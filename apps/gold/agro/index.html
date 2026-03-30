@@ -3995,8 +3995,8 @@
         <div class="agro-buyer-panel" role="dialog" aria-modal="true" aria-labelledby="agro-buyer-title" tabindex="-1">
             <header class="agro-buyer-header">
                 <div>
-                    <p class="agro-buyer-eyebrow">CRM Local Privado</p>
-                    <h3 id="agro-buyer-title" class="agro-buyer-title">Ficha del Comprador</h3>
+                    <p id="agro-buyer-eyebrow" class="agro-buyer-eyebrow">Cliente nuevo</p>
+                    <h3 id="agro-buyer-title" class="agro-buyer-title">Ficha del Cliente</h3>
                 </div>
                 <button type="button" class="agro-buyer-close" data-agro-buyer-close aria-label="Cerrar ficha">
                     <i class="fa-solid fa-xmark" aria-hidden="true"></i>
@@ -4031,7 +4031,7 @@
                 <label class="agro-buyer-field">
                     <span>Notas</span>
                     <textarea id="agro-buyer-notes" class="styled-input" rows="4" maxlength="800"
-                        placeholder="Preferencias, acuerdos o recordatorios del comprador"></textarea>
+                        placeholder="Preferencias, acuerdos o recordatorios del cliente"></textarea>
                 </label>
                 <label class="agro-buyer-field">
                     <span>Vincular user_id público (opcional)</span>
@@ -4043,8 +4043,10 @@
                     <p id="agro-buyer-status" class="agro-buyer-status" data-level="muted"></p>
                     <div class="agro-buyer-actions">
                         <button type="button" class="btn" id="btn-open-buyer-public-profile">Ver perfil público</button>
+                        <button type="button" class="btn" id="btn-archive-agro-buyer">Archivar cliente</button>
+                        <button type="button" class="btn" id="btn-delete-agro-buyer">Eliminar cliente</button>
                         <button type="button" class="btn" data-agro-buyer-close>Cancelar</button>
-                        <button type="submit" id="btn-save-agro-buyer" class="btn btn-primary">Guardar ficha</button>
+                        <button type="submit" id="btn-save-agro-buyer" class="btn btn-primary">Guardar cliente</button>
                     </div>
                 </footer>
             </form>

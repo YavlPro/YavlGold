@@ -1032,7 +1032,7 @@ body.agro-profile-open {
   }
 }
 
-/* V9.8: Ficha local de compradores (CRM) */
+/* V1: Ficha local de clientes (CRM) */
 body.agro-buyer-open {
   overflow: hidden;
 }
@@ -1185,6 +1185,11 @@ body.agro-buyer-open {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+#modal-agro-buyer .agro-buyer-actions .btn {
+  min-height: var(--a11y-touch-min, 44px);
 }
 
 @media (max-width: 640px) {

@@ -70,6 +70,10 @@ export function normalizeBuyerPortfolioSummaryRow(row) {
         nextRow[field] = Math.max(0, Math.trunc(normalizeBuyerPortfolioNumber(nextRow[field])));
     });
 
+    nextRow.canonical_name = String(nextRow.canonical_name || nextRow.group_key || '').trim();
+    nextRow.client_status = String(nextRow.client_status || 'active').trim().toLowerCase() === 'archived'
+        ? 'archived'
+        : 'active';
     nextRow.global_status = String(nextRow.global_status || 'Mixto');
     nextRow.requires_review = normalizeBuyerPortfolioBoolean(nextRow.requires_review);
 

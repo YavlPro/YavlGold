@@ -161,6 +161,7 @@
   display: flex;
   align-items: center;
   gap: 0.7rem;
+  flex-wrap: wrap;
 }
 
 .cartera-viva-view__actions {
@@ -290,6 +291,10 @@
 
 .cartera-viva-card__footer {
   justify-content: flex-end;
+}
+
+.cartera-viva-detail__summary .cartera-viva-card__footer {
+  justify-content: flex-start;
 }
 
 .cartera-viva-refresh,

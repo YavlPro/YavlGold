@@ -27,7 +27,7 @@ const WIZARD_TAB_META = {
         title: 'Registrar Ingreso',
         icon: '💰',
         conceptPlaceholder: 'Ej: Venta de cosecha',
-        whoLabel: 'Comprador',
+        whoLabel: 'Cliente',
         whoPlaceholder: 'Ej: Jesús, Pedro...',
         hasWho: true,
         hasUnits: true,

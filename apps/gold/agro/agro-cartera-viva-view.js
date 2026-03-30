@@ -12,6 +12,10 @@ import {
     getVisibleBuyerHistoryRows,
     renderBuyerHistoryDetail
 } from './agro-cartera-viva-detail.js';
+import {
+    openBuyerProfileById,
+    openNewBuyerProfile
+} from './agrocompradores.js';
 
 const CARTERA_VIVA_VIEW = 'cartera-viva';
 const CARTERA_VIVA_ROOT_ID = 'agro-cartera-viva-root';
@@ -27,8 +31,8 @@ const CATEGORY_META = Object.freeze({
     }),
     pagados: Object.freeze({
         label: 'Pagados',
-        emptyTitle: 'No hay compradores al día',
-        emptyCopy: 'Aquí aparecen los compradores que ya cerraron su saldo.'
+        emptyTitle: 'No hay clientes al día',
+        emptyCopy: 'Aquí aparecen los clientes que ya cerraron su saldo.'
     }),
     perdidos: Object.freeze({
         label: 'Pérdidas',
@@ -287,23 +291,30 @@ function resolveVisibleCategory(row) {
     const pending = Number(row?.pending_total || 0);
     const paid = Number(row?.paid_total || 0);
     const loss = Number(row?.loss_total || 0);
+    const review = getReviewTotal(row);
 
-    // Active debt: always fiados regardless of partial payments.
     if (pending > 0) return 'fiados';
-    // Any closed account that carries a loss falls under perdidos,
-    // even if some amount was previously collected.
     if (loss > 0) return 'perdidos';
-    // Fully collected with no loss.
     if (paid > 0) return 'pagados';
+    if (review > 0) return 'fiados';
     return 'fiados';
 }
 
 function resolveBuyerStatus(row) {
+    const clientStatus = String(row?.client_status || 'active').trim().toLowerCase();
     const pending = Number(row?.pending_total || 0);
     const paid = Number(row?.paid_total || 0);
     const loss = Number(row?.loss_total || 0);
     const review = getReviewTotal(row);
     const paidPercent = getPaidPercent(row);
+
+    if (clientStatus === 'archived') {
+        return {
+            tone: 'review',
+            label: 'Archivado',
+            detail: 'Cliente fuera del flujo activo, con historial preservado.'
+        };
+    }
 
     if (pending > 0) {
         if (paid > 0 && paidPercent >= 65) {
@@ -349,10 +360,10 @@ function resolveBuyerStatus(row) {
 
     return {
         tone: review > 0 ? 'review' : 'seguimiento',
-        label: review > 0 ? 'Por revisar' : 'Seguimiento',
+        label: review > 0 ? 'Por revisar' : 'Sin movimientos',
         detail: review > 0
             ? `${formatMoney(review)} pendientes por ordenar`
-            : 'Sin lectura suficiente todavía'
+            : 'Cliente listo para registrar su primer movimiento.'
     };
 }
 
@@ -372,6 +383,7 @@ function matchesPortfolioSearch(row, query = searchQuery) {
 
     const haystack = [
         row?.display_name,
+        row?.canonical_name,
         row?.buyer_group_key,
         row?.group_key,
         row?.global_status
@@ -455,7 +467,7 @@ function resolveCyclePayloadFromContext(context = {}) {
         buyerRow?.display_name
         || historyRow?.buyer_name
         || getSelectedBuyerRow?.()?.display_name
-        || 'Comprador'
+        || 'Cliente'
     ).trim();
     const baseConcept = String(historyRow?.concept || historyRow?.title || '').trim();
     const suggestedName = historyRow
@@ -566,14 +578,22 @@ function resolveCategorySummary(rows, category) {
     const paid = sumField(rows, 'paid_total');
     const loss = sumField(rows, 'loss_total');
     const review = rows.reduce((total, row) => total + getReviewTotal(row), 0);
+    const pendingClients = rows.filter((row) => Number(row?.pending_total || 0) > 0).length;
+    const readyClients = rows.filter((row) =>
+        Number(row?.pending_total || 0) <= 0
+        && Number(row?.paid_total || 0) <= 0
+        && Number(row?.loss_total || 0) <= 0
+        && Number(row?.credited_total || 0) <= 0
+        && getReviewTotal(row) <= 0
+    ).length;
 
     if (category === 'pagados') {
         return {
             label: 'Cobrado',
             amount: formatMoney(paid),
-            copy: `${formatCount(count)} comprador${count === 1 ? '' : 'es'} con saldo cerrado`,
+            copy: `${formatCount(count)} cliente${count === 1 ? '' : 's'} con saldo cerrado`,
             stats: [
-                { label: 'Compradores', value: formatCount(count) },
+                { label: 'Clientes', value: formatCount(count) },
                 { label: 'Fiado total', value: formatMoney(sumField(rows, 'credited_total')) },
                 { label: 'Por revisar', value: formatMoney(review) }
             ]
@@ -596,9 +616,11 @@ function resolveCategorySummary(rows, category) {
     return {
         label: 'Por cobrar',
         amount: formatMoney(pending),
-        copy: `${formatCount(count)} comprador${count === 1 ? '' : 'es'} con saldo activo`,
+        copy: pendingClients > 0
+            ? `${formatCount(pendingClients)} cliente${pendingClients === 1 ? '' : 's'} con saldo activo${readyClients > 0 ? ` · ${formatCount(readyClients)} listos para registrar` : ''}`
+            : `${formatCount(count)} cliente${count === 1 ? '' : 's'} listos para registrar`,
         stats: [
-            { label: 'Compradores', value: formatCount(count) },
+            { label: 'Clientes', value: formatCount(count) },
             { label: 'Ya cobrado', value: formatMoney(paid) },
             { label: 'Por revisar', value: formatMoney(review) }
         ]
@@ -610,11 +632,11 @@ function renderHeaderSummary(filteredRows, options = {}) {
         return `
             <div class="cartera-viva-summary-strip cartera-viva-summary-strip--loading" aria-live="polite">
                 <div class="cartera-viva-summary-strip__main">
-                    <p class="cartera-viva-summary-strip__label">Cartera Viva</p>
-                    <div class="cartera-viva-summary-strip__amount-row">
-                        <strong class="cartera-viva-summary-strip__amount">Preparando lectura</strong>
-                        <p class="cartera-viva-summary-strip__copy">Ordenando compradores, saldos y categorias visibles.</p>
-                    </div>
+                        <p class="cartera-viva-summary-strip__label">Cartera Viva</p>
+                        <div class="cartera-viva-summary-strip__amount-row">
+                            <strong class="cartera-viva-summary-strip__amount">Preparando lectura</strong>
+                        <p class="cartera-viva-summary-strip__copy">Ordenando clientes, saldos y categorías visibles.</p>
+                        </div>
                 </div>
                 <div class="cartera-viva-summary-strip__loading">
                     <span class="cartera-viva-loading-dot" aria-hidden="true"></span>
@@ -657,7 +679,7 @@ function renderCardSignal(row) {
     const thirdClass = Number(row?.loss_total || 0) > 0 ? 'is-loss' : 'is-review';
 
     return `
-        <svg class="cartera-viva-card__signal" viewBox="0 0 28 18" role="img" aria-label="Señal rápida del comprador">
+        <svg class="cartera-viva-card__signal" viewBox="0 0 28 18" role="img" aria-label="Señal rápida del cliente">
             <rect x="1" y="${18 - paid}" width="6" height="${paid}" rx="2"></rect>
             <rect x="11" y="${18 - pending}" width="6" height="${pending}" rx="2"></rect>
             <rect class="${thirdClass}" x="21" y="${18 - third}" width="6" height="${third}" rx="2"></rect>
@@ -696,7 +718,7 @@ function renderProgressBlock(row, options = {}) {
     const loss = Number(row?.loss_total || 0);
     const base = Math.max(breakdown.base, 0);
     const label = base > 0 ? `Cobrado de ${formatMoney(base)}` : 'Sin base';
-    let footer = 'Saldo cerrado';
+    let footer = base > 0 ? 'Saldo cerrado' : 'Listo para registrar';
 
     if (pending > 0) {
         footer = `Faltan ${formatMoney(pending)}`;
@@ -727,14 +749,14 @@ function renderProgressBlock(row, options = {}) {
 
 function renderSearchBar() {
     return `
-        <label class="cartera-viva-search" aria-label="Buscar comprador">
+        <label class="cartera-viva-search" aria-label="Buscar cliente">
             <span class="cartera-viva-search__icon" aria-hidden="true">⌕</span>
             <input
                 type="search"
                 class="cartera-viva-search__input"
                 data-cartera-search
                 value="${escapeHtml(searchQuery)}"
-                placeholder="Buscar comprador">
+                placeholder="Buscar cliente">
         </label>
     `;
 }
@@ -795,8 +817,8 @@ function renderToolbarControls() {
             ${renderSearchBar()}
             <div class="cartera-viva-toolbar__row">
                 ${renderCropSelector()}
-                <button type="button" class="cartera-viva-quick-action" data-cartera-new-record>
-                    ${resolveRecordActionLabel(activeCategory)}
+                <button type="button" class="cartera-viva-quick-action" data-cartera-new-client>
+                    Nuevo cliente
                 </button>
             </div>
         </div>
@@ -828,7 +850,7 @@ function renderCommercialFamilyNav(activeView = CARTERA_VIVA_VIEW) {
 function renderScopeNote() {
     const selectedCropId = getSelectedCropId();
     if (selectedCropId) {
-        return `Lista y detalle filtrados por ${escapeHtml(getSelectedCropShortLabel())}. El resumen superior sigue la lectura global buyer-centric. Otros pertenece a Ciclos Operativos.`;
+        return `Lista y detalle filtrados por ${escapeHtml(getSelectedCropShortLabel())}. El resumen superior sigue la lectura global client-centric. Otros pertenece a Ciclos Operativos.`;
     }
     return 'Otros pertenece a Ciclos Operativos. Donaciones solo entra cuando la data real la sostiene.';
 }
@@ -855,25 +877,31 @@ function renderPortfolioCards(filteredRows) {
         const status = resolveBuyerStatus(row);
         const loss = Number(row?.loss_total || 0);
         const pending = Number(row?.pending_total || 0);
-        const thirdMetricLabel = loss > 0 && pending <= 0 ? 'Pérdida' : 'Falta';
-        const thirdMetricValue = thirdMetricLabel === 'Pérdida'
-            ? formatMoney(loss)
-            : formatMoney(pending);
+        const hasMovementTotals = pending > 0 || loss > 0 || Number(row?.paid_total || 0) > 0 || Number(row?.credited_total || 0) > 0;
+        const thirdMetricLabel = hasMovementTotals
+            ? (loss > 0 && pending <= 0 ? 'Pérdida' : 'Falta')
+            : 'Historial';
+        const thirdMetricValue = hasMovementTotals
+            ? (thirdMetricLabel === 'Pérdida' ? formatMoney(loss) : formatMoney(pending))
+            : '0 movimientos';
         const hasReview = getReviewTotal(row) > 0;
+        const isArchived = String(row?.client_status || '').trim().toLowerCase() === 'archived';
 
         return `
             <article class="cartera-viva-card${row?.requires_review ? ' is-review' : ''}">
                 <header class="cartera-viva-card__head">
                     <div class="cartera-viva-card__identity">
-                        <h3 class="cartera-viva-card__title">${escapeHtml(row?.display_name || 'Comprador sin nombre')}</h3>
+                        <h3 class="cartera-viva-card__title">${escapeHtml(row?.display_name || 'Cliente sin nombre')}</h3>
                     </div>
                     <div class="cartera-viva-card__head-side">
                         <span class="cartera-viva-badge cartera-viva-badge--${status.tone}">${status.label}</span>
+                        ${isArchived ? '<span class="cartera-viva-badge cartera-viva-badge--review">Archivado</span>' : ''}
                         ${hasReview ? '<span class="cartera-viva-badge cartera-viva-badge--review">Revisar</span>' : ''}
                     </div>
                 </header>
 
                 ${renderProgressBlock(row, { noLegend: true })}
+                ${renderSupportChips(row)}
 
                 <dl class="cartera-viva-card__metrics">
                     <div class="cartera-viva-card__metric">
@@ -894,6 +922,12 @@ function renderPortfolioCards(filteredRows) {
                     <button
                         type="button"
                         class="cartera-viva-detail-link"
+                        data-cartera-edit-client="${escapeHtml(row?.buyer_id || '')}">
+                        Editar cliente
+                    </button>
+                    <button
+                        type="button"
+                        class="cartera-viva-detail-link"
                         data-cartera-open-history="${escapeHtml(row?.buyer_id || '')}">
                         Ver detalle
                     </button>
@@ -906,10 +940,10 @@ function renderPortfolioCards(filteredRows) {
 function renderEmptyState(config = {}) {
     const title = escapeHtml(config.title || 'Sin datos para mostrar');
     const copy = escapeHtml(config.copy || 'Cartera Viva todavia no tiene una lectura disponible para esta vista.');
-    const action = config.action === 'new-record'
+    const action = config.action === 'new-client'
         ? `
-            <button type="button" class="cartera-viva-empty__action" data-agro-action="new-record">
-                Registrar movimiento
+            <button type="button" class="cartera-viva-empty__action" data-cartera-new-client>
+                Nuevo cliente
             </button>
         `
         : '';
@@ -929,7 +963,7 @@ function renderLoadingState() {
         <div class="cartera-viva-empty cartera-viva-empty--loading">
             <div class="cartera-viva-loading-dot" aria-hidden="true"></div>
             <h3 class="cartera-viva-empty__title">Cargando cartera</h3>
-            <p class="cartera-viva-empty__copy">Ordenando compradores y saldos visibles.</p>
+            <p class="cartera-viva-empty__copy">Ordenando clientes y saldos visibles.</p>
         </div>
     `;
 }
@@ -937,7 +971,7 @@ function renderLoadingState() {
 function renderErrorState(message) {
     return renderEmptyState({
         title: 'No se pudo cargar Cartera Viva',
-        copy: message || 'La vista no pudo leer los saldos de compradores. Intenta actualizar.'
+        copy: message || 'La vista no pudo leer los saldos de clientes. Intenta actualizar.'
     });
 }
 
@@ -956,19 +990,12 @@ function renderListView(root) {
         : filterRowsByCategory(cropScopedRows, activeCategory);
     const categoryCounts = getCategoryCounts(cropScopedRows);
     const filteredRows = filterRowsByCategory(cropScopedRows, activeCategory);
-    const hasReliableMetrics = cropScopedRows.some((row) =>
-        Number(row?.credited_total || 0) > 0
-        || Number(row?.paid_total || 0) > 0
-        || Number(row?.loss_total || 0) > 0
-        || Number(row?.pending_total || 0) > 0
-    );
-
     let bodyContent = '';
     if (shouldBlockInitialLoading) {
         bodyContent = renderLoadingState();
     } else if (visibleCropScopeLoading && selectedCropId) {
         bodyContent = renderEmptyState({
-            title: 'Cargando compradores del cultivo',
+            title: 'Cargando clientes del cultivo',
             copy: `Buscando movimientos visibles para ${getSelectedCropShortLabel()}.`
         });
     } else if (visibleCropScopeError && selectedCropId) {
@@ -977,25 +1004,18 @@ function renderListView(root) {
         bodyContent = renderErrorState(lastErrorMessage);
     } else if (summaryRows.length <= 0) {
         bodyContent = renderEmptyState({
-            title: 'Todavía no hay compradores en cartera',
-            copy: 'Registra fiados o movimientos para empezar a ver compradores aquí.',
-            action: 'new-record'
-        });
-    } else if (!hasReliableMetrics) {
-        bodyContent = renderEmptyState({
-            title: 'Todavía no hay lectura suficiente',
-            copy: selectedCropId
-                ? `Todavía no hay movimientos visibles de ${getSelectedCropShortLabel()} para mostrar una cartera clara.`
-                : 'Hay movimientos por ordenar, pero aún no alcanzan para mostrar una cartera clara.'
+            title: 'Todavía no hay clientes en Cartera Viva',
+            copy: 'Crea tu primer cliente para empezar a registrar su historial desde aquí.',
+            action: 'new-client'
         });
     } else if (filteredRows.length <= 0) {
         const categoryMeta = CATEGORY_META[activeCategory];
         bodyContent = renderEmptyState({
             title: searchQuery ? 'Sin coincidencias en esta vista' : categoryMeta.emptyTitle,
             copy: searchQuery
-                ? `No encontramos compradores para "${searchQuery}" dentro de ${categoryMeta.label.toLowerCase()}.`
+                ? `No encontramos clientes para "${searchQuery}" dentro de ${categoryMeta.label.toLowerCase()}.`
                 : (selectedCropId
-                    ? `${categoryMeta.emptyCopy} Ahora mismo ${getSelectedCropShortLabel()} no tiene compradores visibles en esta categoría.`
+                    ? `${categoryMeta.emptyCopy} Ahora mismo ${getSelectedCropShortLabel()} no tiene clientes visibles en esta categoría.`
                     : categoryMeta.emptyCopy)
         });
     } else {
@@ -1007,16 +1027,19 @@ function renderListView(root) {
     }
 
     root.innerHTML = `
-        <section class="cartera-viva-view${isSoftRefreshing ? ' is-refreshing' : ''}" aria-label="Cartera de compradores" aria-busy="${shouldBlockInitialLoading || isSoftRefreshing ? 'true' : 'false'}">
+        <section class="cartera-viva-view${isSoftRefreshing ? ' is-refreshing' : ''}" aria-label="Cartera de clientes" aria-busy="${shouldBlockInitialLoading || isSoftRefreshing ? 'true' : 'false'}">
             <header class="cartera-viva-view__header">
                 ${renderCommercialFamilyNav('cartera-viva')}
                 <div class="cartera-viva-view__headline">
                     <div class="cartera-viva-view__copy">
                         <p class="cartera-viva-view__eyebrow">Cartera Viva</p>
-                        <h2 class="cartera-viva-view__title">Cartera de compradores</h2>
-                        <p class="cartera-viva-view__subtitle">Cobros, cierres y pérdidas con lectura compacta.</p>
+                        <h2 class="cartera-viva-view__title">Cartera de clientes</h2>
+                        <p class="cartera-viva-view__subtitle">Primero vive el cliente; luego sus movimientos.</p>
                     </div>
                 <div class="cartera-viva-view__actions">
+                    <button type="button" class="cartera-viva-refresh" data-cartera-new-client>
+                        Nuevo cliente
+                    </button>
                     <button type="button" class="cartera-viva-refresh" data-cartera-refresh ${isSoftRefreshing ? 'disabled' : ''}>
                         ${isSoftRefreshing ? 'Actualizando…' : 'Actualizar'}
                     </button>
@@ -1065,6 +1088,16 @@ function renderView() {
             onRefresh: () => {
                 if (!selectedBuyerId) return;
                 loadBuyerDetail(selectedBuyerId);
+            },
+            onEditClient: () => {
+                const buyerRow = getSelectedBuyerRow();
+                if (!buyerRow?.buyer_id) return;
+                openBuyerProfileById(buyerRow.buyer_id, buyerRow.display_name || '');
+            },
+            onOpenRecord: (tabName) => {
+                const buyerRow = getSelectedBuyerRow();
+                if (!buyerRow) return;
+                openClientRecordWizard(tabName, buyerRow);
             },
             onExport: () => {
                 exportBuyerDetail();
@@ -1134,7 +1167,7 @@ async function loadSummary() {
         await syncVisibleCropScope({ render: false });
     } catch (error) {
         console.error('[CarteraViva] summary load failed:', error?.message || error);
-        lastErrorMessage = String(error?.message || 'Error leyendo la cartera de compradores.');
+        lastErrorMessage = String(error?.message || 'Error leyendo la cartera de clientes.');
         summaryRows = [];
         visibleCropScopeKeys = null;
         visibleCropScopeId = null;
@@ -1170,7 +1203,7 @@ async function loadBuyerDetail(buyerId) {
         detailExchangeStatus = getExchangeStatus();
     } catch (error) {
         console.error('[CarteraViva] buyer detail load failed:', error?.message || error);
-        detailErrorMessage = String(error?.message || 'Error leyendo el historial contextual del comprador.');
+        detailErrorMessage = String(error?.message || 'Error leyendo el historial contextual del cliente.');
         detailRows = [];
     } finally {
         detailLoading = false;
@@ -1186,7 +1219,7 @@ function setDetailExportState(message = '', tone = '') {
 async function exportBuyerDetail() {
     const buyerRow = getSelectedBuyerRow();
     if (!buyerRow) {
-        setDetailExportState('No se encontro el comprador activo para exportar.', 'error');
+        setDetailExportState('No se encontró el cliente activo para exportar.', 'error');
         renderView();
         return;
     }
@@ -1198,7 +1231,7 @@ async function exportBuyerDetail() {
     }
 
     if (detailErrorMessage) {
-        setDetailExportState('Actualiza el historial antes de exportar este comprador.', 'error');
+        setDetailExportState('Actualiza el historial antes de exportar este cliente.', 'error');
         renderView();
         return;
     }
@@ -1216,7 +1249,7 @@ async function exportBuyerDetail() {
         setDetailExportState(`Exportado: ${fileName}`, 'success');
     } catch (error) {
         console.error('[CarteraViva] buyer export failed:', error?.message || error);
-        setDetailExportState(String(error?.message || 'No se pudo generar la exportación del comprador.'), 'error');
+        setDetailExportState(String(error?.message || 'No se pudo generar la exportación del cliente.'), 'error');
     } finally {
         detailExportPending = false;
         renderView();
@@ -1244,8 +1277,10 @@ function bindListViewEvents(root) {
         loadSummary();
     });
 
-    root.querySelector('[data-cartera-new-record]')?.addEventListener('click', () => {
-        openRecordFromCarteraContext();
+    root.querySelectorAll('[data-cartera-new-client]').forEach((button) => {
+        button.addEventListener('click', () => {
+            openNewBuyerProfile('');
+        });
     });
 
     root.querySelectorAll('[data-cartera-crop]').forEach((button) => {
@@ -1263,6 +1298,15 @@ function bindListViewEvents(root) {
             const buyerId = String(button.dataset.carteraOpenHistory || '').trim();
             if (!buyerId) return;
             loadBuyerDetail(buyerId);
+        });
+    });
+
+    root.querySelectorAll('[data-cartera-edit-client]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const buyerId = String(button.dataset.carteraEditClient || '').trim();
+            const row = summaryRows.find((entry) => String(entry?.buyer_id || '').trim() === buyerId) || null;
+            if (!buyerId) return;
+            openBuyerProfileById(buyerId, row?.display_name || '');
         });
     });
 }
@@ -1323,6 +1367,48 @@ async function handleCropContextUpdated() {
     renderView();
 }
 
+function openClientRecordWizard(tabName, buyerRow) {
+    const safeTab = String(tabName || '').trim().toLowerCase();
+    if (!['pendientes', 'ingresos', 'perdidas'].includes(safeTab)) return false;
+    if (typeof window === 'undefined' || typeof window.launchAgroWizard !== 'function') return false;
+
+    const cropId = getSelectedCropId();
+    if (typeof window.setSelectedCropId === 'function') {
+        window.setSelectedCropId(cropId || null);
+    }
+
+    window.launchAgroWizard(safeTab, {
+        initialCropId: cropId || null,
+        prefill: {
+            who: String(buyerRow?.display_name || '').trim()
+        }
+    });
+    return true;
+}
+
+function handleClientChanged(event) {
+    const clientId = String(event?.detail?.clientId || '').trim();
+    const openDetail = event?.detail?.openDetail === true;
+
+    void (async () => {
+        await loadSummary();
+        if (clientId && openDetail) {
+            await loadBuyerDetail(clientId);
+            return;
+        }
+
+        if (event?.detail?.deleted === true && selectedBuyerId === clientId) {
+            resetDetailState();
+            renderView();
+            return;
+        }
+
+        if (selectedBuyerId) {
+            await loadBuyerDetail(selectedBuyerId);
+        }
+    })();
+}
+
 export function initAgroCarteraVivaView() {
     if (initialized) {
         syncCarteraVivaGlobalContext();
@@ -1344,6 +1430,7 @@ export function initAgroCarteraVivaView() {
     document.addEventListener('agro:losses:changed', scheduleExternalPortfolioRefresh);
     document.addEventListener('agro:pending:refreshed', scheduleExternalPortfolioRefresh);
     document.addEventListener('agro:transfers:refreshed', scheduleExternalPortfolioRefresh);
+    document.addEventListener('agro:client:changed', handleClientChanged);
 
     if (String(document.body?.dataset?.agroActiveView || '').trim().toLowerCase() === CARTERA_VIVA_VIEW) {
         loadSummary();

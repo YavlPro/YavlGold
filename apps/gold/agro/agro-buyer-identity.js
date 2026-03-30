@@ -177,7 +177,9 @@ export async function ensureBuyerIdentityLink({
             .insert([{
                 user_id: safeUserId,
                 display_name: candidate.rawName || 'Comprador',
-                group_key: candidate.groupKey
+                group_key: candidate.groupKey,
+                canonical_name: candidate.groupKey,
+                status: 'active'
             }])
             .select('id')
             .single();

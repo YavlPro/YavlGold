@@ -6596,3 +6596,169 @@ Motivo de elección: menor riesgo, menor diff, máxima coherencia visual, cero r
   1. dataset QA de `Ciclos Operativos`;
   2. `QA-3` completo;
   3. `QA-5` smoke de `Facturero`.
+
+## Sesión: Fase nueva Cartera Viva client-centric (2026-03-30)
+
+### Diagnóstico
+
+- Cartera Viva ya no parte de cero en identidad: existe una fundación previa en `public.agro_buyers` con `id` estable, `display_name`, `group_key` y FKs vivas desde:
+  - `public.agro_pending.buyer_id / buyer_group_key / buyer_match_status`
+  - `public.agro_income.buyer_id / buyer_group_key / buyer_match_status`
+  - `public.agro_losses.buyer_id / buyer_group_key / buyer_match_status`
+- La tabla real del historial/facturero que alimenta cartera no es una sola:
+  - fiados: `public.agro_pending`
+  - cobros: `public.agro_income`
+  - pérdidas: `public.agro_losses`
+- El `group_key` actual se construye con canonicalización buyer-centric:
+  - JS: `normalizeBuyerGroupKey()` en `apps/gold/agro/agro-buyer-identity.js`
+  - SQL: `public.agro_canonicalize_buyer_name(text)` en `supabase/migrations/20260327001037_agro_buyer_foundation_v4.sql`
+- La vista actual `apps/gold/agro/agro-cartera-viva-view.js` ya es buyer-centric por RPC (`agro_buyer_portfolio_summary_v1`) y detalle propio, pero todavía falla en dos puntos de producto:
+  - la experiencia principal no arranca desde una entidad explícita `cliente`;
+  - el detalle no tiene un CTA directo de `Nuevo registro` contextualizado al cliente actual.
+- Crear una tabla paralela `agro_clients` encima de `agro_buyers` duplicaría identidad, migración y puntos de verdad. El diff mínimo coherente es elevar `agro_buyers` al rol de cliente maestro equivalente aprobado.
+
+### Tablas reales involucradas
+
+- `public.agro_buyers`
+- `public.agro_pending`
+- `public.agro_income`
+- `public.agro_losses`
+- RPC actual: `public.agro_buyer_portfolio_summary_v1()`
+
+### Estrategia de migración
+
+1. Evolucionar `public.agro_buyers` con campos de cliente maestro equivalentes:
+   - `canonical_name`
+   - `status` (`active|archived`)
+   - `deleted_at` solo si hace falta compatibilidad de patrón, sin usarlo como flujo principal
+2. Backfill:
+   - `canonical_name = coalesce(canonical_name, group_key)`
+   - `status = 'active'` por defecto
+3. Mantener `group_key` como alias de compatibilidad legacy para no romper RPCs, social threads ni bridges existentes.
+4. Reescribir `agro_buyer_portfolio_summary_v1()` para leer el estado del cliente maestro equivalente sin romper el nombre del RPC.
+
+### Estrategia de asociación entre movimientos legacy y cliente maestro
+
+- Mantener `buyer_id` como FK estable actual; no abrir una segunda FK paralela en esta fase.
+- Cuando exista `buyer_id`, la asociación del movimiento al cliente será directa por id.
+- Cuando solo exista `buyer_group_key`, resolver por `group_key/canonical_name` del cliente y, en edición segura, promover esos registros a vínculo estable con `buyer_id` cuando corresponda.
+- Resultado: no se rompe Cartera Viva actual y se evita una migración masiva más agresiva de lo necesario.
+
+### Estrategia de edición segura
+
+- Editar cliente actualizará `display_name` y, si cambia la canonicalización, también `canonical_name/group_key`.
+- Para no romper historial legacy:
+  - se actualizará el registro maestro;
+  - se reasignarán `buyer_group_key` legacy en `agro_pending`, `agro_income` y `agro_losses` del usuario para reflejar el nuevo group key;
+  - los registros ya ligados por `buyer_id` permanecerán estables.
+- Si el nuevo nombre colisiona con otro cliente del mismo usuario por canonicalización, la edición debe bloquearse y exigir resolver el duplicado en vez de fusionar silenciosamente.
+
+### Estrategia de archivado seguro
+
+- `Sin historial` -> permitir eliminación dura del cliente maestro.
+- `Con historial` -> no borrar; pasar `status = 'archived'`.
+- Nunca dejar movimientos con historial huérfano ni depender de `ON DELETE SET NULL` como flujo normal.
+
+### Archivos a tocar
+
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+- `supabase/migrations/*` nuevo lote client-centric
+- `apps/gold/agro/agrocompradores.js`
+- `apps/gold/agro/agro-cartera-viva.js`
+- `apps/gold/agro/agro-cartera-viva-view.js`
+- `apps/gold/agro/agro-cartera-viva-detail.js`
+- `apps/gold/agro/agro-cartera-viva-export.js`
+- `apps/gold/agro/agro-wizard.js`
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro.css` y/o `apps/gold/agro/agro-cartera-viva.css`
+
+### Riesgos
+
+- `agro_buyers` ya es usado por CRM local, social y perfiles públicos; cualquier cambio de schema debe ser aditivo y compatible.
+- Renombrar `group_key` sin propagarlo a filas legacy con `buyer_id = null` rompería la lectura de detalle/historial.
+- Cambiar copy visible de `comprador` a `cliente` debe limitarse a Cartera Viva y flujos asociados, sin reescribir superficies ajenas en este lote.
+
+### Cambios aplicados
+
+- `supabase/migrations/20260330173000_agro_clients_master_equivalent_v1.sql`
+  - `agro_buyers` se elevó a cliente maestro equivalente con:
+    - `canonical_name`
+    - `status` (`active|archived`)
+    - índice único `(user_id, canonical_name)`
+    - índice `(user_id, status)`
+  - `agro_buyer_portfolio_summary_v1()` se recreó para:
+    - exponer `canonical_name` y `client_status`;
+    - incluir clientes activos sin movimientos;
+    - mantener compatibilidad con `buyer_id/group_key`.
+- `apps/gold/agro/agro-buyer-identity.js`
+  - el auto-link de nuevos movimientos ahora inserta también `canonical_name` y `status` al crear identidad nueva.
+- `apps/gold/agro/agrocompradores.js`
+  - el modal pasó de ficha de comprador a CRUD real de cliente:
+    - crear cliente;
+    - editar cliente;
+    - archivar/reactivar cliente;
+    - eliminar cliente solo sin historial;
+    - propagar cambios de `group_key/canonical_name` a `agro_pending`, `agro_income`, `agro_losses` y `agro_social_threads`;
+    - emitir evento `agro:client:changed` para refrescar Cartera Viva y abrir detalle contextual tras altas/duplicados.
+- `apps/gold/agro/index.html`
+  - copy del modal actualizado a cliente;
+  - nuevos CTAs `Archivar cliente` y `Eliminar cliente`.
+- `apps/gold/agro/agro.css`
+  - ajuste del modal para soportar más acciones y tocabilidad mínima.
+- `apps/gold/agro/agro-cartera-viva.js`
+  - normalización de `canonical_name` y `client_status` en filas del RPC.
+- `apps/gold/agro/agro-cartera-viva-view.js`
+  - Cartera Viva pasó a copy client-centric;
+  - nuevo CTA principal `Nuevo cliente`;
+  - cards con `Editar cliente` + `Ver detalle`;
+  - soporte para clientes activos sin movimientos;
+  - refresh por evento `agro:client:changed`;
+  - apertura contextual del wizard desde detalle con cliente prellenado.
+- `apps/gold/agro/agro-cartera-viva-detail.js`
+  - detalle renombrado a cliente;
+  - quick actions:
+    - `Nuevo fiado`
+    - `Nuevo cobro`
+    - `Nueva pérdida`
+    - `Editar cliente`
+- `apps/gold/agro/agro-cartera-viva-export.js`
+  - exportación renombrada a clientes.
+- `apps/gold/agro/agro-wizard.js`
+  - el label visible de ingresos usa `Cliente`.
+
+### Build status
+
+- `git diff --check` -> OK
+- `pnpm build:gold` -> OK
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`;
+  - warning histórico de chunks grandes en `assets/agro-*.js`.
+
+### QA sugerido
+
+1. `Nuevo cliente`
+   - crear cliente sin historial;
+   - confirmar que aparece en Cartera Viva aun con métricas en cero;
+   - entrar a su detalle y registrar su primer movimiento desde los CTAs nuevos.
+2. `Duplicado`
+   - intentar crear el mismo cliente con variación menor de nombre;
+   - confirmar que no duplica y que abre el detalle del existente.
+3. `Editar cliente`
+   - renombrar cliente con historial;
+   - validar que detalle, timeline y registros legacy siguen ligados.
+4. `Eliminar seguro`
+   - cliente sin historial -> eliminar;
+   - cliente con historial -> bloqueo de delete y archivado correcto.
+5. `Archivado`
+   - archivar cliente con historial;
+   - confirmar badge/estado archivado y que el historial sigue exportable.
+6. `Nuevo registro contextual`
+   - desde detalle del cliente abrir `Nuevo fiado`, `Nuevo cobro` y `Nueva pérdida`;
+   - confirmar que el nombre del cliente ya nace prellenado y que no se pierde el contexto.
+7. `Mobile`
+   - revisar `<=480px` el modal de cliente y las quick actions del detalle.

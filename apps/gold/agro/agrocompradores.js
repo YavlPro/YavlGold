@@ -6,8 +6,28 @@ const BUYER_MODAL_ID = 'modal-agro-buyer';
 const BUYER_FORM_ID = 'agro-buyer-form';
 const BUYER_STATUS_ID = 'agro-buyer-status';
 const BUYER_TITLE_ID = 'agro-buyer-title';
+const BUYER_EYEBROW_ID = 'agro-buyer-eyebrow';
 const BUYER_SAVE_BUTTON_ID = 'btn-save-agro-buyer';
 const BUYER_OPEN_PUBLIC_BUTTON_ID = 'btn-open-buyer-public-profile';
+const BUYER_ARCHIVE_BUTTON_ID = 'btn-archive-agro-buyer';
+const BUYER_DELETE_BUTTON_ID = 'btn-delete-agro-buyer';
+
+const BUYER_SELECT = [
+    'id',
+    'user_id',
+    'display_name',
+    'group_key',
+    'canonical_name',
+    'status',
+    'phone',
+    'whatsapp',
+    'instagram',
+    'facebook',
+    'notes',
+    'linked_user_id',
+    'created_at',
+    'updated_at'
+].join(',');
 
 const BUYER_FIELD_IDS = [
     'display_name',
@@ -19,13 +39,24 @@ const BUYER_FIELD_IDS = [
     'linked_user_id'
 ];
 
+const BUYER_MOVEMENT_TABLES = Object.freeze([
+    'agro_pending',
+    'agro_income',
+    'agro_losses'
+]);
+
 const state = {
     initialized: false,
     supabase: null,
     currentUser: null,
+    currentBuyerId: '',
     currentGroupKey: '',
+    currentCanonicalName: '',
     currentDisplayName: '',
-    currentLinkedUserId: ''
+    currentLinkedUserId: '',
+    currentStatus: 'active',
+    currentHistoryCount: 0,
+    mode: 'edit'
 };
 
 function setBuyerStatus(message = '', level = 'muted') {
@@ -39,36 +70,21 @@ function setSaveBusy(isBusy) {
     const button = document.getElementById(BUYER_SAVE_BUTTON_ID);
     if (!button) return;
     button.disabled = !!isBusy;
-    button.textContent = isBusy ? 'Guardando...' : 'Guardar ficha';
+    button.textContent = isBusy ? 'Guardando...' : 'Guardar cliente';
 }
 
 function normalizeUuid(value) {
     return String(value || '').trim().toLowerCase();
 }
 
+function normalizeClientStatus(value) {
+    return String(value || '').trim().toLowerCase() === 'archived' ? 'archived' : 'active';
+}
+
 function isValidUuid(value) {
     const token = normalizeUuid(value);
     if (!token) return false;
     return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(token);
-}
-
-function syncOpenPublicButton() {
-    const button = document.getElementById(BUYER_OPEN_PUBLIC_BUTTON_ID);
-    if (!button) return;
-    const linked = normalizeUuid(state.currentLinkedUserId);
-    const hasLinked = !!linked;
-    button.disabled = !hasLinked;
-    button.title = hasLinked
-        ? 'Abrir perfil público vinculado'
-        : 'Comprador no vinculado a un user_id público';
-}
-
-async function resolveSessionUser() {
-    if (state.currentUser?.id) return state.currentUser;
-    const { data, error } = await state.supabase.auth.getUser();
-    if (error) throw error;
-    state.currentUser = data?.user || null;
-    return state.currentUser;
 }
 
 function getBuyerModal() {
@@ -98,32 +114,88 @@ function closeBuyerModal() {
     document.body.classList.remove('agro-buyer-open');
 }
 
-function fillBuyerForm(buyer = {}) {
-    BUYER_FIELD_IDS.forEach((fieldName) => {
-        const input = document.getElementById(`agro-buyer-${fieldName}`);
-        if (!input) return;
-        input.value = String(buyer?.[fieldName] || '').trim();
-    });
+function emitClientChanged(detail = {}) {
+    document.dispatchEvent(new CustomEvent('agro:client:changed', {
+        detail: {
+            clientId: String(detail.clientId || '').trim(),
+            openDetail: detail.openDetail === true,
+            duplicate: detail.duplicate === true,
+            deleted: detail.deleted === true
+        }
+    }));
+}
 
-    state.currentLinkedUserId = normalizeUuid(buyer?.linked_user_id || state.currentLinkedUserId || '');
-    const linkedInput = document.getElementById('agro-buyer-linked_user_id');
-    if (linkedInput) {
-        linkedInput.value = state.currentLinkedUserId;
+function syncOpenPublicButton() {
+    const button = document.getElementById(BUYER_OPEN_PUBLIC_BUTTON_ID);
+    if (!button) return;
+    const linked = normalizeUuid(state.currentLinkedUserId);
+    const hasLinked = !!linked;
+    button.disabled = !hasLinked;
+    button.title = hasLinked
+        ? 'Abrir perfil público vinculado'
+        : 'Cliente no vinculado a un user_id público';
+}
+
+function syncLifecycleButtons() {
+    const archiveButton = document.getElementById(BUYER_ARCHIVE_BUTTON_ID);
+    const deleteButton = document.getElementById(BUYER_DELETE_BUTTON_ID);
+    const hasBuyer = !!state.currentBuyerId;
+    const hasHistory = Number(state.currentHistoryCount || 0) > 0;
+    const isArchived = state.currentStatus === 'archived';
+
+    if (archiveButton) {
+        archiveButton.disabled = !hasBuyer || (!hasHistory && !isArchived);
+        archiveButton.textContent = isArchived ? 'Reactivar cliente' : 'Archivar cliente';
+        archiveButton.title = !hasBuyer
+            ? 'Guarda el cliente primero'
+            : (!hasHistory && !isArchived
+                ? 'Solo archivamos clientes con historial'
+                : (isArchived ? 'Volver a activar este cliente' : 'Mantener este cliente fuera del flujo activo'));
     }
 
+    if (deleteButton) {
+        deleteButton.disabled = !hasBuyer || hasHistory;
+        deleteButton.title = !hasBuyer
+            ? 'Guarda el cliente primero'
+            : (hasHistory
+                ? 'Este cliente tiene historial y debe archivarse, no borrarse'
+                : 'Eliminar cliente sin historial');
+    }
+}
+
+function syncBuyerHeading() {
+    const eyebrow = document.getElementById(BUYER_EYEBROW_ID);
     const title = document.getElementById(BUYER_TITLE_ID);
+    const displayName = String(state.currentDisplayName || '').trim() || 'Cliente';
+    const hasHistory = Number(state.currentHistoryCount || 0) > 0;
+
+    if (eyebrow) {
+        if (state.mode === 'create') {
+            eyebrow.textContent = 'Cliente nuevo';
+        } else if (state.currentStatus === 'archived') {
+            eyebrow.textContent = 'Cliente archivado';
+        } else if (hasHistory) {
+            eyebrow.textContent = 'Cliente con historial';
+        } else {
+            eyebrow.textContent = 'Cliente listo para registrar';
+        }
+    }
+
     if (title) {
-        const displayName = String(
-            buyer?.display_name
-            || state.currentDisplayName
-            || 'Comprador'
-        ).trim() || 'Comprador';
-        title.textContent = `Ficha del Comprador: ${displayName}`;
+        title.textContent = state.mode === 'create'
+            ? 'Nuevo cliente'
+            : `Ficha del Cliente: ${displayName}`;
         title.dataset.buyerName = '1';
         title.dataset.rawName = displayName;
     }
+}
 
-    syncOpenPublicButton();
+async function resolveSessionUser() {
+    if (state.currentUser?.id) return state.currentUser;
+    const { data, error } = await state.supabase.auth.getUser();
+    if (error) throw error;
+    state.currentUser = data?.user || null;
+    return state.currentUser;
 }
 
 function readBuyerForm() {
@@ -136,10 +208,34 @@ function readBuyerForm() {
     return payload;
 }
 
-async function loadBuyer(userId, groupKey) {
+function fillBuyerForm(buyer = {}) {
+    BUYER_FIELD_IDS.forEach((fieldName) => {
+        const input = document.getElementById(`agro-buyer-${fieldName}`);
+        if (!input) return;
+        input.value = String(buyer?.[fieldName] || '').trim();
+    });
+
+    state.currentBuyerId = String(buyer?.id || state.currentBuyerId || '').trim();
+    state.currentDisplayName = String(buyer?.display_name || state.currentDisplayName || '').trim();
+    state.currentGroupKey = String(buyer?.group_key || state.currentGroupKey || normalizeBuyerGroupKey(state.currentDisplayName)).trim();
+    state.currentCanonicalName = String(buyer?.canonical_name || state.currentCanonicalName || state.currentGroupKey).trim();
+    state.currentStatus = normalizeClientStatus(buyer?.status || state.currentStatus);
+    state.currentLinkedUserId = normalizeUuid(buyer?.linked_user_id || state.currentLinkedUserId || '');
+
+    const linkedInput = document.getElementById('agro-buyer-linked_user_id');
+    if (linkedInput) {
+        linkedInput.value = state.currentLinkedUserId;
+    }
+
+    syncBuyerHeading();
+    syncOpenPublicButton();
+    syncLifecycleButtons();
+}
+
+async function loadBuyerByGroupKey(userId, groupKey) {
     const { data, error } = await state.supabase
         .from('agro_buyers')
-        .select('id,user_id,display_name,group_key,phone,whatsapp,instagram,facebook,notes,linked_user_id,created_at,updated_at')
+        .select(BUYER_SELECT)
         .eq('user_id', userId)
         .eq('group_key', groupKey)
         .maybeSingle();
@@ -148,49 +244,135 @@ async function loadBuyer(userId, groupKey) {
     return data || null;
 }
 
-async function upsertBuyer(userId, groupKey, buyerData) {
-    const rawLinkedUserId = String(buyerData?.linked_user_id || '').trim();
-    let linkedUserId = normalizeUuid(state.currentLinkedUserId);
-    if (rawLinkedUserId) {
-        if (!isValidUuid(rawLinkedUserId)) {
-            throw new Error('El user_id vinculado no tiene formato UUID válido.');
-        }
-        linkedUserId = normalizeUuid(rawLinkedUserId);
-    }
-
-    const payload = {
-        user_id: userId,
-        group_key: groupKey,
-        display_name: String(buyerData?.display_name || state.currentDisplayName || '').trim() || state.currentDisplayName || 'Comprador',
-        phone: String(buyerData?.phone || '').trim() || null,
-        whatsapp: String(buyerData?.whatsapp || '').trim() || null,
-        instagram: String(buyerData?.instagram || '').trim() || null,
-        facebook: String(buyerData?.facebook || '').trim() || null,
-        notes: String(buyerData?.notes || '').trim() || null,
-        linked_user_id: linkedUserId || null,
-        updated_at: new Date().toISOString()
-    };
-
+async function loadBuyerById(userId, buyerId) {
     const { data, error } = await state.supabase
         .from('agro_buyers')
-        .upsert(payload, { onConflict: 'user_id,group_key' })
-        .select('id,user_id,display_name,group_key,phone,whatsapp,instagram,facebook,notes,linked_user_id,created_at,updated_at')
+        .select(BUYER_SELECT)
+        .eq('user_id', userId)
+        .eq('id', buyerId)
         .maybeSingle();
 
     if (error) throw error;
-    return data || payload;
+    return data || null;
+}
+
+async function loadBuyerByCanonicalName(userId, canonicalName) {
+    const { data, error } = await state.supabase
+        .from('agro_buyers')
+        .select(BUYER_SELECT)
+        .eq('user_id', userId)
+        .eq('canonical_name', canonicalName)
+        .maybeSingle();
+
+    if (error) {
+        const fallback = await state.supabase
+            .from('agro_buyers')
+            .select(BUYER_SELECT)
+            .eq('user_id', userId)
+            .eq('group_key', canonicalName)
+            .maybeSingle();
+
+        if (fallback.error) throw fallback.error;
+        return fallback.data || null;
+    }
+
+    return data || null;
+}
+
+async function fetchHistoryCountForTable(tableName, userId, buyerId, groupKey) {
+    const idQuery = state.supabase
+        .from(tableName)
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .is('deleted_at', null)
+        .eq('buyer_id', buyerId);
+
+    const groupQuery = groupKey
+        ? state.supabase
+            .from(tableName)
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', userId)
+            .is('deleted_at', null)
+            .is('buyer_id', null)
+            .eq('buyer_group_key', groupKey)
+        : Promise.resolve({ count: 0, error: null });
+
+    const [idResult, groupResult] = await Promise.all([idQuery, groupQuery]);
+    if (idResult?.error) throw idResult.error;
+    if (groupResult?.error) throw groupResult.error;
+    return Number(idResult?.count || 0) + Number(groupResult?.count || 0);
+}
+
+async function refreshHistoryCount() {
+    if (!state.currentBuyerId || !state.currentUser?.id) {
+        state.currentHistoryCount = 0;
+        syncBuyerHeading();
+        syncLifecycleButtons();
+        return 0;
+    }
+
+    const counts = await Promise.all(
+        BUYER_MOVEMENT_TABLES.map((tableName) =>
+            fetchHistoryCountForTable(tableName, state.currentUser.id, state.currentBuyerId, state.currentGroupKey)
+        )
+    );
+
+    state.currentHistoryCount = counts.reduce((total, value) => total + Number(value || 0), 0);
+    syncBuyerHeading();
+    syncLifecycleButtons();
+    return state.currentHistoryCount;
+}
+
+async function updateMovementLinks(userId, buyerId, oldGroupKey, nextGroupKey) {
+    const safeBuyerId = String(buyerId || '').trim();
+    const safeOldGroupKey = String(oldGroupKey || '').trim();
+    const safeNextGroupKey = String(nextGroupKey || '').trim();
+    if (!safeBuyerId || !safeNextGroupKey) return;
+
+    await Promise.all(BUYER_MOVEMENT_TABLES.map(async (tableName) => {
+        const linkedResult = await state.supabase
+            .from(tableName)
+            .update({
+                buyer_group_key: safeNextGroupKey,
+                buyer_match_status: 'matched'
+            })
+            .eq('user_id', userId)
+            .eq('buyer_id', safeBuyerId);
+
+        if (linkedResult.error) throw linkedResult.error;
+
+        if (!safeOldGroupKey) return;
+
+        const legacyResult = await state.supabase
+            .from(tableName)
+            .update({
+                buyer_id: safeBuyerId,
+                buyer_group_key: safeNextGroupKey,
+                buyer_match_status: 'matched'
+            })
+            .eq('user_id', userId)
+            .is('buyer_id', null)
+            .eq('buyer_group_key', safeOldGroupKey);
+
+        if (legacyResult.error) throw legacyResult.error;
+    }));
+
+    if (safeOldGroupKey && safeOldGroupKey !== safeNextGroupKey) {
+        const threadResult = await state.supabase
+            .from('agro_social_threads')
+            .update({ buyer_group_key: safeNextGroupKey })
+            .eq('user_id', userId)
+            .eq('buyer_group_key', safeOldGroupKey);
+
+        if (threadResult.error) throw threadResult.error;
+    }
 }
 
 async function handleBuyerSave(event) {
     event?.preventDefault();
 
-    if (!state.currentGroupKey) {
-        setBuyerStatus('No se detectó comprador para guardar.', 'error');
-        return;
-    }
-
     setSaveBusy(true);
-    setBuyerStatus('Guardando ficha...', 'muted');
+    setBuyerStatus('Guardando cliente...', 'muted');
 
     try {
         const user = await resolveSessionUser();
@@ -199,27 +381,200 @@ async function handleBuyerSave(event) {
         }
 
         const formData = readBuyerForm();
-        const saved = await upsertBuyer(user.id, state.currentGroupKey, formData);
-        state.currentDisplayName = String(saved?.display_name || state.currentDisplayName || '').trim() || state.currentDisplayName;
-        state.currentLinkedUserId = normalizeUuid(saved?.linked_user_id || state.currentLinkedUserId || '');
-        fillBuyerForm(saved);
-        setBuyerStatus('Ficha guardada correctamente.', 'ok');
-
-        const modal = getBuyerModal();
-        if (modal) {
-            applyBuyerPrivacy(modal);
-            applyMoneyPrivacy(modal);
+        const displayName = String(formData?.display_name || '').trim();
+        const canonicalName = normalizeBuyerGroupKey(displayName);
+        if (!displayName || !canonicalName) {
+            throw new Error('Ingresa un nombre válido para este cliente.');
         }
+
+        const duplicate = await loadBuyerByCanonicalName(user.id, canonicalName);
+        if (duplicate?.id && String(duplicate.id) !== String(state.currentBuyerId || '')) {
+            emitClientChanged({
+                clientId: duplicate.id,
+                openDetail: true,
+                duplicate: true
+            });
+            closeBuyerModal();
+            return;
+        }
+
+        const rawLinkedUserId = String(formData?.linked_user_id || '').trim();
+        let linkedUserId = normalizeUuid(state.currentLinkedUserId);
+        if (rawLinkedUserId) {
+            if (!isValidUuid(rawLinkedUserId)) {
+                throw new Error('El user_id vinculado no tiene formato UUID válido.');
+            }
+            linkedUserId = normalizeUuid(rawLinkedUserId);
+        }
+
+        const payload = {
+            display_name: displayName,
+            group_key: canonicalName,
+            canonical_name: canonicalName,
+            status: normalizeClientStatus(state.currentStatus),
+            phone: String(formData?.phone || '').trim() || null,
+            whatsapp: String(formData?.whatsapp || '').trim() || null,
+            instagram: String(formData?.instagram || '').trim() || null,
+            facebook: String(formData?.facebook || '').trim() || null,
+            notes: String(formData?.notes || '').trim() || null,
+            linked_user_id: linkedUserId || null,
+            updated_at: new Date().toISOString()
+        };
+
+        const previousGroupKey = state.currentGroupKey;
+        let saved;
+        if (state.currentBuyerId) {
+            const { data, error } = await state.supabase
+                .from('agro_buyers')
+                .update(payload)
+                .eq('id', state.currentBuyerId)
+                .eq('user_id', user.id)
+                .select(BUYER_SELECT)
+                .maybeSingle();
+
+            if (error) throw error;
+            saved = data || null;
+        } else {
+            const { data, error } = await state.supabase
+                .from('agro_buyers')
+                .insert([{
+                    user_id: user.id,
+                    ...payload
+                }])
+                .select(BUYER_SELECT)
+                .single();
+
+            if (error) throw error;
+            saved = data || null;
+        }
+
+        if (!saved?.id) {
+            throw new Error('No se pudo guardar el cliente.');
+        }
+
+        await updateMovementLinks(user.id, saved.id, previousGroupKey, saved.group_key || canonicalName);
+
+        fillBuyerForm(saved);
+        await refreshHistoryCount();
+
+        const shouldOpenDetail = state.mode === 'create';
+        emitClientChanged({
+            clientId: saved.id,
+            openDetail: shouldOpenDetail
+        });
+
+        if (shouldOpenDetail) {
+            closeBuyerModal();
+            return;
+        }
+
+        setBuyerStatus('Cliente guardado correctamente.', 'ok');
     } catch (error) {
-        console.error('[AGRO_BUYERS] save error:', error);
+        console.error('[AGRO_CLIENTS] save error:', error);
         const message = String(error?.message || '').trim();
         if (message.toLowerCase().includes('uuid')) {
             setBuyerStatus(message, 'warn');
         } else {
-            setBuyerStatus('No se pudo guardar la ficha.', 'error');
+            setBuyerStatus(message || 'No se pudo guardar el cliente.', 'error');
         }
     } finally {
         setSaveBusy(false);
+    }
+}
+
+async function handleBuyerArchive(event) {
+    event?.preventDefault();
+
+    if (!state.currentBuyerId) {
+        setBuyerStatus('Guarda el cliente antes de archivarlo.', 'warn');
+        return;
+    }
+
+    try {
+        const user = await resolveSessionUser();
+        const historyCount = await refreshHistoryCount();
+        const nextStatus = state.currentStatus === 'archived' ? 'active' : 'archived';
+
+        if (nextStatus === 'archived' && historyCount <= 0) {
+            setBuyerStatus('Este cliente no tiene historial. Puedes eliminarlo directamente.', 'warn');
+            return;
+        }
+
+        const { data, error } = await state.supabase
+            .from('agro_buyers')
+            .update({
+                status: nextStatus,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', state.currentBuyerId)
+            .eq('user_id', user.id)
+            .select(BUYER_SELECT)
+            .maybeSingle();
+
+        if (error) throw error;
+
+        fillBuyerForm(data || { status: nextStatus });
+        emitClientChanged({
+            clientId: state.currentBuyerId,
+            openDetail: false
+        });
+        setBuyerStatus(
+            nextStatus === 'archived'
+                ? 'Cliente archivado. Su historial se conserva intacto.'
+                : 'Cliente reactivado.',
+            'ok'
+        );
+    } catch (error) {
+        console.error('[AGRO_CLIENTS] archive error:', error);
+        setBuyerStatus('No se pudo actualizar el estado del cliente.', 'error');
+    }
+}
+
+async function handleBuyerDelete(event) {
+    event?.preventDefault();
+
+    if (!state.currentBuyerId) {
+        setBuyerStatus('Guarda el cliente antes de eliminarlo.', 'warn');
+        return;
+    }
+
+    try {
+        const user = await resolveSessionUser();
+        const historyCount = await refreshHistoryCount();
+        if (historyCount > 0) {
+            setBuyerStatus('Este cliente tiene historial. Usa archivar cliente en lugar de borrar.', 'warn');
+            return;
+        }
+
+        if (typeof window !== 'undefined' && typeof window.confirm === 'function') {
+            const confirmed = window.confirm('Eliminar este cliente sin historial? Esta acción no se puede deshacer.');
+            if (!confirmed) return;
+        }
+
+        const threadResult = await state.supabase
+            .from('agro_social_threads')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('buyer_group_key', state.currentGroupKey);
+
+        if (threadResult.error) throw threadResult.error;
+
+        const deleteResult = await state.supabase
+            .from('agro_buyers')
+            .delete()
+            .eq('id', state.currentBuyerId)
+            .eq('user_id', user.id);
+
+        if (deleteResult.error) throw deleteResult.error;
+
+        emitClientChanged({
+            clientId: state.currentBuyerId,
+            deleted: true
+        });
+        closeBuyerModal();
+    } catch (error) {
+        console.error('[AGRO_CLIENTS] delete error:', error);
+        setBuyerStatus('No se pudo eliminar el cliente.', 'error');
     }
 }
 
@@ -227,14 +582,14 @@ async function handleOpenBuyerPublicProfile(event) {
     event?.preventDefault();
     const linkedUserId = normalizeUuid(state.currentLinkedUserId);
     if (!linkedUserId) {
-        setBuyerStatus('Comprador no vinculado a usuario público.', 'warn');
+        setBuyerStatus('Cliente no vinculado a usuario público.', 'warn');
         return;
     }
 
     try {
         await openPublicFarmerProfile(linkedUserId);
     } catch (error) {
-        console.error('[AGRO_BUYERS] open public profile error:', error);
+        console.error('[AGRO_CLIENTS] open public profile error:', error);
         setBuyerStatus('No se pudo abrir el perfil público vinculado.', 'error');
     }
 }
@@ -261,75 +616,118 @@ function bindBuyerModalEvents() {
         form.addEventListener('submit', handleBuyerSave);
     }
 
-    const openPublicButton = document.getElementById(BUYER_OPEN_PUBLIC_BUTTON_ID);
-    if (openPublicButton) {
-        openPublicButton.addEventListener('click', handleOpenBuyerPublicProfile);
-    }
+    document.getElementById(BUYER_OPEN_PUBLIC_BUTTON_ID)?.addEventListener('click', handleOpenBuyerPublicProfile);
+    document.getElementById(BUYER_ARCHIVE_BUTTON_ID)?.addEventListener('click', handleBuyerArchive);
+    document.getElementById(BUYER_DELETE_BUTTON_ID)?.addEventListener('click', handleBuyerDelete);
 
     const linkedInput = document.getElementById('agro-buyer-linked_user_id');
     if (linkedInput) {
         linkedInput.addEventListener('input', () => {
             const raw = String(linkedInput.value || '').trim();
-            if (!raw) {
-                state.currentLinkedUserId = '';
-                syncOpenPublicButton();
-                return;
-            }
-            state.currentLinkedUserId = normalizeUuid(raw);
+            state.currentLinkedUserId = raw ? normalizeUuid(raw) : '';
             syncOpenPublicButton();
         });
     }
+}
+
+async function openBuyerProfileInternal({ buyerId = '', displayName = '', groupKey = '', mode = 'edit' } = {}) {
+    const user = await resolveSessionUser();
+    if (!user?.id) {
+        throw new Error('Sesión no disponible.');
+    }
+
+    state.mode = mode === 'create' ? 'create' : 'edit';
+    state.currentBuyerId = String(buyerId || '').trim();
+    state.currentDisplayName = String(displayName || '').trim();
+    state.currentGroupKey = String(groupKey || normalizeBuyerGroupKey(displayName)).trim();
+    state.currentCanonicalName = state.currentGroupKey;
+    state.currentLinkedUserId = '';
+    state.currentStatus = 'active';
+    state.currentHistoryCount = 0;
+
+    fillBuyerForm({ display_name: state.currentDisplayName });
+    setBuyerStatus(
+        state.mode === 'create'
+            ? 'Define el cliente y guárdalo para abrir su detalle.'
+            : 'Cargando cliente...',
+        'muted'
+    );
+    openBuyerModal();
+
+    let buyer = null;
+    if (state.currentBuyerId) {
+        buyer = await loadBuyerById(user.id, state.currentBuyerId);
+    } else if (state.currentGroupKey) {
+        buyer = await loadBuyerByGroupKey(user.id, state.currentGroupKey);
+    }
+
+    if (buyer) {
+        state.mode = 'edit';
+        fillBuyerForm(buyer);
+        await refreshHistoryCount();
+        setBuyerStatus('Cliente cargado.', 'ok');
+    } else {
+        fillBuyerForm({
+            display_name: state.currentDisplayName,
+            group_key: state.currentGroupKey,
+            canonical_name: state.currentGroupKey,
+            status: 'active'
+        });
+        syncBuyerHeading();
+        syncLifecycleButtons();
+        setBuyerStatus('Cliente nuevo. Guarda la ficha para activarlo en Cartera Viva.', 'warn');
+    }
+
+    const modal = getBuyerModal();
+    if (modal) {
+        applyBuyerPrivacy(modal);
+        applyMoneyPrivacy(modal);
+    }
+
+    syncOpenPublicButton();
 }
 
 export async function openBuyerProfileByName(displayName) {
     const safeName = String(displayName || '').trim();
     const groupKey = normalizeBuyerGroupKey(safeName);
     if (!safeName || !groupKey) return false;
+    await openBuyerProfileInternal({
+        displayName: safeName,
+        groupKey,
+        mode: 'edit'
+    });
+    return true;
+}
 
-    state.currentDisplayName = safeName;
-    state.currentGroupKey = groupKey;
-    state.currentLinkedUserId = '';
-    openBuyerModal();
-    setBuyerStatus('Cargando ficha del comprador...', 'muted');
+export async function openBuyerProfileById(buyerId, fallbackDisplayName = '') {
+    const safeBuyerId = String(buyerId || '').trim();
+    if (!safeBuyerId) return false;
+    await openBuyerProfileInternal({
+        buyerId: safeBuyerId,
+        displayName: String(fallbackDisplayName || '').trim(),
+        mode: 'edit'
+    });
+    return true;
+}
 
-    try {
-        const user = await resolveSessionUser();
-        if (!user?.id) {
-            throw new Error('Sesión no disponible.');
-        }
-
-        const buyer = await loadBuyer(user.id, groupKey);
-        if (buyer) {
-            fillBuyerForm(buyer);
-            setBuyerStatus('Ficha cargada.', 'ok');
-        } else {
-            fillBuyerForm({ display_name: safeName });
-            setBuyerStatus('Comprador nuevo. Completa los datos y guarda.', 'warn');
-        }
-
-        const modal = getBuyerModal();
-        if (modal) {
-            applyBuyerPrivacy(modal);
-            applyMoneyPrivacy(modal);
-        }
-    } catch (error) {
-        console.error('[AGRO_BUYERS] open error:', error);
-        setBuyerStatus('No se pudo cargar la ficha.', 'error');
-    }
-
+export async function openNewBuyerProfile(initialDisplayName = '') {
+    await openBuyerProfileInternal({
+        displayName: String(initialDisplayName || '').trim(),
+        mode: 'create'
+    });
     return true;
 }
 
 export function initAgroCompradores({ supabase } = {}) {
     if (state.initialized) return;
     if (!supabase) {
-        console.warn('[AGRO_BUYERS] Supabase client missing, módulo no inicializado.');
+        console.warn('[AGRO_CLIENTS] Supabase client missing, módulo no inicializado.');
         return;
     }
 
     const modal = getBuyerModal();
     if (!modal) {
-        console.warn('[AGRO_BUYERS] modal-agro-buyer no encontrado.');
+        console.warn('[AGRO_CLIENTS] modal-agro-buyer no encontrado.');
         return;
     }
 
@@ -337,8 +735,10 @@ export function initAgroCompradores({ supabase } = {}) {
     state.initialized = true;
 
     bindBuyerModalEvents();
+    syncBuyerHeading();
     syncOpenPublicButton();
-    setBuyerStatus('Haz clic en un comprador del historial o rankings.', 'muted');
+    syncLifecycleButtons();
+    setBuyerStatus('Abre una ficha o crea un cliente nuevo desde Cartera Viva.', 'muted');
 }
 
 export { normalizeBuyerGroupKey as normalizeGroupKey };

@@ -38,7 +38,7 @@ function resolveBuyerStatus(buyerRow) {
 }
 
 function sanitizeFileToken(value) {
-    return String(value || 'comprador')
+    return String(value || 'cliente')
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase()
@@ -46,7 +46,7 @@ function sanitizeFileToken(value) {
         .trim()
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-')
-        || 'comprador';
+        || 'cliente';
 }
 
 function getDateStamp(date = new Date()) {
@@ -93,7 +93,7 @@ function buildHistoryLines(rows) {
         return [
             '## Historial contextual',
             '',
-            '_No hay historial contextual exportable para este comprador._'
+            '_No hay historial contextual exportable para este cliente._'
         ];
     }
 
@@ -106,7 +106,7 @@ function buildHistoryLines(rows) {
 
         (group?.rows || []).forEach((row) => {
             lines.push(`- **${row?.label || 'Movimiento'}** · ${formatMoney(row?.amount)}`);
-            lines.push(`  - Registro: ${row?.title || 'Movimiento del comprador'}`);
+            lines.push(`  - Registro: ${row?.title || 'Movimiento del cliente'}`);
             lines.push(`  - Estado: ${getHistoryConfidenceLabel(row)}`);
             if (row?.meta) {
                 lines.push(`  - Contexto: ${row.meta}`);
@@ -137,7 +137,7 @@ export function buildBuyerPortfolioExportMarkdown({ buyerRow, historyRows, expor
     const historyLines = buildHistoryLines(historyRows);
 
     return [
-        `# Cartera de compradores — ${buyerRow.display_name || 'Comprador'}`,
+        `# Cartera de clientes — ${buyerRow.display_name || 'Cliente'}`,
         '',
         `- Fecha de exportación: ${formatExportTimestamp(exportedAt)}`,
         `- Estado: ${resolveBuyerStatus(buyerRow)}`,

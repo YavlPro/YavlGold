@@ -371,7 +371,7 @@ function buildPendingHistoryRow(row) {
     const isReverted = transferState === 'reverted' || Boolean(row?.reverted_at);
 
     let label = 'Fiado';
-    let note = 'Saldo abierto dentro de la cartera del comprador.';
+    let note = 'Saldo abierto dentro de la cartera del cliente.';
     let tone = 'pending';
 
     if (isReverted) {
@@ -456,7 +456,7 @@ function buildIncomeHistoryRow(row) {
             ? 'Este ingreso aún está pendiente por revisar.'
             : (fromPending
                 ? 'Entrada confirmada como cobro del saldo.'
-                : 'Entrada relacionada con el comprador, pero separada de la cartera.'),
+                : 'Entrada relacionada con el cliente, pero separada de la cartera.'),
         tone: isReverted ? 'review' : (isReview ? 'review' : (fromPending ? 'paid' : 'neutral')),
         is_review: isReview,
         crop_id: String(row?.crop_id || '').trim(),
@@ -586,7 +586,7 @@ export async function fetchBuyerHistoryTimeline(supabaseClient, buyerRow, option
 
 function renderEmptyState(config = {}) {
     const title = escapeHtml(config.title || 'Sin historial legible');
-    const copy = escapeHtml(config.copy || 'Este comprador todavía no tiene movimientos visibles para contar su historia.');
+    const copy = escapeHtml(config.copy || 'Este cliente todavía no tiene movimientos visibles para contar su historia.');
 
     return `
         <div class="cartera-viva-empty">
@@ -893,7 +893,7 @@ function resolvePrimarySummaryMetric(buyerRow) {
         label: reviewTotal > 0 ? 'Revisión' : 'Saldo',
         amountUsd: reviewTotal,
         copy: reviewTotal > 0
-            ? `Hay ${formatMoney(reviewTotal)} por revisar en este comprador`
+            ? `Hay ${formatMoney(reviewTotal)} por revisar en este cliente`
             : buyerStatus.copy
     };
 }
@@ -1049,11 +1049,12 @@ function renderBuyerSummary(buyerRow, options = {}) {
         <section class="cartera-viva-detail__summary">
             <header class="cartera-viva-detail__summary-head">
                 <div class="cartera-viva-detail__identity">
-                    <h2 class="cartera-viva-detail__title">${escapeHtml(buyerRow?.display_name || 'Comprador no encontrado')}</h2>
+                    <h2 class="cartera-viva-detail__title">${escapeHtml(buyerRow?.display_name || 'Cliente no encontrado')}</h2>
                     <p class="cartera-viva-detail__subtitle">${escapeHtml(primaryMetric.copy)}</p>
                 </div>
                 <div class="cartera-viva-card__badges">
                     <span class="cartera-viva-badge cartera-viva-badge--${buyerStatus.tone}">${escapeHtml(buyerStatus.label)}</span>
+                    ${String(buyerRow?.client_status || '').trim().toLowerCase() === 'archived' ? '<span class="cartera-viva-badge cartera-viva-badge--review">Archivado</span>' : ''}
                     ${buyerRow?.requires_review ? '<span class="cartera-viva-badge cartera-viva-badge--review">Por revisar</span>' : ''}
                 </div>
             </header>
@@ -1102,6 +1103,13 @@ function renderBuyerSummary(buyerRow, options = {}) {
                 ${renderDetailInsight('Fiado', formatMoney(buyerRow?.credited_total))}
                 ${renderDetailInsight('Cobrado', formatMoney(buyerRow?.paid_total))}
                 ${renderDetailInsight(secondaryLabel, secondaryValue)}
+            </div>
+
+            <div class="cartera-viva-card__footer">
+                <button type="button" class="cartera-viva-quick-action" data-cartera-detail-record-tab="pendientes">Nuevo fiado</button>
+                <button type="button" class="cartera-viva-quick-action" data-cartera-detail-record-tab="ingresos">Nuevo cobro</button>
+                <button type="button" class="cartera-viva-quick-action" data-cartera-detail-record-tab="perdidas">Nueva pérdida</button>
+                <button type="button" class="cartera-viva-quick-action" data-cartera-detail-edit-client>Editar cliente</button>
             </div>
         </section>
     `;
@@ -1165,8 +1173,8 @@ export function renderBuyerHistoryDetail(root, options = {}) {
         ? 'Sin revertidos visibles'
         : 'Sin transferidos visibles';
     const filterEmptyCopy = historyFilter === 'revertidos'
-        ? 'Este comprador no tiene movimientos revertidos dentro del filtro activo.'
-        : 'Este comprador no tiene movimientos transferidos dentro del filtro activo.';
+        ? 'Este cliente no tiene movimientos revertidos dentro del filtro activo.'
+        : 'Este cliente no tiene movimientos transferidos dentro del filtro activo.';
 
     if (!buyerRow) {
         root.innerHTML = `
@@ -1175,8 +1183,8 @@ export function renderBuyerHistoryDetail(root, options = {}) {
                     <button type="button" class="cartera-viva-back" data-cartera-detail-back>Volver</button>
                 </div>
                 ${renderEmptyState({
-                    title: 'Comprador no encontrado',
-                    copy: 'La grilla ya no tiene disponible este comprador.'
+                    title: 'Cliente no encontrado',
+                    copy: 'La grilla ya no tiene disponible este cliente.'
                 })}
             </section>
         `;
@@ -1193,8 +1201,8 @@ export function renderBuyerHistoryDetail(root, options = {}) {
 
     if (loading) {
         bodyContent = renderEmptyState({
-            title: 'Cargando historial del comprador',
-            copy: 'Ordenando los movimientos relacionados a este comprador.'
+            title: 'Cargando historial del cliente',
+            copy: 'Ordenando los movimientos relacionados a este cliente.'
         });
     } else if (errorMessage) {
         bodyContent = renderEmptyState({
@@ -1204,7 +1212,7 @@ export function renderBuyerHistoryDetail(root, options = {}) {
     } else if (historyRows.length <= 0) {
         bodyContent = renderEmptyState({
             title: 'Sin historial legible',
-            copy: 'Este comprador todavía no tiene movimientos suficientes para contar su historia.'
+            copy: 'Este cliente todavía no tiene movimientos suficientes para contar su historia.'
         });
     } else if (visibleHistoryRows.length <= 0) {
         bodyContent = renderEmptyState({
@@ -1216,7 +1224,7 @@ export function renderBuyerHistoryDetail(root, options = {}) {
     }
 
     root.innerHTML = `
-        <section class="cartera-viva-view cartera-viva-view--detail" aria-label="Historial contextual por comprador">
+        <section class="cartera-viva-view cartera-viva-view--detail" aria-label="Historial contextual por cliente">
             ${renderCommercialFamilyNav('cartera-viva')}
             <div class="cartera-viva-detail__toolbar">
                 <button type="button" class="cartera-viva-back" data-cartera-detail-back>Volver</button>
@@ -1246,11 +1254,11 @@ export function renderBuyerHistoryDetail(root, options = {}) {
                 <header class="cartera-viva-detail__body-head">
                     <div>
                         <p class="cartera-viva-view__eyebrow">Historial</p>
-                        <h3 class="cartera-viva-detail__section-title">Movimientos del comprador</h3>
+                        <h3 class="cartera-viva-detail__section-title">Movimientos del cliente</h3>
                     </div>
                     <div class="cartera-viva-detail__body-meta">
                         <p class="cartera-viva-detail__body-copy">
-                            Fiados, cobros, pérdidas e ingresos relacionados con este comprador.
+                            Fiados, cobros, pérdidas e ingresos relacionados con este cliente.
                         </p>
                         ${renderHistoryFilters(historyRows, historyFilter)}
                     </div>
@@ -1266,6 +1274,17 @@ export function renderBuyerHistoryDetail(root, options = {}) {
 
     root.querySelector('[data-cartera-detail-refresh]')?.addEventListener('click', () => {
         options.onRefresh?.();
+    });
+
+    root.querySelector('[data-cartera-detail-edit-client]')?.addEventListener('click', () => {
+        options.onEditClient?.();
+    });
+
+    root.querySelectorAll('[data-cartera-detail-record-tab]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const nextTab = String(button.dataset.carteraDetailRecordTab || '').trim().toLowerCase();
+            options.onOpenRecord?.(nextTab);
+        });
     });
 
     root.querySelector('[data-cartera-detail-create-cycle]')?.addEventListener('click', () => {
