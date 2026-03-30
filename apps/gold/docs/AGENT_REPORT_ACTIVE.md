@@ -6155,3 +6155,100 @@ Motivo de elección: menor riesgo, menor diff, máxima coherencia visual, cero r
 - Legibilidad: **Conservada** (contraste mejorado ligeramente)
 - DNA V10: **Alineado** — uso correcto de token para superficies elevadas
 
+## Sesión: Cierre visual final + fix de parpadeo en historial comercial (2026-03-30)
+
+### Diagnóstico
+
+- Lo que quedó bien del lote anterior:
+  - `Historial comercial` ya agrupa correctamente `Cartera Viva` y `Ciclos Operativos`.
+  - La base de superficies ya migró a tokens del ADN V10 y salió del negro puro más agresivo.
+  - La barra de progreso de `Cartera Viva` y la jerarquía del sidebar ya tienen una dirección visual más madura.
+- Lo que todavía se ve débil:
+  - `Cartera Viva` sigue alternando entre bloques muy planos (`--bg-0`) y paneles con poca separación de capas, así que el conjunto todavía se siente más “ensamblado” que “cerrado”.
+  - `Ciclos Operativos` tiene mejor base, pero la carga todavía corta la continuidad visual del panel y vuelve a una lectura más de prototipo cuando refresca.
+  - Ambas vistas todavía pueden perder presencia al reemplazar contenido real por estados vacíos o de loading demasiado bruscos.
+- Dónde aparece el parpadeo:
+  - `Cartera Viva`: en primera entrada y en refresh, porque `initAgroCarteraVivaView()` hace `renderView()` antes de que `loadSummary()` deje `loading = true`; además `loadSummary()` reemplaza el contenido completo por `renderLoadingState()`.
+  - `Ciclos Operativos`: en primera entrada y en refresh, porque `initAgroOperationalCycles()` hace `renderAll()` con datasets vacíos antes de `refreshData()`, y luego `refreshData()` vuelve a reemplazar la lista por un panel de carga bloqueante.
+- Hipótesis de causa raíz confirmadas:
+  - pintura inicial prematura de estado vacío antes de la primera lectura real;
+  - reemplazo destructivo del contenido ya cargado durante refresh;
+  - discontinuidad visual entre shell/panel y estado de carga;
+  - falta de un “loading shell” estable para primera carga y de un “soft refresh” para recargas.
+- Archivos involucrados:
+  - `apps/gold/agro/agro-cartera-viva-view.js`
+  - `apps/gold/agro/agro-cartera-viva.css`
+  - `apps/gold/agro/agroOperationalCycles.js`
+  - `apps/gold/agro/agro-operational-cycles.css`
+
+### Plan
+
+- Opción A: parche mínimo solo de CSS sobre loaders y opacidades.
+  - Descartada: reduce ruido visual, pero no corrige la causa real del flicker.
+- Opción B: ajuste pequeño de render/loading state con CSS localizado.
+  - Válida, pero se queda corta si el refresh sigue desmontando el contenido ya cargado.
+- Opción C: fix de sincronización visual más polish fino de superficies compartidas.
+  - Elegida: menor riesgo real con mayor claridad.
+
+- Qué voy a tocar:
+  - `agro-cartera-viva-view.js`: introducir guard de primera carga y refresh no destructivo.
+  - `agroOperationalCycles.js`: usar `loadedOnce` como criterio real para bloquear solo la primera carga y mantener contenido estable en refresh.
+  - `agro-cartera-viva.css` y `agro-operational-cycles.css`: cerrar micro-polish de superficies y estado visual de refreshing/loading sin rediseño.
+- Qué NO voy a tocar:
+  - `agro.js`
+  - lógica de negocio de facturero
+  - estructura del shell/navegación
+  - tablas, queries o migraciones
+- Cómo minimizar riesgo:
+  - diff corto y localizado en 4 archivos;
+  - sin mover fetches ni contratos de datos;
+  - usar flags ya existentes (`loadedOnce`) o equivalentes mínimos;
+  - mantener el mismo markup principal y solo estabilizar el ciclo visual de render.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-cartera-viva-view.js`
+  - `L48`: nuevo flag `hasLoadedSummary`.
+  - `L608-L625`: `renderHeaderSummary()` ahora tiene variante de primera carga estable.
+  - `L952-L1025`: `renderListView()` distingue entre primera carga bloqueante y refresh suave, mantiene contenido cargado y marca la vista con `is-refreshing`.
+  - `L1145`: la primera lectura completada deja trazado `hasLoadedSummary = true`.
+  - `L1308`: `handleShellViewChanged()` deja de confundir “sin datos” con “sin cargar”.
+- `apps/gold/agro/agro-cartera-viva.css`
+  - `L101-L102`, `L363`, `L403`: nuevo estado visual de refresh y loading shell.
+  - ajuste fino de superficies en `agro-commercial-family`, header, summary strip, cards y paneles de detalle para dar más continuidad metálica y menos sensación de bloque plano.
+- `apps/gold/agro/agroOperationalCycles.js`
+  - `L986-L1046`: ids/refs mínimos para overview y list section.
+  - `L1395-L1427`: overview usa loading shell real antes de la primera lectura y refresh suave después.
+  - `L1749-L1798`: lista/export usa `loadedOnce` para no desmontar la vista al refrescar.
+  - `L1983`: `loadedOnce` pasa a ser el corte real entre primera carga y refresco.
+- `apps/gold/agro/agro-operational-cycles.css`
+  - `L147-L168`, `L483-L490`, `L1139-L1141`: micro-polish de superficies y estado `is-refreshing`.
+  - ajuste fino de summary cards y money cells para sostener mejor la profundidad del panel durante carga y refresh.
+
+### Build status
+
+- `pnpm build:gold` -> OK
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`;
+  - warning histórico de chunk grande en `assets/agro-*.js`.
+
+### QA sugerido
+
+- QA técnico ejecutado:
+  - `git diff --check` -> OK.
+  - smoke local con `python -m http.server 4173 -d apps/gold/dist`.
+  - navegación a `/agro/` redirige correctamente a `index.html#login`.
+  - intento de autenticación real con cuenta QA local quedó bloqueado por desafío visual de hCaptcha, así que no fue posible entrar a sesión para validar la vista autenticada final.
+  - browser cerrado, preview detenido y temporales de Playwright eliminados:
+    - `%LOCALAPPDATA%\\Temp\\playwright-mcp-output\\1774898109699`
+- QA manual pendiente recomendado:
+  1. abrir `Cartera Viva` autenticada y confirmar que ya no aparece vacío falso antes del contenido;
+  2. disparar `Actualizar` en `Cartera Viva` y verificar que el cuerpo no se desmonta, solo queda en refresh suave;
+  3. abrir `Ciclos Operativos` autenticada y confirmar que primera carga nace estable;
+  4. disparar refresh en `Ciclos Operativos` y verificar que la lista no cae a panel vacío/loading destructivo;
+  5. revisar desktop y móvil (`<=480px`) para confirmar que el polish mantiene respiración y jerarquía.

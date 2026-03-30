@@ -17,7 +17,11 @@
   padding: 0.5rem 0.58rem;
   border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  background: var(--bg-0);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 7%, transparent), transparent 24%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.015), transparent 56%),
+    var(--bg-0);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .agro-commercial-family__tabs {
@@ -70,8 +74,13 @@
   padding: 0.9rem;
   border-radius: var(--radius-lg);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: var(--bg-1);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 6%, transparent), transparent 22%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.018), transparent 58%),
+    var(--bg-1);
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.025);
 }
 
 .cartera-viva-view__headline,
@@ -81,6 +90,17 @@
 .cartera-viva-detail__identity {
   display: grid;
   gap: 0.35rem;
+}
+
+.cartera-viva-view__body,
+.cartera-viva-summary-strip,
+.cartera-viva-grid {
+  transition: opacity 180ms ease;
+}
+
+.cartera-viva-view.is-refreshing .cartera-viva-view__body,
+.cartera-viva-view.is-refreshing .cartera-viva-summary-strip {
+  opacity: 0.82;
 }
 
 .cartera-viva-view__headline {
@@ -333,7 +353,15 @@
   padding: 0.7rem 0.75rem;
   border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  background: var(--bg-0);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 5%, transparent), transparent 24%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.014), transparent 60%),
+    var(--bg-0);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}
+
+.cartera-viva-summary-strip--loading {
+  align-items: center;
 }
 
 .cartera-viva-summary-strip__main {
@@ -370,6 +398,20 @@
 
 .cartera-viva-summary-strip__signal {
   display: grid;
+}
+
+.cartera-viva-summary-strip__loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.42rem 0.58rem;
+  width: fit-content;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(200, 167, 82, 0.18);
+  background: rgba(200, 167, 82, 0.08);
+  color: var(--gold-5);
+  font-size: 0.74rem;
+  font-weight: 700;
 }
 
 .cartera-viva-hero__signal {
@@ -542,7 +584,11 @@
   padding: 0.7rem 0.75rem;
   border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.07);
-  background: var(--bg-0);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 4%, transparent), transparent 26%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.014), transparent 62%),
+    var(--bg-0);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.018);
 }
 
 .cartera-viva-card.is-review {
@@ -808,7 +854,10 @@
   padding: 0.72rem 0.78rem;
   border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  background: var(--bg-0);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 5%, transparent), transparent 26%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.014), transparent 60%),
+    var(--bg-0);
 }
 
 .cartera-viva-detail__amount-label,
@@ -973,7 +1022,9 @@
   padding: 0.75rem 0.8rem;
   border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.02);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.018), rgba(255, 255, 255, 0.01)),
+    rgba(255, 255, 255, 0.02);
 }
 
 .cartera-viva-history-item--pending {

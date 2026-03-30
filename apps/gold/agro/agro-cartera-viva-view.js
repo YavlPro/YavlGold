@@ -45,6 +45,7 @@ let activeCategory = readStoredCategory();
 let searchQuery = readStoredSearch();
 let summaryRows = [];
 let loading = false;
+let hasLoadedSummary = false;
 let lastErrorMessage = '';
 let selectedBuyerId = '';
 let detailRows = [];
@@ -604,7 +605,25 @@ function resolveCategorySummary(rows, category) {
     };
 }
 
-function renderHeaderSummary(filteredRows) {
+function renderHeaderSummary(filteredRows, options = {}) {
+    if (options.loading) {
+        return `
+            <div class="cartera-viva-summary-strip cartera-viva-summary-strip--loading" aria-live="polite">
+                <div class="cartera-viva-summary-strip__main">
+                    <p class="cartera-viva-summary-strip__label">Cartera Viva</p>
+                    <div class="cartera-viva-summary-strip__amount-row">
+                        <strong class="cartera-viva-summary-strip__amount">Preparando lectura</strong>
+                        <p class="cartera-viva-summary-strip__copy">Ordenando compradores, saldos y categorias visibles.</p>
+                    </div>
+                </div>
+                <div class="cartera-viva-summary-strip__loading">
+                    <span class="cartera-viva-loading-dot" aria-hidden="true"></span>
+                    <span>Cargando cartera</span>
+                </div>
+            </div>
+        `;
+    }
+
     const summary = resolveCategorySummary(filteredRows, activeCategory);
     return `
         <div class="cartera-viva-summary-strip">
@@ -930,6 +949,8 @@ function getSelectedBuyerRow() {
 function renderListView(root) {
     const selectedCropId = getSelectedCropId();
     const cropScopedRows = getCropScopedRows(summaryRows);
+    const shouldBlockInitialLoading = !hasLoadedSummary && !lastErrorMessage;
+    const isSoftRefreshing = loading && hasLoadedSummary;
     const summaryRowsForHeader = selectedCropId
         ? filterRowsByCategory(summaryRows, activeCategory)
         : filterRowsByCategory(cropScopedRows, activeCategory);
@@ -943,7 +964,7 @@ function renderListView(root) {
     );
 
     let bodyContent = '';
-    if (loading) {
+    if (shouldBlockInitialLoading) {
         bodyContent = renderLoadingState();
     } else if (visibleCropScopeLoading && selectedCropId) {
         bodyContent = renderEmptyState({
@@ -986,7 +1007,7 @@ function renderListView(root) {
     }
 
     root.innerHTML = `
-        <section class="cartera-viva-view" aria-label="Cartera de compradores">
+        <section class="cartera-viva-view${isSoftRefreshing ? ' is-refreshing' : ''}" aria-label="Cartera de compradores" aria-busy="${shouldBlockInitialLoading || isSoftRefreshing ? 'true' : 'false'}">
             <header class="cartera-viva-view__header">
                 ${renderCommercialFamilyNav('cartera-viva')}
                 <div class="cartera-viva-view__headline">
@@ -996,12 +1017,12 @@ function renderListView(root) {
                         <p class="cartera-viva-view__subtitle">Cobros, cierres y pérdidas con lectura compacta.</p>
                     </div>
                 <div class="cartera-viva-view__actions">
-                    <button type="button" class="cartera-viva-refresh" data-cartera-refresh>
-                        Actualizar
+                    <button type="button" class="cartera-viva-refresh" data-cartera-refresh ${isSoftRefreshing ? 'disabled' : ''}>
+                        ${isSoftRefreshing ? 'Actualizando…' : 'Actualizar'}
                     </button>
                 </div>
             </div>
-                ${renderHeaderSummary(summaryRowsForHeader)}
+                ${renderHeaderSummary(summaryRowsForHeader, { loading: shouldBlockInitialLoading })}
             </header>
 
             ${renderToolbarControls()}
@@ -1121,6 +1142,7 @@ async function loadSummary() {
         visibleCropScopeError = '';
     } finally {
         loading = false;
+        hasLoadedSummary = true;
         renderView();
     }
 }
@@ -1283,7 +1305,7 @@ function handleShellViewChanged(event) {
     const nextView = String(event?.detail?.view || '').trim().toLowerCase();
     if (nextView !== CARTERA_VIVA_VIEW) return;
 
-    if (!summaryRows.length) {
+    if (!hasLoadedSummary) {
         loadSummary();
         return;
     }

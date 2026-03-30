@@ -983,7 +983,7 @@ function renderShell() {
 
             <div class="agro-operational-feedback agro-operational-feedback--page" id="agro-operational-feedback" data-tone="info"></div>
 
-            <section class="agro-operational-panel agro-operational-overview-panel">
+            <section id="agro-operational-overview-panel" class="agro-operational-panel agro-operational-overview-panel">
                 <div class="agro-operational-panel__head">
                     <div>
                         <p class="agro-operational-panel__eyebrow" id="agro-operational-overview-eyebrow">🟡 Activos</p>
@@ -994,7 +994,7 @@ function renderShell() {
                 <div id="agro-operational-overview-body"></div>
             </section>
 
-            <section class="agro-operational-list-section">
+            <section id="agro-operational-list-section" class="agro-operational-list-section">
                 <div class="agro-operational-list-head">
                     <div>
                         <p class="agro-operational-list-eyebrow" id="agro-operational-list-eyebrow">🟡 Activos</p>
@@ -1036,12 +1036,14 @@ function renderShell() {
         overviewTitle: document.getElementById('agro-operational-overview-title'),
         overviewCopy: document.getElementById('agro-operational-overview-copy'),
         overviewBody: document.getElementById('agro-operational-overview-body'),
+        overviewSection: document.getElementById('agro-operational-overview-panel'),
         listEyebrow: document.getElementById('agro-operational-list-eyebrow'),
         listTitle: document.getElementById('agro-operational-list-title'),
         listCopy: document.getElementById('agro-operational-list-copy'),
         filtersHost: document.getElementById('agro-operational-filters-host'),
         listStatus: document.getElementById('agro-operational-list-status'),
         list: document.getElementById('agro-operational-list'),
+        listSection: document.getElementById('agro-operational-list-section'),
         formEyebrow: document.getElementById('agro-operational-form-eyebrow'),
         formTitle: document.getElementById('agro-operational-form-title'),
         formCopy: document.getElementById('agro-operational-form-copy')
@@ -1390,9 +1392,40 @@ function renderOverview() {
     if (!state.refs?.overviewBody) return;
 
     const meta = getSubviewMeta(state.currentSubview);
+    const shouldBlockInitialLoading = !state.loadedOnce && !state.schemaMissing;
+    const isSoftRefreshing = state.loading && state.loadedOnce;
     state.refs.overviewEyebrow.textContent = meta.eyebrow;
     state.refs.overviewTitle.textContent = meta.title;
     state.refs.overviewCopy.textContent = meta.copy;
+    state.refs.overviewSection?.classList.toggle('is-refreshing', isSoftRefreshing);
+
+    if (shouldBlockInitialLoading) {
+        state.refs.overviewBody.innerHTML = `
+            <div class="agro-operational-summary-grid agro-operational-summary-grid--loading">
+                <article class="agro-operational-summary-card agro-operational-summary-card--loading">
+                    <span class="agro-operational-summary-card__label">Preparando vista</span>
+                    <strong class="agro-operational-summary-card__value">Cargando</strong>
+                    <p class="agro-operational-summary-card__hint">Leyendo ciclos, cultivos y balances visibles.</p>
+                </article>
+                <article class="agro-operational-summary-card agro-operational-summary-card--loading">
+                    <span class="agro-operational-summary-card__label">Cultivos enlazados</span>
+                    <strong class="agro-operational-summary-card__value">En lectura</strong>
+                    <p class="agro-operational-summary-card__hint">Se valida solo contra cultivos actuales del usuario.</p>
+                </article>
+                <article class="agro-operational-summary-card agro-operational-summary-card--loading">
+                    <span class="agro-operational-summary-card__label">Movimientos</span>
+                    <strong class="agro-operational-summary-card__value">Ordenando</strong>
+                    <p class="agro-operational-summary-card__hint">Se enlaza el historial real de cada ciclo.</p>
+                </article>
+                <article class="agro-operational-summary-card agro-operational-summary-card--loading">
+                    <span class="agro-operational-summary-card__label">Balance</span>
+                    <strong class="agro-operational-summary-card__value">Calculando</strong>
+                    <p class="agro-operational-summary-card__hint">La primera carga evita pintar vacíos transitorios.</p>
+                </article>
+            </div>
+        `;
+        return;
+    }
 
     if (state.currentSubview === SUBVIEW_EXPORT) {
         const activeSummary = state.datasets[SUBVIEW_ACTIVE].summary;
@@ -1713,11 +1746,15 @@ function renderCurrentSubview() {
     if (!state.refs?.list || !state.refs?.listStatus || !state.refs?.filtersHost) return;
 
     const meta = getSubviewMeta(state.currentSubview);
+    const shouldBlockInitialLoading = !state.loadedOnce && !state.schemaMissing;
+    const isSoftRefreshing = state.loading && state.loadedOnce;
     state.refs.listEyebrow.textContent = meta.eyebrow;
     state.refs.listTitle.textContent = meta.title;
     state.refs.listCopy.textContent = meta.copy;
+    state.refs.listSection?.classList.toggle('is-refreshing', isSoftRefreshing);
+    state.refs.listStatus.classList.toggle('is-refreshing', isSoftRefreshing);
 
-    if (state.loading) {
+    if (shouldBlockInitialLoading) {
         state.refs.filtersHost.innerHTML = state.currentSubview === SUBVIEW_EXPORT ? '' : renderFilters(state.currentSubview);
         state.refs.listStatus.textContent = 'Cargando ciclos operativos...';
         state.refs.list.innerHTML = `
@@ -1748,14 +1785,18 @@ function renderCurrentSubview() {
         const activeCount = state.datasets[SUBVIEW_ACTIVE].summary.count;
         const finishedCount = state.datasets[SUBVIEW_FINISHED].summary.count;
         state.refs.filtersHost.innerHTML = '';
-        state.refs.listStatus.textContent = `Exportarás ${activeCount + finishedCount} ciclo${activeCount + finishedCount === 1 ? '' : 's'} respetando los filtros activos.`;
+        state.refs.listStatus.textContent = isSoftRefreshing
+            ? 'Actualizando vista de exportación...'
+            : `Exportarás ${activeCount + finishedCount} ciclo${activeCount + finishedCount === 1 ? '' : 's'} respetando los filtros activos.`;
         state.refs.list.innerHTML = renderExportView();
         return;
     }
 
     const dataset = getDataset(state.currentSubview);
     state.refs.filtersHost.innerHTML = renderFilters(state.currentSubview);
-    state.refs.listStatus.textContent = `${dataset.summary.count} ciclo${dataset.summary.count === 1 ? '' : 's'} visible${dataset.summary.count === 1 ? '' : 's'} en esta subvista.`;
+    state.refs.listStatus.textContent = isSoftRefreshing
+        ? 'Actualizando ciclos operativos sin desmontar la vista...'
+        : `${dataset.summary.count} ciclo${dataset.summary.count === 1 ? '' : 's'} visible${dataset.summary.count === 1 ? '' : 's'} en esta subvista.`;
 
     if (dataset.cycles.length === 0) {
         state.refs.list.innerHTML = renderEmptyState(state.currentSubview);
