@@ -12,9 +12,9 @@ const state = {
 const METRICS = Object.freeze([
     {
         key: 'estado',
-        label: 'Estado actual',
+        label: 'Estado del cultivo',
         kind: 'text',
-        helper: 'Lectura operativa del ciclo'
+        helper: 'Lectura agricola del ciclo'
     },
     {
         key: 'progreso',
@@ -116,6 +116,16 @@ function extractNumericValue(value) {
     return Number.isFinite(parsed) ? parsed : null;
 }
 
+function resolvePortfolioStatus(fiadosUsd) {
+    const pending = Number(fiadosUsd);
+    if (!Number.isFinite(pending)) {
+        return { label: '', tone: '' };
+    }
+    return pending > 0
+        ? { label: 'Cartera activa', tone: 'active' }
+        : { label: 'Cartera cerrada', tone: 'closed' };
+}
+
 function formatUsd(value, options = {}) {
     const number = toNumber(value, 0);
     const abs = Math.abs(number);
@@ -188,6 +198,7 @@ function buildCycleCollection(snapshot) {
             const lifecycleLabel = kind === 'active'
                 ? 'Activo'
                 : (kind === 'lost' ? 'Perdido' : 'Finalizado');
+            const portfolioStatus = resolvePortfolioStatus(row?.fiadosUsd);
             items.push({
                 ...row,
                 compareId: `${kind}:${cycleId}`,
@@ -200,6 +211,8 @@ function buildCycleCollection(snapshot) {
                 area: String(row?.area || 'N/D').trim() || 'N/D',
                 areaValue: extractNumericValue(row?.area),
                 estado: String(row?.estadoTexto || lifecycleLabel).trim() || lifecycleLabel,
+                carteraEstado: portfolioStatus.label,
+                carteraEstadoTone: portfolioStatus.tone,
                 baseInvestmentUsd: toNumber(row?.baseInvestmentUsd ?? row?.inversionUSD, 0),
                 costosUsd: toNumber(row?.costosUsd, 0),
                 pagadosUsd: toNumber(row?.pagadosUsd, 0),
@@ -360,12 +373,16 @@ function resolveDelta(metric, leftValue, rightValue) {
 }
 
 function renderSummaryCard(label, item) {
+    const portfolioToneClass = item.carteraEstadoTone
+        ? ` agro-cycle-compare__summary-pill--portfolio-${item.carteraEstadoTone}`
+        : '';
     return `
         <article class="agro-cycle-compare__summary-card">
             <p class="agro-cycle-compare__summary-eyebrow">${escapeHtml(label)}</p>
             <h4 class="agro-cycle-compare__summary-title">${escapeHtml(item.nombre)}</h4>
             <p class="agro-cycle-compare__summary-copy">${escapeHtml(item.variedad)}</p>
             <span class="agro-cycle-compare__summary-pill">${escapeHtml(item.lifecycleLabel)} · ${escapeHtml(item.estado)}</span>
+            ${item.carteraEstado ? `<span class="agro-cycle-compare__summary-pill${portfolioToneClass}">${escapeHtml(item.carteraEstado)}</span>` : ''}
             <div class="agro-cycle-compare__summary-meta">
                 <div>
                     <span class="agro-cycle-compare__summary-label">Siembra</span>

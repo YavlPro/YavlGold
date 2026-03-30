@@ -43,6 +43,14 @@ function statusClassFor(state) {
   return 'status-produccion';
 }
 
+function resolvePortfolioStatus(fiadosUsd) {
+  const pending = Number(fiadosUsd);
+  if (!Number.isFinite(pending)) return null;
+  return pending > 0
+    ? { label: 'Cartera activa', tone: 'active' }
+    : { label: 'Cartera cerrada', tone: 'closed' };
+}
+
 function formatUsdCompact(value) {
   const amount = Math.abs(toNumber(value, 0));
   return amount.toLocaleString('es-VE', {
@@ -158,6 +166,7 @@ function renderCard(ciclo, index = 0) {
   const inversionText = formatUsdCompact(ciclo?.inversionUSD);
   const trendIcon = esPositivo ? '↗' : '↘';
   const profitLabel = mode === 'finished' ? 'Rentabilidad Final' : 'Potencial Neto';
+  const portfolioStatus = resolvePortfolioStatus(ciclo?.fiadosUsd);
   const progressText = mode === 'finished'
     ? 'Completado'
     : `Día ${toNumber(ciclo?.diaActual, 0)}/${toNumber(ciclo?.diasTotales, 0)} (${porcentaje}%)`;
@@ -186,7 +195,10 @@ function renderCard(ciclo, index = 0) {
         </div>
 
         <div class="card-header-side">
-          <span class="status-badge ${statusClass}">${escapeHtml(ciclo?.estadoTexto || 'En producción')}</span>
+          <div class="card-status-group">
+            <span class="status-badge ${statusClass}">${escapeHtml(ciclo?.estadoTexto || 'En producción')}</span>
+            ${portfolioStatus ? `<span class="portfolio-badge portfolio-badge--${escapeAttr(portfolioStatus.tone)}">${escapeHtml(portfolioStatus.label)}</span>` : ''}
+          </div>
           ${buildActions(ciclo)}
         </div>
       </header>

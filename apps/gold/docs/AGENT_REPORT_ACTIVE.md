@@ -6252,3 +6252,81 @@ Motivo de elección: menor riesgo, menor diff, máxima coherencia visual, cero r
   3. abrir `Ciclos Operativos` autenticada y confirmar que primera carga nace estable;
   4. disparar refresh en `Ciclos Operativos` y verificar que la lista no cae a panel vacío/loading destructivo;
   5. revisar desktop y móvil (`<=480px`) para confirmar que el polish mantiene respiración y jerarquía.
+
+## Sesión: Ajuste semántico de cartera en cards/ciclos de Agro (2026-03-30)
+
+### Diagnóstico
+
+- Evidencia exacta del render actual:
+  - `apps/gold/agro/agrociclos.js`: el badge principal de la card pinta `ciclo?.estadoTexto || 'En producción'`.
+  - `apps/gold/agro/agro-cycles-workspace.js`: el comparador vuelve a mapear `row?.estadoTexto` dentro de la métrica `estado`.
+  - `apps/gold/agro/agro.js`: `buildActiveCycleCardsData()` y `buildFinishedCycleCardsData()` construyen el mismo objeto de card con `estadoTexto` agrícola y, al mismo tiempo, `pagadosUsd` / `fiadosUsd` comerciales.
+- Problema confirmado:
+  - la UI sí mezcla la capa agrícola y la capa comercial dentro del mismo view-model;
+  - hoy el estado agrícola es el único label visible en la card, mientras la cartera solo existe como monto (`fiadosUsd`) y no como semántica separada;
+  - en vistas comparativas, `estadoTexto` sigue etiquetado como si fuera la lectura total del ciclo, lo que deja espacio para confusión entre estado productivo y estado comercial.
+- Condición actual que decide el texto:
+  - en activos: `estadoTexto` sale de `statusMeta?.text || 'En producción'`;
+  - en finalizados/perdidos: `estadoTexto` sale de `finishedStatus.estadoTexto`;
+  - el cierre de cartera no tiene hoy un label canónico independiente, aunque la fuente real ya existe en `fiadosUsd` / `pendingTotal`.
+- Alcance semántico:
+  - no hay evidencia de que la card principal deba mostrar `semilla` o material de siembra; agregarlo contaminaría la semántica general de cultivos.
+
+### Plan mínimo
+
+- Mantener intacto `estadoTexto` como verdad agrícola.
+- Agregar un campo derivado mínimo para cartera usando solo `fiadosUsd`.
+- Pintar ese label comercial como capa secundaria visible en cards/ciclos, con dos únicos estados:
+  - `Cartera activa` si `fiadosUsd > 0`
+  - `Cartera cerrada` si `fiadosUsd <= 0`
+- Revisar el comparador de ciclos para que la lectura comercial no reaparezca mezclada como estado agrícola.
+
+### Archivos candidatos
+
+- `apps/gold/agro/agro.js`
+- `apps/gold/agro/agrociclos.js`
+- `apps/gold/agro/agrociclos.css`
+- `apps/gold/agro/agro-cycles-workspace.js`
+
+### Riesgo
+
+- Bajo si el diff se limita a derivar y pintar un label comercial secundario.
+- El único punto sensible es no reemplazar ni reinterpretar `estadoTexto`, porque ese campo sigue siendo la verdad agrícola del ciclo.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agrociclos.js`
+  - Se derivó el estado comercial desde `fiadosUsd` sin tocar `estadoTexto`.
+  - La card principal conserva su badge agrícola y ahora agrega un badge secundario de cartera:
+    - `Cartera activa` si hay fiados pendientes.
+    - `Cartera cerrada` si los fiados están en cero.
+- `apps/gold/agro/agrociclos.css`
+  - Se añadieron estilos mínimos para el badge comercial secundario de la card y para el pill comercial del comparador.
+- `apps/gold/agro/agro-cycles-workspace.js`
+  - La métrica `estado` pasó a leerse explícitamente como `Estado del cultivo`.
+  - El comparador ahora muestra la capa comercial por separado en el resumen, derivada solo desde `fiadosUsd`.
+- `apps/gold/agro/agro.js`
+  - Sin cambios. Se respetó la regla de no crecer el monolito.
+
+### Build status
+
+- `pnpm build:gold` -> OK
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`;
+  - warning histórico por chunk `assets/agro-*.js` > 500 kB.
+
+### QA sugerido
+
+- Validado técnicamente:
+  - `git diff --check` -> OK
+  - `pnpm build:gold` -> OK
+- Pendiente de validación manual autenticada:
+  1. ciclo con `fiadosUsd > 0` -> badge agrícola intacto + `Cartera activa`;
+  2. ciclo con `fiadosUsd = 0` -> badge agrícola intacto + `Cartera cerrada`;
+  3. ciclo finalizado con cartera abierta -> seguir mostrando estado agrícola de cierre + `Cartera activa`;
+  4. confirmar que no apareció ningún campo de semilla/material de siembra en la card principal.
