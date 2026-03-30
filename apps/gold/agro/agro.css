@@ -6803,11 +6803,15 @@ body.modal-open {
   right: 14px;
   bottom: 14px;
   z-index: 9999;
+  min-height: var(--a11y-touch-min, 44px);
   border: 1px solid rgba(200, 167, 82, 0.35);
   background: rgba(10, 10, 10, 0.88);
   color: rgba(255, 255, 255, 0.92);
   border-radius: 999px;
   padding: 10px 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-family: 'Rajdhani', sans-serif;
   font-size: 0.9rem;
   font-weight: 700;
@@ -7074,6 +7078,10 @@ body.agro-shell-open .agro-feedback-fab,
 
 @media (max-width: 640px) {
   .agro-feedback-fab {
+    min-height: var(--a11y-touch-min, 44px);
+  }
+
+  .agro-feedback-fab {
     right: 12px;
     bottom: 12px;
     padding: 9px 11px;
@@ -7331,6 +7339,7 @@ body.agro-view-dense::after {
 .agro-shell-sublink {
   display: inline-flex;
   align-items: center;
+  min-height: var(--a11y-touch-min, 44px);
   gap: 0.36rem;
   padding: 0.38rem 0.72rem;
   border: 1px solid transparent;

@@ -6465,3 +6465,98 @@ Motivo de elección: menor riesgo, menor diff, máxima coherencia visual, cero r
   2. categorías `Fiados / Pagados / Pérdidas` `>=44px`;
   3. CTAs `Nuevo fiado` y `Nuevo ciclo operativo` `>=44px`;
   4. ausencia total del warning de clima fuera de la vista `Clima`.
+
+## Sesión: Re-QA runtime post-deploy Agro V1 (2026-03-30)
+
+### Diagnóstico
+
+- Se repitió el QA rápido en producción real después del nuevo deploy, usando viewport mobile `390x844`.
+- El login siguió pasando por `hCaptcha` invisible con reto visual intermedio, pero la sesión QA terminó entrando y permitió validar runtime.
+- Resultado actualizado por fix:
+  - `BUG-01 / tab activa`: `RESUELTO`.
+    - `document.body.dataset.agroActiveView` alternó correctamente entre `cartera-viva` y `operational`;
+    - la cabecera visible coincidió con la vista activa;
+    - los tabs visibles de la familia comercial marcaron el estado correcto al ir `Cartera Viva -> Ciclos Operativos -> Cartera Viva`.
+  - `BUG-02 / touch targets mobile`: `RESUELTO EN LAS VISTAS PRINCIPALES`.
+    - en `Cartera Viva`, los controles visibles del módulo quedaron en `44px`:
+      - tabs de familia comercial internos: `44px`;
+      - `Actualizar`: `44px`;
+      - chips de cultivo: `44px`;
+      - `Nuevo fiado`: `44px`;
+      - categorías `Fiados / Pagados / Pérdidas`: `44px`.
+    - en `Ciclos Operativos`, los controles visibles del módulo quedaron correctos:
+      - tabs de familia comercial internos: `46px`;
+      - `Nuevo ciclo operativo`: `44px`.
+    - observación menor:
+      - los sublinks del shell lateral `Cartera Viva / Ciclos Operativos` siguen midiendo `31px` cuando el sidebar expandido está visible;
+      - el botón flotante `Feedback` sigue en `40px`.
+    - como el bug original apuntaba a tabs y acciones secundarias de las vistas principales, el fix operativo principal sí quedó validado.
+  - `BUG-03 / warning de Clima`: `SIGUE FALLANDO`.
+    - el warning todavía aparece fuera de la vista Clima al cargar Agro:
+      - `[AGRO_CLIMA_LAYOUT] Missing clima weekly nodes; embed not initialized.`
+    - en esta corrida no hubo errores rojos de consola; quedó solo ese warning.
+
+### Cambios aplicados
+
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - Se agregó esta sección de revalidación post-deploy.
+- Sin cambios de código productivo en esta sesión.
+
+### Build status
+
+- `No ejecutado`.
+- Motivo: sesión de QA runtime sin cambios de código; solo se actualizó el reporte activo.
+
+### QA sugerido
+
+- Corregir el guard de `Clima` en runtime productivo y revalidar únicamente consola en:
+  1. `Dashboard Agro`;
+  2. `Cartera Viva`;
+  3. `Ciclos Operativos`.
+- Decidir si los sublinks del sidebar comercial (`31px`) y `Feedback` (`40px`) entran en el alcance estricto del estándar `--a11y-touch-min`.
+
+## Sesión: Fix menor Clima + touch targets shell Agro V1 (2026-03-30)
+
+### Diagnóstico
+
+- El warning `[AGRO_CLIMA_LAYOUT] Missing clima weekly nodes; embed not initialized.` seguía viniendo de un único `console.warn` en `agroclima-layout.js`.
+- El disparo no era un segundo path oculto: el problema real era que `initClimaWeeklyEmbed()` corría desde el init global del monolito aun cuando la vista activa no era `clima`.
+- En el markup actual del dashboard existe `#clima-weekly-host`, pero no existen `#yg-acc-weekly` ni `#btn-toggle-weekly-forecast` en ese contexto; por eso el guard previo todavía dejaba pasar el warning.
+- En accesibilidad mobile quedaban dos pendientes menores por debajo de `44px`:
+  - `.agro-shell-sublink` del sidebar comercial;
+  - `.agro-feedback-fab`.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agroclima-layout.js`
+  - Se agregó `isClimaViewActive()` para detectar la vista `clima` por `document.body.dataset.agroActiveView` y por el estado visible de la región `data-agro-shell-region="clima"`.
+  - `initClimaWeeklyEmbed()` ahora sale en silencio cuando faltan nodos semanales fuera de la vista `clima`.
+  - El warning solo queda habilitado para estados realmente parciales dentro del contexto de `clima`.
+- `apps/gold/agro/agro.css`
+  - `.agro-shell-sublink` ahora fuerza `min-height: var(--a11y-touch-min, 44px)`.
+  - `.agro-feedback-fab` ahora fuerza `min-height: var(--a11y-touch-min, 44px)` y centra su contenido con `inline-flex`.
+  - En mobile `<=640px` se reafirma el mínimo táctil de `44px` para el FAB.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - Se agregó esta sección de cierre.
+
+### Build status
+
+- `pnpm build:gold` -> OK
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`;
+  - warning histórico por chunk `assets/agro-*.js` > 500 kB.
+
+### QA sugerido
+
+- Revalidar en producción con consola abierta que el warning de `Clima` ya no aparezca al entrar a:
+  1. `Dashboard Agro`;
+  2. `Cartera Viva`;
+  3. `Ciclos Operativos`.
+- Reconfirmar en mobile `390x844` que:
+  1. los sublinks del sidebar comercial ya no bajen de `44px`;
+  2. el botón `Feedback` ya no quede en `40px`.

@@ -8,6 +8,13 @@ const state = {
     isOpen: false
 };
 
+function isClimaViewActive() {
+    const activeView = String(document.body?.dataset?.agroActiveView || '').trim().toLowerCase();
+    if (activeView === 'clima') return true;
+    const climaRegion = document.querySelector('[data-agro-shell-region="clima"]');
+    return !!(climaRegion && !climaRegion.hasAttribute('hidden') && !climaRegion.hasAttribute('inert'));
+}
+
 function getNodes() {
     const toggle = document.getElementById(WEEKLY_TOGGLE_ID);
     const host = document.getElementById(WEEKLY_HOST_ID);
@@ -74,8 +81,14 @@ function bindEvents(nodes) {
 
 export function initClimaWeeklyEmbed() {
     const nodes = getNodes();
-    const hasWeeklyStructure = !!(nodes.toggle || nodes.host || nodes.weeklyRoot);
-    if (!hasWeeklyStructure) {
+    const hasWeeklyNode = !!(nodes.toggle || nodes.host || nodes.weeklyRoot);
+    const climaViewActive = isClimaViewActive();
+
+    if (!hasWeeklyNode) {
+        return;
+    }
+
+    if (!climaViewActive && (!nodes.toggle || !nodes.host || !nodes.weeklyRoot)) {
         return;
     }
 
