@@ -6560,3 +6560,39 @@ Motivo de elección: menor riesgo, menor diff, máxima coherencia visual, cero r
 - Reconfirmar en mobile `390x844` que:
   1. los sublinks del sidebar comercial ya no bajen de `44px`;
   2. el botón `Feedback` ya no quede en `40px`.
+
+## Sesión: QA final post-fix en producción Agro V1 (2026-03-30)
+
+### Diagnóstico
+
+- Se ejecutó QA final en producción real con viewport mobile `390x844`.
+- El login QA volvió a pasar por `hCaptcha` invisible, pero la sesión terminó entrando correctamente y permitió completar la validación.
+- Resultado final:
+  - `BUG-03 / warning de Clima`: `RESUELTO`.
+    - al entrar a `Dashboard Agro`, `Cartera Viva` y `Ciclos Operativos`, la consola quedó en `0 warnings` y `0 errors`;
+    - el warning `[AGRO_CLIMA_LAYOUT] Missing clima weekly nodes; embed not initialized.` ya no apareció fuera de contexto.
+  - `touch targets sidebar`: `RESUELTO`.
+    - sublinks visibles `Cartera Viva / Ciclos Operativos` del shell lateral: `44px`;
+    - botón `Feedback`: `44px`.
+  - `tab activa`: se mantuvo correcta durante la revalidación:
+    - `Cartera Viva` -> `activeView: cartera-viva` + cabecera visible `Cartera de compradores`;
+    - `Ciclos Operativos` -> `activeView: operational` + cabecera visible `Ciclos Operativos`.
+
+### Cambios aplicados
+
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - Se agregó esta sección de validación final en producción.
+- Sin cambios de código productivo en esta sesión.
+
+### Build status
+
+- `No ejecutado`.
+- Motivo: sesión de QA runtime final sin cambios de código; solo se actualizó el reporte activo.
+
+### QA sugerido
+
+- Los tres bugs de esta ronda quedaron cerrados en producción.
+- Siguiente bloque recomendado:
+  1. dataset QA de `Ciclos Operativos`;
+  2. `QA-3` completo;
+  3. `QA-5` smoke de `Facturero`.
