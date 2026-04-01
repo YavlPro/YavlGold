@@ -7006,3 +7006,172 @@ Motivo de elección: menor riesgo, menor diff, máxima coherencia visual, cero r
 5. Balance sigue siendo negativo (correcto; la direccin `out` se preserva)
 6. Gasto/Ingreso/Pérdida siguen mostrando sus labels originales sin regresión
 
+---
+
+## Sesión: Bugfix críticos Cartera Viva — bugs 1-4 (2026-03-31)
+
+### Diagnóstico
+
+**Bug 1 — Nuevo cobro crea Ingreso aparte, no reduce COBRADO/FALTA**
+
+Causa raíz: En `agro-wizard.js` línea 1692, `origin_table = 'manual_income'` se setea ANTES de resolver el buyer link. La RPC `agro_buyer_portfolio_summary_v1` solo cuenta como `paid_total` los ingresos con `origin_table = 'agro_pending'`. Todos los ingresos del wizard — matched o no — iban a `non_debt_income_total`. Nunca tocaban `pending_total` ni `paid_total`.
+
+**Bug 2 — Nueva pérdida queda con buyer_id = null y legacy_review_required**
+
+Causa raíz: Para perdidas, el wizard nunca setea `origin_table`. La RPC `loss_matched` solo cuenta pérdidas con `origin_table = 'agro_pending'`. Sin `origin_table` en el payload, la pérdida wizard no llegaba a ninguna CTAS.
+
+**Bug 3 — Fórmula comercial descuadrada**
+
+Consecuencia directa de bugs 1 y 2: `paid_total` y `loss_total` siempre quedaban en 0 para registros wizard.
+
+**Bug 4 — Cliente nuevo sin historial no aparece en grilla y auto-open falla**
+
+Causa raíz: La RPC tiene WHERE que requiere al menos una métrica > 0. Un cliente nuevo con todos sus campos en 0 no entra en la query. `summaryRows` queda vacío para ese cliente → `getSelectedBuyerRow()` retorna null → `loadBuyerDetail` recibe null → la vista de detalle dice "Cliente no encontrado".
+
+### Plan ejecutado (fix CONTEXTUAL, no global)
+
+1. Diagnosticar wiring `Nuevo fiado` vs `Nuevo cobro` vs `Nueva pérdida`.
+2. Identificar que `openClientRecordWizard` es el único punto de entrada para quick actions de Cartera Viva.
+3. Introducir flag `debtContext: true` que solo se setea en ese contexto.
+4. Propagar flag via `launchAgroWizard` → `openAgroWizard`.
+5. En wizard, solo si `deps.debtContext === true`, sobreescribir `origin_table = 'agro_pending'`.
+6. Para bug 4: nueva migración con `OR (all metrics = 0)` y filtro `status = 'active'`.
+
+### Cambios aplicados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/agro-cartera-viva-view.js` | Agregado `debtContext: true` en `openClientRecordWizard` |
+| `apps/gold/agro/agro.js` | Propagado `debtContext` desde `wizardOptions` a `openAgroWizard` |
+| `apps/gold/agro/agro-wizard.js` | Solo si `deps.debtContext === true`, setear `origin_table = 'agro_pending'` |
+| `supabase/migrations/20260331000000_agro_buyer_portfolio_include_zero_buyers.sql` | RPC con `OR (all metrics = 0)` + filtro `coalesce(b.status, 'active') = 'active'` |
+
+### Por qué es contextual y no global
+
+El fix anterior aplicaba `origin_table = 'agro_pending'` a TODOS los ingresos/pérdidas con buyer match, lo que podía reclasificar ingresos manuales como deuda.
+
+El fix actual solo aplica ese cambio cuando el wizard viene desde quick actions de Cartera Viva (`debtContext: true`). Ingresos/pérdidas manuales fuera de ese contexto permanecen inalterados.
+
+### Flujo corregido
+
+**Nuevo cobro desde Cartera Viva (con debtContext)**:
+```
+openClientRecordWizard('ingresos', buyerRow)
+→ launchAgroWizard('ingresos', { debtContext: true, prefill: { who } })
+→ openAgroWizard recibe deps.debtContext = true
+→ handleSubmit: deps.debtContext === true → origin_table = 'agro_pending'
+→ RPC income_paid: MATCHES → paid_total += monto
+```
+
+**Ingreso manual desde Facturero (sin debtContext)**:
+```
+launchAgroWizard('ingresos', { initialCropId })
+→ NO hay debtContext
+→ handleSubmit: deps.debtContext !== true → origin_table permanece 'manual_income'
+→ RPC non_debt_income: MATCHES (comportamiento correcto)
+```
+
+### Verificación manual esperada
+
+1. Cliente nuevo "Carlos" creado desde Cartera Viva → aparece en grilla con todos los badges en $0.00
+2. Fiado 100 → FALTA $100
+3. Cobro 30 (desde quick action) → COBRADO $30 / FALTA $70
+4. Pérdida 20 (desde quick action) → COBRADO $30 / FALTA $50 / Pérdida $20
+5. Ingreso manual con buyer match desde Facturero → NO se clasifica como deuda (queda en non_debt_income)
+6. Pérdida manual con buyer match desde Facturero → NO se clasifica como deuda (queda en legacy_unclassified)
+
+### Build status
+
+- `pnpm build:gold` → OK (2.48s)
+
+### Migración DB requerida
+
+Aplicar en Supabase SQL Editor:
+```sql
+-- Contenido de: supabase/migrations/20260331000000_agro_buyer_portfolio_include_zero_buyers.sql
+-- Incluye: OR (all metrics = 0) + filtro status = 'active'
+```
+
+---
+
+## Sesión: QA final del fix contextual Cartera Viva (2026-03-31)
+
+### Objetivo
+
+Validar que el fix contextual corrige los 4 bugs sin romper funcionalidad existente.
+
+### Alcance
+
+- Revisión de código: wiring del flag `debtContext`
+- Build validation
+- Verificación de migración
+- QA runtime (si hay navegador disponible)
+
+### Entorno
+
+- **Navegador disponible**: NO
+- Esta sesión es **validación de código + build** únicamente.
+
+### Riesgo
+
+- Sin navegador, no puedo validar comportamiento runtime real.
+- QA manual en navegador es obligatorio antes de considerar el fix completamente aprobado.
+
+### Plan de validación
+
+1. Confirmar que `debtContext` solo nace en `openClientRecordWizard`
+2. Confirmar propagación correcta en `agro.js`
+3. Confirmar uso condicional en `agro-wizard.js`
+4. Verificar que migración nueva tiene filtro `status = 'active'`
+5. Confirmar que migración histórica no fue modificada
+6. Ejecutar `pnpm build:gold`
+
+### Resultado de validación
+
+| Check | Estado |
+|---|---|
+| `debtContext` solo en `openClientRecordWizard` | ✅ Confirmado |
+| `agro.js` solo propaga flag | ✅ Confirmado |
+| `agro-wizard.js` uso condicional | ✅ Confirmado (`if (deps.debtContext === true)`) |
+| Migración con filtro `status = 'active'` | ✅ Confirmado |
+| Migración histórica sin cambios | ✅ Confirmado (git diff vacío) |
+| Build | ✅ OK (3.26s) |
+| QA runtime | ⏸️ Pendiente (sin navegador) |
+
+### Veredicto
+
+**APROBADO PROVISIONALMENTE**
+
+- Código: validado ✅
+- Build: OK ✅
+- QA runtime: pendiente (requiere navegador)
+
+### Checklist manual para QA en navegador
+
+1. **Cliente nuevo sin historial**
+   - Crear cliente desde Cartera Viva
+   - Esperado: aparece en grilla, auto-open funciona
+
+2. **Fiado + cobro + pérdida**
+   - Fiado 100 → FALTA $100
+   - Cobro 30 (quick action) → COBRADO $30 / FALTA $70
+   - Pérdida 20 (quick action) → COBRADO $30 / FALTA $50
+
+3. **Ingreso manual desde Facturero**
+   - Crear ingreso con buyer match fuera de Cartera Viva
+   - Esperado: NO se reclasifica como deuda (queda en non_debt_income)
+
+4. **Pérdida manual desde Facturero**
+   - Crear pérdida fuera de Cartera Viva
+   - Esperado: comportamiento normal, no forzada como deuda
+
+5. **Consola del navegador**
+   - Esperado: 0 errores rojos nuevos, 0 warnings relevantes nuevos
+
+### Migración DB pendiente
+
+Aplicar en Supabase SQL Editor:
+```sql
+-- Archivo: supabase/migrations/20260331000000_agro_buyer_portfolio_include_zero_buyers.sql
+-- Incluye: OR (all metrics = 0) + filtro status = 'active'
+```

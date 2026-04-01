@@ -201,9 +201,17 @@ function getReviewTotal(buyerRow) {
     return Number(buyerRow?.review_required_total || 0) + Number(buyerRow?.legacy_unclassified_total || 0);
 }
 
+function getOutstandingBalance(buyerRow) {
+    const credited = Number(buyerRow?.credited_total || 0);
+    const paid = Number(buyerRow?.paid_total || 0);
+    const loss = Number(buyerRow?.loss_total || 0);
+    const transferred = Number(buyerRow?.transferred_total || 0);
+    return Math.max(0, credited - paid - loss - transferred);
+}
+
 function getProgressBase(buyerRow) {
     const credited = Number(buyerRow?.credited_total || 0);
-    const combined = Number(buyerRow?.paid_total || 0) + Number(buyerRow?.pending_total || 0) + Number(buyerRow?.loss_total || 0);
+    const combined = Number(buyerRow?.paid_total || 0) + getOutstandingBalance(buyerRow) + Number(buyerRow?.loss_total || 0);
     return Math.max(credited, combined, 0);
 }
 
@@ -217,7 +225,7 @@ function getPaidPercent(buyerRow) {
 }
 
 function resolveBuyerStatus(buyerRow) {
-    const pending = Number(buyerRow?.pending_total || 0);
+    const pending = getOutstandingBalance(buyerRow);
     const paid = Number(buyerRow?.paid_total || 0);
     const loss = Number(buyerRow?.loss_total || 0);
     const review = getReviewTotal(buyerRow);
@@ -256,7 +264,7 @@ function resolveBuyerStatus(buyerRow) {
 function buildProgressBreakdown(buyerRow) {
     const base = Math.max(getProgressBase(buyerRow), 1);
     const paid = Math.max(0, Number(buyerRow?.paid_total || 0));
-    const pending = Math.max(0, Number(buyerRow?.pending_total || 0));
+    const pending = Math.max(0, getOutstandingBalance(buyerRow));
     const loss = Math.max(0, Number(buyerRow?.loss_total || 0));
 
     const paidShare = clampPercent((paid / base) * 100);
@@ -861,7 +869,7 @@ function renderHistorySupportLink(row) {
 function resolvePrimarySummaryMetric(buyerRow) {
     const reviewTotal = getReviewTotal(buyerRow);
     const buyerStatus = resolveBuyerStatus(buyerRow);
-    const pending = Number(buyerRow?.pending_total || 0);
+    const pending = getOutstandingBalance(buyerRow);
     const paid = Number(buyerRow?.paid_total || 0);
     const loss = Number(buyerRow?.loss_total || 0);
 
@@ -1040,10 +1048,11 @@ function renderBuyerSummary(buyerRow, options = {}) {
     const pairRate = resolveDetailRateForCurrency(pairOption.currency, exchangeRates);
     const pairSeries = buildPairSeries(options.historyRows, pairOption);
     const loss = Number(buyerRow?.loss_total || 0);
-    const secondaryLabel = loss > 0 && Number(buyerRow?.pending_total || 0) <= 0 ? 'Pérdida' : 'Falta';
+    const outstanding = getOutstandingBalance(buyerRow);
+    const secondaryLabel = loss > 0 && outstanding <= 0 ? 'Pérdida' : 'Falta';
     const secondaryValue = secondaryLabel === 'Pérdida'
         ? formatMoney(loss)
-        : formatMoney(buyerRow?.pending_total || 0);
+        : formatMoney(outstanding);
 
     return `
         <section class="cartera-viva-detail__summary">

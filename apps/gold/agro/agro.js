@@ -5823,6 +5823,7 @@ async function launchAgroWizard(tabName, options = {}) {
     const prefill = wizardOptions.prefill && typeof wizardOptions.prefill === 'object'
         ? wizardOptions.prefill
         : null;
+    const debtContext = wizardOptions.debtContext === true;
 
     openAgroWizard(targetTab, {
         supabase,
@@ -5836,7 +5837,8 @@ async function launchAgroWizard(tabName, options = {}) {
         initialCropId,
         lockCropSelection,
         refreshAlsoTabs,
-        prefill
+        prefill,
+        debtContext
     });
 }
 

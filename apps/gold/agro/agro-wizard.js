@@ -1705,6 +1705,10 @@ export async function openAgroWizard(tabName, deps) {
                 insertData.destino = insertData.destino || 'Beneficiario general';
             }
 
+            if (deps.debtContext === true && tabName === 'perdidas') {
+                insertData.origin_table = 'agro_pending';
+            }
+
             if (isBuyerIdentityRelevantTab(tabName)) {
                 const buyerLink = await ensureBuyerIdentityLink({
                     supabase,
@@ -1717,6 +1721,19 @@ export async function openAgroWizard(tabName, deps) {
                     originTable: insertData.origin_table
                 });
                 Object.assign(insertData, buyerLink);
+
+                // BUGFIX: Only set origin_table = 'agro_pending' when wizard comes from
+                // Cartera Viva detail (debtContext flag). This ensures the RPC counts
+                // the movement as debt payment (paid_total / loss_total) instead of
+                // non_debt_income or legacy_review_required.
+                // IMPORTANT: We do NOT apply this globally to all ingresos/perdidas with
+                // buyer match, because manual ingresos/perdidas outside of Cartera Viva
+                // context should NOT be classified as debt-related.
+                if (deps.debtContext === true) {
+                    if (tabName === 'ingresos') {
+                        insertData.origin_table = 'agro_pending';
+                    }
+                }
             }
 
             // Units (if applicable)
@@ -1823,7 +1840,7 @@ export async function openAgroWizard(tabName, deps) {
                     ingresos: ['unit_type', 'unit_qty', 'quantity_kg', 'currency', 'exchange_rate', 'monto_usd', 'origin_table', 'transfer_state', 'buyer_id', 'buyer_group_key', 'buyer_match_status'],
                     pendientes: ['unit_type', 'unit_qty', 'quantity_kg', 'currency', 'exchange_rate', 'monto_usd', 'buyer_id', 'buyer_group_key', 'buyer_match_status'],
                     gastos: ['currency', 'exchange_rate', 'monto_usd'],
-                    perdidas: ['unit_type', 'unit_qty', 'quantity_kg', 'currency', 'exchange_rate', 'monto_usd', 'buyer_id', 'buyer_group_key', 'buyer_match_status'],
+                    perdidas: ['unit_type', 'unit_qty', 'quantity_kg', 'currency', 'exchange_rate', 'monto_usd', 'origin_table', 'buyer_id', 'buyer_group_key', 'buyer_match_status'],
                     transferencias: ['unit_type', 'unit_qty', 'quantity_kg', 'currency', 'exchange_rate', 'monto_usd']
                 };
                 const insertResult = await insertWizardRowWithFallback(

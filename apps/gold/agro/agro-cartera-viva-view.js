@@ -253,9 +253,17 @@ function getReviewTotal(row) {
     return Number(row?.review_required_total || 0) + Number(row?.legacy_unclassified_total || 0);
 }
 
+function getOutstandingBalance(row) {
+    const credited = Number(row?.credited_total || 0);
+    const paid = Number(row?.paid_total || 0);
+    const loss = Number(row?.loss_total || 0);
+    const transferred = Number(row?.transferred_total || 0);
+    return Math.max(0, credited - paid - loss - transferred);
+}
+
 function getProgressBase(row) {
     const credited = Number(row?.credited_total || 0);
-    const combined = Number(row?.paid_total || 0) + Number(row?.pending_total || 0) + Number(row?.loss_total || 0);
+    const combined = Number(row?.paid_total || 0) + getOutstandingBalance(row) + Number(row?.loss_total || 0);
     return Math.max(credited, combined, 0);
 }
 
@@ -271,7 +279,7 @@ function getPaidPercent(row) {
 function getProgressBreakdown(row) {
     const base = Math.max(getProgressBase(row), 1);
     const paid = Math.max(0, Number(row?.paid_total || 0));
-    const pending = Math.max(0, Number(row?.pending_total || 0));
+    const pending = Math.max(0, getOutstandingBalance(row));
     const loss = Math.max(0, Number(row?.loss_total || 0));
 
     const paidShare = clampPercent((paid / base) * 100);
@@ -288,7 +296,7 @@ function getProgressBreakdown(row) {
 }
 
 function resolveVisibleCategory(row) {
-    const pending = Number(row?.pending_total || 0);
+    const pending = getOutstandingBalance(row);
     const paid = Number(row?.paid_total || 0);
     const loss = Number(row?.loss_total || 0);
     const review = getReviewTotal(row);
@@ -302,7 +310,7 @@ function resolveVisibleCategory(row) {
 
 function resolveBuyerStatus(row) {
     const clientStatus = String(row?.client_status || 'active').trim().toLowerCase();
-    const pending = Number(row?.pending_total || 0);
+    const pending = getOutstandingBalance(row);
     const paid = Number(row?.paid_total || 0);
     const loss = Number(row?.loss_total || 0);
     const review = getReviewTotal(row);
@@ -368,7 +376,7 @@ function resolveBuyerStatus(row) {
 }
 
 function comparePortfolioRows(a, b) {
-    const pendingDiff = Number(b?.pending_total || 0) - Number(a?.pending_total || 0);
+    const pendingDiff = getOutstandingBalance(b) - getOutstandingBalance(a);
     if (pendingDiff !== 0) return pendingDiff;
 
     const reviewDiff = Number(b?.review_required_total || 0) - Number(a?.review_required_total || 0);
@@ -489,7 +497,7 @@ function resolveCyclePayloadFromContext(context = {}) {
     const amount = historyRow
         ? Number(historyRow?.amount || 0)
         : Math.max(
-            Number(buyerRow?.pending_total || 0),
+            getOutstandingBalance(buyerRow),
             Number(buyerRow?.loss_total || 0),
             Number(buyerRow?.paid_total || 0),
             0
@@ -547,9 +555,10 @@ function syncCarteraVivaGlobalContext() {
 }
 
 function renderHeroSignal(rows) {
+    const pendingTotal = rows.reduce((total, row) => total + getOutstandingBalance(row), 0);
     const base = Math.max(
         sumField(rows, 'credited_total'),
-        sumField(rows, 'paid_total') + sumField(rows, 'pending_total') + sumField(rows, 'loss_total'),
+        sumField(rows, 'paid_total') + pendingTotal + sumField(rows, 'loss_total'),
         1
     );
     const paidShare = clampPercent((sumField(rows, 'paid_total') / base) * 100);
@@ -574,13 +583,13 @@ function renderHeroSignal(rows) {
 
 function resolveCategorySummary(rows, category) {
     const count = rows.length;
-    const pending = sumField(rows, 'pending_total');
+    const pending = rows.reduce((total, row) => total + getOutstandingBalance(row), 0);
     const paid = sumField(rows, 'paid_total');
     const loss = sumField(rows, 'loss_total');
     const review = rows.reduce((total, row) => total + getReviewTotal(row), 0);
-    const pendingClients = rows.filter((row) => Number(row?.pending_total || 0) > 0).length;
+    const pendingClients = rows.filter((row) => getOutstandingBalance(row) > 0).length;
     const readyClients = rows.filter((row) =>
-        Number(row?.pending_total || 0) <= 0
+        getOutstandingBalance(row) <= 0
         && Number(row?.paid_total || 0) <= 0
         && Number(row?.loss_total || 0) <= 0
         && Number(row?.credited_total || 0) <= 0
@@ -673,7 +682,7 @@ function renderHeaderSummary(filteredRows, options = {}) {
 
 function renderCardSignal(row) {
     const paid = Math.max(4, Math.round(clampPercent(getPaidPercent(row)) / 7) + 4);
-    const pending = Math.max(4, Math.round(clampPercent((Number(row?.pending_total || 0) / Math.max(getProgressBase(row), 1)) * 100) / 7) + 4);
+    const pending = Math.max(4, Math.round(clampPercent((getOutstandingBalance(row) / Math.max(getProgressBase(row), 1)) * 100) / 7) + 4);
     const thirdMetric = Math.max(Number(row?.loss_total || 0), getReviewTotal(row));
     const third = Math.max(4, Math.round(clampPercent((thirdMetric / Math.max(getProgressBase(row), 1)) * 100) / 7) + 4);
     const thirdClass = Number(row?.loss_total || 0) > 0 ? 'is-loss' : 'is-review';
@@ -714,7 +723,7 @@ function renderProgressBlock(row, options = {}) {
     const large = options.large === true;
     const noLegend = options.noLegend === true;
     const breakdown = getProgressBreakdown(row);
-    const pending = Number(row?.pending_total || 0);
+    const pending = getOutstandingBalance(row);
     const loss = Number(row?.loss_total || 0);
     const base = Math.max(breakdown.base, 0);
     const label = base > 0 ? `Cobrado de ${formatMoney(base)}` : 'Sin base';
@@ -876,7 +885,7 @@ function renderPortfolioCards(filteredRows) {
     return filteredRows.map((row) => {
         const status = resolveBuyerStatus(row);
         const loss = Number(row?.loss_total || 0);
-        const pending = Number(row?.pending_total || 0);
+        const pending = getOutstandingBalance(row);
         const hasMovementTotals = pending > 0 || loss > 0 || Number(row?.paid_total || 0) > 0 || Number(row?.credited_total || 0) > 0;
         const thirdMetricLabel = hasMovementTotals
             ? (loss > 0 && pending <= 0 ? 'Pérdida' : 'Falta')
@@ -1379,6 +1388,7 @@ function openClientRecordWizard(tabName, buyerRow) {
 
     window.launchAgroWizard(safeTab, {
         initialCropId: cropId || null,
+        debtContext: true,
         prefill: {
             who: String(buyerRow?.display_name || '').trim()
         }
