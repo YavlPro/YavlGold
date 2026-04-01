@@ -7175,3 +7175,150 @@ Aplicar en Supabase SQL Editor:
 -- Archivo: supabase/migrations/20260331000000_agro_buyer_portfolio_include_zero_buyers.sql
 -- Incluye: OR (all metrics = 0) + filtro status = 'active'
 ```
+
+---
+
+## Sesión 2026-04-01 — Pack 4 bugs críticos (G, C, B, A)
+
+**Agente:** Kilo / claude-sonnet-4.6
+**Commit base:** 7cf6fab (fix cartera viva debt actions contextual)
+
+---
+
+### Diagnóstico
+
+#### BUG-G — No se puede crear ciclo operativo
+
+**Causa raíz:** `ensureLocalCropSelection()` en `agroOperationalCycles.js` lanza `"Cultivo no valido."` cuando `state.crops.length === 0`.
+
+Esto ocurre específicamente en el **path de API** (`createFromPayload` llamado desde Cartera Viva via `window.YGAgroOperationalCycles.createFromPayload`):
+
+1. El DOM elemento `#agro-operational-root` no existe (la vista de Ciclos Operativos no está activa).
+2. `initAgroOperationalCycles()` encuentra `state.root = null` y retorna `null` sin inicializar.
+3. `state.crops` queda vacío `[]`.
+4. `normalizePayload()` llama `ensureLocalCropSelection(cropId)` donde `cropId` es no-vacío.
+5. `state.crops.some(...)` → `false` → **throw** "Cultivo no valido."
+
+**Regresión introducida por:** No atribuible a 7cf6fab directamente. El bug existía antes pero solo se activa desde la integración Cartera Viva → Ciclos Operativos.
+
+**Archivos afectados:** `agro/agroOperationalCycles.js`
+
+**Riesgo de regresión:** Bajo. El guard solo aplica cuando `state.crops` está vacío; la validación DB (`validateCropId`) es la fuente de verdad en ese caso.
+
+---
+
+#### BUG-C — Cobro/pérdida desde quick actions no impactan cartera
+
+**Causa raíz:** El wizard `agro-wizard.js` solo despacha `agro:crops:refresh` después del save. Cartera Viva escucha **otros eventos** (`agro:income:changed`, `agro:losses:changed`, `agro:pending:refreshed`) para desencadenar `scheduleExternalPortfolioRefresh`.
+
+El fix del 7cf6fab implementó correctamente:
+- `debtContext: true` en `openClientRecordWizard` (cartera-viva-view.js)
+- `insertData.origin_table = 'agro_pending'` para ingresos y pérdidas
+- `buyer_id` via `ensureBuyerIdentityLink`
+
+Lo que faltó: disparar el evento correcto post-save para que la UI de Cartera Viva refresque.
+
+**Archivos afectados:** `agro/agro-wizard.js`
+
+**Riesgo de regresión:** Ninguno. Se agregan dispatches al final del setTimeout. No modifica lógica existente.
+
+---
+
+#### BUG-B — Tab "Ver transferidos" vacío
+
+**Causa raíz:** `detailHistoryFilter` en `agro-cartera-viva-view.js` no se resetea al navegar a un **cliente diferente**. Si el usuario hizo clic en "Ver transferidos" (cliente A) y luego abre el cliente B, el filtro queda en `'transferidos'`. Si el cliente B no tiene movimientos transferidos:
+- `transferCount = 0` → los botones de filtro **no se renderizan**
+- `visibleHistoryRows = []` → el timeline muestra "Sin transferidos visibles"
+- El usuario no puede volver a "Todo" porque el botón no existe
+
+La lógica de filtrado en sí (`filterHistoryRows`, `isTransferRelatedHistoryRow`) es correcta.
+
+**Archivos afectados:** `agro/agro-cartera-viva-view.js`
+
+**Riesgo de regresión:** Mínimo. El reset solo ocurre al cambiar de buyer; si se recarga el mismo buyer (refresh externo), el filtro se preserva.
+
+---
+
+#### BUG-A — Fórmula/progreso de la card
+
+**Causa raíz secundaria:** Consecuencia de BUG-C. La fórmula en código es correcta:
+- `pendiente = credited_total - paid_total - loss_total - transferred_total` (`getOutstandingBalance`)
+- `progreso = paid_total / base` (`getPaidPercent`)
+
+El problema: cobros/pérdidas desde quick actions **no disparaban refresh** de Cartera Viva. El RPC `agro_buyer_portfolio_summary_v1` no se re-ejecutaba, por lo que `paid_total` y `loss_total` no actualizaban hasta que el usuario recargaba manualmente.
+
+Con BUG-C corregido, el RPC se recarga en ~140ms post-save y los valores se actualizan automáticamente.
+
+**Archivos afectados:** Ninguno adicional (resuelto con BUG-C fix).
+
+---
+
+### Cambios aplicados
+
+| Archivo | Líneas afectadas | Descripción |
+|---|---|---|
+| `agro/agroOperationalCycles.js` | ~675–685 | Guard en `ensureLocalCropSelection`: si `state.crops.length === 0`, retorna `normalizedId` sin validar localmente |
+| `agro/agro-wizard.js` | ~1883–1912 | Agrega dispatches `agro:income:changed`, `agro:losses:changed`, `agro:pending:refreshed` en el setTimeout post-save |
+| `agro/agro-cartera-viva-view.js` | ~1192–1200 | En `loadBuyerDetail`: detecta cambio de buyer y resetea `detailHistoryFilter = 'todos'` |
+
+---
+
+### Build status
+
+```
+pnpm build:gold → OK
+agent-guard: OK
+agent-report-check: OK
+vite build: 154 modules, 0 errores, 0 warnings
+check-dist-utf8: OK
+```
+
+---
+
+### QA manual requerido en browser
+
+#### BUG-G: Crear ciclo desde Cartera Viva
+
+1. Abrir Cartera Viva → seleccionar un cliente que tenga movimientos
+2. Hacer clic en botón **"Crear ciclo"** (toolbar del detalle)
+3. **Esperado:** wizard se abre → ciclo se crea sin error "Cultivo no valido."
+4. **No debe verse:** toast de error "Cultivo no valido." ni "No se pudo crear el ciclo"
+5. Verificar que el ciclo aparece en la vista de Ciclos Operativos
+
+#### BUG-C: Cobro desde quick action actualiza cartera
+
+1. Abrir Cartera Viva → entrar al detalle de un cliente con fiados activos
+2. Hacer clic en **"Nuevo cobro"** (quick action en el resumen del cliente)
+3. Completar el wizard: concepto, monto, fecha
+4. **Esperado:** tras cerrar el wizard (~1.5 s), la cartera **se refresca sola**:
+   - COBRADO aumenta
+   - FALTA disminuye
+   - La barra de progreso avanza
+5. **No debe verse:** que el usuario tenga que recargar la página manualmente para ver el cambio
+
+#### BUG-C: Pérdida desde quick action actualiza cartera
+
+1. Desde el mismo detalle, hacer clic en **"Nueva pérdida"**
+2. Completar el wizard
+3. **Esperado:** FALTA disminuye, la card actualiza loss_total
+4. **No debe verse:** cartera sin cambios hasta recarga manual
+
+#### BUG-B: Tab "Ver transferidos" persiste correctamente entre clientes
+
+1. Abrir Cartera Viva → seleccionar cliente A que tenga movimientos transferidos
+2. Hacer clic en **"Ver transferidos"** → confirmar que muestra fiados/cobros transferidos
+3. Hacer clic en **"Volver"** para regresar a la grilla
+4. Seleccionar cliente B que NO tenga transferidos
+5. **Esperado:** el historial de B muestra **"Todo" por defecto** (sin filtro de transferidos aplicado)
+6. **No debe verse:** historial de B vacío con mensaje "Sin transferidos visibles" sin botones de filtro
+
+#### BUG-A: Fórmula de la card en detalle
+
+1. Abrir detalle de un cliente con saldo activo (fiado > 0)
+2. Crear un cobro de X monto via quick action
+3. Esperar el refresh automático
+4. **Esperado:**
+   - "Cobrado" = suma correcta de todos los cobros con `origin_table = 'agro_pending'`
+   - "Falta" = fiado_total - cobrado - perdido - transferido
+   - La barra de progreso muestra el porcentaje correcto
+5. **No debe verse:** valores en 0 o sin cambio después del cobro

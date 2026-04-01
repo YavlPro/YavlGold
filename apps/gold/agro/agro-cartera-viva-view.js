@@ -1190,7 +1190,13 @@ async function loadSummary() {
 }
 
 async function loadBuyerDetail(buyerId) {
-    selectedBuyerId = String(buyerId || '').trim();
+    const nextBuyerId = String(buyerId || '').trim();
+    // Reset history filter when switching to a different buyer to avoid showing
+    // an empty "transferidos" or "revertidos" tab for clients that have no such rows.
+    if (nextBuyerId !== selectedBuyerId) {
+        detailHistoryFilter = 'todos';
+    }
+    selectedBuyerId = nextBuyerId;
     detailLoading = true;
     detailErrorMessage = '';
     detailRows = [];

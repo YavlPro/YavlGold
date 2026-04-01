@@ -1909,6 +1909,17 @@ export async function openAgroWizard(tabName, deps) {
                         }
                     }));
                 }
+                // Dispatch portfolio-specific events so Cartera Viva refreshes its RPC summary.
+                // These events are listened by agro-cartera-viva-view → scheduleExternalPortfolioRefresh.
+                if (tabName === 'ingresos') {
+                    document.dispatchEvent(new CustomEvent('agro:income:changed'));
+                }
+                if (tabName === 'perdidas') {
+                    document.dispatchEvent(new CustomEvent('agro:losses:changed'));
+                }
+                if (tabName === 'pendientes') {
+                    document.dispatchEvent(new CustomEvent('agro:pending:refreshed'));
+                }
             }, 1500);
 
         } catch (err) {

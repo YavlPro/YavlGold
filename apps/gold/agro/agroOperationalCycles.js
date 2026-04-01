@@ -675,6 +675,9 @@ async function validateCropId(supabase, userId, cropId) {
 function ensureLocalCropSelection(cropId) {
     const normalizedId = normalizeId(cropId);
     if (!normalizedId) return '';
+    // When crops haven't loaded yet (API path / root not mounted), skip local check;
+    // DB validation in createCycleRecord / validateCropId will catch invalid IDs.
+    if (state.crops.length === 0) return normalizedId;
     const isOwnedCrop = state.crops.some((crop) => buildCropDisplay(crop).id === normalizedId);
     if (!isOwnedCrop) {
         throw new Error('Cultivo no valido.');
