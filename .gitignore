@@ -116,9 +116,11 @@ apps/gold/public/env.local.js
  assets/apps/gold/config.local.js
  assets/js/supabase-config.local.js
 
-# Local MCP overrides (keep credentials out of git)
-.kilocode/mcp.local.json
-.roo/mcp.local.json
+# AI tool local configs and credentials (keep out of git)
+.claude/
+.kilo/
+.kilocode/
+.roo/
 
 # Documentación interna (NO subir al repo)
 docs/AUDITORIA_REPOSITORIO.md

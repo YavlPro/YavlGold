@@ -292,7 +292,7 @@ pnpm -C apps/gold build
 
 ### Agregar Nueva Página
 1. Crear HTML en ubicación apropiada
-2. Registrar entrada en `vite.config.js`
+2. Registrar entrada en `apps/gold/vite.config.js`
 3. Ajustar routing en `vercel.json` si necesario
 4. Mantener patrón: HTML + JS modular
 
