@@ -7842,3 +7842,63 @@ order by r.display_name asc;
    - se abre la ficha del cliente;
    - el foco cae en la acción destructiva;
    - el flujo de confirmación sigue siendo el de borrado seguro.
+
+## [2026-04-03] Cartera Viva v2.4 — progreso operativo por unidades, CTA reubicado y refresh raíz sin desmontaje
+
+### Diagnóstico
+
+- `apps/gold/agro/agro-cartera-viva-view.js` seguía calculando el progreso visible de las cards con base monetaria en `getProgressBase()` / `getProgressBreakdown()` / `renderProgressBlock()` (`credited_total`, `paid_total`, `pending_total`, `loss_total`). Eso contaminaba la lectura operativa del ciclo y terminaba mostrando copy como `USD 2,73 faltan` donde producto esperaba unidades.
+- `apps/gold/agro/agro-cartera-viva-detail.js` todavía dejaba el CTA destructivo dentro del footer de `renderBuyerSummary()` (detalle/historial), compitiendo con la narrativa del timeline en vez de vivir en acciones primarias del cliente.
+- El refresh raíz seguía pasando por reconstrucción total de la vista: `renderListView()` terminaba rehaciendo el shell completo con `root.innerHTML`, por eso la card podía desaparecer y reaparecer aunque ya existiera data cargada.
+
+### Cambios aplicados
+
+| Archivo | Líneas | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro-cartera-viva-view.js` | 1137-1344 | Nuevo helper canónico de progreso operativo por unidades: unifica `unit_qty + unit_type`, cae a `kg` cuando aplica y marca `Avance no unificado` cuando hay mezcla incompatible |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 1280-1338 | Las cards ahora muestran breakdown operativo fijo `Pendiente / Cobrado / Pérdida` por unidades y exponen `Eliminar cliente canónico` en acciones primarias |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 1391-1622 | La raíz de Cartera Viva se separó en shell + patch incremental: summary, filtros y body se actualizan por slots; la grilla se mantiene montada y solo se parchean cards internas |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 1724-1749 | `loadSummary()` ahora refresca también `operationalProgressMap` por cultivo activo para que el avance visible salga de unidades, no de dinero |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 1844-1922 | `bindListViewEvents()` pasó a delegación sobre el root, evitando re-bind y pérdida de handlers cuando la grilla se parchea |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 1973-1979 | `handleCropContextUpdated()` ya reutiliza `loadSummary()` para refrescar scope visible + progreso operativo en una sola pasada |
+| `apps/gold/agro/agro-cartera-viva-detail.js` | 1366-1452, 1652-1654 | Se quitó `Eliminar cliente canónico` del footer del detalle; el histórico vuelve a quedarse solo con acciones de lectura/registro |
+| `apps/gold/agro/agro-cartera-viva.css` | 504-506 | Nuevo estado visual neutral para track sin base homogénea (`is-neutral`) |
+| `apps/gold/agro/agrocompradores.js` | 117, 735-809 | Se reutiliza el foco destructivo existente para que el CTA nuevo de la card abra la ficha con la acción de borrado lista |
+
+### Riesgo residual
+
+- Si un cliente tiene mezcla real de unidades incompatibles y tampoco hay `quantity_kg` homogéneo, la card ahora muestra fallback honesto (`Avance no unificado`, `No unificado`) en vez de inventar una suma.
+- El header summary de Cartera Viva sigue siendo financiero a propósito; el cambio de esta sesión separa resumen económico de progreso operativo, pero no elimina la lectura monetaria global.
+- El refresh raíz ya no desmonta el shell ni vacía la grilla durante `Actualizar`; si más adelante se quiere cero reemplazo de nodos incluso a nivel card, el siguiente paso sería patch field-by-field dentro de cada article.
+
+### Build status
+
+- `pnpm build:gold`: ✅ Exitoso
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observación no bloqueante:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+
+### QA sugerido
+
+1. En Cartera Viva raíz, usar un cliente con `1 fiado + 1 cobro + 1 pérdida` y verificar que la card muestra:
+   - `Pendiente`
+   - `Cobrado`
+   - `Pérdida`
+   en unidades, no en USD.
+2. Probar un cliente con mezcla de unidades incompatibles y confirmar que la card no suma a la fuerza:
+   - aparece `Avance no unificado`;
+   - las métricas dicen `No unificado`.
+3. Pulsar `Actualizar` varias veces en raíz y verificar que:
+   - la card no desaparece;
+   - el botón solo cambia a `Actualizando…`;
+   - la grilla permanece montada.
+4. Entrar a `Ver detalle` y confirmar que el CTA destructivo ya no aparece dentro del historial/detalle.
+5. Desde la card, pulsar `Eliminar cliente canónico` y validar que:
+   - se abre la ficha del cliente;
+   - el foco cae en la acción destructiva;
+   - el flujo sigue usando la ruta segura con RPC cuando exista.

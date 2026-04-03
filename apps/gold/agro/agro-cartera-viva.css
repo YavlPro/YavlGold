@@ -501,6 +501,10 @@
   background: linear-gradient(90deg, rgba(153, 27, 27, 0.76) 0%, rgba(239, 68, 68, 0.9) 48%, rgba(248, 113, 113, 0.6) 100%);
 }
 
+.cartera-viva-progress__segment.is-neutral {
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.18) 0%, rgba(148, 163, 184, 0.3) 52%, rgba(226, 232, 240, 0.18) 100%);
+}
+
 .cartera-viva-hero__signal-legend,
 .cartera-viva-progress__legend {
   display: flex;

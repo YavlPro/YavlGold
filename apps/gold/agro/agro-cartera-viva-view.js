@@ -69,6 +69,7 @@ let visibleCropScopeLoading = false;
 let visibleCropScopeError = '';
 let visibleCropScopeRequestId = 0;
 let externalRefreshTimer = 0;
+let operationalProgressMap = new Map();
 
 function readStoredCategory() {
     try {
@@ -229,6 +230,239 @@ function normalizeOperationalUnitType(value) {
     return ['unidad', 'saco', 'kg'].includes(token) ? token : '';
 }
 
+function normalizeProgressUnitType(value) {
+    const token = String(value || '').trim().toLowerCase();
+    if (!token) return '';
+    if (token === 'kg' || token === 'kilo' || token === 'kilos') return 'kg';
+    if (token === 'saco' || token === 'sacos') return 'saco';
+    if (token === 'cesta' || token === 'cestas') return 'cesta';
+    if (token === 'unidad' || token === 'unidades') return 'unidad';
+    return token;
+}
+
+function formatOperationalQuantity(value, decimals = 2) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric) || numeric <= 0) return '0';
+    if (Math.abs(numeric - Math.round(numeric)) < 1e-9) {
+        return String(Math.round(numeric));
+    }
+    return String(Number(numeric.toFixed(decimals)));
+}
+
+function formatOperationalUnitLabel(unitType, quantity) {
+    const normalizedType = normalizeProgressUnitType(unitType);
+    const singular = Math.abs(Number(quantity) - 1) < 1e-9;
+    if (normalizedType === 'kg') return 'kg';
+    if (normalizedType === 'saco') return singular ? 'saco' : 'sacos';
+    if (normalizedType === 'cesta') return singular ? 'cesta' : 'cestas';
+    if (normalizedType === 'unidad') return singular ? 'unidad' : 'unidades';
+    return normalizedType || (singular ? 'unidad' : 'unidades');
+}
+
+function formatOperationalValue(value, unitType) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric) || numeric <= 0) {
+        return `0 ${formatOperationalUnitLabel(unitType, 0)}`;
+    }
+    return `${formatOperationalQuantity(numeric)} ${formatOperationalUnitLabel(unitType, numeric)}`;
+}
+
+function createEmptyOperationalProgressBucket() {
+    return {
+        pending: [],
+        paid: [],
+        loss: []
+    };
+}
+
+function createOperationalProgressEntry(row) {
+    const naturalType = normalizeProgressUnitType(row?.unit_type);
+    const naturalQty = Number(row?.unit_qty);
+    const kgQty = Number(row?.quantity_kg);
+    const hasNatural = naturalType && Number.isFinite(naturalQty) && naturalQty > 0;
+    const hasKg = Number.isFinite(kgQty) && kgQty > 0;
+
+    if (!hasNatural && !hasKg) return null;
+
+    return {
+        naturalType: hasNatural ? naturalType : '',
+        naturalQty: hasNatural ? naturalQty : null,
+        kgQty: hasKg ? kgQty : null
+    };
+}
+
+function appendOperationalProgressEntry(progressMapTarget, scopeKey, stage, row) {
+    const safeScopeKey = String(scopeKey || '').trim();
+    if (!safeScopeKey || !['pending', 'paid', 'loss'].includes(stage)) return;
+    const entry = createOperationalProgressEntry(row);
+    if (!entry) return;
+
+    if (!progressMapTarget.has(safeScopeKey)) {
+        progressMapTarget.set(safeScopeKey, createEmptyOperationalProgressBucket());
+    }
+
+    progressMapTarget.get(safeScopeKey)[stage].push(entry);
+}
+
+function sumOperationalEntries(entries, fieldName) {
+    return (Array.isArray(entries) ? entries : []).reduce((total, entry) => total + Number(entry?.[fieldName] || 0), 0);
+}
+
+function resolveUnifiedOperationalProgress(bucket) {
+    const safeBucket = bucket && typeof bucket === 'object'
+        ? bucket
+        : createEmptyOperationalProgressBucket();
+    const allEntries = ['pending', 'paid', 'loss'].flatMap((stage) => safeBucket[stage] || []);
+
+    if (allEntries.length <= 0) {
+        return {
+            mode: 'none',
+            unitType: '',
+            pending: 0,
+            paid: 0,
+            loss: 0,
+            total: 0,
+            percent: null,
+            paidShare: 0,
+            pendingShare: 0,
+            lossShare: 0,
+            pendingLabel: 'Sin unidades',
+            paidLabel: 'Sin unidades',
+            lossLabel: 'Sin unidades',
+            totalLabel: 'Sin unidades'
+        };
+    }
+
+    const everyHasNatural = allEntries.every((entry) =>
+        entry?.naturalType && Number.isFinite(entry?.naturalQty) && entry.naturalQty > 0
+    );
+    const naturalTypes = Array.from(new Set(
+        allEntries.map((entry) => entry?.naturalType).filter(Boolean)
+    ));
+    const everyHasKg = allEntries.every((entry) =>
+        Number.isFinite(entry?.kgQty) && entry.kgQty > 0
+    );
+
+    let unitType = '';
+    let fieldName = '';
+
+    if (everyHasNatural && naturalTypes.length === 1) {
+        unitType = naturalTypes[0];
+        fieldName = 'naturalQty';
+    } else if (everyHasKg) {
+        unitType = 'kg';
+        fieldName = 'kgQty';
+    } else {
+        return {
+            mode: 'mixed',
+            unitType: '',
+            pending: 0,
+            paid: 0,
+            loss: 0,
+            total: 0,
+            percent: null,
+            paidShare: 0,
+            pendingShare: 0,
+            lossShare: 0,
+            pendingLabel: 'No unificado',
+            paidLabel: 'No unificado',
+            lossLabel: 'No unificado',
+            totalLabel: 'Avance no unificado'
+        };
+    }
+
+    const pending = sumOperationalEntries(safeBucket.pending, fieldName);
+    const paid = sumOperationalEntries(safeBucket.paid, fieldName);
+    const loss = sumOperationalEntries(safeBucket.loss, fieldName);
+    const total = Math.max(0, pending + paid + loss);
+    const percent = total > 0 ? clampPercent(((paid + loss) / total) * 100) : 0;
+    const paidShare = total > 0 ? clampPercent((paid / total) * 100) : 0;
+    const lossShare = total > 0 ? clampPercent((loss / total) * 100) : 0;
+    const pendingShare = total > 0 ? clampPercent(Math.max(0, 100 - paidShare - lossShare)) : 0;
+
+    return {
+        mode: 'unified',
+        unitType,
+        pending,
+        paid,
+        loss,
+        total,
+        percent,
+        paidShare,
+        pendingShare,
+        lossShare,
+        pendingLabel: formatOperationalValue(pending, unitType),
+        paidLabel: formatOperationalValue(paid, unitType),
+        lossLabel: formatOperationalValue(loss, unitType),
+        totalLabel: formatOperationalValue(total, unitType)
+    };
+}
+
+async function fetchOperationalProgressMap(supabaseClient, cropId = null) {
+    const safeCropId = normalizeCropId(cropId);
+    const baseColumns = 'buyer_id,buyer_group_key,unit_type,unit_qty,quantity_kg';
+    const pendingQuery = supabaseClient
+        .from('agro_pending')
+        .select(`${baseColumns},transfer_state,crop_id`)
+        .is('deleted_at', null)
+        .is('reverted_at', null);
+    const incomeQuery = supabaseClient
+        .from('agro_income')
+        .select(`${baseColumns},origin_table,crop_id`)
+        .is('deleted_at', null)
+        .is('reverted_at', null);
+    const lossQuery = supabaseClient
+        .from('agro_losses')
+        .select(`${baseColumns},origin_table,crop_id`)
+        .is('deleted_at', null)
+        .is('reverted_at', null);
+
+    const scopedPendingQuery = safeCropId ? pendingQuery.eq('crop_id', safeCropId) : pendingQuery;
+    const scopedIncomeQuery = safeCropId ? incomeQuery.eq('crop_id', safeCropId) : incomeQuery;
+    const scopedLossQuery = safeCropId ? lossQuery.eq('crop_id', safeCropId) : lossQuery;
+
+    const [pendingResult, incomeResult, lossResult] = await Promise.all([
+        scopedPendingQuery,
+        scopedIncomeQuery,
+        scopedLossQuery
+    ]);
+
+    if (pendingResult?.error) throw pendingResult.error;
+    if (incomeResult?.error) throw incomeResult.error;
+    if (lossResult?.error) throw lossResult.error;
+
+    const nextMap = new Map();
+
+    (Array.isArray(pendingResult?.data) ? pendingResult.data : []).forEach((row) => {
+        if (String(row?.transfer_state || 'active').trim().toLowerCase() !== 'active') return;
+        const scopeKey = buildBuyerPortfolioScopeKey(row);
+        appendOperationalProgressEntry(nextMap, scopeKey, 'pending', row);
+    });
+
+    (Array.isArray(incomeResult?.data) ? incomeResult.data : []).forEach((row) => {
+        if (String(row?.origin_table || '').trim().toLowerCase() !== 'agro_pending') return;
+        const scopeKey = buildBuyerPortfolioScopeKey(row);
+        appendOperationalProgressEntry(nextMap, scopeKey, 'paid', row);
+    });
+
+    (Array.isArray(lossResult?.data) ? lossResult.data : []).forEach((row) => {
+        if (String(row?.origin_table || '').trim().toLowerCase() !== 'agro_pending') return;
+        const scopeKey = buildBuyerPortfolioScopeKey(row);
+        appendOperationalProgressEntry(nextMap, scopeKey, 'loss', row);
+    });
+
+    nextMap.forEach((bucket, scopeKey) => {
+        nextMap.set(scopeKey, resolveUnifiedOperationalProgress(bucket));
+    });
+
+    return nextMap;
+}
+
+function getOperationalProgress(row) {
+    const scopeKey = buildBuyerPortfolioScopeKey(row);
+    return operationalProgressMap.get(scopeKey) || resolveUnifiedOperationalProgress(null);
+}
+
 function formatMoney(value) {
     const amount = Number(value);
     if (!Number.isFinite(amount)) return '$0.00';
@@ -274,12 +508,22 @@ function getOutstandingBalance(row) {
 }
 
 function getProgressBase(row) {
+    const operationalProgress = getOperationalProgress(row);
+    if (operationalProgress.mode === 'unified') {
+        return Math.max(operationalProgress.total, 0);
+    }
+
     const credited = Number(row?.credited_total || 0);
     const combined = Number(row?.paid_total || 0) + getOutstandingBalance(row) + Number(row?.loss_total || 0);
     return Math.max(credited, combined, 0);
 }
 
 function getPaidPercent(row) {
+    const operationalProgress = getOperationalProgress(row);
+    if (operationalProgress.mode === 'unified') {
+        return clampPercent(operationalProgress.percent);
+    }
+
     const compliance = Number(row?.compliance_percent);
     if (Number.isFinite(compliance) && compliance > 0) return clampPercent(compliance);
 
@@ -289,6 +533,18 @@ function getPaidPercent(row) {
 }
 
 function getProgressBreakdown(row) {
+    const operationalProgress = getOperationalProgress(row);
+    if (operationalProgress.mode === 'unified') {
+        return {
+            base: operationalProgress.total,
+            paidShare: operationalProgress.paidShare,
+            lossShare: operationalProgress.lossShare,
+            pendingShare: operationalProgress.pendingShare,
+            paidPercent: operationalProgress.percent,
+            mode: 'unified'
+        };
+    }
+
     const base = Math.max(getProgressBase(row), 1);
     const paid = Math.max(0, Number(row?.paid_total || 0));
     const pending = Math.max(0, getOutstandingBalance(row));
@@ -303,7 +559,8 @@ function getProgressBreakdown(row) {
         paidShare,
         lossShare,
         pendingShare,
-        paidPercent: getPaidPercent(row)
+        paidPercent: getPaidPercent(row),
+        mode: operationalProgress.mode || 'financial'
     };
 }
 
@@ -365,7 +622,11 @@ function resolveBuyerStatus(row) {
     const paid = Number(row?.paid_total || 0);
     const loss = Number(row?.loss_total || 0);
     const review = getReviewTotal(row);
+    const operationalProgress = getOperationalProgress(row);
     const paidPercent = getPaidPercent(row);
+    const pendingUnits = operationalProgress.mode === 'unified' ? operationalProgress.pendingLabel : '';
+    const paidUnits = operationalProgress.mode === 'unified' ? operationalProgress.paidLabel : '';
+    const lossUnits = operationalProgress.mode === 'unified' ? operationalProgress.lossLabel : '';
 
     if (clientStatus === 'archived') {
         return {
@@ -376,11 +637,11 @@ function resolveBuyerStatus(row) {
     }
 
     if (pending > 0) {
-        if (paid > 0 && paidPercent >= 65) {
+        if (paid > 0 && operationalProgress.mode === 'unified' && paidPercent >= 65) {
             return {
                 tone: 'fiado',
                 label: 'Cobro avanzado',
-                detail: `${formatMoney(pending)} por cobrar · ${formatMoney(paid)} ya cobrados`
+                detail: `${pendingUnits} pendientes · ${paidUnits} cobrados`
             };
         }
 
@@ -388,14 +649,18 @@ function resolveBuyerStatus(row) {
             return {
                 tone: 'fiado',
                 label: 'Fiado activo',
-                detail: `${formatMoney(pending)} por cobrar · sigue abonando`
+                detail: operationalProgress.mode === 'unified'
+                    ? `${pendingUnits} pendientes · ${paidUnits} cobrados`
+                    : `${formatMoney(pending)} por cobrar · sigue abonando`
             };
         }
 
         return {
             tone: 'fiado',
             label: 'Fiado activo',
-            detail: `${formatMoney(pending)} por cobrar${review > 0 ? ' · con revisión pendiente' : ''}`
+            detail: operationalProgress.mode === 'unified'
+                ? `${pendingUnits} pendientes${review > 0 ? ' · con revisión pendiente' : ''}`
+                : `${formatMoney(pending)} por cobrar${review > 0 ? ' · con revisión pendiente' : ''}`
         };
     }
 
@@ -403,9 +668,13 @@ function resolveBuyerStatus(row) {
         return {
             tone: 'pagado',
             label: 'Pagado',
-            detail: loss > 0
-                ? `Saldo cobrado con ${formatMoney(loss)} cerrados como pérdida`
-                : 'Cuenta cerrada sin saldo pendiente'
+            detail: operationalProgress.mode === 'unified'
+                ? (loss > 0
+                    ? `${paidUnits} cobrados · ${lossUnits} en pérdida`
+                    : `${paidUnits} cobrados · sin saldo pendiente`)
+                : (loss > 0
+                    ? `Saldo cobrado con ${formatMoney(loss)} cerrados como pérdida`
+                    : 'Cuenta cerrada sin saldo pendiente')
         };
     }
 
@@ -413,7 +682,9 @@ function resolveBuyerStatus(row) {
         return {
             tone: 'perdido',
             label: 'Pérdida',
-            detail: `${formatMoney(loss)} cerrados fuera de cartera`
+            detail: operationalProgress.mode === 'unified'
+                ? `${lossUnits} cerrados fuera de cartera`
+                : `${formatMoney(loss)} cerrados fuera de cartera`
         };
     }
 
@@ -736,82 +1007,6 @@ function renderHeaderSummary(filteredRows, options = {}) {
     `;
 }
 
-function renderCardSignal(row) {
-    const paid = Math.max(4, Math.round(clampPercent(getPaidPercent(row)) / 7) + 4);
-    const pending = Math.max(4, Math.round(clampPercent((getOutstandingBalance(row) / Math.max(getProgressBase(row), 1)) * 100) / 7) + 4);
-    const thirdMetric = Math.max(Number(row?.loss_total || 0), getReviewTotal(row));
-    const third = Math.max(4, Math.round(clampPercent((thirdMetric / Math.max(getProgressBase(row), 1)) * 100) / 7) + 4);
-    const thirdClass = Number(row?.loss_total || 0) > 0 ? 'is-loss' : 'is-review';
-
-    return `
-        <svg class="cartera-viva-card__signal" viewBox="0 0 28 18" role="img" aria-label="Señal rápida del cliente">
-            <rect x="1" y="${18 - paid}" width="6" height="${paid}" rx="2"></rect>
-            <rect x="11" y="${18 - pending}" width="6" height="${pending}" rx="2"></rect>
-            <rect class="${thirdClass}" x="21" y="${18 - third}" width="6" height="${third}" rx="2"></rect>
-        </svg>
-    `;
-}
-
-function renderSupportChips(row) {
-    const chips = [];
-    const review = getReviewTotal(row);
-
-    if (Number(row?.loss_total || 0) > 0) {
-        chips.push(`<span class="cartera-viva-chip is-loss">Pérdida ${formatMoney(row.loss_total)}</span>`);
-    }
-    if (review > 0) {
-        chips.push(`<span class="cartera-viva-chip is-review">Por revisar ${formatMoney(review)}</span>`);
-    }
-    if (Number(row?.non_debt_income_total || 0) > 0) {
-        chips.push(`<span class="cartera-viva-chip">Ingreso aparte ${formatMoney(row.non_debt_income_total)}</span>`);
-    }
-
-    if (chips.length <= 0) return '';
-
-    return `
-        <div class="cartera-viva-card__chips">
-            ${chips.join('')}
-        </div>
-    `;
-}
-
-function renderProgressBlock(row, options = {}) {
-    const large = options.large === true;
-    const noLegend = options.noLegend === true;
-    const breakdown = getProgressBreakdown(row);
-    const pending = getOutstandingBalance(row);
-    const loss = Number(row?.loss_total || 0);
-    const base = Math.max(breakdown.base, 0);
-    const label = base > 0 ? `Cobrado de ${formatMoney(base)}` : 'Sin base';
-    let footer = base > 0 ? 'Saldo cerrado' : 'Listo para registrar';
-
-    if (pending > 0) {
-        footer = `Faltan ${formatMoney(pending)}`;
-    } else if (loss > 0) {
-        footer = `${formatMoney(loss)} como pérdida`;
-    }
-
-    return `
-        <section class="cartera-viva-progress${large ? ' cartera-viva-progress--large' : ''}">
-            <div class="cartera-viva-progress__head">
-                <span class="cartera-viva-progress__label">${label}</span>
-                <span class="cartera-viva-progress__value">${formatPercent(breakdown.paidPercent)}</span>
-            </div>
-            <div class="cartera-viva-progress__track">
-                ${breakdown.paidShare > 0 ? `<span class="cartera-viva-progress__segment is-paid" style="width:${breakdown.paidShare}%"></span>` : ''}
-                ${breakdown.pendingShare > 0 ? `<span class="cartera-viva-progress__segment is-pending" style="width:${breakdown.pendingShare}%"></span>` : ''}
-                ${breakdown.lossShare > 0 ? `<span class="cartera-viva-progress__segment is-loss" style="width:${breakdown.lossShare}%"></span>` : ''}
-            </div>
-            ${!noLegend ? `
-            <div class="cartera-viva-progress__legend">
-                <span>${formatMoney(row?.paid_total || 0)} cobrados</span>
-                <span>${footer}</span>
-            </div>
-            ` : ''}
-        </section>
-    `;
-}
-
 function renderSearchBar() {
     return `
         <label class="cartera-viva-search" aria-label="Buscar cliente">
@@ -881,7 +1076,9 @@ function renderToolbarControls() {
         <div class="cartera-viva-toolbar">
             ${renderSearchBar()}
             <div class="cartera-viva-toolbar__row">
-                ${renderCropSelector()}
+                <div data-cartera-crop-picker-slot>
+                    ${renderCropSelector()}
+                </div>
                 <button type="button" class="cartera-viva-quick-action" data-cartera-new-client>
                     Nuevo cliente
                 </button>
@@ -937,103 +1134,215 @@ function renderCategoryControls(counts) {
     }).join('');
 }
 
-function renderPortfolioCards(filteredRows) {
-    return filteredRows.map((row) => {
-        const category = resolveDisplayCategory(row);
-        const loss = Number(row?.loss_total || 0);
-        const pending = getOutstandingBalance(row);
-        const paid = Number(row?.paid_total || 0);
-        const credited = Number(row?.credited_total || 0);
-        const review = getReviewTotal(row);
-        const hasReview = getReviewTotal(row) > 0;
-        const isArchived = String(row?.client_status || '').trim().toLowerCase() === 'archived';
-        const status = category === 'pagados'
-            ? {
-                tone: 'pagado',
-                label: 'Cobro',
-                detail: `${formatMoney(paid)} ya cobrados${pending > 0 ? ` · quedan ${formatMoney(pending)}` : ''}`
-            }
-            : category === 'perdidos'
-                ? {
-                    tone: 'perdido',
-                    label: 'Pérdida',
-                    detail: `${formatMoney(loss)} cerrados como pérdida${paid > 0 ? ` · ${formatMoney(paid)} cobrados antes` : ''}`
-                }
-                : (review > 0 && pending <= 0
-                    ? {
-                        tone: 'review',
-                        label: 'Por revisar',
-                        detail: `${formatMoney(review)} pendientes por ordenar`
-                    }
-                    : {
-                        tone: 'fiado',
-                        label: 'Fiado',
-                        detail: `${formatMoney(pending)} por cobrar${paid > 0 ? ` · ${formatMoney(paid)} ya cobrados` : ''}`
-                    });
-        const primaryMetric = category === 'pagados'
-            ? { label: 'Cobrado', value: formatMoney(paid) }
-            : category === 'perdidos'
-                ? { label: 'Perdido', value: formatMoney(loss) }
-                : { label: 'Pendiente', value: formatMoney(pending) };
-        const secondaryMetric = category === 'pagados'
-            ? { label: 'Pendiente', value: formatMoney(pending) }
-            : category === 'perdidos'
-                ? { label: 'Cobrado', value: formatMoney(paid) }
-                : { label: 'Cobrado', value: formatMoney(paid) };
-        const tertiaryMetric = category === 'perdidos'
-            ? { label: 'Fiado origen', value: formatMoney(credited) }
-            : { label: 'Por revisar', value: formatMoney(review) };
+function getOperationalCardMetrics(row) {
+    const operationalProgress = getOperationalProgress(row);
 
-        return `
-            <article class="cartera-viva-card cartera-viva-card--${category}${row?.requires_review ? ' is-review' : ''}">
-                <header class="cartera-viva-card__head">
-                    <div class="cartera-viva-card__identity">
-                        <h3 class="cartera-viva-card__title">${escapeHtml(row?.display_name || 'Cliente sin nombre')}</h3>
-                        <p class="cartera-viva-card__subtitle">${escapeHtml(status.detail)}</p>
-                    </div>
-                    <div class="cartera-viva-card__head-side">
-                        <span class="cartera-viva-badge cartera-viva-badge--${status.tone}">${status.label}</span>
-                        ${isArchived ? '<span class="cartera-viva-badge cartera-viva-badge--review">Archivado</span>' : ''}
-                        ${hasReview ? '<span class="cartera-viva-badge cartera-viva-badge--review">Revisar</span>' : ''}
-                    </div>
-                </header>
+    if (operationalProgress.mode === 'unified') {
+        return {
+            mode: 'unified',
+            progressLabel: `Avance por ${formatOperationalUnitLabel(operationalProgress.unitType, operationalProgress.total)}`,
+            progressValue: formatPercent(operationalProgress.percent),
+            legendStart: `Base ${operationalProgress.totalLabel}`,
+            legendEnd: `${operationalProgress.pendingLabel} pendientes`,
+            metrics: [
+                { label: 'Pendiente', value: operationalProgress.pendingLabel },
+                { label: 'Cobrado', value: operationalProgress.paidLabel },
+                { label: 'Pérdida', value: operationalProgress.lossLabel }
+            ]
+        };
+    }
 
-                ${renderProgressBlock(row, { noLegend: true })}
-                ${renderSupportChips(row)}
+    if (operationalProgress.mode === 'mixed') {
+        return {
+            mode: 'mixed',
+            progressLabel: 'Avance no unificado',
+            progressValue: 'Sin %',
+            legendStart: 'Unidades incompatibles',
+            legendEnd: 'Revisa unidad canónica',
+            metrics: [
+                { label: 'Pendiente', value: 'No unificado' },
+                { label: 'Cobrado', value: 'No unificado' },
+                { label: 'Pérdida', value: 'No unificado' }
+            ]
+        };
+    }
 
-                <dl class="cartera-viva-card__metrics">
-                    <div class="cartera-viva-card__metric">
-                        <dt>${primaryMetric.label}</dt>
-                        <dd>${primaryMetric.value}</dd>
-                    </div>
-                    <div class="cartera-viva-card__metric">
-                        <dt>${secondaryMetric.label}</dt>
-                        <dd>${secondaryMetric.value}</dd>
-                    </div>
-                    <div class="cartera-viva-card__metric">
-                        <dt>${tertiaryMetric.label}</dt>
-                        <dd>${tertiaryMetric.value}</dd>
-                    </div>
-                </dl>
+    return {
+        mode: 'none',
+        progressLabel: 'Sin base operativa',
+        progressValue: 'Sin %',
+        legendStart: 'Sin unidades registradas',
+        legendEnd: 'Usa unidad canónica',
+        metrics: [
+            { label: 'Pendiente', value: 'Sin unidades' },
+            { label: 'Cobrado', value: 'Sin unidades' },
+            { label: 'Pérdida', value: 'Sin unidades' }
+        ]
+    };
+}
 
-                <div class="cartera-viva-card__footer">
-                    <button
-                        type="button"
-                        class="cartera-viva-detail-link"
-                        data-cartera-edit-client="${escapeHtml(row?.buyer_id || '')}">
-                        Editar cliente
-                    </button>
-                    <button
-                        type="button"
-                        class="cartera-viva-detail-link"
-                        data-cartera-open-history="${escapeHtml(row?.buyer_id || '')}"
-                        data-cartera-open-history-scope="${escapeHtml(category)}">
-                        Ver detalle
-                    </button>
+function renderOperationalProgressTrack(row) {
+    const breakdown = getProgressBreakdown(row);
+    if (breakdown.mode !== 'unified' || breakdown.base <= 0) {
+        return '<span class="cartera-viva-progress__segment is-neutral" style="width:100%"></span>';
+    }
+
+    return `
+        ${breakdown.paidShare > 0 ? `<span class="cartera-viva-progress__segment is-paid" style="width:${breakdown.paidShare}%"></span>` : ''}
+        ${breakdown.pendingShare > 0 ? `<span class="cartera-viva-progress__segment is-pending" style="width:${breakdown.pendingShare}%"></span>` : ''}
+        ${breakdown.lossShare > 0 ? `<span class="cartera-viva-progress__segment is-loss" style="width:${breakdown.lossShare}%"></span>` : ''}
+    `;
+}
+
+function getSignalHeight(share, minimum = 4) {
+    return Math.max(minimum, Math.round(clampPercent(share) / 7) + minimum);
+}
+
+function renderCardSignal(row) {
+    const operationalProgress = getOperationalProgress(row);
+    let paid = 6;
+    let pending = 6;
+    let third = 6;
+    let thirdClass = 'is-review';
+
+    if (operationalProgress.mode === 'unified' && operationalProgress.total > 0) {
+        paid = getSignalHeight(operationalProgress.paidShare);
+        pending = getSignalHeight(operationalProgress.pendingShare);
+        third = getSignalHeight(operationalProgress.lossShare);
+        thirdClass = 'is-loss';
+    } else if (operationalProgress.mode === 'mixed') {
+        pending = 10;
+    }
+
+    return `
+        <svg class="cartera-viva-card__signal" viewBox="0 0 28 18" role="img" aria-label="Señal rápida del cliente">
+            <rect x="1" y="${18 - paid}" width="6" height="${paid}" rx="2"></rect>
+            <rect x="11" y="${18 - pending}" width="6" height="${pending}" rx="2"></rect>
+            <rect class="${thirdClass}" x="21" y="${18 - third}" width="6" height="${third}" rx="2"></rect>
+        </svg>
+    `;
+}
+
+function renderSupportChips(row) {
+    const chips = [];
+    const review = getReviewTotal(row);
+    const operationalProgress = getOperationalProgress(row);
+
+    if (operationalProgress.mode === 'mixed') {
+        chips.push('<span class="cartera-viva-chip is-review">Avance no unificado</span>');
+    } else if (operationalProgress.mode === 'none') {
+        chips.push('<span class="cartera-viva-chip">Sin base operativa</span>');
+    }
+
+    if (Number(row?.loss_total || 0) > 0) {
+        chips.push(`<span class="cartera-viva-chip is-loss">Pérdida ${formatMoney(row.loss_total)}</span>`);
+    }
+    if (review > 0) {
+        chips.push(`<span class="cartera-viva-chip is-review">Por revisar ${formatMoney(review)}</span>`);
+    }
+    if (Number(row?.non_debt_income_total || 0) > 0) {
+        chips.push(`<span class="cartera-viva-chip">Ingreso aparte ${formatMoney(row.non_debt_income_total)}</span>`);
+    }
+
+    if (chips.length <= 0) return '';
+
+    return `
+        <div class="cartera-viva-card__chips">
+            ${chips.join('')}
+        </div>
+    `;
+}
+
+function renderProgressBlock(row, options = {}) {
+    const large = options.large === true;
+    const noLegend = options.noLegend === true;
+    const metrics = getOperationalCardMetrics(row);
+
+    return `
+        <section class="cartera-viva-progress${large ? ' cartera-viva-progress--large' : ''}">
+            <div class="cartera-viva-progress__head">
+                <span class="cartera-viva-progress__label">${metrics.progressLabel}</span>
+                <span class="cartera-viva-progress__value">${metrics.progressValue}</span>
+            </div>
+            <div class="cartera-viva-progress__track">
+                ${renderOperationalProgressTrack(row)}
+            </div>
+            ${!noLegend ? `
+            <div class="cartera-viva-progress__legend">
+                <span>${metrics.legendStart}</span>
+                <span>${metrics.legendEnd}</span>
+            </div>
+            ` : ''}
+        </section>
+    `;
+}
+
+function renderPortfolioCard(row) {
+    const category = resolveDisplayCategory(row);
+    const status = resolveBuyerStatus(row);
+    const metrics = getOperationalCardMetrics(row);
+    const hasReview = getReviewTotal(row) > 0;
+    const isArchived = String(row?.client_status || '').trim().toLowerCase() === 'archived';
+    const safeBuyerId = escapeHtml(row?.buyer_id || '');
+    const safeScope = escapeHtml(category);
+    const safeEntryKey = escapeHtml(row?.__portfolioEntryKey || '');
+
+    return `
+        <article
+            class="cartera-viva-card cartera-viva-card--${category}${row?.requires_review ? ' is-review' : ''}"
+            data-portfolio-entry-key="${safeEntryKey}">
+            <header class="cartera-viva-card__head">
+                <div class="cartera-viva-card__identity">
+                    <h3 class="cartera-viva-card__title">${escapeHtml(row?.display_name || 'Cliente sin nombre')}</h3>
+                    <p class="cartera-viva-card__subtitle">${escapeHtml(status.detail)}</p>
                 </div>
-            </article>
-        `;
-    }).join('');
+                <div class="cartera-viva-card__head-side">
+                    ${renderCardSignal(row)}
+                    <span class="cartera-viva-badge cartera-viva-badge--${status.tone}">${status.label}</span>
+                    ${isArchived ? '<span class="cartera-viva-badge cartera-viva-badge--review">Archivado</span>' : ''}
+                    ${hasReview ? '<span class="cartera-viva-badge cartera-viva-badge--review">Revisar</span>' : ''}
+                </div>
+            </header>
+
+            ${renderProgressBlock(row, { noLegend: true })}
+            ${renderSupportChips(row)}
+
+            <dl class="cartera-viva-card__metrics">
+                ${metrics.metrics.map((metric) => `
+                    <div class="cartera-viva-card__metric">
+                        <dt>${metric.label}</dt>
+                        <dd>${metric.value}</dd>
+                    </div>
+                `).join('')}
+            </dl>
+
+            <div class="cartera-viva-card__footer">
+                <button
+                    type="button"
+                    class="cartera-viva-detail-link"
+                    data-cartera-edit-client="${safeBuyerId}">
+                    Editar cliente
+                </button>
+                <button
+                    type="button"
+                    class="cartera-viva-detail-link"
+                    data-cartera-open-history="${safeBuyerId}"
+                    data-cartera-open-history-scope="${safeScope}">
+                    Ver detalle
+                </button>
+                <button
+                    type="button"
+                    class="cartera-viva-quick-action cartera-viva-quick-action--danger"
+                    data-cartera-delete-client="${safeBuyerId}">
+                    Eliminar cliente canónico
+                </button>
+            </div>
+        </article>
+    `;
+}
+
+function renderPortfolioCards(filteredRows) {
+    return filteredRows.map((row) => renderPortfolioCard(row)).join('');
 }
 
 function renderEmptyState(config = {}) {
@@ -1079,7 +1388,7 @@ function getSelectedBuyerRow() {
     return summaryRows.find((row) => String(row?.buyer_id || '') === selectedBuyerId) || null;
 }
 
-function renderListView(root) {
+function getListViewState() {
     const selectedCropId = getSelectedCropId();
     const cropScopedRows = getCropScopedRows(summaryRows);
     const shouldBlockInitialLoading = !hasLoadedSummary && !lastErrorMessage;
@@ -1089,25 +1398,33 @@ function renderListView(root) {
         : filterRowsByCategory(cropScopedRows, activeCategory);
     const categoryCounts = getCategoryCounts(cropScopedRows);
     const filteredRows = filterRowsByCategory(cropScopedRows, activeCategory);
+    let bodyMode = 'grid';
     let bodyContent = '';
+
     if (shouldBlockInitialLoading) {
+        bodyMode = 'loading';
         bodyContent = renderLoadingState();
     } else if (visibleCropScopeLoading && selectedCropId) {
+        bodyMode = 'crop-loading';
         bodyContent = renderEmptyState({
             title: 'Cargando clientes del cultivo',
             copy: `Buscando movimientos visibles para ${getSelectedCropShortLabel()}.`
         });
     } else if (visibleCropScopeError && selectedCropId) {
+        bodyMode = 'error';
         bodyContent = renderErrorState(visibleCropScopeError);
     } else if (lastErrorMessage) {
+        bodyMode = 'error';
         bodyContent = renderErrorState(lastErrorMessage);
     } else if (summaryRows.length <= 0) {
+        bodyMode = 'empty';
         bodyContent = renderEmptyState({
             title: 'Todavía no hay clientes en Cartera Viva',
             copy: 'Crea tu primer cliente para empezar a registrar su historial desde aquí.',
             action: 'new-client'
         });
     } else if (filteredRows.length <= 0) {
+        bodyMode = 'empty';
         const categoryMeta = CATEGORY_META[activeCategory];
         bodyContent = renderEmptyState({
             title: searchQuery ? 'Sin coincidencias en esta vista' : categoryMeta.emptyTitle,
@@ -1118,15 +1435,40 @@ function renderListView(root) {
                     : categoryMeta.emptyCopy)
         });
     } else {
-        bodyContent = `
-            <div class="cartera-viva-grid">
-                ${renderPortfolioCards(filteredRows)}
+        bodyContent = '';
+    }
+
+    return {
+        selectedCropId,
+        cropScopedRows,
+        shouldBlockInitialLoading,
+        isSoftRefreshing,
+        summaryRowsForHeader,
+        categoryCounts,
+        filteredRows,
+        bodyMode,
+        bodyContent
+    };
+}
+
+function renderListBody(state) {
+    if (state.bodyMode === 'grid') {
+        return `
+            <div class="cartera-viva-grid" data-cartera-grid>
+                ${renderPortfolioCards(state.filteredRows)}
             </div>
         `;
     }
+    return state.bodyContent;
+}
 
-    root.innerHTML = `
-        <section class="cartera-viva-view${isSoftRefreshing ? ' is-refreshing' : ''}" aria-label="Cartera de clientes" aria-busy="${loading ? 'true' : 'false'}">
+function renderListViewMarkup(state) {
+    return `
+        <section
+            class="cartera-viva-view${state.isSoftRefreshing ? ' is-refreshing' : ''}"
+            data-cartera-list-view
+            aria-label="Cartera de clientes"
+            aria-busy="${loading ? 'true' : 'false'}">
             <header class="cartera-viva-view__header">
                 ${renderCommercialFamilyNav('cartera-viva')}
                 <div class="cartera-viva-view__headline">
@@ -1144,22 +1486,140 @@ function renderListView(root) {
                     </button>
                 </div>
             </div>
-                ${renderHeaderSummary(summaryRowsForHeader, { loading: shouldBlockInitialLoading })}
+                <div data-cartera-summary-slot>
+                    ${renderHeaderSummary(state.summaryRowsForHeader, { loading: state.shouldBlockInitialLoading })}
+                </div>
             </header>
 
             ${renderToolbarControls()}
 
-            <div class="cartera-viva-category-bar" role="group" aria-label="Categorias de Cartera Viva">
-                ${renderCategoryControls(categoryCounts)}
+            <div class="cartera-viva-category-bar" data-cartera-category-bar role="group" aria-label="Categorias de Cartera Viva">
+                ${renderCategoryControls(state.categoryCounts)}
             </div>
 
-            <p class="cartera-viva-view__note">${renderScopeNote()}</p>
+            <p class="cartera-viva-view__note" data-cartera-scope-note>${renderScopeNote()}</p>
 
-            <div class="cartera-viva-view__body">
-                ${bodyContent}
+            <div class="cartera-viva-view__body" data-cartera-view-body>
+                ${renderListBody(state)}
             </div>
         </section>
     `;
+}
+
+function createPortfolioCardElement(row) {
+    const template = document.createElement('template');
+    template.innerHTML = renderPortfolioCard(row).trim();
+    return template.content.firstElementChild;
+}
+
+function updatePortfolioCardNode(cardNode, row) {
+    const nextNode = createPortfolioCardElement(row);
+    if (!nextNode) return;
+    cardNode.className = nextNode.className;
+    cardNode.setAttribute('data-portfolio-entry-key', nextNode.getAttribute('data-portfolio-entry-key') || '');
+    cardNode.innerHTML = nextNode.innerHTML;
+}
+
+function updatePortfolioGrid(gridNode, rows) {
+    if (!gridNode) return;
+
+    const existingNodes = new Map(
+        Array.from(gridNode.querySelectorAll('[data-portfolio-entry-key]')).map((node) => [
+            String(node.getAttribute('data-portfolio-entry-key') || '').trim(),
+            node
+        ])
+    );
+    const fragment = document.createDocumentFragment();
+
+    rows.forEach((row) => {
+        const entryKey = String(row?.__portfolioEntryKey || '').trim();
+        let cardNode = existingNodes.get(entryKey) || null;
+        if (cardNode) {
+            updatePortfolioCardNode(cardNode, row);
+            existingNodes.delete(entryKey);
+        } else {
+            cardNode = createPortfolioCardElement(row);
+        }
+        if (cardNode) fragment.appendChild(cardNode);
+    });
+
+    existingNodes.forEach((node) => node.remove());
+    gridNode.replaceChildren(fragment);
+}
+
+function updateListBody(bodyNode, state) {
+    if (!bodyNode) return;
+
+    const currentGrid = bodyNode.querySelector('[data-cartera-grid]');
+    if (state.bodyMode !== 'grid') {
+        if (loading && currentGrid && state.bodyMode !== 'error') {
+            return;
+        }
+        bodyNode.innerHTML = renderListBody(state);
+        return;
+    }
+
+    if (!currentGrid) {
+        bodyNode.innerHTML = renderListBody(state);
+        return;
+    }
+
+    updatePortfolioGrid(currentGrid, state.filteredRows);
+}
+
+function patchListView(root, state) {
+    const viewNode = root.querySelector('[data-cartera-list-view]');
+    if (!viewNode) return;
+
+    viewNode.className = `cartera-viva-view${state.isSoftRefreshing ? ' is-refreshing' : ''}`;
+    viewNode.setAttribute('aria-busy', loading ? 'true' : 'false');
+
+    const refreshButton = viewNode.querySelector('[data-cartera-refresh]');
+    if (refreshButton) {
+        refreshButton.disabled = loading;
+        refreshButton.textContent = loading ? 'Actualizando…' : 'Actualizar';
+    }
+
+    const summarySlot = viewNode.querySelector('[data-cartera-summary-slot]');
+    if (summarySlot) {
+        summarySlot.innerHTML = renderHeaderSummary(state.summaryRowsForHeader, {
+            loading: state.shouldBlockInitialLoading
+        });
+    }
+
+    const searchInput = viewNode.querySelector('[data-cartera-search]');
+    if (searchInput && document.activeElement !== searchInput && searchInput.value !== searchQuery) {
+        searchInput.value = searchQuery;
+    }
+
+    const cropSlot = viewNode.querySelector('[data-cartera-crop-picker-slot]');
+    if (cropSlot) {
+        cropSlot.innerHTML = renderCropSelector();
+    }
+
+    const categoryBar = viewNode.querySelector('[data-cartera-category-bar]');
+    if (categoryBar) {
+        categoryBar.innerHTML = renderCategoryControls(state.categoryCounts);
+    }
+
+    const scopeNote = viewNode.querySelector('[data-cartera-scope-note]');
+    if (scopeNote) {
+        scopeNote.textContent = renderScopeNote();
+    }
+
+    updateListBody(viewNode.querySelector('[data-cartera-view-body]'), state);
+}
+
+function renderListView(root) {
+    const state = getListViewState();
+    const hasShell = root.querySelector('[data-cartera-list-view]');
+
+    if (!hasShell) {
+        root.innerHTML = renderListViewMarkup(state);
+        return;
+    }
+
+    patchListView(root, state);
 }
 
 function renderView() {
@@ -1217,13 +1677,6 @@ function renderView() {
                 detailSelectedPair = String(nextPair || '').trim().toUpperCase() === 'USD/VES' ? 'USD/VES' : 'USD/COP';
                 writeStoredDetailPair(detailSelectedPair);
                 renderView();
-            },
-            onDeleteClient: () => {
-                const buyerRow = getSelectedBuyerRow();
-                if (!buyerRow?.buyer_id) return;
-                openBuyerProfileById(buyerRow.buyer_id, buyerRow.display_name || '', {
-                    focusAction: 'delete'
-                });
             }
         });
         return;
@@ -1274,12 +1727,22 @@ async function loadSummary() {
     renderView();
 
     try {
-        summaryRows = await fetchBuyerPortfolioSummary(supabase);
+        const selectedCropId = getSelectedCropId();
+        const [nextSummaryRows, nextOperationalProgress] = await Promise.all([
+            fetchBuyerPortfolioSummary(supabase),
+            fetchOperationalProgressMap(supabase, selectedCropId).catch((error) => {
+                console.warn('[CarteraViva] operational progress load failed:', error?.message || error);
+                return new Map();
+            })
+        ]);
+        summaryRows = nextSummaryRows;
+        operationalProgressMap = nextOperationalProgress;
         await syncVisibleCropScope({ render: false });
     } catch (error) {
         console.error('[CarteraViva] summary load failed:', error?.message || error);
         lastErrorMessage = String(error?.message || 'Error leyendo la cartera de clientes.');
         summaryRows = [];
+        operationalProgressMap = new Map();
         visibleCropScopeKeys = null;
         visibleCropScopeId = null;
         visibleCropScopeLoading = false;
@@ -1379,58 +1842,84 @@ async function exportBuyerDetail() {
 }
 
 function bindListViewEvents(root) {
-    root.querySelector('[data-cartera-search]')?.addEventListener('input', (event) => {
-        searchQuery = normalizeSearchQuery(event.target?.value);
+    if (root.dataset.carteraListEventsBound === '1') return;
+    root.dataset.carteraListEventsBound = '1';
+
+    root.addEventListener('input', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement)) return;
+        if (!target.matches('[data-cartera-search]')) return;
+        if (!root.querySelector('[data-cartera-list-view]')) return;
+
+        searchQuery = normalizeSearchQuery(target.value);
         writeStoredSearch(searchQuery);
         renderView();
     });
 
-    root.querySelectorAll('[data-cartera-category]').forEach((button) => {
-        button.addEventListener('click', () => {
-            const nextCategory = normalizeCategory(button.dataset.carteraCategory);
+    root.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        if (!root.querySelector('[data-cartera-list-view]')) return;
+
+        const categoryButton = target.closest('[data-cartera-category]');
+        if (categoryButton) {
+            const nextCategory = normalizeCategory(categoryButton.getAttribute('data-cartera-category'));
             if (nextCategory === activeCategory) return;
             activeCategory = nextCategory;
             writeStoredCategory(activeCategory);
             renderView();
-        });
-    });
+            return;
+        }
 
-    root.querySelector('[data-cartera-refresh]')?.addEventListener('click', () => {
-        loadSummary();
-    });
+        if (target.closest('[data-cartera-refresh]')) {
+            loadSummary();
+            return;
+        }
 
-    root.querySelectorAll('[data-cartera-new-client]').forEach((button) => {
-        button.addEventListener('click', () => {
+        if (target.closest('[data-cartera-new-client]')) {
             openNewBuyerProfile('');
-        });
-    });
+            return;
+        }
 
-    root.querySelectorAll('[data-cartera-crop]').forEach((button) => {
-        button.addEventListener('click', () => {
+        const cropButton = target.closest('[data-cartera-crop]');
+        if (cropButton) {
             if (typeof window === 'undefined' || typeof window.setSelectedCropId !== 'function') return;
-            const cropId = button.dataset.carteraCrop === CARTERA_VIVA_GENERAL_CROP_ID
+            const cropId = cropButton.getAttribute('data-cartera-crop') === CARTERA_VIVA_GENERAL_CROP_ID
                 ? null
-                : normalizeCropId(button.dataset.carteraCrop);
+                : normalizeCropId(cropButton.getAttribute('data-cartera-crop'));
             window.setSelectedCropId(cropId);
-        });
-    });
+            return;
+        }
 
-    root.querySelectorAll('[data-cartera-open-history]').forEach((button) => {
-        button.addEventListener('click', () => {
-            const buyerId = String(button.dataset.carteraOpenHistory || '').trim();
-            const ledgerScope = normalizeDetailLedgerScope(button.dataset.carteraOpenHistoryScope || activeCategory);
+        const detailButton = target.closest('[data-cartera-open-history]');
+        if (detailButton) {
+            const buyerId = String(detailButton.getAttribute('data-cartera-open-history') || '').trim();
+            const ledgerScope = normalizeDetailLedgerScope(
+                detailButton.getAttribute('data-cartera-open-history-scope') || activeCategory
+            );
             if (!buyerId) return;
             loadBuyerDetail(buyerId, { ledgerScope });
-        });
-    });
+            return;
+        }
 
-    root.querySelectorAll('[data-cartera-edit-client]').forEach((button) => {
-        button.addEventListener('click', () => {
-            const buyerId = String(button.dataset.carteraEditClient || '').trim();
+        const editButton = target.closest('[data-cartera-edit-client]');
+        if (editButton) {
+            const buyerId = String(editButton.getAttribute('data-cartera-edit-client') || '').trim();
             const row = summaryRows.find((entry) => String(entry?.buyer_id || '').trim() === buyerId) || null;
             if (!buyerId) return;
             openBuyerProfileById(buyerId, row?.display_name || '');
-        });
+            return;
+        }
+
+        const deleteButton = target.closest('[data-cartera-delete-client]');
+        if (deleteButton) {
+            const buyerId = String(deleteButton.getAttribute('data-cartera-delete-client') || '').trim();
+            const row = summaryRows.find((entry) => String(entry?.buyer_id || '').trim() === buyerId) || null;
+            if (!buyerId) return;
+            openBuyerProfileById(buyerId, row?.display_name || '', {
+                focusAction: 'delete'
+            });
+        }
     });
 }
 
@@ -1483,9 +1972,9 @@ function handleShellViewChanged(event) {
 
 async function handleCropContextUpdated() {
     if (String(document.body?.dataset?.agroActiveView || '').trim().toLowerCase() !== CARTERA_VIVA_VIEW) return;
-    await syncVisibleCropScope();
+    await loadSummary();
     if (selectedBuyerId) {
-        loadBuyerDetail(selectedBuyerId);
+        await loadBuyerDetail(selectedBuyerId);
         return;
     }
     renderView();

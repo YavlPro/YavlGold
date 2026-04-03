@@ -1450,7 +1450,6 @@ function renderBuyerSummary(buyerRow, options = {}) {
                 <button type="button" class="cartera-viva-quick-action" data-cartera-detail-record-tab="ingresos">Nuevo cobro</button>
                 <button type="button" class="cartera-viva-quick-action" data-cartera-detail-record-tab="perdidas">Nueva pérdida</button>
                 <button type="button" class="cartera-viva-quick-action" data-cartera-detail-edit-client>Editar cliente</button>
-                <button type="button" class="cartera-viva-quick-action cartera-viva-quick-action--danger" data-cartera-detail-delete-client>Eliminar cliente canónico</button>
             </div>
         </section>
     `;
@@ -1652,10 +1651,6 @@ export function renderBuyerHistoryDetail(root, options = {}) {
 
     root.querySelector('[data-cartera-detail-edit-client]')?.addEventListener('click', () => {
         options.onEditClient?.();
-    });
-
-    root.querySelector('[data-cartera-detail-delete-client]')?.addEventListener('click', () => {
-        options.onDeleteClient?.();
     });
 
     root.querySelectorAll('[data-cartera-detail-record-tab]').forEach((button) => {
