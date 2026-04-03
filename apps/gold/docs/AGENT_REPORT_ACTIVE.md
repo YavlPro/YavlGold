@@ -7659,3 +7659,66 @@ order by r.display_name asc;
 5. Ejecutar el SQL de verificación:
    - si `pending_total` es correcto y la UI ya refleja esos valores, el bug estaba en frontend;
    - si el RPC ya viene mal, el siguiente fix debe ser SQL y no de render.
+
+## [2026-04-02] Cartera Viva v2.1 — proyección de ciclos visibles y detalle más legible
+
+### Diagnóstico
+
+- El parpadeo restante ya no venía del summary principal, sino del detalle: cada refresh seguía re-renderizando toda la pantalla sin una señal visual suave de actualización.
+- El detalle estaba ordenado por día, pero seguía viéndose confuso porque:
+  - `agro_income` usaba label `Pago` en vez de `Cobro`;
+  - `agro_income` y `agro_losses` no mostraban cantidades/unidades en `meta`;
+  - los labels de historial no tenían una diferenciación visual suficientemente clara por tipo.
+- La lista seguía colapsando estados porque `resolveVisibleCategory()` imponía un solo bucket por buyer. Un cliente mixto con fiado + cobro + pérdida solo podía vivir en una categoría visible a la vez.
+
+### Cambios aplicados
+
+| Archivo | Líneas | Cambio |
+|---|---|---|
+| `agro/agro-cartera-viva-view.js` | 314-347 | Nueva proyección `buyer + categoría visible` para que un mismo cliente pueda aparecer en `Fiados`, `Pagados` y `Pérdidas` sin cambiar el RPC |
+| `agro/agro-cartera-viva-view.js` | 421-429 | Orden de cards ajustado por categoría visible y métrica primaria de ese ciclo |
+| `agro/agro-cartera-viva-view.js` | 931-1009 | Cards reescritas de forma mínima para mostrar badge y métricas coherentes por tipo: `Fiado`, `Cobro`, `Pérdida` |
+| `agro/agro-cartera-viva-detail.js` | 364-370 | `buildMovementMeta()` ahora acepta partes base y agrega unidades/cantidades también para cobros y pérdidas |
+| `agro/agro-cartera-viva-detail.js` | 446-510 | Timeline con labels explícitos y meta más clara: `Cobro`, `Pérdida`, causa/categoría + unidades |
+| `agro/agro-cartera-viva-detail.js` | 535-543 | Orden temporal más estable con `getHistorySortTimestamp()` |
+| `agro/agro-cartera-viva-detail.js` | 1191-1253 | Refresh suave en detalle: `isSoftRefreshing`, `aria-busy` y botón `Actualizando…` sin desmontar el historial cargado |
+| `agro/agro-cartera-viva.css` | 599-610 | Variantes visuales mínimas por tipo de card (`fiados`, `pagados`, `perdidos`) |
+| `agro/agro-cartera-viva.css` | 1028-1030 | Atenuación visual del detalle durante refresh |
+| `agro/agro-cartera-viva.css` | 1092-1110 | Labels del timeline con color por tipo (`pending`, `paid`, `loss`, `review`) |
+
+### Riesgo residual
+
+- La proyección multi-categoría ocurre solo en frontend; no cambia el RPC ni la semántica del backend.
+- Si más adelante producto decide que un buyer mixto debe renderizarse como entidad compuesta distinta, eso ya sería una fase mayor.
+- Sigue pendiente la decisión de producto sobre archivado/eliminación de clientes; esta sesión no toca eso.
+
+### Build status
+
+- `pnpm build:gold`: ✅ Exitoso
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observación no bloqueante:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+
+### QA sugerido
+
+1. Abrir un cliente que tenga mezcla de saldo pendiente, cobros y pérdidas.
+2. Verificar que ese cliente aparece:
+   - en `Fiados` con monto pendiente;
+   - en `Pagados` con monto cobrado;
+   - en `Pérdidas` con monto perdido.
+3. Entrar al detalle y confirmar que el timeline se lee con labels explícitos:
+   - `Fiado`
+   - `Cobro`
+   - `Pérdida`
+   - `Transferido a cobro`
+   - `Transferido a pérdida`
+4. Confirmar que cobros y pérdidas ahora muestran también sus unidades/cantidades cuando existan.
+5. Hacer refresh del detalle o disparar un cambio desde wizard y verificar que:
+   - no aparece vacío destructivo;
+   - se atenúa la vista mientras actualiza;
+   - el historial vuelve consistente al terminar.

@@ -311,6 +311,45 @@ function resolveVisibleCategory(row) {
     return 'fiados';
 }
 
+function resolveDisplayCategory(row) {
+    const explicitCategory = String(row?.__portfolioCategory || '').trim().toLowerCase();
+    return CATEGORY_ORDER.includes(explicitCategory)
+        ? explicitCategory
+        : resolveVisibleCategory(row);
+}
+
+function hasVisibleCategory(row, category) {
+    const safeCategory = normalizeCategory(category);
+    const pending = getOutstandingBalance(row);
+    const paid = Number(row?.paid_total || 0);
+    const loss = Number(row?.loss_total || 0);
+    const review = getReviewTotal(row);
+
+    if (safeCategory === 'pagados') return paid > 0;
+    if (safeCategory === 'perdidos') return loss > 0;
+    return pending > 0 || review > 0;
+}
+
+function buildPortfolioEntries(rows, category) {
+    const safeRows = Array.isArray(rows) ? rows.slice() : [];
+    const categories = category ? [normalizeCategory(category)] : CATEGORY_ORDER;
+
+    return safeRows.flatMap((row) => categories
+        .filter((candidate) => hasVisibleCategory(row, candidate))
+        .map((candidate) => ({
+            ...row,
+            __portfolioCategory: candidate,
+            __portfolioEntryKey: `${buildBuyerPortfolioScopeKey(row) || String(row?.buyer_id || row?.group_key || row?.display_name || 'cliente')}:${candidate}`
+        })));
+}
+
+function getCategorySortMetric(row, category) {
+    const safeCategory = normalizeCategory(category);
+    if (safeCategory === 'pagados') return Number(row?.paid_total || 0);
+    if (safeCategory === 'perdidos') return Number(row?.loss_total || 0);
+    return Math.max(getOutstandingBalance(row), getReviewTotal(row));
+}
+
 function resolveBuyerStatus(row) {
     const clientStatus = String(row?.client_status || 'active').trim().toLowerCase();
     const pending = getOutstandingBalance(row);
@@ -379,8 +418,13 @@ function resolveBuyerStatus(row) {
 }
 
 function comparePortfolioRows(a, b) {
-    const pendingDiff = getOutstandingBalance(b) - getOutstandingBalance(a);
-    if (pendingDiff !== 0) return pendingDiff;
+    const aCategory = resolveDisplayCategory(a);
+    const bCategory = resolveDisplayCategory(b);
+    const categoryDiff = CATEGORY_ORDER.indexOf(aCategory) - CATEGORY_ORDER.indexOf(bCategory);
+    if (categoryDiff !== 0) return categoryDiff;
+
+    const primaryDiff = getCategorySortMetric(b, bCategory) - getCategorySortMetric(a, aCategory);
+    if (primaryDiff !== 0) return primaryDiff;
 
     const reviewDiff = Number(b?.review_required_total || 0) - Number(a?.review_required_total || 0);
     if (reviewDiff !== 0) return reviewDiff;
@@ -418,9 +462,8 @@ function getCropScopedRows(rows) {
 }
 
 function filterRowsByCategory(rows, category) {
-    const safeRows = Array.isArray(rows) ? rows.slice() : [];
-    return safeRows
-        .filter((row) => resolveVisibleCategory(row) === category && matchesPortfolioSearch(row))
+    return buildPortfolioEntries(rows, category)
+        .filter((row) => matchesPortfolioSearch(row))
         .sort(comparePortfolioRows);
 }
 
@@ -887,24 +930,57 @@ function renderCategoryControls(counts) {
 
 function renderPortfolioCards(filteredRows) {
     return filteredRows.map((row) => {
-        const status = resolveBuyerStatus(row);
+        const category = resolveDisplayCategory(row);
         const loss = Number(row?.loss_total || 0);
         const pending = getOutstandingBalance(row);
-        const hasMovementTotals = pending > 0 || loss > 0 || Number(row?.paid_total || 0) > 0 || Number(row?.credited_total || 0) > 0;
-        const thirdMetricLabel = hasMovementTotals
-            ? (loss > 0 && pending <= 0 ? 'Pérdida' : 'Falta')
-            : 'Historial';
-        const thirdMetricValue = hasMovementTotals
-            ? (thirdMetricLabel === 'Pérdida' ? formatMoney(loss) : formatMoney(pending))
-            : '0 movimientos';
+        const paid = Number(row?.paid_total || 0);
+        const credited = Number(row?.credited_total || 0);
+        const review = getReviewTotal(row);
         const hasReview = getReviewTotal(row) > 0;
         const isArchived = String(row?.client_status || '').trim().toLowerCase() === 'archived';
+        const status = category === 'pagados'
+            ? {
+                tone: 'pagado',
+                label: 'Cobro',
+                detail: `${formatMoney(paid)} ya cobrados${pending > 0 ? ` · quedan ${formatMoney(pending)}` : ''}`
+            }
+            : category === 'perdidos'
+                ? {
+                    tone: 'perdido',
+                    label: 'Pérdida',
+                    detail: `${formatMoney(loss)} cerrados como pérdida${paid > 0 ? ` · ${formatMoney(paid)} cobrados antes` : ''}`
+                }
+                : (review > 0 && pending <= 0
+                    ? {
+                        tone: 'review',
+                        label: 'Por revisar',
+                        detail: `${formatMoney(review)} pendientes por ordenar`
+                    }
+                    : {
+                        tone: 'fiado',
+                        label: 'Fiado',
+                        detail: `${formatMoney(pending)} por cobrar${paid > 0 ? ` · ${formatMoney(paid)} ya cobrados` : ''}`
+                    });
+        const primaryMetric = category === 'pagados'
+            ? { label: 'Cobrado', value: formatMoney(paid) }
+            : category === 'perdidos'
+                ? { label: 'Perdido', value: formatMoney(loss) }
+                : { label: 'Pendiente', value: formatMoney(pending) };
+        const secondaryMetric = category === 'pagados'
+            ? { label: 'Pendiente', value: formatMoney(pending) }
+            : category === 'perdidos'
+                ? { label: 'Cobrado', value: formatMoney(paid) }
+                : { label: 'Cobrado', value: formatMoney(paid) };
+        const tertiaryMetric = category === 'perdidos'
+            ? { label: 'Fiado origen', value: formatMoney(credited) }
+            : { label: 'Por revisar', value: formatMoney(review) };
 
         return `
-            <article class="cartera-viva-card${row?.requires_review ? ' is-review' : ''}">
+            <article class="cartera-viva-card cartera-viva-card--${category}${row?.requires_review ? ' is-review' : ''}">
                 <header class="cartera-viva-card__head">
                     <div class="cartera-viva-card__identity">
                         <h3 class="cartera-viva-card__title">${escapeHtml(row?.display_name || 'Cliente sin nombre')}</h3>
+                        <p class="cartera-viva-card__subtitle">${escapeHtml(status.detail)}</p>
                     </div>
                     <div class="cartera-viva-card__head-side">
                         <span class="cartera-viva-badge cartera-viva-badge--${status.tone}">${status.label}</span>
@@ -918,16 +994,16 @@ function renderPortfolioCards(filteredRows) {
 
                 <dl class="cartera-viva-card__metrics">
                     <div class="cartera-viva-card__metric">
-                        <dt>Fiado</dt>
-                        <dd>${formatMoney(row?.credited_total)}</dd>
+                        <dt>${primaryMetric.label}</dt>
+                        <dd>${primaryMetric.value}</dd>
                     </div>
                     <div class="cartera-viva-card__metric">
-                        <dt>Cobrado</dt>
-                        <dd>${formatMoney(row?.paid_total)}</dd>
+                        <dt>${secondaryMetric.label}</dt>
+                        <dd>${secondaryMetric.value}</dd>
                     </div>
                     <div class="cartera-viva-card__metric">
-                        <dt>${thirdMetricLabel}</dt>
-                        <dd>${thirdMetricValue}</dd>
+                        <dt>${tertiaryMetric.label}</dt>
+                        <dd>${tertiaryMetric.value}</dd>
                     </div>
                 </dl>
 

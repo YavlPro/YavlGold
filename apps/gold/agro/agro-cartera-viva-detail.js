@@ -361,8 +361,10 @@ async function fetchBuyerScopedRows(supabaseClient, tableName, columns, buyerSco
     });
 }
 
-function buildMovementMeta(row) {
-    const parts = [];
+function buildMovementMeta(row, primaryParts = []) {
+    const parts = Array.isArray(primaryParts)
+        ? primaryParts.map((part) => String(part || '').trim()).filter(Boolean)
+        : [];
     const quantity = readHistoryItemField(row, ['unit_qty', 'quantity_kg']);
     const unitType = readHistoryItemField(row, ['unit_type']);
 
@@ -453,14 +455,14 @@ function buildIncomeHistoryRow(row) {
         source_tab: 'ingresos',
         source_id: String(row?.id || '').trim(),
         title: isReverted ? 'Cobro revertido' : (fromPending ? 'Cobro registrado' : 'Ingreso aparte'),
-        label: isReverted ? 'Revertido' : (fromPending ? 'Pago' : 'Ingreso aparte'),
+        label: isReverted ? 'Revertido' : (fromPending ? 'Cobro' : 'Ingreso aparte'),
         amount,
         currency: normalizeDetailCurrency(row?.currency),
         exchange_rate: Number(row?.exchange_rate) || null,
         fecha: row?.fecha || '',
         created_at: row?.created_at || '',
         concept: String(row?.concepto || '').trim(),
-        meta: String(row?.categoria || '').trim(),
+        meta: buildMovementMeta(row, [String(row?.categoria || '').trim()]),
         note: isReverted
             ? 'Este cobro fue devuelto a Fiados.'
             : isReview
@@ -505,7 +507,7 @@ function buildLossHistoryRow(row) {
         fecha: row?.fecha || '',
         created_at: row?.created_at || '',
         concept: String(row?.concepto || '').trim(),
-        meta: String(row?.causa || '').trim(),
+        meta: buildMovementMeta(row, [String(row?.causa || '').trim()]),
         note: isReverted
             ? 'Esta pérdida fue devuelta a Fiados.'
             : isReview
@@ -530,9 +532,15 @@ function buildLossHistoryRow(row) {
     };
 }
 
+function getHistorySortTimestamp(row) {
+    const createdAt = Date.parse(row?.created_at || '') || 0;
+    const explicitDate = Date.parse(row?.fecha || '') || 0;
+    return Math.max(explicitDate, createdAt, 0);
+}
+
 function compareHistoryRows(a, b) {
-    const aDate = Date.parse(a?.fecha || a?.created_at || '') || 0;
-    const bDate = Date.parse(b?.fecha || b?.created_at || '') || 0;
+    const aDate = getHistorySortTimestamp(a);
+    const bDate = getHistorySortTimestamp(b);
     return bDate - aDate;
 }
 
@@ -1145,7 +1153,7 @@ function createTimelineRowElement(row, options = {}) {
             <div class="cartera-viva-history-item__copy">
                 <div class="cartera-viva-history-item__head">
                     <h3 class="cartera-viva-history-item__title">${title}</h3>
-                    <span class="cartera-viva-history-item__label">${label}</span>
+                    <span class="cartera-viva-history-item__label cartera-viva-history-item__label--${escapeHtml(row?.tone || 'neutral')}">${label}</span>
                 </div>
                 ${meta}
                 ${concept}
@@ -1180,6 +1188,7 @@ export function renderBuyerHistoryDetail(root, options = {}) {
     const exchangeStatus = options.exchangeStatus && typeof options.exchangeStatus === 'object'
         ? options.exchangeStatus
         : {};
+    const isSoftRefreshing = loading && historyRows.length > 0;
     const visibleHistoryRows = filterHistoryRows(historyRows, historyFilter);
     const filterEmptyTitle = historyFilter === 'revertidos'
         ? 'Sin revertidos visibles'
@@ -1236,12 +1245,12 @@ export function renderBuyerHistoryDetail(root, options = {}) {
     }
 
     root.innerHTML = `
-        <section class="cartera-viva-view cartera-viva-view--detail" aria-label="Historial contextual por cliente">
+        <section class="cartera-viva-view cartera-viva-view--detail${isSoftRefreshing ? ' is-refreshing' : ''}" aria-label="Historial contextual por cliente" aria-busy="${isSoftRefreshing ? 'true' : 'false'}">
             ${renderCommercialFamilyNav('cartera-viva')}
             <div class="cartera-viva-detail__toolbar">
                 <button type="button" class="cartera-viva-back" data-cartera-detail-back>Volver</button>
                 <div class="cartera-viva-detail__toolbar-actions">
-                <button type="button" class="cartera-viva-refresh" data-cartera-detail-refresh>Actualizar</button>
+                <button type="button" class="cartera-viva-refresh" data-cartera-detail-refresh ${isSoftRefreshing ? 'disabled' : ''}>${isSoftRefreshing ? 'Actualizando…' : 'Actualizar'}</button>
                 <button type="button" class="cartera-viva-refresh" data-cartera-detail-create-cycle>Crear ciclo</button>
                 <button
                     type="button"

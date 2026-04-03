@@ -596,6 +596,18 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.018);
 }
 
+.cartera-viva-card--fiados {
+  border-color: rgba(200, 167, 82, 0.18);
+}
+
+.cartera-viva-card--pagados {
+  border-color: rgba(16, 185, 129, 0.18);
+}
+
+.cartera-viva-card--perdidos {
+  border-color: rgba(239, 68, 68, 0.22);
+}
+
 .cartera-viva-card.is-review {
   border-color: rgba(245, 158, 11, 0.36);
 }
@@ -1013,6 +1025,11 @@
   gap: 0.7rem;
 }
 
+.cartera-viva-view--detail.is-refreshing .cartera-viva-detail__summary,
+.cartera-viva-view--detail.is-refreshing .cartera-viva-detail__body {
+  opacity: 0.84;
+}
+
 .cartera-viva-detail__timeline .facturero-day-header {
   margin-top: 0.4rem;
   color: var(--gold-4);
@@ -1070,6 +1087,26 @@
 .cartera-viva-history-item__label {
   color: var(--text-secondary);
   background: rgba(255, 255, 255, 0.05);
+}
+
+.cartera-viva-history-item__label--pending {
+  color: var(--gold-5);
+  background: rgba(200, 167, 82, 0.12);
+}
+
+.cartera-viva-history-item__label--paid {
+  color: var(--color-success);
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.cartera-viva-history-item__label--loss {
+  color: var(--color-error);
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.cartera-viva-history-item__label--review {
+  color: var(--color-warning);
+  background: rgba(245, 158, 11, 0.12);
 }
 
 .cartera-viva-history-item__amount {
