@@ -7322,3 +7322,91 @@ check-dist-utf8: OK
    - "Falta" = fiado_total - cobrado - perdido - transferido
    - La barra de progreso muestra el porcentaje correcto
 5. **No debe verse:** valores en 0 o sin cambio después del cobro
+
+---
+
+## [2026-04-02] Fix quirúrgico: wizard ciclos operativos, cartera viva detail, transfer wizard
+
+### Diagnóstico
+
+6 bugs diagnosticados con causa raíz identificada en 4 archivos:
+
+**P1 — Wizard de Ciclos Operativos (CSS):**
+- `agro-operational-cycles.css` línea 990: `display: flex` en `.agro-operational-step-panel` sobreescribía el atributo HTML `[hidden]`.
+- Los 4 paneles del wizard eran visibles simultáneamente.
+
+**P4 — Barra de progreso a 0%:**
+- `agro-cartera-viva-view.js` `getPaidPercent()`: `Number.isFinite(0)` retorna `true`, así que cuando `compliance_percent = 0` del RPC, nunca ejecutaba el cálculo manual `paid_total / base`.
+
+**P5 — Transfer wizard con opciones legacy:**
+- `agro.js` `handlePendingTransfer` línea 7316: mostraba 6 opciones (Gastos, Donaciones, Otros, Fiados) que no funcionaban y mostraban un warning. Solo Pagados y Pérdidas eran funcionales.
+
+**P6 — Conteo de transferidos inflado:**
+- `agro-cartera-viva-detail.js` `isTransferRelatedHistoryRow` línea 634: contaba cualquier income/loss con `origin_table = 'agro_pending'` como transferencia, incluyendo cobros normales (quick action). Falta verificar `origin_id`.
+- `buildIncomeHistoryRow` y `buildLossHistoryRow` también seteaban `is_transfer_related` sin verificar `origin_id`.
+
+**P3 — Labels de transferencia:**
+- `buildPendingHistoryRow` líneas 391-396: "Fiado cerrado" era ambiguo. Debe decir "Transferido a cobro" o "Transferido a pérdida".
+
+**P2 — Registros desaparecen (REQUIERE QA MANUAL):**
+- La lógica de código (resolveVisibleCategory, getOutstandingBalance, filterRowsByCategory) es correcta.
+- El RPC `agro_buyer_portfolio_summary_v1` fue actualizado en commit `7cf6fab` para incluir zero-buyers.
+- No se puede confirmar sin acceso a Supabase: el usuario debe verificar si el RPC retorna los buyers esperados.
+
+### Cambios aplicados
+
+| Archivo | Líneas | Cambio |
+|---|---|---|
+| `agro/agro-operational-cycles.css` | +4 después de 994 | Agregada regla `.agro-operational-step-panel[hidden] { display: none !important; }` |
+| `agro/agro-cartera-viva-view.js` | 272 | `getPaidPercent`: cambiado `Number.isFinite(compliance)` a `Number.isFinite(compliance) && compliance > 0` para que 0 caiga al cálculo manual |
+| `agro/agro.js` | 7316-7323 | Eliminadas 4 opciones legacy del transfer wizard (Gastos, Donaciones, Otros, Fiados) |
+| `agro/agro-cartera-viva-detail.js` | 634 | `isTransferRelatedHistoryRow`: agregado requisito `origin_id` no vacío |
+| `agro/agro-cartera-viva-detail.js` | 478 | `buildIncomeHistoryRow`: `is_transfer_related` ahora requiere `origin_id` |
+| `agro/agro-cartera-viva-detail.js` | 523 | `buildLossHistoryRow`: `is_transfer_related` ahora requiere `origin_id` |
+| `agro/agro-cartera-viva-detail.js` | 391, 395 | Labels: "Fiado cerrado" → "Transferido a cobro" / "Transferido a pérdida" |
+
+### Build status
+- `pnpm build:gold`: ✅ Exitoso (154 modules, 3.17s)
+
+### QA sugerido (CHECKLIST PARA EL USUARIO)
+
+**P1 — Wizard de Ciclos Operativos:**
+1. Ir a Agro → Ciclos Operativos
+2. Click "Nuevo ciclo"
+3. Verificar que SOLO se ve el Paso 1 (nombre + descripción)
+4. Click "Siguiente" → Solo se ve Paso 2 (tipo económico + categoría)
+5. Click "Siguiente" → Solo se ve Paso 3 (monto + fecha)
+6. Click "Siguiente" → Solo se ve Paso 4 (confirmación con botón "Crear")
+7. Crear ciclo tipo Gasto → debe aparecer en la lista
+
+**P4 — Barra de progreso:**
+1. Ir a un cliente que tenga cobros registrados
+2. Verificar que la barra de "Avance" muestra un % > 0
+3. Si el cliente tiene $13.65 cobrado de $13.65 fiado → debe mostrar 100%
+
+**P5 — Transfer wizard:**
+1. Ir a un fiado activo
+2. Click "Transferir"
+3. Verificar que SOLO se ven 2 opciones: "Pagados" y "Pérdidas (Cancelado)"
+4. No deben aparecer: Gastos, Donaciones, Otros, Fiados
+
+**P6 — Conteo de transferidos:**
+1. Ir al detalle de un cliente
+2. Verificar que "Ver transferidos (N)" solo cuenta transferencias reales (con origin_id)
+3. Cobros creados via quick action ("Nuevo cobro") NO deben contar como transferidos
+
+**P3 — Labels:**
+1. Ir al detalle de un cliente que tenga fiados transferidos
+2. Verificar que un fiado transferido a cobro dice "Transferido a cobro" (no "Fiado cerrado")
+3. Verificar que un fiado transferido a pérdida dice "Transferido a pérdida"
+
+**P2 — Registros desaparecen (REQUIERE VERIFICACIÓN MANUAL):**
+1. En el dashboard de Supabase, ejecutar: `SELECT * FROM agro_buyer_portfolio_summary_v1();`
+2. Verificar que los 3 buyers de prueba aparecen en el resultado
+3. Si NO aparecen, el problema está en el RPC o en los datos, no en el código frontend
+4. Si SÍ aparecen, verificar que la categoría tabs muestra el conteo correcto
+
+### Lo que NO se resolvió
+
+- **P2 (registros desaparecen):** El código frontend es correcto. Si los datos no se muestran, el problema está en el RPC o en los datos de Supabase. Requiere verificación manual del usuario ejecutando el RPC directamente.
+- **Doble parpadeo al cargar:** `loadSummary()` llama `renderView()` dos veces (línea 1172 loading=true y línea 1188 loading=false). Esto es por diseño (skeleton → contenido), pero si causa parpadeo visual, se puede optimizar en una sesión futura.

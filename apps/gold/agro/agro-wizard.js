@@ -1720,7 +1720,13 @@ export async function openAgroWizard(tabName, deps) {
                     cause: insertData.causa,
                     originTable: insertData.origin_table
                 });
+                
+                const defaultOriginTable = insertData.origin_table;
                 Object.assign(insertData, buyerLink);
+
+                if (insertData.origin_table === null && defaultOriginTable) {
+                    insertData.origin_table = defaultOriginTable;
+                }
 
                 // BUGFIX: Only set origin_table = 'agro_pending' when wizard comes from
                 // Cartera Viva detail (debtContext flag). This ensures the RPC counts

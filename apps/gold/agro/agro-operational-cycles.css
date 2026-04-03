@@ -993,6 +993,10 @@ body.agro-operational-modal-open {
   gap: 0.9rem;
 }
 
+.agro-operational-step-panel[hidden] {
+  display: none !important;
+}
+
 .agro-operational-step-panel__head {
   display: flex;
   flex-direction: column;

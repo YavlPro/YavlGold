@@ -269,7 +269,7 @@ function getProgressBase(row) {
 
 function getPaidPercent(row) {
     const compliance = Number(row?.compliance_percent);
-    if (Number.isFinite(compliance)) return clampPercent(compliance);
+    if (Number.isFinite(compliance) && compliance > 0) return clampPercent(compliance);
 
     const base = getProgressBase(row);
     if (base <= 0) return 0;
@@ -461,7 +461,8 @@ function openRecordFromCarteraContext() {
         window.setSelectedCropId(context.cropId || null);
     }
     window.launchAgroWizard(context.wizardTab, {
-        initialCropId: context.cropId || null
+        initialCropId: context.cropId || null,
+        debtContext: true
     });
     return true;
 }

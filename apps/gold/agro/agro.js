@@ -7315,11 +7315,7 @@ async function handlePendingTransfer(itemId) {
         question: '¿A qué historial deseas transferir?',
         choices: [
             { value: 'income', label: 'Pagados', desc: 'Registrar como cobro realizado', variant: 'success' },
-            { value: 'losses', label: 'Pérdidas (Cancelado)', desc: 'Marcar como pérdida o cancelación', variant: 'danger' },
-            { value: 'gastos', label: 'Gastos', desc: 'Reclasificar como gasto operativo', variant: 'neutral' },
-            { value: 'transferencias', label: 'Donaciones', desc: 'Mover a donaciones o transferencias', variant: 'neutral' },
-            { value: 'otros', label: 'Otros', desc: 'Movimiento general sin categoría', variant: 'neutral' },
-            { value: 'pendientes', label: 'Fiados', desc: 'Ya está en fiados', variant: 'neutral', disabled: true }
+            { value: 'losses', label: 'Pérdidas (Cancelado)', desc: 'Marcar como pérdida o cancelación', variant: 'danger' }
         ]
     });
     if (!destination) return; // User cancelled

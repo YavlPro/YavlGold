@@ -387,11 +387,11 @@ function buildPendingHistoryRow(row) {
         note = 'Este fiado volvió a quedar activo después de una transferencia.';
         tone = 'review';
     } else if (transferState === 'transferred' && transferredTo === 'income') {
-        label = 'Fiado cerrado';
+        label = 'Transferido a cobro';
         note = 'Este saldo ya terminó como cobro.';
         tone = 'paid';
     } else if (transferState === 'transferred' && transferredTo === 'losses') {
-        label = 'Fiado cerrado';
+        label = 'Transferido a pérdida';
         note = 'Este saldo terminó cerrado como pérdida.';
         tone = 'loss';
     } else if (transferState === 'transferred') {
@@ -475,7 +475,7 @@ function buildIncomeHistoryRow(row) {
         reverted_at: row?.reverted_at || '',
         origin_table: String(row?.origin_table || '').trim().toLowerCase(),
         origin_id: String(row?.origin_id || '').trim(),
-        is_transfer_related: fromPending && !isReverted,
+        is_transfer_related: fromPending && !isReverted && Boolean(String(row?.origin_id || '').trim()),
         support_url_raw: String(row?.soporte_url || row?.evidence_url || '').trim(),
         support_url_resolved: '',
         support_label: 'Ver soporte'
@@ -520,7 +520,7 @@ function buildLossHistoryRow(row) {
         reverted_at: row?.reverted_at || '',
         origin_table: String(row?.origin_table || '').trim().toLowerCase(),
         origin_id: String(row?.origin_id || '').trim(),
-        is_transfer_related: fromPending && !isReverted,
+        is_transfer_related: fromPending && !isReverted && Boolean(String(row?.origin_id || '').trim()),
         support_url_raw: String(row?.evidence_url || row?.soporte_url || '').trim(),
         support_url_resolved: '',
         support_label: 'Ver soporte'
@@ -631,7 +631,7 @@ function isTransferRelatedHistoryRow(row) {
     const originTable = String(row?.origin_table || '').trim().toLowerCase();
 
     if (sourceTable === 'agro_pending' && transferState === 'transferred') return true;
-    if ((sourceTable === 'agro_income' || sourceTable === 'agro_losses') && originTable === 'agro_pending') return true;
+    if ((sourceTable === 'agro_income' || sourceTable === 'agro_losses') && originTable === 'agro_pending' && String(row?.origin_id || '').trim()) return true;
     return false;
 }
 
