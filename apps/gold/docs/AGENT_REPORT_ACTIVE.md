@@ -7787,3 +7787,58 @@ order by r.display_name asc;
    - validar que desaparece de Cartera Viva;
    - verificar en Supabase que los movimientos quedan con `deleted_at` y no visibles en el summary;
    - confirmar que social threads del `buyer_group_key` también se limpian.
+
+## [2026-04-03] Cartera Viva v2.3 — contexto real de detalle, refresh raíz estable y CTA visible
+
+### Diagnóstico
+
+- El detalle ya había separado `ledger` y `action`, pero todavía mostraba ambas narrativas al mismo tiempo. Eso seguía ensuciando la composición aunque la semántica de datos estuviera mejor.
+- La entrada a detalle no respetaba el contexto visual de origen. Entrar desde `Fiados`, `Pagados` o `Pérdidas` seguía abriendo un timeline canónico global en vez de un ledger contextual.
+- El parpadeo reportado en QA ya no estaba en la apertura del detalle, sino en el refresh de la vista raíz de Cartera Viva. `loadSummary()` no activaba explícitamente el modo soft-refresh cuando ya existía data en pantalla.
+- La lógica de borrado seguro existía, pero seguía escondida detrás del modal de cliente. De cara a producto, la acción todavía no estaba expuesta de forma explícita en el detalle.
+
+### Cambios aplicados
+
+| Archivo | Líneas | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro-cartera-viva-view.js` | 62, 1030, 1180-1225 | Se añadió `detailLedgerScope`, se pasa el contexto real desde la card de origen y se expone CTA visible para eliminar cliente canónico desde detalle |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 1271-1306 | `loadSummary()` ahora entra en soft-refresh desde el primer render y `loadBuyerDetail()` preserva o fija el scope contextual del ledger |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 1366, 1421-1443, 1519-1521 | Export y reaperturas del detalle respetan `ledgerScope`; el estado se resetea correctamente al salir |
+| `apps/gold/agro/agro-cartera-viva-detail.js` | 827-892 | Nuevo filtro de scope para ledger: `fiados`, `pagados`, `perdidos`, `todos`, incluyendo export contextual |
+| `apps/gold/agro/agro-cartera-viva-detail.js` | 918-999 | Las acciones del sistema pasan a disclosure compacta con contador/capa secundaria, en lugar de bloque grande compitiendo con el timeline principal |
+| `apps/gold/agro/agro-cartera-viva-detail.js` | 1453, 1510-1698 | El detalle ahora hereda el contexto de entrada, actualiza título/copy según el scope y muestra el botón `Eliminar cliente canónico` |
+| `apps/gold/agro/agro-cartera-viva.css` | 297-303 | Variante visual `danger` para el CTA explícito de eliminación |
+| `apps/gold/agro/agro-cartera-viva.css` | 869-980 | Estilos nuevos para disclosure compacta de acciones, pills y mini-items secundarios |
+| `apps/gold/agro/agrocompradores.js` | 117, 735-825 | El modal acepta `focusAction`, permitiendo que el CTA del detalle abra la ficha con foco directo en borrar |
+
+### Riesgo residual
+
+- El refresh raíz ya mantiene la vista montada durante `Actualizar`, pero sigue dependiendo de un rerender completo del root. Si QA todavía detecta micro-parpadeo, el siguiente paso sería una estrategia de patching incremental del body en vez de `innerHTML` completo.
+- El detalle contextual filtra el ledger principal por categoría de entrada. Las acciones secundarias siguen siendo globales del cliente, pero ahora están colapsadas y discretas.
+- El CTA visible de borrado abre la ficha con foco en la acción destructiva; el borrado seguro sigue dependiendo de la RPC ya creada y de que la migración esté aplicada.
+
+### Build status
+
+- `pnpm build:gold`: ✅ Exitoso
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observación no bloqueante:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+
+### QA sugerido
+
+1. Entrar desde la card de `Fiados` y confirmar que el detalle abre directamente en ledger de fiados.
+2. Repetir desde `Pagados` y `Pérdidas`, verificando que el timeline principal respeta el contexto de origen.
+3. Confirmar que las acciones del sistema ya no aparecen como bloque narrativo grande debajo del timeline, sino como disclosure compacta con contador.
+4. En la raíz de Cartera Viva, pulsar `Actualizar` varias veces y verificar que:
+   - la grilla no desaparece;
+   - el botón pasa a `Actualizando…`;
+   - la vista permanece montada durante el refresh.
+5. En detalle, pulsar `Eliminar cliente canónico` y confirmar que:
+   - se abre la ficha del cliente;
+   - el foco cae en la acción destructiva;
+   - el flujo de confirmación sigue siendo el de borrado seguro.

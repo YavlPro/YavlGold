@@ -824,6 +824,34 @@ function normalizeHistoryFilter(value) {
     return 'todos';
 }
 
+function normalizeLedgerScope(value) {
+    const token = String(value || '').trim().toLowerCase();
+    if (token === 'fiados') return 'fiados';
+    if (token === 'pagados') return 'pagados';
+    if (token === 'perdidos') return 'perdidos';
+    return 'todos';
+}
+
+function matchesLedgerScope(row, ledgerScope) {
+    const normalizedScope = normalizeLedgerScope(ledgerScope);
+    const sourceTab = String(row?.source_tab || '').trim().toLowerCase();
+    if (normalizedScope === 'fiados') return sourceTab === 'pendientes';
+    if (normalizedScope === 'pagados') return sourceTab === 'ingresos';
+    if (normalizedScope === 'perdidos') return sourceTab === 'perdidas';
+    return true;
+}
+
+function filterLedgerRowsByScope(rows, ledgerScope) {
+    const safeRows = Array.isArray(rows) ? rows : [];
+    const normalizedScope = normalizeLedgerScope(ledgerScope);
+    if (normalizedScope === 'todos') return safeRows;
+    return safeRows.filter((row) => matchesLedgerScope(row, normalizedScope));
+}
+
+function getLedgerScopeCount(rows, ledgerScope) {
+    return filterLedgerRowsByScope(rows, ledgerScope).length;
+}
+
 function isActionHistoryRow(row) {
     return row && typeof row === 'object' && String(row?.row_kind || '').trim().toLowerCase() === 'action';
 }
@@ -856,17 +884,21 @@ function getHistoryFilterCount(rows, filterMode) {
     return filterHistoryRows(rows, filterMode).length;
 }
 
-export function getVisibleBuyerHistoryRows(rows, filterMode) {
-    return filterHistoryRows(rows, filterMode);
+export function getVisibleBuyerHistoryRows(rows, filterMode, ledgerScope = 'todos') {
+    const normalizedFilter = normalizeHistoryFilter(filterMode);
+    if (normalizedFilter !== 'todos') {
+        return getActionHistoryRows(rows, normalizedFilter);
+    }
+    return filterLedgerRowsByScope(getLedgerHistoryRows(rows), ledgerScope);
 }
 
-function renderHistoryFilters(historyRows, activeFilter) {
+function renderHistoryFilters(historyRows, activeFilter, options = {}) {
     const transferCount = getHistoryFilterCount(historyRows, 'transferidos');
     const revertedCount = getHistoryFilterCount(historyRows, 'revertidos');
     if (transferCount <= 0 && revertedCount <= 0) return '';
 
     const normalizedFilter = normalizeHistoryFilter(activeFilter);
-    const allCount = getHistoryFilterCount(historyRows, 'todos');
+    const allCount = Number(options.timelineCount ?? getHistoryFilterCount(historyRows, 'todos'));
     const filters = [
         { id: 'todos', label: `Timeline (${allCount})`, visible: true },
         { id: 'transferidos', label: `Ver transferidos (${transferCount})`, visible: transferCount > 0 },
@@ -887,6 +919,75 @@ function renderHistoryFilters(historyRows, activeFilter) {
                     </button>
                 `).join('')}
         </div>
+    `;
+}
+
+function renderLedgerScopeFilters(ledgerRows, activeScope) {
+    const normalizedScope = normalizeLedgerScope(activeScope);
+    const filters = [
+        { id: 'fiados', label: 'Fiados', count: getLedgerScopeCount(ledgerRows, 'fiados') },
+        { id: 'pagados', label: 'Cobros', count: getLedgerScopeCount(ledgerRows, 'pagados') },
+        { id: 'perdidos', label: 'Pérdidas', count: getLedgerScopeCount(ledgerRows, 'perdidos') },
+        { id: 'todos', label: 'Todo', count: getLedgerScopeCount(ledgerRows, 'todos') }
+    ].filter((filter) => filter.id === 'todos' || filter.count > 0);
+
+    if (filters.length <= 1) return '';
+
+    return `
+        <div class="cartera-viva-detail__filters cartera-viva-detail__filters--scope" role="group" aria-label="Contexto del detalle">
+            ${filters.map((filter) => `
+                <button
+                    type="button"
+                    class="cartera-viva-detail__filter${normalizedScope === filter.id ? ' is-active' : ''}"
+                    data-cartera-detail-ledger-scope="${filter.id}"
+                    aria-pressed="${normalizedScope === filter.id ? 'true' : 'false'}">
+                    ${filter.label} (${filter.count})
+                </button>
+            `).join('')}
+        </div>
+    `;
+}
+
+function renderActionDisclosure(actions) {
+    const safeActions = Array.isArray(actions) ? actions : [];
+    if (safeActions.length <= 0) return '';
+
+    const previewItems = safeActions.slice(0, 4).map((row) => `
+        <span class="cartera-viva-action-pill cartera-viva-action-pill--${escapeHtml(row?.tone || 'review')}">
+            ${escapeHtml(row?.label || 'Acción')}
+        </span>
+    `).join('');
+
+    const remainingCount = Math.max(0, safeActions.length - 4);
+    const disclosureItems = safeActions.map((row) => `
+        <article class="cartera-viva-detail__action-mini cartera-viva-detail__action-mini--${escapeHtml(row?.tone || 'review')}">
+            <div class="cartera-viva-detail__action-mini-head">
+                <span class="cartera-viva-action-pill cartera-viva-action-pill--${escapeHtml(row?.tone || 'review')}">
+                    ${escapeHtml(row?.label || 'Acción')}
+                </span>
+                <span class="cartera-viva-detail__action-mini-date">${escapeHtml(formatHistoryAbsoluteDayLabel(row?.fecha || row?.created_at || ''))}</span>
+            </div>
+            ${row?.note ? `<p class="cartera-viva-detail__action-mini-copy">${escapeHtml(row.note)}</p>` : ''}
+        </article>
+    `).join('');
+
+    return `
+        <details class="cartera-viva-detail__actions-disclosure">
+            <summary class="cartera-viva-detail__actions-summary">
+                <div class="cartera-viva-detail__actions-summary-copy">
+                    <span class="cartera-viva-detail__actions-summary-title">Acciones del sistema</span>
+                    <span class="cartera-viva-detail__actions-summary-subtitle">Transferencias, cierres y reversiones viven en una capa secundaria.</span>
+                </div>
+                <span class="cartera-viva-detail__actions-counter">${safeActions.length}</span>
+            </summary>
+            <div class="cartera-viva-detail__actions-preview">
+                ${previewItems}
+                ${remainingCount > 0 ? `<span class="cartera-viva-action-pill cartera-viva-action-pill--ghost">+${remainingCount}</span>` : ''}
+            </div>
+            <div class="cartera-viva-detail__actions-list">
+                ${disclosureItems}
+            </div>
+        </details>
     `;
 }
 
@@ -1349,6 +1450,7 @@ function renderBuyerSummary(buyerRow, options = {}) {
                 <button type="button" class="cartera-viva-quick-action" data-cartera-detail-record-tab="ingresos">Nuevo cobro</button>
                 <button type="button" class="cartera-viva-quick-action" data-cartera-detail-record-tab="perdidas">Nueva pérdida</button>
                 <button type="button" class="cartera-viva-quick-action" data-cartera-detail-edit-client>Editar cliente</button>
+                <button type="button" class="cartera-viva-quick-action cartera-viva-quick-action--danger" data-cartera-detail-delete-client>Eliminar cliente canónico</button>
             </div>
         </section>
     `;
@@ -1405,6 +1507,7 @@ export function renderBuyerHistoryDetail(root, options = {}) {
     const exportTone = String(options.exportTone || '').trim().toLowerCase();
     const selectedPair = normalizeDetailPair(options.selectedPair);
     const historyFilter = normalizeHistoryFilter(options.historyFilter);
+    const ledgerScope = normalizeLedgerScope(options.ledgerScope);
     const exchangeRates = options.exchangeRates && typeof options.exchangeRates === 'object'
         ? options.exchangeRates
         : { USD: 1, COP: null, VES: null };
@@ -1414,7 +1517,10 @@ export function renderBuyerHistoryDetail(root, options = {}) {
     const isSoftRefreshing = loading && historyRows.length > 0;
     const ledgerRows = getLedgerHistoryRows(historyRows);
     const actionRows = getActionHistoryRows(historyRows, 'todos');
-    const visibleHistoryRows = filterHistoryRows(historyRows, historyFilter);
+    const visibleLedgerRows = filterLedgerRowsByScope(ledgerRows, ledgerScope);
+    const visibleHistoryRows = historyFilter === 'todos'
+        ? visibleLedgerRows
+        : getActionHistoryRows(historyRows, historyFilter);
     const visibleActionRows = historyFilter === 'todos'
         ? actionRows
         : visibleHistoryRows;
@@ -1473,21 +1579,7 @@ export function renderBuyerHistoryDetail(root, options = {}) {
         bodyContent = isCanonicalFilter
             ? `
                 <div class="cartera-viva-detail__timeline" data-cartera-detail-timeline></div>
-                ${visibleActionRows.length > 0 ? `
-                    <section class="cartera-viva-detail__actions-band" aria-label="Acciones del sistema">
-                        <div class="cartera-viva-detail__actions-head">
-                            <div>
-                                <p class="cartera-viva-view__eyebrow">Acciones</p>
-                                <h4 class="cartera-viva-detail__actions-title">Eventos del sistema</h4>
-                            </div>
-                            <span class="cartera-viva-detail__actions-counter">${visibleActionRows.length}</span>
-                        </div>
-                        <p class="cartera-viva-detail__actions-copy">
-                            Transferencias, cierres y reversiones se muestran aparte para no contaminar el historial canónico.
-                        </p>
-                        <div class="cartera-viva-detail__actions-timeline" data-cartera-detail-actions></div>
-                    </section>
-                ` : ''}
+                ${renderActionDisclosure(actionRows)}
             `
             : '<div class="cartera-viva-detail__timeline cartera-viva-detail__timeline--actions" data-cartera-detail-timeline></div>';
     }
@@ -1523,15 +1615,26 @@ export function renderBuyerHistoryDetail(root, options = {}) {
                 <header class="cartera-viva-detail__body-head">
                     <div>
                         <p class="cartera-viva-view__eyebrow">Historial</p>
-                        <h3 class="cartera-viva-detail__section-title">${isCanonicalFilter ? 'Timeline canónico del cliente' : 'Acciones del sistema'}</h3>
+                        <h3 class="cartera-viva-detail__section-title">${isCanonicalFilter
+                            ? (ledgerScope === 'fiados'
+                                ? 'Fiados del cliente'
+                                : (ledgerScope === 'pagados'
+                                    ? 'Cobros del cliente'
+                                    : (ledgerScope === 'perdidos'
+                                        ? 'Pérdidas del cliente'
+                                        : 'Timeline canónico del cliente')))
+                            : 'Acciones del sistema'}</h3>
                     </div>
                     <div class="cartera-viva-detail__body-meta">
                         <p class="cartera-viva-detail__body-copy">
                             ${isCanonicalFilter
-                                ? 'El timeline principal muestra solo movimientos económicos reales agrupados por día. Las acciones del sistema viven en una capa aparte.'
+                                ? (ledgerScope === 'todos'
+                                    ? 'El timeline principal muestra solo movimientos económicos reales agrupados por día. Las acciones del sistema viven en una capa aparte.'
+                                    : 'El detalle respeta el contexto de entrada y muestra solo el ledger económico de esta categoría.')
                                 : 'Aquí solo ves eventos auxiliares del sistema, sin mezclar cobros o pérdidas normales.'}
                         </p>
-                        ${renderHistoryFilters(historyRows, historyFilter)}
+                        ${isCanonicalFilter ? renderLedgerScopeFilters(ledgerRows, ledgerScope) : ''}
+                        ${renderHistoryFilters(historyRows, historyFilter, { timelineCount: visibleLedgerRows.length })}
                     </div>
                 </header>
                 ${bodyContent}
@@ -1549,6 +1652,10 @@ export function renderBuyerHistoryDetail(root, options = {}) {
 
     root.querySelector('[data-cartera-detail-edit-client]')?.addEventListener('click', () => {
         options.onEditClient?.();
+    });
+
+    root.querySelector('[data-cartera-detail-delete-client]')?.addEventListener('click', () => {
+        options.onDeleteClient?.();
     });
 
     root.querySelectorAll('[data-cartera-detail-record-tab]').forEach((button) => {
@@ -1585,6 +1692,14 @@ export function renderBuyerHistoryDetail(root, options = {}) {
         });
     });
 
+    root.querySelectorAll('[data-cartera-detail-ledger-scope]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const nextScope = normalizeLedgerScope(button.dataset.carteraDetailLedgerScope);
+            if (nextScope === ledgerScope) return;
+            options.onLedgerScopeChange?.(nextScope);
+        });
+    });
+
     root.querySelectorAll('[data-cartera-history-action="create-cycle"]').forEach((button) => {
         button.addEventListener('click', () => {
             const historyId = String(button.dataset.carteraHistoryId || '').trim();
@@ -1609,14 +1724,4 @@ export function renderBuyerHistoryDetail(root, options = {}) {
         });
     }
 
-    const actionsNode = root.querySelector('[data-cartera-detail-actions]');
-    if (actionsNode) {
-        renderHistoryDayGroups(actionsNode, visibleActionRows, {
-            dateFieldName: 'fecha',
-            formatDayLabel: formatHistoryAbsoluteDayLabel,
-            renderRow(fragment, row) {
-                fragment.appendChild(createActionRowElement(row));
-            }
-        });
-    }
 }

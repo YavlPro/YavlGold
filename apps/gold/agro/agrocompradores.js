@@ -114,6 +114,17 @@ function closeBuyerModal() {
     document.body.classList.remove('agro-buyer-open');
 }
 
+function focusBuyerLifecycleAction(action = '') {
+    const actionId = String(action || '').trim().toLowerCase() === 'delete'
+        ? BUYER_DELETE_BUTTON_ID
+        : BUYER_ARCHIVE_BUTTON_ID;
+    const button = document.getElementById(actionId);
+    if (!button || typeof button.focus !== 'function') return;
+    requestAnimationFrame(() => {
+        button.focus({ preventScroll: false });
+    });
+}
+
 function emitClientChanged(detail = {}) {
     document.dispatchEvent(new CustomEvent('agro:client:changed', {
         detail: {
@@ -721,7 +732,7 @@ function bindBuyerModalEvents() {
     }
 }
 
-async function openBuyerProfileInternal({ buyerId = '', displayName = '', groupKey = '', mode = 'edit' } = {}) {
+async function openBuyerProfileInternal({ buyerId = '', displayName = '', groupKey = '', mode = 'edit', focusAction = '' } = {}) {
     const user = await resolveSessionUser();
     if (!user?.id) {
         throw new Error('Sesión no disponible.');
@@ -776,35 +787,42 @@ async function openBuyerProfileInternal({ buyerId = '', displayName = '', groupK
     }
 
     syncOpenPublicButton();
+
+    if (focusAction) {
+        focusBuyerLifecycleAction(focusAction);
+    }
 }
 
-export async function openBuyerProfileByName(displayName) {
+export async function openBuyerProfileByName(displayName, options = {}) {
     const safeName = String(displayName || '').trim();
     const groupKey = normalizeBuyerGroupKey(safeName);
     if (!safeName || !groupKey) return false;
     await openBuyerProfileInternal({
         displayName: safeName,
         groupKey,
-        mode: 'edit'
+        mode: 'edit',
+        focusAction: options?.focusAction || ''
     });
     return true;
 }
 
-export async function openBuyerProfileById(buyerId, fallbackDisplayName = '') {
+export async function openBuyerProfileById(buyerId, fallbackDisplayName = '', options = {}) {
     const safeBuyerId = String(buyerId || '').trim();
     if (!safeBuyerId) return false;
     await openBuyerProfileInternal({
         buyerId: safeBuyerId,
         displayName: String(fallbackDisplayName || '').trim(),
-        mode: 'edit'
+        mode: 'edit',
+        focusAction: options?.focusAction || ''
     });
     return true;
 }
 
-export async function openNewBuyerProfile(initialDisplayName = '') {
+export async function openNewBuyerProfile(initialDisplayName = '', options = {}) {
     await openBuyerProfileInternal({
         displayName: String(initialDisplayName || '').trim(),
-        mode: 'create'
+        mode: 'create',
+        focusAction: options?.focusAction || ''
     });
     return true;
 }

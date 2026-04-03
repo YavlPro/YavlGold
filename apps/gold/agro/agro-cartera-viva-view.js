@@ -59,6 +59,7 @@ let detailExportPending = false;
 let detailExportMessage = '';
 let detailExportTone = '';
 let detailHistoryFilter = 'todos';
+let detailLedgerScope = 'todos';
 let detailSelectedPair = readStoredDetailPair();
 let detailExchangeRates = { USD: 1, COP: null, VES: null };
 let detailExchangeStatus = { source: 'unknown', warning: '', fetchedAt: null };
@@ -157,6 +158,14 @@ function normalizeDetailHistoryFilter(value) {
     const token = String(value || '').trim().toLowerCase();
     if (token === 'transferidos') return 'transferidos';
     if (token === 'revertidos') return 'revertidos';
+    return 'todos';
+}
+
+function normalizeDetailLedgerScope(value) {
+    const token = String(value || '').trim().toLowerCase();
+    if (token === 'fiados') return 'fiados';
+    if (token === 'pagados') return 'pagados';
+    if (token === 'perdidos') return 'perdidos';
     return 'todos';
 }
 
@@ -1017,7 +1026,8 @@ function renderPortfolioCards(filteredRows) {
                     <button
                         type="button"
                         class="cartera-viva-detail-link"
-                        data-cartera-open-history="${escapeHtml(row?.buyer_id || '')}">
+                        data-cartera-open-history="${escapeHtml(row?.buyer_id || '')}"
+                        data-cartera-open-history-scope="${escapeHtml(category)}">
                         Ver detalle
                     </button>
                 </div>
@@ -1116,7 +1126,7 @@ function renderListView(root) {
     }
 
     root.innerHTML = `
-        <section class="cartera-viva-view${isSoftRefreshing ? ' is-refreshing' : ''}" aria-label="Cartera de clientes" aria-busy="${shouldBlockInitialLoading || isSoftRefreshing ? 'true' : 'false'}">
+        <section class="cartera-viva-view${isSoftRefreshing ? ' is-refreshing' : ''}" aria-label="Cartera de clientes" aria-busy="${loading ? 'true' : 'false'}">
             <header class="cartera-viva-view__header">
                 ${renderCommercialFamilyNav('cartera-viva')}
                 <div class="cartera-viva-view__headline">
@@ -1129,8 +1139,8 @@ function renderListView(root) {
                     <button type="button" class="cartera-viva-refresh" data-cartera-new-client>
                         Nuevo cliente
                     </button>
-                    <button type="button" class="cartera-viva-refresh" data-cartera-refresh ${isSoftRefreshing ? 'disabled' : ''}>
-                        ${isSoftRefreshing ? 'Actualizando…' : 'Actualizar'}
+                    <button type="button" class="cartera-viva-refresh" data-cartera-refresh ${loading ? 'disabled' : ''}>
+                        ${loading ? 'Actualizando…' : 'Actualizar'}
                     </button>
                 </div>
             </div>
@@ -1167,6 +1177,7 @@ function renderView() {
             exportMessage: detailExportMessage,
             exportTone: detailExportTone,
             historyFilter: detailHistoryFilter,
+            ledgerScope: detailLedgerScope,
             selectedPair: detailSelectedPair,
             exchangeRates: detailExchangeRates,
             exchangeStatus: detailExchangeStatus,
@@ -1198,10 +1209,21 @@ function renderView() {
                 detailHistoryFilter = normalizeDetailHistoryFilter(nextFilter);
                 renderView();
             },
+            onLedgerScopeChange: (nextScope) => {
+                detailLedgerScope = normalizeDetailLedgerScope(nextScope);
+                renderView();
+            },
             onPairChange: (nextPair) => {
                 detailSelectedPair = String(nextPair || '').trim().toUpperCase() === 'USD/VES' ? 'USD/VES' : 'USD/COP';
                 writeStoredDetailPair(detailSelectedPair);
                 renderView();
+            },
+            onDeleteClient: () => {
+                const buyerRow = getSelectedBuyerRow();
+                if (!buyerRow?.buyer_id) return;
+                openBuyerProfileById(buyerRow.buyer_id, buyerRow.display_name || '', {
+                    focusAction: 'delete'
+                });
             }
         });
         return;
@@ -1249,7 +1271,7 @@ async function syncVisibleCropScope(options = {}) {
 async function loadSummary() {
     loading = true;
     lastErrorMessage = '';
-    if (!hasLoadedSummary) renderView();
+    renderView();
 
     try {
         summaryRows = await fetchBuyerPortfolioSummary(supabase);
@@ -1269,15 +1291,19 @@ async function loadSummary() {
     }
 }
 
-async function loadBuyerDetail(buyerId) {
+async function loadBuyerDetail(buyerId, options = {}) {
     const nextBuyerId = String(buyerId || '').trim();
     const switchingBuyer = nextBuyerId !== selectedBuyerId;
+    const nextLedgerScope = Object.prototype.hasOwnProperty.call(options, 'ledgerScope')
+        ? normalizeDetailLedgerScope(options.ledgerScope)
+        : (switchingBuyer ? 'todos' : detailLedgerScope);
     // Reset history filter when switching to a different buyer to avoid showing
     // an empty "transferidos" or "revertidos" tab for clients that have no such rows.
     if (switchingBuyer) {
         detailHistoryFilter = 'todos';
         detailRows = [];
     }
+    detailLedgerScope = nextLedgerScope;
     selectedBuyerId = nextBuyerId;
     detailLoading = true;
     detailErrorMessage = '';
@@ -1337,7 +1363,7 @@ async function exportBuyerDetail() {
     renderView();
 
     try {
-        const visibleHistoryRows = getVisibleBuyerHistoryRows(detailRows, detailHistoryFilter);
+        const visibleHistoryRows = getVisibleBuyerHistoryRows(detailRows, detailHistoryFilter, detailLedgerScope);
         const fileName = downloadBuyerPortfolioExport({
             buyerRow,
             historyRows: visibleHistoryRows
@@ -1392,8 +1418,9 @@ function bindListViewEvents(root) {
     root.querySelectorAll('[data-cartera-open-history]').forEach((button) => {
         button.addEventListener('click', () => {
             const buyerId = String(button.dataset.carteraOpenHistory || '').trim();
+            const ledgerScope = normalizeDetailLedgerScope(button.dataset.carteraOpenHistoryScope || activeCategory);
             if (!buyerId) return;
-            loadBuyerDetail(buyerId);
+            loadBuyerDetail(buyerId, { ledgerScope });
         });
     });
 
@@ -1413,6 +1440,7 @@ function resetDetailState() {
     detailLoading = false;
     detailErrorMessage = '';
     detailHistoryFilter = 'todos';
+    detailLedgerScope = 'todos';
     resetDetailExportState();
 }
 
@@ -1490,7 +1518,7 @@ function handleClientChanged(event) {
     void (async () => {
         await loadSummary();
         if (clientId && openDetail) {
-            await loadBuyerDetail(clientId);
+            await loadBuyerDetail(clientId, { ledgerScope: 'todos' });
             return;
         }
 
