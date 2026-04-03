@@ -1722,7 +1722,11 @@ export async function openAgroWizard(tabName, deps) {
                 });
                 
                 const defaultOriginTable = insertData.origin_table;
-                Object.assign(insertData, buyerLink);
+                // Explicitly assign only known buyer identity fields — avoids
+                // accidentally overwriting origin_table or other critical payload keys.
+                if (buyerLink.buyer_id !== undefined) insertData.buyer_id = buyerLink.buyer_id;
+                if (buyerLink.buyer_group_key !== undefined) insertData.buyer_group_key = buyerLink.buyer_group_key;
+                if (buyerLink.buyer_match_status !== undefined) insertData.buyer_match_status = buyerLink.buyer_match_status;
 
                 if (insertData.origin_table === null && defaultOriginTable) {
                     insertData.origin_table = defaultOriginTable;
@@ -1926,6 +1930,9 @@ export async function openAgroWizard(tabName, deps) {
                 if (tabName === 'pendientes') {
                     document.dispatchEvent(new CustomEvent('agro:pending:refreshed'));
                 }
+                // Redundant global refresh so Cartera Viva always reloads after wizard submit,
+                // even if the specific event listener has a timing issue.
+                document.dispatchEvent(new CustomEvent('data-refresh'));
             }, 1500);
 
         } catch (err) {

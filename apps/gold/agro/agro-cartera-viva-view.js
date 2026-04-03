@@ -1170,7 +1170,7 @@ async function syncVisibleCropScope(options = {}) {
 async function loadSummary() {
     loading = true;
     lastErrorMessage = '';
-    renderView();
+    if (!hasLoadedSummary) renderView();
 
     try {
         summaryRows = await fetchBuyerPortfolioSummary(supabase);
@@ -1358,7 +1358,7 @@ function scheduleExternalPortfolioRefresh() {
                 await loadBuyerDetail(activeBuyerId);
             }
         })();
-    }, 140);
+    }, 350);
 }
 
 function handleShellViewChanged(event) {

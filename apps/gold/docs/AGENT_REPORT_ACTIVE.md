@@ -7410,3 +7410,34 @@ check-dist-utf8: OK
 
 - **P2 (registros desaparecen):** El código frontend es correcto. Si los datos no se muestran, el problema está en el RPC o en los datos de Supabase. Requiere verificación manual del usuario ejecutando el RPC directamente.
 - **Doble parpadeo al cargar:** `loadSummary()` llama `renderView()` dos veces (línea 1172 loading=true y línea 1188 loading=false). Esto es por diseño (skeleton → contenido), pero si causa parpadeo visual, se puede optimizar en una sesión futura.
+
+## [2026-04-02] Fix quirúrgico: soft refresh en Cartera Viva y endurecimiento de payload en wizard
+
+### Diagnóstico
+
+- `loadSummary()` en `agro-cartera-viva-view.js` volvía a renderizar skeleton en recargas posteriores, generando doble parpadeo visible aunque ya existía contenido cargado.
+- `scheduleExternalPortfolioRefresh()` reaccionaba demasiado rápido tras los eventos del wizard; con `140ms` podía competir con persistencia/eventos y dejar refreshs perdidos o prematuros.
+- El wizard mezclaba `buyerLink` con `insertData` mediante `Object.assign`, con riesgo de sobrescribir llaves sensibles como `origin_table`.
+- No se aplicó ningún cambio SQL en esta sesión: el workspace solo tenía trazabilidad clara para los fixes frontend/event dispatch/payload.
+
+### Cambios aplicados
+
+| Archivo | Líneas | Cambio |
+|---|---|---|
+| `agro/agro-cartera-viva-view.js` | 1170-1173 | `loadSummary()` ahora solo fuerza `renderView()` en la primera carga; en refresh posteriores conserva la vista existente y usa estado de actualización |
+| `agro/agro-cartera-viva-view.js` | 1345-1361 | `scheduleExternalPortfolioRefresh()` aumentó debounce de `140ms` a `350ms` para dar margen al submit/event chain |
+| `agro/agro-wizard.js` | 1724-1729 | Reemplazado `Object.assign(insertData, buyerLink)` por asignación explícita de `buyer_id`, `buyer_group_key` y `buyer_match_status` |
+| `agro/agro-wizard.js` | 1935 | Agregado `document.dispatchEvent(new CustomEvent('data-refresh'))` como refresh redundante después del submit del wizard |
+
+### Build status
+
+- `pnpm build:gold`: ✅ Exitoso
+- Advertencia no bloqueante: `pnpm` reportó engine esperado `node 20.x`, pero el build completó correctamente bajo `node v25.6.0`
+
+### QA sugerido
+
+1. Abrir Cartera Viva y esperar la primera carga completa.
+2. Crear o transferir un movimiento desde el wizard que afecte un buyer visible en Cartera Viva.
+3. Verificar que en la recarga posterior no reaparece skeleton completo: el contenido debe quedarse visible con refresh suave.
+4. Verificar que el resumen y, si aplica, el detalle abierto del buyer se actualizan solos tras `1.5s + debounce`.
+5. Probar al menos un caso con `pendientes`, uno con `ingresos` o `pérdidas`, y confirmar que no se rompe `origin_table` ni la asociación del comprador.
