@@ -7441,3 +7441,221 @@ check-dist-utf8: OK
 3. Verificar que en la recarga posterior no reaparece skeleton completo: el contenido debe quedarse visible con refresh suave.
 4. Verificar que el resumen y, si aplica, el detalle abierto del buyer se actualizan solos tras `1.5s + debounce`.
 5. Probar al menos un caso con `pendientes`, uno con `ingresos` o `pérdidas`, y confirmar que no se rompe `origin_table` ni la asociación del comprador.
+
+## [2026-04-02] Diagnóstico forense: Cartera Viva rota por drift entre RPC y frontend
+
+### Diagnóstico
+
+- La causa raíz principal no estaba en el wizard ni en `agro.js`: estaba en la lectura de Cartera Viva.
+- El RPC `agro_buyer_portfolio_summary_v1()` ya expone `pending_total` como saldo activo real del cliente.
+- Sin embargo, tanto `agro-cartera-viva-view.js` como `agro-cartera-viva-detail.js` seguían recalculando el saldo con lógica legacy:
+  - `credited_total - paid_total - loss_total - transferred_total`
+- Esa resta vieja contradice el contrato buyer-centric del RPC y puede reclasificar mal clientes entre `Fiados`, `Pagados` y `Pérdidas`, además de distorsionar progreso y métricas.
+- El parpadeo no era la causa raíz contable, pero sí agravaba el problema: en refresh de detalle se vaciaba la data antes de terminar la recarga, haciendo que el estado pareciera más roto de lo que realmente devolvía el backend.
+- No fue necesario tocar `agro.js`, Exchange ni Ciclos Operativos.
+
+### Causa raíz principal
+
+- **Drift de contrato frontend/backend**:
+  - backend/RPC: `pending_total` = saldo activo confiable;
+  - frontend: seguía usando una fórmula legacy que intenta reconstruir ese saldo restando `transferred_total`.
+- Resultado:
+  - fiados podían desaparecer o caer en categoría incorrecta;
+  - cobros/pérdidas podían mostrar progreso incoherente;
+  - el detalle heredaba la misma lectura rota;
+  - el refresh destructivo del detalle amplificaba la percepción del fallo.
+
+### Cambios aplicados
+
+| Archivo | Líneas | Cambio |
+|---|---|---|
+| `agro/agro-cartera-viva-view.js` | 256-261 | `getOutstandingBalance()` ahora prioriza `pending_total` del RPC y solo usa la fórmula legacy como fallback defensivo |
+| `agro/agro-cartera-viva-view.js` | 1196-1205 | `loadBuyerDetail()` ya no limpia `detailRows` cuando solo refresca el mismo cliente; solo limpia al cambiar de buyer |
+| `agro/agro-cartera-viva-detail.js` | 204-209 | `getOutstandingBalance()` alineado con `pending_total` del RPC |
+| `agro/agro-cartera-viva-detail.js` | 221-226 | `getPaidPercent()` ya no se queda pegado en `0%` cuando `compliance_percent = 0` pero existe base calculable |
+| `agro/agro-cartera-viva-detail.js` | 1214 | La vista de detalle ya no reemplaza historial visible por estado vacío de carga cuando el refresh ocurre sobre un cliente ya cargado |
+
+### SQL de verificación
+
+```sql
+-- 1) Ver exactamente qué devuelve hoy el RPC buyer-centric
+select
+  buyer_id,
+  display_name,
+  group_key,
+  credited_total,
+  paid_total,
+  loss_total,
+  transferred_total,
+  pending_total,
+  compliance_percent,
+  review_required_total,
+  legacy_unclassified_total,
+  non_debt_income_total,
+  global_status,
+  balance_gap_total,
+  requires_review,
+  canonical_name,
+  client_status
+from public.agro_buyer_portfolio_summary_v1()
+order by pending_total desc nulls last, display_name asc;
+
+-- 2) Detectar si el frontend viejo estaria discrepando del RPC
+select
+  buyer_id,
+  display_name,
+  credited_total,
+  paid_total,
+  loss_total,
+  transferred_total,
+  pending_total,
+  round((credited_total - paid_total - loss_total - transferred_total)::numeric, 2) as legacy_frontend_pending,
+  round((pending_total - (credited_total - paid_total - loss_total - transferred_total))::numeric, 2) as drift_vs_rpc,
+  global_status,
+  balance_gap_total,
+  requires_review
+from public.agro_buyer_portfolio_summary_v1()
+order by abs(coalesce(balance_gap_total, 0)) desc, display_name asc;
+
+-- 3) Ver datos crudos de fiados
+select
+  p.id,
+  p.fecha,
+  p.cliente,
+  p.buyer_id,
+  p.buyer_group_key,
+  p.buyer_match_status,
+  p.crop_id,
+  p.transfer_state,
+  p.transferred_to,
+  p.reverted_at,
+  p.deleted_at,
+  coalesce(p.monto_usd, p.monto, 0) as amount_usd
+from public.agro_pending p
+where p.user_id = auth.uid()
+order by p.fecha desc nulls last, p.created_at desc nulls last
+limit 200;
+
+-- 4) Ver datos crudos de cobros
+select
+  i.id,
+  i.fecha,
+  i.concepto,
+  i.buyer_id,
+  i.buyer_group_key,
+  i.buyer_match_status,
+  i.crop_id,
+  i.origin_table,
+  i.origin_id,
+  i.transfer_state,
+  i.reverted_at,
+  i.deleted_at,
+  coalesce(i.monto_usd, i.monto, 0) as amount_usd
+from public.agro_income i
+where i.user_id = auth.uid()
+order by i.fecha desc nulls last, i.created_at desc nulls last
+limit 200;
+
+-- 5) Ver datos crudos de pérdidas
+select
+  l.id,
+  l.fecha,
+  l.concepto,
+  l.causa,
+  l.buyer_id,
+  l.buyer_group_key,
+  l.buyer_match_status,
+  l.crop_id,
+  l.origin_table,
+  l.origin_id,
+  l.transfer_state,
+  l.reverted_at,
+  l.deleted_at,
+  coalesce(l.monto_usd, l.monto, 0) as amount_usd
+from public.agro_losses l
+where l.user_id = auth.uid()
+order by l.fecha desc nulls last, l.created_at desc nulls last
+limit 200;
+
+-- 6) Confirmar buyers activos y su identidad canónica
+select
+  b.id,
+  b.display_name,
+  b.group_key,
+  b.canonical_name,
+  b.status,
+  b.created_at,
+  b.updated_at
+from public.agro_buyers b
+where b.user_id = auth.uid()
+order by b.display_name asc;
+
+-- 7) Cruce rápido por buyer para ver si el problema es datos o frontend
+with rpc as (
+  select *
+  from public.agro_buyer_portfolio_summary_v1()
+)
+select
+  r.display_name,
+  r.buyer_id,
+  r.credited_total,
+  r.paid_total,
+  r.loss_total,
+  r.pending_total,
+  count(distinct p.id) filter (
+    where p.deleted_at is null and p.reverted_at is null
+  ) as pending_rows,
+  count(distinct i.id) filter (
+    where i.deleted_at is null and i.reverted_at is null and lower(coalesce(i.origin_table, '')) = 'agro_pending'
+  ) as income_paid_rows,
+  count(distinct l.id) filter (
+    where l.deleted_at is null and l.reverted_at is null and lower(coalesce(l.origin_table, '')) = 'agro_pending'
+  ) as loss_rows
+from rpc r
+left join public.agro_pending p
+  on p.user_id = auth.uid()
+ and p.buyer_id = r.buyer_id
+left join public.agro_income i
+  on i.user_id = auth.uid()
+ and i.buyer_id = r.buyer_id
+left join public.agro_losses l
+  on l.user_id = auth.uid()
+ and l.buyer_id = r.buyer_id
+group by
+  r.display_name,
+  r.buyer_id,
+  r.credited_total,
+  r.paid_total,
+  r.loss_total,
+  r.pending_total
+order by r.display_name asc;
+```
+
+### Build status
+
+- `pnpm build:gold`: ✅ Exitoso
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observación no bloqueante:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+
+### QA sugerido
+
+1. Abrir Cartera Viva en `Fiados` y verificar que el conteo ahora refleja el `pending_total` del RPC, no la resta legacy.
+2. Crear un fiado nuevo desde el detalle de un cliente y confirmar que sigue visible tras el refresh automático.
+3. Crear un cobro desde ese mismo cliente y verificar:
+   - la barra de avance cambia;
+   - el cliente no desaparece;
+   - si queda saldo, sigue en `Fiados`;
+   - si se cerró, pasa a `Pagados`.
+4. Crear una pérdida real desde ese mismo cliente y verificar que:
+   - aparece en historial;
+   - la tarjeta/detalle muestran pérdida coherente;
+   - no reemplaza erróneamente el historial por un vacío de carga.
+5. Ejecutar el SQL de verificación:
+   - si `pending_total` es correcto y la UI ya refleja esos valores, el bug estaba en frontend;
+   - si el RPC ya viene mal, el siguiente fix debe ser SQL y no de render.

@@ -202,6 +202,9 @@ function getReviewTotal(buyerRow) {
 }
 
 function getOutstandingBalance(buyerRow) {
+    const pendingTotal = Number(buyerRow?.pending_total);
+    if (Number.isFinite(pendingTotal)) return Math.max(0, pendingTotal);
+
     const credited = Number(buyerRow?.credited_total || 0);
     const paid = Number(buyerRow?.paid_total || 0);
     const loss = Number(buyerRow?.loss_total || 0);
@@ -217,7 +220,7 @@ function getProgressBase(buyerRow) {
 
 function getPaidPercent(buyerRow) {
     const compliance = Number(buyerRow?.compliance_percent);
-    if (Number.isFinite(compliance)) return clampPercent(compliance);
+    if (Number.isFinite(compliance) && compliance > 0) return clampPercent(compliance);
 
     const base = getProgressBase(buyerRow);
     if (base <= 0) return 0;
@@ -1208,7 +1211,7 @@ export function renderBuyerHistoryDetail(root, options = {}) {
         ? `<p class="cartera-viva-detail__status${exportTone ? ` is-${escapeHtml(exportTone)}` : ''}">${escapeHtml(exportMessage)}</p>`
         : '';
 
-    if (loading) {
+    if (loading && historyRows.length <= 0) {
         bodyContent = renderEmptyState({
             title: 'Cargando historial del cliente',
             copy: 'Ordenando los movimientos relacionados a este cliente.'

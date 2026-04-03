@@ -254,6 +254,9 @@ function getReviewTotal(row) {
 }
 
 function getOutstandingBalance(row) {
+    const pendingTotal = Number(row?.pending_total);
+    if (Number.isFinite(pendingTotal)) return Math.max(0, pendingTotal);
+
     const credited = Number(row?.credited_total || 0);
     const paid = Number(row?.paid_total || 0);
     const loss = Number(row?.loss_total || 0);
@@ -1192,15 +1195,16 @@ async function loadSummary() {
 
 async function loadBuyerDetail(buyerId) {
     const nextBuyerId = String(buyerId || '').trim();
+    const switchingBuyer = nextBuyerId !== selectedBuyerId;
     // Reset history filter when switching to a different buyer to avoid showing
     // an empty "transferidos" or "revertidos" tab for clients that have no such rows.
-    if (nextBuyerId !== selectedBuyerId) {
+    if (switchingBuyer) {
         detailHistoryFilter = 'todos';
+        detailRows = [];
     }
     selectedBuyerId = nextBuyerId;
     detailLoading = true;
     detailErrorMessage = '';
-    detailRows = [];
     resetDetailExportState();
     renderView();
 
