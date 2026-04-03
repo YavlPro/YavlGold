@@ -154,11 +154,12 @@ function syncLifecycleButtons() {
     }
 
     if (deleteButton) {
-        deleteButton.disabled = !hasBuyer || hasHistory;
+        deleteButton.disabled = !hasBuyer;
+        deleteButton.textContent = hasHistory ? 'Eliminar cliente + cartera' : 'Eliminar cliente';
         deleteButton.title = !hasBuyer
             ? 'Guarda el cliente primero'
             : (hasHistory
-                ? 'Este cliente tiene historial y debe archivarse, no borrarse'
+                ? 'Eliminar cliente y su cartera relacionada con cascada segura'
                 : 'Eliminar cliente sin historial');
     }
 }
@@ -303,6 +304,37 @@ async function fetchHistoryCountForTable(tableName, userId, buyerId, groupKey) {
     return Number(idResult?.count || 0) + Number(groupResult?.count || 0);
 }
 
+async function fetchBuyerDeleteScopeSummary(userId, buyerId, groupKey) {
+    const movementCounts = {};
+
+    await Promise.all(BUYER_MOVEMENT_TABLES.map(async (tableName) => {
+        movementCounts[tableName] = await fetchHistoryCountForTable(tableName, userId, buyerId, groupKey);
+    }));
+
+    let socialThreadCount = 0;
+    if (groupKey) {
+        const threadResult = await state.supabase
+            .from('agro_social_threads')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', userId)
+            .eq('buyer_group_key', groupKey);
+
+        if (threadResult.error) throw threadResult.error;
+        socialThreadCount = Number(threadResult.count || 0);
+    }
+
+    const historyCount = BUYER_MOVEMENT_TABLES.reduce(
+        (total, tableName) => total + Number(movementCounts[tableName] || 0),
+        0
+    );
+
+    return {
+        movementCounts,
+        historyCount,
+        socialThreadCount
+    };
+}
+
 async function refreshHistoryCount() {
     if (!state.currentBuyerId || !state.currentUser?.id) {
         state.currentHistoryCount = 0;
@@ -321,6 +353,41 @@ async function refreshHistoryCount() {
     syncBuyerHeading();
     syncLifecycleButtons();
     return state.currentHistoryCount;
+}
+
+function isMissingBuyerDeleteCascadeRpc(error) {
+    const code = String(error?.code || '').trim().toUpperCase();
+    const message = String(error?.message || '').trim().toLowerCase();
+    return code === 'PGRST202'
+        || code === '42883'
+        || message.includes('agro_delete_buyer_cascade_v1');
+}
+
+async function deleteBuyerWithoutHistory(userId) {
+    const threadResult = await state.supabase
+        .from('agro_social_threads')
+        .delete()
+        .eq('user_id', userId)
+        .eq('buyer_group_key', state.currentGroupKey);
+
+    if (threadResult.error) throw threadResult.error;
+
+    const deleteResult = await state.supabase
+        .from('agro_buyers')
+        .delete()
+        .eq('id', state.currentBuyerId)
+        .eq('user_id', userId);
+
+    if (deleteResult.error) throw deleteResult.error;
+}
+
+async function deleteBuyerWithCascade() {
+    const rpcResult = await state.supabase.rpc('agro_delete_buyer_cascade_v1', {
+        p_buyer_id: state.currentBuyerId
+    });
+
+    if (rpcResult.error) throw rpcResult.error;
+    return rpcResult.data || null;
 }
 
 async function updateMovementLinks(userId, buyerId, oldGroupKey, nextGroupKey) {
@@ -540,32 +607,56 @@ async function handleBuyerDelete(event) {
 
     try {
         const user = await resolveSessionUser();
-        const historyCount = await refreshHistoryCount();
-        if (historyCount > 0) {
-            setBuyerStatus('Este cliente tiene historial. Usa archivar cliente en lugar de borrar.', 'warn');
-            return;
+        await refreshHistoryCount();
+        const deleteScope = await fetchBuyerDeleteScopeSummary(user.id, state.currentBuyerId, state.currentGroupKey);
+        const historyCount = Number(deleteScope.historyCount || 0);
+        const requiresCascade = historyCount > 0;
+        const fiadosCount = Number(deleteScope.movementCounts?.agro_pending || 0);
+        const cobrosCount = Number(deleteScope.movementCounts?.agro_income || 0);
+        const perdidasCount = Number(deleteScope.movementCounts?.agro_losses || 0);
+        const threadCount = Number(deleteScope.socialThreadCount || 0);
+        const confirmationKey = String(state.currentCanonicalName || state.currentGroupKey || state.currentDisplayName || '').trim();
+        const impactLines = [
+            `Cliente: ${state.currentDisplayName || confirmationKey}`,
+            `Fiados afectados: ${fiadosCount}`,
+            `Cobros afectados: ${cobrosCount}`,
+            `Pérdidas afectadas: ${perdidasCount}`
+        ];
+
+        if (threadCount > 0) {
+            impactLines.push(`Conversaciones sociales afectadas: ${threadCount}`);
         }
 
         if (typeof window !== 'undefined' && typeof window.confirm === 'function') {
-            const confirmed = window.confirm('Eliminar este cliente sin historial? Esta acción no se puede deshacer.');
+            const confirmed = window.confirm(
+                requiresCascade
+                    ? `Se eliminará el cliente canónico y se archivará su cartera relacionada.\n\n${impactLines.join('\n')}\n\nEsta acción no se puede deshacer.`
+                    : 'Eliminar este cliente sin historial? Esta acción no se puede deshacer.'
+            );
             if (!confirmed) return;
         }
 
-        const threadResult = await state.supabase
-            .from('agro_social_threads')
-            .delete()
-            .eq('user_id', user.id)
-            .eq('buyer_group_key', state.currentGroupKey);
+        if (confirmationKey && typeof window !== 'undefined' && typeof window.prompt === 'function') {
+            const typed = String(window.prompt(`Escribe "${confirmationKey}" para confirmar la eliminación`, '') || '').trim();
+            if (typed !== confirmationKey) {
+                setBuyerStatus('Confirmación cancelada. El nombre canónico no coincide.', 'warn');
+                return;
+            }
+        }
 
-        if (threadResult.error) throw threadResult.error;
-
-        const deleteResult = await state.supabase
-            .from('agro_buyers')
-            .delete()
-            .eq('id', state.currentBuyerId)
-            .eq('user_id', user.id);
-
-        if (deleteResult.error) throw deleteResult.error;
+        if (requiresCascade) {
+            try {
+                await deleteBuyerWithCascade();
+            } catch (error) {
+                if (isMissingBuyerDeleteCascadeRpc(error)) {
+                    setBuyerStatus('Falta la migración de borrado seguro. Ejecuta las migraciones antes de eliminar clientes con historial.', 'error');
+                    return;
+                }
+                throw error;
+            }
+        } else {
+            await deleteBuyerWithoutHistory(user.id);
+        }
 
         emitClientChanged({
             clientId: state.currentBuyerId,

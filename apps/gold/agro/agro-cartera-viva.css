@@ -129,7 +129,8 @@
 .cartera-viva-detail__title,
 .cartera-viva-progress__value,
 .cartera-viva-insight__value,
-.cartera-viva-history-item__amount {
+.cartera-viva-history-item__amount,
+.cartera-viva-history-action__amount {
   font-family: 'Orbitron', sans-serif;
 }
 
@@ -149,7 +150,11 @@
 .cartera-viva-detail__status,
 .cartera-viva-history-item__meta,
 .cartera-viva-history-item__concept,
-.cartera-viva-history-item__note {
+.cartera-viva-history-item__note,
+.cartera-viva-history-action__meta,
+.cartera-viva-history-action__concept,
+.cartera-viva-history-action__note,
+.cartera-viva-detail__actions-copy {
   color: var(--text-secondary);
   font-size: 0.92rem;
 }
@@ -632,7 +637,9 @@
 .cartera-viva-detail__title,
 .cartera-viva-detail__section-title,
 .cartera-viva-empty__title,
-.cartera-viva-history-item__title {
+.cartera-viva-history-item__title,
+.cartera-viva-history-action__title,
+.cartera-viva-detail__actions-title {
   color: var(--text-primary);
 }
 
@@ -669,7 +676,8 @@
 
 .cartera-viva-badge,
 .cartera-viva-chip,
-.cartera-viva-history-item__label {
+.cartera-viva-history-item__label,
+.cartera-viva-history-action__label {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1025,6 +1033,103 @@
   gap: 0.7rem;
 }
 
+.cartera-viva-detail__timeline--actions {
+  gap: 0.6rem;
+}
+
+.cartera-viva-detail__timeline-skeleton {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.cartera-viva-skeleton-line {
+  display: block;
+  height: 0.72rem;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.cartera-viva-skeleton-line--title {
+  width: min(14rem, 72%);
+  height: 0.9rem;
+}
+
+.cartera-viva-skeleton-line--meta {
+  width: min(12rem, 58%);
+}
+
+.cartera-viva-skeleton-line--note {
+  width: min(18rem, 88%);
+}
+
+.cartera-viva-skeleton-line--amount {
+  width: 4.5rem;
+  height: 0.88rem;
+}
+
+.cartera-viva-skeleton-line--tag {
+  width: 2.2rem;
+  height: 1.25rem;
+}
+
+.cartera-viva-history-item--skeleton {
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.cartera-viva-detail__actions-band {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.8rem 0.85rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(200, 167, 82, 0.14);
+  background:
+    linear-gradient(180deg, rgba(200, 167, 82, 0.035), rgba(255, 255, 255, 0.015)),
+    rgba(255, 255, 255, 0.018);
+}
+
+.cartera-viva-detail__actions-band--loading {
+  border-style: dashed;
+}
+
+.cartera-viva-detail__actions-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.cartera-viva-detail__actions-title {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.cartera-viva-detail__actions-copy {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.cartera-viva-detail__actions-counter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.8rem;
+  min-height: 1.8rem;
+  padding: 0 0.55rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(200, 167, 82, 0.18);
+  color: var(--gold-4);
+  background: rgba(200, 167, 82, 0.08);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.72rem;
+}
+
+.cartera-viva-detail__actions-timeline {
+  display: grid;
+  gap: 0.55rem;
+}
+
 .cartera-viva-view--detail.is-refreshing .cartera-viva-detail__summary,
 .cartera-viva-view--detail.is-refreshing .cartera-viva-detail__body {
   opacity: 0.84;
@@ -1084,27 +1189,32 @@
   align-items: center;
 }
 
-.cartera-viva-history-item__label {
+.cartera-viva-history-item__label,
+.cartera-viva-history-action__label {
   color: var(--text-secondary);
   background: rgba(255, 255, 255, 0.05);
 }
 
-.cartera-viva-history-item__label--pending {
+.cartera-viva-history-item__label--pending,
+.cartera-viva-history-action__label--pending {
   color: var(--gold-5);
   background: rgba(200, 167, 82, 0.12);
 }
 
-.cartera-viva-history-item__label--paid {
+.cartera-viva-history-item__label--paid,
+.cartera-viva-history-action__label--paid {
   color: var(--color-success);
   background: rgba(16, 185, 129, 0.12);
 }
 
-.cartera-viva-history-item__label--loss {
+.cartera-viva-history-item__label--loss,
+.cartera-viva-history-action__label--loss {
   color: var(--color-error);
   background: rgba(239, 68, 68, 0.12);
 }
 
-.cartera-viva-history-item__label--review {
+.cartera-viva-history-item__label--review,
+.cartera-viva-history-action__label--review {
   color: var(--color-warning);
   background: rgba(245, 158, 11, 0.12);
 }
@@ -1113,6 +1223,60 @@
   color: var(--text-primary);
   font-size: 0.85rem;
   text-align: right;
+}
+
+.cartera-viva-history-action {
+  display: grid;
+  gap: 0.38rem;
+  padding: 0.72rem 0.78rem;
+  border-radius: var(--radius-md);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.cartera-viva-history-action--paid {
+  border-color: rgba(16, 185, 129, 0.24);
+}
+
+.cartera-viva-history-action--loss {
+  border-color: rgba(239, 68, 68, 0.22);
+}
+
+.cartera-viva-history-action--review {
+  border-color: rgba(245, 158, 11, 0.24);
+}
+
+.cartera-viva-history-action__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.cartera-viva-history-action__copy {
+  display: grid;
+  gap: 0.28rem;
+  min-width: 0;
+}
+
+.cartera-viva-history-action__title {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.2;
+}
+
+.cartera-viva-history-action__meta,
+.cartera-viva-history-action__concept,
+.cartera-viva-history-action__note {
+  margin: 0;
+  font-size: 0.78rem;
+}
+
+.cartera-viva-history-action__amount {
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .cartera-viva-history-item__support {
@@ -1341,11 +1505,17 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .cartera-viva-detail__actions-head,
+  .cartera-viva-history-action__head {
+    display: grid;
+  }
+
   .cartera-viva-detail__equivalents {
     grid-template-columns: 1fr;
   }
 
-  .cartera-viva-history-item__amount {
+  .cartera-viva-history-item__amount,
+  .cartera-viva-history-action__amount {
     text-align: left;
   }
 

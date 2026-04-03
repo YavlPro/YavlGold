@@ -45,6 +45,9 @@ const INCOME_HISTORY_COLUMNS = [
     'exchange_rate',
     'fecha',
     'created_at',
+    'unit_type',
+    'unit_qty',
+    'quantity_kg',
     'origin_table',
     'origin_id',
     'transfer_state',
@@ -67,6 +70,9 @@ const LOSS_HISTORY_COLUMNS = [
     'exchange_rate',
     'fecha',
     'created_at',
+    'unit_type',
+    'unit_qty',
+    'quantity_kg',
     'origin_table',
     'origin_id',
     'transfer_state',
@@ -361,63 +367,105 @@ async function fetchBuyerScopedRows(supabaseClient, tableName, columns, buyerSco
     });
 }
 
+function formatHistoryQuantity(value, decimals = 2) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric) || numeric <= 0) return '';
+    if (Math.abs(numeric - Math.round(numeric)) < 1e-9) {
+        return String(Math.round(numeric));
+    }
+    return String(Number(numeric.toFixed(decimals)));
+}
+
+function formatHistoryUnitLabel(unitType, quantity) {
+    const normalizedType = String(unitType || '').trim().toLowerCase();
+    const numeric = Number(quantity);
+    const singular = Math.abs(numeric - 1) < 1e-9;
+
+    if (normalizedType === 'kg') return 'kg';
+    if (normalizedType === 'saco') return singular ? 'saco' : 'sacos';
+    if (normalizedType === 'cesta') return singular ? 'cesta' : 'cestas';
+    if (normalizedType === 'unidad') return singular ? 'unidad' : 'unidades';
+    if (!normalizedType) return singular ? 'unidad' : 'unidades';
+    return normalizedType;
+}
+
+function buildVisibleUnitParts(row) {
+    const parts = [];
+    const unitQty = Number(readHistoryItemField(row, ['unit_qty']));
+    const quantityKg = Number(readHistoryItemField(row, ['quantity_kg']));
+    const unitType = String(readHistoryItemField(row, ['unit_type']) || '').trim().toLowerCase();
+
+    if (Number.isFinite(unitQty) && unitQty > 0) {
+        parts.push(`${formatHistoryQuantity(unitQty)} ${formatHistoryUnitLabel(unitType, unitQty)}`);
+    }
+
+    if (Number.isFinite(quantityKg) && quantityKg > 0 && (!unitType || unitType !== 'kg')) {
+        parts.push(`${formatHistoryQuantity(quantityKg)} kg`);
+    }
+
+    return parts;
+}
+
 function buildMovementMeta(row, primaryParts = []) {
     const parts = Array.isArray(primaryParts)
         ? primaryParts.map((part) => String(part || '').trim()).filter(Boolean)
         : [];
-    const quantity = readHistoryItemField(row, ['unit_qty', 'quantity_kg']);
-    const unitType = readHistoryItemField(row, ['unit_type']);
 
-    if (quantity !== null && quantity !== undefined && String(quantity).trim() !== '') {
-        parts.push(`${quantity} ${String(unitType || '').trim() || 'unidad(es)'}`);
-    }
+    buildVisibleUnitParts(row).forEach((part) => {
+        if (!parts.includes(part)) {
+            parts.push(part);
+        }
+    });
 
     return parts.join(' · ');
 }
 
-function buildPendingHistoryRow(row) {
+function createActionHistoryRow(row, config = {}) {
+    const timestamp = String(config.timestamp || row?.created_at || row?.fecha || '').trim();
+    const actionDate = /^\d{4}-\d{2}-\d{2}/.test(timestamp)
+        ? timestamp.slice(0, 10)
+        : String(row?.fecha || '').trim();
+
+    return {
+        history_id: String(config.history_id || '').trim(),
+        row_kind: 'action',
+        history_filter: String(config.history_filter || 'transferidos').trim().toLowerCase(),
+        source_table: String(config.source_table || '').trim().toLowerCase(),
+        source_tab: String(config.source_tab || '').trim().toLowerCase(),
+        source_id: String(config.source_id || row?.id || '').trim(),
+        title: String(config.title || 'Acción del sistema').trim(),
+        label: String(config.label || 'Acción').trim(),
+        amount: normalizeMoney(config.amount ?? readHistoryItemField(row, ['monto_usd', 'monto'])),
+        currency: normalizeDetailCurrency(config.currency || row?.currency),
+        exchange_rate: Number(config.exchange_rate ?? row?.exchange_rate) || null,
+        fecha: actionDate,
+        created_at: timestamp || row?.created_at || row?.fecha || '',
+        concept: String((config.concept ?? row?.concepto) || '').trim(),
+        meta: buildMovementMeta(row, config.metaParts || []),
+        note: String(config.note || 'Evento auxiliar del sistema sobre la cartera.').trim(),
+        tone: String(config.tone || 'review').trim().toLowerCase() || 'review',
+        crop_id: String(config.crop_id || row?.crop_id || '').trim(),
+        support_url_raw: '',
+        support_url_resolved: '',
+        support_label: ''
+    };
+}
+
+function buildPendingLedgerRow(row) {
     const amount = normalizeMoney(readHistoryItemField(row, ['monto_usd', 'monto']));
     const transferState = String(row?.transfer_state || 'active').trim().toLowerCase();
     const transferredTo = String(row?.transferred_to || '').trim().toLowerCase();
     const isReview = String(row?.buyer_match_status || '').trim().toLowerCase() !== 'matched';
-    const isTransferred = transferState === 'transferred';
-    const isReverted = transferState === 'reverted' || Boolean(row?.reverted_at);
-
-    let label = 'Fiado';
-    let note = 'Saldo abierto dentro de la cartera del cliente.';
-    let tone = 'pending';
-
-    if (isReverted) {
-        label = 'Revertido';
-        note = 'Este fiado volvió a quedar activo después de una transferencia.';
-        tone = 'review';
-    } else if (transferState === 'transferred' && transferredTo === 'income') {
-        label = 'Transferido a cobro';
-        note = 'Este saldo ya terminó como cobro.';
-        tone = 'paid';
-    } else if (transferState === 'transferred' && transferredTo === 'losses') {
-        label = 'Transferido a pérdida';
-        note = 'Este saldo terminó cerrado como pérdida.';
-        tone = 'loss';
-    } else if (transferState === 'transferred') {
-        label = 'Fiado movido';
-        note = 'El movimiento salió de cartera hacia otra salida operativa.';
-        tone = 'review';
-    }
-
-    if (isReview) {
-        tone = 'review';
-        label = 'Por revisar';
-        note = 'Este movimiento aún necesita revisión antes de cerrar su lectura.';
-    }
 
     return {
         history_id: `agro_pending:${row?.id || ''}`,
+        row_kind: 'ledger',
+        history_filter: 'todos',
         source_table: 'agro_pending',
         source_tab: 'pendientes',
         source_id: String(row?.id || '').trim(),
         title: String(row?.cliente || '').trim() ? `Fiado a ${row.cliente}` : 'Fiado registrado',
-        label,
+        label: isReview ? 'Por revisar' : 'Fiado',
         amount,
         currency: normalizeDetailCurrency(row?.currency),
         exchange_rate: Number(row?.exchange_rate) || null,
@@ -425,8 +473,10 @@ function buildPendingHistoryRow(row) {
         created_at: row?.created_at || '',
         concept: String(row?.concepto || '').trim(),
         meta: buildMovementMeta(row),
-        note,
-        tone,
+        note: isReview
+            ? 'Este movimiento aún necesita revisión antes de cerrar su lectura.'
+            : 'Registro canónico de deuda del cliente.',
+        tone: isReview ? 'review' : 'pending',
         is_review: isReview,
         crop_id: String(row?.crop_id || '').trim(),
         unit_type: String(row?.unit_type || '').trim().toLowerCase(),
@@ -436,26 +486,51 @@ function buildPendingHistoryRow(row) {
         reverted_at: row?.reverted_at || '',
         origin_table: '',
         origin_id: '',
-        is_transfer_related: isTransferred,
+        is_transfer_related: false,
         support_url_raw: String(row?.evidence_url || row?.soporte_url || '').trim(),
         support_url_resolved: '',
         support_label: 'Ver soporte'
     };
 }
 
-function buildIncomeHistoryRow(row) {
+function buildPendingActionRows(row) {
+    const transferState = String(row?.transfer_state || '').trim().toLowerCase();
+    const transferredTo = String(row?.transferred_to || '').trim().toLowerCase();
+    if (transferState !== 'transferred' || transferredTo === 'income' || transferredTo === 'losses') return [];
+
+    return [
+        createActionHistoryRow(row, {
+            history_id: `agro_pending_action:${row?.id || ''}`,
+            history_filter: 'transferidos',
+            source_table: 'agro_pending',
+            source_tab: 'pendientes',
+            source_id: String(row?.id || '').trim(),
+            label: transferredTo ? `Transferido a ${transferredTo}` : 'Transferido fuera de cartera',
+            tone: 'review',
+            note: 'Este fiado salió de la cartera activa hacia otra salida operativa.'
+        })
+    ];
+}
+
+function buildIncomeLedgerRow(row) {
     const amount = normalizeMoney(readHistoryItemField(row, ['monto_usd', 'monto']));
-    const fromPending = String(row?.origin_table || '').trim().toLowerCase() === 'agro_pending';
+    const originTable = String(row?.origin_table || '').trim().toLowerCase();
+    const originId = String(row?.origin_id || '').trim();
+    const fromPendingContext = originTable === 'agro_pending';
+    const hasTransferOrigin = fromPendingContext && !!originId;
     const isReview = String(row?.buyer_match_status || '').trim().toLowerCase() !== 'matched';
     const isReverted = String(row?.transfer_state || '').trim().toLowerCase() === 'reverted' || Boolean(row?.reverted_at);
+    if (isReverted) return null;
 
     return {
         history_id: `agro_income:${row?.id || ''}`,
+        row_kind: 'ledger',
+        history_filter: 'todos',
         source_table: 'agro_income',
         source_tab: 'ingresos',
         source_id: String(row?.id || '').trim(),
-        title: isReverted ? 'Cobro revertido' : (fromPending ? 'Cobro registrado' : 'Ingreso aparte'),
-        label: isReverted ? 'Revertido' : (fromPending ? 'Cobro' : 'Ingreso aparte'),
+        title: fromPendingContext ? 'Cobro registrado' : 'Ingreso aparte',
+        label: fromPendingContext ? 'Cobro' : 'Ingreso aparte',
         amount,
         currency: normalizeDetailCurrency(row?.currency),
         exchange_rate: Number(row?.exchange_rate) || null,
@@ -463,14 +538,12 @@ function buildIncomeHistoryRow(row) {
         created_at: row?.created_at || '',
         concept: String(row?.concepto || '').trim(),
         meta: buildMovementMeta(row, [String(row?.categoria || '').trim()]),
-        note: isReverted
-            ? 'Este cobro fue devuelto a Fiados.'
-            : isReview
+        note: isReview
             ? 'Este ingreso aún está pendiente por revisar.'
-            : (fromPending
-                ? 'Entrada confirmada como cobro del saldo.'
+            : (fromPendingContext
+                ? 'Movimiento económico confirmado dentro del saldo del cliente.'
                 : 'Entrada relacionada con el cliente, pero separada de la cartera.'),
-        tone: isReverted ? 'review' : (isReview ? 'review' : (fromPending ? 'paid' : 'neutral')),
+        tone: isReview ? 'review' : (fromPendingContext ? 'paid' : 'neutral'),
         is_review: isReview,
         crop_id: String(row?.crop_id || '').trim(),
         unit_type: String(row?.unit_type || '').trim().toLowerCase(),
@@ -478,29 +551,72 @@ function buildIncomeHistoryRow(row) {
         transfer_state: String(row?.transfer_state || '').trim().toLowerCase(),
         transferred_to: '',
         reverted_at: row?.reverted_at || '',
-        origin_table: String(row?.origin_table || '').trim().toLowerCase(),
-        origin_id: String(row?.origin_id || '').trim(),
-        is_transfer_related: fromPending && !isReverted && Boolean(String(row?.origin_id || '').trim()),
+        origin_table: originTable,
+        origin_id: originId,
+        is_transfer_related: hasTransferOrigin,
         support_url_raw: String(row?.soporte_url || row?.evidence_url || '').trim(),
         support_url_resolved: '',
         support_label: 'Ver soporte'
     };
 }
 
-function buildLossHistoryRow(row) {
+function buildIncomeActionRows(row) {
+    const originTable = String(row?.origin_table || '').trim().toLowerCase();
+    const originId = String(row?.origin_id || '').trim();
+    if (originTable !== 'agro_pending' || !originId) return [];
+
+    const isReverted = String(row?.transfer_state || '').trim().toLowerCase() === 'reverted' || Boolean(row?.reverted_at);
+    if (isReverted) {
+        return [
+            createActionHistoryRow(row, {
+                history_id: `agro_income_action_revert:${row?.id || ''}`,
+                history_filter: 'revertidos',
+                source_table: 'agro_income',
+                source_tab: 'ingresos',
+                source_id: String(row?.id || '').trim(),
+                label: 'Revertido desde cobro',
+                tone: 'review',
+                note: 'El cobro se devolvió nuevamente a Fiados.',
+                metaParts: [String(row?.categoria || '').trim()]
+            })
+        ];
+    }
+
+    return [
+        createActionHistoryRow(row, {
+            history_id: `agro_income_action_transfer:${row?.id || ''}`,
+            history_filter: 'transferidos',
+            source_table: 'agro_income',
+            source_tab: 'ingresos',
+            source_id: String(row?.id || '').trim(),
+            label: 'Transferido a cobro',
+            tone: 'paid',
+            note: 'Acción del sistema: este cobro nació desde un fiado canónico.',
+            metaParts: [String(row?.categoria || '').trim()]
+        })
+    ];
+}
+
+function buildLossLedgerRow(row) {
     const amount = normalizeMoney(readHistoryItemField(row, ['monto_usd', 'monto']));
-    const fromPending = String(row?.origin_table || '').trim().toLowerCase() === 'agro_pending';
+    const originTable = String(row?.origin_table || '').trim().toLowerCase();
+    const originId = String(row?.origin_id || '').trim();
+    const fromPendingContext = originTable === 'agro_pending';
+    const hasTransferOrigin = fromPendingContext && !!originId;
     const matchStatus = String(row?.buyer_match_status || '').trim().toLowerCase();
     const isReview = matchStatus !== 'matched';
     const isReverted = String(row?.transfer_state || '').trim().toLowerCase() === 'reverted' || Boolean(row?.reverted_at);
+    if (isReverted) return null;
 
     return {
         history_id: `agro_losses:${row?.id || ''}`,
+        row_kind: 'ledger',
+        history_filter: 'todos',
         source_table: 'agro_losses',
         source_tab: 'perdidas',
         source_id: String(row?.id || '').trim(),
-        title: isReverted ? 'Pérdida revertida' : (fromPending ? 'Pérdida registrada' : 'Pérdida por revisar'),
-        label: isReverted ? 'Revertido' : (fromPending ? 'Pérdida' : 'Por revisar'),
+        title: fromPendingContext ? 'Pérdida registrada' : 'Pérdida por revisar',
+        label: fromPendingContext ? 'Pérdida' : 'Por revisar',
         amount,
         currency: normalizeDetailCurrency(row?.currency),
         exchange_rate: Number(row?.exchange_rate) || null,
@@ -508,14 +624,12 @@ function buildLossHistoryRow(row) {
         created_at: row?.created_at || '',
         concept: String(row?.concepto || '').trim(),
         meta: buildMovementMeta(row, [String(row?.causa || '').trim()]),
-        note: isReverted
-            ? 'Esta pérdida fue devuelta a Fiados.'
-            : isReview
+        note: isReview
             ? (matchStatus === 'legacy_unclassified'
                 ? 'Hay un registro antiguo que todavía necesita ordenarse.'
                 : 'Esta pérdida aún necesita confirmación final.')
             : 'Salida cerrada de la cartera.',
-        tone: isReverted ? 'review' : (isReview ? 'review' : 'loss'),
+        tone: isReview ? 'review' : 'loss',
         is_review: isReview,
         crop_id: String(row?.crop_id || '').trim(),
         unit_type: String(row?.unit_type || '').trim().toLowerCase(),
@@ -523,13 +637,50 @@ function buildLossHistoryRow(row) {
         transfer_state: String(row?.transfer_state || '').trim().toLowerCase(),
         transferred_to: '',
         reverted_at: row?.reverted_at || '',
-        origin_table: String(row?.origin_table || '').trim().toLowerCase(),
-        origin_id: String(row?.origin_id || '').trim(),
-        is_transfer_related: fromPending && !isReverted && Boolean(String(row?.origin_id || '').trim()),
+        origin_table: originTable,
+        origin_id: originId,
+        is_transfer_related: hasTransferOrigin,
         support_url_raw: String(row?.evidence_url || row?.soporte_url || '').trim(),
         support_url_resolved: '',
         support_label: 'Ver soporte'
     };
+}
+
+function buildLossActionRows(row) {
+    const originTable = String(row?.origin_table || '').trim().toLowerCase();
+    const originId = String(row?.origin_id || '').trim();
+    if (originTable !== 'agro_pending' || !originId) return [];
+
+    const isReverted = String(row?.transfer_state || '').trim().toLowerCase() === 'reverted' || Boolean(row?.reverted_at);
+    if (isReverted) {
+        return [
+            createActionHistoryRow(row, {
+                history_id: `agro_losses_action_revert:${row?.id || ''}`,
+                history_filter: 'revertidos',
+                source_table: 'agro_losses',
+                source_tab: 'perdidas',
+                source_id: String(row?.id || '').trim(),
+                label: 'Revertido desde pérdida',
+                tone: 'review',
+                note: 'La pérdida se devolvió nuevamente a Fiados.',
+                metaParts: [String(row?.causa || '').trim()]
+            })
+        ];
+    }
+
+    return [
+        createActionHistoryRow(row, {
+            history_id: `agro_losses_action_transfer:${row?.id || ''}`,
+            history_filter: 'transferidos',
+            source_table: 'agro_losses',
+            source_tab: 'perdidas',
+            source_id: String(row?.id || '').trim(),
+            label: 'Transferido a pérdida',
+            tone: 'loss',
+            note: 'Acción del sistema: esta pérdida cerró un fiado del cliente.',
+            metaParts: [String(row?.causa || '').trim()]
+        })
+    ];
 }
 
 function getHistorySortTimestamp(row) {
@@ -595,9 +746,12 @@ export async function fetchBuyerHistoryTimeline(supabaseClient, buyerRow, option
     ]);
 
     const timelineRows = [
-        ...pendingRows.map(buildPendingHistoryRow),
-        ...incomeRows.map(buildIncomeHistoryRow),
-        ...lossRows.map(buildLossHistoryRow)
+        ...pendingRows.map(buildPendingLedgerRow).filter(Boolean),
+        ...pendingRows.flatMap(buildPendingActionRows),
+        ...incomeRows.map(buildIncomeLedgerRow).filter(Boolean),
+        ...incomeRows.flatMap(buildIncomeActionRows),
+        ...lossRows.map(buildLossLedgerRow).filter(Boolean),
+        ...lossRows.flatMap(buildLossActionRows)
     ].sort(compareHistoryRows);
 
     return hydrateHistorySupportUrls(timelineRows);
@@ -625,6 +779,44 @@ function renderDetailInsight(label, value) {
     `;
 }
 
+function renderTimelineSkeleton(count = 3) {
+    const size = Math.max(1, Number(count) || 3);
+    return `
+        <div class="cartera-viva-detail__timeline-skeleton" aria-hidden="true">
+            ${Array.from({ length: size }, () => `
+                <article class="cartera-viva-history-item cartera-viva-history-item--skeleton">
+                    <div class="cartera-viva-history-item__main">
+                        <div class="cartera-viva-history-item__copy">
+                            <span class="cartera-viva-skeleton-line cartera-viva-skeleton-line--title"></span>
+                            <span class="cartera-viva-skeleton-line cartera-viva-skeleton-line--meta"></span>
+                            <span class="cartera-viva-skeleton-line cartera-viva-skeleton-line--note"></span>
+                        </div>
+                        <div class="cartera-viva-history-item__side">
+                            <span class="cartera-viva-skeleton-line cartera-viva-skeleton-line--amount"></span>
+                        </div>
+                    </div>
+                </article>
+            `).join('')}
+        </div>
+    `;
+}
+
+function renderSystemActionShell() {
+    return `
+        <section class="cartera-viva-detail__actions-band cartera-viva-detail__actions-band--loading" aria-hidden="true">
+            <div class="cartera-viva-detail__actions-head">
+                <div>
+                    <p class="cartera-viva-view__eyebrow">Acciones</p>
+                    <h4 class="cartera-viva-detail__actions-title">Eventos del sistema</h4>
+                </div>
+                <span class="cartera-viva-skeleton-line cartera-viva-skeleton-line--tag"></span>
+            </div>
+            <p class="cartera-viva-detail__actions-copy">Preparando transferencias, cierres y reversiones…</p>
+            ${renderTimelineSkeleton(2)}
+        </section>
+    `;
+}
+
 function normalizeHistoryFilter(value) {
     const token = String(value || '').trim().toLowerCase();
     if (token === 'transferidos') return 'transferidos';
@@ -632,36 +824,32 @@ function normalizeHistoryFilter(value) {
     return 'todos';
 }
 
-function isTransferRelatedHistoryRow(row) {
-    if (!row || typeof row !== 'object') return false;
-    if (isRevertedHistoryRow(row)) return false;
-    if (row.is_transfer_related) return true;
-
-    const sourceTable = String(row?.source_table || '').trim().toLowerCase();
-    const transferState = String(row?.transfer_state || '').trim().toLowerCase();
-    const originTable = String(row?.origin_table || '').trim().toLowerCase();
-
-    if (sourceTable === 'agro_pending' && transferState === 'transferred') return true;
-    if ((sourceTable === 'agro_income' || sourceTable === 'agro_losses') && originTable === 'agro_pending' && String(row?.origin_id || '').trim()) return true;
-    return false;
+function isActionHistoryRow(row) {
+    return row && typeof row === 'object' && String(row?.row_kind || '').trim().toLowerCase() === 'action';
 }
 
-function isRevertedHistoryRow(row) {
-    if (!row || typeof row !== 'object') return false;
-    const transferState = String(row?.transfer_state || '').trim().toLowerCase();
-    return transferState === 'reverted' || Boolean(row?.reverted_at);
+function getLedgerHistoryRows(rows) {
+    const safeRows = Array.isArray(rows) ? rows : [];
+    return safeRows.filter((row) => !isActionHistoryRow(row));
+}
+
+function getActionHistoryRows(rows, filterMode = 'todos') {
+    const safeRows = Array.isArray(rows) ? rows : [];
+    const normalizedFilter = normalizeHistoryFilter(filterMode);
+    if (normalizedFilter === 'todos') {
+        return safeRows.filter((row) => isActionHistoryRow(row));
+    }
+
+    return safeRows.filter((row) =>
+        isActionHistoryRow(row)
+        && String(row?.history_filter || '').trim().toLowerCase() === normalizedFilter
+    );
 }
 
 function filterHistoryRows(rows, filterMode) {
-    const safeRows = Array.isArray(rows) ? rows : [];
     const normalizedFilter = normalizeHistoryFilter(filterMode);
-    if (normalizedFilter === 'transferidos') {
-        return safeRows.filter((row) => isTransferRelatedHistoryRow(row));
-    }
-    if (normalizedFilter === 'revertidos') {
-        return safeRows.filter((row) => isRevertedHistoryRow(row));
-    }
-    return safeRows;
+    if (normalizedFilter === 'todos') return getLedgerHistoryRows(rows);
+    return getActionHistoryRows(rows, normalizedFilter);
 }
 
 function getHistoryFilterCount(rows, filterMode) {
@@ -680,7 +868,7 @@ function renderHistoryFilters(historyRows, activeFilter) {
     const normalizedFilter = normalizeHistoryFilter(activeFilter);
     const allCount = getHistoryFilterCount(historyRows, 'todos');
     const filters = [
-        { id: 'todos', label: `Todo (${allCount})`, visible: true },
+        { id: 'todos', label: `Timeline (${allCount})`, visible: true },
         { id: 'transferidos', label: `Ver transferidos (${transferCount})`, visible: transferCount > 0 },
         { id: 'revertidos', label: `Ver revertidos (${revertedCount})`, visible: revertedCount > 0 }
     ];
@@ -875,6 +1063,37 @@ function renderHistorySupportLink(row) {
             <span>${escapeHtml(label)}</span>
         </a>
     `;
+}
+
+function createActionRowElement(row) {
+    const article = document.createElement('article');
+    article.className = `cartera-viva-history-action cartera-viva-history-action--${row?.tone || 'neutral'}`;
+    article.dataset.historyId = String(row?.history_id || '').trim();
+
+    const title = escapeHtml(row?.title || 'Acción del sistema');
+    const label = escapeHtml(row?.label || 'Acción');
+    const amount = Number(row?.amount);
+    const amountMarkup = Number.isFinite(amount) && amount > 0
+        ? `<strong class="cartera-viva-history-action__amount">${formatMoney(amount)}</strong>`
+        : '';
+    const meta = row?.meta ? `<p class="cartera-viva-history-action__meta">${escapeHtml(row.meta)}</p>` : '';
+    const concept = row?.concept ? `<p class="cartera-viva-history-action__concept">${escapeHtml(row.concept)}</p>` : '';
+    const note = row?.note ? `<p class="cartera-viva-history-action__note">${escapeHtml(row.note)}</p>` : '';
+
+    article.innerHTML = `
+        <div class="cartera-viva-history-action__head">
+            <div class="cartera-viva-history-action__copy">
+                <span class="cartera-viva-history-action__label cartera-viva-history-action__label--${escapeHtml(row?.tone || 'neutral')}">${label}</span>
+                <h4 class="cartera-viva-history-action__title">${title}</h4>
+            </div>
+            ${amountMarkup}
+        </div>
+        ${meta}
+        ${concept}
+        ${note}
+    `;
+
+    return article;
 }
 
 function resolvePrimarySummaryMetric(buyerRow) {
@@ -1136,6 +1355,10 @@ function renderBuyerSummary(buyerRow, options = {}) {
 }
 
 function createTimelineRowElement(row, options = {}) {
+    if (isActionHistoryRow(row)) {
+        return createActionRowElement(row);
+    }
+
     const article = document.createElement('article');
     article.className = `cartera-viva-history-item cartera-viva-history-item--${row?.tone || 'neutral'}`;
     article.dataset.historyId = String(row?.history_id || '').trim();
@@ -1189,13 +1412,19 @@ export function renderBuyerHistoryDetail(root, options = {}) {
         ? options.exchangeStatus
         : {};
     const isSoftRefreshing = loading && historyRows.length > 0;
+    const ledgerRows = getLedgerHistoryRows(historyRows);
+    const actionRows = getActionHistoryRows(historyRows, 'todos');
     const visibleHistoryRows = filterHistoryRows(historyRows, historyFilter);
+    const visibleActionRows = historyFilter === 'todos'
+        ? actionRows
+        : visibleHistoryRows;
+    const isCanonicalFilter = historyFilter === 'todos';
     const filterEmptyTitle = historyFilter === 'revertidos'
-        ? 'Sin revertidos visibles'
-        : 'Sin transferidos visibles';
+        ? 'Sin acciones de reversión'
+        : 'Sin acciones de transferencia';
     const filterEmptyCopy = historyFilter === 'revertidos'
-        ? 'Este cliente no tiene movimientos revertidos dentro del filtro activo.'
-        : 'Este cliente no tiene movimientos transferidos dentro del filtro activo.';
+        ? 'Este cliente no tiene reversiones reales dentro del filtro activo.'
+        : 'Este cliente no tiene transferencias reales dentro del filtro activo.';
 
     if (!buyerRow) {
         root.innerHTML = `
@@ -1221,10 +1450,10 @@ export function renderBuyerHistoryDetail(root, options = {}) {
         : '';
 
     if (loading && historyRows.length <= 0) {
-        bodyContent = renderEmptyState({
-            title: 'Cargando historial del cliente',
-            copy: 'Ordenando los movimientos relacionados a este cliente.'
-        });
+        bodyContent = `
+            ${renderTimelineSkeleton(3)}
+            ${renderSystemActionShell()}
+        `;
     } else if (errorMessage) {
         bodyContent = renderEmptyState({
             title: 'No se pudo leer el historial',
@@ -1232,8 +1461,8 @@ export function renderBuyerHistoryDetail(root, options = {}) {
         });
     } else if (historyRows.length <= 0) {
         bodyContent = renderEmptyState({
-            title: 'Sin historial legible',
-            copy: 'Este cliente todavía no tiene movimientos suficientes para contar su historia.'
+            title: 'Sin historial canónico',
+            copy: 'Este cliente todavía no tiene registros suficientes para reconstruir su timeline.'
         });
     } else if (visibleHistoryRows.length <= 0) {
         bodyContent = renderEmptyState({
@@ -1241,16 +1470,35 @@ export function renderBuyerHistoryDetail(root, options = {}) {
             copy: filterEmptyCopy
         });
     } else {
-        bodyContent = '<div class="cartera-viva-detail__timeline" data-cartera-detail-timeline></div>';
+        bodyContent = isCanonicalFilter
+            ? `
+                <div class="cartera-viva-detail__timeline" data-cartera-detail-timeline></div>
+                ${visibleActionRows.length > 0 ? `
+                    <section class="cartera-viva-detail__actions-band" aria-label="Acciones del sistema">
+                        <div class="cartera-viva-detail__actions-head">
+                            <div>
+                                <p class="cartera-viva-view__eyebrow">Acciones</p>
+                                <h4 class="cartera-viva-detail__actions-title">Eventos del sistema</h4>
+                            </div>
+                            <span class="cartera-viva-detail__actions-counter">${visibleActionRows.length}</span>
+                        </div>
+                        <p class="cartera-viva-detail__actions-copy">
+                            Transferencias, cierres y reversiones se muestran aparte para no contaminar el historial canónico.
+                        </p>
+                        <div class="cartera-viva-detail__actions-timeline" data-cartera-detail-actions></div>
+                    </section>
+                ` : ''}
+            `
+            : '<div class="cartera-viva-detail__timeline cartera-viva-detail__timeline--actions" data-cartera-detail-timeline></div>';
     }
 
     root.innerHTML = `
-        <section class="cartera-viva-view cartera-viva-view--detail${isSoftRefreshing ? ' is-refreshing' : ''}" aria-label="Historial contextual por cliente" aria-busy="${isSoftRefreshing ? 'true' : 'false'}">
+        <section class="cartera-viva-view cartera-viva-view--detail${isSoftRefreshing ? ' is-refreshing' : ''}" aria-label="Historial contextual por cliente" aria-busy="${loading ? 'true' : 'false'}">
             ${renderCommercialFamilyNav('cartera-viva')}
             <div class="cartera-viva-detail__toolbar">
                 <button type="button" class="cartera-viva-back" data-cartera-detail-back>Volver</button>
                 <div class="cartera-viva-detail__toolbar-actions">
-                <button type="button" class="cartera-viva-refresh" data-cartera-detail-refresh ${isSoftRefreshing ? 'disabled' : ''}>${isSoftRefreshing ? 'Actualizando…' : 'Actualizar'}</button>
+                <button type="button" class="cartera-viva-refresh" data-cartera-detail-refresh ${loading ? 'disabled' : ''}>${loading ? 'Actualizando…' : 'Actualizar'}</button>
                 <button type="button" class="cartera-viva-refresh" data-cartera-detail-create-cycle>Crear ciclo</button>
                 <button
                     type="button"
@@ -1265,7 +1513,7 @@ export function renderBuyerHistoryDetail(root, options = {}) {
             ${exportStatus}
 
             ${renderBuyerSummary(buyerRow, {
-                historyRows,
+                historyRows: ledgerRows,
                 selectedPair,
                 exchangeRates,
                 exchangeStatus
@@ -1275,11 +1523,13 @@ export function renderBuyerHistoryDetail(root, options = {}) {
                 <header class="cartera-viva-detail__body-head">
                     <div>
                         <p class="cartera-viva-view__eyebrow">Historial</p>
-                        <h3 class="cartera-viva-detail__section-title">Movimientos del cliente</h3>
+                        <h3 class="cartera-viva-detail__section-title">${isCanonicalFilter ? 'Timeline canónico del cliente' : 'Acciones del sistema'}</h3>
                     </div>
                     <div class="cartera-viva-detail__body-meta">
                         <p class="cartera-viva-detail__body-copy">
-                            Fiados, cobros, pérdidas e ingresos relacionados con este cliente.
+                            ${isCanonicalFilter
+                                ? 'El timeline principal muestra solo movimientos económicos reales agrupados por día. Las acciones del sistema viven en una capa aparte.'
+                                : 'Aquí solo ves eventos auxiliares del sistema, sin mezclar cobros o pérdidas normales.'}
                         </p>
                         ${renderHistoryFilters(historyRows, historyFilter)}
                     </div>
@@ -1355,6 +1605,17 @@ export function renderBuyerHistoryDetail(root, options = {}) {
                 fragment.appendChild(createTimelineRowElement(row, {
                     onCreateCycle: options.onCreateCycle
                 }));
+            }
+        });
+    }
+
+    const actionsNode = root.querySelector('[data-cartera-detail-actions]');
+    if (actionsNode) {
+        renderHistoryDayGroups(actionsNode, visibleActionRows, {
+            dateFieldName: 'fecha',
+            formatDayLabel: formatHistoryAbsoluteDayLabel,
+            renderRow(fragment, row) {
+                fragment.appendChild(createActionRowElement(row));
             }
         });
     }

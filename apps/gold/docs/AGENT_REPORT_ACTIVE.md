@@ -7722,3 +7722,68 @@ order by r.display_name asc;
    - no aparece vacío destructivo;
    - se atenúa la vista mientras actualiza;
    - el historial vuelve consistente al terminar.
+
+## [2026-04-03] Cartera Viva v2.2 — timeline canónico, transferencias reales y borrado seguro
+
+### Diagnóstico
+
+- `apps/gold/agro/agro-cartera-viva-detail.js` estaba mezclando movimientos económicos reales del cliente con acciones auxiliares del sistema. Eso hacía que el timeline se sintiera sucio aunque parte de la lógica “funcionara”.
+- `Ver transferidos` seguía siendo semánticamente inestable porque dependía de `origin_table = 'agro_pending'`, pero el wizard también usa ese valor para cobros manuales creados desde contexto de deuda. La señal real de transferencia era `origin_id` presente.
+- El bug de unidades era real: el render intentaba leer `unit_type`, `unit_qty` y `quantity_kg` en ingresos/pérdidas, pero esas columnas ni siquiera se estaban seleccionando en el fetch del detalle.
+- El parpadeo fuerte del detalle venía del render inicial: al abrir o cambiar cliente se vaciaba el historial y se montaba un empty/loading state destructivo en vez de mantener shell estable.
+- `apps/gold/agro/agrocompradores.js` bloqueaba por completo la eliminación cuando existía historial. Eso evitaba huérfanos, pero también impedía implementar un borrado seguro del cliente canónico con cascada controlada.
+
+### Cambios aplicados
+
+| Archivo | Líneas | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro-cartera-viva-detail.js` | 48-75 | Se agregaron `unit_type`, `unit_qty` y `quantity_kg` a ingresos y pérdidas para que el detalle pueda renderizar unidades reales |
+| `apps/gold/agro/agro-cartera-viva-detail.js` | 370-686 | Se unificó la meta visible de unidades/cantidades y se separó la construcción de filas en `ledger` vs `action` |
+| `apps/gold/agro/agro-cartera-viva-detail.js` | 734-871 | El timeline ahora se ensambla con movimientos canónicos y acciones auxiliares por separado; `Ver transferidos` y `Ver revertidos` filtran solo eventos reales |
+| `apps/gold/agro/agro-cartera-viva-detail.js` | 1068-1618 | Se agregó renderer específico para acciones del sistema, skeleton estable de carga y copy nuevo para reforzar la separación semántica |
+| `apps/gold/agro/agro-cartera-viva.css` | 132-157, 640-680 | Se extendieron tipografías y labels para el nuevo layer de acciones |
+| `apps/gold/agro/agro-cartera-viva.css` | 1036-1275 | Se agregaron estilos para skeleton, banda de acciones y tarjetas auxiliares sin romper ADN Visual V10 |
+| `apps/gold/agro/agro-cartera-viva.css` | 1508-1518 | Ajustes responsive para que acciones y montos sigan legibles en tablet/mobile |
+| `apps/gold/agro/agrocompradores.js` | 157-162 | El botón de eliminar deja de quedar bloqueado por historial y pasa a comunicar explícitamente cuando borrará cliente + cartera |
+| `apps/gold/agro/agrocompradores.js` | 307-390 | Nuevo scope summary de borrado, helpers de fallback y detección de RPC faltante |
+| `apps/gold/agro/agrocompradores.js` | 610-658 | Confirmación fuerte + prompt con nombre canónico + ruta de borrado seguro con cascada |
+| `supabase/migrations/20260403143000_agro_delete_buyer_cascade_v1.sql` | 1-90 | Nueva RPC `agro_delete_buyer_cascade_v1` para soft-delete transaccional de `agro_pending`, `agro_income`, `agro_losses`, limpieza de threads y delete final del buyer |
+
+### Riesgo residual
+
+- La eliminación segura de clientes con historial depende de aplicar la migración nueva en Supabase. Si la RPC no existe aún, la UI ahora lo avisa y no deja ejecutar un borrado inseguro.
+- La cascada segura cubre cartera y social threads. No toca `agro_operational_cycles` porque el modelo actual no tiene relación canónica directa por `buyer_id`; si producto quiere esa cascada, requiere diseño aparte.
+- No hice QA browser intensivo en producción real. La validación fuerte que falta es abrir un cliente mixto y confirmar en UI que el layer de acciones ya no contamina el timeline principal.
+
+### Build status
+
+- `pnpm build:gold`: ✅ Exitoso
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observación no bloqueante:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+
+### QA sugerido
+
+1. Abrir un cliente con fiados + cobros + pérdidas y confirmar que el bloque principal del detalle muestra solo timeline canónico por días.
+2. Cambiar entre `Timeline`, `Ver transferidos` y `Ver revertidos` y verificar que:
+   - `Timeline` no muestra tags de transferencia/reversión como si fueran movimientos normales;
+   - `Ver transferidos` solo muestra transferencias reales con `origin_id`;
+   - cobros manuales creados desde contexto de deuda ya no aparecen falsamente como “transferidos”.
+3. Verificar unidades en fiados, cobros y pérdidas sobre el mismo cliente:
+   - `unit_qty + unit_type`;
+   - `quantity_kg`;
+   - mezcla de ambos cuando aplique.
+4. Abrir el detalle varias veces y cambiar entre clientes confirmando que:
+   - no aparece vacío destructivo;
+   - se mantiene shell estable mientras carga;
+   - el refresh sigue siendo suave.
+5. Probar el borrado de un cliente canónico con historial en un entorno controlado:
+   - confirmar doble prompt;
+   - validar que desaparece de Cartera Viva;
+   - verificar en Supabase que los movimientos quedan con `deleted_at` y no visibles en el summary;
+   - confirmar que social threads del `buyer_group_key` también se limpian.
