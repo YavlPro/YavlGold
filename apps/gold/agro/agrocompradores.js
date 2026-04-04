@@ -11,6 +11,13 @@ const BUYER_SAVE_BUTTON_ID = 'btn-save-agro-buyer';
 const BUYER_OPEN_PUBLIC_BUTTON_ID = 'btn-open-buyer-public-profile';
 const BUYER_ARCHIVE_BUTTON_ID = 'btn-archive-agro-buyer';
 const BUYER_DELETE_BUTTON_ID = 'btn-delete-agro-buyer';
+const BUYER_DELETE_CONFIRM_MODAL_ID = 'modal-agro-buyer-delete-confirm';
+const BUYER_DELETE_CONFIRM_TITLE_ID = 'agro-buyer-delete-title';
+const BUYER_DELETE_CONFIRM_COPY_ID = 'agro-buyer-delete-copy';
+const BUYER_DELETE_CONFIRM_IMPACT_ID = 'agro-buyer-delete-impact';
+const BUYER_DELETE_CONFIRM_BUTTON_ID = 'btn-confirm-agro-buyer-delete';
+const BUYER_DUPLICATE_CREATE_MESSAGE = 'Este cliente ya existe y no se puede crear de nuevo.';
+const BUYER_DUPLICATE_EDIT_MESSAGE = 'Ya existe otro cliente con ese nombre canónico y no se puede guardar.';
 
 const BUYER_SELECT = [
     'id',
@@ -56,8 +63,18 @@ const state = {
     currentLinkedUserId: '',
     currentStatus: 'active',
     currentHistoryCount: 0,
-    mode: 'edit'
+    mode: 'edit',
+    pendingDeleteResolver: null
 };
+
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
 
 function setBuyerStatus(message = '', level = 'muted') {
     const node = document.getElementById(BUYER_STATUS_ID);
@@ -91,6 +108,15 @@ function getBuyerModal() {
     return document.getElementById(BUYER_MODAL_ID);
 }
 
+function getBuyerDeleteConfirmModal() {
+    return document.getElementById(BUYER_DELETE_CONFIRM_MODAL_ID);
+}
+
+function isBuyerDeleteConfirmOpen() {
+    const modal = getBuyerDeleteConfirmModal();
+    return !!modal && modal.classList.contains('is-open');
+}
+
 function openBuyerModal() {
     const modal = getBuyerModal();
     if (!modal) return;
@@ -107,11 +133,118 @@ function openBuyerModal() {
 }
 
 function closeBuyerModal() {
+    if (state.pendingDeleteResolver) {
+        const resolve = state.pendingDeleteResolver;
+        state.pendingDeleteResolver = null;
+        resolve(false);
+    }
+
+    const confirmModal = getBuyerDeleteConfirmModal();
+    if (confirmModal) {
+        confirmModal.classList.remove('is-open');
+        confirmModal.setAttribute('aria-hidden', 'true');
+    }
+
     const modal = getBuyerModal();
     if (!modal) return;
     modal.classList.remove('is-open');
     modal.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('agro-buyer-open');
+}
+
+function openBuyerDeleteConfirmModal() {
+    const modal = getBuyerDeleteConfirmModal();
+    if (!modal) return;
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+
+    const panel = modal.querySelector('.agro-buyer-confirm-panel');
+    if (panel && typeof panel.focus === 'function') {
+        requestAnimationFrame(() => {
+            panel.focus({ preventScroll: true });
+        });
+    }
+}
+
+function closeBuyerDeleteConfirmModal() {
+    const modal = getBuyerDeleteConfirmModal();
+    if (!modal) return;
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+}
+
+function settleBuyerDeleteConfirmation(confirmed = false) {
+    const resolve = state.pendingDeleteResolver;
+    state.pendingDeleteResolver = null;
+    closeBuyerDeleteConfirmModal();
+    if (typeof resolve === 'function') {
+        resolve(confirmed === true);
+    }
+}
+
+function focusBuyerNameField(selectText = false) {
+    const input = document.getElementById('agro-buyer-display_name');
+    if (!input || typeof input.focus !== 'function') return;
+    requestAnimationFrame(() => {
+        input.focus({ preventScroll: false });
+        if (selectText && typeof input.select === 'function') {
+            input.select();
+        }
+    });
+}
+
+function getBuyerDuplicateMessage() {
+    return state.mode === 'create'
+        ? BUYER_DUPLICATE_CREATE_MESSAGE
+        : BUYER_DUPLICATE_EDIT_MESSAGE;
+}
+
+function showBuyerDuplicateStatus() {
+    setBuyerStatus(getBuyerDuplicateMessage(), 'warn');
+    focusBuyerNameField(true);
+}
+
+function setBuyerDeleteConfirmContent({ title = 'Eliminar cliente', copy = '¿Deseas eliminar este cliente?', impactLines = [] } = {}) {
+    const titleNode = document.getElementById(BUYER_DELETE_CONFIRM_TITLE_ID);
+    const copyNode = document.getElementById(BUYER_DELETE_CONFIRM_COPY_ID);
+    const impactNode = document.getElementById(BUYER_DELETE_CONFIRM_IMPACT_ID);
+    const confirmButton = document.getElementById(BUYER_DELETE_CONFIRM_BUTTON_ID);
+
+    if (titleNode) titleNode.textContent = title;
+    if (copyNode) copyNode.textContent = copy;
+    if (confirmButton) confirmButton.textContent = 'Sí, eliminar';
+
+    if (impactNode) {
+        const safeLines = Array.isArray(impactLines) ? impactLines.filter(Boolean) : [];
+        impactNode.innerHTML = safeLines.map((line) => `<li>${escapeHtml(line)}</li>`).join('');
+        impactNode.hidden = safeLines.length <= 0;
+    }
+}
+
+function requestBuyerDeleteConfirmation(config = {}) {
+    const modal = getBuyerDeleteConfirmModal();
+    const title = String(config?.title || 'Eliminar cliente').trim() || 'Eliminar cliente';
+    const copy = String(config?.copy || '¿Deseas eliminar este cliente?').trim() || '¿Deseas eliminar este cliente?';
+    const impactLines = Array.isArray(config?.impactLines) ? config.impactLines : [];
+
+    if (!modal) {
+        if (typeof window !== 'undefined' && typeof window.confirm === 'function') {
+            const promptBody = [copy].concat(impactLines).join('\n\n');
+            return Promise.resolve(window.confirm(promptBody));
+        }
+        return Promise.resolve(false);
+    }
+
+    if (state.pendingDeleteResolver) {
+        settleBuyerDeleteConfirmation(false);
+    }
+
+    setBuyerDeleteConfirmContent({ title, copy, impactLines });
+    openBuyerDeleteConfirmModal();
+
+    return new Promise((resolve) => {
+        state.pendingDeleteResolver = resolve;
+    });
 }
 
 function focusBuyerLifecycleAction(action = '') {
@@ -508,13 +641,7 @@ async function handleBuyerSave(event) {
 
         const duplicate = await findBuyerDuplicateByNormalizedName(user.id, displayName, state.currentBuyerId);
         if (duplicate?.id && String(duplicate.id) !== String(state.currentBuyerId || '')) {
-            emitClientChanged({
-                clientId: duplicate.id,
-                groupKey: duplicate.group_key || duplicate.canonical_name || canonicalName,
-                openDetail: true,
-                duplicate: true
-            });
-            closeBuyerModal();
+            showBuyerDuplicateStatus();
             return;
         }
 
@@ -594,27 +721,7 @@ async function handleBuyerSave(event) {
     } catch (error) {
         console.error('[AGRO_CLIENTS] save error:', error);
         if (isBuyerCanonicalConflictError(error)) {
-            try {
-                const user = state.currentUser?.id ? state.currentUser : await resolveSessionUser();
-                const duplicate = await findBuyerDuplicateByNormalizedName(
-                    user?.id,
-                    document.getElementById('agro-buyer-display_name')?.value || state.currentDisplayName,
-                    state.currentBuyerId
-                );
-                if (duplicate?.id) {
-                    emitClientChanged({
-                        clientId: duplicate.id,
-                        groupKey: duplicate.group_key || duplicate.canonical_name || '',
-                        openDetail: true,
-                        duplicate: true
-                    });
-                    closeBuyerModal();
-                    return;
-                }
-            } catch (duplicateError) {
-                console.warn('[AGRO_CLIENTS] duplicate resolution fallback failed:', duplicateError?.message || duplicateError);
-            }
-            setBuyerStatus('Ya existe un cliente canónico con ese nombre.', 'warn');
+            showBuyerDuplicateStatus();
             return;
         }
         const message = String(error?.message || '').trim();
@@ -706,21 +813,22 @@ async function handleBuyerDelete(event) {
             impactLines.push(`Conversaciones sociales afectadas: ${threadCount}`);
         }
 
-        if (typeof window !== 'undefined' && typeof window.confirm === 'function') {
-            const confirmed = window.confirm(
-                requiresCascade
-                    ? `Se eliminará el cliente canónico y se archivará su cartera relacionada.\n\n${impactLines.join('\n')}\n\nEsta acción no se puede deshacer.`
-                    : 'Eliminar este cliente sin historial? Esta acción no se puede deshacer.'
-            );
-            if (!confirmed) return;
-        }
-
-        if (confirmationKey && typeof window !== 'undefined' && typeof window.prompt === 'function') {
-            const typed = String(window.prompt(`Escribe "${confirmationKey}" para confirmar la eliminación`, '') || '').trim();
-            if (typed !== confirmationKey) {
-                setBuyerStatus('Confirmación cancelada. El nombre canónico no coincide.', 'warn');
-                return;
-            }
+        const confirmed = await requestBuyerDeleteConfirmation({
+            title: 'Eliminar cliente',
+            copy: requiresCascade
+                ? '¿Deseas eliminar este cliente? Esta acción también eliminará su cartera relacionada.'
+                : '¿Deseas eliminar este cliente?',
+            impactLines: requiresCascade
+                ? impactLines.concat(['Esta acción no se puede deshacer.'])
+                : [
+                    `Cliente: ${state.currentDisplayName || confirmationKey || 'Cliente'}`,
+                    'Sin historial relacionado.',
+                    'Esta acción no se puede deshacer.'
+                ]
+        });
+        if (!confirmed) {
+            setBuyerStatus('Eliminación cancelada.', 'muted');
+            return;
         }
 
         if (requiresCascade) {
@@ -776,6 +884,12 @@ function bindBuyerModalEvents() {
     });
 
     document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && isBuyerDeleteConfirmOpen()) {
+            event.preventDefault();
+            settleBuyerDeleteConfirmation(false);
+            return;
+        }
+
         if (event.key === 'Escape' && modal.classList.contains('is-open')) {
             closeBuyerModal();
         }
@@ -798,6 +912,24 @@ function bindBuyerModalEvents() {
             syncOpenPublicButton();
         });
     }
+}
+
+function bindBuyerDeleteConfirmEvents() {
+    const modal = getBuyerDeleteConfirmModal();
+    if (!modal || modal.dataset.bound === '1') return;
+    modal.dataset.bound = '1';
+
+    modal.querySelectorAll('[data-agro-buyer-delete-close]').forEach((node) => {
+        node.addEventListener('click', (event) => {
+            event.preventDefault();
+            settleBuyerDeleteConfirmation(false);
+        });
+    });
+
+    document.getElementById(BUYER_DELETE_CONFIRM_BUTTON_ID)?.addEventListener('click', (event) => {
+        event.preventDefault();
+        settleBuyerDeleteConfirmation(true);
+    });
 }
 
 async function openBuyerProfileInternal({ buyerId = '', displayName = '', groupKey = '', mode = 'edit', focusAction = '' } = {}) {
@@ -912,6 +1044,7 @@ export function initAgroCompradores({ supabase } = {}) {
     state.initialized = true;
 
     bindBuyerModalEvents();
+    bindBuyerDeleteConfirmEvents();
     syncBuyerHeading();
     syncOpenPublicButton();
     syncLifecycleButtons();

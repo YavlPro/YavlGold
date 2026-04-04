@@ -4053,6 +4053,31 @@
         </div>
     </div>
 
+    <div id="modal-agro-buyer-delete-confirm" class="agro-buyer-confirm-modal" aria-hidden="true">
+        <div class="agro-buyer-confirm-backdrop" data-agro-buyer-delete-close></div>
+        <div class="agro-buyer-confirm-panel" role="dialog" aria-modal="true" aria-labelledby="agro-buyer-delete-title"
+            tabindex="-1">
+            <header class="agro-buyer-confirm-header">
+                <div>
+                    <p class="agro-buyer-confirm-eyebrow">Confirmación</p>
+                    <h3 id="agro-buyer-delete-title" class="agro-buyer-confirm-title">Eliminar cliente</h3>
+                </div>
+                <button type="button" class="agro-buyer-confirm-close" data-agro-buyer-delete-close
+                    aria-label="Cerrar confirmación">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </header>
+            <div class="agro-buyer-confirm-body">
+                <p id="agro-buyer-delete-copy" class="agro-buyer-confirm-copy">¿Deseas eliminar este cliente?</p>
+                <ul id="agro-buyer-delete-impact" class="agro-buyer-confirm-impact" hidden></ul>
+            </div>
+            <footer class="agro-buyer-confirm-footer">
+                <button type="button" class="btn" data-agro-buyer-delete-close>No, cancelar</button>
+                <button type="button" class="btn agro-buyer-confirm__danger" id="btn-confirm-agro-buyer-delete">Sí, eliminar</button>
+            </footer>
+        </div>
+    </div>
+
     <div id="modal-agro-public-profile" class="agro-public-modal" aria-hidden="true">
         <div class="agro-public-backdrop" data-agro-public-close></div>
         <div class="agro-public-panel" role="dialog" aria-modal="true" aria-labelledby="agro-public-title"

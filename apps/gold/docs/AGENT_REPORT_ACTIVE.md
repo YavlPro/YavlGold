@@ -8215,3 +8215,51 @@ order by r.display_name asc;
 1. Crear `José` sin movimientos y validar que aparece en `Sin registro`.
 2. Confirmar que la card conserva `Sin registros de historial`, barra gris y `0%`.
 3. Registrar luego un fiado y validar transición de `Sin registro` a `Fiados`.
+
+## [2026-04-04] Cartera Viva v2.11 — aviso de duplicado, confirmación dedicada y buyers legacy visibles
+
+### Diagnóstico
+
+- El bloqueo por duplicado ya existe en `apps/gold/agro/agrocompradores.js` dentro de `handleBuyerSave()`, pero hoy el flujo resuelve el caso con `emitClientChanged(... duplicate: true)` y `closeBuyerModal()`. Eso bloquea la creación, pero no deja un aviso claro y persistente dentro de la UI del modal.
+- El flujo de eliminar cliente también vive en `apps/gold/agro/agrocompradores.js`, dentro de `handleBuyerDelete()`, y hoy depende de `window.confirm()` + `window.prompt()`. Eso no cumple la separación pedida entre crear/editar y confirmar eliminación.
+- La recuperación de buyers legacy ya tiene una base en `fetchBuyerDirectorySummaryRows()` y `mergeSummaryRowsWithBuyerDirectory()` dentro de `apps/gold/agro/agro-cartera-viva-view.js`, pero con cultivo activo `getCropScopedRows()` sigue mostrando solo buyers con scope real por movimientos o pin de sesión. Los buyers viejos sin historial, creados antes del fix, pueden seguir invisibles si no fueron los recién creados en la sesión actual.
+- El menor diff correcto es:
+  - dejar el duplicado visible como mensaje claro dentro del modal de buyer;
+  - crear un popup de confirmación dedicado para eliminar;
+  - y permitir que buyers sin historial sigan visibles en `Sin registro` aunque exista cultivo activo.
+
+### Cambios aplicados
+
+| Archivo | Líneas | Cambio |
+|---|---|---|
+| `apps/gold/agro/agrocompradores.js` | 5-22, 45-144 | Nuevos ids/helpers para popup de eliminación dedicado, foco del nombre y mensaje visible de duplicado |
+| `apps/gold/agro/agrocompradores.js` | 579-612 | `handleBuyerSave()` deja de cerrar el modal por duplicado y ahora muestra aviso claro dentro de la ficha |
+| `apps/gold/agro/agrocompradores.js` | 671-734 | `handleBuyerDelete()` deja de usar `window.confirm/prompt` y pasa a popup dedicado con `Sí, eliminar / No, cancelar` |
+| `apps/gold/agro/agrocompradores.js` | 756-823 | Nuevo binding del popup de confirmación y manejo de `Escape` sin mezclarlo con el modal de crear/editar |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 1068-1075 | `getCropScopedRows()` conserva visibles los buyers sin historial aunque exista cultivo activo, recuperando buyers legacy huérfanos de visibilidad |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 1627-1631 | `renderScopeNote()` aclara que `Sin registro` sigue visible aun con cultivo activo |
+| `apps/gold/agro/index.html` | 4053-4074 | Nuevo modal/popup dedicado para confirmar eliminación de cliente |
+| `apps/gold/agro/agro.css` | 1194-1296 | Estilos V10 del popup dedicado de eliminación, separado del modal de buyer |
+
+### Riesgo residual
+
+- No ejecuté QA manual browser en esta vuelta; la validación final pendiente sigue siendo intento de duplicado + cancelación/confirmación real del popup.
+- La recuperación de buyers legacy sin historial ahora funciona también con cultivo activo, pero se apoya en la regla de producto actual: un buyer sin historial sigue siendo visible en `Sin registro` aunque todavía no tenga relación operativa con un cultivo específico.
+
+### Build status
+
+- `pnpm build:gold`: ✅ Exitoso
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observación no bloqueante:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+
+### QA sugerido
+
+1. Intentar crear `José` cuando ya existe y validar mensaje visible de duplicado.
+2. Abrir eliminar cliente y confirmar que aparece popup dedicado, separado del modal de crear/editar.
+3. Activar un cultivo y validar que un buyer legacy sin historial sigue apareciendo en `Sin registro`.

@@ -1090,6 +1090,7 @@ function getCropScopedRows(rows) {
     const sessionKeys = getSessionCropScopeKeys(selectedCropId);
 
     return safeRows.filter((row) => {
+        if (!hasBuyerPortfolioHistory(row)) return true;
         const scopeKey = buildBuyerPortfolioScopeKey(row);
         return scopeKey && (visibleCropScopeKeys.has(scopeKey) || sessionKeys?.has(scopeKey));
     });
@@ -1654,7 +1655,7 @@ function renderCommercialFamilyNav(activeView = CARTERA_VIVA_VIEW) {
 function renderScopeNote() {
     const selectedCropId = getSelectedCropId();
     if (selectedCropId) {
-        return `Lista y detalle filtrados por ${escapeHtml(getSelectedCropShortLabel())}. El resumen superior sigue la lectura global client-centric. Otros pertenece a Ciclos Operativos.`;
+        return `Lista y detalle filtrados por ${escapeHtml(getSelectedCropShortLabel())}. Los clientes sin historial siguen visibles en Sin registro. El resumen superior sigue la lectura global client-centric. Otros pertenece a Ciclos Operativos.`;
     }
     return 'Otros pertenece a Ciclos Operativos. Donaciones solo entra cuando la data real la sostiene.';
 }
