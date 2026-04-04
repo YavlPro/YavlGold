@@ -8019,3 +8019,51 @@ order by r.display_name asc;
    - filtra timeline y acciones por la familia activa.
 3. Abrir un cliente con solo `cestas` y confirmar que la vista no cae en dinero-first si existe base operativa.
 4. En Ciclos Operativos, revisar un ciclo con mezcla de familias y validar que la banda `Base operativa` separa el breakdown por unidad en vez de sumarlo.
+
+## [2026-04-03] Cartera Viva v2.7 — barras por familia de unidad en cards
+
+### Diagnóstico
+
+- La barra de progreso de cada card hoy se renderiza en `apps/gold/agro/agro-cartera-viva-view.js` dentro de `renderProgressBlock()`, que a su vez consume un único `signal` desde `getOperationalCardMetrics()` y `renderOperationalProgressTrack()`.
+- Visualmente esa barra parecía depender de una sola base visible porque `getOperationalProgress(row)` devuelve una lectura agregada para la familia activa; cuando la card tiene varias familias en `Vista general`, el modelo ya conoce la separación, pero la UI sigue pintando solo una barra.
+- La data necesaria ya existe. El helper `getOperationalProgressByFamily(row, family)` y el mapa `operationalProgressFamilyMap` ya calculan progreso independiente para `sacks`, `baskets` y `kg`, así que no hace falta recalcular cartera ni tocar Supabase.
+- El menor diff posible es:
+  - exponer una colección de barras visibles por familia en el view model de la card;
+  - renderizar solo las familias con datos reales;
+  - mantener la barra única cuando la card solo tenga una familia.
+
+### Cambios aplicados
+
+| Archivo | Líneas | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro-cartera-viva-view.js` | 762-844 | `resolveBuyerStatus()` deja de llamar "sin base unificada" a clientes con varias familias visibles y pasa a copy honesto `separado por unidad` |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 858-896 | Nuevo helper `getVisibleOperationalProgressFamilies()` que expone la colección de familias visibles (`sacks`, `baskets`, `kg`) con sus shares, labels y totals |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 1505-1547 | `getOperationalCardMetrics()` ahora detecta cards multi-familia y cambia el view model a `family-collection` en vez de colapsar todo a una sola barra |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 1627-1638 | `renderSupportChips()` pasa a mostrar `Base separada por unidad` cuando la card tiene varias familias reales |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 1660-1692 | `renderProgressBlock()` renderiza una barra independiente por familia presente; si solo existe una familia, mantiene la barra única anterior |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 1735-1739 | Las métricas de la card aceptan `copy` secundario para explicar `Pend / Cob / Pér` por familia sin saturar el bloque principal |
+| `apps/gold/agro/agro-cartera-viva.css` | 802-813, 854-858 | Estilos compactos para stack de barras por familia y copy secundario de métricas |
+
+### Riesgo residual
+
+- La señal rápida SVG de la card sigue siendo una lectura resumida y no una miniatura por familia; la verdad operativa completa ahora vive en el stack de barras.
+- Si una familia tiene actividad muy baja frente a otra, la barra se renderiza igual pero visualmente será delgada por definición del porcentaje; no se inventó altura artificial para exagerar peso.
+- No se muestran barras vacías: si falta una familia, se oculta. Si producto quisiera persistir el layout fijo con placeholders, sería otra decisión visual.
+
+### Build status
+
+- `pnpm build:gold`: ✅ Exitoso
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observación no bloqueante:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+
+### QA sugerido
+
+1. Validar una card con una sola familia y confirmar que no aparecen barras vacías.
+2. Validar una card con dos familias y confirmar que cada barra responde a su propia base.
+3. Validar una card con las tres familias y confirmar que no se mezclan porcentajes entre sí.

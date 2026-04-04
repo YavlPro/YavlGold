@@ -759,6 +759,8 @@ function resolveBuyerStatus(row) {
     const loss = Number(row?.loss_total || 0);
     const review = getReviewTotal(row);
     const operationalProgress = getOperationalProgress(row);
+    const visibleOperationalFamilies = getVisibleOperationalProgressFamilies(row, activeOperationalFamily);
+    const hasSeparatedFamilies = activeOperationalFamily === 'all' && visibleOperationalFamilies.length > 1;
     const paidPercent = getPaidPercent(row);
     const pendingUnits = operationalProgress.mode === 'unified'
         ? formatOperationalStatePhrase(operationalProgress.pending, 'pendiente', 'pendientes')
@@ -793,9 +795,11 @@ function resolveBuyerStatus(row) {
                 label: 'Fiado activo',
                 detail: operationalProgress.mode === 'unified'
                     ? `${pendingUnits} · ${paidUnits}`
-                    : (operationalProgress.mode === 'mixed'
-                        ? 'Pendiente operativo sin base unificada'
-                        : `Pendiente operativo${review > 0 ? ' · con revisión pendiente' : ''}`)
+                    : (hasSeparatedFamilies
+                        ? 'Pendiente operativo separado por unidad'
+                        : (operationalProgress.mode === 'mixed'
+                            ? 'Pendiente operativo sin base unificada'
+                            : `Pendiente operativo${review > 0 ? ' · con revisión pendiente' : ''}`))
             };
         }
 
@@ -804,9 +808,11 @@ function resolveBuyerStatus(row) {
             label: 'Fiado activo',
             detail: operationalProgress.mode === 'unified'
                 ? `${pendingUnits}${review > 0 ? ' · con revisión pendiente' : ''}`
-                : (operationalProgress.mode === 'mixed'
-                    ? `Pendiente operativo sin base unificada${review > 0 ? ' · con revisión pendiente' : ''}`
-                    : `Pendiente operativo${review > 0 ? ' · con revisión pendiente' : ''}`)
+                : (hasSeparatedFamilies
+                    ? `Pendiente operativo separado por unidad${review > 0 ? ' · con revisión pendiente' : ''}`
+                    : (operationalProgress.mode === 'mixed'
+                        ? `Pendiente operativo sin base unificada${review > 0 ? ' · con revisión pendiente' : ''}`
+                        : `Pendiente operativo${review > 0 ? ' · con revisión pendiente' : ''}`))
         };
     }
 
@@ -818,9 +824,11 @@ function resolveBuyerStatus(row) {
                 ? (loss > 0
                     ? `${paidUnits} · ${lossUnits}`
                     : `${paidUnits} · sin pendiente operativo`)
-                : (operationalProgress.mode === 'mixed'
-                    ? 'Cierre operativo sin base unificada'
-                    : 'Cuenta cerrada sin base física')
+                : (hasSeparatedFamilies
+                    ? 'Cierre operativo separado por unidad'
+                    : (operationalProgress.mode === 'mixed'
+                        ? 'Cierre operativo sin base unificada'
+                        : 'Cuenta cerrada sin base física'))
         };
     }
 
@@ -830,9 +838,11 @@ function resolveBuyerStatus(row) {
             label: 'Pérdida',
             detail: operationalProgress.mode === 'unified'
                 ? `${lossUnits}`
-                : (operationalProgress.mode === 'mixed'
-                    ? 'Pérdida sin base unificada'
-                    : 'Pérdida sin base física')
+                : (hasSeparatedFamilies
+                    ? 'Pérdida separada por unidad'
+                    : (operationalProgress.mode === 'mixed'
+                        ? 'Pérdida sin base unificada'
+                        : 'Pérdida sin base física'))
         };
     }
 
@@ -843,6 +853,45 @@ function resolveBuyerStatus(row) {
             ? 'Pendiente operativo por ordenar'
             : 'Cliente listo para registrar su primer movimiento.'
     };
+}
+
+function getVisibleOperationalProgressFamilies(row, family = activeOperationalFamily) {
+    const normalizedFamily = normalizeOperationalFamily(family);
+    const targetFamilies = normalizedFamily === 'all'
+        ? ['sacks', 'baskets', 'kg']
+        : [normalizedFamily];
+
+    return targetFamilies.map((familyKey) => {
+        const progress = getOperationalProgressByFamily(row, familyKey);
+        if (progress.mode !== 'unified' || Number(progress.total || 0) <= 0) return null;
+
+        const familyMeta = getOperationalFamilyMeta(familyKey);
+        const lossCopy = Number(progress.loss || 0) > 0 ? ` · Pér ${progress.lossLabel}` : '';
+
+        return {
+            mode: 'unified',
+            family: familyKey,
+            label: familyMeta.label,
+            progressLabel: familyMeta.label,
+            progressValue: formatPercent(progress.percent),
+            legendStart: `Pend ${progress.pendingLabel}`,
+            legendEnd: `Cob ${progress.paidLabel}${lossCopy}`,
+            metricsCopy: `Pend ${progress.pendingLabel} · Cob ${progress.paidLabel}${lossCopy}`,
+            totalLabel: formatOperationalValue(progress.total, progress.unitType),
+            unitType: progress.unitType,
+            total: progress.total,
+            pending: progress.pending,
+            paid: progress.paid,
+            loss: progress.loss,
+            paidShare: progress.paidShare,
+            pendingShare: progress.pendingShare,
+            lossShare: progress.lossShare,
+            percent: progress.percent,
+            pendingLabel: progress.pendingLabel,
+            paidLabel: progress.paidLabel,
+            lossLabel: progress.lossLabel
+        };
+    }).filter(Boolean);
 }
 
 function comparePortfolioRows(a, b) {
@@ -1454,7 +1503,40 @@ function renderCategoryControls(counts) {
 }
 
 function getOperationalCardMetrics(row) {
+    const visibleFamilies = getVisibleOperationalProgressFamilies(row, activeOperationalFamily);
     const operationalProgress = getOperationalProgress(row);
+
+    if (visibleFamilies.length > 1 && activeOperationalFamily === 'all') {
+        return {
+            mode: 'family-collection',
+            progressLabel: 'Base operativa',
+            progressValue: `${formatCount(visibleFamilies.length)} familias`,
+            legendStart: 'Lectura separada',
+            legendEnd: 'Una barra por unidad',
+            metrics: visibleFamilies.map((family) => ({
+                label: family.label,
+                value: family.totalLabel,
+                copy: family.metricsCopy
+            }))
+        };
+    }
+
+    if (visibleFamilies.length === 1) {
+        const familyProgress = visibleFamilies[0];
+        const unitDescriptor = formatOperationalUnitDescriptor(familyProgress.unitType, familyProgress.total);
+        return {
+            mode: 'unified',
+            progressLabel: 'Avance operativo',
+            progressValue: familyProgress.progressValue,
+            legendStart: `Base ${formatUniversalUnitValue(familyProgress.total)}`,
+            legendEnd: unitDescriptor ? `Unidad real: ${unitDescriptor}` : 'Base operativa unificada',
+            metrics: [
+                { label: 'Pendiente', value: familyProgress.pendingLabel },
+                { label: 'Cobrado', value: familyProgress.paidLabel },
+                { label: 'Pérdida', value: familyProgress.lossLabel }
+            ]
+        };
+    }
 
     if (operationalProgress.mode === 'unified') {
         const unitDescriptor = formatOperationalUnitDescriptor(operationalProgress.unitType, operationalProgress.total);
@@ -1501,16 +1583,15 @@ function getOperationalCardMetrics(row) {
     };
 }
 
-function renderOperationalProgressTrack(row) {
-    const breakdown = getProgressBreakdown(row);
-    if (breakdown.mode !== 'unified' || breakdown.base <= 0) {
+function renderOperationalProgressTrack(progressSummary = null) {
+    if (!progressSummary || progressSummary.mode !== 'unified' || Number(progressSummary.total || progressSummary.base || 0) <= 0) {
         return '<span class="cartera-viva-progress__segment is-neutral" style="width:100%"></span>';
     }
 
     return `
-        ${breakdown.paidShare > 0 ? `<span class="cartera-viva-progress__segment is-paid" style="width:${breakdown.paidShare}%"></span>` : ''}
-        ${breakdown.pendingShare > 0 ? `<span class="cartera-viva-progress__segment is-pending" style="width:${breakdown.pendingShare}%"></span>` : ''}
-        ${breakdown.lossShare > 0 ? `<span class="cartera-viva-progress__segment is-loss" style="width:${breakdown.lossShare}%"></span>` : ''}
+        ${progressSummary.paidShare > 0 ? `<span class="cartera-viva-progress__segment is-paid" style="width:${progressSummary.paidShare}%"></span>` : ''}
+        ${progressSummary.pendingShare > 0 ? `<span class="cartera-viva-progress__segment is-pending" style="width:${progressSummary.pendingShare}%"></span>` : ''}
+        ${progressSummary.lossShare > 0 ? `<span class="cartera-viva-progress__segment is-loss" style="width:${progressSummary.lossShare}%"></span>` : ''}
     `;
 }
 
@@ -1547,8 +1628,11 @@ function renderSupportChips(row) {
     const chips = [];
     const review = getReviewTotal(row);
     const operationalProgress = getOperationalProgress(row);
+    const visibleFamilies = getVisibleOperationalProgressFamilies(row, activeOperationalFamily);
 
-    if (operationalProgress.mode === 'mixed') {
+    if (activeOperationalFamily === 'all' && visibleFamilies.length > 1) {
+        chips.push('<span class="cartera-viva-chip">Base separada por unidad</span>');
+    } else if (operationalProgress.mode === 'mixed') {
         chips.push('<span class="cartera-viva-chip is-review">Avance no unificado</span>');
     } else if (operationalProgress.mode === 'none') {
         chips.push('<span class="cartera-viva-chip">Sin base operativa</span>');
@@ -1577,6 +1661,26 @@ function renderProgressBlock(row, options = {}) {
     const large = options.large === true;
     const noLegend = options.noLegend === true;
     const metrics = getOperationalCardMetrics(row);
+    const visibleFamilies = getVisibleOperationalProgressFamilies(row, activeOperationalFamily);
+    const fallbackProgress = visibleFamilies[0] || getProgressBreakdown(row);
+
+    if (visibleFamilies.length > 1 && activeOperationalFamily === 'all') {
+        return `
+            <div class="cartera-viva-progress-stack" aria-label="Avance por familia operativa">
+                ${visibleFamilies.map((family) => `
+                    <section class="cartera-viva-progress cartera-viva-progress--family${large ? ' cartera-viva-progress--large' : ''}">
+                        <div class="cartera-viva-progress__head">
+                            <span class="cartera-viva-progress__label">${family.label}</span>
+                            <span class="cartera-viva-progress__value">${family.progressValue}</span>
+                        </div>
+                        <div class="cartera-viva-progress__track">
+                            ${renderOperationalProgressTrack(family)}
+                        </div>
+                    </section>
+                `).join('')}
+            </div>
+        `;
+    }
 
     return `
         <section class="cartera-viva-progress${large ? ' cartera-viva-progress--large' : ''}">
@@ -1585,7 +1689,7 @@ function renderProgressBlock(row, options = {}) {
                 <span class="cartera-viva-progress__value">${metrics.progressValue}</span>
             </div>
             <div class="cartera-viva-progress__track">
-                ${renderOperationalProgressTrack(row)}
+                ${renderOperationalProgressTrack(fallbackProgress)}
             </div>
             ${!noLegend ? `
             <div class="cartera-viva-progress__legend">
@@ -1632,6 +1736,7 @@ function renderPortfolioCard(row) {
                     <div class="cartera-viva-card__metric">
                         <dt>${metric.label}</dt>
                         <dd>${metric.value}</dd>
+                        ${metric.copy ? `<span class="cartera-viva-card__metric-copy">${metric.copy}</span>` : ''}
                     </div>
                 `).join('')}
             </dl>
