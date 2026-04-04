@@ -744,6 +744,10 @@
   fill: rgba(148, 163, 184, 0.82);
 }
 
+.cartera-viva-card__signal rect.is-empty {
+  fill: rgba(148, 163, 184, 0.62);
+}
+
 .cartera-viva-badge,
 .cartera-viva-chip,
 .cartera-viva-history-item__label,

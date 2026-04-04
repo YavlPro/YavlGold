@@ -8119,3 +8119,50 @@ order by r.display_name asc;
 1. Crear `José` y validar que aparece sin recarga manual rara.
 2. Intentar crear `jose`, ` JOSE ` y `JosÉ` después del mismo cliente y confirmar bloqueo.
 3. Crear un cliente nuevo con cultivo activo y verificar visibilidad inmediata en esa vista.
+
+## [2026-04-04] Cartera Viva v2.9 — ciclo vacío visible para buyer sin historial
+
+### Diagnóstico
+
+- Después del fix `v2.8`, el buyer canónico ya entra al dataset de Cartera Viva aunque no tenga movimientos, porque el summary ahora fusiona `agro_buyers` con el RPC.
+- El hueco restante ya no es de existencia del ciclo sino de semántica visual del estado vacío. La card sigue resolviendo ese caso desde `getOperationalCardMetrics()` como `mode: none`, con copy tipo `Sin %` y `Sin unidades`, y `resolveBuyerStatus()` todavía cae en `Cliente listo para registrar su primer movimiento.`
+- La barra ya se pinta neutral en `renderOperationalProgressTrack()` cuando no hay base unificada, pero el porcentaje y el copy principal no están expresando claramente el estado funcional correcto: buyer existente, ciclo visible, historial vacío.
+- El menor diff posible es:
+  - detectar explícitamente buyer sin historial;
+  - renderizar `Sin registros de historial`;
+  - forzar `0%`;
+  - y hacer que la señal rápida de la card también quede gris en ese estado.
+
+### Cambios aplicados
+
+| Archivo | Líneas | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro-cartera-viva-view.js` | 811-828 | Nuevo helper `hasBuyerPortfolioHistory()` para distinguir buyer existente sin historial de buyer con actividad real |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 889-983 | `resolveBuyerStatus()` ya no trata el estado vacío como "cliente listo"; ahora expone `Sin registros de historial` como estado principal |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 1649-1742 | `getOperationalCardMetrics()` fuerza estado inicial consistente: `0%`, leyenda de historial vacío y métricas operativas en cero |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 1762-1794 | `renderCardSignal()` ahora pinta una señal inicial gris para buyers sin historial |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 1797-1824 | `renderSupportChips()` no agrega chips de "sin base operativa" en el estado vacío, para no contaminar la lectura |
+| `apps/gold/agro/agro-cartera-viva.css` | 743-749 | Nuevo estado visual `.is-empty` para que la señal del ciclo vacío quede gris y coherente con `0%` |
+
+### Riesgo residual
+
+- No ejecuté QA manual browser en esta vuelta; la validación pendiente sigue siendo alta de buyer vacío + transición a buyer con historial real.
+- La detección de historial vacío depende de totales derivados del summary actual. Si en el futuro aparece un tipo nuevo de movimiento que no incremente esos totales, habría que sumarlo al helper `hasBuyerPortfolioHistory()`.
+
+### Build status
+
+- `pnpm build:gold`: ✅ Exitoso
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observación no bloqueante:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+
+### QA sugerido
+
+1. Crear un buyer sin movimientos y validar que la card aparece con `Sin registros de historial`.
+2. Confirmar que la barra principal del ciclo vacío queda gris y en `0%`.
+3. Registrar luego un movimiento y validar transición limpia de vacío a ciclo normal.

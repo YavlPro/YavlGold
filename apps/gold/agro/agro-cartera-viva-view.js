@@ -808,6 +808,26 @@ function getProgressBreakdown(row) {
     };
 }
 
+function hasBuyerPortfolioHistory(row) {
+    const numericFields = [
+        'credited_total',
+        'paid_total',
+        'loss_total',
+        'transferred_total',
+        'pending_total',
+        'review_required_total',
+        'legacy_unclassified_total',
+        'non_debt_income_total',
+        'balance_gap_total'
+    ];
+
+    const hasNumericHistory = numericFields.some((field) => Number(row?.[field] || 0) > 0);
+    if (hasNumericHistory) return true;
+
+    return Number(row?.review_required_count || 0) > 0
+        || Number(row?.legacy_unclassified_count || 0) > 0;
+}
+
 function resolveVisibleCategory(row) {
     const pending = getOutstandingBalance(row);
     const paid = Number(row?.paid_total || 0);
@@ -868,6 +888,7 @@ function getCategorySortMetric(row, category) {
 
 function resolveBuyerStatus(row) {
     const clientStatus = String(row?.client_status || 'active').trim().toLowerCase();
+    const hasHistory = hasBuyerPortfolioHistory(row);
     const pending = getOutstandingBalance(row);
     const paid = Number(row?.paid_total || 0);
     const loss = Number(row?.loss_total || 0);
@@ -891,6 +912,14 @@ function resolveBuyerStatus(row) {
             tone: 'review',
             label: 'Archivado',
             detail: 'Cliente fuera del flujo activo, con historial preservado.'
+        };
+    }
+
+    if (!hasHistory) {
+        return {
+            tone: 'empty',
+            label: 'Sin registros',
+            detail: 'Sin registros de historial'
         };
     }
 
@@ -1620,6 +1649,22 @@ function renderCategoryControls(counts) {
 function getOperationalCardMetrics(row) {
     const visibleFamilies = getVisibleOperationalProgressFamilies(row, activeOperationalFamily);
     const operationalProgress = getOperationalProgress(row);
+    const hasHistory = hasBuyerPortfolioHistory(row);
+
+    if (!hasHistory) {
+        return {
+            mode: 'empty',
+            progressLabel: 'Avance operativo',
+            progressValue: '0%',
+            legendStart: 'Sin registros de historial',
+            legendEnd: 'Estado inicial del cliente',
+            metrics: [
+                { label: 'Pendiente', value: '0 unidades' },
+                { label: 'Cobrado', value: '0 unidades' },
+                { label: 'Pérdida', value: '0 unidades' }
+            ]
+        };
+    }
 
     if (visibleFamilies.length > 1 && activeOperationalFamily === 'all') {
         return {
@@ -1716,6 +1761,16 @@ function getSignalHeight(share, minimum = 4) {
 
 function renderCardSignal(row) {
     const operationalProgress = getOperationalProgress(row);
+    const hasHistory = hasBuyerPortfolioHistory(row);
+    if (!hasHistory) {
+        return `
+            <svg class="cartera-viva-card__signal" viewBox="0 0 28 18" role="img" aria-label="Señal inicial del cliente">
+                <rect class="is-empty" x="1" y="12" width="6" height="6" rx="2"></rect>
+                <rect class="is-empty" x="11" y="12" width="6" height="6" rx="2"></rect>
+                <rect class="is-empty" x="21" y="12" width="6" height="6" rx="2"></rect>
+            </svg>
+        `;
+    }
     let paid = 6;
     let pending = 6;
     let third = 6;
@@ -1744,6 +1799,9 @@ function renderSupportChips(row) {
     const review = getReviewTotal(row);
     const operationalProgress = getOperationalProgress(row);
     const visibleFamilies = getVisibleOperationalProgressFamilies(row, activeOperationalFamily);
+    const hasHistory = hasBuyerPortfolioHistory(row);
+
+    if (!hasHistory) return '';
 
     if (activeOperationalFamily === 'all' && visibleFamilies.length > 1) {
         chips.push('<span class="cartera-viva-chip">Base separada por unidad</span>');
