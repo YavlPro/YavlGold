@@ -7963,3 +7963,59 @@ order by r.display_name asc;
 4. Abrir un ciclo sin cantidades y uno con mezcla de unidades para validar:
    - `Sin unidades`;
    - `Sin base unificada`.
+
+## [2026-04-03] Cartera Viva v2.6 — familias de unidad y resumen superior unit-first
+
+### Diagnóstico
+
+- El resumen superior de Cartera Viva todavía nacía de `renderHeaderSummary()` + `resolveCategorySummary()` en `apps/gold/agro/agro-cartera-viva-view.js`, pero sin una taxonomía visible por familias de unidad. Por eso, incluso con cards ya corregidas, el strip podía seguir mostrando una narrativa dinero-first (`USD 2,73`, `USD 27,30`) en contextos donde el usuario ya esperaba una lectura operativa.
+- Los movimientos operativos del root y del detalle seguían teniendo base física (`unit_type`, `unit_qty`, `quantity_kg`), pero la UI no gobernaba la lectura por familias oficiales. Faltaba separar explícitamente:
+  - `Sacos`
+  - `Cestas`
+  - `Kilogramos`
+  para no mezclar naturalezas incompatibles en la misma vista.
+- `apps/gold/agro/agro-cartera-viva-detail.js` ya filtraba por tipo de ledger (`fiados`, `pagados`, `perdidas`), pero todavía no exponía una capa paralela de filtro por familia de unidad, así que el historial operativo podía sentirse mezclado cuando el cliente tenía más de una base física.
+- `apps/gold/agro/agroOperationalCycles.js` ya mostraba una banda física inicial, pero en ciclos mixtos faltaba separar esa base por familia en vez de dejar una única frase genérica.
+
+### Cambios aplicados
+
+| Archivo | Líneas | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro-cartera-viva-view.js` | 24, 123-131, 160-170 | Persistencia y normalización de familia operativa activa (`all`, `sacks`, `baskets`, `kg`) |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 304-387, 492-565, 567-636 | Nuevo mapa canónico de progreso por familias de unidad; cada cliente conserva buckets separados para sacos, cestas y kg |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 898-940, 1145-1167 | Conteos y chips de familia en raíz; la lista ya no mezcla categorías heterogéneas cuando el usuario entra a una familia concreta |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 1170-1341 | El resumen superior ahora cae en lectura operativa por familia cuando hay base física; la vista general honesta muestra `Base operativa separada por unidad` en vez de una suma falsa |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 1810-1815, 1908-1915, 1959-2006, 2172 | Integración completa con slots del root, detalle contextual y export; la familia activa se propaga a historial, filtros y exportación |
+| `apps/gold/agro/agro-cartera-viva-detail.js` | 96-217, 727-929, 1566-1778 | Taxonomía de familias en detalle: helpers de normalización, chips `Sacos/Cestas/Kilogramos`, filtrado del timeline y de acciones para no contaminar un historial con otro |
+| `apps/gold/agro/agro-cartera-viva.css` | 421-428, 548-591 | Estilos para copy secundario del strip y barra de familias operativas en ADN V10 |
+| `apps/gold/agro/agroOperationalCycles.js` | 410-493, 523, 1677-1714 | La banda física del ciclo ahora separa familias cuando hay mezcla real; si un ciclo contiene varias unidades incompatibles, muestra breakdown por familia en vez de mezclar cantidades |
+| `apps/gold/agro/agro-operational-cycles.css` | 649-671 | Estilos para breakdown físico por familia dentro de la card del ciclo |
+
+### Riesgo residual
+
+- Si la data histórica llega con `unit_type` inconsistente o vacío y sin `quantity_kg`, la UI cae en `Vista general` / fallback honesto y no inventa una familia. El siguiente paso, si producto lo pide, sería endurecer normalización en el origen de datos.
+- El resumen financiero superior no desaparece del todo: sigue existiendo como stats monetarias secundarias dentro del strip. Lo que cambió es la narrativa dominante, que ahora obedece a la familia operativa activa cuando hay base física.
+- En Ciclos Operativos, la separación por familia se hizo en la banda física de la card individual; no se rehízo el resumen global del módulo porque agrega ciclos heterogéneos y ahí la lectura financiera sigue siendo válida.
+
+### Build status
+
+- `pnpm build:gold`: ✅ Exitoso
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observación no bloqueante:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+
+### QA sugerido
+
+1. En Cartera Viva raíz, cambiar entre `Vista general`, `Sacos`, `Cestas` y `Kilogramos` y confirmar que:
+   - el strip superior cambia de narrativa;
+   - la lista ya no mezcla familias incompatibles.
+2. Abrir un cliente mixto (`sacos + kg`) y verificar que el detalle:
+   - muestra chips por familia;
+   - filtra timeline y acciones por la familia activa.
+3. Abrir un cliente con solo `cestas` y confirmar que la vista no cae en dinero-first si existe base operativa.
+4. En Ciclos Operativos, revisar un ciclo con mezcla de familias y validar que la banda `Base operativa` separa el breakdown por unidad en vez de sumarlo.

@@ -389,6 +389,31 @@ function formatHistoryUnitLabel(unitType, quantity) {
     return normalizedType;
 }
 
+function normalizeUnitFamily(value) {
+    const token = String(value || '').trim().toLowerCase();
+    if (token === 'sacks' || token === 'sack' || token === 'saco' || token === 'sacos') return 'sacks';
+    if (token === 'baskets' || token === 'basket' || token === 'cesta' || token === 'cestas') return 'baskets';
+    if (token === 'kg' || token === 'kilogramo' || token === 'kilogramos') return 'kg';
+    return 'all';
+}
+
+function getUnitFamilyLabel(family) {
+    const normalizedFamily = normalizeUnitFamily(family);
+    if (normalizedFamily === 'sacks') return 'Sacos';
+    if (normalizedFamily === 'baskets') return 'Cestas';
+    if (normalizedFamily === 'kg') return 'Kilogramos';
+    return 'Vista general';
+}
+
+function resolveHistoryUnitFamily(row) {
+    const unitType = String(row?.unit_type || '').trim().toLowerCase();
+    if (unitType === 'saco') return 'sacks';
+    if (unitType === 'cesta') return 'baskets';
+    if (unitType === 'kg') return 'kg';
+    if (Number.isFinite(Number(row?.quantity_kg)) && Number(row.quantity_kg) > 0) return 'kg';
+    return 'all';
+}
+
 function buildVisibleUnitParts(row) {
     const parts = [];
     const unitQty = Number(readHistoryItemField(row, ['unit_qty']));
@@ -445,6 +470,9 @@ function createActionHistoryRow(row, config = {}) {
         note: String(config.note || 'Evento auxiliar del sistema sobre la cartera.').trim(),
         tone: String(config.tone || 'review').trim().toLowerCase() || 'review',
         crop_id: String(config.crop_id || row?.crop_id || '').trim(),
+        unit_type: String(row?.unit_type || (Number(row?.quantity_kg) > 0 ? 'kg' : '')).trim().toLowerCase(),
+        unit_qty: Number(row?.unit_qty ?? row?.quantity_kg ?? NaN),
+        quantity_kg: Number(row?.quantity_kg ?? NaN),
         support_url_raw: '',
         support_url_resolved: '',
         support_label: ''
@@ -479,8 +507,9 @@ function buildPendingLedgerRow(row) {
         tone: isReview ? 'review' : 'pending',
         is_review: isReview,
         crop_id: String(row?.crop_id || '').trim(),
-        unit_type: String(row?.unit_type || '').trim().toLowerCase(),
+        unit_type: String(row?.unit_type || (Number(row?.quantity_kg) > 0 ? 'kg' : '')).trim().toLowerCase(),
         unit_qty: Number(row?.unit_qty ?? row?.quantity_kg ?? NaN),
+        quantity_kg: Number(row?.quantity_kg ?? NaN),
         transfer_state: transferState,
         transferred_to: transferredTo,
         reverted_at: row?.reverted_at || '',
@@ -546,8 +575,9 @@ function buildIncomeLedgerRow(row) {
         tone: isReview ? 'review' : (fromPendingContext ? 'paid' : 'neutral'),
         is_review: isReview,
         crop_id: String(row?.crop_id || '').trim(),
-        unit_type: String(row?.unit_type || '').trim().toLowerCase(),
+        unit_type: String(row?.unit_type || (Number(row?.quantity_kg) > 0 ? 'kg' : '')).trim().toLowerCase(),
         unit_qty: Number(row?.unit_qty ?? row?.quantity_kg ?? NaN),
+        quantity_kg: Number(row?.quantity_kg ?? NaN),
         transfer_state: String(row?.transfer_state || '').trim().toLowerCase(),
         transferred_to: '',
         reverted_at: row?.reverted_at || '',
@@ -632,8 +662,9 @@ function buildLossLedgerRow(row) {
         tone: isReview ? 'review' : 'loss',
         is_review: isReview,
         crop_id: String(row?.crop_id || '').trim(),
-        unit_type: String(row?.unit_type || '').trim().toLowerCase(),
+        unit_type: String(row?.unit_type || (Number(row?.quantity_kg) > 0 ? 'kg' : '')).trim().toLowerCase(),
         unit_qty: Number(row?.unit_qty ?? row?.quantity_kg ?? NaN),
+        quantity_kg: Number(row?.quantity_kg ?? NaN),
         transfer_state: String(row?.transfer_state || '').trim().toLowerCase(),
         transferred_to: '',
         reverted_at: row?.reverted_at || '',
@@ -848,8 +879,19 @@ function filterLedgerRowsByScope(rows, ledgerScope) {
     return safeRows.filter((row) => matchesLedgerScope(row, normalizedScope));
 }
 
+function filterRowsByUnitFamily(rows, unitFamily) {
+    const safeRows = Array.isArray(rows) ? rows : [];
+    const normalizedFamily = normalizeUnitFamily(unitFamily);
+    if (normalizedFamily === 'all') return safeRows;
+    return safeRows.filter((row) => resolveHistoryUnitFamily(row) === normalizedFamily);
+}
+
 function getLedgerScopeCount(rows, ledgerScope) {
     return filterLedgerRowsByScope(rows, ledgerScope).length;
+}
+
+function getUnitFamilyCount(rows, unitFamily) {
+    return filterRowsByUnitFamily(rows, unitFamily).length;
 }
 
 function isActionHistoryRow(row) {
@@ -861,44 +903,45 @@ function getLedgerHistoryRows(rows) {
     return safeRows.filter((row) => !isActionHistoryRow(row));
 }
 
-function getActionHistoryRows(rows, filterMode = 'todos') {
+function getActionHistoryRows(rows, filterMode = 'todos', unitFamily = 'all') {
     const safeRows = Array.isArray(rows) ? rows : [];
     const normalizedFilter = normalizeHistoryFilter(filterMode);
-    if (normalizedFilter === 'todos') {
-        return safeRows.filter((row) => isActionHistoryRow(row));
-    }
+    const actionRows = normalizedFilter === 'todos'
+        ? safeRows.filter((row) => isActionHistoryRow(row))
+        : safeRows.filter((row) =>
+            isActionHistoryRow(row)
+            && String(row?.history_filter || '').trim().toLowerCase() === normalizedFilter
+        );
 
-    return safeRows.filter((row) =>
-        isActionHistoryRow(row)
-        && String(row?.history_filter || '').trim().toLowerCase() === normalizedFilter
-    );
+    return filterRowsByUnitFamily(actionRows, unitFamily);
 }
 
-function filterHistoryRows(rows, filterMode) {
+function filterHistoryRows(rows, filterMode, unitFamily = 'all') {
     const normalizedFilter = normalizeHistoryFilter(filterMode);
     if (normalizedFilter === 'todos') return getLedgerHistoryRows(rows);
-    return getActionHistoryRows(rows, normalizedFilter);
+    return getActionHistoryRows(rows, normalizedFilter, unitFamily);
 }
 
-function getHistoryFilterCount(rows, filterMode) {
-    return filterHistoryRows(rows, filterMode).length;
+function getHistoryFilterCount(rows, filterMode, unitFamily = 'all') {
+    return filterHistoryRows(rows, filterMode, unitFamily).length;
 }
 
-export function getVisibleBuyerHistoryRows(rows, filterMode, ledgerScope = 'todos') {
+export function getVisibleBuyerHistoryRows(rows, filterMode, ledgerScope = 'todos', unitFamily = 'all') {
     const normalizedFilter = normalizeHistoryFilter(filterMode);
     if (normalizedFilter !== 'todos') {
-        return getActionHistoryRows(rows, normalizedFilter);
+        return getActionHistoryRows(rows, normalizedFilter, unitFamily);
     }
-    return filterLedgerRowsByScope(getLedgerHistoryRows(rows), ledgerScope);
+    return filterRowsByUnitFamily(filterLedgerRowsByScope(getLedgerHistoryRows(rows), ledgerScope), unitFamily);
 }
 
 function renderHistoryFilters(historyRows, activeFilter, options = {}) {
-    const transferCount = getHistoryFilterCount(historyRows, 'transferidos');
-    const revertedCount = getHistoryFilterCount(historyRows, 'revertidos');
+    const unitFamily = normalizeUnitFamily(options.unitFamily);
+    const transferCount = getHistoryFilterCount(historyRows, 'transferidos', unitFamily);
+    const revertedCount = getHistoryFilterCount(historyRows, 'revertidos', unitFamily);
     if (transferCount <= 0 && revertedCount <= 0) return '';
 
     const normalizedFilter = normalizeHistoryFilter(activeFilter);
-    const allCount = Number(options.timelineCount ?? getHistoryFilterCount(historyRows, 'todos'));
+    const allCount = Number(options.timelineCount ?? getHistoryFilterCount(historyRows, 'todos', unitFamily));
     const filters = [
         { id: 'todos', label: `Timeline (${allCount})`, visible: true },
         { id: 'transferidos', label: `Ver transferidos (${transferCount})`, visible: transferCount > 0 },
@@ -941,6 +984,32 @@ function renderLedgerScopeFilters(ledgerRows, activeScope) {
                     class="cartera-viva-detail__filter${normalizedScope === filter.id ? ' is-active' : ''}"
                     data-cartera-detail-ledger-scope="${filter.id}"
                     aria-pressed="${normalizedScope === filter.id ? 'true' : 'false'}">
+                    ${filter.label} (${filter.count})
+                </button>
+            `).join('')}
+        </div>
+    `;
+}
+
+function renderUnitFamilyFilters(rows, activeFamily) {
+    const normalizedFamily = normalizeUnitFamily(activeFamily);
+    const filters = [
+        { id: 'all', label: 'Vista general', count: Array.isArray(rows) ? rows.length : 0 },
+        { id: 'sacks', label: 'Sacos', count: getUnitFamilyCount(rows, 'sacks') },
+        { id: 'baskets', label: 'Cestas', count: getUnitFamilyCount(rows, 'baskets') },
+        { id: 'kg', label: 'Kilogramos', count: getUnitFamilyCount(rows, 'kg') }
+    ].filter((filter) => filter.id === 'all' || filter.count > 0);
+
+    if (filters.length <= 1) return '';
+
+    return `
+        <div class="cartera-viva-detail__filters cartera-viva-detail__filters--family" role="group" aria-label="Familia operativa">
+            ${filters.map((filter) => `
+                <button
+                    type="button"
+                    class="cartera-viva-detail__filter${normalizedFamily === filter.id ? ' is-active' : ''}"
+                    data-cartera-detail-unit-family="${filter.id}"
+                    aria-pressed="${normalizedFamily === filter.id ? 'true' : 'false'}">
                     ${filter.label} (${filter.count})
                 </button>
             `).join('')}
@@ -1507,6 +1576,7 @@ export function renderBuyerHistoryDetail(root, options = {}) {
     const selectedPair = normalizeDetailPair(options.selectedPair);
     const historyFilter = normalizeHistoryFilter(options.historyFilter);
     const ledgerScope = normalizeLedgerScope(options.ledgerScope);
+    const unitFamily = normalizeUnitFamily(options.unitFamily);
     const exchangeRates = options.exchangeRates && typeof options.exchangeRates === 'object'
         ? options.exchangeRates
         : { USD: 1, COP: null, VES: null };
@@ -1515,15 +1585,16 @@ export function renderBuyerHistoryDetail(root, options = {}) {
         : {};
     const isSoftRefreshing = loading && historyRows.length > 0;
     const ledgerRows = getLedgerHistoryRows(historyRows);
-    const actionRows = getActionHistoryRows(historyRows, 'todos');
-    const visibleLedgerRows = filterLedgerRowsByScope(ledgerRows, ledgerScope);
+    const actionRows = getActionHistoryRows(historyRows, 'todos', unitFamily);
+    const visibleLedgerRows = filterRowsByUnitFamily(filterLedgerRowsByScope(ledgerRows, ledgerScope), unitFamily);
     const visibleHistoryRows = historyFilter === 'todos'
         ? visibleLedgerRows
-        : getActionHistoryRows(historyRows, historyFilter);
+        : getActionHistoryRows(historyRows, historyFilter, unitFamily);
     const visibleActionRows = historyFilter === 'todos'
         ? actionRows
         : visibleHistoryRows;
     const isCanonicalFilter = historyFilter === 'todos';
+    const unitFamilyPrefix = unitFamily === 'all' ? '' : `${getUnitFamilyLabel(unitFamily)} · `;
     const filterEmptyTitle = historyFilter === 'revertidos'
         ? 'Sin acciones de reversión'
         : 'Sin acciones de transferencia';
@@ -1616,24 +1687,29 @@ export function renderBuyerHistoryDetail(root, options = {}) {
                         <p class="cartera-viva-view__eyebrow">Historial</p>
                         <h3 class="cartera-viva-detail__section-title">${isCanonicalFilter
                             ? (ledgerScope === 'fiados'
-                                ? 'Fiados del cliente'
+                                ? `${unitFamilyPrefix}Fiados del cliente`
                                 : (ledgerScope === 'pagados'
-                                    ? 'Cobros del cliente'
+                                    ? `${unitFamilyPrefix}Cobros del cliente`
                                     : (ledgerScope === 'perdidos'
-                                        ? 'Pérdidas del cliente'
-                                        : 'Timeline canónico del cliente')))
+                                        ? `${unitFamilyPrefix}Pérdidas del cliente`
+                                        : (unitFamily === 'all'
+                                            ? 'Timeline canónico del cliente'
+                                            : `Historial de ${getUnitFamilyLabel(unitFamily).toLowerCase()}`))))
                             : 'Acciones del sistema'}</h3>
                     </div>
                     <div class="cartera-viva-detail__body-meta">
                         <p class="cartera-viva-detail__body-copy">
                             ${isCanonicalFilter
                                 ? (ledgerScope === 'todos'
-                                    ? 'El timeline principal muestra solo movimientos económicos reales agrupados por día. Las acciones del sistema viven en una capa aparte.'
+                                    ? (unitFamily === 'all'
+                                        ? 'El timeline principal muestra solo movimientos económicos reales, separados por familia operativa cuando haga falta.'
+                                        : `El timeline principal muestra solo ${getUnitFamilyLabel(unitFamily).toLowerCase()} dentro del ledger económico del cliente.`)
                                     : 'El detalle respeta el contexto de entrada y muestra solo el ledger económico de esta categoría.')
                                 : 'Aquí solo ves eventos auxiliares del sistema, sin mezclar cobros o pérdidas normales.'}
                         </p>
+                        ${renderUnitFamilyFilters(ledgerRows, unitFamily)}
                         ${isCanonicalFilter ? renderLedgerScopeFilters(ledgerRows, ledgerScope) : ''}
-                        ${renderHistoryFilters(historyRows, historyFilter, { timelineCount: visibleLedgerRows.length })}
+                        ${renderHistoryFilters(historyRows, historyFilter, { timelineCount: visibleLedgerRows.length, unitFamily })}
                     </div>
                 </header>
                 ${bodyContent}
@@ -1692,6 +1768,14 @@ export function renderBuyerHistoryDetail(root, options = {}) {
             const nextScope = normalizeLedgerScope(button.dataset.carteraDetailLedgerScope);
             if (nextScope === ledgerScope) return;
             options.onLedgerScopeChange?.(nextScope);
+        });
+    });
+
+    root.querySelectorAll('[data-cartera-detail-unit-family]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const nextFamily = normalizeUnitFamily(button.dataset.carteraDetailUnitFamily);
+            if (nextFamily === unitFamily) return;
+            options.onUnitFamilyChange?.(nextFamily);
         });
     });
 

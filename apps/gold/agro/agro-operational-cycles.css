@@ -646,6 +646,25 @@ body.agro-operational-modal-open {
   line-height: 1.45;
 }
 
+.agro-operational-physical-summary__families {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.42rem;
+}
+
+.agro-operational-physical-summary__family {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.28rem 0.54rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-neutral);
+  background: var(--bg-0);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
 .agro-operational-physical-summary[data-mode='mixed'] .agro-operational-physical-summary__value {
   color: var(--color-warning);
 }

@@ -21,6 +21,7 @@ const CARTERA_VIVA_VIEW = 'cartera-viva';
 const CARTERA_VIVA_ROOT_ID = 'agro-cartera-viva-root';
 const CARTERA_VIVA_CATEGORY_KEY = 'YG_AGRO_CARTERA_VIVA_CATEGORY_V1';
 const CARTERA_VIVA_SEARCH_KEY = 'YG_AGRO_CARTERA_VIVA_SEARCH_V1';
+const CARTERA_VIVA_UNIT_FAMILY_KEY = 'YG_AGRO_CARTERA_VIVA_UNIT_FAMILY_V1';
 const CARTERA_VIVA_GENERAL_CROP_ID = '__general__';
 
 const CATEGORY_META = Object.freeze({
@@ -42,11 +43,19 @@ const CATEGORY_META = Object.freeze({
 });
 
 const CATEGORY_ORDER = Object.freeze(['fiados', 'pagados', 'perdidos']);
+const OPERATIONAL_FAMILY_ORDER = Object.freeze(['all', 'sacks', 'baskets', 'kg']);
+const OPERATIONAL_FAMILY_META = Object.freeze({
+    all: Object.freeze({ label: 'Vista general', shortLabel: 'General' }),
+    sacks: Object.freeze({ label: 'Sacos', shortLabel: 'Sacos' }),
+    baskets: Object.freeze({ label: 'Cestas', shortLabel: 'Cestas' }),
+    kg: Object.freeze({ label: 'Kilogramos', shortLabel: 'Kg' })
+});
 
 let initialized = false;
 let rootNode = null;
 let activeCategory = readStoredCategory();
 let searchQuery = readStoredSearch();
+let activeOperationalFamily = readStoredOperationalFamily();
 let summaryRows = [];
 let loading = false;
 let hasLoadedSummary = false;
@@ -70,6 +79,7 @@ let visibleCropScopeError = '';
 let visibleCropScopeRequestId = 0;
 let externalRefreshTimer = 0;
 let operationalProgressMap = new Map();
+let operationalProgressFamilyMap = new Map();
 
 function readStoredCategory() {
     try {
@@ -108,6 +118,22 @@ function writeStoredSearch(value) {
     }
 }
 
+function readStoredOperationalFamily() {
+    try {
+        return normalizeOperationalFamily(localStorage.getItem(CARTERA_VIVA_UNIT_FAMILY_KEY));
+    } catch (_error) {
+        return 'all';
+    }
+}
+
+function writeStoredOperationalFamily(value) {
+    try {
+        localStorage.setItem(CARTERA_VIVA_UNIT_FAMILY_KEY, normalizeOperationalFamily(value));
+    } catch (_error) {
+        // Ignore storage failures.
+    }
+}
+
 function readStoredDetailPair() {
     try {
         const raw = String(localStorage.getItem('YG_AGRO_CARTERA_VIVA_PAIR_V1') || '').trim().toUpperCase();
@@ -129,6 +155,14 @@ function writeStoredDetailPair(value) {
 function normalizeCategory(category) {
     const token = String(category || '').trim().toLowerCase();
     return CATEGORY_ORDER.includes(token) ? token : 'fiados';
+}
+
+function normalizeOperationalFamily(value) {
+    const token = String(value || '').trim().toLowerCase();
+    if (token === 'sacks' || token === 'sack' || token === 'saco' || token === 'sacos') return 'sacks';
+    if (token === 'baskets' || token === 'basket' || token === 'cesta' || token === 'cestas') return 'baskets';
+    if (token === 'kg' || token === 'kilogram' || token === 'kilograms' || token === 'kilogramo' || token === 'kilogramos') return 'kg';
+    return 'all';
 }
 
 function getRootNode() {
@@ -227,7 +261,7 @@ function normalizeOperationalCurrency(value) {
 
 function normalizeOperationalUnitType(value) {
     const token = String(value || '').trim().toLowerCase();
-    return ['unidad', 'saco', 'kg'].includes(token) ? token : '';
+    return ['unidad', 'saco', 'cesta', 'kg'].includes(token) ? token : '';
 }
 
 function normalizeProgressUnitType(value) {
@@ -267,6 +301,19 @@ function formatOperationalValue(value, unitType) {
     return `${formatOperationalQuantity(numeric)} ${formatOperationalUnitLabel(unitType, numeric)}`;
 }
 
+function resolveOperationalFamilyKey(unitType, quantityKg = null) {
+    const normalizedType = normalizeProgressUnitType(unitType);
+    if (normalizedType === 'saco') return 'sacks';
+    if (normalizedType === 'cesta') return 'baskets';
+    if (normalizedType === 'kg') return 'kg';
+    if (Number.isFinite(Number(quantityKg)) && Number(quantityKg) > 0) return 'kg';
+    return '';
+}
+
+function getOperationalFamilyMeta(family) {
+    return OPERATIONAL_FAMILY_META[normalizeOperationalFamily(family)] || OPERATIONAL_FAMILY_META.all;
+}
+
 function formatUniversalUnitValue(value) {
     const numeric = Number(value);
     if (!Number.isFinite(numeric) || numeric <= 0) return '0 unidades';
@@ -291,6 +338,14 @@ function createEmptyOperationalProgressBucket() {
         pending: [],
         paid: [],
         loss: []
+    };
+}
+
+function createEmptyOperationalFamilyBucketMap() {
+    return {
+        sacks: createEmptyOperationalProgressBucket(),
+        baskets: createEmptyOperationalProgressBucket(),
+        kg: createEmptyOperationalProgressBucket()
     };
 }
 
@@ -321,6 +376,23 @@ function appendOperationalProgressEntry(progressMapTarget, scopeKey, stage, row)
     }
 
     progressMapTarget.get(safeScopeKey)[stage].push(entry);
+}
+
+function appendOperationalProgressFamilyEntry(progressMapTarget, scopeKey, stage, row) {
+    const safeScopeKey = String(scopeKey || '').trim();
+    if (!safeScopeKey || !['pending', 'paid', 'loss'].includes(stage)) return;
+
+    const familyKey = resolveOperationalFamilyKey(row?.unit_type, row?.quantity_kg);
+    if (!familyKey || familyKey === 'all') return;
+
+    const entry = createOperationalProgressEntry(row);
+    if (!entry) return;
+
+    if (!progressMapTarget.has(safeScopeKey)) {
+        progressMapTarget.set(safeScopeKey, createEmptyOperationalFamilyBucketMap());
+    }
+
+    progressMapTarget.get(safeScopeKey)[familyKey][stage].push(entry);
 }
 
 function sumOperationalEntries(entries, fieldName) {
@@ -451,35 +523,74 @@ async function fetchOperationalProgressMap(supabaseClient, cropId = null) {
     if (lossResult?.error) throw lossResult.error;
 
     const nextMap = new Map();
+    const nextFamilyMap = new Map();
 
     (Array.isArray(pendingResult?.data) ? pendingResult.data : []).forEach((row) => {
         if (String(row?.transfer_state || 'active').trim().toLowerCase() !== 'active') return;
         const scopeKey = buildBuyerPortfolioScopeKey(row);
         appendOperationalProgressEntry(nextMap, scopeKey, 'pending', row);
+        appendOperationalProgressFamilyEntry(nextFamilyMap, scopeKey, 'pending', row);
     });
 
     (Array.isArray(incomeResult?.data) ? incomeResult.data : []).forEach((row) => {
         if (String(row?.origin_table || '').trim().toLowerCase() !== 'agro_pending') return;
         const scopeKey = buildBuyerPortfolioScopeKey(row);
         appendOperationalProgressEntry(nextMap, scopeKey, 'paid', row);
+        appendOperationalProgressFamilyEntry(nextFamilyMap, scopeKey, 'paid', row);
     });
 
     (Array.isArray(lossResult?.data) ? lossResult.data : []).forEach((row) => {
         if (String(row?.origin_table || '').trim().toLowerCase() !== 'agro_pending') return;
         const scopeKey = buildBuyerPortfolioScopeKey(row);
         appendOperationalProgressEntry(nextMap, scopeKey, 'loss', row);
+        appendOperationalProgressFamilyEntry(nextFamilyMap, scopeKey, 'loss', row);
     });
 
     nextMap.forEach((bucket, scopeKey) => {
         nextMap.set(scopeKey, resolveUnifiedOperationalProgress(bucket));
     });
 
-    return nextMap;
+    nextFamilyMap.forEach((bucketMap, scopeKey) => {
+        nextFamilyMap.set(scopeKey, {
+            sacks: resolveUnifiedOperationalProgress(bucketMap?.sacks),
+            baskets: resolveUnifiedOperationalProgress(bucketMap?.baskets),
+            kg: resolveUnifiedOperationalProgress(bucketMap?.kg)
+        });
+    });
+
+    return {
+        aggregateMap: nextMap,
+        familyMap: nextFamilyMap
+    };
+}
+
+function getOperationalProgressByFamily(row, family = activeOperationalFamily) {
+    const scopeKey = buildBuyerPortfolioScopeKey(row);
+    if (!scopeKey) return resolveUnifiedOperationalProgress(null);
+
+    const normalizedFamily = normalizeOperationalFamily(family);
+    if (normalizedFamily === 'all') {
+        return operationalProgressMap.get(scopeKey) || resolveUnifiedOperationalProgress(null);
+    }
+
+    const familyProgress = operationalProgressFamilyMap.get(scopeKey);
+    return familyProgress?.[normalizedFamily] || resolveUnifiedOperationalProgress(null);
 }
 
 function getOperationalProgress(row) {
-    const scopeKey = buildBuyerPortfolioScopeKey(row);
-    return operationalProgressMap.get(scopeKey) || resolveUnifiedOperationalProgress(null);
+    return getOperationalProgressByFamily(row, activeOperationalFamily);
+}
+
+function rowHasOperationalFamily(row, family = activeOperationalFamily) {
+    const progress = getOperationalProgressByFamily(row, family);
+    return progress.mode === 'unified' && progress.total > 0;
+}
+
+function filterRowsByOperationalFamily(rows, family = activeOperationalFamily) {
+    const safeRows = Array.isArray(rows) ? rows : [];
+    const normalizedFamily = normalizeOperationalFamily(family);
+    if (normalizedFamily === 'all') return safeRows;
+    return safeRows.filter((row) => rowHasOperationalFamily(row, normalizedFamily));
 }
 
 function formatMoney(value) {
@@ -630,6 +741,12 @@ function buildPortfolioEntries(rows, category) {
 
 function getCategorySortMetric(row, category) {
     const safeCategory = normalizeCategory(category);
+    const operationalProgress = getOperationalProgress(row);
+    if (activeOperationalFamily !== 'all' && operationalProgress.mode === 'unified') {
+        if (safeCategory === 'pagados') return Number(operationalProgress.paid || 0);
+        if (safeCategory === 'perdidos') return Number(operationalProgress.loss || 0);
+        return Math.max(Number(operationalProgress.pending || 0), 0);
+    }
     if (safeCategory === 'pagados') return Number(row?.paid_total || 0);
     if (safeCategory === 'perdidos') return Number(row?.loss_total || 0);
     return Math.max(getOutstandingBalance(row), getReviewTotal(row));
@@ -778,11 +895,11 @@ function filterRowsByCategory(rows, category) {
         .sort(comparePortfolioRows);
 }
 
-function getCategoryCounts(rows) {
+function getCategoryCounts(rows, family = activeOperationalFamily) {
     return {
-        fiados: filterRowsByCategory(rows, 'fiados').length,
-        pagados: filterRowsByCategory(rows, 'pagados').length,
-        perdidos: filterRowsByCategory(rows, 'perdidos').length
+        fiados: filterRowsByOperationalFamily(filterRowsByCategory(rows, 'fiados'), family).length,
+        pagados: filterRowsByOperationalFamily(filterRowsByCategory(rows, 'pagados'), family).length,
+        perdidos: filterRowsByOperationalFamily(filterRowsByCategory(rows, 'perdidos'), family).length
     };
 }
 
@@ -939,7 +1056,175 @@ function renderHeroSignal(rows) {
     `;
 }
 
+function renderProgressSignalFromSummary(summary = null) {
+    if (!summary || Number(summary.total || 0) <= 0) {
+        return `
+            <div class="cartera-viva-hero__signal cartera-viva-hero__signal--separated" aria-hidden="true">
+                <span class="cartera-viva-hero__signal-track">
+                    <span class="cartera-viva-progress__segment is-neutral" style="width:100%"></span>
+                </span>
+                <span class="cartera-viva-hero__signal-legend">
+                    <span>Base separada</span>
+                    <span>Sin suma forzada</span>
+                </span>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="cartera-viva-hero__signal" aria-hidden="true">
+            <span class="cartera-viva-hero__signal-track">
+                ${summary.paidShare > 0 ? `<span class="cartera-viva-hero__signal-segment is-paid" style="width:${summary.paidShare}%"></span>` : ''}
+                ${summary.pendingShare > 0 ? `<span class="cartera-viva-hero__signal-segment is-pending" style="width:${summary.pendingShare}%"></span>` : ''}
+                ${summary.lossShare > 0 ? `<span class="cartera-viva-hero__signal-segment is-loss" style="width:${summary.lossShare}%"></span>` : ''}
+            </span>
+            <span class="cartera-viva-hero__signal-legend">
+                <span>Cobrado</span>
+                <span>Pendiente</span>
+                <span>Pérdida</span>
+            </span>
+        </div>
+    `;
+}
+
+function getOperationalFamilyUnitType(family) {
+    const normalizedFamily = normalizeOperationalFamily(family);
+    if (normalizedFamily === 'sacks') return 'saco';
+    if (normalizedFamily === 'baskets') return 'cesta';
+    if (normalizedFamily === 'kg') return 'kg';
+    return 'unidad';
+}
+
+function summarizeOperationalFamilyRows(rows, family) {
+    const normalizedFamily = normalizeOperationalFamily(family);
+    const safeRows = filterRowsByOperationalFamily(rows, normalizedFamily);
+    const unitType = getOperationalFamilyUnitType(normalizedFamily);
+    let pending = 0;
+    let paid = 0;
+    let loss = 0;
+
+    safeRows.forEach((row) => {
+        const progress = getOperationalProgressByFamily(row, normalizedFamily);
+        if (progress.mode !== 'unified' || progress.total <= 0) return;
+        pending += Number(progress.pending || 0);
+        paid += Number(progress.paid || 0);
+        loss += Number(progress.loss || 0);
+    });
+
+    const total = Math.max(0, pending + paid + loss);
+    const paidShare = total > 0 ? clampPercent((paid / total) * 100) : 0;
+    const lossShare = total > 0 ? clampPercent((loss / total) * 100) : 0;
+    const pendingShare = total > 0 ? clampPercent(Math.max(0, 100 - paidShare - lossShare)) : 0;
+
+    return {
+        family: normalizedFamily,
+        label: getOperationalFamilyMeta(normalizedFamily).label,
+        count: safeRows.length,
+        unitType,
+        pending,
+        paid,
+        loss,
+        total,
+        pendingUniversal: formatUniversalUnitValue(pending),
+        paidUniversal: formatUniversalUnitValue(paid),
+        lossUniversal: formatUniversalUnitValue(loss),
+        totalUniversal: formatUniversalUnitValue(total),
+        pendingConcrete: formatOperationalValue(pending, unitType),
+        paidConcrete: formatOperationalValue(paid, unitType),
+        lossConcrete: formatOperationalValue(loss, unitType),
+        paidShare,
+        pendingShare,
+        lossShare
+    };
+}
+
+function getOperationalFamilyCount(rows, family) {
+    return summarizeOperationalFamilyRows(rows, family).count;
+}
+
+function renderOperationalFamilyControls(rows) {
+    const filters = OPERATIONAL_FAMILY_ORDER.map((family) => ({
+        id: family,
+        label: getOperationalFamilyMeta(family).label,
+        count: family === 'all' ? (Array.isArray(rows) ? rows.length : 0) : getOperationalFamilyCount(rows, family)
+    })).filter((filter) => filter.id === 'all' || filter.count > 0);
+
+    if (filters.length <= 1) return '';
+
+    return `
+        <div class="cartera-viva-family-bar" role="group" aria-label="Familia operativa">
+            ${filters.map((filter) => `
+                <button
+                    type="button"
+                    class="cartera-viva-family-chip${activeOperationalFamily === filter.id ? ' is-active' : ''}"
+                    data-cartera-unit-family="${filter.id}"
+                    aria-pressed="${activeOperationalFamily === filter.id ? 'true' : 'false'}">
+                    <span>${filter.label}</span>
+                    <span class="cartera-viva-family-chip__count">${formatCount(filter.count)}</span>
+                </button>
+            `).join('')}
+        </div>
+    `;
+}
+
 function resolveCategorySummary(rows, category) {
+    const familySummaries = ['sacks', 'baskets', 'kg']
+        .map((family) => summarizeOperationalFamilyRows(rows, family))
+        .filter((summary) => summary.count > 0 && summary.total > 0);
+
+    if (activeOperationalFamily !== 'all') {
+        const familySummary = summarizeOperationalFamilyRows(rows, activeOperationalFamily);
+        if (familySummary.total > 0) {
+            const categoryAmount = category === 'pagados'
+                ? formatOperationalStatePhrase(familySummary.paid, 'cobrada', 'cobradas')
+                : category === 'perdidos'
+                    ? formatOperationalStatePhrase(familySummary.loss, 'perdida', 'perdidas')
+                    : formatOperationalStatePhrase(familySummary.pending, 'pendiente', 'pendientes');
+            const copy = `${familySummary.label} · ${formatCount(familySummary.count)} cliente${familySummary.count === 1 ? '' : 's'} visibles`;
+
+            return {
+                mode: 'family',
+                label: familySummary.label,
+                amount: categoryAmount,
+                copy,
+                stats: [
+                    { label: 'Pendiente', value: familySummary.pendingConcrete },
+                    { label: 'Cobrado', value: familySummary.paidConcrete },
+                    { label: 'Pérdida', value: familySummary.lossConcrete }
+                ],
+                signal: familySummary
+            };
+        }
+
+        return {
+            mode: 'family-empty',
+            label: getOperationalFamilyMeta(activeOperationalFamily).label,
+            amount: 'Sin base operativa',
+            copy: 'No hay registros visibles de esta familia en el contexto actual.',
+            stats: [
+                { label: 'Pendiente', value: '0 unidades' },
+                { label: 'Cobrado', value: '0 unidades' },
+                { label: 'Pérdida', value: '0 unidades' }
+            ],
+            signal: null
+        };
+    }
+
+    if (familySummaries.length > 0) {
+        return {
+            mode: 'overview',
+            label: 'Base operativa',
+            amount: 'Separada por unidad',
+            copy: 'Sacos, cestas y kilogramos se leen como familias independientes.',
+            stats: familySummaries.map((summary) => ({
+                label: summary.label,
+                value: summary.totalUniversal,
+                copy: `Pend ${summary.pendingUniversal} · Cob ${summary.paidUniversal} · Pér ${summary.lossUniversal}`
+            })),
+            signal: null
+        };
+    }
+
     const count = rows.length;
     const pending = rows.reduce((total, row) => total + getOutstandingBalance(row), 0);
     const paid = sumField(rows, 'paid_total');
@@ -1024,13 +1309,16 @@ function renderHeaderSummary(filteredRows, options = {}) {
                 </div>
             </div>
             <div class="cartera-viva-summary-strip__signal">
-                ${renderHeroSignal(filteredRows)}
+                ${summary.mode === 'overview' || summary.mode === 'family-empty'
+                    ? renderProgressSignalFromSummary(null)
+                    : (summary.signal ? renderProgressSignalFromSummary(summary.signal) : renderHeroSignal(filteredRows))}
             </div>
             <div class="cartera-viva-summary-strip__stats">
                 ${summary.stats.map((stat) => `
                         <div class="cartera-viva-summary-strip__stat">
                             <span class="cartera-viva-summary-strip__stat-label">${stat.label}</span>
                             <strong class="cartera-viva-summary-strip__stat-value">${stat.value}</strong>
+                            ${stat.copy ? `<span class="cartera-viva-summary-strip__stat-copy">${stat.copy}</span>` : ''}
                         </div>
                     `).join('')}
             </div>
@@ -1425,11 +1713,10 @@ function getListViewState() {
     const cropScopedRows = getCropScopedRows(summaryRows);
     const shouldBlockInitialLoading = !hasLoadedSummary && !lastErrorMessage;
     const isSoftRefreshing = loading && hasLoadedSummary;
-    const summaryRowsForHeader = selectedCropId
-        ? filterRowsByCategory(summaryRows, activeCategory)
-        : filterRowsByCategory(cropScopedRows, activeCategory);
-    const categoryCounts = getCategoryCounts(cropScopedRows);
-    const filteredRows = filterRowsByCategory(cropScopedRows, activeCategory);
+    const categoryRows = filterRowsByCategory(cropScopedRows, activeCategory);
+    const summaryRowsForHeader = categoryRows;
+    const categoryCounts = getCategoryCounts(cropScopedRows, activeOperationalFamily);
+    const filteredRows = filterRowsByOperationalFamily(categoryRows, activeOperationalFamily);
     let bodyMode = 'grid';
     let bodyContent = '';
 
@@ -1477,6 +1764,7 @@ function getListViewState() {
         isSoftRefreshing,
         summaryRowsForHeader,
         categoryCounts,
+        categoryRows,
         filteredRows,
         bodyMode,
         bodyContent
@@ -1520,6 +1808,9 @@ function renderListViewMarkup(state) {
             </div>
                 <div data-cartera-summary-slot>
                     ${renderHeaderSummary(state.summaryRowsForHeader, { loading: state.shouldBlockInitialLoading })}
+                </div>
+                <div data-cartera-family-controls-slot>
+                    ${renderOperationalFamilyControls(state.summaryRowsForHeader)}
                 </div>
             </header>
 
@@ -1619,6 +1910,11 @@ function patchListView(root, state) {
         });
     }
 
+    const familyControlsSlot = viewNode.querySelector('[data-cartera-family-controls-slot]');
+    if (familyControlsSlot) {
+        familyControlsSlot.innerHTML = renderOperationalFamilyControls(state.summaryRowsForHeader);
+    }
+
     const searchInput = viewNode.querySelector('[data-cartera-search]');
     if (searchInput && document.activeElement !== searchInput && searchInput.value !== searchQuery) {
         searchInput.value = searchQuery;
@@ -1670,6 +1966,7 @@ function renderView() {
             exportTone: detailExportTone,
             historyFilter: detailHistoryFilter,
             ledgerScope: detailLedgerScope,
+            unitFamily: activeOperationalFamily,
             selectedPair: detailSelectedPair,
             exchangeRates: detailExchangeRates,
             exchangeStatus: detailExchangeStatus,
@@ -1703,6 +2000,11 @@ function renderView() {
             },
             onLedgerScopeChange: (nextScope) => {
                 detailLedgerScope = normalizeDetailLedgerScope(nextScope);
+                renderView();
+            },
+            onUnitFamilyChange: (nextFamily) => {
+                activeOperationalFamily = normalizeOperationalFamily(nextFamily);
+                writeStoredOperationalFamily(activeOperationalFamily);
                 renderView();
             },
             onPairChange: (nextPair) => {
@@ -1764,17 +2066,26 @@ async function loadSummary() {
             fetchBuyerPortfolioSummary(supabase),
             fetchOperationalProgressMap(supabase, selectedCropId).catch((error) => {
                 console.warn('[CarteraViva] operational progress load failed:', error?.message || error);
-                return new Map();
+                return {
+                    aggregateMap: new Map(),
+                    familyMap: new Map()
+                };
             })
         ]);
         summaryRows = nextSummaryRows;
-        operationalProgressMap = nextOperationalProgress;
+        operationalProgressMap = nextOperationalProgress?.aggregateMap instanceof Map
+            ? nextOperationalProgress.aggregateMap
+            : new Map();
+        operationalProgressFamilyMap = nextOperationalProgress?.familyMap instanceof Map
+            ? nextOperationalProgress.familyMap
+            : new Map();
         await syncVisibleCropScope({ render: false });
     } catch (error) {
         console.error('[CarteraViva] summary load failed:', error?.message || error);
         lastErrorMessage = String(error?.message || 'Error leyendo la cartera de clientes.');
         summaryRows = [];
         operationalProgressMap = new Map();
+        operationalProgressFamilyMap = new Map();
         visibleCropScopeKeys = null;
         visibleCropScopeId = null;
         visibleCropScopeLoading = false;
@@ -1858,7 +2169,7 @@ async function exportBuyerDetail() {
     renderView();
 
     try {
-        const visibleHistoryRows = getVisibleBuyerHistoryRows(detailRows, detailHistoryFilter, detailLedgerScope);
+        const visibleHistoryRows = getVisibleBuyerHistoryRows(detailRows, detailHistoryFilter, detailLedgerScope, activeOperationalFamily);
         const fileName = downloadBuyerPortfolioExport({
             buyerRow,
             historyRows: visibleHistoryRows
@@ -1899,6 +2210,16 @@ function bindListViewEvents(root) {
             if (nextCategory === activeCategory) return;
             activeCategory = nextCategory;
             writeStoredCategory(activeCategory);
+            renderView();
+            return;
+        }
+
+        const familyButton = target.closest('[data-cartera-unit-family]');
+        if (familyButton) {
+            const nextFamily = normalizeOperationalFamily(familyButton.getAttribute('data-cartera-unit-family'));
+            if (nextFamily === activeOperationalFamily) return;
+            activeOperationalFamily = nextFamily;
+            writeStoredOperationalFamily(activeOperationalFamily);
             renderView();
             return;
         }

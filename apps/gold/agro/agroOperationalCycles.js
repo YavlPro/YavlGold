@@ -40,6 +40,7 @@ const STATUS_OPTIONS = Object.freeze([
 const UNIT_TYPE_OPTIONS = Object.freeze([
     { value: 'unidad', label: 'Unidad' },
     { value: 'saco', label: 'Saco' },
+    { value: 'cesta', label: 'Cesta' },
     { value: 'kg', label: 'Kg' }
 ]);
 
@@ -410,6 +411,30 @@ function summarizePhysicalMovements(movements = []) {
     const physicalMovements = (Array.isArray(movements) ? movements : []).filter((movement) =>
         movement?.quantity != null && Number.isFinite(Number(movement.quantity)) && Number(movement.quantity) > 0 && movement?.unit_type
     );
+    const familyBuckets = new Map();
+
+    physicalMovements.forEach((movement) => {
+        const unitType = normalizeToken(movement.unit_type);
+        const familyKey = unitType === 'saco'
+            ? 'sacks'
+            : (unitType === 'cesta'
+                ? 'baskets'
+                : (unitType === 'kg' ? 'kg' : 'other'));
+        if (familyKey === 'other') return;
+        if (!familyBuckets.has(familyKey)) {
+            familyBuckets.set(familyKey, {
+                id: familyKey,
+                label: familyKey === 'sacks' ? 'Sacos' : (familyKey === 'baskets' ? 'Cestas' : 'Kilogramos'),
+                unitType,
+                total: 0
+            });
+        }
+        familyBuckets.get(familyKey).total += Number(movement.quantity || 0);
+    });
+    const familyList = Array.from(familyBuckets.values()).map((family) => ({
+        ...family,
+        totalText: formatQuantityLabel(family.total, family.unitType)
+    }));
 
     if (physicalMovements.length <= 0) {
         return {
@@ -419,7 +444,8 @@ function summarizePhysicalMovements(movements = []) {
             incoming: 0,
             outgoing: 0,
             summaryText: 'Sin unidades',
-            hintText: 'Sin base física registrada en este ciclo.'
+            hintText: 'Sin base física registrada en este ciclo.',
+            families: []
         };
     }
 
@@ -431,8 +457,9 @@ function summarizePhysicalMovements(movements = []) {
             total: 0,
             incoming: 0,
             outgoing: 0,
-            summaryText: 'Sin base unificada',
-            hintText: 'Hay mezcla de unidades físicas dentro del mismo ciclo.'
+            summaryText: 'Base separada por unidad',
+            hintText: 'Hay mezcla de unidades físicas dentro del mismo ciclo.',
+            families: familyList
         };
     }
 
@@ -453,7 +480,8 @@ function summarizePhysicalMovements(movements = []) {
         incoming,
         outgoing,
         summaryText: formatUniversalQuantityLabel(total),
-        hintText: `Unidad real: ${unitDescriptor} · Entradas: ${formatQuantityLabel(incoming, unitType)} · Salidas: ${formatQuantityLabel(outgoing, unitType)}`
+        hintText: `Unidad real: ${unitDescriptor} · Entradas: ${formatQuantityLabel(incoming, unitType)} · Salidas: ${formatQuantityLabel(outgoing, unitType)}`,
+        families: familyList
     };
 }
 
@@ -1649,12 +1677,24 @@ function renderMovementRows(cycle) {
 function renderCyclePhysicalSummary(cycle) {
     const physicalSummary = cycle?.physicalSummary;
     if (!physicalSummary) return '';
+    const familyBreakdown = Array.isArray(physicalSummary.families) && physicalSummary.families.length > 1
+        ? `
+            <div class="agro-operational-physical-summary__families">
+                ${physicalSummary.families.map((family) => `
+                    <span class="agro-operational-physical-summary__family">
+                        ${escapeHtml(family.label)}: ${escapeHtml(family.totalText)}
+                    </span>
+                `).join('')}
+            </div>
+        `
+        : '';
 
     return `
         <section class="agro-operational-physical-summary" data-mode="${escapeAttr(physicalSummary.mode)}">
             <span class="agro-operational-physical-summary__label">Base operativa</span>
             <strong class="agro-operational-physical-summary__value">${escapeHtml(physicalSummary.summaryText)}</strong>
             <p class="agro-operational-physical-summary__hint">${escapeHtml(physicalSummary.hintText)}</p>
+            ${familyBreakdown}
         </section>
     `;
 }
