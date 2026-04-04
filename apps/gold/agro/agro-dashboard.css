@@ -31,49 +31,7 @@
   }
 }
 
-.agro-dashboard-v10 {
-  --gold-1: #2a2218;
-  --gold-2: #3a3228;
-  --gold-3: #6b5a3e;
-  --gold-4: #C8A752;
-  --gold-5: #E8D48B;
 
-  --bg-0: #050505;
-  --bg-1: #0a0a0a;
-  --bg-2: #0B0C0F;
-  --bg-3: #111113;
-  --bg-4: #1a1a1f;
-
-  --text-primary: #ffffff;
-  --text-secondary: #cccccc;
-  --text-muted: #94A3B8;
-  --text-gold-prestige: #E5D5A0;
-
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-error: #EF4444;
-
-  --border-neutral: rgba(255,255,255,0.08);
-  --border-gold: rgba(200,167,82,0.25);
-
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-
-  --shadow-gold-sm: 0 2px 10px rgba(200,167,82,0.15);
-  --shadow-gold-md: 0 5px 20px rgba(200,167,82,0.25);
-
-  --text-xs: 0.70rem;
-  --text-sm: 0.80rem;
-  --text-base: 0.92rem;
-  --text-md: 1.00rem;
-  --text-lg: 1.10rem;
-  --text-xl: 1.30rem;
-
-  --metallic-border: linear-gradient(90deg, transparent, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e, transparent);
-  --metallic-btn: linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e);
-  --metallic-text: linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e);
-}
 
 .agro-dashboard-v10 .agro-dash-header {
   display: flex;

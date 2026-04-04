@@ -8732,3 +8732,39 @@ order by r.display_name asc;
 ### QA sugerido
 - Verificar visualmente cualquier Card de cultivo y validar el color dorado del botón de edición.
 - Ver un Ciclo de Tareas y revisar los badges; todos deben usar el color semántico formal.
+
+---
+
+## Ejecución Fase 2: Consolidación y Tokens Centralizados (2026-04-04)
+
+### Diagnóstico
+- Múltiples módulos (gro-operations.css, gro-dashboard.css) reescribían las mismas variables globales V10, generando redundancia y riesgo de des-sincronización.
+- El monolito gro.css utilizaba el prefijo --v10-* como un shim/fallback lo cual fragmentaba la definición de la paleta.
+- Espaciados (spacing) "mágicos" como 13px o  .68rem desperdigados en el UI, rompiendo la escala fundamental descrita en la auditoría.
+
+### Cambios aplicados
+
+#### 1. Creación de gro-tokens.css (Capa Central)
+- Se extrajo el sistema 5-Tone Metallic completo.
+- Se definieron los tokens en el :root puro para cascada global.
+- Se añadieron tokens del sistema de densidad para el spacing futuro (compact, default, spacious).
+
+#### 2. Limpieza de Módulos Secundarios
+- Eliminadas las directivas .agro-ops-v10 de gro-operations.css.
+- Eliminadas las directivas .agro-dashboard-v10 de gro-dashboard.css.
+
+#### 3. Normalización del Monolito (gro.css)
+- **Limpieza de variables**: Sustituidos >100 usos del shim temporal --v10-* por llamadas directas al token canónico V10 (ej. ar(--gold-4) en lugar de ar(--v10-gold-4)).
+- **Escala de Espaciado (Deuda solucionada)**:
+  - Textos de 13px y  .68rem llevados a la escala rígida de tokens V10 (ar(--text-sm) y ar(--text-xs)).
+  - Paddings y gaps anómalos (10px 13px,  .68rem) ajustados al grid semántico de rems ( .75rem,  .5rem).
+
+#### 4. HTML Bootstrap
+- Añadido <link rel="stylesheet" href="./agro-tokens.css"> en la cabecera de index.html para unificar el contexto visual.
+
+### Build
+- pnpm build:gold → ✅ Exit 0 (Validación UTF-8 limpia). Ningún quiebre estructural.
+
+### QA sugerido
+- Navegar entre Cartera Viva, Dashboard y Ciclos Operativos. La transición y coherencia visual debe sentirse ininterrumpida al no haber overrides de variables CSS por bloque.
+- Validar componentes compactos (tags, text-badges pequeños) donde el escalado a  .75rem/	ext-xs debió normalizar las alturas raras derivadas de los 13px anteriores.
