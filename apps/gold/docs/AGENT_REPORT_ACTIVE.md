@@ -8768,3 +8768,29 @@ order by r.display_name asc;
 ### QA sugerido
 - Navegar entre Cartera Viva, Dashboard y Ciclos Operativos. La transición y coherencia visual debe sentirse ininterrumpida al no haber overrides de variables CSS por bloque.
 - Validar componentes compactos (tags, text-badges pequeños) donde el escalado a  .75rem/	ext-xs debió normalizar las alturas raras derivadas de los 13px anteriores.
+
+---
+
+## Ejecución Fase 3: Polish y Contraste Final (2026-04-04)
+
+### Diagnóstico
+- Existencia de múltiples componentes interactivos en modo de teclado sin una señalética fuerte (focus border ausente).
+- Las pautas de la Fase 3 exigían validar el remanente legacy de contrastes que pudieran comprometer la legibilidad sobre el sistema dark mode base.
+
+### Cambios aplicados
+
+#### 1. Restauración de Interacciones (Focus-visible)
+- Agregado en el top :root de gro-tokens.css un reseteo de :focus-visible global:
+  - Todo elemento interactable (botones, forms, tabs, inputs, .btn) emitirá un outline solido dorado (2px solid var(--gold-4)) con desplazamiento y un halo perimetral ox-shadow al recibir enfoque por teclado.
+  - Mitigado el outline grotesco en estados puramente de mouse mediante :focus:not(:focus-visible) { outline: none; } manteniendo la limpieza de clics de ratón intacta.
+
+#### 2. Auditoría de Contraste Cero-Falso
+- Verificamos mediante scripts todo el espectro de colores harcodeados en el CSS del módulo, barriendo posibles #333, #444, #666 en fuentes que habrían provocado fallo por bajo contraste en el layout con fondo ar(--bg-0, #0a0a0a).
+- **Certificado**: Todos los colores semánticos ahora descansan sobre ar(--text-primary), ar(--text-secondary) y ar(--text-muted), garantizando W3C mínimo AA en legibilidad oscura.
+
+### Build & Estabilidad
+- pnpm build:gold → ✅ Exit 0, sin advertencias.
+
+### QA sugerido
+- Navegar la aplicación Agro mediante la tecla TAB repetidamente; deberás ver un recuadro de foco de color Dorado-Oro marcando exactamente el recorrido lógico con alta nitidez, frente a fallos previos de foco invisible.
+- Validar interacciones en inputs y checks donde el ocus-visible actúe con fuerza.
