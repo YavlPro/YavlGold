@@ -455,43 +455,43 @@
 }
 
 .agro-task-pill.is-expense {
-  color: #f1b17a;
+  color: var(--color-warning, #f59e0b);
 }
 
 .agro-task-pill.is-income {
-  color: #8de2bf;
+  color: var(--color-success, #10b981);
 }
 
 .agro-task-pill.is-loss {
-  color: #f59a9a;
+  color: var(--color-error, #ef4444);
 }
 
 .agro-task-pill.is-pending {
-  color: #c7b0ff;
+  color: var(--color-warning, #f59e0b);
 }
 
 .agro-task-pill.is-warn {
-  color: #f1b17a;
+  color: var(--color-warning, #f59e0b);
 }
 
 .agro-task-pill.is-task-pending,
 .agro-task-card__fact strong.is-task-pending {
-  color: #f0d17f;
+  color: var(--gold-4, #c8a752);
 }
 
 .agro-task-pill.is-task-active,
 .agro-task-card__fact strong.is-task-active {
-  color: #86cbff;
+  color: var(--color-info, #3b82f6);
 }
 
 .agro-task-pill.is-task-completed,
 .agro-task-card__fact strong.is-task-completed {
-  color: #8de2bf;
+  color: var(--color-success, #10b981);
 }
 
 .agro-task-pill.is-task-not-executed,
 .agro-task-card__fact strong.is-task-not-executed {
-  color: #f59a9a;
+  color: var(--color-error, #ef4444);
 }
 
 .agro-task-card__body {

@@ -8698,3 +8698,37 @@ order by r.display_name asc;
   - `check-dist-utf8: OK`
 - Observación no bloqueante:
   - warning de engine por `node v25.6.0` vs `20.x`
+
+---
+
+## Ejecución Fase 1: Cirugía Visual Estratégica (2026-04-04)
+
+### Diagnóstico
+- Auditoría visual estratégica detectó problemas en superficies post-V10 vs monolito legacy.
+- **Top prioridades (Quick Wins)**:
+  1. Azul #60a5fa en .btn-edit-crop viola el ADN §1 (solo azul para info).
+  2. Colores hardcodeados en task pills (ej. violeta #c7b0ff) sin tokens semánticos.
+  3. Transiciones dispares en monolito ( .2s vs el estándar 180ms ease).
+
+### Cambios aplicados
+
+#### gro.css
+- **.btn-edit-crop**: recoloreado de azul a gold, eliminando el color prohibido por §11 en UI principal.
+- **.btn-delete-crop**: #ef4444 actualizado a fallbacks seguros ar(--color-error, #ef4444).
+- **Motion**: transiciones de .btn-edit-crop, .btn-delete-crop y .crop-card normalizadas a 180ms ease eliminando  .2s.
+
+#### gro-task-cycles.css
+- Mapeados los **task pills colors** hacia los tokens semánticos del sistema:
+  - warn/expense → ar(--color-warning, #f59e0b)
+  - income/completed → ar(--color-success, #10b981)
+  - loss/not-executed → ar(--color-error, #ef4444)
+  - pending (antes violeta) → ar(--color-warning, #f59e0b)
+  - task-pending → ar(--gold-4, #c8a752)
+  - active → ar(--color-info, #3b82f6)
+
+### Build
+- `pnpm build:gold` → ✅ OK (UTF-8 validation: OK)
+
+### QA sugerido
+- Verificar visualmente cualquier Card de cultivo y validar el color dorado del botón de edición.
+- Ver un Ciclo de Tareas y revisar los badges; todos deben usar el color semántico formal.
