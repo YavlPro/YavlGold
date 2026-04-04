@@ -8263,3 +8263,238 @@ order by r.display_name asc;
 1. Intentar crear `José` cuando ya existe y validar mensaje visible de duplicado.
 2. Abrir eliminar cliente y confirmar que aparece popup dedicado, separado del modal de crear/editar.
 3. Activar un cultivo y validar que un buyer legacy sin historial sigue apareciendo en `Sin registro`.
+
+## [2026-04-04] Agro v2.12 — Ciclos de Tareas MVP
+
+### Diagnóstico
+
+- El shell de Agro ya soporta vistas independientes fuera del monolito a través de `apps/gold/agro/agro-shell.js`, con regiones dedicadas en `apps/gold/agro/index.html` y bootstrap por import dinámico. Ese patrón ya lo usan `Cartera Viva` y `Ciclos Operativos`.
+- `agro.js` no es el lugar correcto para esta feature. La opción más segura es colgar `Ciclos de Tareas` como vista nueva del shell con root propio, módulo JS propio y CSS propio.
+- El modelo de datos todavía no existe. Hace falta una tabla nueva orientada a trabajo de campo real, no a movimientos económicos legacy:
+  - título;
+  - tipo de tarea;
+  - fecha;
+  - duración;
+  - cultivo opcional;
+  - impacto económico opcional resumido.
+- Para el MVP no hace falta integración temprana con el facturero ni con `Cartera Viva`. El impacto económico puede guardarse como metadata propia del módulo y leerse en sus estadísticas.
+- El menor riesgo funcional es cargar tareas y cultivos desde Supabase, mantener filtros y estadísticas en memoria del módulo, y resolver CRUD + soft-delete desde un solo punto.
+
+### Opciones
+
+- A) MVP en un solo módulo separado: `agroTaskCycles.js` + `agro-task-cycles.css` + migración + wiring mínimo en shell/index.
+- B) MVP en dos módulos: separar UI y stats desde el día 1.
+- C) MVP más ambicioso con integración financiera temprana y múltiples submódulos.
+
+### Opción recomendada
+
+- Elegida: **A) MVP en un solo módulo separado**.
+- Motivo:
+  - respeta la regla de no crecer `agro.js`;
+  - sigue el patrón real del repo para vistas nuevas;
+  - reduce riesgo de wiring;
+  - deja el MVP utilizable sin abrir sobrearquitectura prematura.
+
+### Alcance MVP
+
+- Vista independiente `Ciclos de Tareas` dentro de Agro.
+- CRUD completo:
+  - crear;
+  - editar;
+  - eliminar con confirmación dedicada;
+  - soft-delete.
+- Historial/listado con filtros razonables.
+- Centro de estadísticas con lectura:
+  - diaria;
+  - semanal;
+  - mensual;
+  - anual.
+- Soporte para:
+  - tareas con cultivo;
+  - tareas sin cultivo;
+  - tareas sin impacto económico;
+  - tareas con gasto, ingreso, pérdida o fiado.
+
+### Decisión arquitectónica
+
+- Crear tabla nueva `public.agro_task_cycles` con RLS owner-only, `deleted_at`, `updated_at` y constraints de negocio mínimas.
+- Crear módulo nuevo `apps/gold/agro/agroTaskCycles.js` autocontenido para:
+  - render;
+  - CRUD;
+  - filtros;
+  - estadísticas;
+  - modal de formulario;
+  - modal de confirmación de borrado.
+- Crear stylesheet dedicado `apps/gold/agro/agro-task-cycles.css`.
+- Integrar solo con:
+  - `apps/gold/agro/agro-shell.js`;
+  - `apps/gold/agro/index.html`.
+
+### Riesgos
+
+- Si el volumen de tareas creciera mucho, el filtrado/stats en memoria podría requerir paginación o queries agregadas. Para el MVP actual es un tradeoff aceptable.
+- La primera versión guardará impacto económico como dato resumido propio. No generará movimientos automáticos en tablas financieras legacy.
+- La resolución de cultivos seguirá el patrón actual de `agro_crops`, incluyendo fallback seguro si algún `crop_id` queda apuntando a un cultivo ya no visible.
+
+### Cambios aplicados
+
+| Archivo | Líneas | Cambio |
+|---|---|---|
+| `supabase/migrations/20260404120000_agro_task_cycles_v1.sql` | 5-109 | Nueva tabla `agro_task_cycles` con soft-delete, RLS owner-only, constraints de negocio, índices y trigger `updated_at` |
+| `apps/gold/agro/agroTaskCycles.js` | 1-1639 | Módulo nuevo autocontenido con shell, CRUD, historial, filtros, stats, modal crear/editar, confirmación de eliminar y fallback por migración faltante |
+| `apps/gold/agro/agroTaskCycles.js` | 720-1639 | Render del apartado, lectura client-side, estadísticas diaria/semanal/mensual/anual y wiring de eventos shell/crops |
+| `apps/gold/agro/agro-task-cycles.css` | 1-646 | Estilos dedicados V10 para cards, stats, filtros, historial, empty state y modales del módulo |
+| `apps/gold/agro/agro-shell.js` | 56 | Registro de la nueva vista shell `task-cycles` |
+| `apps/gold/agro/index.html` | 33, 1216-1222, 1811-1813, 4341-4345 | Link CSS, entrada de navegación, región root propia e import dinámico del nuevo módulo |
+
+### Build status
+
+- `pnpm build:gold`: ✅ Exitoso
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observación no bloqueante:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+
+### QA sugerido
+
+1. Crear tarea sin impacto económico.
+2. Crear tarea con gasto.
+3. Crear tarea con ingreso.
+4. Crear tarea con pérdida.
+5. Crear tarea con fiado.
+6. Crear tarea con cultivo asociado.
+7. Crear tarea sin cultivo.
+8. Editar una tarea ya creada.
+9. Cancelar eliminación desde el popup dedicado.
+10. Confirmar eliminación y validar soft-delete visual.
+11. Revisar el historial filtrando por rango, tipo, cultivo e impacto.
+12. Verificar estadísticas en lectura diaria.
+13. Verificar estadísticas en lectura semanal.
+14. Verificar estadísticas en lectura mensual.
+15. Verificar estadísticas en lectura anual.
+
+### Validación ejecutada
+
+- Se validó compilación/sintaxis y wiring por build completo.
+- No se ejecutó QA manual browser intensiva en esta vuelta; queda pendiente la validación funcional sobre producción o entorno QA con datos reales.
+
+## [2026-04-04] Agro v2.13 — validación real de Ciclos de Tareas
+
+### Diagnóstico
+
+- El MVP ya estaba implementado y compilando, pero faltaban tres cierres reales:
+  - aplicar la migración al proyecto Supabase vinculado;
+  - verificar que el módulo quedara realmente separado de `Cartera Viva` y `Ciclos Operativos`;
+  - ejecutar QA funcional real del CRUD y de las estadísticas.
+- El proyecto Supabase correcto quedó identificado desde el repo local y el conector como `gerzlzprkarikblqxpjt` (`YavlGold`).
+- La cuenta QA local existe en `testqacredentials.md`, así que esta vuelta puede usar autenticación real sin improvisar credenciales.
+
+### Plan de validación
+
+1. Aplicar la migración `20260404120000_agro_task_cycles_v1.sql` al proyecto Supabase correcto.
+2. Verificar que la tabla, políticas RLS y trigger queden activos.
+3. Ejecutar QA funcional real en la UI:
+   - crear;
+   - editar;
+   - eliminar;
+   - filtros/listado;
+   - estadísticas por rango.
+4. Confirmar separación conceptual:
+   - sin mezcla visual o semántica con `Cartera Viva`;
+   - sin mezcla visual o semántica con `Ciclos Operativos`.
+5. Corregir solo bugs reales encontrados, con el menor diff posible.
+
+### Riesgos
+
+- La validación real sobre producción debe dejar datos QA controlados y entendibles; si se crean tareas de prueba, deben limpiarse o documentarse.
+- Si la migración falla por drift o por objetos previos en la base remota, la prioridad será diagnosticar la causa exacta antes de tocar el módulo.
+
+### Migración aplicada
+
+- Se aplicó la migración `supabase/migrations/20260404120000_agro_task_cycles_v1.sql` sobre el proyecto real `gerzlzprkarikblqxpjt`.
+- Verificación posterior vía Supabase:
+  - tabla `public.agro_task_cycles` creada;
+  - RLS activa;
+  - políticas owner-only presentes;
+  - índices creados;
+  - trigger `agro_task_cycles_handle_updated_at` activo.
+
+### Validación ejecutada
+
+- Producción no servía para QA funcional del módulo porque `Ciclos de Tareas` todavía no está desplegado allí como vista visible del shell.
+- La validación real se ejecutó sobre el workspace local en `vite --mode online`, apuntando al proyecto Supabase real y usando una sesión QA legítima renovada desde `auth.refresh_tokens`.
+- Separación conceptual verificada en UI:
+  - shell/navegación propia `Trabajo diario` → `Ciclos de Tareas`;
+  - copy principal centrado en trabajo diario;
+  - sin copy de `Cartera Viva`;
+  - sin copy de `Ciclos Operativos`.
+
+### QA funcional real
+
+- Crear:
+  - tarea sin impacto económico: OK;
+  - tarea con gasto: OK;
+  - tarea con ingreso: OK;
+  - tarea con pérdida: OK;
+  - tarea con fiado: OK;
+  - tarea con cultivo asociado: OK (`Batata Amarilla · Temprana`);
+  - tarea sin cultivo: OK.
+- Editar:
+  - tarea `Jornal sin impacto` actualizada a `Jornal sin impacto EDITADO`: OK;
+  - persistencia confirmada tanto en UI como en DB.
+- Eliminar:
+  - confirmación dedicada visible: OK;
+  - cancelación mantiene la tarea visible: OK;
+  - confirmación aplica soft-delete real: OK.
+- Historial/listado:
+  - las tareas QA aparecieron en el listado filtrado por prefijo: OK;
+  - no hubo mezcla con otras entidades del sistema.
+- Estadísticas por rango:
+  - diaria: OK;
+  - semanal: OK;
+  - mensual: OK;
+  - anual: OK.
+- Snapshot final del lote QA antes de cleanup:
+  - 6 tareas visibles;
+  - 8 h 25 min;
+  - promedio 1 h 24 min;
+  - 3 con impacto económico.
+
+### Bugs encontrados
+
+- No se detectaron bugs funcionales del módulo durante esta vuelta.
+- El único ajuste necesario fue del lado de automatización QA:
+  - la apertura del submódulo en el shell necesitó click programático en Playwright porque el botón quedaba fuera del viewport efectivo del runner;
+  - esto no fue un bug del producto ni requirió cambio de código del repo.
+
+### Cleanup QA
+
+- Se confirmó que la tarea `Cosecha con ingreso` quedó con `deleted_at` poblado tras la eliminación desde UI.
+- Al cierre, todas las tareas QA del lote `[QA-TC-20260404]` fueron marcadas con soft-delete para no contaminar la cuenta QA.
+- Se cerraron los servidores locales usados para QA y se limpiaron temporales de la sesión.
+
+### Cambios de código en esta vuelta
+
+- No hicieron falta cambios adicionales de código del repo para cerrar `v2.13`.
+- Esta vuelta fue de aplicación de migración, QA real, verificación de separación y cierre documental.
+
+### Build status
+
+- `pnpm build:gold`: ✅ Exitoso
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observación no bloqueante:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+
+### QA sugerido
+
+1. Cuando `Ciclos de Tareas` se despliegue a producción, repetir una pasada corta de smoke QA allí para validar navegación real del shell publicado.
+2. Si en el futuro aparece mucho volumen de tareas, revisar si las estadísticas client-side siguen respondiendo con buen desempeño.
