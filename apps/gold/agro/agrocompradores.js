@@ -129,9 +129,11 @@ function emitClientChanged(detail = {}) {
     document.dispatchEvent(new CustomEvent('agro:client:changed', {
         detail: {
             clientId: String(detail.clientId || '').trim(),
+            groupKey: normalizeBuyerGroupKey(detail.groupKey || ''),
             openDetail: detail.openDetail === true,
             duplicate: detail.duplicate === true,
-            deleted: detail.deleted === true
+            deleted: detail.deleted === true,
+            created: detail.created === true
         }
     }));
 }
@@ -289,6 +291,44 @@ async function loadBuyerByCanonicalName(userId, canonicalName) {
     }
 
     return data || null;
+}
+
+async function findBuyerDuplicateByNormalizedName(userId, rawName, excludeBuyerId = '') {
+    const targetCanonical = normalizeBuyerGroupKey(rawName);
+    if (!targetCanonical) return null;
+
+    const { data, error } = await state.supabase
+        .from('agro_buyers')
+        .select(BUYER_SELECT)
+        .eq('user_id', userId);
+
+    if (error) throw error;
+
+    const safeExcludeId = String(excludeBuyerId || '').trim();
+    const buyers = Array.isArray(data) ? data : [];
+
+    return buyers.find((buyer) => {
+        if (safeExcludeId && String(buyer?.id || '').trim() === safeExcludeId) return false;
+        const candidateTokens = [
+            buyer?.canonical_name,
+            buyer?.group_key,
+            buyer?.display_name
+        ]
+            .map((value) => normalizeBuyerGroupKey(value))
+            .filter(Boolean);
+
+        return candidateTokens.includes(targetCanonical);
+    }) || null;
+}
+
+function isBuyerCanonicalConflictError(error) {
+    const message = String(error?.message || error || '').trim().toLowerCase();
+    const details = String(error?.details || '').trim().toLowerCase();
+    return message.includes('duplicate key value violates unique constraint')
+        || message.includes('agro_buyers_user_group_key_uidx')
+        || message.includes('agro_buyers_user_canonical_name_uidx')
+        || details.includes('agro_buyers_user_group_key_uidx')
+        || details.includes('agro_buyers_user_canonical_name_uidx');
 }
 
 async function fetchHistoryCountForTable(tableName, userId, buyerId, groupKey) {
@@ -461,14 +501,16 @@ async function handleBuyerSave(event) {
         const formData = readBuyerForm();
         const displayName = String(formData?.display_name || '').trim();
         const canonicalName = normalizeBuyerGroupKey(displayName);
+        const isCreateMode = !state.currentBuyerId;
         if (!displayName || !canonicalName) {
             throw new Error('Ingresa un nombre válido para este cliente.');
         }
 
-        const duplicate = await loadBuyerByCanonicalName(user.id, canonicalName);
+        const duplicate = await findBuyerDuplicateByNormalizedName(user.id, displayName, state.currentBuyerId);
         if (duplicate?.id && String(duplicate.id) !== String(state.currentBuyerId || '')) {
             emitClientChanged({
                 clientId: duplicate.id,
+                groupKey: duplicate.group_key || duplicate.canonical_name || canonicalName,
                 openDetail: true,
                 duplicate: true
             });
@@ -538,7 +580,9 @@ async function handleBuyerSave(event) {
         const shouldOpenDetail = state.mode === 'create';
         emitClientChanged({
             clientId: saved.id,
-            openDetail: shouldOpenDetail
+            groupKey: saved.group_key || saved.canonical_name || canonicalName,
+            openDetail: shouldOpenDetail,
+            created: isCreateMode
         });
 
         if (shouldOpenDetail) {
@@ -549,6 +593,30 @@ async function handleBuyerSave(event) {
         setBuyerStatus('Cliente guardado correctamente.', 'ok');
     } catch (error) {
         console.error('[AGRO_CLIENTS] save error:', error);
+        if (isBuyerCanonicalConflictError(error)) {
+            try {
+                const user = state.currentUser?.id ? state.currentUser : await resolveSessionUser();
+                const duplicate = await findBuyerDuplicateByNormalizedName(
+                    user?.id,
+                    document.getElementById('agro-buyer-display_name')?.value || state.currentDisplayName,
+                    state.currentBuyerId
+                );
+                if (duplicate?.id) {
+                    emitClientChanged({
+                        clientId: duplicate.id,
+                        groupKey: duplicate.group_key || duplicate.canonical_name || '',
+                        openDetail: true,
+                        duplicate: true
+                    });
+                    closeBuyerModal();
+                    return;
+                }
+            } catch (duplicateError) {
+                console.warn('[AGRO_CLIENTS] duplicate resolution fallback failed:', duplicateError?.message || duplicateError);
+            }
+            setBuyerStatus('Ya existe un cliente canónico con ese nombre.', 'warn');
+            return;
+        }
         const message = String(error?.message || '').trim();
         if (message.toLowerCase().includes('uuid')) {
             setBuyerStatus(message, 'warn');

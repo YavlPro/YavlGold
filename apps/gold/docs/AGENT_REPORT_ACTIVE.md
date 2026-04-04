@@ -8067,3 +8067,55 @@ order by r.display_name asc;
 1. Validar una card con una sola familia y confirmar que no aparecen barras vacías.
 2. Validar una card con dos familias y confirmar que cada barra responde a su propia base.
 3. Validar una card con las tres familias y confirmar que no se mezclan porcentajes entre sí.
+
+## [2026-04-04] Cartera Viva v2.8 — cliente canónico visible + unicidad robusta
+
+### Diagnóstico
+
+- El alta del cliente canónico vive en `apps/gold/agro/agrocompradores.js` dentro de `handleBuyerSave()`. El flujo sí guarda en `agro_buyers` y sí emite `agro:client:changed`.
+- Cartera Viva escucha ese evento en `apps/gold/agro/agro-cartera-viva-view.js`, pero su render depende de `loadSummary()` y de `fetchBuyerPortfolioSummary()`, que leen el RPC `agro_buyer_portfolio_summary_v1`. Si el ambiente no tiene la versión del RPC que incluye buyers en cero movimientos, el cliente recién creado queda fuera del dataset aunque el create haya salido bien.
+- Además, cuando hay cultivo activo, `syncVisibleCropScope()` filtra con `fetchBuyerPortfolioCropScopeKeys()` leyendo solo movimientos (`agro_pending`, `agro_income`, `agro_losses`). Un comprador nuevo sin historial no genera scope key real y puede desaparecer del listado filtrado aunque exista en `agro_buyers`.
+- La unicidad canónica base ya existe: `normalizeBuyerGroupKey()` quita acentos, baja case, hace trim y colapsa espacios. El punto débil es que `handleBuyerSave()` hoy busca duplicados con `loadBuyerByCanonicalName()` usando igualdad exacta sobre `canonical_name` / `group_key`, lo que deja hueco frente a rows legacy o inconsistentes si esas columnas no están perfectamente saneadas.
+- Recomendación mínima de cambio:
+  - robustecer la detección de duplicados contra `display_name`, `group_key` y `canonical_name` normalizados;
+  - dejar fallback client-side para que Cartera Viva fusione `agro_buyers` al resumen si el RPC no trae buyers en cero;
+  - y mantener visible en sesión al comprador recién creado dentro del cultivo activo hasta que exista movimiento real.
+
+### Cambios aplicados
+
+| Archivo | Líneas | Cambio |
+|---|---|---|
+| `apps/gold/agro/agrocompradores.js` | 128-136 | `emitClientChanged()` ahora propaga `groupKey` y `created`, para que Cartera Viva sepa si debe abrir detalle, reforzar unicidad o pinnear visibilidad inmediata |
+| `apps/gold/agro/agrocompradores.js` | 296-321 | Nuevo helper `findBuyerDuplicateByNormalizedName()` que compara `display_name`, `group_key` y `canonical_name` usando la misma normalización canónica |
+| `apps/gold/agro/agrocompradores.js` | 324-331 | `isBuyerCanonicalConflictError()` captura choques de índices únicos y los reconcilia como duplicado canónico, en vez de dejar error crudo |
+| `apps/gold/agro/agrocompradores.js` | 489-621 | `handleBuyerSave()` deja de depender de igualdad exacta por columna y bloquea duplicados por nombre normalizado; al crear emite `created: true` y `groupKey` real |
+| `apps/gold/agro/agro-cartera-viva.js` | 148-153 | `normalizeHistorySearchToken()` ahora también colapsa espacios y hace trim, alineando search/scope con la normalización canónica |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 171-248 | Fallback client-side para buyers sin movimientos: `createBuyerPortfolioFallbackRow()`, `fetchBuyerDirectorySummaryRows()` y `mergeSummaryRowsWithBuyerDirectory()` |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 250-279 | Nuevo scope en memoria por cultivo para buyers recién creados sin historial: `getSessionCropScopeKeys()` y `pinBuyerToCurrentCropScope()` |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 1043-1053 | `getCropScopedRows()` ya no depende solo de movimientos persistidos; también respeta buyers recién creados pinneados en la sesión actual |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 2278-2300 | `loadSummary()` fusiona el RPC con `agro_buyers`, evitando que un create exitoso quede invisible si el RPC desplegado no trae buyers en cero |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 2580-2608 | `handleClientChanged()` fuerza categoría `fiados` al crear, pinnea el buyer al cultivo activo y luego refresca summary/detalle |
+
+### Riesgo residual
+
+- La visibilidad inmediata por cultivo para un buyer nuevo sin movimientos queda sostenida en memoria de sesión. Eso resuelve la UX actual, pero no reemplaza una relación buyer-crop persistente a nivel de modelo.
+- La búsqueda robusta de duplicados hace un scan owner-only sobre `agro_buyers` al guardar. Para el volumen actual de esta superficie es razonable; si más adelante el directorio creciera mucho, convendría mover esa validación a RPC/index funcional.
+- No hice QA browser intensivo en esta vuelta. La validación final pendiente es manual sobre create + cultivo activo + variantes de nombre.
+
+### Build status
+
+- `pnpm build:gold`: ✅ Exitoso
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observación no bloqueante:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+
+### QA sugerido
+
+1. Crear `José` y validar que aparece sin recarga manual rara.
+2. Intentar crear `jose`, ` JOSE ` y `JosÉ` después del mismo cliente y confirmar bloqueo.
+3. Crear un cliente nuevo con cultivo activo y verificar visibilidad inmediata en esa vista.

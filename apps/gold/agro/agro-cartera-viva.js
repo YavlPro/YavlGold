@@ -147,6 +147,8 @@ export async function fetchBuyerPortfolioCropScopeKeys(supabaseClient, cropId) {
 
 export function normalizeHistorySearchToken(value) {
     return String(value || '')
+        .replace(/\s+/g, ' ')
+        .trim()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase();

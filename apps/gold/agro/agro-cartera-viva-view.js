@@ -4,6 +4,8 @@ import {
     buildBuyerPortfolioScopeKey,
     fetchBuyerPortfolioCropScopeKeys,
     fetchBuyerPortfolioSummary,
+    normalizeBuyerGroupKey,
+    normalizeBuyerPortfolioSummaryRow,
     normalizeHistorySearchToken
 } from './agro-cartera-viva.js';
 import { downloadBuyerPortfolioExport } from './agro-cartera-viva-export.js';
@@ -77,6 +79,7 @@ let visibleCropScopeId = null;
 let visibleCropScopeLoading = false;
 let visibleCropScopeError = '';
 let visibleCropScopeRequestId = 0;
+const sessionCropBuyerScopeKeys = new Map();
 let externalRefreshTimer = 0;
 let operationalProgressMap = new Map();
 let operationalProgressFamilyMap = new Map();
@@ -163,6 +166,117 @@ function normalizeOperationalFamily(value) {
     if (token === 'baskets' || token === 'basket' || token === 'cesta' || token === 'cestas') return 'baskets';
     if (token === 'kg' || token === 'kilogram' || token === 'kilograms' || token === 'kilogramo' || token === 'kilogramos') return 'kg';
     return 'all';
+}
+
+function createBuyerPortfolioFallbackRow(buyer = {}) {
+    const buyerId = String(buyer?.id || '').trim();
+    const canonicalName = normalizeBuyerGroupKey(buyer?.canonical_name || buyer?.group_key || buyer?.display_name || '');
+    const displayName = String(buyer?.display_name || '').trim() || 'Cliente';
+
+    return normalizeBuyerPortfolioSummaryRow({
+        buyer_id: buyerId,
+        display_name: displayName,
+        group_key: canonicalName,
+        canonical_name: canonicalName,
+        client_status: String(buyer?.status || 'active').trim().toLowerCase() === 'archived' ? 'archived' : 'active',
+        global_status: 'Sin movimientos',
+        requires_review: false,
+        created_at: buyer?.created_at || null,
+        updated_at: buyer?.updated_at || null
+    });
+}
+
+async function fetchBuyerDirectorySummaryRows() {
+    const { data, error } = await supabase
+        .from('agro_buyers')
+        .select('id,display_name,group_key,canonical_name,status,created_at,updated_at')
+        .order('updated_at', { ascending: false });
+
+    if (error) throw error;
+
+    return Array.isArray(data)
+        ? data.map((buyer) => createBuyerPortfolioFallbackRow(buyer))
+        : [];
+}
+
+function rowsMatchBuyerIdentity(summaryRow, buyerRow) {
+    const summaryBuyerId = String(summaryRow?.buyer_id || '').trim();
+    const buyerId = String(buyerRow?.buyer_id || '').trim();
+    if (summaryBuyerId && buyerId && summaryBuyerId === buyerId) return true;
+
+    const summaryCanonical = normalizeBuyerGroupKey(
+        summaryRow?.canonical_name
+        || summaryRow?.group_key
+        || summaryRow?.display_name
+        || ''
+    );
+    const buyerCanonical = normalizeBuyerGroupKey(
+        buyerRow?.canonical_name
+        || buyerRow?.group_key
+        || buyerRow?.display_name
+        || ''
+    );
+
+    return Boolean(summaryCanonical && buyerCanonical && summaryCanonical === buyerCanonical);
+}
+
+function mergeSummaryRowsWithBuyerDirectory(summaryData, buyerDirectoryRows) {
+    const mergedRows = Array.isArray(summaryData)
+        ? summaryData.map((row) => normalizeBuyerPortfolioSummaryRow(row))
+        : [];
+
+    (Array.isArray(buyerDirectoryRows) ? buyerDirectoryRows : []).forEach((buyerRow) => {
+        const matchIndex = mergedRows.findIndex((summaryRow) => rowsMatchBuyerIdentity(summaryRow, buyerRow));
+        if (matchIndex >= 0) {
+            const currentRow = mergedRows[matchIndex];
+            mergedRows[matchIndex] = normalizeBuyerPortfolioSummaryRow({
+                ...buyerRow,
+                ...currentRow,
+                buyer_id: String(currentRow?.buyer_id || buyerRow?.buyer_id || '').trim(),
+                display_name: String(buyerRow?.display_name || currentRow?.display_name || '').trim(),
+                group_key: String(buyerRow?.group_key || currentRow?.group_key || '').trim(),
+                canonical_name: String(buyerRow?.canonical_name || currentRow?.canonical_name || '').trim(),
+                client_status: String(buyerRow?.client_status || currentRow?.client_status || 'active').trim()
+            });
+            return;
+        }
+
+        mergedRows.push(buyerRow);
+    });
+
+    return mergedRows;
+}
+
+function getSessionCropScopeKeys(cropId = getSelectedCropId()) {
+    const safeCropId = normalizeCropId(cropId);
+    if (!safeCropId) return null;
+    const existingKeys = sessionCropBuyerScopeKeys.get(safeCropId);
+    if (existingKeys instanceof Set) return existingKeys;
+    const nextKeys = new Set();
+    sessionCropBuyerScopeKeys.set(safeCropId, nextKeys);
+    return nextKeys;
+}
+
+function pinBuyerToCurrentCropScope(clientId = '', groupKey = '') {
+    const scopeKeys = getSessionCropScopeKeys();
+    if (!(scopeKeys instanceof Set)) return;
+
+    const safeBuyerId = String(clientId || '').trim();
+    const safeGroupKey = normalizeBuyerGroupKey(groupKey);
+    if (safeBuyerId) scopeKeys.add(`buyer:${safeBuyerId}`);
+    if (safeGroupKey) scopeKeys.add(`group:${safeGroupKey}`);
+}
+
+function unpinBuyerFromSessionCropScopes(clientId = '', groupKey = '') {
+    const safeBuyerId = String(clientId || '').trim();
+    const safeGroupKey = normalizeBuyerGroupKey(groupKey);
+    if (!safeBuyerId && !safeGroupKey) return;
+
+    sessionCropBuyerScopeKeys.forEach((scopeKeys) => {
+        if (!(scopeKeys instanceof Set)) return;
+        if (safeBuyerId) scopeKeys.delete(`buyer:${safeBuyerId}`);
+        if (safeGroupKey) scopeKeys.delete(`group:${safeGroupKey}`);
+    });
 }
 
 function getRootNode() {
@@ -931,10 +1045,11 @@ function getCropScopedRows(rows) {
     const selectedCropId = getSelectedCropId();
     if (!selectedCropId) return safeRows;
     if (!(visibleCropScopeKeys instanceof Set) || visibleCropScopeId !== selectedCropId) return [];
+    const sessionKeys = getSessionCropScopeKeys(selectedCropId);
 
     return safeRows.filter((row) => {
         const scopeKey = buildBuyerPortfolioScopeKey(row);
-        return scopeKey && visibleCropScopeKeys.has(scopeKey);
+        return scopeKey && (visibleCropScopeKeys.has(scopeKey) || sessionKeys?.has(scopeKey));
     });
 }
 
@@ -2167,8 +2282,12 @@ async function loadSummary() {
 
     try {
         const selectedCropId = getSelectedCropId();
-        const [nextSummaryRows, nextOperationalProgress] = await Promise.all([
+        const [nextSummaryRows, nextBuyerDirectoryRows, nextOperationalProgress] = await Promise.all([
             fetchBuyerPortfolioSummary(supabase),
+            fetchBuyerDirectorySummaryRows().catch((error) => {
+                console.warn('[CarteraViva] buyer directory fallback unavailable:', error?.message || error);
+                return [];
+            }),
             fetchOperationalProgressMap(supabase, selectedCropId).catch((error) => {
                 console.warn('[CarteraViva] operational progress load failed:', error?.message || error);
                 return {
@@ -2177,7 +2296,7 @@ async function loadSummary() {
                 };
             })
         ]);
-        summaryRows = nextSummaryRows;
+        summaryRows = mergeSummaryRowsWithBuyerDirectory(nextSummaryRows, nextBuyerDirectoryRows);
         operationalProgressMap = nextOperationalProgress?.aggregateMap instanceof Map
             ? nextOperationalProgress.aggregateMap
             : new Map();
@@ -2460,16 +2579,27 @@ function openClientRecordWizard(tabName, buyerRow) {
 
 function handleClientChanged(event) {
     const clientId = String(event?.detail?.clientId || '').trim();
+    const groupKey = normalizeBuyerGroupKey(event?.detail?.groupKey || '');
     const openDetail = event?.detail?.openDetail === true;
+    const created = event?.detail?.created === true;
+    const deleted = event?.detail?.deleted === true;
 
     void (async () => {
+        if (created && clientId) {
+            activeCategory = 'fiados';
+            writeStoredCategory(activeCategory);
+            pinBuyerToCurrentCropScope(clientId, groupKey);
+        }
+        if (deleted && clientId) {
+            unpinBuyerFromSessionCropScopes(clientId, groupKey);
+        }
         await loadSummary();
         if (clientId && openDetail) {
             await loadBuyerDetail(clientId, { ledgerScope: 'todos' });
             return;
         }
 
-        if (event?.detail?.deleted === true && selectedBuyerId === clientId) {
+        if (deleted && selectedBuyerId === clientId) {
             resetDetailState();
             renderView();
             return;
