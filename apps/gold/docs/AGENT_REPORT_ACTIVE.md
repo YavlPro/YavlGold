@@ -8166,3 +8166,52 @@ order by r.display_name asc;
 1. Crear un buyer sin movimientos y validar que la card aparece con `Sin registros de historial`.
 2. Confirmar que la barra principal del ciclo vacío queda gris y en `0%`.
 3. Registrar luego un movimiento y validar transición limpia de vacío a ciclo normal.
+
+## [2026-04-04] Cartera Viva v2.10 — categoría Sin registro para buyers canónicos sin historial
+
+### Diagnóstico
+
+- La card vacía ya existe desde `v2.9`, pero la clasificación principal de Cartera Viva sigue viviendo en `apps/gold/agro/agro-cartera-viva-view.js` alrededor de `resolveVisibleCategory()`, `hasVisibleCategory()` y `buildPortfolioEntries()`.
+- Hoy `CATEGORY_ORDER` solo contempla `fiados`, `pagados` y `perdidos`. Cuando un buyer no tiene pendiente, pago ni pérdida, `buildPortfolioEntries()` no le genera entrada visible propia por categoría y el flujo sigue siendo semánticamente incompleto.
+- El problema ya no es solo visual: falta una categoría funcional explícita para el buyer canónico existente sin historial. La opción más estable es `Sin registro`, no `Nuevo cliente`, porque depende del estado operativo real y no de la fecha de creación.
+- El menor diff correcto es:
+  - añadir `sin-registro` a la taxonomía de categorías;
+  - hacer que todo buyer sin historial clasifique ahí;
+  - evitar que el filtro por familia operativa lo esconda;
+  - y, al crear un buyer vacío, aterrizar la vista en esa categoría.
+
+### Cambios aplicados
+
+| Archivo | Líneas | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro-cartera-viva-view.js` | 29-50, 160-163 | Se agrega `sin-registro` a `CATEGORY_META`, `CATEGORY_ORDER` y `normalizeCategory()` |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 831-882 | `resolveVisibleCategory()` y `hasVisibleCategory()` ahora asignan buyers sin historial a `Sin registro` |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 883-896 | Los buyers `sin-registro` se ordenan por `updated_at/created_at`, dejando el más reciente arriba |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 1091-1098 | `getCategoryCounts()` suma `Sin registro` como categoría visible real |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 1363-1380, 1510-1512 | `resolveCategorySummary()` y `renderHeaderSummary()` muestran resumen neutral propio para `Sin registro`, sin caer en lectura monetaria ni señal falsa |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 2005-2007 | `getListViewState()` deja de esconder `Sin registro` por filtro de familia operativa |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 2676-2683 | Al crear buyer nuevo, la vista aterriza en `Sin registro` y resetea familia operativa a `Vista general` |
+| `apps/gold/agro/agro-cartera-viva.css` | 674-686, 771-775 | Estilo mínimo para card y badge de `Sin registro` con identidad gris consistente |
+
+### Riesgo residual
+
+- No ejecuté QA manual browser en esta vuelta; la verificación final pendiente es alta de create vacío -> `Sin registro` -> transición posterior a `Fiados`.
+- `Sin registro` depende de `hasBuyerPortfolioHistory()`. Si en el futuro aparece un tipo nuevo de movimiento que no incremente los totales usados por ese helper, habría que sumarlo para no clasificar mal.
+
+### Build status
+
+- `pnpm build:gold`: ✅ Exitoso
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observación no bloqueante:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+
+### QA sugerido
+
+1. Crear `José` sin movimientos y validar que aparece en `Sin registro`.
+2. Confirmar que la card conserva `Sin registros de historial`, barra gris y `0%`.
+3. Registrar luego un fiado y validar transición de `Sin registro` a `Fiados`.

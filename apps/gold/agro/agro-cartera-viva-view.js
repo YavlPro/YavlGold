@@ -27,6 +27,11 @@ const CARTERA_VIVA_UNIT_FAMILY_KEY = 'YG_AGRO_CARTERA_VIVA_UNIT_FAMILY_V1';
 const CARTERA_VIVA_GENERAL_CROP_ID = '__general__';
 
 const CATEGORY_META = Object.freeze({
+    'sin-registro': Object.freeze({
+        label: 'Sin registro',
+        emptyTitle: 'No hay clientes sin registro',
+        emptyCopy: 'Aquí aparecen los clientes canónicos creados que todavía no tienen historial.'
+    }),
     fiados: Object.freeze({
         label: 'Fiados',
         emptyTitle: 'No hay fiados activos',
@@ -44,7 +49,7 @@ const CATEGORY_META = Object.freeze({
     })
 });
 
-const CATEGORY_ORDER = Object.freeze(['fiados', 'pagados', 'perdidos']);
+const CATEGORY_ORDER = Object.freeze(['sin-registro', 'fiados', 'pagados', 'perdidos']);
 const OPERATIONAL_FAMILY_ORDER = Object.freeze(['all', 'sacks', 'baskets', 'kg']);
 const OPERATIONAL_FAMILY_META = Object.freeze({
     all: Object.freeze({ label: 'Vista general', shortLabel: 'General' }),
@@ -157,6 +162,7 @@ function writeStoredDetailPair(value) {
 
 function normalizeCategory(category) {
     const token = String(category || '').trim().toLowerCase();
+    if (token === 'sin registro' || token === 'sin-registro' || token === 'sinregistro') return 'sin-registro';
     return CATEGORY_ORDER.includes(token) ? token : 'fiados';
 }
 
@@ -829,11 +835,13 @@ function hasBuyerPortfolioHistory(row) {
 }
 
 function resolveVisibleCategory(row) {
+    const hasHistory = hasBuyerPortfolioHistory(row);
     const pending = getOutstandingBalance(row);
     const paid = Number(row?.paid_total || 0);
     const loss = Number(row?.loss_total || 0);
     const review = getReviewTotal(row);
 
+    if (!hasHistory) return 'sin-registro';
     if (pending > 0) return 'fiados';
     if (loss > 0) return 'perdidos';
     if (paid > 0) return 'pagados';
@@ -850,11 +858,13 @@ function resolveDisplayCategory(row) {
 
 function hasVisibleCategory(row, category) {
     const safeCategory = normalizeCategory(category);
+    const hasHistory = hasBuyerPortfolioHistory(row);
     const pending = getOutstandingBalance(row);
     const paid = Number(row?.paid_total || 0);
     const loss = Number(row?.loss_total || 0);
     const review = getReviewTotal(row);
 
+    if (safeCategory === 'sin-registro') return !hasHistory;
     if (safeCategory === 'pagados') return paid > 0;
     if (safeCategory === 'perdidos') return loss > 0;
     return pending > 0 || review > 0;
@@ -876,6 +886,9 @@ function buildPortfolioEntries(rows, category) {
 function getCategorySortMetric(row, category) {
     const safeCategory = normalizeCategory(category);
     const operationalProgress = getOperationalProgress(row);
+    if (safeCategory === 'sin-registro') {
+        return Date.parse(row?.updated_at || row?.created_at || '') || 0;
+    }
     if (activeOperationalFamily !== 'all' && operationalProgress.mode === 'unified') {
         if (safeCategory === 'pagados') return Number(operationalProgress.paid || 0);
         if (safeCategory === 'perdidos') return Number(operationalProgress.loss || 0);
@@ -918,7 +931,7 @@ function resolveBuyerStatus(row) {
     if (!hasHistory) {
         return {
             tone: 'empty',
-            label: 'Sin registros',
+            label: 'Sin registro',
             detail: 'Sin registros de historial'
         };
     }
@@ -1090,6 +1103,7 @@ function filterRowsByCategory(rows, category) {
 
 function getCategoryCounts(rows, family = activeOperationalFamily) {
     return {
+        'sin-registro': filterRowsByCategory(rows, 'sin-registro').length,
         fiados: filterRowsByOperationalFamily(filterRowsByCategory(rows, 'fiados'), family).length,
         pagados: filterRowsByOperationalFamily(filterRowsByCategory(rows, 'pagados'), family).length,
         perdidos: filterRowsByOperationalFamily(filterRowsByCategory(rows, 'perdidos'), family).length
@@ -1361,6 +1375,22 @@ function renderOperationalFamilyControls(rows) {
 }
 
 function resolveCategorySummary(rows, category) {
+    if (category === 'sin-registro') {
+        const count = Array.isArray(rows) ? rows.length : 0;
+        return {
+            mode: 'empty-cycle',
+            label: 'Sin registro',
+            amount: `${formatCount(count)} cliente${count === 1 ? '' : 's'}`,
+            copy: `${formatCount(count)} cliente${count === 1 ? '' : 's'} canónico${count === 1 ? '' : 's'} sin historial operativo todavía.`,
+            stats: [
+                { label: 'Pendiente', value: '0 unidades' },
+                { label: 'Cobrado', value: '0 unidades' },
+                { label: 'Pérdida', value: '0 unidades' }
+            ],
+            signal: null
+        };
+    }
+
     const familySummaries = ['sacks', 'baskets', 'kg']
         .map((family) => summarizeOperationalFamilyRows(rows, family))
         .filter((summary) => summary.count > 0 && summary.total > 0);
@@ -1502,7 +1532,7 @@ function renderHeaderSummary(filteredRows, options = {}) {
                 </div>
             </div>
             <div class="cartera-viva-summary-strip__signal">
-                ${summary.mode === 'overview' || summary.mode === 'family-empty'
+                ${summary.mode === 'overview' || summary.mode === 'family-empty' || summary.mode === 'empty-cycle'
                     ? renderProgressSignalFromSummary(null)
                     : (summary.signal ? renderProgressSignalFromSummary(summary.signal) : renderHeroSignal(filteredRows))}
             </div>
@@ -1994,7 +2024,9 @@ function getListViewState() {
     const categoryRows = filterRowsByCategory(cropScopedRows, activeCategory);
     const summaryRowsForHeader = categoryRows;
     const categoryCounts = getCategoryCounts(cropScopedRows, activeOperationalFamily);
-    const filteredRows = filterRowsByOperationalFamily(categoryRows, activeOperationalFamily);
+    const filteredRows = activeCategory === 'sin-registro'
+        ? categoryRows
+        : filterRowsByOperationalFamily(categoryRows, activeOperationalFamily);
     let bodyMode = 'grid';
     let bodyContent = '';
 
@@ -2644,8 +2676,10 @@ function handleClientChanged(event) {
 
     void (async () => {
         if (created && clientId) {
-            activeCategory = 'fiados';
+            activeCategory = 'sin-registro';
             writeStoredCategory(activeCategory);
+            activeOperationalFamily = 'all';
+            writeStoredOperationalFamily(activeOperationalFamily);
             pinBuyerToCurrentCropScope(clientId, groupKey);
         }
         if (deleted && clientId) {
