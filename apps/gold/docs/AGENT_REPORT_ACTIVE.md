@@ -8498,3 +8498,134 @@ order by r.display_name asc;
 
 1. Cuando `Ciclos de Tareas` se despliegue a producción, repetir una pasada corta de smoke QA allí para validar navegación real del shell publicado.
 2. Si en el futuro aparece mucho volumen de tareas, revisar si las estadísticas client-side siguen respondiendo con buen desempeño.
+
+## [2026-04-04] Agro v2.14 — tabs Tareas/Estadísticas + estado funcional de tarea
+
+### Diagnóstico
+
+- La UI actual de `Ciclos de Tareas` en `apps/gold/agro/agroTaskCycles.js` renderiza dos paneles simultáneos (`Estadísticas` + `Historial de tareas`) dentro del mismo shell. Eso funciona, pero se siente mezclado visualmente porque el módulo no separa el trabajo operativo del análisis.
+- El modelo actual de tarea solo guarda:
+  - tipo;
+  - fecha;
+  - duración;
+  - cultivo opcional;
+  - impacto económico opcional.
+- No existe campo `task_status` ni en la tabla `public.agro_task_cycles` ni en:
+  - `createDraftValues()`;
+  - `normalizeTaskRow()`;
+  - `ensureFormPayload()`;
+  - filtros/listado;
+  - snapshot de estadísticas.
+- Por eso no hay forma canónica de clasificar tareas en:
+  - pendientes;
+  - activas;
+  - finalizadas;
+  - no ejecutadas.
+
+### Opciones
+
+- A) Reordenar solo la UI y fingir estados en front.
+- B) Agregar `task_status` real al modelo, separar tabs `Tareas` / `Estadísticas`, y usar filtros por estado dentro de `Tareas`.
+- C) Convertir el módulo en un mini planner con estados, planificación y automatismos más profundos.
+
+### Opción recomendada
+
+- Elegida: **B) estado real + tabs separados**.
+- Motivo:
+  - evita estados inventados;
+  - mantiene el módulo serio y auditable;
+  - permite clasificación operativa real sin mezclarlo con `Cartera Viva`, `Ciclos Operativos` ni el facturero;
+  - sigue siendo un diff acotado sobre el MVP existente.
+
+### Plan
+
+1. Crear migración mínima para `task_status` con default seguro.
+2. Actualizar CRUD del módulo para leer/guardar/editar estado.
+3. Separar el shell en tabs principales:
+   - `Tareas`;
+   - `Estadísticas`.
+4. Dentro de `Tareas`, agregar filtros por estado en orden:
+   - pendientes;
+   - activas;
+   - finalizadas;
+   - no ejecutadas;
+   - todas.
+5. Ajustar estadísticas para que sigan viviendo en su tab propio y, donde aplique, reflejen estado.
+6. Validar con build y QA del flujo nuevo.
+
+### Riesgos
+
+- Requiere migración DDL sobre una tabla que ya está en uso para QA; el default debe preservar semántica histórica.
+- El default más seguro para tareas existentes es `completed`, porque el MVP original nació como registro de trabajo ya ejecutado.
+
+### Migración
+
+- Nueva migración creada: `supabase/migrations/20260404221000_agro_task_cycles_status_v1.sql`.
+- Aplicada sobre `gerzlzprkarikblqxpjt`: OK.
+- Verificación posterior:
+  - columna `task_status`: OK (`text`, `not null`, default `completed`)
+  - constraint `agro_task_cycles_task_status_check`: OK
+  - índice `agro_task_cycles_user_status_idx`: OK
+
+### Cambios aplicados
+
+| Archivo | Líneas | Cambio |
+| --- | --- | --- |
+| `apps/gold/agro/agroTaskCycles.js` | 40-79 | Nuevas constantes y estado para tabs del módulo + `task_status` |
+| `apps/gold/agro/agroTaskCycles.js` | 120-193 | Normalizadores para tab y estado |
+| `apps/gold/agro/agroTaskCycles.js` | 343-495 | `task_status` integrado al modelo, fetch y tolerancia a migración faltante |
+| `apps/gold/agro/agroTaskCycles.js` | 645-682 | Filtro canónico por estado y conteos de chips |
+| `apps/gold/agro/agroTaskCycles.js` | 698-799 | Snapshot estadístico ampliado con breakdown por estado |
+| `apps/gold/agro/agroTaskCycles.js` | 802-951 | Shell separado en tabs `Tareas` / `Estadísticas` |
+| `apps/gold/agro/agroTaskCycles.js` | 1100-1218 | Filtros por estado y cards con estado visible |
+| `apps/gold/agro/agroTaskCycles.js` | 1274-1528 | Formulario y CRUD ya guardan/actualizan `task_status` |
+| `apps/gold/agro/agroTaskCycles.js` | 1658-1765 | Click handlers para tabs/filtros y debug snapshot |
+| `apps/gold/agro/agro-task-cycles.css` | 1-715 | Estilos nuevos para tabs, filtros de estado y tonos visuales |
+| `supabase/migrations/20260404221000_agro_task_cycles_status_v1.sql` | 1-31 | DDL mínima para `task_status` |
+
+### QA ejecutado
+
+- QA de datos real contra Supabase usando cliente autenticado del proyecto con JWT válido de la cuenta QA.
+- Lote temporal usado: `[QA-TC-20260404-v214]`.
+- Casos validados:
+  1. creación de tarea `pending`: OK
+  2. creación de tarea `active`: OK
+  3. creación de tarea `completed`: OK
+  4. creación de tarea `not_executed`: OK
+  5. creación con cultivo asociado: OK
+  6. creación sin cultivo: OK
+  7. edición de estado (`completed` -> `active`): OK
+  8. soft-delete real: OK
+  9. conteo consolidado por estado tras create/edit: OK
+- Resultado del lote:
+  - `created: 5`
+  - `visibleAfterCreate: 5`
+  - `counts: pending=1, active=2, completed=1, not_executed=1`
+  - `durationTotal: 360`
+  - `softDeleted: true`
+- Cleanup:
+  - todo el lote `[QA-TC-20260404-v214]` quedó en soft-delete al cierre.
+
+### QA pendiente
+
+- No se ejecutó browser QA automatizada de UI en esta vuelta.
+- Motivo:
+  - `playwright` no está disponible en el workspace local;
+  - el MCP de Playwright del entorno intentó crear `.playwright-mcp` en `C:\Windows\System32` y falló por permisos externos al repo.
+- Queda pendiente una pasada visual/manual corta para confirmar:
+  - tab `Tareas`;
+  - tab `Estadísticas`;
+  - chips `Pendientes / Activas / Finalizadas / No ejecutadas / Todas`;
+  - separación visual real entre listado y centro de estadísticas.
+
+### Build status
+
+- `pnpm build:gold`: ✅ Exitoso
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observación no bloqueante:
+  - warning de engine por `node v25.6.0` vs `20.x`

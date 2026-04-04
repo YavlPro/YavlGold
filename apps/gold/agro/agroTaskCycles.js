@@ -44,6 +44,26 @@ const STATS_RANGE_OPTIONS = Object.freeze([
     { value: 'year', label: 'Anual' }
 ]);
 
+const MODULE_TAB_OPTIONS = Object.freeze([
+    { value: 'tasks', label: 'Tareas' },
+    { value: 'stats', label: 'Estadísticas' }
+]);
+
+const TASK_STATUS_OPTIONS = Object.freeze([
+    { value: 'pending', label: 'Pendiente' },
+    { value: 'active', label: 'Activa' },
+    { value: 'completed', label: 'Finalizada' },
+    { value: 'not_executed', label: 'No ejecutada' }
+]);
+
+const TASK_STATUS_FILTER_OPTIONS = Object.freeze([
+    { value: 'pending', label: 'Pendientes' },
+    { value: 'active', label: 'Activas' },
+    { value: 'completed', label: 'Finalizadas' },
+    { value: 'not_executed', label: 'No ejecutadas' },
+    { value: 'all', label: 'Todas' }
+]);
+
 const CURRENCY_OPTIONS = Object.freeze(['COP', 'USD', 'VES']);
 const EFFECT_TONE_CLASS = Object.freeze({
     none: 'is-none',
@@ -51,6 +71,12 @@ const EFFECT_TONE_CLASS = Object.freeze({
     income: 'is-income',
     loss: 'is-loss',
     pending: 'is-pending'
+});
+const TASK_STATUS_TONE_CLASS = Object.freeze({
+    pending: 'is-task-pending',
+    active: 'is-task-active',
+    completed: 'is-task-completed',
+    not_executed: 'is-task-not-executed'
 });
 
 const state = {
@@ -70,6 +96,7 @@ const state = {
     deleteConfirmOpen: false,
     editId: '',
     deleteId: '',
+    activeTab: 'tasks',
     statsRange: 'month',
     listFilters: createDefaultListFilters(),
     form: createFormState(),
@@ -79,6 +106,7 @@ const state = {
 
 function createDefaultListFilters() {
     return {
+        status: 'all',
         search: '',
         range: 'all',
         taskType: 'all',
@@ -95,6 +123,7 @@ function createDraftValues(overrides = {}) {
         cropId: '',
         durationMinutes: '',
         durationLabel: '',
+        taskStatus: 'completed',
         economicEffect: 'none',
         amount: '',
         currency: 'COP',
@@ -152,6 +181,16 @@ function normalizeListRange(value) {
 function normalizeStatsRange(value) {
     const token = normalizeToken(value);
     return STATS_RANGE_OPTIONS.some((option) => option.value === token) ? token : 'month';
+}
+
+function normalizeModuleTab(value) {
+    const token = normalizeToken(value);
+    return MODULE_TAB_OPTIONS.some((option) => option.value === token) ? token : 'tasks';
+}
+
+function normalizeTaskStatus(value) {
+    const token = normalizeToken(value);
+    return TASK_STATUS_OPTIONS.some((option) => option.value === token) ? token : 'completed';
 }
 
 function escapeHtml(value) {
@@ -303,6 +342,7 @@ function isSchemaMissingError(error) {
     return message.includes(TASKS_TABLE)
         || message.includes('does not exist')
         || message.includes('could not find')
+        || isMissingColumnError(error, 'task_status')
         || String(error?.code || '') === '42P01';
 }
 
@@ -372,6 +412,7 @@ function normalizeTaskRow(row = {}) {
         task_date: String(row.task_date || '').trim() || todayLocalIso(),
         duration_minutes: Math.max(0, Number(row.duration_minutes) || 0),
         duration_label: toNullableText(row.duration_label),
+        task_status: normalizeTaskStatus(row.task_status),
         economic_effect: normalizeEconomicEffect(row.economic_effect),
         amount: toOptionalNumber(row.amount),
         currency: row.currency ? normalizeCurrency(row.currency, '') : '',
@@ -451,7 +492,7 @@ async function validateCropId(userId, cropId) {
 async function fetchTasks(userId) {
     const { data, error } = await supabase
         .from(TASKS_TABLE)
-        .select('id,user_id,crop_id,title,task_type,task_date,duration_minutes,duration_label,economic_effect,amount,currency,notes,created_at,updated_at,deleted_at')
+        .select('id,user_id,crop_id,title,task_type,task_date,duration_minutes,duration_label,task_status,economic_effect,amount,currency,notes,created_at,updated_at,deleted_at')
         .eq('user_id', userId)
         .is('deleted_at', null)
         .order('task_date', { ascending: false })
@@ -526,6 +567,7 @@ function openEditModal(taskId) {
             cropId: task.crop_id,
             durationMinutes: String(task.duration_minutes || ''),
             durationLabel: task.duration_label || '',
+            taskStatus: task.task_status,
             economicEffect: task.economic_effect,
             amount: task.amount != null ? String(task.amount) : '',
             currency: task.currency || 'COP',
@@ -594,20 +636,21 @@ function buildSearchHaystack(task) {
         task.title,
         task.notes,
         readLabel(TASK_TYPE_OPTIONS, task.task_type, task.task_type),
+        readLabel(TASK_STATUS_OPTIONS, task.task_status, task.task_status),
         crop.label,
         readLabel(ECONOMIC_EFFECT_OPTIONS, task.economic_effect, task.economic_effect)
     ].filter(Boolean).join(' '));
 }
 
-function getVisibleTasks() {
-    const filters = state.listFilters;
+function filterTasks(tasks = state.tasks, filters = state.listFilters, options = {}) {
     const search = normalizeSearchToken(filters.search);
     const taskType = normalizeTaskType(filters.taskType === 'all' ? '' : filters.taskType) || 'all';
     const effect = normalizeEconomicEffect(filters.effect === 'all' ? '' : filters.effect) || 'all';
     const cropId = normalizeId(filters.cropId);
 
-    return state.tasks.filter((task) => {
+    return tasks.filter((task) => {
         if (!isDateWithinRange(task.task_date, filters.range)) return false;
+        if (!options.ignoreStatus && filters.status !== 'all' && task.task_status !== normalizeTaskStatus(filters.status)) return false;
         if (filters.taskType !== 'all' && task.task_type !== taskType) return false;
         if (filters.effect !== 'all' && task.economic_effect !== effect) return false;
         if (cropId === 'uncropped' && task.crop_id) return false;
@@ -615,6 +658,26 @@ function getVisibleTasks() {
         if (search && !buildSearchHaystack(task).includes(search)) return false;
         return true;
     });
+}
+
+function getVisibleTasks() {
+    return filterTasks(state.tasks, state.listFilters);
+}
+
+function buildTaskStatusCounts() {
+    const scopedTasks = filterTasks(state.tasks, state.listFilters, { ignoreStatus: true });
+    const counts = {
+        all: scopedTasks.length,
+        pending: 0,
+        active: 0,
+        completed: 0,
+        not_executed: 0
+    };
+    scopedTasks.forEach((task) => {
+        const key = normalizeTaskStatus(task.task_status);
+        counts[key] = Number(counts[key] || 0) + 1;
+    });
+    return counts;
 }
 
 function groupTasksByDate(tasks) {
@@ -652,6 +715,7 @@ function buildStatsSnapshot(range) {
     const byType = new Map();
     const byCrop = new Map();
     const byEffect = new Map();
+    const byStatus = new Map();
 
     ECONOMIC_EFFECT_OPTIONS.forEach((option) => {
         byEffect.set(option.value, {
@@ -659,6 +723,15 @@ function buildStatsSnapshot(range) {
             label: option.label,
             count: 0,
             totals: new Map()
+        });
+    });
+
+    TASK_STATUS_OPTIONS.forEach((option) => {
+        byStatus.set(option.value, {
+            value: option.value,
+            label: option.label,
+            count: 0,
+            durationMinutes: 0
         });
     });
 
@@ -685,6 +758,16 @@ function buildStatsSnapshot(range) {
         cropEntry.count += 1;
         cropEntry.durationMinutes += Number(task.duration_minutes || 0);
         byCrop.set(cropKey, cropEntry);
+
+        const statusEntry = byStatus.get(task.task_status) || {
+            value: task.task_status,
+            label: readLabel(TASK_STATUS_OPTIONS, task.task_status, task.task_status),
+            count: 0,
+            durationMinutes: 0
+        };
+        statusEntry.count += 1;
+        statusEntry.durationMinutes += Number(task.duration_minutes || 0);
+        byStatus.set(task.task_status, statusEntry);
 
         const effectEntry = byEffect.get(task.economic_effect) || {
             value: task.economic_effect,
@@ -713,6 +796,7 @@ function buildStatsSnapshot(range) {
         withoutEconomicImpact: totalTasks - withEconomicImpact,
         byType: Array.from(byType.values()).sort((left, right) => right.count - left.count || left.label.localeCompare(right.label)),
         byCrop: Array.from(byCrop.values()).sort((left, right) => right.count - left.count || left.label.localeCompare(right.label)),
+        byStatus: Array.from(byStatus.values()).sort((left, right) => TASK_STATUS_OPTIONS.findIndex((option) => option.value === left.value) - TASK_STATUS_OPTIONS.findIndex((option) => option.value === right.value)),
         byEffect: Array.from(byEffect.values()).sort((left, right) => ECONOMIC_EFFECT_OPTIONS.findIndex((option) => option.value === left.value) - ECONOMIC_EFFECT_OPTIONS.findIndex((option) => option.value === right.value))
     };
 }
@@ -741,6 +825,31 @@ function renderShell() {
 
             <div id="agro-task-page-feedback" class="agro-task-feedback agro-task-feedback--page" data-tone="info" hidden></div>
 
+            <section class="agro-task-panel agro-task-shell__tabs">
+                <div class="agro-task-panel__head agro-task-panel__head--compact">
+                    <div>
+                        <p class="agro-task-panel__eyebrow">Vista del módulo</p>
+                        <h3 class="agro-task-panel__title">Tareas o estadísticas</h3>
+                        <p class="agro-task-panel__copy">Trabaja el registro diario por separado del análisis para no mezclar operación con lectura histórica.</p>
+                    </div>
+                </div>
+                <div id="agro-task-module-tabs" class="agro-task-range-pills agro-task-range-pills--module" role="tablist" aria-label="Secciones de Ciclos de Tareas"></div>
+            </section>
+
+            <section id="agro-task-list-section" class="agro-task-panel agro-task-list-section">
+                <div class="agro-task-panel__head">
+                    <div>
+                        <p class="agro-task-panel__eyebrow">Tareas</p>
+                        <h3 class="agro-task-panel__title">Trabajo registrado del día a día</h3>
+                        <p class="agro-task-panel__copy">Ordena el trabajo por estado, rango, cultivo, tipo o impacto sin mezclarlo con Cartera Viva ni Ciclos Operativos.</p>
+                    </div>
+                    <button type="button" class="btn" data-task-action="new-task">➕ Nueva tarea</button>
+                </div>
+                <div id="agro-task-list-filters"></div>
+                <p id="agro-task-list-status" class="agro-task-list-status">Cargando tareas...</p>
+                <div id="agro-task-list"></div>
+            </section>
+
             <section id="agro-task-stats-section" class="agro-task-panel agro-task-stats-section">
                 <div class="agro-task-panel__head">
                     <div>
@@ -751,20 +860,6 @@ function renderShell() {
                     <div id="agro-task-stats-range" class="agro-task-range-pills" role="group" aria-label="Rango de estadísticas"></div>
                 </div>
                 <div id="agro-task-stats-body"></div>
-            </section>
-
-            <section id="agro-task-list-section" class="agro-task-panel agro-task-list-section">
-                <div class="agro-task-panel__head">
-                    <div>
-                        <p class="agro-task-panel__eyebrow">Historial de tareas</p>
-                        <h3 class="agro-task-panel__title">Trabajo registrado del día a día</h3>
-                        <p class="agro-task-panel__copy">Filtra por rango, cultivo, tipo o impacto sin mezclarlo con Cartera Viva ni Ciclos Operativos.</p>
-                    </div>
-                    <button type="button" class="btn" data-task-action="new-task">➕ Nueva tarea</button>
-                </div>
-                <div id="agro-task-list-filters"></div>
-                <p id="agro-task-list-status" class="agro-task-list-status">Cargando tareas...</p>
-                <div id="agro-task-list"></div>
             </section>
 
             <div id="agro-task-modal" class="agro-task-modal" aria-hidden="true">
@@ -804,6 +899,7 @@ function renderShell() {
 
     state.refs = {
         pageFeedback: document.getElementById('agro-task-page-feedback'),
+        moduleTabs: document.getElementById('agro-task-module-tabs'),
         statsSection: document.getElementById('agro-task-stats-section'),
         statsRange: document.getElementById('agro-task-stats-range'),
         statsBody: document.getElementById('agro-task-stats-body'),
@@ -823,11 +919,39 @@ function renderShell() {
     };
 
     renderPageFeedback();
+    renderModuleTabs();
+    syncActiveTabPanels();
     renderStats();
     renderListFilters();
     renderList();
     renderComposer();
     renderDeleteConfirm();
+}
+
+function renderModuleTabs() {
+    if (!state.refs?.moduleTabs) return;
+    state.refs.moduleTabs.innerHTML = MODULE_TAB_OPTIONS.map((option) => `
+        <button
+            type="button"
+            class="agro-task-range-pill agro-task-range-pill--module${state.activeTab === option.value ? ' is-active' : ''}"
+            role="tab"
+            aria-selected="${state.activeTab === option.value ? 'true' : 'false'}"
+            data-task-action="module-tab"
+            data-tab="${escapeAttr(option.value)}"
+        >
+            ${escapeHtml(option.label)}
+        </button>
+    `).join('');
+}
+
+function syncActiveTabPanels() {
+    const showTasks = state.activeTab !== 'stats';
+    if (state.refs?.listSection) {
+        state.refs.listSection.hidden = !showTasks;
+    }
+    if (state.refs?.statsSection) {
+        state.refs.statsSection.hidden = showTasks;
+    }
 }
 
 function renderStatsRangeControls() {
@@ -933,6 +1057,13 @@ function renderStats() {
             </article>
             <article class="agro-task-breakdown-card">
                 <div class="agro-task-breakdown-card__head">
+                    <p class="agro-task-breakdown-card__eyebrow">Ejecución</p>
+                    <h4 class="agro-task-breakdown-card__title">Tareas por estado</h4>
+                </div>
+                ${renderStatsBreakdownList(snapshot.byStatus, 'Los estados aparecerán cuando registres tareas pendientes, activas o cerradas.')}
+            </article>
+            <article class="agro-task-breakdown-card">
+                <div class="agro-task-breakdown-card__head">
                     <p class="agro-task-breakdown-card__eyebrow">Cultivos</p>
                     <h4 class="agro-task-breakdown-card__title">Tareas por cultivo</h4>
                 </div>
@@ -953,6 +1084,7 @@ function renderStats() {
 
 function renderListFilters() {
     if (!state.refs?.listFilters) return;
+    const statusCounts = buildTaskStatusCounts();
     const cropOptions = [
         '<option value="all">Todos los cultivos</option>',
         '<option value="uncropped">Sin cultivo</option>',
@@ -964,37 +1096,59 @@ function renderListFilters() {
     ];
 
     state.refs.listFilters.innerHTML = `
-        <div class="agro-task-filters">
-            <label class="agro-task-filter">
-                <span>Buscar</span>
-                <input type="search" class="styled-input" placeholder="Título, nota o cultivo" value="${escapeAttr(state.listFilters.search)}" data-task-filter="search">
-            </label>
-            <label class="agro-task-filter">
-                <span>Rango</span>
-                <select class="styled-input" data-task-filter="range">
-                    ${buildSelectOptionsMarkup(LIST_RANGE_OPTIONS, state.listFilters.range)}
-                </select>
-            </label>
-            <label class="agro-task-filter">
-                <span>Tipo</span>
-                <select class="styled-input" data-task-filter="taskType">
-                    <option value="all">Todos los tipos</option>
-                    ${buildSelectOptionsMarkup(TASK_TYPE_OPTIONS, state.listFilters.taskType === 'all' ? '' : state.listFilters.taskType)}
-                </select>
-            </label>
-            <label class="agro-task-filter">
-                <span>Impacto</span>
-                <select class="styled-input" data-task-filter="effect">
-                    <option value="all">Todos los impactos</option>
-                    ${buildSelectOptionsMarkup(ECONOMIC_EFFECT_OPTIONS, state.listFilters.effect === 'all' ? '' : state.listFilters.effect)}
-                </select>
-            </label>
-            <label class="agro-task-filter">
-                <span>Cultivo</span>
-                <select class="styled-input" data-task-filter="cropId">
-                    ${cropOptions.join('')}
-                </select>
-            </label>
+        <div class="agro-task-filter-stack">
+            <div class="agro-task-filter-group">
+                <div class="agro-task-filter-group__head">
+                    <p class="agro-task-filter-group__eyebrow">Estado</p>
+                    <p class="agro-task-filter-group__copy">Cuenta la historia natural del trabajo: pendiente, activo, finalizado o no ejecutado.</p>
+                </div>
+                <div class="agro-task-range-pills agro-task-range-pills--status" role="group" aria-label="Estados de tareas">
+                    ${TASK_STATUS_FILTER_OPTIONS.map((option) => `
+                        <button
+                            type="button"
+                            class="agro-task-range-pill agro-task-range-pill--status${state.listFilters.status === option.value ? ' is-active' : ''}"
+                            data-task-action="filter-status"
+                            data-status="${escapeAttr(option.value)}"
+                        >
+                            <span>${escapeHtml(option.label)}</span>
+                            <strong>${Number(statusCounts[option.value] || 0)}</strong>
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="agro-task-filters">
+                <label class="agro-task-filter">
+                    <span>Buscar</span>
+                    <input type="search" class="styled-input" placeholder="Título, nota o cultivo" value="${escapeAttr(state.listFilters.search)}" data-task-filter="search">
+                </label>
+                <label class="agro-task-filter">
+                    <span>Rango</span>
+                    <select class="styled-input" data-task-filter="range">
+                        ${buildSelectOptionsMarkup(LIST_RANGE_OPTIONS, state.listFilters.range)}
+                    </select>
+                </label>
+                <label class="agro-task-filter">
+                    <span>Tipo</span>
+                    <select class="styled-input" data-task-filter="taskType">
+                        <option value="all">Todos los tipos</option>
+                        ${buildSelectOptionsMarkup(TASK_TYPE_OPTIONS, state.listFilters.taskType === 'all' ? '' : state.listFilters.taskType)}
+                    </select>
+                </label>
+                <label class="agro-task-filter">
+                    <span>Impacto</span>
+                    <select class="styled-input" data-task-filter="effect">
+                        <option value="all">Todos los impactos</option>
+                        ${buildSelectOptionsMarkup(ECONOMIC_EFFECT_OPTIONS, state.listFilters.effect === 'all' ? '' : state.listFilters.effect)}
+                    </select>
+                </label>
+                <label class="agro-task-filter">
+                    <span>Cultivo</span>
+                    <select class="styled-input" data-task-filter="cropId">
+                        ${cropOptions.join('')}
+                    </select>
+                </label>
+            </div>
         </div>
     `;
 }
@@ -1007,10 +1161,12 @@ function renderTaskMeta(task) {
         : 'Sin monto';
     const durationText = task.duration_label || formatDurationMinutes(task.duration_minutes);
     const typeLabel = readLabel(TASK_TYPE_OPTIONS, task.task_type, task.task_type);
+    const statusLabel = readLabel(TASK_STATUS_OPTIONS, task.task_status, task.task_status);
 
     return `
         <div class="agro-task-card__meta">
             <span>${escapeHtml(typeLabel)}</span>
+            <span>${escapeHtml(statusLabel)}</span>
             <span>${escapeHtml(durationText)}</span>
             <span>${escapeHtml(crop.shortLabel)}</span>
             <span>${escapeHtml(effectLabel)}${task.economic_effect !== 'none' ? ` · ${escapeHtml(amountText)}` : ''}</span>
@@ -1022,6 +1178,8 @@ function renderTaskCard(task) {
     const crop = resolveCropInfo(task.crop_id);
     const effectLabel = readLabel(ECONOMIC_EFFECT_OPTIONS, task.economic_effect, task.economic_effect);
     const effectClass = EFFECT_TONE_CLASS[task.economic_effect] || EFFECT_TONE_CLASS.none;
+    const statusLabel = readLabel(TASK_STATUS_OPTIONS, task.task_status, task.task_status);
+    const statusClass = TASK_STATUS_TONE_CLASS[task.task_status] || TASK_STATUS_TONE_CLASS.completed;
     const amountText = task.economic_effect !== 'none' && task.amount != null
         ? formatCurrencyValue(task.amount, task.currency || 'COP')
         : 'Sin impacto económico';
@@ -1040,11 +1198,16 @@ function renderTaskCard(task) {
                 </div>
             </div>
             <div class="agro-task-card__pills">
+                <span class="agro-task-pill ${escapeAttr(statusClass)}">${escapeHtml(statusLabel)}</span>
                 <span class="agro-task-pill">${escapeHtml(readLabel(TASK_TYPE_OPTIONS, task.task_type, task.task_type))}</span>
                 <span class="agro-task-pill ${escapeAttr(effectClass)}">${escapeHtml(effectLabel)}</span>
                 <span class="agro-task-pill ${crop.missing ? 'is-warn' : ''}">${escapeHtml(crop.label)}</span>
             </div>
             <div class="agro-task-card__body">
+                <div class="agro-task-card__fact">
+                    <small>Estado</small>
+                    <strong class="${escapeAttr(statusClass)}">${escapeHtml(statusLabel)}</strong>
+                </div>
                 <div class="agro-task-card__fact">
                     <small>Duración</small>
                     <strong>${escapeHtml(task.duration_label || formatDurationMinutes(task.duration_minutes))}</strong>
@@ -1107,7 +1270,7 @@ function renderList() {
         state.refs.list.innerHTML = `
             <div class="agro-task-empty">
                 <h4>Sin resultados visibles</h4>
-                <p>Ajusta búsqueda, rango, cultivo o tipo para volver a ver tareas registradas.</p>
+                <p>Ajusta estado, búsqueda, rango, cultivo o tipo para volver a ver tareas registradas.</p>
             </div>
         `;
         return;
@@ -1157,6 +1320,13 @@ function buildFormMarkup() {
                 </label>
 
                 <label class="input-group">
+                    <span class="input-label">Estado</span>
+                    <select class="styled-input" data-task-draft="taskStatus">
+                        ${buildSelectOptionsMarkup(TASK_STATUS_OPTIONS, values.taskStatus)}
+                    </select>
+                </label>
+
+                <label class="input-group">
                     <span class="input-label">Cultivo asociado</span>
                     <select class="styled-input" data-task-draft="cropId">
                         ${buildCropOptionsMarkup(values.cropId)}
@@ -1203,7 +1373,7 @@ function buildFormMarkup() {
                 <div class="agro-task-form__summary-card">
                     <small>Vista rápida</small>
                     <strong>${escapeHtml(values.title || (isEdit ? 'Editando tarea' : 'Nueva tarea'))}</strong>
-                    <p>${escapeHtml(readLabel(TASK_TYPE_OPTIONS, values.taskType, 'Otra'))} · ${escapeHtml(values.durationLabel || (values.durationMinutes ? formatDurationMinutes(Number(values.durationMinutes)) : 'Sin tiempo'))}</p>
+                    <p>${escapeHtml(readLabel(TASK_TYPE_OPTIONS, values.taskType, 'Otra'))} · ${escapeHtml(readLabel(TASK_STATUS_OPTIONS, values.taskStatus, 'Finalizada'))} · ${escapeHtml(values.durationLabel || (values.durationMinutes ? formatDurationMinutes(Number(values.durationMinutes)) : 'Sin tiempo'))}</p>
                 </div>
                 <div class="agro-task-form__summary-card">
                     <small>Impacto</small>
@@ -1302,6 +1472,7 @@ function ensureFormPayload() {
         cropId: normalizeId(values.cropId),
         durationMinutes: toPositiveInteger(values.durationMinutes, 'La duración'),
         durationLabel: toNullableText(values.durationLabel),
+        taskStatus: ensureAllowedValue(values.taskStatus, TASK_STATUS_OPTIONS.map((option) => option.value), 'Estado de tarea no válido.'),
         economicEffect: ensureAllowedValue(values.economicEffect, ECONOMIC_EFFECT_OPTIONS.map((option) => option.value), 'Impacto económico no válido.'),
         amount: values.economicEffect === 'none' ? null : toPositiveAmount(values.amount, 'El monto'),
         currency: values.economicEffect === 'none' ? null : normalizeCurrency(values.currency, 'COP'),
@@ -1320,6 +1491,7 @@ async function createTaskRecord(payload) {
         task_date: payload.taskDate,
         duration_minutes: payload.durationMinutes,
         duration_label: payload.durationLabel,
+        task_status: payload.taskStatus,
         economic_effect: payload.economicEffect,
         amount: payload.amount,
         currency: payload.currency,
@@ -1344,6 +1516,7 @@ async function updateTaskRecord(taskId, payload) {
         task_date: payload.taskDate,
         duration_minutes: payload.durationMinutes,
         duration_label: payload.durationLabel,
+        task_status: payload.taskStatus,
         economic_effect: payload.economicEffect,
         amount: payload.amount,
         currency: payload.currency,
@@ -1470,17 +1643,28 @@ async function handleDeleteConfirm() {
 
 function handleFilterChange(field, value) {
     if (!field) return;
-    if (field === 'search') {
+    let shouldRerenderFilters = false;
+    if (field === 'status') {
+        state.listFilters.status = value === 'all' ? 'all' : normalizeTaskStatus(value);
+        shouldRerenderFilters = true;
+    } else if (field === 'search') {
         state.listFilters.search = String(value || '');
     } else if (field === 'range') {
         state.listFilters.range = normalizeListRange(value);
+        shouldRerenderFilters = true;
     } else if (field === 'taskType') {
         state.listFilters.taskType = value === 'all' ? 'all' : normalizeTaskType(value);
+        shouldRerenderFilters = true;
     } else if (field === 'effect') {
         state.listFilters.effect = value === 'all' ? 'all' : normalizeEconomicEffect(value);
+        shouldRerenderFilters = true;
     } else if (field === 'cropId') {
         const normalizedCrop = normalizeId(value);
         state.listFilters.cropId = !normalizedCrop ? 'all' : normalizedCrop;
+        shouldRerenderFilters = true;
+    }
+    if (shouldRerenderFilters) {
+        renderListFilters();
     }
     renderList();
 }
@@ -1495,6 +1679,9 @@ async function handleRootClick(event) {
             setPageFeedback(TASK_SCHEMA_MISSING_COPY, 'warn');
             return;
         }
+        state.activeTab = 'tasks';
+        renderModuleTabs();
+        syncActiveTabPanels();
         openCreateModal();
         return;
     }
@@ -1520,6 +1707,16 @@ async function handleRootClick(event) {
     }
     if (action === 'confirm-delete') {
         await handleDeleteConfirm();
+        return;
+    }
+    if (action === 'module-tab') {
+        state.activeTab = normalizeModuleTab(button.dataset.tab);
+        renderModuleTabs();
+        syncActiveTabPanels();
+        return;
+    }
+    if (action === 'filter-status') {
+        handleFilterChange('status', button.dataset.status);
         return;
     }
     if (action === 'stats-range') {
@@ -1562,6 +1759,7 @@ function buildDebugSnapshot() {
         deleteConfirmOpen: state.deleteConfirmOpen,
         editId: state.editId,
         deleteId: state.deleteId,
+        activeTab: state.activeTab,
         statsRange: state.statsRange,
         listFilters: { ...state.listFilters },
         form: {

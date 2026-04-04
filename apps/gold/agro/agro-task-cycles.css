@@ -30,6 +30,10 @@
   flex-wrap: wrap;
 }
 
+.agro-task-shell__tabs {
+  padding-block: 0.85rem;
+}
+
 .agro-task-refresh-btn {
   display: inline-flex;
   align-items: center;
@@ -117,6 +121,10 @@
   margin-bottom: 0.95rem;
 }
 
+.agro-task-panel__head--compact {
+  margin-bottom: 0.7rem;
+}
+
 .agro-task-panel__eyebrow {
   margin: 0 0 0.18rem;
   font-family: 'Orbitron', sans-serif;
@@ -149,6 +157,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.42rem;
   min-height: 36px;
   padding: 0 0.85rem;
   border-radius: 999px;
@@ -167,6 +176,28 @@
 
 .agro-task-range-pill:hover {
   transform: translateY(-1px);
+}
+
+.agro-task-range-pill--module {
+  min-width: 138px;
+}
+
+.agro-task-range-pill--status {
+  justify-content: space-between;
+  min-width: 136px;
+}
+
+.agro-task-range-pill--status strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  font-size: 0.82rem;
 }
 
 .agro-task-stats-grid {
@@ -222,7 +253,7 @@
 
 .agro-task-breakdown-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 0.75rem;
 }
 
@@ -275,6 +306,39 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.55rem;
+}
+
+.agro-task-filter-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.agro-task-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.agro-task-filter-group__head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.agro-task-filter-group__eyebrow {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-5);
+  opacity: 0.82;
+}
+
+.agro-task-filter-group__copy {
+  margin: 0;
+  color: var(--text-secondary);
 }
 
 .agro-task-filters {
@@ -408,6 +472,26 @@
 
 .agro-task-pill.is-warn {
   color: #f1b17a;
+}
+
+.agro-task-pill.is-task-pending,
+.agro-task-card__fact strong.is-task-pending {
+  color: #f0d17f;
+}
+
+.agro-task-pill.is-task-active,
+.agro-task-card__fact strong.is-task-active {
+  color: #86cbff;
+}
+
+.agro-task-pill.is-task-completed,
+.agro-task-card__fact strong.is-task-completed {
+  color: #8de2bf;
+}
+
+.agro-task-pill.is-task-not-executed,
+.agro-task-card__fact strong.is-task-not-executed {
+  color: #f59a9a;
 }
 
 .agro-task-card__body {
@@ -600,7 +684,6 @@ body.agro-task-cycles-modal-open {
 
 @media (max-width: 900px) {
   .agro-task-stats-grid,
-  .agro-task-breakdown-grid,
   .agro-task-filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -616,7 +699,6 @@ body.agro-task-cycles-modal-open {
   }
 
   .agro-task-stats-grid,
-  .agro-task-breakdown-grid,
   .agro-task-impact-grid,
   .agro-task-filters,
   .agro-task-form__grid,
@@ -626,6 +708,11 @@ body.agro-task-cycles-modal-open {
   }
 
   .agro-task-range-pills {
+    width: 100%;
+  }
+
+  .agro-task-range-pill--module,
+  .agro-task-range-pill--status {
     width: 100%;
   }
 }
