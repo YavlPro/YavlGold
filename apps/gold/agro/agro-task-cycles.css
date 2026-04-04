@@ -1,0 +1,647 @@
+.agro-task-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.agro-task-shell__header {
+  margin-bottom: 0;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 5%, transparent), transparent 18%),
+    var(--bg-1);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.28);
+}
+
+.agro-task-shell__eyebrow {
+  margin: 0 0 0.2rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-5);
+  opacity: 0.82;
+}
+
+.agro-task-shell__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.agro-task-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--gold-4) 30%, rgba(255, 255, 255, 0.08));
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--gold-4);
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+
+.agro-task-refresh-btn:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--gold-4) 50%, rgba(255, 255, 255, 0.08));
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.agro-task-feedback {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.8rem 1rem;
+  font-size: 0.98rem;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.agro-task-feedback[data-tone="success"] {
+  border-color: color-mix(in srgb, #18c29c 42%, rgba(255, 255, 255, 0.08));
+  background: color-mix(in srgb, #18c29c 12%, transparent);
+}
+
+.agro-task-feedback[data-tone="warn"] {
+  border-color: color-mix(in srgb, #d1783c 44%, rgba(255, 255, 255, 0.08));
+  background: color-mix(in srgb, #d1783c 12%, transparent);
+}
+
+.agro-task-panel,
+.agro-task-card {
+  position: relative;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-gold);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 6%, transparent), transparent 20%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.018), transparent 60%),
+    var(--bg-3);
+  box-shadow:
+    0 16px 32px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  overflow: hidden;
+}
+
+.agro-task-panel::before,
+.agro-task-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--metallic-border);
+  background-size: 200% 100%;
+  opacity: 0.75;
+  animation: borderShimmer 4s linear infinite;
+}
+
+.agro-task-panel {
+  padding: 0.95rem;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.agro-task-panel.is-refreshing {
+  border-color: color-mix(in srgb, var(--gold-4) 34%, rgba(255, 255, 255, 0.08));
+  box-shadow:
+    0 18px 34px rgba(0, 0, 0, 0.28),
+    0 0 0 1px rgba(200, 167, 82, 0.06);
+}
+
+.agro-task-panel__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.85rem;
+  align-items: flex-start;
+  margin-bottom: 0.95rem;
+}
+
+.agro-task-panel__eyebrow {
+  margin: 0 0 0.18rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-5);
+  opacity: 0.82;
+}
+
+.agro-task-panel__title {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1rem, 2.2vw, 1.25rem);
+  color: var(--text-primary);
+}
+
+.agro-task-panel__copy {
+  margin: 0.32rem 0 0;
+  color: var(--text-secondary);
+}
+
+.agro-task-range-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.agro-task-range-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  font-weight: 600;
+  transition: transform 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+
+.agro-task-range-pill.is-active {
+  border-color: color-mix(in srgb, var(--gold-4) 42%, rgba(255, 255, 255, 0.08));
+  color: var(--gold-4);
+  background: color-mix(in srgb, var(--gold-4) 12%, transparent);
+}
+
+.agro-task-range-pill:hover {
+  transform: translateY(-1px);
+}
+
+.agro-task-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.agro-task-stat-card,
+.agro-task-breakdown-card,
+.agro-task-impact-card {
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.85rem;
+}
+
+.agro-task-stat-card__eyebrow,
+.agro-task-breakdown-card__eyebrow,
+.agro-task-impact-card__eyebrow {
+  margin: 0 0 0.2rem;
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.agro-task-stat-card__value,
+.agro-task-impact-card__value {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1.1rem, 2vw, 1.45rem);
+  color: var(--text-primary);
+}
+
+.agro-task-stat-card__copy,
+.agro-task-impact-card__copy {
+  margin: 0.28rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.agro-task-stats-grid--loading .agro-task-stat-card--loading,
+.agro-task-card--loading {
+  min-height: 116px;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    rgba(255, 255, 255, 0.02);
+  background-size: 220% 100%;
+  animation: agroTaskShimmer 1.8s linear infinite;
+}
+
+.agro-task-breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.agro-task-breakdown-card__head {
+  margin-bottom: 0.7rem;
+}
+
+.agro-task-breakdown-card__title {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+}
+
+.agro-task-breakdown-card__empty {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.agro-task-breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.agro-task-breakdown-list__item {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.65rem 0.75rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.agro-task-breakdown-list__item strong,
+.agro-task-breakdown-list__item span {
+  color: var(--text-primary);
+}
+
+.agro-task-breakdown-list__item small {
+  display: block;
+  margin-top: 0.18rem;
+  color: var(--text-secondary);
+}
+
+.agro-task-impact-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.agro-task-filters {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-bottom: 0.8rem;
+}
+
+.agro-task-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.agro-task-filter span {
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+}
+
+.agro-task-list-status {
+  margin: 0 0 0.8rem;
+  color: var(--text-secondary);
+}
+
+.agro-task-loading,
+.agro-task-day-group__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.agro-task-day-group + .agro-task-day-group {
+  margin-top: 0.95rem;
+}
+
+.agro-task-day-group__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-bottom: 0.7rem;
+}
+
+.agro-task-day-group__eyebrow {
+  margin: 0 0 0.15rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+}
+
+.agro-task-day-group__title {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+}
+
+.agro-task-day-group__count {
+  color: var(--gold-4);
+  font-weight: 700;
+}
+
+.agro-task-card {
+  padding: 0.9rem;
+}
+
+.agro-task-card__head,
+.agro-task-card__body,
+.agro-task-card__actions,
+.agro-task-card__pills {
+  display: flex;
+  gap: 0.65rem;
+}
+
+.agro-task-card__head {
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.agro-task-card__title {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+}
+
+.agro-task-card__eyebrow {
+  margin: 0 0 0.18rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+}
+
+.agro-task-card__meta,
+.agro-task-card__pills {
+  flex-wrap: wrap;
+}
+
+.agro-task-card__meta {
+  margin-top: 0.35rem;
+}
+
+.agro-task-card__meta span,
+.agro-task-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 0.7rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.045);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.agro-task-pill.is-expense {
+  color: #f1b17a;
+}
+
+.agro-task-pill.is-income {
+  color: #8de2bf;
+}
+
+.agro-task-pill.is-loss {
+  color: #f59a9a;
+}
+
+.agro-task-pill.is-pending {
+  color: #c7b0ff;
+}
+
+.agro-task-pill.is-warn {
+  color: #f1b17a;
+}
+
+.agro-task-card__body {
+  margin-top: 0.75rem;
+  align-items: stretch;
+}
+
+.agro-task-card__fact {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0.7rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.agro-task-card__fact small {
+  display: block;
+  margin-bottom: 0.2rem;
+  color: var(--text-muted);
+}
+
+.agro-task-card__fact strong {
+  color: var(--text-primary);
+}
+
+.agro-task-card__notes {
+  margin: 0.75rem 0 0;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.agro-task-empty {
+  padding: 1.2rem;
+  border-radius: 18px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.015);
+  text-align: center;
+}
+
+.agro-task-empty h4 {
+  margin: 0 0 0.35rem;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.agro-task-empty p {
+  margin: 0 0 0.9rem;
+  color: var(--text-secondary);
+}
+
+.agro-task-empty--warn {
+  border-style: solid;
+  border-color: color-mix(in srgb, #d1783c 42%, rgba(255, 255, 255, 0.08));
+  background: color-mix(in srgb, #d1783c 8%, transparent);
+}
+
+body.agro-task-cycles-modal-open {
+  overflow: hidden;
+}
+
+.agro-task-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.84);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 10020;
+}
+
+.agro-task-modal.is-open {
+  display: flex;
+}
+
+.agro-task-modal__dialog {
+  width: min(760px, 100%);
+  max-height: min(90vh, 880px);
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid color-mix(in srgb, var(--gold-4) 24%, rgba(255, 255, 255, 0.08));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 6%, transparent), transparent 18%),
+    var(--bg-0);
+  box-shadow:
+    0 25px 50px rgba(0, 0, 0, 0.5),
+    0 0 60px color-mix(in srgb, var(--gold-4) 8%, transparent);
+}
+
+.agro-task-modal__dialog--confirm {
+  width: min(520px, 100%);
+}
+
+.agro-task-modal__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.3rem 1.4rem 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--gold-4) 14%, rgba(255, 255, 255, 0.08));
+}
+
+.agro-task-modal__eyebrow {
+  margin: 0 0 0.2rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-5);
+  opacity: 0.82;
+}
+
+.agro-task-modal__title {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.agro-task-modal__copy {
+  margin: 0.35rem 0 0;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.agro-task-modal__close {
+  color: var(--gold-4);
+  font-size: 1.9rem;
+}
+
+.agro-task-modal__body {
+  padding: 1rem 1.35rem 1.35rem;
+  overflow: auto;
+}
+
+.agro-task-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.agro-task-form__grid,
+.agro-task-economic-fields,
+.agro-task-form__summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.agro-task-economic-fields.is-hidden {
+  display: none;
+}
+
+.agro-task-form__summary-card,
+.agro-task-delete-card {
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.9rem;
+}
+
+.agro-task-form__summary-card small {
+  display: block;
+  margin-bottom: 0.22rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.agro-task-form__summary-card strong {
+  display: block;
+  color: var(--text-primary);
+}
+
+.agro-task-form__summary-card p,
+.agro-task-delete-card__note {
+  margin: 0.32rem 0 0;
+  color: var(--text-secondary);
+}
+
+.agro-task-form__actions,
+.agro-task-delete-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+@keyframes agroTaskShimmer {
+  0% { background-position: 220% 0; }
+  100% { background-position: -40% 0; }
+}
+
+@media (max-width: 900px) {
+  .agro-task-stats-grid,
+  .agro-task-breakdown-grid,
+  .agro-task-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .agro-task-panel__head,
+  .agro-task-card__head,
+  .agro-task-card__body,
+  .agro-task-form__actions,
+  .agro-task-delete-card__actions {
+    flex-direction: column;
+  }
+
+  .agro-task-stats-grid,
+  .agro-task-breakdown-grid,
+  .agro-task-impact-grid,
+  .agro-task-filters,
+  .agro-task-form__grid,
+  .agro-task-economic-fields,
+  .agro-task-form__summary {
+    grid-template-columns: 1fr;
+  }
+
+  .agro-task-range-pills {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agro-task-refresh-btn,
+  .agro-task-range-pill,
+  .agro-task-panel,
+  .agro-task-card {
+    transition: none;
+  }
+
+  .agro-task-panel::before,
+  .agro-task-card::before,
+  .agro-task-stats-grid--loading .agro-task-stat-card--loading,
+  .agro-task-card--loading {
+    animation: none;
+  }
+}

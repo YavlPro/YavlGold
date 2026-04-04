@@ -30,6 +30,7 @@
     <link rel="stylesheet" href="./agro-dashboard.css">
     <link rel="stylesheet" href="./agro-operations.css">
     <link rel="stylesheet" href="./agro-operational-cycles.css">
+    <link rel="stylesheet" href="./agro-task-cycles.css">
     <link rel="stylesheet" href="./agro-cartera-viva.css">
     <link rel="stylesheet" href="./tx-cards-v2.css">
     <style>
@@ -1212,6 +1213,17 @@
 
             <div class="agro-shell-sidebar__group">
                 <p class="agro-shell-sidebar__label"><span class="agro-shell-sidebar__label-icon"
+                        aria-hidden="true">🧑‍🌾</span><span>Trabajo diario</span></p>
+                <div class="agro-shell-nav-item">
+                    <button type="button" class="agro-shell-link" data-agro-view="task-cycles">
+                        <span class="agro-shell-link__icon" aria-hidden="true">🧑‍🌾</span><span
+                            class="agro-shell-link__label">Ciclos de Tareas</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="agro-shell-sidebar__group">
+                <p class="agro-shell-sidebar__label"><span class="agro-shell-sidebar__label-icon"
                         aria-hidden="true">🧾</span><span>Historial legacy</span></p>
 
                 <div class="agro-shell-nav-item" data-agro-nav-parent="pagados">
@@ -1794,6 +1806,10 @@
             <div id="agro-cartera-viva-root" class="agro-cartera-viva-root">
                 <!-- agro-cartera-viva-view.js renders here when Cartera Viva view is active -->
             </div>
+        </section>
+
+        <section class="agro-task-cycles-region agro-ops-v10" data-agro-shell-region="task-cycles" hidden inert>
+            <div id="agro-task-cycles-root"></div>
         </section>
 
         <!-- Active Crops Section -->
@@ -4321,6 +4337,12 @@
                         mod.initAgroCarteraVivaView({ initialUserId: session.user?.id });
                     }
                 }).catch(err => console.warn('[AGRO] Cartera Viva view module load error:', err.message));
+
+                import('./agroTaskCycles.js').then((mod) => {
+                    if (typeof mod.initAgroTaskCycles === 'function') {
+                        mod.initAgroTaskCycles({ initialUserId: session.user?.id });
+                    }
+                }).catch(err => console.warn('[AGRO] Task cycles module load error:', err.message));
 
                 // Expose unified stats globally for inline scripts
                 window.refreshAgroStats = async function () {
