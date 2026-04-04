@@ -7902,3 +7902,64 @@ order by r.display_name asc;
    - se abre la ficha del cliente;
    - el foco cae en la acción destructiva;
    - el flujo sigue usando la ruta segura con RPC cuando exista.
+
+## [2026-04-03] Cartera Viva v2.5 — diagnóstico de cierre semántico operativo
+
+### Diagnóstico
+
+- El texto resumen principal de la card de Cartera Viva hoy se construye en `apps/gold/agro/agro-cartera-viva-view.js` dentro de `resolveBuyerStatus()`. Ahí siguen filtrándose strings monetarios legacy como `USD X por cobrar`, aunque el cálculo operativo ya fue corregido por unidades.
+- El helper que decide si la card cae en dinero, unidades o fallback mixto es la combinación de:
+  - `getOperationalProgress()`
+  - `getOperationalCardMetrics()`
+  - `resolveBuyerStatus()`
+  El cálculo físico ya está bien; el problema restante es de copy y jerarquía semántica.
+- Las strings monetarias que todavía contaminan la UI de Cartera Viva están en los branches no unificados de `resolveBuyerStatus()` y en algunos textos secundarios de estado/revisión.
+- `apps/gold/agro/agroOperationalCycles.js` no reutiliza la lógica de Cartera Viva. Tiene su propia semántica: `buildCycleViewModel()` y `createDatasetSummary()` priorizan buckets monetarios (`incomingText`, `outgoingText`, `balanceText`) y `renderCycleCard()` pinta una card claramente dinero-first.
+- Recomendación mínima de cambio:
+  - en Cartera Viva, reemplazar el subtítulo principal de la card por lenguaje operativo universal (`unidad/unidades`) y dejar la unidad concreta para precisión secundaria;
+  - en Ciclos Operativos, no rehacer el módulo, pero sí agregar una capa física compacta antes del bloque financiero cuando exista base homogénea, para alinear la lectura sin romper su naturaleza económica.
+
+### Cambios aplicados
+
+| Archivo | Líneas | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro-cartera-viva-view.js` | 270-283 | Nuevos helpers semánticos universales: `formatUniversalUnitValue()`, `formatOperationalStatePhrase()` y `formatOperationalUnitDescriptor()` |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 638-715 | `resolveBuyerStatus()` deja de usar frases monetarias como copy principal y pasa a subtítulos operativos tipo `1 unidad pendiente · 2 unidades cobradas` |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 1168-1202 | `getOperationalCardMetrics()` deja el label de progreso en `Avance operativo`, usa base universal y conserva la unidad concreta como precisión secundaria |
+| `apps/gold/agro/agroOperationalCycles.js` | 390-456 | Nueva capa física para ciclos: pluralización correcta de cantidades, resumen físico homogéneo y fallback honesto para mezcla o ausencia de unidades |
+| `apps/gold/agro/agroOperationalCycles.js` | 495 | `buildCycleViewModel()` incorpora `physicalSummary` sin tocar el balance monetario existente |
+| `apps/gold/agro/agroOperationalCycles.js` | 1641-1685 | El historial del ciclo ahora muestra cantidad antes que dinero y cada card recibe una `Base operativa` compacta antes del bloque financiero |
+| `apps/gold/agro/agro-operational-cycles.css` | 616-653 | Estilos nuevos para la banda física de Ciclos Operativos, con estados `mixed` y `none` |
+
+### Riesgo residual
+
+- En Cartera Viva, la unidad concreta sigue mostrándose en métricas y no en el subtítulo principal para mantener la lectura humana limpia; si producto quiere aún más precisión visible, el siguiente paso sería añadir un micro-chip `Unidad real: sacos/kg`.
+- En Ciclos Operativos, el resumen superior del módulo sigue siendo financiero a propósito, porque agrega múltiples ciclos heterogéneos; la alineación operativa se hizo a nivel card individual, que es donde sí existe contexto físico utilizable.
+- Si un ciclo mezcla unidades físicas incompatibles, la nueva banda muestra `Sin base unificada` en vez de intentar sumar cantidades heterogéneas.
+
+### Build status
+
+- `pnpm build:gold`: ✅ Exitoso
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observación no bloqueante:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+
+### QA sugerido
+
+1. En Cartera Viva, validar card con unidad homogénea:
+   - subtítulo universal (`unidad/unidades`);
+   - métricas precisas (`saco`, `kg`, etc.).
+2. Revisar un cliente sin base física y otro con mezcla incompatible para confirmar:
+   - no vuelve el copy monetario como lectura principal;
+   - aparece fallback honesto.
+3. En Ciclos Operativos, abrir un ciclo con cantidad homogénea y confirmar que:
+   - la banda `Base operativa` aparece antes del bloque monetario;
+   - el historial lista `cantidad · dinero`, no al revés.
+4. Abrir un ciclo sin cantidades y uno con mezcla de unidades para validar:
+   - `Sin unidades`;
+   - `Sin base unificada`.

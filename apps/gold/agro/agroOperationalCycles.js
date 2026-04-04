@@ -387,9 +387,74 @@ function formatAmountLabel(amount, currency) {
     return amount == null ? EMPTY_AMOUNT_LABEL : formatCurrencyValue(amount, currency);
 }
 
+function formatPhysicalUnitLabel(unitType, quantity) {
+    const token = normalizeToken(unitType);
+    const singular = Math.abs(Number(quantity) - 1) < 1e-9;
+    if (token === 'kg') return 'kg';
+    if (token === 'saco') return singular ? 'saco' : 'sacos';
+    return singular ? 'unidad' : 'unidades';
+}
+
+function formatUniversalQuantityLabel(quantity) {
+    const numeric = Number(quantity);
+    if (!Number.isFinite(numeric) || numeric <= 0) return '0 unidades';
+    return `${numeric} ${Math.abs(numeric - 1) < 1e-9 ? 'unidad' : 'unidades'}`;
+}
+
 function formatQuantityLabel(quantity, unitType) {
     if (quantity == null || !unitType) return 'Sin cantidad física';
-    return `${quantity} ${readLabel(UNIT_TYPE_OPTIONS, unitType, unitType)}`;
+    return `${quantity} ${formatPhysicalUnitLabel(unitType, quantity)}`;
+}
+
+function summarizePhysicalMovements(movements = []) {
+    const physicalMovements = (Array.isArray(movements) ? movements : []).filter((movement) =>
+        movement?.quantity != null && Number.isFinite(Number(movement.quantity)) && Number(movement.quantity) > 0 && movement?.unit_type
+    );
+
+    if (physicalMovements.length <= 0) {
+        return {
+            mode: 'none',
+            unitType: '',
+            total: 0,
+            incoming: 0,
+            outgoing: 0,
+            summaryText: 'Sin unidades',
+            hintText: 'Sin base física registrada en este ciclo.'
+        };
+    }
+
+    const unitTypes = Array.from(new Set(physicalMovements.map((movement) => normalizeToken(movement.unit_type)).filter(Boolean)));
+    if (unitTypes.length !== 1) {
+        return {
+            mode: 'mixed',
+            unitType: '',
+            total: 0,
+            incoming: 0,
+            outgoing: 0,
+            summaryText: 'Sin base unificada',
+            hintText: 'Hay mezcla de unidades físicas dentro del mismo ciclo.'
+        };
+    }
+
+    const unitType = unitTypes[0];
+    const incoming = physicalMovements
+        .filter((movement) => movement.direction === 'in')
+        .reduce((total, movement) => total + Number(movement.quantity || 0), 0);
+    const outgoing = physicalMovements
+        .filter((movement) => movement.direction !== 'in')
+        .reduce((total, movement) => total + Number(movement.quantity || 0), 0);
+    const total = incoming + outgoing;
+    const unitDescriptor = formatPhysicalUnitLabel(unitType, total > 1 ? total : 2);
+
+    return {
+        mode: 'unified',
+        unitType,
+        total,
+        incoming,
+        outgoing,
+        summaryText: formatUniversalQuantityLabel(total),
+        hintText: `Unidad real: ${unitDescriptor} · Entradas: ${formatQuantityLabel(incoming, unitType)} · Salidas: ${formatQuantityLabel(outgoing, unitType)}`
+    };
 }
 
 function buildCycleViewModel(cycle, movementsByCycle, cropMap) {
@@ -427,6 +492,7 @@ function buildCycleViewModel(cycle, movementsByCycle, cropMap) {
         outgoingText: formatMoneyBucket(summary.outgoing, { emptyText: EMPTY_AMOUNT_LABEL }),
         balanceText: formatMoneyBucket(summary.balance, { signed: true, emptyText: EMPTY_BALANCE_LABEL }),
         balanceTone: resolveBalanceTone(summary.balance),
+        physicalSummary: summarizePhysicalMovements(movements),
         summary
     };
 }
@@ -1572,11 +1638,24 @@ function renderMovementRows(cycle) {
                     <span class="agro-operational-movement-badge ${movement.direction === 'in' ? 'is-in' : 'is-out'}">${escapeHtml(directionDetailLabel(movement.direction, cycle.economic_type))}</span>
                     <div>
                         <p class="agro-operational-detail-item__concept">${escapeHtml(movement.concept || cycle.name)}</p>
-                        <p class="agro-operational-detail-item__meta">${escapeHtml(formatDateLabel(movement.movement_date))} · ${escapeHtml(formatAmountLabel(movement.amount, movement.currency))} · ${escapeHtml(formatQuantityLabel(movement.quantity, movement.unit_type))}</p>
+                        <p class="agro-operational-detail-item__meta">${escapeHtml(formatDateLabel(movement.movement_date))} · ${escapeHtml(formatQuantityLabel(movement.quantity, movement.unit_type))} · ${escapeHtml(formatAmountLabel(movement.amount, movement.currency))}</p>
                     </div>
                 </article>
             `).join('')}
         </div>
+    `;
+}
+
+function renderCyclePhysicalSummary(cycle) {
+    const physicalSummary = cycle?.physicalSummary;
+    if (!physicalSummary) return '';
+
+    return `
+        <section class="agro-operational-physical-summary" data-mode="${escapeAttr(physicalSummary.mode)}">
+            <span class="agro-operational-physical-summary__label">Base operativa</span>
+            <strong class="agro-operational-physical-summary__value">${escapeHtml(physicalSummary.summaryText)}</strong>
+            <p class="agro-operational-physical-summary__hint">${escapeHtml(physicalSummary.hintText)}</p>
+        </section>
     `;
 }
 
@@ -1603,6 +1682,7 @@ function renderCycleCard(cycle) {
 
             ${cycle.description ? `<p class="agro-operational-card__description"><strong>📝 Descripción:</strong> ${escapeHtml(cycle.description)}</p>` : ''}
             ${cycle.notes ? `<p class="agro-operational-card__notes"><strong>📌 Observaciones:</strong> ${escapeHtml(cycle.notes)}</p>` : ''}
+            ${renderCyclePhysicalSummary(cycle)}
 
             <div class="agro-operational-money-grid">
                 <div class="agro-operational-money-cell" data-tone="gold">

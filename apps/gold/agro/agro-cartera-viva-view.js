@@ -267,6 +267,25 @@ function formatOperationalValue(value, unitType) {
     return `${formatOperationalQuantity(numeric)} ${formatOperationalUnitLabel(unitType, numeric)}`;
 }
 
+function formatUniversalUnitValue(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric) || numeric <= 0) return '0 unidades';
+    const quantityText = formatOperationalQuantity(numeric);
+    return `${quantityText} ${Math.abs(numeric - 1) < 1e-9 ? 'unidad' : 'unidades'}`;
+}
+
+function formatOperationalStatePhrase(value, singularState, pluralState) {
+    const numeric = Number(value);
+    const stateLabel = Math.abs(numeric - 1) < 1e-9 ? singularState : pluralState;
+    return `${formatUniversalUnitValue(numeric)} ${stateLabel}`;
+}
+
+function formatOperationalUnitDescriptor(unitType, quantity = 2) {
+    const normalizedType = normalizeProgressUnitType(unitType);
+    if (!normalizedType || normalizedType === 'unidad') return '';
+    return formatOperationalUnitLabel(normalizedType, quantity);
+}
+
 function createEmptyOperationalProgressBucket() {
     return {
         pending: [],
@@ -624,9 +643,15 @@ function resolveBuyerStatus(row) {
     const review = getReviewTotal(row);
     const operationalProgress = getOperationalProgress(row);
     const paidPercent = getPaidPercent(row);
-    const pendingUnits = operationalProgress.mode === 'unified' ? operationalProgress.pendingLabel : '';
-    const paidUnits = operationalProgress.mode === 'unified' ? operationalProgress.paidLabel : '';
-    const lossUnits = operationalProgress.mode === 'unified' ? operationalProgress.lossLabel : '';
+    const pendingUnits = operationalProgress.mode === 'unified'
+        ? formatOperationalStatePhrase(operationalProgress.pending, 'pendiente', 'pendientes')
+        : '';
+    const paidUnits = operationalProgress.mode === 'unified'
+        ? formatOperationalStatePhrase(operationalProgress.paid, 'cobrada', 'cobradas')
+        : '';
+    const lossUnits = operationalProgress.mode === 'unified'
+        ? formatOperationalStatePhrase(operationalProgress.loss, 'perdida', 'perdidas')
+        : '';
 
     if (clientStatus === 'archived') {
         return {
@@ -641,7 +666,7 @@ function resolveBuyerStatus(row) {
             return {
                 tone: 'fiado',
                 label: 'Cobro avanzado',
-                detail: `${pendingUnits} pendientes · ${paidUnits} cobrados`
+                detail: `${pendingUnits} · ${paidUnits}`
             };
         }
 
@@ -650,8 +675,10 @@ function resolveBuyerStatus(row) {
                 tone: 'fiado',
                 label: 'Fiado activo',
                 detail: operationalProgress.mode === 'unified'
-                    ? `${pendingUnits} pendientes · ${paidUnits} cobrados`
-                    : `${formatMoney(pending)} por cobrar · sigue abonando`
+                    ? `${pendingUnits} · ${paidUnits}`
+                    : (operationalProgress.mode === 'mixed'
+                        ? 'Pendiente operativo sin base unificada'
+                        : `Pendiente operativo${review > 0 ? ' · con revisión pendiente' : ''}`)
             };
         }
 
@@ -659,8 +686,10 @@ function resolveBuyerStatus(row) {
             tone: 'fiado',
             label: 'Fiado activo',
             detail: operationalProgress.mode === 'unified'
-                ? `${pendingUnits} pendientes${review > 0 ? ' · con revisión pendiente' : ''}`
-                : `${formatMoney(pending)} por cobrar${review > 0 ? ' · con revisión pendiente' : ''}`
+                ? `${pendingUnits}${review > 0 ? ' · con revisión pendiente' : ''}`
+                : (operationalProgress.mode === 'mixed'
+                    ? `Pendiente operativo sin base unificada${review > 0 ? ' · con revisión pendiente' : ''}`
+                    : `Pendiente operativo${review > 0 ? ' · con revisión pendiente' : ''}`)
         };
     }
 
@@ -670,11 +699,11 @@ function resolveBuyerStatus(row) {
             label: 'Pagado',
             detail: operationalProgress.mode === 'unified'
                 ? (loss > 0
-                    ? `${paidUnits} cobrados · ${lossUnits} en pérdida`
-                    : `${paidUnits} cobrados · sin saldo pendiente`)
-                : (loss > 0
-                    ? `Saldo cobrado con ${formatMoney(loss)} cerrados como pérdida`
-                    : 'Cuenta cerrada sin saldo pendiente')
+                    ? `${paidUnits} · ${lossUnits}`
+                    : `${paidUnits} · sin pendiente operativo`)
+                : (operationalProgress.mode === 'mixed'
+                    ? 'Cierre operativo sin base unificada'
+                    : 'Cuenta cerrada sin base física')
         };
     }
 
@@ -683,8 +712,10 @@ function resolveBuyerStatus(row) {
             tone: 'perdido',
             label: 'Pérdida',
             detail: operationalProgress.mode === 'unified'
-                ? `${lossUnits} cerrados fuera de cartera`
-                : `${formatMoney(loss)} cerrados fuera de cartera`
+                ? `${lossUnits}`
+                : (operationalProgress.mode === 'mixed'
+                    ? 'Pérdida sin base unificada'
+                    : 'Pérdida sin base física')
         };
     }
 
@@ -692,7 +723,7 @@ function resolveBuyerStatus(row) {
         tone: review > 0 ? 'review' : 'seguimiento',
         label: review > 0 ? 'Por revisar' : 'Sin movimientos',
         detail: review > 0
-            ? `${formatMoney(review)} pendientes por ordenar`
+            ? 'Pendiente operativo por ordenar'
             : 'Cliente listo para registrar su primer movimiento.'
     };
 }
@@ -1138,12 +1169,13 @@ function getOperationalCardMetrics(row) {
     const operationalProgress = getOperationalProgress(row);
 
     if (operationalProgress.mode === 'unified') {
+        const unitDescriptor = formatOperationalUnitDescriptor(operationalProgress.unitType, operationalProgress.total);
         return {
             mode: 'unified',
-            progressLabel: `Avance por ${formatOperationalUnitLabel(operationalProgress.unitType, operationalProgress.total)}`,
+            progressLabel: 'Avance operativo',
             progressValue: formatPercent(operationalProgress.percent),
-            legendStart: `Base ${operationalProgress.totalLabel}`,
-            legendEnd: `${operationalProgress.pendingLabel} pendientes`,
+            legendStart: `Base ${formatUniversalUnitValue(operationalProgress.total)}`,
+            legendEnd: unitDescriptor ? `Unidad real: ${unitDescriptor}` : 'Base operativa unificada',
             metrics: [
                 { label: 'Pendiente', value: operationalProgress.pendingLabel },
                 { label: 'Cobrado', value: operationalProgress.paidLabel },
@@ -1155,7 +1187,7 @@ function getOperationalCardMetrics(row) {
     if (operationalProgress.mode === 'mixed') {
         return {
             mode: 'mixed',
-            progressLabel: 'Avance no unificado',
+            progressLabel: 'Avance operativo',
             progressValue: 'Sin %',
             legendStart: 'Unidades incompatibles',
             legendEnd: 'Revisa unidad canónica',
@@ -1169,7 +1201,7 @@ function getOperationalCardMetrics(row) {
 
     return {
         mode: 'none',
-        progressLabel: 'Sin base operativa',
+        progressLabel: 'Avance operativo',
         progressValue: 'Sin %',
         legendStart: 'Sin unidades registradas',
         legendEnd: 'Usa unidad canónica',
