@@ -64,6 +64,11 @@ const TASK_STATUS_FILTER_OPTIONS = Object.freeze([
     { value: 'all', label: 'Todas' }
 ]);
 
+const DURATION_UNIT_OPTIONS = Object.freeze([
+    { value: 'minutes', label: 'Minutos' },
+    { value: 'hours', label: 'Horas' }
+]);
+
 const CURRENCY_OPTIONS = Object.freeze(['COP', 'USD', 'VES']);
 const EFFECT_TONE_CLASS = Object.freeze({
     none: 'is-none',
@@ -121,8 +126,8 @@ function createDraftValues(overrides = {}) {
         taskType: 'jornal',
         taskDate: todayLocalIso(),
         cropId: '',
-        durationMinutes: '',
-        durationLabel: '',
+        durationValue: '',
+        durationUnit: 'minutes',
         taskStatus: 'completed',
         economicEffect: 'none',
         amount: '',
@@ -193,6 +198,11 @@ function normalizeTaskStatus(value) {
     return TASK_STATUS_OPTIONS.some((option) => option.value === token) ? token : 'completed';
 }
 
+function normalizeDurationUnit(value) {
+    const token = normalizeToken(value);
+    return DURATION_UNIT_OPTIONS.some((option) => option.value === token) ? token : 'minutes';
+}
+
 function escapeHtml(value) {
     return String(value ?? '')
         .replace(/&/g, '&amp;')
@@ -215,15 +225,6 @@ function ensureAllowedValue(value, allowedValues, errorMessage) {
     const token = String(value || '').trim();
     if (allowedValues.includes(token)) return token;
     throw new Error(errorMessage);
-}
-
-function toPositiveInteger(value, label) {
-    const raw = String(value ?? '').trim();
-    const parsed = Number(raw);
-    if (!raw || !Number.isFinite(parsed) || parsed <= 0 || !Number.isInteger(parsed)) {
-        throw new Error(`${label} debe ser un número entero mayor a cero.`);
-    }
-    return parsed;
 }
 
 function toPositiveAmount(value, label) {
@@ -301,6 +302,53 @@ function formatDurationMinutes(totalMinutes) {
     if (hours <= 0) return `${mins} min`;
     if (mins <= 0) return `${hours} h`;
     return `${hours} h ${mins} min`;
+}
+
+function createDurationDraftFromMinutes(totalMinutes) {
+    const minutes = Number(totalMinutes);
+    if (!Number.isFinite(minutes) || minutes <= 0) {
+        return {
+            durationValue: '',
+            durationUnit: 'minutes'
+        };
+    }
+    if (minutes % 60 === 0) {
+        return {
+            durationValue: String(minutes / 60),
+            durationUnit: 'hours'
+        };
+    }
+    return {
+        durationValue: String(minutes),
+        durationUnit: 'minutes'
+    };
+}
+
+function resolveDurationMinutes(value, unit) {
+    const raw = String(value ?? '').trim();
+    const parsed = Number(raw);
+    if (!raw || !Number.isFinite(parsed) || parsed <= 0) {
+        throw new Error('La duración debe ser un número mayor a cero.');
+    }
+
+    const normalizedUnit = normalizeDurationUnit(unit);
+    const durationMinutes = normalizedUnit === 'hours'
+        ? Math.round(parsed * 60)
+        : Math.round(parsed);
+
+    if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
+        throw new Error('La duración debe ser un número mayor a cero.');
+    }
+    return durationMinutes;
+}
+
+function resolveDraftDurationText(values = {}) {
+    try {
+        const durationMinutes = resolveDurationMinutes(values.durationValue, values.durationUnit);
+        return formatDurationMinutes(durationMinutes);
+    } catch (_error) {
+        return 'Sin tiempo';
+    }
 }
 
 function buildRangeBounds(range) {
@@ -558,6 +606,7 @@ function openEditModal(taskId) {
         return;
     }
 
+    const durationDraft = createDurationDraftFromMinutes(task.duration_minutes);
     state.form = createFormState({
         mode: 'edit',
         values: createDraftValues({
@@ -565,8 +614,7 @@ function openEditModal(taskId) {
             taskType: task.task_type,
             taskDate: task.task_date,
             cropId: task.crop_id,
-            durationMinutes: String(task.duration_minutes || ''),
-            durationLabel: task.duration_label || '',
+            ...durationDraft,
             taskStatus: task.task_status,
             economicEffect: task.economic_effect,
             amount: task.amount != null ? String(task.amount) : '',
@@ -1298,6 +1346,7 @@ function renderList() {
 function buildFormMarkup() {
     const values = state.form.values;
     const isEdit = state.form.mode === 'edit';
+    const durationPreview = resolveDraftDurationText(values);
 
     return `
         <form id="agro-task-form" class="agro-task-form" novalidate>
@@ -1334,13 +1383,15 @@ function buildFormMarkup() {
                 </label>
 
                 <label class="input-group">
-                    <span class="input-label">Tiempo en minutos</span>
-                    <input type="number" min="1" step="1" class="styled-input" placeholder="Ej: 180" data-task-draft="durationMinutes" value="${escapeAttr(values.durationMinutes)}" required>
+                    <span class="input-label">Duración</span>
+                    <input type="number" min="0.25" step="0.25" class="styled-input" placeholder="Ej: 2" data-task-draft="durationValue" value="${escapeAttr(values.durationValue)}" required>
                 </label>
 
-                <label class="input-group input-group--full">
-                    <span class="input-label">Tiempo visible opcional</span>
-                    <input type="text" class="styled-input" maxlength="80" placeholder="Ej: 3 horas aprox" data-task-draft="durationLabel" value="${escapeAttr(values.durationLabel)}">
+                <label class="input-group">
+                    <span class="input-label">Unidad</span>
+                    <select class="styled-input" data-task-draft="durationUnit">
+                        ${buildSelectOptionsMarkup(DURATION_UNIT_OPTIONS, normalizeDurationUnit(values.durationUnit))}
+                    </select>
                 </label>
 
                 <label class="input-group">
@@ -1373,7 +1424,7 @@ function buildFormMarkup() {
                 <div class="agro-task-form__summary-card">
                     <small>Vista rápida</small>
                     <strong>${escapeHtml(values.title || (isEdit ? 'Editando tarea' : 'Nueva tarea'))}</strong>
-                    <p>${escapeHtml(readLabel(TASK_TYPE_OPTIONS, values.taskType, 'Otra'))} · ${escapeHtml(readLabel(TASK_STATUS_OPTIONS, values.taskStatus, 'Finalizada'))} · ${escapeHtml(values.durationLabel || (values.durationMinutes ? formatDurationMinutes(Number(values.durationMinutes)) : 'Sin tiempo'))}</p>
+                    <p>${escapeHtml(readLabel(TASK_TYPE_OPTIONS, values.taskType, 'Otra'))} · ${escapeHtml(readLabel(TASK_STATUS_OPTIONS, values.taskStatus, 'Finalizada'))} · ${escapeHtml(durationPreview)}</p>
                 </div>
                 <div class="agro-task-form__summary-card">
                     <small>Impacto</small>
@@ -1465,13 +1516,14 @@ function ensureFormPayload() {
         throw new Error('La fecha de la tarea es obligatoria.');
     }
 
+    const durationMinutes = resolveDurationMinutes(values.durationValue, values.durationUnit);
     return {
         title,
         taskType: ensureAllowedValue(values.taskType, TASK_TYPE_OPTIONS.map((option) => option.value), 'Tipo de tarea no válido.'),
         taskDate,
         cropId: normalizeId(values.cropId),
-        durationMinutes: toPositiveInteger(values.durationMinutes, 'La duración'),
-        durationLabel: toNullableText(values.durationLabel),
+        durationMinutes,
+        durationLabel: formatDurationMinutes(durationMinutes),
         taskStatus: ensureAllowedValue(values.taskStatus, TASK_STATUS_OPTIONS.map((option) => option.value), 'Estado de tarea no válido.'),
         economicEffect: ensureAllowedValue(values.economicEffect, ECONOMIC_EFFECT_OPTIONS.map((option) => option.value), 'Impacto económico no válido.'),
         amount: values.economicEffect === 'none' ? null : toPositiveAmount(values.amount, 'El monto'),

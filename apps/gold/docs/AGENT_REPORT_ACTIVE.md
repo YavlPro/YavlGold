@@ -8629,3 +8629,72 @@ order by r.display_name asc;
   - `check-dist-utf8: OK`
 - Observación no bloqueante:
   - warning de engine por `node v25.6.0` vs `20.x`
+
+## [2026-04-04] Agro v2.15 — modal de tareas + consistencia de finalización en cultivos
+
+### Diagnóstico
+
+- El modal de `Ciclos de Tareas` sigue usando una captura ambigua de tiempo en `apps/gold/agro/agroTaskCycles.js`: conviven `durationMinutes` y `durationLabel` editable, y el formulario todavía expone `Tiempo en minutos` + `Tiempo visible opcional`.
+- El diálogo de crear/editar tarea ya tiene `overflow: auto` en el body, pero la estructura CSS de `apps/gold/agro/agro-task-cycles.css` todavía no lo trata como contenedor flex con `min-height: 0`, así que bajo ciertos viewports el modal se corta y el scroll interno no resuelve bien la altura útil.
+- En cultivos, el guardado activo no vive en `agro.js`; la fuente real es `window.saveCrop` en `apps/gold/agro/index.html`. Allí siguen dos problemas:
+  - se bloquea la edición cuando `expected_harvest_date` quedó en el pasado, incluso si el usuario necesita cerrar manualmente un ciclo ya terminado;
+  - existe al menos una fila real en `public.agro_crops` con `status = finalizado` y `status_override = produccion`, lo que deja la resolución visual inconsistente porque el sistema prioriza `status_override`.
+
+### Plan
+
+1. Rehacer la captura de tiempo en `Ciclos de Tareas` a `Duración + Unidad`, manteniendo persistencia en minutos y `duration_label` derivado automáticamente.
+2. Ajustar el modal para que el body tenga scroll interno real y no se salga del viewport.
+3. Corregir la finalización de cultivos en la fuente activa (`index.html`) permitiendo fechas de cosecha pasadas cuando el ciclo ya cerró o necesita cerrarse.
+4. Endurecer la resolución de estado manual en cultivos para que un `status` terminal no quede opacado por un `status_override` heredado.
+5. Verificar con build y documentar QA sugerido.
+
+### Riesgos
+
+- Cambiar el formulario de duración toca create/edit, render rápido y persistencia; el diff debe mantener compatibilidad con tareas existentes.
+- En cultivos, el fix debe ser quirúrgico porque el flujo de guardado sigue en inline script legacy dentro de `index.html`.
+
+### Cambios aplicados
+
+| Archivo | Líneas | Cambio |
+| --- | --- | --- |
+| `apps/gold/agro/agroTaskCycles.js` | 67-67, 129-130, 201-203 | Nueva taxonomía de unidad de duración (`minutes` / `hours`) y draft simplificado |
+| `apps/gold/agro/agroTaskCycles.js` | 307-357 | Helpers para derivar minutos persistidos y label visible automático desde `Duración + Unidad` |
+| `apps/gold/agro/agroTaskCycles.js` | 609-621 | Edición de tareas ahora hidrata duración desde `duration_minutes` sin campo libre ambiguo |
+| `apps/gold/agro/agroTaskCycles.js` | 1346-1526 | Formulario reemplaza `Tiempo en minutos` + `Tiempo visible opcional` por `Duración` + `Unidad`, y persiste label derivado |
+| `apps/gold/agro/agro-task-cycles.css` | 554-627, 700-707 | Modal tratado como contenedor flex con `max-height` por viewport y body con scroll interno real |
+| `apps/gold/agro/index.html` | 3661-3812 | `window.saveCrop` deja de bloquear fechas de cosecha pasadas, permitiendo cerrar ciclos ya terminados |
+| `apps/gold/agro/agro.js` | 8764-8802 | Nuevo saneamiento de estado manual para priorizar estados terminales (`finalizado` / `lost`) sobre overrides heredados |
+| `apps/gold/agro/agro.js` | 10523, 17919-17928 | Tarjetas y modal de edición de cultivos usan el estado manual resuelto, no un override stale |
+
+### QA ejecutado
+
+- Verificación de build: `pnpm build:gold` OK.
+- Verificación de datos real en `public.agro_crops`:
+  - se detectó una fila legacy con `status = finalizado` y `status_override = produccion`;
+  - se saneó la inconsistencia de datos;
+  - conteo posterior de filas terminales manuales inconsistentes: `0`.
+- Verificación funcional de código:
+  - `Ciclos de Tareas` ahora guarda siempre `duration_minutes` como entero derivado y `duration_label` automático desde la misma entrada;
+  - el modal queda preparado para scroll interno sin depender de altura fija del contenido;
+  - un cultivo finalizado ya no queda bloqueado por tener `expected_harvest_date` en el pasado.
+
+### QA pendiente
+
+- No se ejecutó browser QA automatizada en esta vuelta.
+- Queda pendiente una pasada visual/manual corta para confirmar:
+  - scroll interno del modal en desktop;
+  - scroll interno del modal en mobile;
+  - create/edit con `30 minutos`;
+  - create/edit con `2 horas`.
+
+### Build status
+
+- `pnpm build:gold`: ✅ Exitoso
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observación no bloqueante:
+  - warning de engine por `node v25.6.0` vs `20.x`

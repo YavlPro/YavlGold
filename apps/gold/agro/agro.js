@@ -8761,6 +8761,20 @@ function normalizeCropStatus(status) {
     return value;
 }
 
+function readCropStatusToken(status) {
+    const raw = String(status || '').trim();
+    return raw ? normalizeCropStatus(raw) : '';
+}
+
+function resolveManualCropStatus(crop) {
+    const statusToken = readCropStatusToken(crop?.status);
+    const overrideToken = readCropStatusToken(crop?.status_override);
+    if (statusToken === 'finalizado' || statusToken === 'lost') {
+        return statusToken;
+    }
+    return overrideToken || statusToken || '';
+}
+
 function computeAutoCropStatus(crop, progress) {
     if (crop?.actual_harvest_date) return 'finalizado';
     if (!progress?.ok) {
@@ -8775,11 +8789,16 @@ function computeAutoCropStatus(crop, progress) {
 }
 
 function resolveCropStatus(crop, progress) {
-    const override = String(crop?.status_override || '').trim();
-    if (override) return normalizeCropStatus(override);
     const mode = String(crop?.status_mode || '').toLowerCase().trim();
+    if (mode === 'manual') {
+        const manualStatus = resolveManualCropStatus(crop);
+        if (manualStatus) return manualStatus;
+    }
+    const override = readCropStatusToken(crop?.status_override);
+    if (override) return override;
     if (mode === 'auto') return computeAutoCropStatus(crop, progress);
-    if (crop?.status) return normalizeCropStatus(crop.status);
+    const status = readCropStatusToken(crop?.status);
+    if (status) return status;
     return computeAutoCropStatus(crop, progress);
 }
 
@@ -10501,7 +10520,7 @@ function buildFinishedCycleCardsData(crops, options = {}) {
             : cotizacionBase;
         const finishedStatus = groupType === 'lost'
             ? { estado: 'perdido', estadoTexto: 'Perdido' }
-            : mapStatusToFinishedCycleMeta(crop?.status_override || crop?.status || effectiveStatus, statusMeta);
+            : mapStatusToFinishedCycleMeta(resolveCropStatus(crop, progress) || effectiveStatus, statusMeta);
         const resolvedEndDate = resolveCropEndDateKey(crop);
         const harvestDate = resolvedEndDate || crop?.actual_harvest_date || crop?.expected_harvest_date;
         const totalDays = progress.ok
@@ -17897,15 +17916,16 @@ export function openEditModal(id) {
     const statusSelect = document.getElementById('crop-status');
     if (statusSelect) {
         const mode = String(crop.status_mode || '').toLowerCase().trim();
+        const manualStatus = resolveManualCropStatus(crop);
         if (mode === 'auto' && !crop.status_override) {
             statusSelect.value = 'auto';
         } else {
-            statusSelect.value = normalizeCropStatus(crop.status_override || crop.status);
+            statusSelect.value = manualStatus || normalizeCropStatus(crop.status);
         }
     }
     const cropForm = document.getElementById('form-new-crop');
     if (cropForm?.dataset) {
-        cropForm.dataset.initialStatus = normalizeCropStatus(crop.status_override || crop.status);
+        cropForm.dataset.initialStatus = resolveManualCropStatus(crop) || normalizeCropStatus(crop.status);
     }
     const editInput = document.getElementById('crop-edit-id');
     if (editInput) editInput.value = String(crop.id || '');

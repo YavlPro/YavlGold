@@ -556,8 +556,9 @@ body.agro-task-cycles-modal-open {
   position: fixed;
   inset: 0;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   padding: 1rem;
+  overflow-y: auto;
   background: rgba(0, 0, 0, 0.84);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -570,7 +571,10 @@ body.agro-task-cycles-modal-open {
 
 .agro-task-modal__dialog {
   width: min(760px, 100%);
-  max-height: min(90vh, 880px);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 2rem);
+  min-height: 0;
   overflow: hidden;
   border-radius: 24px;
   border: 1px solid color-mix(in srgb, var(--gold-4) 24%, rgba(255, 255, 255, 0.08));
@@ -621,8 +625,11 @@ body.agro-task-cycles-modal-open {
 }
 
 .agro-task-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
   padding: 1rem 1.35rem 1.35rem;
-  overflow: auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .agro-task-form {
@@ -690,6 +697,15 @@ body.agro-task-cycles-modal-open {
 }
 
 @media (max-width: 768px) {
+  .agro-task-modal {
+    padding: 0.75rem;
+  }
+
+  .agro-task-modal__dialog {
+    max-height: calc(100vh - 1.5rem);
+    border-radius: 20px;
+  }
+
   .agro-task-panel__head,
   .agro-task-card__head,
   .agro-task-card__body,
