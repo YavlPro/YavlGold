@@ -529,7 +529,31 @@ function buildPendingLedgerRow(row) {
 function buildPendingActionRows(row) {
     const transferState = String(row?.transfer_state || '').trim().toLowerCase();
     const transferredTo = String(row?.transferred_to || '').trim().toLowerCase();
-    if (transferState !== 'transferred' || transferredTo === 'income' || transferredTo === 'losses') return [];
+    const isReverted = transferState === 'reverted' || Boolean(row?.reverted_at);
+
+    if (isReverted) {
+        return [
+            createActionHistoryRow(row, {
+                history_id: `agro_pending_action_revert:${row?.id || ''}`,
+                history_filter: 'revertidos',
+                source_table: 'agro_pending',
+                source_tab: 'pendientes',
+                source_id: String(row?.id || '').trim(),
+                ledger_scope: 'fiados',
+                label: 'Revertido a fiado',
+                tone: 'review',
+                note: 'Este fiado volvió a la cartera activa del cliente.'
+            })
+        ];
+    }
+
+    if (transferState !== 'transferred') return [];
+
+    const transferLabel = transferredTo === 'income'
+        ? 'Transferido a cobro'
+        : transferredTo === 'losses'
+            ? 'Transferido a pérdida'
+            : (transferredTo ? `Transferido a ${transferredTo}` : 'Transferido fuera de cartera');
 
     return [
         createActionHistoryRow(row, {
@@ -539,7 +563,7 @@ function buildPendingActionRows(row) {
             source_tab: 'pendientes',
             source_id: String(row?.id || '').trim(),
             ledger_scope: 'fiados',
-            label: transferredTo ? `Transferido a ${transferredTo}` : 'Transferido fuera de cartera',
+            label: transferLabel,
             tone: 'review',
             note: 'Este fiado salió de la cartera activa hacia otra salida operativa.'
         })
@@ -938,32 +962,35 @@ function getActionHistoryRows(rows, filterMode = 'todos', unitFamily = 'all') {
     return filterRowsByUnitFamily(actionRows, unitFamily);
 }
 
-function filterHistoryRows(rows, filterMode, unitFamily = 'all') {
+function filterHistoryRows(rows, filterMode, unitFamily = 'all', ledgerScope = 'todos') {
     const normalizedFilter = normalizeHistoryFilter(filterMode);
-    if (normalizedFilter === 'todos') return getLedgerHistoryRows(rows);
-    return getActionHistoryRows(rows, normalizedFilter, unitFamily);
+    if (normalizedFilter === 'todos') {
+        return filterRowsByUnitFamily(filterLedgerRowsByScope(getLedgerHistoryRows(rows), ledgerScope), unitFamily);
+    }
+    return filterLedgerRowsByScope(getActionHistoryRows(rows, normalizedFilter, unitFamily), ledgerScope);
 }
 
-function getHistoryFilterCount(rows, filterMode, unitFamily = 'all') {
-    return filterHistoryRows(rows, filterMode, unitFamily).length;
+function getHistoryFilterCount(rows, filterMode, unitFamily = 'all', ledgerScope = 'todos') {
+    return filterHistoryRows(rows, filterMode, unitFamily, ledgerScope).length;
 }
 
 export function getVisibleBuyerHistoryRows(rows, filterMode, ledgerScope = 'todos', unitFamily = 'all') {
     const normalizedFilter = normalizeHistoryFilter(filterMode);
     if (normalizedFilter !== 'todos') {
-        return getActionHistoryRows(rows, normalizedFilter, unitFamily);
+        return filterLedgerRowsByScope(getActionHistoryRows(rows, normalizedFilter, unitFamily), ledgerScope);
     }
     return filterRowsByUnitFamily(filterLedgerRowsByScope(getLedgerHistoryRows(rows), ledgerScope), unitFamily);
 }
 
 function renderHistoryFilters(historyRows, activeFilter, options = {}) {
     const unitFamily = normalizeUnitFamily(options.unitFamily);
-    const transferCount = getHistoryFilterCount(historyRows, 'transferidos', unitFamily);
-    const revertedCount = getHistoryFilterCount(historyRows, 'revertidos', unitFamily);
+    const ledgerScope = normalizeLedgerScope(options.ledgerScope);
+    const transferCount = getHistoryFilterCount(historyRows, 'transferidos', unitFamily, ledgerScope);
+    const revertedCount = getHistoryFilterCount(historyRows, 'revertidos', unitFamily, ledgerScope);
     if (transferCount <= 0 && revertedCount <= 0) return '';
 
     const normalizedFilter = normalizeHistoryFilter(activeFilter);
-    const allCount = Number(options.timelineCount ?? getHistoryFilterCount(historyRows, 'todos', unitFamily));
+    const allCount = Number(options.timelineCount ?? getHistoryFilterCount(historyRows, 'todos', unitFamily, ledgerScope));
     const filters = [
         { id: 'todos', label: `Timeline (${allCount})`, visible: true },
         { id: 'transferidos', label: `Ver transferidos (${transferCount})`, visible: transferCount > 0 },
@@ -1729,7 +1756,7 @@ export function renderBuyerHistoryDetail(root, options = {}) {
                         </p>
                         ${renderUnitFamilyFilters(ledgerRows, unitFamily)}
                         ${isCanonicalFilter ? renderLedgerScopeFilters(ledgerRows, ledgerScope) : ''}
-                        ${renderHistoryFilters(historyRows, historyFilter, { timelineCount: visibleLedgerRows.length, unitFamily })}
+                        ${renderHistoryFilters(historyRows, historyFilter, { timelineCount: visibleLedgerRows.length, unitFamily, ledgerScope })}
                     </div>
                 </header>
                 ${bodyContent}

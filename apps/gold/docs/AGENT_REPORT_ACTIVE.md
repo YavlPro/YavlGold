@@ -8904,3 +8904,57 @@ order by r.display_name asc;
 - Abrir un comprador con caso `fiado -> cobro` y confirmar que en `Fiados` ya no se vea la fila del pendiente transferido.
 - Abrir un comprador con caso `fiado -> pérdida` y confirmar la misma lectura.
 - Cambiar entre `Fiados`, `Pagados` y `Pérdidas` dentro del detalle y verificar que el disclosure de acciones siga el mismo scope visible.
+
+---
+
+## Preparación auditoría: registros faltantes en detalle Cartera Viva (2026-04-05)
+
+### Hipótesis del faltante
+- El fix anterior pudo haber dejado un filtro demasiado agresivo en la exclusión de pendientes `transferred` o en el filtrado por `ledger_scope`, ocultando filas legítimas que sí deberían seguir visibles en `fiados`, `pagados` o `pérdidas`.
+
+### Puntos exactos a auditar
+- Entrada desde Supabase hacia `pendingRows`, `incomeRows`, `lossRows` y composición de `timelineRows`.
+- Descartes dentro de `buildPendingLedgerRow()`, `buildIncomeLedgerRow()` y `buildLossLedgerRow()`.
+- Filtro posterior en `matchesLedgerScope()`, `getVisibleBuyerHistoryRows()` y render del disclosure de acciones.
+
+### Plan mínimo
+- Confirmar con evidencia qué filas entran y en qué función exacta se pierden.
+- Corregir solo la condición puntual o la asignación de `ledger_scope` si el descarte es incorrecto.
+- Validar con `pnpm build:gold`.
+
+---
+
+## Auditoría resuelta: registros faltantes en detalle Cartera Viva (2026-04-05)
+
+### Fecha
+- 2026-04-05 18:42:01 -04:00
+
+### Diagnóstico
+- Los registros faltantes no se estaban perdiendo en Supabase ni en `timelineRows`; entraban correctamente como `pendingRows`.
+- El descarte incorrecto ocurría en `buildPendingActionRows()`:
+  - un pendiente `transferred` hacia `income` o `losses` ya no entraba como ledger, pero tampoco generaba acción en `fiados`, así que desaparecía por completo del detalle de esa categoría;
+  - un pendiente `reverted` conservaba su ledger activo en `fiados`, pero no generaba acción `revertidos` dentro de `fiados`, dejando ese historial incompleto.
+- Adicionalmente, `getVisibleBuyerHistoryRows()` y los conteos de `renderHistoryFilters()` no estaban aplicando `ledgerScope` al filtrar acciones. Eso podía dejar la exportación y los contadores desalineados con lo que realmente se mostraba por categoría.
+- Evidencia de intención correcta:
+  - la vista legacy de `Fiados` en `agro.js` sigue contando `transferred` y `reverted` como parte del historial filtrable de fiados;
+  - por lo tanto, el detalle de Cartera Viva no debía borrar esos casos, sino moverlos de ledger activo a capa de acciones dentro del scope `fiados`.
+
+### Cambios aplicados
+- `apps/gold/agro/agro-cartera-viva-detail.js`
+  - `:529` `buildPendingActionRows()` ahora crea acciones de `fiados` para pendientes `transferred` hacia cobro/pérdida y también para pendientes `reverted`.
+  - `:965`, `:973`, `:977` se alineó `filterHistoryRows()`, `getHistoryFilterCount()` y `getVisibleBuyerHistoryRows()` para que las acciones también respeten `ledgerScope`.
+  - `:985`, `:1759` `renderHistoryFilters()` y su callsite ahora calculan los conteos por scope visible, no sobre el universo completo del cliente.
+
+### Build status
+- `pnpm build:gold` → OK
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observación:
+  - se mantiene la advertencia de engine por Node `v25.6.0` vs `20.x`, pero el build terminó correctamente.
+
+### Riesgo/deuda pendiente
+- Las acciones de transferencia y reversión siguen usando la metadata temporal ya existente en el detalle; no se cambió el modelo de fechas ni se rehízo el timeline. Si más adelante se quiere precisión cronológica absoluta para eventos de transferencia/reversión, eso debe ir en otro lote.
