@@ -8794,3 +8794,113 @@ order by r.display_name asc;
 ### QA sugerido
 - Navegar la aplicación Agro mediante la tecla TAB repetidamente; deberás ver un recuadro de foco de color Dorado-Oro marcando exactamente el recorrido lógico con alta nitidez, frente a fallos previos de foco invisible.
 - Validar interacciones en inputs y checks donde el ocus-visible actúe con fuerza.
+
+---
+
+## Diagnóstico importante: historial mezclado en Cartera Viva > Detalles (2026-04-05)
+
+### Fecha
+- 2026-04-05 17:51:40 -04:00
+
+### Diagnóstico
+- El bug no nace en la card ni en la apertura del detalle. La lista de Cartera Viva sí abre el detalle con un `scope` explícito por categoría (`fiados`, `pagados`, `perdidos`) desde `apps/gold/agro/agro-cartera-viva-view.js:1908` y `apps/gold/agro/agro-cartera-viva-view.js:1959`, y ese `scope` se reinyecta al cargar el detalle en `apps/gold/agro/agro-cartera-viva-view.js:2562`.
+- La mezcla aparece dentro del detalle porque la separación del ledger se resuelve por `source_tab` y no por estado comercial efectivo del movimiento. La función `matchesLedgerScope()` en `apps/gold/agro/agro-cartera-viva-detail.js:866` clasifica todo lo que venga de `agro_pending` como `fiados`, todo lo que venga de `agro_income` como `pagados` y todo lo que venga de `agro_losses` como `perdidos`.
+- Ese criterio entra en conflicto con la lógica resumida de Cartera Viva, donde el saldo pendiente visible ya descuenta `transferred_total` en `apps/gold/agro/agro-cartera-viva-view.js:749` y `apps/gold/agro/agro-cartera-viva-detail.js:210`. Es decir: el resumen entiende que un fiado transferido ya no es cartera viva activa, pero el detalle lo sigue trayendo como fila `ledger` si nació en `agro_pending`.
+- La evidencia más directa está en `buildPendingLedgerRow()` (`apps/gold/agro/agro-cartera-viva-detail.js:482`), porque construye la fila canónica del fiado aun cuando `transfer_state === 'transferred'`. No hay exclusión de fiados transferidos; solo se guarda metadata (`transfer_state`, `transferred_to`) y la fila sigue entrando al ledger.
+- En paralelo, los cobros y pérdidas derivados del mismo fiado también entran al timeline como filas `ledger` independientes mediante `buildIncomeLedgerRow()` (`apps/gold/agro/agro-cartera-viva-detail.js:544`) y `buildLossLedgerRow()` (`apps/gold/agro/agro-cartera-viva-detail.js:630`), siempre que no estén revertidos. Resultado: el detalle puede mostrar simultáneamente el fiado original más su cobro o pérdida derivada.
+- Además, la capa de acciones del sistema agrava la percepción de mezcla. En `apps/gold/agro/agro-cartera-viva-detail.js:1587` se calcula `visibleActionRows`, pero nunca se usa; el render real inserta `renderActionDisclosure(actionRows)` en `apps/gold/agro/agro-cartera-viva-detail.js:1652`. Eso hace que el bloque de transferidos/revertidos muestre todas las acciones del cliente, sin respetar el `ledgerScope` activo del detalle.
+- Hay una inconsistencia de diseño adicional con el resto del módulo: `apps/gold/agro/agro-crop-report.js:738` y `apps/gold/agro/agro-crop-report.js:879` ya distinguen explícitamente `pendingActive` vs `pendingTransferred`. O sea, el ecosistema Agro sí tiene una semántica de "fiado activo" frente a "fiado transferido", pero Cartera Viva Detalle no la está aplicando.
+
+### Causa raíz probable
+- Causa raíz principal: el timeline contextual de Cartera Viva fue implementado con una taxonomía técnica basada en tabla origen (`agro_pending`, `agro_income`, `agro_losses`) en lugar de una taxonomía comercial basada en estado visible (`fiado activo`, `cobro`, `pérdida`, `transferido`).
+- Causa raíz secundaria: la UI del detalle calcula subconjuntos visibles (`visibleLedgerRows`, `visibleActionRows`) pero el bloque de acciones ignora ese subconjunto y renderiza la colección global de acciones del cliente.
+
+### Archivos responsables
+- `apps/gold/agro/agro-cartera-viva-detail.js`
+  - `:482` `buildPendingLedgerRow()`
+  - `:544` `buildIncomeLedgerRow()`
+  - `:630` `buildLossLedgerRow()`
+  - `:766` `fetchBuyerHistoryTimeline()`
+  - `:866` `matchesLedgerScope()`
+  - `:889` `getLedgerScopeCount()`
+  - `:1587` armado de `visibleLedgerRows` / `visibleActionRows`
+  - `:1652` render de acciones sin respetar scope
+- `apps/gold/agro/agro-cartera-viva-view.js`
+  - `:749` cálculo del saldo pendiente visible restando `transferred_total`
+  - `:859` `hasVisibleCategory()`
+  - `:873` `buildPortfolioEntries()`
+  - `:1908` `renderPortfolioCard()`
+  - `:2562` apertura del detalle con `data-cartera-open-history-scope`
+- `apps/gold/agro/agro-crop-report.js`
+  - `:738` separación de `pendingActive` y `pendingTransferred`
+  - `:879` bloque específico de `Fiados transferidos`
+
+### Cambios aplicados
+- Sin cambios funcionales.
+- Solo documentación diagnóstica en este reporte activo.
+
+### Build status
+- No ejecutado por solicitud explícita del usuario.
+
+### QA sugerido
+- Abrir un cliente que tenga historial con al menos un fiado transferido a cobro o pérdida y comparar:
+  - categoría visible en la card de Cartera Viva;
+  - detalle abierto desde `Fiados`;
+  - detalle abierto desde `Pagados` o `Pérdidas`.
+- Verificar si en `Fiados` aparece todavía la fila original del pendiente ya transferido.
+- Verificar si el disclosure de acciones muestra transferidos/revertidos ajenos al scope activo del detalle.
+
+---
+
+## Preparación fix quirúrgico: detalle de Cartera Viva (2026-04-05)
+
+### Diagnóstico confirmado
+- El detalle mezcla estados porque resuelve el bucket visible por `source_tab` y sigue dejando entrar al ledger fiados ya `transferred`.
+- El disclosure de acciones calcula subconjuntos visibles pero termina renderizando la colección global de acciones del cliente.
+
+### Plan mínimo de fix
+- Excluir del ledger visible los pendientes que ya estén `transferred`, para que no sigan apareciendo como `fiados`.
+- Mantener visibles los cobros y pérdidas derivados, que ya representan el estado comercial final del caso.
+- Hacer que el bloque de acciones renderice el subconjunto visible del scope activo y no `actionRows` globales.
+
+### Archivos a tocar
+- `apps/gold/agro/agro-cartera-viva-detail.js`
+- `apps/gold/agro/agro-cartera-viva-view.js` solo si apareciera un wiring mínimo imprescindible
+
+---
+
+## Fix aplicado: detalle Cartera Viva sin mezcla de estados (2026-04-05)
+
+### Fecha
+- 2026-04-05 18:04:09 -04:00
+
+### Diagnóstico
+- La mezcla venía de dos puntos concretos:
+  - el ledger del detalle seguía admitiendo pendientes ya `transferred`, dejándolos convivir con su cobro o pérdida derivados;
+  - el bloque de acciones calculaba el subconjunto visible pero renderizaba la colección global del cliente.
+- El resumen ya trabajaba con estado comercial visible; el detalle todavía trabajaba con semántica técnica por origen.
+
+### Cambios aplicados
+- `apps/gold/agro/agro-cartera-viva-detail.js`
+  - `:476` se añadió `ledger_scope` explícito a las action rows para que el scope visible no dependa solo de `source_tab`.
+  - `:485` `buildPendingLedgerRow()` ahora devuelve `null` cuando el pendiente ya está `transferred`, evitando que siga apareciendo como fiado activo.
+  - `:516`, `:586`, `:676` se marcó el scope semántico de las ledger rows (`fiados`, `pagados`, `perdidos`).
+  - `:541`, `:613`, `:629`, `:703`, `:719` se marcó también el scope semántico de las action rows relacionadas.
+  - `:877` se agregó `resolveRowLedgerScope()` para resolver el bucket visible priorizando `ledger_scope` y usando `source_tab` solo como fallback.
+  - `:1612`, `:1615`, `:1672` el render del detalle ahora filtra acciones por el scope activo y el disclosure ya usa `visibleActionRows` en lugar de `actionRows` globales.
+
+### Build status
+- `pnpm build:gold` → OK
+- Checks ejecutados:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observación:
+  - `pnpm` emitió advertencia de engine porque el entorno local está en Node `v25.6.0` y el proyecto declara `20.x`, pero el build terminó correctamente.
+
+### QA sugerido
+- Abrir un comprador con caso `fiado -> cobro` y confirmar que en `Fiados` ya no se vea la fila del pendiente transferido.
+- Abrir un comprador con caso `fiado -> pérdida` y confirmar la misma lectura.
+- Cambiar entre `Fiados`, `Pagados` y `Pérdidas` dentro del detalle y verificar que el disclosure de acciones siga el mismo scope visible.

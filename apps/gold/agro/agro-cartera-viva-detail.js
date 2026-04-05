@@ -473,6 +473,7 @@ function createActionHistoryRow(row, config = {}) {
         unit_type: String(row?.unit_type || (Number(row?.quantity_kg) > 0 ? 'kg' : '')).trim().toLowerCase(),
         unit_qty: Number(row?.unit_qty ?? row?.quantity_kg ?? NaN),
         quantity_kg: Number(row?.quantity_kg ?? NaN),
+        ledger_scope: normalizeLedgerScope(config.ledger_scope),
         support_url_raw: '',
         support_url_resolved: '',
         support_label: ''
@@ -480,8 +481,10 @@ function createActionHistoryRow(row, config = {}) {
 }
 
 function buildPendingLedgerRow(row) {
-    const amount = normalizeMoney(readHistoryItemField(row, ['monto_usd', 'monto']));
     const transferState = String(row?.transfer_state || 'active').trim().toLowerCase();
+    if (transferState === 'transferred') return null;
+
+    const amount = normalizeMoney(readHistoryItemField(row, ['monto_usd', 'monto']));
     const transferredTo = String(row?.transferred_to || '').trim().toLowerCase();
     const isReview = String(row?.buyer_match_status || '').trim().toLowerCase() !== 'matched';
 
@@ -510,6 +513,7 @@ function buildPendingLedgerRow(row) {
         unit_type: String(row?.unit_type || (Number(row?.quantity_kg) > 0 ? 'kg' : '')).trim().toLowerCase(),
         unit_qty: Number(row?.unit_qty ?? row?.quantity_kg ?? NaN),
         quantity_kg: Number(row?.quantity_kg ?? NaN),
+        ledger_scope: 'fiados',
         transfer_state: transferState,
         transferred_to: transferredTo,
         reverted_at: row?.reverted_at || '',
@@ -534,6 +538,7 @@ function buildPendingActionRows(row) {
             source_table: 'agro_pending',
             source_tab: 'pendientes',
             source_id: String(row?.id || '').trim(),
+            ledger_scope: 'fiados',
             label: transferredTo ? `Transferido a ${transferredTo}` : 'Transferido fuera de cartera',
             tone: 'review',
             note: 'Este fiado salió de la cartera activa hacia otra salida operativa.'
@@ -578,6 +583,7 @@ function buildIncomeLedgerRow(row) {
         unit_type: String(row?.unit_type || (Number(row?.quantity_kg) > 0 ? 'kg' : '')).trim().toLowerCase(),
         unit_qty: Number(row?.unit_qty ?? row?.quantity_kg ?? NaN),
         quantity_kg: Number(row?.quantity_kg ?? NaN),
+        ledger_scope: 'pagados',
         transfer_state: String(row?.transfer_state || '').trim().toLowerCase(),
         transferred_to: '',
         reverted_at: row?.reverted_at || '',
@@ -604,6 +610,7 @@ function buildIncomeActionRows(row) {
                 source_table: 'agro_income',
                 source_tab: 'ingresos',
                 source_id: String(row?.id || '').trim(),
+                ledger_scope: 'pagados',
                 label: 'Revertido desde cobro',
                 tone: 'review',
                 note: 'El cobro se devolvió nuevamente a Fiados.',
@@ -619,6 +626,7 @@ function buildIncomeActionRows(row) {
             source_table: 'agro_income',
             source_tab: 'ingresos',
             source_id: String(row?.id || '').trim(),
+            ledger_scope: 'pagados',
             label: 'Transferido a cobro',
             tone: 'paid',
             note: 'Acción del sistema: este cobro nació desde un fiado canónico.',
@@ -665,6 +673,7 @@ function buildLossLedgerRow(row) {
         unit_type: String(row?.unit_type || (Number(row?.quantity_kg) > 0 ? 'kg' : '')).trim().toLowerCase(),
         unit_qty: Number(row?.unit_qty ?? row?.quantity_kg ?? NaN),
         quantity_kg: Number(row?.quantity_kg ?? NaN),
+        ledger_scope: 'perdidos',
         transfer_state: String(row?.transfer_state || '').trim().toLowerCase(),
         transferred_to: '',
         reverted_at: row?.reverted_at || '',
@@ -691,6 +700,7 @@ function buildLossActionRows(row) {
                 source_table: 'agro_losses',
                 source_tab: 'perdidas',
                 source_id: String(row?.id || '').trim(),
+                ledger_scope: 'perdidos',
                 label: 'Revertido desde pérdida',
                 tone: 'review',
                 note: 'La pérdida se devolvió nuevamente a Fiados.',
@@ -706,6 +716,7 @@ function buildLossActionRows(row) {
             source_table: 'agro_losses',
             source_tab: 'perdidas',
             source_id: String(row?.id || '').trim(),
+            ledger_scope: 'perdidos',
             label: 'Transferido a pérdida',
             tone: 'loss',
             note: 'Acción del sistema: esta pérdida cerró un fiado del cliente.',
@@ -863,12 +874,23 @@ function normalizeLedgerScope(value) {
     return 'todos';
 }
 
+function resolveRowLedgerScope(row) {
+    const explicitScope = normalizeLedgerScope(row?.ledger_scope);
+    if (explicitScope !== 'todos') return explicitScope;
+
+    const sourceTab = String(row?.source_tab || '').trim().toLowerCase();
+    if (sourceTab === 'pendientes') return 'fiados';
+    if (sourceTab === 'ingresos') return 'pagados';
+    if (sourceTab === 'perdidas') return 'perdidos';
+    return 'todos';
+}
+
 function matchesLedgerScope(row, ledgerScope) {
     const normalizedScope = normalizeLedgerScope(ledgerScope);
-    const sourceTab = String(row?.source_tab || '').trim().toLowerCase();
-    if (normalizedScope === 'fiados') return sourceTab === 'pendientes';
-    if (normalizedScope === 'pagados') return sourceTab === 'ingresos';
-    if (normalizedScope === 'perdidos') return sourceTab === 'perdidas';
+    const rowScope = resolveRowLedgerScope(row);
+    if (normalizedScope === 'fiados') return rowScope === 'fiados';
+    if (normalizedScope === 'pagados') return rowScope === 'pagados';
+    if (normalizedScope === 'perdidos') return rowScope === 'perdidos';
     return true;
 }
 
@@ -1587,12 +1609,10 @@ export function renderBuyerHistoryDetail(root, options = {}) {
     const ledgerRows = getLedgerHistoryRows(historyRows);
     const actionRows = getActionHistoryRows(historyRows, 'todos', unitFamily);
     const visibleLedgerRows = filterRowsByUnitFamily(filterLedgerRowsByScope(ledgerRows, ledgerScope), unitFamily);
+    const visibleActionRows = filterLedgerRowsByScope(actionRows, ledgerScope);
     const visibleHistoryRows = historyFilter === 'todos'
         ? visibleLedgerRows
-        : getActionHistoryRows(historyRows, historyFilter, unitFamily);
-    const visibleActionRows = historyFilter === 'todos'
-        ? actionRows
-        : visibleHistoryRows;
+        : filterLedgerRowsByScope(getActionHistoryRows(historyRows, historyFilter, unitFamily), ledgerScope);
     const isCanonicalFilter = historyFilter === 'todos';
     const unitFamilyPrefix = unitFamily === 'all' ? '' : `${getUnitFamilyLabel(unitFamily)} · `;
     const filterEmptyTitle = historyFilter === 'revertidos'
@@ -1649,7 +1669,7 @@ export function renderBuyerHistoryDetail(root, options = {}) {
         bodyContent = isCanonicalFilter
             ? `
                 <div class="cartera-viva-detail__timeline" data-cartera-detail-timeline></div>
-                ${renderActionDisclosure(actionRows)}
+                ${renderActionDisclosure(visibleActionRows)}
             `
             : '<div class="cartera-viva-detail__timeline cartera-viva-detail__timeline--actions" data-cartera-detail-timeline></div>';
     }
