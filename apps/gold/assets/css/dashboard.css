@@ -101,7 +101,7 @@
   object-fit: cover;
   border: 2px solid var(--color-secondary);
   box-shadow: 0 0 15px color-mix(in srgb, var(--gold-vibrante) 30%, transparent);
-  transition: all 0.3s ease;
+  transition: all 180ms ease;
   flex-shrink: 0;
 }
 
@@ -221,7 +221,7 @@
   color: var(--text-primary);
   position: relative;
   overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
   animation: fadeInUp 0.6s ease-out both;
 }
 
@@ -242,7 +242,7 @@
   background: linear-gradient(90deg, var(--color-secondary), var(--gold-light), var(--color-secondary));
   transform: scaleX(0);
   transform-origin: left;
-  transition: transform 0.4s ease;
+  transition: transform 200ms ease;
 }
 
 /* Card glow effect */
@@ -259,7 +259,7 @@
   );
   opacity: 0;
   z-index: -1;
-  transition: opacity 0.4s ease;
+  transition: opacity 200ms ease;
 }
 
 .module-card:hover {
@@ -288,7 +288,7 @@
   font-size: 3.5rem;
   margin-bottom: 20px;
   display: block;
-  transition: all 0.4s ease;
+  transition: all 200ms ease;
   filter: drop-shadow(0 4px 8px color-mix(in srgb, var(--bg-dark) 30%, transparent));
 }
 
@@ -324,7 +324,7 @@
   text-transform: uppercase;
   letter-spacing: 1px;
   border-radius: 50px;
-  transition: all 0.3s ease;
+  transition: all 180ms ease;
 }
 
 .module-card:hover .module-cta {
@@ -474,7 +474,7 @@
     text-transform: uppercase;
     letter-spacing: 1px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 180ms ease;
     backdrop-filter: blur(10px);
     display: inline-flex;
     align-items: center;
@@ -524,7 +524,7 @@
     cursor: pointer;
     box-shadow: 0 0 15px color-mix(in srgb, var(--color-secondary) 25%, transparent);
     backdrop-filter: blur(5px);
-    transition: all 0.3s ease;
+    transition: all 180ms ease;
 }
 
 .mobile-logout-btn:hover {
@@ -603,7 +603,7 @@
   justify-content: center;
   cursor: pointer;
   z-index: 10;
-  transition: all 0.3s ease;
+  transition: all 180ms ease;
 }
 
 .star-toggle:hover {
@@ -615,7 +615,7 @@
 .star-toggle i {
   font-size: 1rem;
   color: color-mix(in srgb, var(--color-secondary) 60%, transparent);
-  transition: color 0.3s ease;
+  transition: color 180ms ease;
 }
 
 .star-toggle:hover i {
@@ -638,7 +638,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 180ms ease;
 }
 
 .btn-notification:hover {
@@ -679,7 +679,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 180ms ease;
 }
 
 .btn-feedback:hover {
@@ -709,7 +709,7 @@
   box-shadow: var(--shadow-gold-sm);
   position: relative;
   overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
 }
 
 .stat-card::before,
@@ -739,7 +739,7 @@
   inset: 0;
   background: var(--gradient-gold);
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 180ms ease;
   pointer-events: none;
   z-index: 0;
 }
@@ -822,7 +822,7 @@
   background: var(--card-bg);
   border: 1px solid var(--border-gold);
   box-shadow: var(--shadow-gold-sm);
-  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
 }
 
 .search-container::before {
@@ -850,7 +850,7 @@
   inset: 0;
   background: var(--gradient-gold);
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 180ms ease;
   pointer-events: none;
   z-index: 0;
 }

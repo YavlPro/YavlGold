@@ -19,7 +19,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap"
         rel="stylesheet">
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -50,36 +50,23 @@
         }
 
         :root {
-            /* Colores Base */
-            --bg-base: #0a0a0a;
-            --bg-card: #1a1a1a;
-            --border-subtle: #2a2a2a;
-            /* Dorado YavlGold */
-            --gold-primary: #C8A752;
-            --gold-light: #e8d090;
-            --gold-dark: #9a7f3c;
+            /* Local aliases — delegating to V10 canonical tokens from agro-tokens.css */
+            --bg-base: var(--bg-1);
+            --bg-card: var(--bg-4);
+            --border-subtle: rgba(255, 255, 255, 0.06);
+            --gold-primary: var(--gold-4);
             --gold-glow: rgba(200, 167, 82, 0.6);
-            /* Texto */
-            --text-primary: #ffffff;
-            --text-secondary: rgba(255, 255, 255, 0.65);
-            --text-muted: rgba(255, 255, 255, 0.4);
-            /* Estados */
-            --success: #4ade80;
-            --warning: #fbbf24;
-            --danger: #f87171;
-            /* Espaciado */
+            /* Estados — V10 canonical */
+            --success: var(--color-success);
+            --warning: var(--color-warning);
+            --danger: var(--color-error);
+            /* Espaciado — local aliases to V10 spacing */
             --spacing-xs: 0.5rem;
             --spacing-sm: 0.75rem;
             --spacing-md: 1rem;
             --spacing-lg: 1.5rem;
             --spacing-xl: 2rem;
             --spacing-2xl: 3rem;
-            /* Bordes */
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 16px;
-            --radius-xl: 24px;
-            --radius-pill: 50px;
         }
 
         /* ============================================ BASE STYLES ============================================ */
@@ -1141,10 +1128,25 @@
                 padding: 0.32rem 0.62rem;
             }
         }
+
+        /* §18.5 — prefers-reduced-motion */
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
     </style>
 </head>
 
-<body> <!-- Animated Background -->
+<body>
+    <a href="#main-content" class="sr-only-focusable">Saltar al contenido principal</a>
+    <!-- Animated Background -->
     <div class="bg-animated">
         <div class="bg-pulse-glow"></div>
         <div class="particle" style="top: 10%; left: 20%;"></div>
@@ -1332,7 +1334,7 @@
         </div>
     </aside>
 
-    <div class="app-container"> <!-- Header -->
+    <div class="app-container" id="main-content"> <!-- Header -->
         <header class="header animate-in agro-shell-header" style="position: relative; z-index: 9999;">
             <div class="agro-shell-header__left">
                 <button type="button" class="agro-shell-toggle" id="agro-shell-toggle" aria-expanded="false"
@@ -1650,8 +1652,7 @@
                 <button type="button" class="perfil-action-btn" data-agro-view="ciclos" data-agro-subview="activos">
                     <i class="fa-solid fa-seedling" aria-hidden="true"></i> Mis Cultivos
                 </button>
-                <button type="button" class="perfil-action-btn" data-agro-view="ciclos"
-                    data-agro-subview="finalizados">
+                <button type="button" class="perfil-action-btn" data-agro-view="ciclos" data-agro-subview="finalizados">
                     <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> Finalizados
                 </button>
             </div>
@@ -1838,7 +1839,8 @@
                     <div class="agro-cycle-overview__copy">
                         <p class="agro-cycle-overview__eyebrow">Lectura de cierre</p>
                         <h3 class="agro-cycle-overview__title">Cierres, pérdidas y trazabilidad</h3>
-                        <p class="agro-cycle-overview__subtitle">Esta vista concentra los ciclos cerrados, los perdidos y
+                        <p class="agro-cycle-overview__subtitle">Esta vista concentra los ciclos cerrados, los perdidos
+                            y
                             cualquier auditoría pendiente.</p>
                     </div>
                     <div class="agro-cycle-overview__grid">
@@ -1875,7 +1877,8 @@
                         <span class="gstats-toggle-icon"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i></span>
                         <span class="gstats-toggle-text">
                             <strong class="gstats-toggle-label">Mis Estadísticas Globales</strong>
-                            <span class="gstats-toggle-hint">Consolidado histórico de todos los ciclos y movimientos</span>
+                            <span class="gstats-toggle-hint">Consolidado histórico de todos los ciclos y
+                                movimientos</span>
                         </span>
                         <span class="gstats-toggle-chevron"><i class="fa-solid fa-chevron-down"
                                 aria-hidden="true"></i></span>
@@ -1910,7 +1913,8 @@
                         </div>
 
                         <div class="gstats-finance">
-                            <h4 class="gstats-section-title"><i class="fa-solid fa-coins" aria-hidden="true"></i> Resumen
+                            <h4 class="gstats-section-title"><i class="fa-solid fa-coins" aria-hidden="true"></i>
+                                Resumen
                                 Financiero</h4>
                             <div class="gstats-money-grid">
                                 <div class="gstats-money-row gstats-money-row--income">
@@ -1983,7 +1987,8 @@
                             </button>
                             <button type="button" id="btn-export-stats-report"
                                 class="gstats-export-btn gstats-export-btn--detail">
-                                <i class="fa-solid fa-chart-bar" aria-hidden="true"></i> Reporte Detallado por Cultivo (MD)
+                                <i class="fa-solid fa-chart-bar" aria-hidden="true"></i> Reporte Detallado por Cultivo
+                                (MD)
                             </button>
                         </div>
 
@@ -2644,7 +2649,8 @@
                     <div class="agro-dedicated-context__copy">
                         <h4 class="agro-dedicated-context__title">Cultivo activo para Pagados</h4>
                         <p class="agro-dedicated-context__note">Selecciona Vista general o un cultivo espec&iacute;fico.
-                            Este contexto sincroniza historial, KPIs, gr&aacute;ficos, insights y exportaci&oacute;n.</p>
+                            Este contexto sincroniza historial, KPIs, gr&aacute;ficos, insights y exportaci&oacute;n.
+                        </p>
                     </div>
                 </div>
                 <div class="agro-dedicated-context__body">
@@ -2781,7 +2787,8 @@
                     <div class="agro-dedicated-context__copy">
                         <h4 class="agro-dedicated-context__title">Cultivo activo para Fiados</h4>
                         <p class="agro-dedicated-context__note">Selecciona Vista general o un cultivo espec&iacute;fico.
-                            Este contexto sincroniza historial, KPIs, gr&aacute;ficos, insights y exportaci&oacute;n.</p>
+                            Este contexto sincroniza historial, KPIs, gr&aacute;ficos, insights y exportaci&oacute;n.
+                        </p>
                     </div>
                 </div>
                 <div class="agro-dedicated-context__body">
@@ -2918,7 +2925,8 @@
                     <div class="agro-dedicated-context__copy">
                         <h4 class="agro-dedicated-context__title">Cultivo activo para P&eacute;rdidas</h4>
                         <p class="agro-dedicated-context__note">Selecciona Vista general o un cultivo espec&iacute;fico.
-                            Este contexto sincroniza historial, KPIs, gr&aacute;ficos, insights y exportaci&oacute;n.</p>
+                            Este contexto sincroniza historial, KPIs, gr&aacute;ficos, insights y exportaci&oacute;n.
+                        </p>
                     </div>
                 </div>
                 <div class="agro-dedicated-context__body">
@@ -3053,7 +3061,8 @@
                     <div class="agro-dedicated-context__copy">
                         <h4 class="agro-dedicated-context__title">Cultivo activo para Donaciones</h4>
                         <p class="agro-dedicated-context__note">Selecciona Vista general o un cultivo espec&iacute;fico.
-                            Este contexto sincroniza historial, KPIs, gr&aacute;ficos, insights y exportaci&oacute;n.</p>
+                            Este contexto sincroniza historial, KPIs, gr&aacute;ficos, insights y exportaci&oacute;n.
+                        </p>
                     </div>
                 </div>
                 <div class="agro-dedicated-context__body">
@@ -3462,7 +3471,8 @@
                         </p>
                     </div>
                     <div class="arw-modal-footer">
-                        <button type="button" class="arw-btn-secondary" data-action="close-delete-modal">Cancelar</button>
+                        <button type="button" class="arw-btn-secondary"
+                            data-action="close-delete-modal">Cancelar</button>
                         <button type="button" class="arw-btn-danger" data-action="confirm-delete">Eliminar</button>
                     </div>
                 </div>
@@ -3480,13 +3490,14 @@
                             <div class="arw-modal-hint" id="arw-nodeModalHint"></div>
                             <div class="arw-form-group">
                                 <label class="arw-input-label" for="arw-nodeModalName">Nombre</label>
-                                <input type="text" class="arw-input-field arw-input-field--single" id="arw-nodeModalName"
-                                    maxlength="80" autocomplete="off" />
+                                <input type="text" class="arw-input-field arw-input-field--single"
+                                    id="arw-nodeModalName" maxlength="80" autocomplete="off" />
                             </div>
                             <div class="arw-modal-parent" id="arw-nodeModalParent"></div>
                         </div>
                         <div class="arw-modal-footer">
-                            <button type="button" class="arw-btn-secondary" data-action="close-node-modal">Cancelar</button>
+                            <button type="button" class="arw-btn-secondary"
+                                data-action="close-node-modal">Cancelar</button>
                             <button type="submit" class="arw-btn-primary" id="arw-nodeModalConfirm">Guardar</button>
                         </div>
                     </form>
@@ -3545,22 +3556,25 @@
                 <main class="arw-main-content">
                     <header class="arw-main-header">
                         <div class="arw-header-left">
-                            <button type="button" class="arw-menu-toggle" id="arw-menuToggle" aria-label="Abrir árbol">☰</button>
+                            <button type="button" class="arw-menu-toggle" id="arw-menuToggle"
+                                aria-label="Abrir árbol">☰</button>
                             <nav class="arw-breadcrumb" id="arw-breadcrumb" aria-label="Ruta actual">
                                 <span class="arw-breadcrumb-item">AgroRepo</span>
                             </nav>
                         </div>
                         <div class="arw-header-actions">
-                            <button type="button" class="arw-btn-icon" data-action="import-json" title="Importar backup JSON">
+                            <button type="button" class="arw-btn-icon" data-action="import-json"
+                                title="Importar backup JSON">
                                 <span>📂</span>
                                 <span class="arw-btn-text">Importar</span>
                             </button>
-                            <button type="button" class="arw-btn-icon" data-action="export-json" title="Exportar backup JSON">
+                            <button type="button" class="arw-btn-icon" data-action="export-json"
+                                title="Exportar backup JSON">
                                 <span>📦</span>
                                 <span class="arw-btn-text">Backup</span>
                             </button>
-                            <button type="button" class="arw-btn-icon" id="arw-btnExportActiveMd" data-action="export-active-md"
-                                title="Exportar archivo Markdown activo" disabled>
+                            <button type="button" class="arw-btn-icon" id="arw-btnExportActiveMd"
+                                data-action="export-active-md" title="Exportar archivo Markdown activo" disabled>
                                 <span>📝</span>
                                 <span class="arw-btn-text">Exportar .md</span>
                             </button>
@@ -4085,7 +4099,8 @@
             </div>
             <footer class="agro-buyer-confirm-footer">
                 <button type="button" class="btn" data-agro-buyer-delete-close>No, cancelar</button>
-                <button type="button" class="btn agro-buyer-confirm__danger" id="btn-confirm-agro-buyer-delete">Sí, eliminar</button>
+                <button type="button" class="btn agro-buyer-confirm__danger" id="btn-confirm-agro-buyer-delete">Sí,
+                    eliminar</button>
             </footer>
         </div>
     </div>

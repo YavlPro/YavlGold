@@ -80,11 +80,11 @@
   --comp-btn-px-default: 0.75rem;
   --comp-btn-py-spacious: 0.75rem;
   --comp-btn-px-spacious: 1rem;
-  
+
   --layout-card-padding-compact: 0.5rem;
   --layout-card-padding-default: 0.75rem;
   --layout-card-padding-spacious: 1rem;
-  
+
   --layout-card-gap-compact: 0.25rem;
   --layout-card-gap-default: 0.5rem;
   --layout-card-gap-spacious: 0.75rem;
@@ -101,9 +101,8 @@ select:focus-visible,
 textarea:focus-visible,
 [role="button"]:focus-visible,
 [tabindex]:not([tabindex="-1"]):focus-visible {
-  outline: 2px solid var(--gold-4, #C8A752) !important;
-  outline-offset: 2px !important;
-  box-shadow: 0 0 0 6px rgba(200, 167, 82, 0.15) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px var(--bg-1, #0a0a0a), 0 0 0 4px var(--gold-4, #C8A752) !important;
 }
 
 :focus:not(:focus-visible) {

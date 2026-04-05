@@ -6071,7 +6071,7 @@ Motivo de elección: menor riesgo, menor diff, máxima coherencia visual, cero r
 
 - `apps/gold/agro/agro.css`
   - `.agro-shell-sidebar__group`: añadido `padding-top: 0.5rem` con `:first-of-type` reset
-  - `.agro-shell-sidebar__label`: 
+  - `.agro-shell-sidebar__label`:
     - Añadido padding (0.35rem 0.5rem) y border-radius 8px
     - Añadido background sutil `rgba(200, 167, 82, 0.04)`
     - Añadido border-left dorado `2px solid rgba(200, 167, 82, 0.28)`
@@ -8958,3 +8958,66 @@ order by r.display_name asc;
 
 ### Riesgo/deuda pendiente
 - Las acciones de transferencia y reversión siguen usando la metadata temporal ya existente en el detalle; no se cambió el modelo de fechas ni se rehízo el timeline. Si más adelante se quiere precisión cronológica absoluta para eventos de transferencia/reversión, eso debe ir en otro lote.
+
+---
+
+## Sesion: Diagnostico ADN Visual V10 — Implementacion correctiva (2026-04-05)
+
+### Diagnostico
+
+Se ejecuto un diagnostico completo del proyecto contra `ADN-VISUAL-V10.0.md`. Se identificaron 13 hallazgos de incumplimiento organizados por severidad (critica, alta, media, baja). La sesion implemento todas las correcciones planificadas.
+
+### Cambios aplicados
+
+**1. Unificacion de tokens V10 canonicos** (`apps/gold/assets/css/tokens.css`)
+- Inyectados tokens V10 canonicos como fuente unica de verdad: 5-Tone Metallic (`--gold-1` a `--gold-5`), backgrounds (`--bg-0` a `--bg-4`), text colors, semantic colors (`--color-success/warning/error/info`), borders, metallic gradients, shadows, glassmorphism, `--font-quote`.
+- Tokens legacy `--gg-*` convertidos a aliases que apuntan a tokens V10.
+- Light mode unificado: selector `body.light-mode, [data-theme="light"]` con overrides V10 canonicos + aliases legacy.
+
+**2. Transiciones normalizadas a <=220ms** (V10 §6)
+- `tokens.css`: `--transition-fast: 120ms`, `--transition-base: 180ms`, `--transition-slow: 220ms`, `--transition-bounce: 200ms`.
+- `unificacion.css`: `--transition` variable y hardcoded `.3s` corregidos a `180ms`.
+- `dashboard.css`: ~15 ocurrencias de `0.3s`/`0.4s` corregidas a `180ms`/`200ms`.
+- `landing-v10.css`: ~20 ocurrencias de `0.3s`/`0.4s`/`0.5s` corregidas a `180ms`/`200ms`/`220ms`.
+- `style.css`: `transition: all 0.3s` corregido a `var(--transition-base)`.
+
+**3. Colores de estado corregidos en Agro inline** (`apps/gold/agro/index.html`)
+- `:root` inline reducido: tokens duplicados eliminados (delegados a `agro-tokens.css`).
+- `--success/--warning/--danger` apuntan a `var(--color-success/warning/error)` V10.
+- `--bg-base`, `--bg-card`, `--gold-primary` delegados a tokens V10 canonicos.
+
+**4. Font-family corregido** (`apps/gold/assets/css/style.css`)
+- `font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif` reemplazado por `'Rajdhani', sans-serif` (V10 §4).
+- Hardcoded `#cbd5e1` y `#94a3b8` reemplazados por `var(--text-secondary)` y `var(--gg-text-muted)`.
+
+**5. Playfair Display agregado a Agro** (`apps/gold/agro/index.html`)
+- Google Fonts import actualizado para incluir `Playfair+Display:ital,wght@0,400;0,700;1,400;1,700` y Rajdhani weight 700.
+
+**6. Skip links en todas las paginas activas** (V10 §18.8 accesibilidad)
+- Clase `.sr-only-focusable` definida en `tokens.css` con estilos focus gold/dark.
+- Skip link `<a href="#main-content">` agregado como primer hijo de `<body>` en: `index.html`, `agro/index.html`, `dashboard/index.html`, `crypto/index.html`, `academia/index.html`, `social/index.html`, `tecnologia/index.html`, `cookies.html`, `faq.html`, `privacy.html`, `terms.html`, `soporte.html`.
+- `id="main-content"` agregado al landmark principal de cada pagina.
+
+**7. prefers-reduced-motion en Agro** (`apps/gold/agro/index.html`)
+- Blanket rule `@media (prefers-reduced-motion: reduce)` agregada al bloque `<style>` inline cubriendo todas las animaciones del modulo.
+
+**8. Focus ring V10 doble anillo** (`apps/gold/agro/agro-tokens.css`)
+- `:focus-visible` actualizado de `outline + offset` a `box-shadow: 0 0 0 2px var(--bg-1), 0 0 0 4px var(--gold-4)` (patron doble anillo V10).
+
+**9. Version header** (`apps/gold/assets/css/motion-pack.css`)
+- Actualizado de "Motion Pack v9.4" a "Motion Pack V10.0".
+
+### Build status
+- `pnpm build:gold` → **OK** (exit 0)
+- `agent-guard: OK`
+- `agent-report-check: OK`
+- `vite build: OK` (157 modules, 2.59s)
+- `check-llms: OK`
+- `check-dist-utf8: OK`
+
+### QA sugerido
+- Verificar landing page en desktop y mobile (<=480px): tokens gold, transiciones rapidas, skip link visible con Tab.
+- Verificar Agro: colores de estado (success verde `#10B981`, warning amarillo `#F59E0B`, error rojo `#EF4444`), ghost emoji animacion, focus ring doble anillo dorado.
+- Verificar dashboard: transiciones de cards y hover effects.
+- Verificar `prefers-reduced-motion`: activar en OS y confirmar que animaciones se desactivan en Agro.
+- Verificar light mode en landing (`body.light-mode` y `[data-theme="light"]`): fondos claros, texto oscuro, tokens V10 activos.

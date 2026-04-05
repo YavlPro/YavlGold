@@ -24,7 +24,7 @@
   --card-bg-solid: #111111;
   --gradient-gold: linear-gradient(45deg, #C8A752, #C8A752, #C8A752);
   --border-radius: 15px;
-  --transition: all 0.3s ease;
+  --transition: all 180ms ease;
   --shadow: rgba(0, 0, 0, 0.5);
 }
 
@@ -43,14 +43,14 @@
   --card-bg-solid: #ffffff;
   --gradient-gold: linear-gradient(45deg, #C8A752, #C8A752, #C8A752);
   --border-radius: 15px;
-  --transition: all 0.3s ease;
+  --transition: all 180ms ease;
   --shadow: rgba(0, 0, 0, 0.1);
 }
 
 body {
   background: var(--bg-body);
   color: var(--text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 180ms ease, color 180ms ease;
 }
 
 /* Header unificado */
@@ -81,7 +81,7 @@ body {
   position: relative;
 }
 .main-nav a:hover, .main-nav a.active { color: var(--color-secondary); }
-.main-nav a::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 2px; background: var(--gradient-gold); transition: width .3s; }
+.main-nav a::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 2px; background: var(--gradient-gold); transition: width 180ms; }
 .main-nav a:hover::after, .main-nav a.active::after { width: 100%; }
 .main-nav a.nav-disabled { color: var(--text-muted); opacity: 0.5; cursor: not-allowed; pointer-events: none; }
 .auth-buttons { display: flex; gap: 12px; align-items: center; }
