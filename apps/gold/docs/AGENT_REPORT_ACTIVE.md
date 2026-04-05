@@ -9021,3 +9021,54 @@ Se ejecuto un diagnostico completo del proyecto contra `ADN-VISUAL-V10.0.md`. Se
 - Verificar dashboard: transiciones de cards y hover effects.
 - Verificar `prefers-reduced-motion`: activar en OS y confirmar que animaciones se desactivan en Agro.
 - Verificar light mode en landing (`body.light-mode` y `[data-theme="light"]`): fondos claros, texto oscuro, tokens V10 activos.
+
+---
+
+## Sesion: Diagnostico y fix de bugs en Agro — Cartera Viva (2026-04-05)
+
+### Diagnostico
+
+Se investigo el reporte del usuario: "no aparece parte del historial en detalles de cartera viva".
+
+Se rastreo el flujo completo de datos:
+1. `loadBuyerDetail` (agro-cartera-viva-view.js) → `fetchBuyerHistoryTimeline` (agro-cartera-viva-detail.js)
+2. `fetchBuyerScopedRows` consulta `agro_pending`, `agro_income`, `agro_losses`
+3. `buildPendingLedgerRow`, `buildIncomeLedgerRow`, `buildLossLedgerRow` construyen filas de timeline
+4. `buildPendingActionRows`, `buildIncomeActionRows`, `buildLossActionRows` construyen action rows
+5. `filterHistoryRows` filtra por scope, unit family, y tipo de accion
+
+### Bugs encontrados
+
+| # | Severidad | Descripcion |
+|---|-----------|-------------|
+| 1 | ALTO | `handleIncomeTransfer` y `handleLossTransfer` a "pendientes" (sin origin) usaban `softDeleteFactureroRow` en vez de `transfer_state: 'reverted'`. El registro original desaparecia del timeline (filtered by `deleted_at IS NULL`) sin dejar action row. |
+| 2 | ALTO | `handleLossTransfer` a "pendientes" no disparaba evento `agro:losses:changed`. Cartera Viva no se refrescaba automaticamente despues de la transferencia. |
+| 3 | MEDIO | `buildIncomeActionRows` y `buildLossActionRows` no generaban action rows para income/loss standalone revertido (sin `origin_table='agro_pending'`). |
+| 4 | MEDIO | `fetchBuyerScopedRows` groupKey query requiere `buyer_id IS NULL` — filas con buyer_id erroneo y groupKey correcto se pierden silenciosamente. (No corregido — es tema de data integrity upstream.) |
+| 5 | BAJO | `transferPendingToLoss` guarda loss ID en campo `transferred_income_id`. Semanticamente incorrecto. (No corregido — bajo impacto.) |
+| 6 | BAJO | `notas` no incluida en `PENDING_HISTORY_COLUMNS`. (No corregido — bajo impacto.) |
+
+### Cambios aplicados
+
+**`agro.js`** (~lines 7997-8067, 8186-8258):
+- `handleIncomeTransfer` to "pendientes" (non-revert): reemplazo `softDeleteFactureroRow` por update con `transfer_state: 'reverted'`, `reverted_at`, `reverted_reason`. Fallback a soft-delete si columnas no existen. Agregado `transfer_state: 'active'` al pending payload.
+- `handleLossTransfer` to "pendientes" (non-revert): mismo patron de fix. Agregado `document.dispatchEvent(new CustomEvent('agro:losses:changed'))` para trigger de refresco en Cartera Viva.
+
+**`agro-cartera-viva-detail.js`** (~lines 623-646, 732-755):
+- `buildIncomeActionRows`: movido `isReverted` check antes del early return. Standalone income revertido ahora genera action row "Devuelto a fiados".
+- `buildLossActionRows`: mismo patron. Standalone loss revertida ahora genera action row "Devuelto a fiados".
+
+### Build status
+- `pnpm build:gold` → **OK** (exit 0)
+- `agent-guard: OK`
+- `agent-report-check: OK`
+- `vite build: OK` (157 modules, 3.38s)
+- `check-llms: OK`
+- `check-dist-utf8: OK`
+
+### QA sugerido
+- Abrir Cartera Viva, seleccionar un cliente con historial de transferencias.
+- Verificar que al transferir un ingreso standalone a Fiados, el ingreso aparece como "Devuelto a fiados" en la seccion de Acciones del sistema.
+- Verificar que al transferir una perdida standalone a Fiados, el historial se actualiza automaticamente (sin necesidad de refresh manual).
+- Verificar que los action rows de revertidos aparecen con el filtro "Revertidos" activo.
+- Verificar que el flujo de revert canonico (income/loss con origin_table='agro_pending') sigue funcionando correctamente sin regresion.

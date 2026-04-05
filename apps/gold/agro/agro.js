@@ -8005,7 +8005,8 @@ async function handleIncomeTransfer(itemId) {
                 crop_id: income.crop_id || null,
                 unit_type: income.unit_type || null,
                 unit_qty: Number.isFinite(Number(income.unit_qty)) ? Number(income.unit_qty) : null,
-                quantity_kg: Number.isFinite(Number(income.quantity_kg)) ? Number(income.quantity_kg) : null
+                quantity_kg: Number.isFinite(Number(income.quantity_kg)) ? Number(income.quantity_kg) : null,
+                transfer_state: 'active'
             };
 
             const pendingPayloadWithBuyer = await enrichBuyerIdentityPayload('pendientes', pendingPayload, {
@@ -8019,23 +8020,44 @@ async function handleIncomeTransfer(itemId) {
                 'unit_type',
                 'unit_qty',
                 'quantity_kg',
+                'transfer_state',
                 'buyer_id',
                 'buyer_group_key',
                 'buyer_match_status'
             ]);
             if (insertResult.error) throw insertResult.error;
 
-            const deleteResult = await softDeleteFactureroRow('agro_income', income.id, user.id);
-            if (!deleteResult.success) {
+            const incomeRevertPayload = {
+                transfer_state: 'reverted',
+                reverted_at: new Date().toISOString(),
+                reverted_reason: 'Devuelto a fiados desde transferencia directa'
+            };
+            let { error: incomeRevertError } = await supabase
+                .from('agro_income')
+                .update(incomeRevertPayload)
+                .eq('id', income.id)
+                .eq('user_id', user.id);
+
+            if (incomeRevertError
+                && (isMissingColumnError(incomeRevertError, 'transfer_state')
+                    || isMissingColumnError(incomeRevertError, 'reverted_at')
+                    || isMissingColumnError(incomeRevertError, 'reverted_reason'))) {
+                const fallbackDelete = await softDeleteFactureroRow('agro_income', income.id, user.id);
+                if (fallbackDelete.success) {
+                    incomeRevertError = null;
+                }
+            }
+
+            if (incomeRevertError) {
                 const rollback = await rollbackInsertedRow({
                     table: 'agro_pending',
                     userId: user.id,
                     insertedId: pendingId
                 });
                 if (!rollback.ok) {
-                    throw new Error('Transferencia cancelada: no se pudo borrar el registro original ni revertir el destino (permisos/RLS).');
+                    throw new Error('Transferencia cancelada: no se pudo marcar el ingreso como revertido ni revertir el destino.');
                 }
-                throw new Error('Transferencia cancelada: no se pudo borrar el registro original (permisos/RLS).');
+                throw new Error('Transferencia cancelada: no se pudo marcar el ingreso como revertido.');
             }
 
             notifyFacturero(uxMessages.copy.transferCompleted({
@@ -8173,7 +8195,8 @@ async function handleLossTransfer(itemId) {
                 crop_id: loss.crop_id || null,
                 unit_type: loss.unit_type || null,
                 unit_qty: Number.isFinite(Number(loss.unit_qty)) ? Number(loss.unit_qty) : null,
-                quantity_kg: Number.isFinite(Number(loss.quantity_kg)) ? Number(loss.quantity_kg) : null
+                quantity_kg: Number.isFinite(Number(loss.quantity_kg)) ? Number(loss.quantity_kg) : null,
+                transfer_state: 'active'
             };
 
             const pendingPayloadWithBuyer = await enrichBuyerIdentityPayload('pendientes', pendingPayload, {
@@ -8187,23 +8210,44 @@ async function handleLossTransfer(itemId) {
                 'unit_qty',
                 'quantity_kg',
                 'notas',
+                'transfer_state',
                 'buyer_id',
                 'buyer_group_key',
                 'buyer_match_status'
             ]);
             if (insertResult.error) throw insertResult.error;
 
-            const deleteResult = await softDeleteFactureroRow('agro_losses', loss.id, user.id);
-            if (!deleteResult.success) {
+            const lossRevertPayload = {
+                transfer_state: 'reverted',
+                reverted_at: new Date().toISOString(),
+                reverted_reason: 'Devuelto a fiados desde transferencia directa'
+            };
+            let { error: lossRevertError } = await supabase
+                .from('agro_losses')
+                .update(lossRevertPayload)
+                .eq('id', loss.id)
+                .eq('user_id', user.id);
+
+            if (lossRevertError
+                && (isMissingColumnError(lossRevertError, 'transfer_state')
+                    || isMissingColumnError(lossRevertError, 'reverted_at')
+                    || isMissingColumnError(lossRevertError, 'reverted_reason'))) {
+                const fallbackDelete = await softDeleteFactureroRow('agro_losses', loss.id, user.id);
+                if (fallbackDelete.success) {
+                    lossRevertError = null;
+                }
+            }
+
+            if (lossRevertError) {
                 const rollback = await rollbackInsertedRow({
                     table: 'agro_pending',
                     userId: user.id,
                     insertedId: pendingId
                 });
                 if (!rollback.ok) {
-                    throw new Error('Transferencia cancelada: no se pudo borrar el registro original ni revertir el destino (permisos/RLS).');
+                    throw new Error('Transferencia cancelada: no se pudo marcar la pérdida como revertida ni revertir el destino.');
                 }
-                throw new Error('Transferencia cancelada: no se pudo borrar el registro original (permisos/RLS).');
+                throw new Error('Transferencia cancelada: no se pudo marcar la pérdida como revertida.');
             }
 
             notifyFacturero(uxMessages.copy.transferCompleted({
@@ -8211,6 +8255,7 @@ async function handleLossTransfer(itemId) {
             }));
             await refreshFactureroHistory('pendientes');
             await refreshFactureroHistory('perdidas');
+            document.dispatchEvent(new CustomEvent('agro:losses:changed'));
         }
 
         if (destination === 'income') {

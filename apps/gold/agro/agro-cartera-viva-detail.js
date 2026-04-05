@@ -623,9 +623,28 @@ function buildIncomeLedgerRow(row) {
 function buildIncomeActionRows(row) {
     const originTable = String(row?.origin_table || '').trim().toLowerCase();
     const originId = String(row?.origin_id || '').trim();
-    if (originTable !== 'agro_pending' || !originId) return [];
-
     const isReverted = String(row?.transfer_state || '').trim().toLowerCase() === 'reverted' || Boolean(row?.reverted_at);
+
+    if (originTable !== 'agro_pending' || !originId) {
+        if (isReverted) {
+            return [
+                createActionHistoryRow(row, {
+                    history_id: `agro_income_action_revert:${row?.id || ''}`,
+                    history_filter: 'revertidos',
+                    source_table: 'agro_income',
+                    source_tab: 'ingresos',
+                    source_id: String(row?.id || '').trim(),
+                    ledger_scope: 'pagados',
+                    label: 'Devuelto a fiados',
+                    tone: 'review',
+                    note: 'Este ingreso fue devuelto a la cartera activa del cliente.',
+                    metaParts: [String(row?.categoria || '').trim()]
+                })
+            ];
+        }
+        return [];
+    }
+
     if (isReverted) {
         return [
             createActionHistoryRow(row, {
@@ -713,9 +732,28 @@ function buildLossLedgerRow(row) {
 function buildLossActionRows(row) {
     const originTable = String(row?.origin_table || '').trim().toLowerCase();
     const originId = String(row?.origin_id || '').trim();
-    if (originTable !== 'agro_pending' || !originId) return [];
-
     const isReverted = String(row?.transfer_state || '').trim().toLowerCase() === 'reverted' || Boolean(row?.reverted_at);
+
+    if (originTable !== 'agro_pending' || !originId) {
+        if (isReverted) {
+            return [
+                createActionHistoryRow(row, {
+                    history_id: `agro_losses_action_revert:${row?.id || ''}`,
+                    history_filter: 'revertidos',
+                    source_table: 'agro_losses',
+                    source_tab: 'perdidas',
+                    source_id: String(row?.id || '').trim(),
+                    ledger_scope: 'perdidos',
+                    label: 'Devuelto a fiados',
+                    tone: 'review',
+                    note: 'Esta pérdida fue devuelta a la cartera activa del cliente.',
+                    metaParts: [String(row?.causa || '').trim()]
+                })
+            ];
+        }
+        return [];
+    }
+
     if (isReverted) {
         return [
             createActionHistoryRow(row, {
@@ -1000,8 +1038,8 @@ function renderHistoryFilters(historyRows, activeFilter, options = {}) {
     return `
         <div class="cartera-viva-detail__filters" role="group" aria-label="Filtrar historial">
             ${filters
-                .filter((filter) => filter.visible)
-                .map((filter) => `
+            .filter((filter) => filter.visible)
+            .map((filter) => `
                     <button
                         type="button"
                         class="cartera-viva-detail__filter${normalizedFilter === filter.id ? ' is-active' : ''}"
@@ -1656,9 +1694,9 @@ export function renderBuyerHistoryDetail(root, options = {}) {
                     <button type="button" class="cartera-viva-back" data-cartera-detail-back>Volver</button>
                 </div>
                 ${renderEmptyState({
-                    title: 'Cliente no encontrado',
-                    copy: 'La grilla ya no tiene disponible este cliente.'
-                })}
+            title: 'Cliente no encontrado',
+            copy: 'La grilla ya no tiene disponible este cliente.'
+        })}
             </section>
         `;
         root.querySelector('[data-cartera-detail-back]')?.addEventListener('click', () => {
@@ -1722,37 +1760,37 @@ export function renderBuyerHistoryDetail(root, options = {}) {
             ${exportStatus}
 
             ${renderBuyerSummary(buyerRow, {
-                historyRows: ledgerRows,
-                selectedPair,
-                exchangeRates,
-                exchangeStatus
-            })}
+        historyRows: ledgerRows,
+        selectedPair,
+        exchangeRates,
+        exchangeStatus
+    })}
 
             <section class="cartera-viva-detail__body">
                 <header class="cartera-viva-detail__body-head">
                     <div>
                         <p class="cartera-viva-view__eyebrow">Historial</p>
                         <h3 class="cartera-viva-detail__section-title">${isCanonicalFilter
-                            ? (ledgerScope === 'fiados'
-                                ? `${unitFamilyPrefix}Fiados del cliente`
-                                : (ledgerScope === 'pagados'
-                                    ? `${unitFamilyPrefix}Cobros del cliente`
-                                    : (ledgerScope === 'perdidos'
-                                        ? `${unitFamilyPrefix}Pérdidas del cliente`
-                                        : (unitFamily === 'all'
-                                            ? 'Timeline canónico del cliente'
-                                            : `Historial de ${getUnitFamilyLabel(unitFamily).toLowerCase()}`))))
-                            : 'Acciones del sistema'}</h3>
+            ? (ledgerScope === 'fiados'
+                ? `${unitFamilyPrefix}Fiados del cliente`
+                : (ledgerScope === 'pagados'
+                    ? `${unitFamilyPrefix}Cobros del cliente`
+                    : (ledgerScope === 'perdidos'
+                        ? `${unitFamilyPrefix}Pérdidas del cliente`
+                        : (unitFamily === 'all'
+                            ? 'Timeline canónico del cliente'
+                            : `Historial de ${getUnitFamilyLabel(unitFamily).toLowerCase()}`))))
+            : 'Acciones del sistema'}</h3>
                     </div>
                     <div class="cartera-viva-detail__body-meta">
                         <p class="cartera-viva-detail__body-copy">
                             ${isCanonicalFilter
-                                ? (ledgerScope === 'todos'
-                                    ? (unitFamily === 'all'
-                                        ? 'El timeline principal muestra solo movimientos económicos reales, separados por familia operativa cuando haga falta.'
-                                        : `El timeline principal muestra solo ${getUnitFamilyLabel(unitFamily).toLowerCase()} dentro del ledger económico del cliente.`)
-                                    : 'El detalle respeta el contexto de entrada y muestra solo el ledger económico de esta categoría.')
-                                : 'Aquí solo ves eventos auxiliares del sistema, sin mezclar cobros o pérdidas normales.'}
+            ? (ledgerScope === 'todos'
+                ? (unitFamily === 'all'
+                    ? 'El timeline principal muestra solo movimientos económicos reales, separados por familia operativa cuando haga falta.'
+                    : `El timeline principal muestra solo ${getUnitFamilyLabel(unitFamily).toLowerCase()} dentro del ledger económico del cliente.`)
+                : 'El detalle respeta el contexto de entrada y muestra solo el ledger económico de esta categoría.')
+            : 'Aquí solo ves eventos auxiliares del sistema, sin mezclar cobros o pérdidas normales.'}
                         </p>
                         ${renderUnitFamilyFilters(ledgerRows, unitFamily)}
                         ${isCanonicalFilter ? renderLedgerScopeFilters(ledgerRows, ledgerScope) : ''}
