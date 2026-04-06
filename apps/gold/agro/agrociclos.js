@@ -3,6 +3,9 @@
 
 import supabase from '../assets/js/config/supabase-config.js';
 
+const OPERATIONAL_PORTFOLIO_UPDATED_EVENT = 'agro:operational-portfolio-updated';
+let isOperationalPortfolioSyncBound = false;
+
 function escapeHtml(value) {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -43,12 +46,71 @@ function statusClassFor(state) {
   return 'status-produccion';
 }
 
-function resolvePortfolioStatus(fiadosUsd) {
+function resolveFallbackPortfolioStatus(fiadosUsd) {
   const pending = Number(fiadosUsd);
   if (!Number.isFinite(pending)) return null;
   return pending > 0
-    ? { label: 'Cartera activa', tone: 'active' }
-    : { label: 'Cartera cerrada', tone: 'closed' };
+    ? { label: 'Cartera operativa abierta', tone: 'active' }
+    : { label: 'Cartera operativa cerrada', tone: 'closed' };
+}
+
+function resolveOperationalPortfolioStatus(cropId) {
+  if (typeof window === 'undefined') return null;
+  const normalizedCropId = String(cropId || '').trim();
+  if (!normalizedCropId) return null;
+
+  try {
+    const api = window.YGAgroOperationalCycles;
+    if (typeof api?.getPortfolioStateByCrop !== 'function') return null;
+    const portfolioState = api.getPortfolioStateByCrop(normalizedCropId);
+    if (!portfolioState || typeof portfolioState !== 'object') return null;
+
+    return {
+      label: String(portfolioState.label || '').trim() || 'Cartera operativa cerrada',
+      tone: String(portfolioState.tone || '').trim() || (portfolioState.status === 'open' ? 'active' : 'closed')
+    };
+  } catch (error) {
+    console.warn('[agrociclos] No se pudo leer cartera operativa asociada:', error);
+    return null;
+  }
+}
+
+function resolvePortfolioStatus(ciclo) {
+  return resolveOperationalPortfolioStatus(ciclo?.id) || resolveFallbackPortfolioStatus(ciclo?.fiadosUsd);
+}
+
+function syncOperationalPortfolioBadges(root = document) {
+  if (!root?.querySelectorAll) return;
+
+  root.querySelectorAll('.crop-card[data-crop-id]').forEach((card) => {
+    const statusGroup = card.querySelector('.card-status-group');
+    if (!statusGroup) return;
+
+    const portfolioStatus = resolveOperationalPortfolioStatus(card.dataset.cropId)
+      || resolveFallbackPortfolioStatus(card.dataset.fiadosUsd);
+    const currentBadge = statusGroup.querySelector('.portfolio-badge');
+
+    if (!portfolioStatus) {
+      currentBadge?.remove();
+      return;
+    }
+
+    const badge = currentBadge || document.createElement('span');
+    badge.className = `portfolio-badge portfolio-badge--${escapeAttr(portfolioStatus.tone)}`;
+    badge.textContent = portfolioStatus.label;
+
+    if (!currentBadge) {
+      statusGroup.appendChild(badge);
+    }
+  });
+}
+
+function bindOperationalPortfolioSync() {
+  if (isOperationalPortfolioSyncBound || typeof window === 'undefined') return;
+  isOperationalPortfolioSyncBound = true;
+  window.addEventListener(OPERATIONAL_PORTFOLIO_UPDATED_EVENT, () => {
+    syncOperationalPortfolioBadges(document);
+  });
 }
 
 function formatUsdCompact(value) {
@@ -166,7 +228,7 @@ function renderCard(ciclo, index = 0) {
   const inversionText = formatUsdCompact(ciclo?.inversionUSD);
   const trendIcon = esPositivo ? '↗' : '↘';
   const profitLabel = mode === 'finished' ? 'Rentabilidad Final' : 'Potencial Neto';
-  const portfolioStatus = resolvePortfolioStatus(ciclo?.fiadosUsd);
+  const portfolioStatus = resolvePortfolioStatus(ciclo);
   const progressText = mode === 'finished'
     ? 'Completado'
     : `Día ${toNumber(ciclo?.diaActual, 0)}/${toNumber(ciclo?.diasTotales, 0)} (${porcentaje}%)`;
@@ -184,7 +246,7 @@ function renderCard(ciclo, index = 0) {
   const globalBreakdownMarkup = renderGlobalBreakdown(ciclo);
 
   return `
-    <article class="cycle-card crop-card" data-crop-id="${escapeAttr(dataId)}"${orphanData} style="animation-delay:${index * 70}ms;">
+    <article class="cycle-card crop-card" data-crop-id="${escapeAttr(dataId)}" data-fiados-usd="${escapeAttr(ciclo?.fiadosUsd ?? '')}"${orphanData} style="animation-delay:${index * 70}ms;">
       <header class="card-header">
         <div class="crop-info">
           <div class="crop-icon">${escapeHtml(ciclo?.icono || '🌱')}</div>
@@ -288,6 +350,7 @@ function renderEmpty(text = 'No hay ciclos activos') {
 
 export function renderCycleCards(container, cycles = [], options = {}) {
   if (!container) return;
+  bindOperationalPortfolioSync();
   const modeFromOptions = options.mode == null
     ? ''
     : String(options.mode).trim().toLowerCase();
@@ -314,6 +377,7 @@ export function renderCycleCards(container, cycles = [], options = {}) {
       ${rows.map((ciclo, index) => renderCard(ciclo, index)).join('')}
     </div>
   `;
+  syncOperationalPortfolioBadges(container);
 }
 
 export function renderFinishedCycles(container, cycles, options = {}) {

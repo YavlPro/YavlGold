@@ -9287,3 +9287,246 @@ La correccion necesaria estaba solo en `apps/gold/agro/agro-cartera-viva-view.js
 - `jose luis` con pendiente vivo e ingreso aparte, pero sin cobro operativo, debe mostrar **`Fiado activo`** y chip **`Ingreso registrado`**.
 - `Gollo` ya sin pendiente vivo no debe volver a `Fiado activo`; debe quedar en lectura de cierre del cultivo.
 - Casos con perdida dentro del cultivo deben mostrar **`Con pérdida`** cuando aplique.
+
+---
+
+## Preparacion: ciclos operativos + bug en ciclos de cultivo (2026-04-06)
+
+### Diagnostico inicial
+- La superficie de ciclos operativos ya no vive principalmente en `agro.js`; el wiring visible apunta a `apps/gold/agro/agro-cycles-workspace.js` y la logica de datos/render a `apps/gold/agro/agroOperationalCycles.js`.
+- Hay evidencia de estados `open`, `in_progress`, `compensating`, `closed` y `lost` en el modulo, asi que el problema de cerrados visibles probablemente no nace en la tabla sino en lectura de filtros, dataset o copy visible.
+- Para ciclos de cultivo, el bug de "0" con registros existentes parece mas cercano a una lectura/agregacion de la vista `ciclos` o del resumen de cultivos que a una ausencia real de datos.
+
+### Hipotesis de causa raiz
+- Los ciclos cerrados pueden existir en datos pero quedar fuera del dataset activo por filtros/statuses en `fetchCycles()` o por snapshots resumidos en `agro-cycles-workspace.js`.
+- La semantica `Abierto` probablemente solo necesita alineacion de etiqueta visible sobre estados ya existentes, sin cambiar taxonomia interna.
+- El "0" en Ciclos de cultivo probablemente nace en una agregacion o conteo que no esta usando el campo relacional correcto (`crop_id`, `cycle_id` o status efectivo) al construir la vista/resumen.
+
+### Plan minimo
+1. Auditar `agro-cycles-workspace.js` y `agroOperationalCycles.js` para ubicar exactamente donde se pierden `closed` en query, filtro o render.
+2. Auditar la vista/resumen de Ciclos de cultivo para identificar la funcion exacta que devuelve `0` pese a existir registros asociados.
+3. Aplicar el menor diff posible en la capa responsable: etiqueta visible, filtro o agregacion.
+4. Cerrar la sesion con actualizacion del reporte y `pnpm build:gold`.
+
+---
+
+## Sesion: ciclos operativos + bug en ciclos de cultivo (2026-04-06)
+
+### Diagnostico
+
+- **Ciclos Operativos**
+  - Los ciclos cerrados **si existen en datos** y **si se cargan** en el modulo.
+  - Evidencia:
+    - `apps/gold/agro/agroOperationalCycles.js`
+      - `FINISHED_STATUS_VALUES = ['closed', 'lost']`
+      - `refreshData()` llama `fetchDatasetRecords(..., SUBVIEW_FINISHED, FINISHED_STATUS_VALUES)`
+      - `state.datasets[SUBVIEW_FINISHED]` se construye y renderiza con `renderCycleCard()`
+  - **Causa raiz exacta**:
+    - la UI no exponia ningun selector visible para cambiar `currentSubview` de `active` a `finished`;
+    - `renderShell()` no tenia tabs/subvista para `finished`;
+    - `index.html` solo enlazaba `data-agro-view="operational"` sin `data-agro-subview="finished"`;
+    - resultado: los cerrados no se perdian ni en query ni en render interno, sino en la **navegacion visible de la UI**.
+  - **Semantica**:
+    - `open` se mostraba como `Abierto`, lo que era ambiguo para el flujo real;
+    - la correccion minima fue renombrar la lectura visible a **`No pagado`** y mantener `En seguimiento`, `Compensándose`, `Cerrado`, `Perdido`.
+
+- **Ciclos de cultivo**
+  - El bug no estaba en la asociacion ni en la existencia de registros, sino en la **clasificacion activo vs finalizado**.
+  - **Causa raiz exacta**:
+    - `apps/gold/agro/agro.js` → `isCropFinishedCycle()`
+    - la funcion marcaba un ciclo como finalizado por heuristica (`progress >= 100` o end date) aunque el cultivo tuviera un estado activo explicito en `status` / `status_override`;
+    - luego `splitCropsByCycle()` usaba esa salida y mandaba cultivos activos reales al bucket `finished`, dejando la vista de activos en `0`.
+  - En otras palabras:
+    - los registros **si entraban**;
+    - pero se **descartaban del bucket activo** por una regla de clasificacion demasiado agresiva.
+
+### Cambios aplicados
+
+**`apps/gold/agro/agroOperationalCycles.js`**
+- ~L33: `open` pasa de `Abierto` a `No pagado`.
+- ~L1086-L1142: se agrego un switch visible de subvista (`No pagados`, `Cerrados`, `Exportar`) dentro del modulo.
+- ~L1460-L1507: se alineo copy/meta visible y se agrego `renderSubviewSwitch()`.
+- ~L1510-L1590 / ~L1888-L1945: overview y lista ahora re-renderizan el switch con conteos por subvista.
+- ~L1768-L1876: se alinearon empty states, markdown export y labels de `Finalizados` → `Cerrados` donde aplica.
+- ~L2257-L2266: nuevo action `set-subview` para navegar entre `active` / `finished` / `export`.
+
+**`apps/gold/agro/agro-operational-cycles.css`**
+- ~L250-L299: estilos nuevos para el switch de subvista visible, siguiendo tokens y timing del ADN Visual V10.
+
+**`apps/gold/agro/agro.js`**
+- ~L8784-L8790: nuevo set `CROP_ACTIVE_STATUS_TOKENS`.
+- ~L8903-L8927: nueva guardia `hasExplicitActiveCycleStatus()` y ajuste en `isCropFinishedCycle()` para respetar estados activos explicitos cuando no existe cierre real.
+
+### Build status
+
+- `pnpm build:gold` → **OK**
+- `agent-guard: OK`
+- `agent-report-check: OK`
+- `vite build: OK`
+- `check-llms: OK`
+- `check-dist-utf8: OK`
+- Nota: `pnpm` mostro warning de engine por Node `v25.6.0` vs `20.x`, pero el build completo paso.
+
+### QA sugerido
+
+- **Ciclos Operativos**
+  - Abrir `Ciclos Operativos` y verificar que ahora exista selector visible para `No pagados`, `Cerrados` y `Exportar`.
+  - Crear/editar un ciclo con estado `closed` y confirmar que aparece en `Cerrados`.
+  - Confirmar que un ciclo `open` se lee como `No pagado`.
+
+- **Ciclos de cultivo**
+  - Verificar que los 2 ciclos activos reales vuelvan a aparecer en `Ciclos activos`.
+  - Confirmar que un cultivo con estado manual activo no se vaya a `finalizados` solo por progreso/heuristica.
+  - Confirmar que ciclos realmente cerrados o perdidos sigan apareciendo en `Ciclos finalizados`.
+
+---
+
+## Sesion: ordenar y clasificar ciclos operativos + fix de ciclos de cultivo (preparacion 2026-04-06)
+
+### Diagnostico inicial
+
+- El bug visible de `0` en Ciclos de cultivo ya apunta a la capa de clasificacion activo/finalizado en `apps/gold/agro/agro.js`, no a ausencia de registros.
+- En Ciclos Operativos, la data ya trae `crop_id`, `economic_type` y `status`, pero la lista principal sigue renderizando una masa plana en `renderCurrentSubview()` sin separar asociados vs no asociados.
+- `donation` existe en datos y `loss` tambien, pero la lectura visible sigue apoyandose en labels genericos y no en una agrupacion clara por familia madre.
+
+### Hipotesis de causa raiz
+
+- El `0` de Ciclos de cultivo nace en la agregacion/clasificacion que decide bucket activo vs cerrado.
+- La confusion de Ciclos Operativos nace en render y presentacion: la query no pierde la data, pero la UI no la ordena por `crop_id` ni destaca suficientemente `No pagado`, `Pagado`, `Donacion/Regalo` y `Perdida`.
+- No parece necesario rediseñar arquitectura ni rehacer persistencia; el fix probable vive en `agroOperationalCycles.js`, su CSS asociado y solo wiring minimo en `agro.js` si la evidencia lo confirma.
+
+### Plan minimo
+
+1. Confirmar con evidencia la funcion exacta que produce el `0` en Ciclos de cultivo.
+2. Agrupar la lista de Ciclos Operativos en apartados `Asociados al cultivo` y `No asociados al cultivo` usando `crop_id` existente.
+3. Ajustar tags visibles para estados y tipos reales sin cambiar la taxonomia interna.
+4. Cerrar con actualizacion final del reporte y `pnpm build:gold`.
+
+---
+
+## Sesion: ordenar y clasificar ciclos operativos + fix de ciclos de cultivo (2026-04-06)
+
+### Diagnostico
+
+- **Ciclos de cultivo**
+  - Los registros activos **si existen**.
+  - El `0` visible nace en **clasificacion/agregacion**, no en query ni en ausencia de datos.
+  - Funcion exacta: `apps/gold/agro/agro.js` -> `isCropFinishedCycle()`.
+  - Flujo exacto:
+    - `splitCropsByCycle()` separa activos vs finalizados.
+    - `isCropFinishedCycle()` marcaba como finalizado por heuristica de progreso/fecha.
+    - si el cultivo tenia estado activo explicito, igual podia caer en `finished`.
+    - resultado: la vista de `Ciclos de cultivo` terminaba en `0` activos aunque los cultivos siguieran vivos.
+
+- **Ciclos Operativos**
+  - La data ya distingue `crop_id`, `economic_type` y `status`.
+  - No habia perdida de datos en query.
+  - La mezcla nacía en **render/clasificacion visible**:
+    - `apps/gold/agro/agroOperationalCycles.js` -> `renderCurrentSubview()`
+    - la lista pintaba `dataset.cycles.map(renderCycleCard)` como una sola masa plana;
+    - no separaba `Asociados al cultivo` vs `No asociados al cultivo`;
+    - `donation` existia en datos, pero no se destacaba con una lectura visible tan clara como `Donación / Regalo`;
+    - `closed` existia, pero la lectura visible quedaba más técnica que operativa.
+
+### Cambios aplicados
+
+**`apps/gold/agro/agro.js`**
+- ~L8784-L8790: se añadió `CROP_ACTIVE_STATUS_TOKENS`.
+- ~L8903-L8931: `hasExplicitActiveCycleStatus()` y guardia en `isCropFinishedCycle()` para no mandar a `finished` un cultivo con estado activo explícito sin cierre real.
+
+**`apps/gold/agro/agroOperationalCycles.js`**
+- ~L16-L38: labels visibles ajustados a `No pagado`, `Pagado` y `Donación / Regalo` sin cambiar taxonomía interna.
+- ~L528-L556: `createDatasetSummary()` ahora calcula también `unlinkedCount`.
+- ~L1461-L1507: copy de subview alineado a `Pagados / pérdidas` y switch visible actualizado.
+- ~L1545-L1603: nuevas helpers `buildTypeClass()`, `buildCycleCropText()`, `splitCyclesByAssociation()`, `renderCycleFamilySection()` y `renderGroupedCycleList()`.
+- ~L1688-L1711: overview ahora muestra `Asociados al cultivo` y `No asociados`.
+- ~L1800-L1866: tarjetas con chips más claros para estado y tipo (`No pagado`, `Pagado`, `Donación / Regalo`, `Pérdida`) y soporte visible de asociación al cultivo.
+- ~L1893-L1950: export markdown alineado a la nueva lectura visible y a la familia `Asociado / No asociado`.
+- ~L2041-L2052: la lista ya no se renderiza plana; ahora se agrupa por familia madre usando `crop_id`.
+
+**`apps/gold/agro/agro-operational-cycles.css`**
+- ~L549-L620: estilos mínimos para apartados `Asociados al cultivo` / `No asociados al cultivo`.
+- ~L689-L715: chips semánticos por tipo económico (`income`, `donation`, `loss`, `expense`).
+- ~L1031-L1083: responsive para la nueva agrupación sin romper desktop/mobile.
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+- `agent-guard: OK`
+- `agent-report-check: OK`
+- `vite build: OK`
+- `check-llms: OK`
+- `check-dist-utf8: OK`
+- Warning no bloqueante: engine mismatch por Node `v25.6.0` vs `20.x`.
+
+### QA sugerido
+
+- Verificar en `Ciclos de cultivo` que los cultivos activos reales vuelvan a aparecer y no queden en `0`.
+- Verificar en `Ciclos Operativos` que la lista quede separada en `Asociados al cultivo` y `No asociados al cultivo`.
+- Confirmar lectura visible de chips: `No pagado`, `Pagado`, `Donación / Regalo`, `Pérdida`.
+- Confirmar que un ciclo con `crop_id` inexistente siga quedando en la familia asociada y se lea como `Cultivo asociado no disponible`, en lugar de confundirse con `Sin asociar`.
+
+---
+
+## Sesion: separar no asociados + sincronizar ciclos operativos con ciclos de cultivo (preparacion 2026-04-06)
+
+### Diagnostico inicial
+
+- La separación actual de `Asociados al cultivo` y `No asociados al cultivo` ya existe a nivel de lista, pero todavía vive dentro del mismo bloque visual principal; la captura confirma que sigue sintiéndose mezclada.
+- La card de `Ciclos activos` sigue mostrando `Cartera cerrada`, y por ahora no hay evidencia de que esa lectura consuma `agro_operational_cycles` por `crop_id`.
+- El siguiente paso es verificar si el problema restante vive en `renderGroupedCycleList()` / CSS del módulo operativo y en la construcción de cards de cultivo (`agrociclos.js` / `agro.js`).
+
+### Hipotesis de causa raiz
+
+- La mezcla de `No asociados` ya no es de query ni de clasificación base, sino de **estructura visual/render**.
+- La falta de `Cartera operativa abierta/cerrada` en cards de cultivo probablemente nace en la capa que arma los datos del cultivo, que hoy parece usar solo su propio desglose financiero y no `agro_operational_cycles`.
+- El fix mínimo probablemente requiere tocar `agroOperationalCycles.js`, su CSS y la capa que mapea datos de cultivo hacia `agrociclos.js`, usando `crop_id` como puente.
+
+### Plan minimo
+
+1. Confirmar la función exacta que todavía mezcla visualmente `No asociados al cultivo`.
+2. Confirmar dónde se construye hoy la lectura `Cartera cerrada` de la card de cultivo.
+3. Incorporar la señal de ciclos operativos asociados con el menor diff posible.
+4. Cerrar reporte y correr `pnpm build:gold`.
+
+---
+
+## Sesion: separar no asociados + sincronizar ciclos operativos con ciclos de cultivo (cierre 2026-04-06)
+
+### Diagnostico final
+
+- La mezcla restante de `No asociados al cultivo` no era de query ni de clasificación base; era de **render/estructura visual** en `apps/gold/agro/agroOperationalCycles.js` -> `renderGroupedCycleList()`, que seguía pintando ambas familias dentro del mismo flujo visual continuo.
+- La falta de sincronización con `Ciclos activos` / `Ciclos finalizados` no venía de `agro.js`; la capa que mostraba `Cartera cerrada` seguía viviendo en `apps/gold/agro/agrociclos.js` -> `resolvePortfolioStatus()`, y solo leía `fiadosUsd`.
+- Los ciclos operativos asociados por `crop_id` sí existen en datos y ya estaban cargados por `agroOperationalCycles.js`; lo que faltaba era exponer un agregado reutilizable por cultivo y notificar a las cards cuando ese snapshot estuviera listo.
+
+### Cambios aplicados
+
+**`apps/gold/agro/agroOperationalCycles.js`**
+- ~L8, ~L102, ~L142-L204: se añadió snapshot de cartera operativa por `crop_id`, con `getPortfolioStateByCrop()` y evento `agro:operational-portfolio-updated`.
+- ~L1659-L1684: `renderGroupedCycleList()` ahora inserta un separador visual explícito antes de `No asociados al cultivo`.
+- ~L2306-L2343: `refreshData()` reconstruye la cartera por cultivo y emite el evento al terminar.
+- ~L2610-L2632 y ~L2678-L2681: el debug snapshot y la API global exponen la nueva lectura por `crop_id`.
+
+**`apps/gold/agro/agrociclos.js`**
+- ~L6-L114: la card de cultivo ahora consulta la cartera operativa asociada vía `window.YGAgroOperationalCycles.getPortfolioStateByCrop()` y escucha el evento de actualización para resincronizar badges ya renderizados.
+- ~L231-L262: `renderCard()` pasó de leer solo `fiadosUsd` a resolver `Cartera operativa abierta/cerrada`, con fallback al comportamiento anterior si el snapshot aún no existe.
+- ~L351-L380: `renderCycleCards()` enlaza y aplica la resincronización al terminar el render, tanto para activos como para finalizados.
+
+**`apps/gold/agro/agro-operational-cycles.css`**
+- ~L548-L598: se añadió un separador visual real entre familias y un tratamiento visual diferenciado para la sección `No asociados al cultivo`, sin romper el ADN V10.
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+- `agent-guard: OK`
+- `agent-report-check: OK`
+- `vite build: OK`
+- `check-llms: OK`
+- `check-dist-utf8: OK`
+- Warning no bloqueante: engine mismatch por Node `v25.6.0` vs `20.x`.
+
+### QA sugerido
+
+- Verificar en `Ciclos Operativos` que `No asociados al cultivo` ya se lea como apartado independiente y no como continuación del bloque asociado.
+- Verificar en `Ciclos activos` y `Ciclos finalizados` que la badge cambie entre `Cartera operativa abierta` y `Cartera operativa cerrada` según existan movimientos operativos pendientes asociados por `crop_id`.
+- Confirmar que `Donación / Regalo`, `Gasto`, `Pagado` y `No pagado` sigan visibles sin pisarse entre sí.

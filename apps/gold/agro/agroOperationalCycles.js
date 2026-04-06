@@ -5,6 +5,7 @@ const SUBVIEW_FINISHED = 'finished';
 const SUBVIEW_EXPORT = 'export';
 const CROPS_READY_EVENT = 'AGRO_CROPS_READY';
 const VIEW_CHANGED_EVENT = 'agro:shell:view-changed';
+const OPERATIONAL_PORTFOLIO_UPDATED_EVENT = 'agro:operational-portfolio-updated';
 const EMPTY_AMOUNT_LABEL = '📝 Monto no anotado';
 const EMPTY_BALANCE_LABEL = '📝 Sin balance monetario';
 
@@ -98,6 +99,7 @@ const state = {
     userId: '',
     crops: [],
     datasets: createDatasetsState(),
+    portfolioByCrop: new Map(),
     cycleIndex: new Map(),
     initialized: false,
     loadedOnce: false,
@@ -135,6 +137,77 @@ function createDatasetsState() {
         [SUBVIEW_ACTIVE]: createDatasetState(),
         [SUBVIEW_FINISHED]: createDatasetState()
     };
+}
+
+function createClosedPortfolioState(cropId = '') {
+    return {
+        cropId: normalizeId(cropId),
+        totalCycles: 0,
+        openCycles: 0,
+        closedCycles: 0,
+        lostCycles: 0,
+        status: 'closed',
+        tone: 'closed',
+        label: 'Cartera operativa cerrada'
+    };
+}
+
+function serializePortfolioState(entry) {
+    const safeEntry = entry && typeof entry === 'object'
+        ? entry
+        : createClosedPortfolioState('');
+    return {
+        cropId: normalizeId(safeEntry.cropId),
+        totalCycles: Number(safeEntry.totalCycles || 0),
+        openCycles: Number(safeEntry.openCycles || 0),
+        closedCycles: Number(safeEntry.closedCycles || 0),
+        lostCycles: Number(safeEntry.lostCycles || 0),
+        status: safeEntry.openCycles > 0 ? 'open' : 'closed',
+        tone: safeEntry.openCycles > 0 ? 'active' : 'closed',
+        label: safeEntry.openCycles > 0 ? 'Cartera operativa abierta' : 'Cartera operativa cerrada'
+    };
+}
+
+function rebuildPortfolioByCrop() {
+    const index = new Map();
+    const registerCycle = (cycle) => {
+        const cropId = normalizeId(cycle?.crop_id);
+        if (!cropId) return;
+
+        const current = index.get(cropId) || createClosedPortfolioState(cropId);
+        current.totalCycles += 1;
+
+        if (ACTIVE_STATUS_VALUES.includes(normalizeToken(cycle?.status))) {
+            current.openCycles += 1;
+        } else if (normalizeToken(cycle?.status) === 'lost') {
+            current.lostCycles += 1;
+        } else {
+            current.closedCycles += 1;
+        }
+
+        index.set(cropId, current);
+    };
+
+    state.datasets[SUBVIEW_ACTIVE].cycles.forEach(registerCycle);
+    state.datasets[SUBVIEW_FINISHED].cycles.forEach(registerCycle);
+    state.portfolioByCrop = index;
+}
+
+function getPortfolioStateByCrop(cropId) {
+    const normalizedCropId = normalizeId(cropId);
+    if (!normalizedCropId) return null;
+    return serializePortfolioState(
+        state.portfolioByCrop.get(normalizedCropId) || createClosedPortfolioState(normalizedCropId)
+    );
+}
+
+function emitPortfolioSnapshot() {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(new CustomEvent(OPERATIONAL_PORTFOLIO_UPDATED_EVENT, {
+        detail: {
+            portfolioByCrop: Array.from(state.portfolioByCrop.values()).map((entry) => serializePortfolioState(entry))
+        }
+    }));
 }
 
 function createDraftValues(overrides = {}) {
@@ -1593,6 +1666,15 @@ function renderGroupedCycleList(cycles = []) {
             copy: 'Tienen crop_id y deben reflejarse también en la lectura de Ciclos de cultivo.',
             cycles: linked
         }),
+        linked.length && unlinked.length
+            ? `
+                <div class="agro-operational-family-break" aria-hidden="true">
+                    <span class="agro-operational-family-break__line"></span>
+                    <span class="agro-operational-family-break__label">Movimientos generales fuera del cultivo</span>
+                    <span class="agro-operational-family-break__line"></span>
+                </div>
+            `
+            : '',
         renderCycleFamilySection({
             familyKey: 'unlinked',
             title: '🌾 No asociados al cultivo',
@@ -2226,6 +2308,7 @@ async function refreshData(options = {}) {
         state.datasets[SUBVIEW_ACTIVE].summary = createDatasetSummary(state.datasets[SUBVIEW_ACTIVE].cycles);
         state.datasets[SUBVIEW_FINISHED].cycles = buildCyclesFromRecords(finishedRecords);
         state.datasets[SUBVIEW_FINISHED].summary = createDatasetSummary(state.datasets[SUBVIEW_FINISHED].cycles);
+        rebuildPortfolioByCrop();
         rebuildCycleIndex();
         state.loadedOnce = true;
 
@@ -2246,6 +2329,7 @@ async function refreshData(options = {}) {
         state.schemaMissing = isSchemaMissingError(error);
         state.crops = [];
         state.datasets = createDatasetsState();
+        state.portfolioByCrop = new Map();
         rebuildCycleIndex();
         renderWizard();
         renderOverview();
@@ -2256,6 +2340,7 @@ async function refreshData(options = {}) {
         setControlsDisabled(state.schemaMissing || state.saving);
         renderCurrentSubview();
         renderOverview();
+        emitPortfolioSnapshot();
         if (state.needsRefresh) {
             state.needsRefresh = false;
             window.setTimeout(() => refreshData(), 0);
@@ -2543,6 +2628,7 @@ function buildDebugSnapshot() {
             active: buildDatasetSnapshot(SUBVIEW_ACTIVE),
             finished: buildDatasetSnapshot(SUBVIEW_FINISHED)
         },
+        portfolioByCrop: Array.from(state.portfolioByCrop.values()).map((entry) => serializePortfolioState(entry)),
         markdownPreview: buildExportMarkdown()
     };
 }
@@ -2592,6 +2678,7 @@ function exposeGlobalApi() {
         init: initAgroOperationalCycles,
         refresh: () => refreshData(),
         getSnapshot: buildDebugSnapshot,
+        getPortfolioStateByCrop,
         createFromPayload,
         updateById,
         deleteById,
