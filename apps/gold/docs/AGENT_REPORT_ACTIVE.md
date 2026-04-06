@@ -9530,3 +9530,46 @@ La correccion necesaria estaba solo en `apps/gold/agro/agro-cartera-viva-view.js
 - Verificar en `Ciclos Operativos` que `No asociados al cultivo` ya se lea como apartado independiente y no como continuación del bloque asociado.
 - Verificar en `Ciclos activos` y `Ciclos finalizados` que la badge cambie entre `Cartera operativa abierta` y `Cartera operativa cerrada` según existan movimientos operativos pendientes asociados por `crop_id`.
 - Confirmar que `Donación / Regalo`, `Gasto`, `Pagado` y `No pagado` sigan visibles sin pisarse entre sí.
+
+---
+
+## Sesion: reforzar separacion visual + chips semanticos + guardia portfolio (2026-04-06)
+
+### Diagnostico
+
+- **Separacion visual**: `renderGroupedCycleList()` ya generaba dos secciones separadas con un break divider, pero el gap era de solo `1rem`, el divider tenia `1px` y `opacity: 0.82`, y la seccion `unlinked` era visualmente casi identica a `linked`. Resultado: ambas familias se sentian mezcladas en la lectura.
+- **Chips semanticos**: Cada tarjeta individual ya mostraba badges de estado y tipo, pero las cabeceras de familia no tenian resumen (cuantos No pagado, cuantos Pagado, cuantas Donaciones, cuantos Gastos). El usuario necesitaba una lectura rapida sin abrir cada card.
+- **Badge de cartera en crop cards**: `getPortfolioStateByCrop()` hacia fallback a `createClosedPortfolioState()` cuando el cultivo no tenia ciclos operativos. Resultado: TODOS los cultivos mostraban `Cartera operativa cerrada` aunque no tuvieran ningun ciclo operativo asociado, lo cual era engañoso.
+
+### Cambios aplicados
+
+**`apps/gold/agro/agro-operational-cycles.css`**
+- `.agro-operational-list`: gap de `1rem` a `1.8rem`
+- `.agro-operational-family-break`: padding de `0.1rem` a `0.6rem`
+- `.agro-operational-family-break__line`: height de `1px` a `2px`, gradiente mas visible (`56%` vs `42%`)
+- `.agro-operational-family-break__label`: font-size de `0.62rem` a `0.68rem`, `opacity: 1`, `color: var(--gold-4)`, `white-space: nowrap`
+- `.agro-operational-family-section[data-family='unlinked']`: borde dashed de `2px`, colores levemente mas visibles
+- Nuevos estilos: `.agro-operational-family-section__chips`, `.agro-operational-family-chip` con variantes `.is-open`, `.is-closed`, `.is-donation`, `.is-expense`, `.is-income`, `.is-loss` — todos con tokens del ADN V10
+
+**`apps/gold/agro/agroOperationalCycles.js`**
+- `getPortfolioStateByCrop()`: ahora retorna `null` si el cultivo no tiene ciclos operativos en el mapa (antes hacia fallback a estado cerrado vacio)
+- Nuevas funciones: `buildFamilySummaryChips()` y `renderFamilySummaryChips()` — generan chips semanticos por familia con conteo de estados y tipos
+- `renderCycleFamilySection()`: ahora incluye `renderFamilySummaryChips(cycles)` en la cabecera de cada seccion
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+- `agent-guard: OK`
+- `agent-report-check: OK`
+- `vite build: OK`
+- `check-llms: OK`
+- `check-dist-utf8: OK`
+- Warning no bloqueante: engine mismatch por Node `v25.6.0` vs `20.x`
+
+### QA sugerido
+
+- Verificar que `No asociados al cultivo` ahora se lea como seccion claramente separada (gap mayor, divider mas grueso, borde dashed mas visible)
+- Verificar que ambas cabeceras de familia muestren chips con conteos: `No pagado: X`, `Pagado: X`, `Donacion / Regalo: X`, `Gasto: X`
+- Verificar que cultivos SIN ciclos operativos ya no muestren badge `Cartera operativa cerrada`
+- Verificar que cultivos CON ciclos operativos asociados sigan mostrando `Cartera operativa abierta` o `Cartera operativa cerrada` segun corresponda
+- Confirmar que el ADN V10 se respeta (tokens, tipografia, breakpoints)

@@ -196,9 +196,9 @@ function rebuildPortfolioByCrop() {
 function getPortfolioStateByCrop(cropId) {
     const normalizedCropId = normalizeId(cropId);
     if (!normalizedCropId) return null;
-    return serializePortfolioState(
-        state.portfolioByCrop.get(normalizedCropId) || createClosedPortfolioState(normalizedCropId)
-    );
+    const entry = state.portfolioByCrop.get(normalizedCropId);
+    if (!entry) return null;
+    return serializePortfolioState(entry);
 }
 
 function emitPortfolioSnapshot() {
@@ -1636,6 +1636,46 @@ function splitCyclesByAssociation(cycles = []) {
     return { linked, unlinked };
 }
 
+function buildFamilySummaryChips(cycles) {
+    let openCount = 0;
+    let closedCount = 0;
+    let donationCount = 0;
+    let expenseCount = 0;
+    let incomeCount = 0;
+    let lossCount = 0;
+
+    (Array.isArray(cycles) ? cycles : []).forEach((cycle) => {
+        const status = normalizeToken(cycle?.status);
+        if (ACTIVE_STATUS_VALUES.includes(status)) openCount += 1;
+        else if (status === 'closed') closedCount += 1;
+
+        const type = normalizeToken(cycle?.economic_type);
+        if (type === 'donation') donationCount += 1;
+        else if (type === 'expense') expenseCount += 1;
+        else if (type === 'income') incomeCount += 1;
+        else if (type === 'loss') lossCount += 1;
+    });
+
+    const chips = [];
+    if (openCount > 0) chips.push({ label: `No pagado: ${openCount}`, cls: 'is-open' });
+    if (closedCount > 0) chips.push({ label: `Pagado: ${closedCount}`, cls: 'is-closed' });
+    if (donationCount > 0) chips.push({ label: `Donacion / Regalo: ${donationCount}`, cls: 'is-donation' });
+    if (expenseCount > 0) chips.push({ label: `Gasto: ${expenseCount}`, cls: 'is-expense' });
+    if (incomeCount > 0) chips.push({ label: `Ingreso: ${incomeCount}`, cls: 'is-income' });
+    if (lossCount > 0) chips.push({ label: `Perdida: ${lossCount}`, cls: 'is-loss' });
+    return chips;
+}
+
+function renderFamilySummaryChips(cycles) {
+    const chips = buildFamilySummaryChips(cycles);
+    if (chips.length === 0) return '';
+    return `
+        <div class="agro-operational-family-section__chips">
+            ${chips.map((chip) => `<span class="agro-operational-family-chip ${chip.cls}">${escapeHtml(chip.label)}</span>`).join('')}
+        </div>
+    `;
+}
+
 function renderCycleFamilySection({ familyKey, title, copy, cycles }) {
     if (!Array.isArray(cycles) || cycles.length === 0) return '';
 
@@ -1646,6 +1686,7 @@ function renderCycleFamilySection({ familyKey, title, copy, cycles }) {
                     <p class="agro-operational-family-section__eyebrow">Ciclos visibles</p>
                     <h4 class="agro-operational-family-section__title">${escapeHtml(title)}</h4>
                     <p class="agro-operational-family-section__copy">${escapeHtml(copy)}</p>
+                    ${renderFamilySummaryChips(cycles)}
                 </div>
                 <span class="agro-operational-family-section__count">${cycles.length}</span>
             </div>
