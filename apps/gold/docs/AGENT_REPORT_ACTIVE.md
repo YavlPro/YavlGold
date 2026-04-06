@@ -8961,6 +8961,23 @@ order by r.display_name asc;
 
 ---
 
+## Preparación auditoría: cartera viva por cultivo activo vs historial global (2026-04-05)
+
+### Diagnóstico inicial
+- El síntoma ya no apunta solo al detalle. Hay señales de desalineación entre la agregación buyer-centric por cultivo, la lectura de saldo abierto vigente y el historial comercial del mismo comprador.
+- El caso de `jose luis` en `Batata amarilla 2` sugiere que la card podría estar mezclando historia global del buyer o perdiendo parte del historial del cultivo activo.
+
+### Hipótesis de causa raíz
+- La vista puede estar agregando por `buyer` global y luego aplicando un filtro de visibilidad por cultivo, en vez de construir la lectura económica directamente por `buyer + crop_id`.
+- También es posible que el saldo abierto actual y el cobrado histórico del mismo cultivo se calculen con fuentes distintas, dejando la card y el detalle en semánticas diferentes.
+
+### Plan mínimo
+- Auditar la construcción de summary rows y cards buyer-centric en `agro-cartera-viva-view.js` y dependencias directas.
+- Verificar qué rows reales entran para `jose luis`, `Gollo` y `Yony` cuando el cultivo activo es `Batata amarilla 2`.
+- Corregir únicamente la capa exacta donde se mezcle otro cultivo o donde se pierda el historial válido del cultivo activo.
+
+---
+
 ## Sesion: Diagnostico ADN Visual V10 — Implementacion correctiva (2026-04-05)
 
 ### Diagnostico
@@ -9170,3 +9187,103 @@ El non-debt income de jose luis ES accesible bajo "Vista general" con scope 'tod
 - **jose luis → Ver detalle desde cualquier tab**: debe abrir con scope 'todos'. Bajo "Vista general", debe mostrar chips "Fiados (N)" + "Cobros (1)" + "Todo (N+1)". El "Ingreso aparte USD 347.65" debe ser visible.
 - **jose luis → Ver detalle bajo "Sacos"**: chips de scope NO deben mostrar "Cobros" (el ingreso no tiene unidad operativa). Solo "Fiados" y "Todo" con conteos correctos.
 - **Buyer con cobros operativos (origin_table='agro_pending') bajo "Sacos"**: chip "Cobros" debe aparecer con conteo correcto.
+
+---
+
+## Sesion: Cartera Viva crop-scoped por cultivo activo (2026-04-05)
+
+### Diagnostico
+
+La card buyer-centric de Cartera Viva no estaba agregando por `buyer + crop_id`. La causa raiz vivia en `apps/gold/agro/agro-cartera-viva-view.js`: `loadSummary()` seguia consumiendo el RPC global `agro_buyer_portfolio_summary_v1()` y `getCropScopedRows()` solo filtraba visibilidad por cultivo, pero no recalculaba `pending / paid / loss / non_debt` dentro del cultivo activo.
+
+Resultado: con un cultivo seleccionado, la vista mezclaba:
+- progreso operativo crop-scoped;
+- totales financieros globales del comprador.
+
+Evidencia validada contra la data real de `Batata amarilla 2`:
+- `Gollo` → `0` pendiente vivo, `9` sacos cobrados en ese cultivo;
+- `Yony` → `2` sacos pendientes, `2` sacos cobrados;
+- `jose luis` → `4` sacos pendientes, `0` cobros derivados de fiado en ese cultivo.
+
+El `5 / 19 / 32` global de `jose luis` pertenecia a otros cultivos y estaba contaminando la lectura del cultivo seleccionado.
+
+### Cambios aplicados
+
+**`apps/gold/agro/agro-cartera-viva-view.js`**
+- Se extendio `fetchOperationalProgressMap()` para reutilizar las mismas rows crop-scoped y construir un `summaryMap` financiero por buyer scope dentro del cultivo activo.
+- Se agrego overlay crop-scoped sobre `summaryRows` en `getCropScopedRows()`, de modo que card, categorias y header ya no lean totales globales cuando hay cultivo seleccionado.
+- `getSelectedBuyerRow()` ahora sale de esa misma vista crop-scoped, alineando el detalle abierto desde la card con el cultivo activo.
+- `renderScopeNote()` se ajusto para reflejar que resumen, lista y detalle ya siguen el cultivo seleccionado.
+
+### Build status
+- `pnpm build:gold` → **OK** (exit 0)
+- `agent-guard: OK`
+- `agent-report-check: OK`
+- `vite build: OK`
+- `check-llms: OK`
+- `check-dist-utf8: OK`
+
+### QA sugerido
+- En `Batata amarilla 2`, `Gollo` no debe seguir en `Fiados`; debe reflejarse como historial cobrado del mismo cultivo.
+- En `Batata amarilla 2`, `Yony` debe quedar con `2` sacos pendientes y `2` cobrados.
+- En `Batata amarilla 2`, `jose luis` debe quedar con `4` sacos pendientes y `0` cobrados si no aparecen nuevos rows de pago dentro de ese cultivo.
+- Al abrir `Ver detalle` desde la card del cultivo seleccionado, el header y el timeline deben seguir ese mismo crop, sin arrastrar totales globales de otro cultivo.
+
+---
+
+## Preparacion: badges vivos y microtags en Cartera Viva (2026-04-05)
+
+### Diagnostico inicial
+- La agregacion crop-scoped ya quedo alineada, pero la semantica del badge principal todavia mezcla estado vivo con lectura de categoria.
+- `Cobro parcial` no refleja bien el lenguaje del producto y ademas no debe dispararse por `non_debt_income`.
+
+### Hipotesis
+- El ajuste debe vivir en `apps/gold/agro/agro-cartera-viva-view.js`, concentrado en `resolveBuyerStatus`, `resolveBuyerStatusForCategory` y `renderSupportChips`.
+- El badge principal debe hablar del presente del cultivo activo; el contexto extra debe ir en chips secundarios.
+
+### Plan minimo
+- Renombrar la lectura operativa `pending + paid operativo` a `Cobro en proceso`.
+- Mantener `Fiado activo` cuando solo haya pendiente vivo aunque exista ingreso aparte.
+- Convertir `Ingreso aparte` a microtag `Ingreso registrado`.
+- Añadir microtag de progreso tipo `2 de 4 sacos cobrados` cuando haya cobro operativo parcial.
+
+---
+
+## Sesion: badges vivos y microtags en Cartera Viva (2026-04-05)
+
+### Diagnostico
+
+Con la agregacion crop-scoped ya corregida, el siguiente ruido quedaba en la semantica visual de la card:
+- el badge principal todavia podia hablar desde la categoria o desde `paid_total`, no desde el estado vivo real del cultivo;
+- `Cobro parcial` no usaba el lenguaje del producto;
+- `Ingreso aparte` quedaba demasiado mezclado con la lectura de cartera.
+
+La correccion necesaria estaba solo en `apps/gold/agro/agro-cartera-viva-view.js`, concentrada en:
+- `resolveBuyerStatus()`
+- `resolveBuyerStatusForCategory()`
+- `renderSupportChips()`
+
+### Cambios aplicados
+
+**`apps/gold/agro/agro-cartera-viva-view.js`**
+- Se agrego `getOperationalStatusSnapshot()` para distinguir cobro operativo real de ingreso aparte.
+- `pending + paid operativo` ahora se lee como **`Cobro en proceso`**.
+- `pending + ingreso aparte sin cobro operativo` se mantiene como **`Fiado activo`**.
+- `paid_total` sin cobro operativo ahora se lee como **`Ingreso registrado`**.
+- `loss_total` sin pendiente pasa a **`Con pérdida`** si coexistio con ingreso en ese cultivo.
+- El chip secundario `Ingreso aparte` paso a **`Ingreso registrado`**.
+- Se agrego microtag de progreso tipo **`2 de 4 sacos cobrados`** cuando hay cobro operativo parcial visible en la familia activa.
+
+### Build status
+- `pnpm build:gold` → **OK** (exit 0)
+- `agent-guard: OK`
+- `agent-report-check: OK`
+- `vite build: OK`
+- `check-llms: OK`
+- `check-dist-utf8: OK`
+
+### QA sugerido
+- `Yony` en el cultivo activo debe mostrar badge **`Cobro en proceso`** y chip de progreso parcial.
+- `jose luis` con pendiente vivo e ingreso aparte, pero sin cobro operativo, debe mostrar **`Fiado activo`** y chip **`Ingreso registrado`**.
+- `Gollo` ya sin pendiente vivo no debe volver a `Fiado activo`; debe quedar en lectura de cierre del cultivo.
+- Casos con perdida dentro del cultivo deben mostrar **`Con pérdida`** cuando aplique.

@@ -86,6 +86,7 @@ let visibleCropScopeError = '';
 let visibleCropScopeRequestId = 0;
 const sessionCropBuyerScopeKeys = new Map();
 let externalRefreshTimer = 0;
+let cropScopedSummaryMap = new Map();
 let operationalProgressMap = new Map();
 let operationalProgressFamilyMap = new Map();
 
@@ -609,12 +610,132 @@ function resolveUnifiedOperationalProgress(bucket) {
     };
 }
 
+function roundPortfolioMetric(value, decimals = 2) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return 0;
+    const precision = 10 ** decimals;
+    return Math.round(numeric * precision) / precision;
+}
+
+function readPortfolioAmount(row) {
+    const amountUsd = Number(row?.monto_usd);
+    if (Number.isFinite(amountUsd)) return amountUsd;
+    const amount = Number(row?.monto);
+    return Number.isFinite(amount) ? amount : 0;
+}
+
+function createEmptyCropScopedSummaryBucket() {
+    return {
+        credited_total: 0,
+        paid_total: 0,
+        loss_total: 0,
+        transferred_total: 0,
+        pending_total: 0,
+        review_required_total: 0,
+        legacy_unclassified_total: 0,
+        non_debt_income_total: 0,
+        review_required_count: 0,
+        legacy_unclassified_count: 0
+    };
+}
+
+function ensureCropScopedSummaryBucket(summaryMapTarget, row) {
+    const scopeKey = buildBuyerPortfolioScopeKey(row);
+    if (!scopeKey) return null;
+    if (!summaryMapTarget.has(scopeKey)) {
+        summaryMapTarget.set(scopeKey, createEmptyCropScopedSummaryBucket());
+    }
+    return summaryMapTarget.get(scopeKey);
+}
+
+function appendCropScopedReview(summaryMapTarget, row) {
+    const matchStatus = String(row?.buyer_match_status || '').trim().toLowerCase();
+    if (!matchStatus || matchStatus === 'matched') return;
+
+    const bucket = ensureCropScopedSummaryBucket(summaryMapTarget, row);
+    if (!bucket) return;
+
+    const amount = readPortfolioAmount(row);
+    if (matchStatus === 'legacy_review_required') {
+        bucket.review_required_total += amount;
+        bucket.review_required_count += 1;
+        return;
+    }
+
+    if (matchStatus === 'legacy_unclassified') {
+        bucket.legacy_unclassified_total += amount;
+        bucket.legacy_unclassified_count += 1;
+    }
+}
+
+function resolveCropScopedGlobalStatus(bucket, clientStatus = 'active') {
+    const safeClientStatus = String(clientStatus || 'active').trim().toLowerCase();
+    if (safeClientStatus === 'archived') return 'Archivado';
+
+    const credited = Number(bucket?.credited_total || 0);
+    const paid = Number(bucket?.paid_total || 0);
+    const loss = Number(bucket?.loss_total || 0);
+    const transferred = Number(bucket?.transferred_total || 0);
+    const pending = Number(bucket?.pending_total || 0);
+    const reviewRequired = Number(bucket?.review_required_total || 0);
+    const legacyUnclassified = Number(bucket?.legacy_unclassified_total || 0);
+    const visibleBalance = credited - paid - loss - transferred;
+
+    if (pending > 0 && paid <= 0 && loss <= 0 && transferred <= 0) return 'Fiado';
+    if (
+        credited > 0
+        && pending <= 0
+        && visibleBalance >= 0
+        && reviewRequired <= 0
+        && legacyUnclassified <= 0
+    ) {
+        return 'Pagado';
+    }
+    if (
+        credited <= 0
+        && paid <= 0
+        && loss <= 0
+        && pending <= 0
+        && reviewRequired <= 0
+        && legacyUnclassified <= 0
+    ) {
+        return 'Sin movimientos';
+    }
+    return 'Mixto';
+}
+
+function buildCropScopedSummaryOverlay(row, bucket = null) {
+    const safeBucket = bucket && typeof bucket === 'object'
+        ? bucket
+        : createEmptyCropScopedSummaryBucket();
+    const credited = Number(safeBucket.credited_total || 0);
+    const paid = Number(safeBucket.paid_total || 0);
+    const loss = Number(safeBucket.loss_total || 0);
+    const transferred = Number(safeBucket.transferred_total || 0);
+    const pending = Number(safeBucket.pending_total || 0);
+    const visibleBalance = credited - paid - loss - transferred;
+    const compliance = credited <= 0 || visibleBalance < 0
+        ? null
+        : roundPortfolioMetric((paid / credited) * 100, 2);
+
+    return normalizeBuyerPortfolioSummaryRow({
+        ...row,
+        ...safeBucket,
+        compliance_percent: compliance,
+        global_status: resolveCropScopedGlobalStatus(safeBucket, row?.client_status),
+        balance_gap_total: roundPortfolioMetric(pending - visibleBalance, 2),
+        requires_review: Number(safeBucket.review_required_total || 0) > 0
+            || Number(safeBucket.legacy_unclassified_total || 0) > 0
+            || visibleBalance < 0
+    });
+}
+
 async function fetchOperationalProgressMap(supabaseClient, cropId = null) {
     const safeCropId = normalizeCropId(cropId);
-    const baseColumns = 'buyer_id,buyer_group_key,unit_type,unit_qty,quantity_kg';
+    const baseColumns = 'buyer_id,buyer_group_key,unit_type,unit_qty,quantity_kg,monto,monto_usd,buyer_match_status';
     const pendingQuery = supabaseClient
         .from('agro_pending')
-        .select(`${baseColumns},transfer_state,crop_id`)
+        .select(`${baseColumns},transfer_state,transferred_to,crop_id`)
         .is('deleted_at', null)
         .is('reverted_at', null);
     const incomeQuery = supabaseClient
@@ -644,23 +765,71 @@ async function fetchOperationalProgressMap(supabaseClient, cropId = null) {
 
     const nextMap = new Map();
     const nextFamilyMap = new Map();
+    const nextSummaryMap = new Map();
 
     (Array.isArray(pendingResult?.data) ? pendingResult.data : []).forEach((row) => {
-        if (String(row?.transfer_state || 'active').trim().toLowerCase() !== 'active') return;
+        const transferState = String(row?.transfer_state || 'active').trim().toLowerCase();
+        const matchStatus = String(row?.buyer_match_status || '').trim().toLowerCase();
+        if (safeCropId) {
+            appendCropScopedReview(nextSummaryMap, row);
+            if (matchStatus === 'matched') {
+                const bucket = ensureCropScopedSummaryBucket(nextSummaryMap, row);
+                if (bucket) {
+                    const amount = readPortfolioAmount(row);
+                    bucket.credited_total += amount;
+                    if (transferState === 'active') {
+                        bucket.pending_total += amount;
+                    } else if (
+                        transferState === 'transferred'
+                        && !['income', 'losses'].includes(String(row?.transferred_to || '').trim().toLowerCase())
+                    ) {
+                        bucket.transferred_total += amount;
+                    }
+                }
+            }
+        }
+        if (transferState !== 'active') return;
         const scopeKey = buildBuyerPortfolioScopeKey(row);
         appendOperationalProgressEntry(nextMap, scopeKey, 'pending', row);
         appendOperationalProgressFamilyEntry(nextFamilyMap, scopeKey, 'pending', row);
     });
 
     (Array.isArray(incomeResult?.data) ? incomeResult.data : []).forEach((row) => {
-        if (String(row?.origin_table || '').trim().toLowerCase() !== 'agro_pending') return;
+        const originTable = String(row?.origin_table || '').trim().toLowerCase();
+        const matchStatus = String(row?.buyer_match_status || '').trim().toLowerCase();
+        if (safeCropId) {
+            appendCropScopedReview(nextSummaryMap, row);
+            if (matchStatus === 'matched') {
+                const bucket = ensureCropScopedSummaryBucket(nextSummaryMap, row);
+                if (bucket) {
+                    const amount = readPortfolioAmount(row);
+                    if (originTable === 'agro_pending') {
+                        bucket.paid_total += amount;
+                    } else {
+                        bucket.non_debt_income_total += amount;
+                    }
+                }
+            }
+        }
+        if (originTable !== 'agro_pending') return;
         const scopeKey = buildBuyerPortfolioScopeKey(row);
         appendOperationalProgressEntry(nextMap, scopeKey, 'paid', row);
         appendOperationalProgressFamilyEntry(nextFamilyMap, scopeKey, 'paid', row);
     });
 
     (Array.isArray(lossResult?.data) ? lossResult.data : []).forEach((row) => {
-        if (String(row?.origin_table || '').trim().toLowerCase() !== 'agro_pending') return;
+        const originTable = String(row?.origin_table || '').trim().toLowerCase();
+        const matchStatus = String(row?.buyer_match_status || '').trim().toLowerCase();
+        if (safeCropId) {
+            appendCropScopedReview(nextSummaryMap, row);
+            if (matchStatus === 'matched' && originTable === 'agro_pending') {
+                const bucket = ensureCropScopedSummaryBucket(nextSummaryMap, row);
+                if (bucket) {
+                    bucket.loss_total += readPortfolioAmount(row);
+                }
+            }
+        }
+        if (originTable !== 'agro_pending') return;
         const scopeKey = buildBuyerPortfolioScopeKey(row);
         appendOperationalProgressEntry(nextMap, scopeKey, 'loss', row);
         appendOperationalProgressFamilyEntry(nextFamilyMap, scopeKey, 'loss', row);
@@ -680,7 +849,8 @@ async function fetchOperationalProgressMap(supabaseClient, cropId = null) {
 
     return {
         aggregateMap: nextMap,
-        familyMap: nextFamilyMap
+        familyMap: nextFamilyMap,
+        summaryMap: nextSummaryMap
     };
 }
 
@@ -814,6 +984,39 @@ function getProgressBreakdown(row) {
     };
 }
 
+function getOperationalStatusSnapshot(row, family = activeOperationalFamily) {
+    const visibleFamilies = getVisibleOperationalProgressFamilies(row, family);
+    if (visibleFamilies.length > 0) {
+        return {
+            hasPaid: visibleFamilies.some((entry) => Number(entry?.paid || 0) > 0),
+            hasPending: visibleFamilies.some((entry) => Number(entry?.pending || 0) > 0),
+            hasLoss: visibleFamilies.some((entry) => Number(entry?.loss || 0) > 0),
+            primaryProgress: visibleFamilies.length === 1 ? visibleFamilies[0] : null,
+            hasSeparatedFamilies: visibleFamilies.length > 1
+        };
+    }
+
+    const progress = getOperationalProgressByFamily(row, family);
+    return {
+        hasPaid: Number(progress?.paid || 0) > 0,
+        hasPending: Number(progress?.pending || 0) > 0,
+        hasLoss: Number(progress?.loss || 0) > 0,
+        primaryProgress: progress?.mode === 'unified' ? progress : null,
+        hasSeparatedFamilies: false
+    };
+}
+
+function formatOperationalPartialChip(progress) {
+    const paid = Number(progress?.paid || 0);
+    const pending = Number(progress?.pending || 0);
+    const unitType = normalizeProgressUnitType(progress?.unitType);
+    const total = paid + pending;
+
+    if (!(paid > 0) || !(pending > 0) || !(total > 0) || !unitType) return '';
+
+    return `${formatOperationalQuantity(paid)} de ${formatOperationalQuantity(total)} ${formatOperationalUnitLabel(unitType, total)} cobrados`;
+}
+
 function hasBuyerPortfolioHistory(row) {
     const numericFields = [
         'credited_total',
@@ -907,9 +1110,9 @@ function resolveBuyerStatus(row) {
     const loss = Number(row?.loss_total || 0);
     const review = getReviewTotal(row);
     const operationalProgress = getOperationalProgress(row);
-    const visibleOperationalFamilies = getVisibleOperationalProgressFamilies(row, activeOperationalFamily);
-    const hasSeparatedFamilies = activeOperationalFamily === 'all' && visibleOperationalFamilies.length > 1;
-    const paidPercent = getPaidPercent(row);
+    const operationalStatus = getOperationalStatusSnapshot(row, activeOperationalFamily);
+    const hasSeparatedFamilies = activeOperationalFamily === 'all' && operationalStatus.hasSeparatedFamilies;
+    const hasOpPaid = operationalStatus.hasPaid;
     const pendingUnits = operationalProgress.mode === 'unified'
         ? formatOperationalStatePhrase(operationalProgress.pending, 'pendiente', 'pendientes')
         : '';
@@ -937,22 +1140,14 @@ function resolveBuyerStatus(row) {
     }
 
     if (pending > 0) {
-        if (paid > 0 && operationalProgress.mode === 'unified' && paidPercent >= 65) {
+        if (hasOpPaid) {
             return {
                 tone: 'fiado',
-                label: 'Cobro avanzado',
-                detail: `${pendingUnits} · ${paidUnits}`
-            };
-        }
-
-        if (paid > 0) {
-            return {
-                tone: 'fiado',
-                label: 'Fiado activo',
+                label: 'Cobro en proceso',
                 detail: operationalProgress.mode === 'unified'
                     ? `${pendingUnits} · ${paidUnits}`
                     : (hasSeparatedFamilies
-                        ? 'Pendiente operativo separado por unidad'
+                        ? 'Cobro operativo separado por unidad'
                         : (operationalProgress.mode === 'mixed'
                             ? 'Pendiente operativo sin base unificada'
                             : `Pendiente operativo${review > 0 ? ' · con revisión pendiente' : ''}`))
@@ -972,14 +1167,26 @@ function resolveBuyerStatus(row) {
         };
     }
 
-    if (paid > 0) {
+    if (loss > 0) {
+        return {
+            tone: 'perdido',
+            label: paid > 0 ? 'Con pérdida' : 'Pérdida',
+            detail: operationalProgress.mode === 'unified'
+                ? `${lossUnits}`
+                : (hasSeparatedFamilies
+                    ? 'Pérdida separada por unidad'
+                    : (operationalProgress.mode === 'mixed'
+                        ? 'Pérdida sin base unificada'
+                        : 'Pérdida sin base física'))
+        };
+    }
+
+    if (hasOpPaid) {
         return {
             tone: 'pagado',
             label: 'Pagado',
             detail: operationalProgress.mode === 'unified'
-                ? (loss > 0
-                    ? `${paidUnits} · ${lossUnits}`
-                    : `${paidUnits} · sin pendiente operativo`)
+                ? `${paidUnits} · sin pendiente operativo`
                 : (hasSeparatedFamilies
                     ? 'Cierre operativo separado por unidad'
                     : (operationalProgress.mode === 'mixed'
@@ -988,17 +1195,11 @@ function resolveBuyerStatus(row) {
         };
     }
 
-    if (loss > 0) {
+    if (paid > 0) {
         return {
-            tone: 'perdido',
-            label: 'Pérdida',
-            detail: operationalProgress.mode === 'unified'
-                ? `${lossUnits}`
-                : (hasSeparatedFamilies
-                    ? 'Pérdida separada por unidad'
-                    : (operationalProgress.mode === 'mixed'
-                        ? 'Pérdida sin base unificada'
-                        : 'Pérdida sin base física'))
+            tone: 'pagado',
+            label: 'Ingreso registrado',
+            detail: 'Ingreso del cultivo sin pendiente operativo.'
         };
     }
 
@@ -1016,38 +1217,10 @@ function resolveBuyerStatusForCategory(row, category) {
     const safeCategory = normalizeCategory(category);
 
     if (safeCategory === 'sin-registro') return globalStatus;
-    if (safeCategory === 'fiados' && globalStatus.tone === 'fiado') return globalStatus;
-    if (safeCategory === 'pagados' && globalStatus.tone === 'pagado') return globalStatus;
-    if (safeCategory === 'perdidos' && globalStatus.tone === 'perdido') return globalStatus;
 
     const pending = getOutstandingBalance(row);
-    const paid = Number(row?.paid_total || 0);
     const loss = Number(row?.loss_total || 0);
-    const progress = getOperationalProgress(row);
-    const hasOpPaid = progress.paid > 0;
-    const hasOpLoss = progress.loss > 0;
-
-    if (safeCategory === 'perdidos' && loss > 0) {
-        if (hasOpLoss) {
-            return {
-                tone: 'perdido',
-                label: (paid > 0 || pending > 0) ? 'Con pérdida' : 'Pérdida',
-                detail: globalStatus.detail
-            };
-        }
-        return { tone: 'perdido', label: 'Pérdida monetaria', detail: globalStatus.detail };
-    }
-
-    if (safeCategory === 'pagados' && paid > 0) {
-        if (hasOpPaid) {
-            return {
-                tone: 'pagado',
-                label: (loss > 0 || pending > 0) ? 'Cobro parcial' : 'Pagado',
-                detail: globalStatus.detail
-            };
-        }
-        return { tone: 'pagado', label: 'Ingreso registrado', detail: globalStatus.detail };
-    }
+    if (pending > 0 || loss > 0) return globalStatus;
 
     return globalStatus;
 }
@@ -1130,10 +1303,13 @@ function getCropScopedRows(rows) {
     if (!(visibleCropScopeKeys instanceof Set) || visibleCropScopeId !== selectedCropId) return [];
     const sessionKeys = getSessionCropScopeKeys(selectedCropId);
 
-    return safeRows.filter((row) => {
-        if (!hasBuyerPortfolioHistory(row)) return true;
+    return safeRows.flatMap((row) => {
+        if (!hasBuyerPortfolioHistory(row)) return [row];
         const scopeKey = buildBuyerPortfolioScopeKey(row);
-        return scopeKey && (visibleCropScopeKeys.has(scopeKey) || sessionKeys?.has(scopeKey));
+        if (!scopeKey || (!visibleCropScopeKeys.has(scopeKey) && !sessionKeys?.has(scopeKey))) {
+            return [];
+        }
+        return [buildCropScopedSummaryOverlay(row, cropScopedSummaryMap.get(scopeKey))];
     });
 }
 
@@ -1696,7 +1872,7 @@ function renderCommercialFamilyNav(activeView = CARTERA_VIVA_VIEW) {
 function renderScopeNote() {
     const selectedCropId = getSelectedCropId();
     if (selectedCropId) {
-        return `Lista y detalle filtrados por ${escapeHtml(getSelectedCropShortLabel())}. Los clientes sin historial siguen visibles en Sin registro. El resumen superior sigue la lectura global client-centric. Otros pertenece a Ciclos Operativos.`;
+        return `Resumen, lista y detalle filtrados por ${escapeHtml(getSelectedCropShortLabel())}. Los clientes sin historial siguen visibles en Sin registro. Otros pertenece a Ciclos Operativos.`;
     }
     return 'Otros pertenece a Ciclos Operativos. Donaciones solo entra cuando la data real la sostiene.';
 }
@@ -1870,6 +2046,7 @@ function renderSupportChips(row) {
     const chips = [];
     const review = getReviewTotal(row);
     const operationalProgress = getOperationalProgress(row);
+    const operationalStatus = getOperationalStatusSnapshot(row, activeOperationalFamily);
     const visibleFamilies = getVisibleOperationalProgressFamilies(row, activeOperationalFamily);
     const hasHistory = hasBuyerPortfolioHistory(row);
 
@@ -1883,6 +2060,10 @@ function renderSupportChips(row) {
         chips.push('<span class="cartera-viva-chip">Sin base operativa</span>');
     }
 
+    const partialChip = formatOperationalPartialChip(operationalStatus.primaryProgress);
+    if (partialChip) {
+        chips.push(`<span class="cartera-viva-chip">${partialChip}</span>`);
+    }
     if (Number(row?.loss_total || 0) > 0) {
         chips.push(`<span class="cartera-viva-chip is-loss">Pérdida ${formatMoney(row.loss_total)}</span>`);
     }
@@ -1890,7 +2071,7 @@ function renderSupportChips(row) {
         chips.push(`<span class="cartera-viva-chip is-review">Por revisar ${formatMoney(review)}</span>`);
     }
     if (Number(row?.non_debt_income_total || 0) > 0) {
-        chips.push(`<span class="cartera-viva-chip">Ingreso aparte ${formatMoney(row.non_debt_income_total)}</span>`);
+        chips.push(`<span class="cartera-viva-chip">Ingreso registrado ${formatMoney(row.non_debt_income_total)}</span>`);
     }
 
     if (chips.length <= 0) return '';
@@ -2060,7 +2241,8 @@ function renderErrorState(message) {
 
 function getSelectedBuyerRow() {
     if (!selectedBuyerId) return null;
-    return summaryRows.find((row) => String(row?.buyer_id || '') === selectedBuyerId) || null;
+    const sourceRows = getSelectedCropId() ? getCropScopedRows(summaryRows) : summaryRows;
+    return sourceRows.find((row) => String(row?.buyer_id || '') === selectedBuyerId) || null;
 }
 
 function getListViewState() {
@@ -2434,6 +2616,9 @@ async function loadSummary() {
             })
         ]);
         summaryRows = mergeSummaryRowsWithBuyerDirectory(nextSummaryRows, nextBuyerDirectoryRows);
+        cropScopedSummaryMap = nextOperationalProgress?.summaryMap instanceof Map
+            ? nextOperationalProgress.summaryMap
+            : new Map();
         operationalProgressMap = nextOperationalProgress?.aggregateMap instanceof Map
             ? nextOperationalProgress.aggregateMap
             : new Map();
@@ -2445,6 +2630,7 @@ async function loadSummary() {
         console.error('[CarteraViva] summary load failed:', error?.message || error);
         lastErrorMessage = String(error?.message || 'Error leyendo la cartera de clientes.');
         summaryRows = [];
+        cropScopedSummaryMap = new Map();
         operationalProgressMap = new Map();
         operationalProgressFamilyMap = new Map();
         visibleCropScopeKeys = null;
