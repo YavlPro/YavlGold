@@ -1793,7 +1793,7 @@ export function renderBuyerHistoryDetail(root, options = {}) {
             : 'Aquí solo ves eventos auxiliares del sistema, sin mezclar cobros o pérdidas normales.'}
                         </p>
                         ${renderUnitFamilyFilters(ledgerRows, unitFamily)}
-                        ${isCanonicalFilter ? renderLedgerScopeFilters(ledgerRows, ledgerScope) : ''}
+                        ${isCanonicalFilter ? renderLedgerScopeFilters(filterRowsByUnitFamily(ledgerRows, unitFamily), ledgerScope) : ''}
                         ${renderHistoryFilters(historyRows, historyFilter, { timelineCount: visibleLedgerRows.length, unitFamily, ledgerScope })}
                     </div>
                 </header>

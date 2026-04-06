@@ -1023,21 +1023,30 @@ function resolveBuyerStatusForCategory(row, category) {
     const pending = getOutstandingBalance(row);
     const paid = Number(row?.paid_total || 0);
     const loss = Number(row?.loss_total || 0);
+    const progress = getOperationalProgress(row);
+    const hasOpPaid = progress.paid > 0;
+    const hasOpLoss = progress.loss > 0;
 
     if (safeCategory === 'perdidos' && loss > 0) {
-        return {
-            tone: 'perdido',
-            label: (paid > 0 || pending > 0) ? 'Con pérdida' : 'Pérdida',
-            detail: globalStatus.detail
-        };
+        if (hasOpLoss) {
+            return {
+                tone: 'perdido',
+                label: (paid > 0 || pending > 0) ? 'Con pérdida' : 'Pérdida',
+                detail: globalStatus.detail
+            };
+        }
+        return { tone: 'perdido', label: 'Pérdida monetaria', detail: globalStatus.detail };
     }
 
     if (safeCategory === 'pagados' && paid > 0) {
-        return {
-            tone: 'pagado',
-            label: (loss > 0 || pending > 0) ? 'Cobro parcial' : 'Pagado',
-            detail: globalStatus.detail
-        };
+        if (hasOpPaid) {
+            return {
+                tone: 'pagado',
+                label: (loss > 0 || pending > 0) ? 'Cobro parcial' : 'Pagado',
+                detail: globalStatus.detail
+            };
+        }
+        return { tone: 'pagado', label: 'Ingreso registrado', detail: globalStatus.detail };
     }
 
     return globalStatus;

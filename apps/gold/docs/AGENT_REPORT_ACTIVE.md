@@ -9115,3 +9115,58 @@ Causa raiz: `resolveBuyerStatus` es context-blind — no sabe en que tab se rend
 - **Gollo en Fiados**: badge "Cobro avanzado" sin cambio (tone fiado ya coincide con tab fiados).
 - **Buyer puro** (solo fiados, solo pagados, solo perdidas): badge y scope sin cambio respecto a comportamiento anterior.
 - **Detalle**: verificar que chips de ledger scope (Fiados/Pagados/Perdidos/Todo) funcionan correctamente para filtrar desde scope 'todos'.
+
+---
+
+## Sesion: Fix badge 'Cobro parcial' incorrecto por non-debt income (2026-04-05)
+
+### Diagnostico
+
+jose luis en tab Pagados mostraba badge "Cobro parcial" con PENDIENTE 4 sacos, COBRADO 0 sacos. La causa: `resolveBuyerStatusForCategory` usaba `paid_total > 0` (monetario, incluye non-debt income como "Ingreso aparte USD 347.65") para decidir "Cobro parcial". Pero el operational progress (unit-based, solo income con `origin_table='agro_pending'`) tenia `paid = 0`.
+
+### Cambio aplicado
+
+**`agro-cartera-viva-view.js`** — `resolveBuyerStatusForCategory` (~line 1014-1053):
+- Ahora usa `getOperationalProgress(row).paid > 0` (hasOpPaid) y `.loss > 0` (hasOpLoss) para decidir badges contextuales
+- Tab 'pagados': `hasOpPaid` → "Cobro parcial" / "Pagado". Sin operational paid → "Ingreso registrado"
+- Tab 'perdidos': `hasOpLoss` → "Con perdida" / "Perdida". Sin operational loss → "Perdida monetaria"
+
+### Build status
+- `pnpm build:gold` → **OK** (exit 0)
+
+### QA sugerido
+- **jose luis en Pagados**: debe mostrar "Ingreso registrado" (no "Cobro parcial") con 0 sacos cobrados
+- **Buyer con cobrado operativo real + pending**: debe seguir mostrando "Cobro parcial"
+- **Buyer con solo cobrado operativo**: debe mostrar "Pagado"
+
+---
+
+## Sesion: Auditoria detalle jose luis + fix scope chips (2026-04-05)
+
+### Diagnostico
+
+Auditoria completa del flujo de datos para el ingreso non-debt de jose luis ("Ingreso aparte USD 347.65"):
+
+1. **Fetch**: `fetchBuyerScopedRows` NO filtra por `origin_table` → non-debt income SI se trae de Supabase
+2. **Build**: `buildIncomeLedgerRow` crea row con `ledger_scope: 'pagados'`, `title: 'Ingreso aparte'`, `unit_type: ''`
+3. **Scope filter**: con fix previo (`scope='todos'` para estados mixtos), el row pasa el filtro de scope
+4. **Unit family filter**: `resolveHistoryUnitFamily` retorna `'all'` para rows sin unit_type → visible bajo "Vista general", oculto bajo "Sacos"
+
+El non-debt income de jose luis ES accesible bajo "Vista general" con scope 'todos'. Bajo "Sacos" se oculta correctamente (no tiene unidades operativas).
+
+**Bug encontrado**: `renderLedgerScopeFilters` contaba scope chips desde ALL ledger rows sin filtro de unit family. Resultado: chip "Cobros (1)" visible con "Sacos" activo, pero al hacer click → vacio (unit family oculta el row). Conteo engañoso.
+
+### Cambios aplicados
+
+**`agro-cartera-viva-detail.js`** — linea ~1796:
+- `renderLedgerScopeFilters(ledgerRows, ledgerScope)` → `renderLedgerScopeFilters(filterRowsByUnitFamily(ledgerRows, unitFamily), ledgerScope)`
+- Ahora los scope chips reflejan solo rows visibles bajo la familia operativa activa
+- "Cobros (1)" solo aparece si hay income rows que coincidan con la familia activa
+
+### Build status
+- `pnpm build:gold` → **OK** (exit 0)
+
+### QA sugerido
+- **jose luis → Ver detalle desde cualquier tab**: debe abrir con scope 'todos'. Bajo "Vista general", debe mostrar chips "Fiados (N)" + "Cobros (1)" + "Todo (N+1)". El "Ingreso aparte USD 347.65" debe ser visible.
+- **jose luis → Ver detalle bajo "Sacos"**: chips de scope NO deben mostrar "Cobros" (el ingreso no tiene unidad operativa). Solo "Fiados" y "Todo" con conteos correctos.
+- **Buyer con cobros operativos (origin_table='agro_pending') bajo "Sacos"**: chip "Cobros" debe aparecer con conteo correcto.
