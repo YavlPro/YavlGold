@@ -9072,3 +9072,46 @@ Se rastreo el flujo completo de datos:
 - Verificar que al transferir una perdida standalone a Fiados, el historial se actualiza automaticamente (sin necesidad de refresh manual).
 - Verificar que los action rows de revertidos aparecen con el filtro "Revertidos" activo.
 - Verificar que el flujo de revert canonico (income/loss con origin_table='agro_pending') sigue funcionando correctamente sin regresion.
+
+---
+
+## Sesion: Fix desincronizacion tab/badge/scope en Cartera Viva cards (2026-04-05)
+
+### Diagnostico
+
+Evidencia visual mostro 3 capas desincronizadas:
+1. **Tab**: `hasVisibleCategory` asigna buyers a multiples tabs (independiente por categoria)
+2. **Badge**: `resolveBuyerStatus` computa un solo estado global con prioridad pending → paid → loss
+3. **Detail scope**: `data-cartera-open-history-scope` se fija al category de la tab, filtrando el detalle
+
+Resultado visible: Freddy en tab "Perdidas" con badge "Pagado" (paid > 0 gana sobre loss > 0 en badge global). Al abrir detalle desde esa tab, scope = 'perdidos' oculta los 9 sacos cobrados.
+
+Causa raiz: `resolveBuyerStatus` es context-blind — no sabe en que tab se renderiza la card. Y el scope del detalle se fija al category de la tab sin considerar si el buyer tiene estados mixtos.
+
+### Cambios aplicados
+
+**`agro-cartera-viva-view.js`**:
+
+1. **Nueva funcion `resolveBuyerStatusForCategory(row, category)`** (~line 1014-1043):
+   - Wrapper sobre `resolveBuyerStatus` que ajusta tone/label al contexto de tab
+   - Si el tone global ya coincide con la tab, retorna sin cambios
+   - En tab 'perdidos' con loss > 0: badge "Con perdida" (si hay paid/pending) o "Perdida" (puro)
+   - En tab 'pagados' con paid > 0: badge "Cobro parcial" (si hay loss/pending) o "Pagado" (puro)
+
+2. **`renderPortfolioCard`** (~line 1940-1953):
+   - Usa `resolveBuyerStatusForCategory(row, category)` en vez de `resolveBuyerStatus(row)`
+   - Calcula `activeStateCount` (cuantos de pending/paid/loss son > 0)
+   - Si `activeStateCount > 1` (estados mixtos), scope = 'todos' para que el detalle muestre todo el historial
+   - Si estado unico, scope = category de la tab (comportamiento anterior)
+
+### Build status
+- `pnpm build:gold` → **OK** (exit 0)
+- `agent-guard: OK`, `agent-report-check: OK`, `vite build: OK` (157 modules, 4.10s)
+- `check-llms: OK`, `check-dist-utf8: OK`
+
+### QA sugerido
+- **Freddy en Perdidas**: debe mostrar badge "Con perdida" (tone perdido), no "Pagado". Al hacer click en "Ver detalle", debe abrir con scope 'todos' mostrando tanto cobros como perdidas.
+- **Freddy en Pagados**: debe mostrar badge "Cobro parcial" (tone pagado). Detalle tambien con scope 'todos'.
+- **Gollo en Fiados**: badge "Cobro avanzado" sin cambio (tone fiado ya coincide con tab fiados).
+- **Buyer puro** (solo fiados, solo pagados, solo perdidas): badge y scope sin cambio respecto a comportamiento anterior.
+- **Detalle**: verificar que chips de ledger scope (Fiados/Pagados/Perdidos/Todo) funcionan correctamente para filtrar desde scope 'todos'.

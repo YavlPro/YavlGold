@@ -1011,6 +1011,38 @@ function resolveBuyerStatus(row) {
     };
 }
 
+function resolveBuyerStatusForCategory(row, category) {
+    const globalStatus = resolveBuyerStatus(row);
+    const safeCategory = normalizeCategory(category);
+
+    if (safeCategory === 'sin-registro') return globalStatus;
+    if (safeCategory === 'fiados' && globalStatus.tone === 'fiado') return globalStatus;
+    if (safeCategory === 'pagados' && globalStatus.tone === 'pagado') return globalStatus;
+    if (safeCategory === 'perdidos' && globalStatus.tone === 'perdido') return globalStatus;
+
+    const pending = getOutstandingBalance(row);
+    const paid = Number(row?.paid_total || 0);
+    const loss = Number(row?.loss_total || 0);
+
+    if (safeCategory === 'perdidos' && loss > 0) {
+        return {
+            tone: 'perdido',
+            label: (paid > 0 || pending > 0) ? 'Con pérdida' : 'Pérdida',
+            detail: globalStatus.detail
+        };
+    }
+
+    if (safeCategory === 'pagados' && paid > 0) {
+        return {
+            tone: 'pagado',
+            label: (loss > 0 || pending > 0) ? 'Cobro parcial' : 'Pagado',
+            detail: globalStatus.detail
+        };
+    }
+
+    return globalStatus;
+}
+
 function getVisibleOperationalProgressFamilies(row, family = activeOperationalFamily) {
     const normalizedFamily = normalizeOperationalFamily(family);
     const targetFamilies = normalizedFamily === 'all'
@@ -1534,8 +1566,8 @@ function renderHeaderSummary(filteredRows, options = {}) {
             </div>
             <div class="cartera-viva-summary-strip__signal">
                 ${summary.mode === 'overview' || summary.mode === 'family-empty' || summary.mode === 'empty-cycle'
-                    ? renderProgressSignalFromSummary(null)
-                    : (summary.signal ? renderProgressSignalFromSummary(summary.signal) : renderHeroSignal(filteredRows))}
+            ? renderProgressSignalFromSummary(null)
+            : (summary.signal ? renderProgressSignalFromSummary(summary.signal) : renderHeroSignal(filteredRows))}
             </div>
             <div class="cartera-viva-summary-strip__stats">
                 ${summary.stats.map((stat) => `
@@ -1907,12 +1939,17 @@ function renderProgressBlock(row, options = {}) {
 
 function renderPortfolioCard(row) {
     const category = resolveDisplayCategory(row);
-    const status = resolveBuyerStatus(row);
+    const status = resolveBuyerStatusForCategory(row, category);
     const metrics = getOperationalCardMetrics(row);
     const hasReview = getReviewTotal(row) > 0;
     const isArchived = String(row?.client_status || '').trim().toLowerCase() === 'archived';
     const safeBuyerId = escapeHtml(row?.buyer_id || '');
-    const safeScope = escapeHtml(category);
+    const activeStateCount = [
+        getOutstandingBalance(row) > 0,
+        Number(row?.paid_total || 0) > 0,
+        Number(row?.loss_total || 0) > 0
+    ].filter(Boolean).length;
+    const safeScope = activeStateCount > 1 ? 'todos' : escapeHtml(category);
     const safeEntryKey = escapeHtml(row?.__portfolioEntryKey || '');
 
     return `
