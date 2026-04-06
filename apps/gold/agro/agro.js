@@ -8781,6 +8781,12 @@ const CROP_FINISHED_STATUS_TOKENS = new Set([
     'damaged'
 ]);
 
+const CROP_ACTIVE_STATUS_TOKENS = new Set([
+    'sembrado',
+    'creciendo',
+    'produccion'
+]);
+
 const CROP_CYCLE_HISTORY_SECTION_ID = 'crops-cycle-history-accordion';
 const CROP_CYCLE_HISTORY_TITLE_ID = 'crops-cycle-history-title';
 const CROP_CYCLE_FINISHED_SECTION_ID = 'crops-cycle-finished-section';
@@ -8894,6 +8900,17 @@ function resolveCropProgressPercent(crop, progress) {
     return null;
 }
 
+function hasExplicitActiveCycleStatus(crop) {
+    const mode = String(crop?.status_mode || '').toLowerCase().trim();
+    const explicitRaw = crop?.status_override || crop?.status;
+    if (mode === 'auto' || !String(explicitRaw || '').trim()) {
+        return false;
+    }
+
+    const explicitStatus = normalizeCropStatus(resolveManualCropStatus(crop) || explicitRaw);
+    return CROP_ACTIVE_STATUS_TOKENS.has(explicitStatus);
+}
+
 function isCropFinishedCycle(crop, progress) {
     const resolvedStatus = resolveCropStatus(crop, progress);
     const normalizedResolved = normalizeCropStatus(resolvedStatus);
@@ -8903,6 +8920,9 @@ function isCropFinishedCycle(crop, progress) {
         || CROP_FINISHED_STATUS_TOKENS.has(explicitStatus);
 
     const endDateKey = resolveCropEndDateKey(crop);
+    if (!finishedByStatus && !endDateKey && hasExplicitActiveCycleStatus(crop)) {
+        return false;
+    }
     const finishedByDate = endDateKey ? (diffDays(getTodayKey(), endDateKey) >= 0) : false;
 
     const progressPercent = resolveCropProgressPercent(crop, progress);

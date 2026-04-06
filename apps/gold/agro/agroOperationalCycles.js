@@ -16,7 +16,7 @@ const CURRENCY_OPTIONS = Object.freeze(['COP', 'USD', 'VES']);
 const ECONOMIC_TYPE_OPTIONS = Object.freeze([
     { value: 'expense', label: '💸 Gasto' },
     { value: 'income', label: '💰 Ingreso' },
-    { value: 'donation', label: '🤝 Donación' },
+    { value: 'donation', label: '🤝 Donación / Regalo' },
     { value: 'loss', label: '💔 Pérdida' }
 ]);
 
@@ -30,10 +30,10 @@ const CATEGORY_OPTIONS = Object.freeze([
 ]);
 
 const STATUS_OPTIONS = Object.freeze([
-    { value: 'open', label: '🟡 Abierto' },
+    { value: 'open', label: '🟡 No pagado' },
     { value: 'in_progress', label: '🟠 En seguimiento' },
     { value: 'compensating', label: '🟠 Compensándose' },
-    { value: 'closed', label: '✅ Cerrado' },
+    { value: 'closed', label: '✅ Pagado' },
     { value: 'lost', label: '🔴 Perdido' }
 ]);
 
@@ -75,6 +75,13 @@ const STATUS_CLASS_BY_VALUE = Object.freeze({
     compensating: 'is-compensating',
     closed: 'is-closed',
     lost: 'is-lost'
+});
+
+const TYPE_CLASS_BY_VALUE = Object.freeze({
+    expense: 'is-expense',
+    income: 'is-income',
+    donation: 'is-donation',
+    loss: 'is-loss'
 });
 
 const WIZARD_STEPS = Object.freeze([
@@ -374,13 +381,13 @@ function sortMovementsAscending(left, right) {
 
 function directionSummaryLabel(direction, economicType) {
     if (direction === 'in') return '💰 Recibí / Cobré';
-    if (normalizeToken(economicType) === 'donation') return '🤝 Donación / Apoyo';
+    if (normalizeToken(economicType) === 'donation') return '🤝 Donación / Regalo';
     return '💸 Pagué / Gasté';
 }
 
 function directionDetailLabel(direction, economicType) {
     if (direction === 'in') return '💰 Entrada de dinero';
-    if (normalizeToken(economicType) === 'donation') return '🤝 Donación / Apoyo';
+    if (normalizeToken(economicType) === 'donation') return '🤝 Donación / Regalo';
     return '💸 Salida de dinero';
 }
 
@@ -529,10 +536,12 @@ function createDatasetSummary(cycles = []) {
     const incoming = createMoneyBucket();
     const outgoing = createMoneyBucket();
     let linkedCount = 0;
+    let unlinkedCount = 0;
     let movementCount = 0;
 
     cycles.forEach((cycle) => {
         if (cycle.crop_id) linkedCount += 1;
+        else unlinkedCount += 1;
         movementCount += Number(cycle.movementCount || 0);
         mergeMoneyBuckets(incoming, cycle.summary.incoming);
         mergeMoneyBuckets(outgoing, cycle.summary.outgoing);
@@ -543,6 +552,7 @@ function createDatasetSummary(cycles = []) {
     return {
         count: cycles.length,
         linkedCount,
+        unlinkedCount,
         movementCount,
         incoming,
         outgoing,
@@ -1083,6 +1093,7 @@ function renderShell() {
             </header>
 
             <div class="agro-operational-feedback agro-operational-feedback--page" id="agro-operational-feedback" data-tone="info"></div>
+            <div class="agro-operational-subview-switch" id="agro-operational-subview-switch" role="group" aria-label="Lecturas de ciclos operativos"></div>
 
             <section id="agro-operational-overview-panel" class="agro-operational-panel agro-operational-overview-panel">
                 <div class="agro-operational-panel__head">
@@ -1100,7 +1111,7 @@ function renderShell() {
                     <div>
                         <p class="agro-operational-list-eyebrow" id="agro-operational-list-eyebrow">🟡 Activos</p>
                         <h3 class="agro-operational-list-title" id="agro-operational-list-title">🟡 Ciclos operativos activos</h3>
-                        <p class="agro-operational-list-copy" id="agro-operational-list-copy">Abiertos, en seguimiento o compensándose con lectura operativa.</p>
+                        <p class="agro-operational-list-copy" id="agro-operational-list-copy">No pagados, en seguimiento o compensándose con lectura operativa.</p>
                     </div>
                     <button type="button" class="btn" data-operational-action="new-cycle">➕ Nuevo ciclo operativo</button>
                 </div>
@@ -1138,6 +1149,7 @@ function renderShell() {
         overviewCopy: document.getElementById('agro-operational-overview-copy'),
         overviewBody: document.getElementById('agro-operational-overview-body'),
         overviewSection: document.getElementById('agro-operational-overview-panel'),
+        subviewHost: document.getElementById('agro-operational-subview-switch'),
         listEyebrow: document.getElementById('agro-operational-list-eyebrow'),
         listTitle: document.getElementById('agro-operational-list-title'),
         listCopy: document.getElementById('agro-operational-list-copy'),
@@ -1217,8 +1229,8 @@ function renderWizard() {
     const parsedAmount = toNullableNumber(values.amount, 'El monto');
     const parsedQuantity = toNullableNumber(values.quantity, 'La cantidad');
     const effectiveStatus = isEdit
-        ? readLabel(STATUS_OPTIONS, values.status, '🟡 Abierto')
-        : (values.closeOnSave ? '✅ Cerrado' : '🟡 Abierto');
+        ? readLabel(STATUS_OPTIONS, values.status, '🟡 No pagado')
+        : (values.closeOnSave ? '✅ Pagado' : '🟡 No pagado');
 
     state.refs.formEyebrow.textContent = `${isEdit ? '✏️ Edición guiada' : '➕ Creación guiada'} · ${currentStepMeta.eyebrow}`;
     state.refs.formTitle.textContent = isEdit ? '✏️ Editar ciclo operativo' : '➕ Nuevo ciclo operativo';
@@ -1459,9 +1471,9 @@ function resolveDraftCropLabel(cropId) {
 function getSubviewMeta(subview) {
     if (subview === SUBVIEW_FINISHED) {
         return {
-            eyebrow: '✅ Finalizados',
-            title: '✅ Ciclos operativos finalizados',
-            copy: 'Cerrados o perdidos, con su propio balance, conteo y filtros.'
+            eyebrow: '✅ Pagados y pérdidas',
+            title: '✅ Ciclos operativos pagados y perdidos',
+            copy: 'Pagados, cobrados o perdidos, agrupados por vínculo con cultivo.'
         };
     }
 
@@ -1469,15 +1481,40 @@ function getSubviewMeta(subview) {
         return {
             eyebrow: '📥 Exportar MD',
             title: '📥 Exportar Ciclos Operativos a Markdown',
-            copy: 'Descarga un reporte limpio usando los filtros activos de Activos y Finalizados.'
+            copy: 'Descarga un reporte limpio usando los filtros activos de No pagados y Pagados / pérdidas.'
         };
     }
 
     return {
         eyebrow: '🟡 Activos',
         title: '🟡 Ciclos operativos activos',
-        copy: 'Abiertos, en seguimiento o compensándose.'
+        copy: 'No pagados, en seguimiento o compensándose, agrupados por vínculo con cultivo.'
     };
+}
+
+function renderSubviewSwitch() {
+    if (!state.refs?.subviewHost) return;
+
+    const activeCount = Number(state.datasets[SUBVIEW_ACTIVE]?.summary?.count || 0);
+    const finishedCount = Number(state.datasets[SUBVIEW_FINISHED]?.summary?.count || 0);
+    const totalCount = activeCount + finishedCount;
+    const options = [
+        { value: SUBVIEW_ACTIVE, label: '🟡 No pagados', count: activeCount },
+        { value: SUBVIEW_FINISHED, label: '✅ Pagados / pérdidas', count: finishedCount },
+        { value: SUBVIEW_EXPORT, label: '📥 Exportar', count: totalCount }
+    ];
+
+    state.refs.subviewHost.innerHTML = options.map((option) => `
+        <button
+            type="button"
+            class="agro-operational-subview-switch__btn${state.currentSubview === option.value ? ' is-active' : ''}"
+            data-operational-action="set-subview"
+            data-subview="${escapeAttr(option.value)}"
+            aria-pressed="${state.currentSubview === option.value ? 'true' : 'false'}">
+            <span class="agro-operational-subview-switch__label">${escapeHtml(option.label)}</span>
+            <span class="agro-operational-subview-switch__count">${option.count}</span>
+        </button>
+    `).join('');
 }
 
 function renderFilterPills(filters) {
@@ -1505,9 +1542,70 @@ function mergeSummaryBalanceText(leftSummary, rightSummary) {
     return formatMoneyBucket(balance, { signed: true, emptyText: EMPTY_BALANCE_LABEL });
 }
 
+function buildTypeClass(economicType) {
+    return TYPE_CLASS_BY_VALUE[normalizeToken(economicType)] || 'is-expense';
+}
+
+function buildCycleCropText(cycle) {
+    if (!cycle?.crop_id) return '🌾 Sin asociar a cultivo';
+    return cycle.crop?.label || '🌱 Cultivo asociado no disponible';
+}
+
+function splitCyclesByAssociation(cycles = []) {
+    const linked = [];
+    const unlinked = [];
+
+    cycles.forEach((cycle) => {
+        if (cycle?.crop_id) linked.push(cycle);
+        else unlinked.push(cycle);
+    });
+
+    return { linked, unlinked };
+}
+
+function renderCycleFamilySection({ familyKey, title, copy, cycles }) {
+    if (!Array.isArray(cycles) || cycles.length === 0) return '';
+
+    return `
+        <section class="agro-operational-family-section" data-family="${escapeAttr(familyKey)}">
+            <div class="agro-operational-family-section__head">
+                <div>
+                    <p class="agro-operational-family-section__eyebrow">Ciclos visibles</p>
+                    <h4 class="agro-operational-family-section__title">${escapeHtml(title)}</h4>
+                    <p class="agro-operational-family-section__copy">${escapeHtml(copy)}</p>
+                </div>
+                <span class="agro-operational-family-section__count">${cycles.length}</span>
+            </div>
+            <div class="agro-operational-family-section__grid">
+                ${cycles.map((cycle) => renderCycleCard(cycle)).join('')}
+            </div>
+        </section>
+    `;
+}
+
+function renderGroupedCycleList(cycles = []) {
+    const { linked, unlinked } = splitCyclesByAssociation(cycles);
+
+    return [
+        renderCycleFamilySection({
+            familyKey: 'linked',
+            title: '🌱 Asociados al cultivo',
+            copy: 'Tienen crop_id y deben reflejarse también en la lectura de Ciclos de cultivo.',
+            cycles: linked
+        }),
+        renderCycleFamilySection({
+            familyKey: 'unlinked',
+            title: '🌾 No asociados al cultivo',
+            copy: 'Son movimientos generales sin crop_id, separados de la lectura del cultivo.',
+            cycles: unlinked
+        })
+    ].filter(Boolean).join('');
+}
+
 function renderOverview() {
     if (!state.refs?.overviewBody) return;
 
+    renderSubviewSwitch();
     const meta = getSubviewMeta(state.currentSubview);
     const shouldBlockInitialLoading = !state.loadedOnce && !state.schemaMissing;
     const isSoftRefreshing = state.loading && state.loadedOnce;
@@ -1525,14 +1623,14 @@ function renderOverview() {
                     <p class="agro-operational-summary-card__hint">Leyendo ciclos, cultivos y balances visibles.</p>
                 </article>
                 <article class="agro-operational-summary-card agro-operational-summary-card--loading">
-                    <span class="agro-operational-summary-card__label">Cultivos enlazados</span>
+                    <span class="agro-operational-summary-card__label">Asociados al cultivo</span>
                     <strong class="agro-operational-summary-card__value">En lectura</strong>
-                    <p class="agro-operational-summary-card__hint">Se valida solo contra cultivos actuales del usuario.</p>
+                    <p class="agro-operational-summary-card__hint">Se ordenan aparte para no mezclar la lectura por cultivo.</p>
                 </article>
                 <article class="agro-operational-summary-card agro-operational-summary-card--loading">
-                    <span class="agro-operational-summary-card__label">Movimientos</span>
+                    <span class="agro-operational-summary-card__label">No asociados</span>
                     <strong class="agro-operational-summary-card__value">Ordenando</strong>
-                    <p class="agro-operational-summary-card__hint">Se enlaza el historial real de cada ciclo.</p>
+                    <p class="agro-operational-summary-card__hint">Los movimientos generales quedan fuera de la lectura del cultivo.</p>
                 </article>
                 <article class="agro-operational-summary-card agro-operational-summary-card--loading">
                     <span class="agro-operational-summary-card__label">Balance</span>
@@ -1556,7 +1654,7 @@ function renderOverview() {
                     <p class="agro-operational-summary-card__hint">${escapeHtml(activeSummary.balanceText)}</p>
                 </article>
                 <article class="agro-operational-summary-card">
-                    <span class="agro-operational-summary-card__label">✅ Finalizados exportables</span>
+                    <span class="agro-operational-summary-card__label">✅ Pagados / pérdidas exportables</span>
                     <strong class="agro-operational-summary-card__value">${finishedSummary.count}</strong>
                     <p class="agro-operational-summary-card__hint">${escapeHtml(finishedSummary.balanceText)}</p>
                 </article>
@@ -1577,7 +1675,7 @@ function renderOverview() {
                     ${renderFilterPills(state.datasets[SUBVIEW_ACTIVE].filters)}
                 </div>
                 <div>
-                    <p class="agro-operational-subtext">Filtros finalizados para exportar:</p>
+                    <p class="agro-operational-subtext">Filtros pagados / pérdidas para exportar:</p>
                     ${renderFilterPills(state.datasets[SUBVIEW_FINISHED].filters)}
                 </div>
             </div>
@@ -1595,14 +1693,14 @@ function renderOverview() {
                 <p class="agro-operational-summary-card__hint">Conteo propio de esta subvista.</p>
             </article>
             <article class="agro-operational-summary-card">
-                <span class="agro-operational-summary-card__label">🌱 Con cultivo</span>
+                <span class="agro-operational-summary-card__label">🌱 Asociados al cultivo</span>
                 <strong class="agro-operational-summary-card__value">${summary.linkedCount}</strong>
-                <p class="agro-operational-summary-card__hint">Solo cultivos válidos del usuario.</p>
+                <p class="agro-operational-summary-card__hint">Ciclos con crop_id dentro de esta subvista.</p>
             </article>
             <article class="agro-operational-summary-card">
-                <span class="agro-operational-summary-card__label">📜 Movimientos</span>
-                <strong class="agro-operational-summary-card__value">${summary.movementCount}</strong>
-                <p class="agro-operational-summary-card__hint">Historial expandible dentro de cada tarjeta.</p>
+                <span class="agro-operational-summary-card__label">🌾 No asociados</span>
+                <strong class="agro-operational-summary-card__value">${summary.unlinkedCount}</strong>
+                <p class="agro-operational-summary-card__hint">Movimientos generales separados del cultivo.</p>
             </article>
             <article class="agro-operational-summary-card" data-tone="${escapeAttr(summary.balanceTone)}">
                 <span class="agro-operational-summary-card__label">📊 Balance del ciclo</span>
@@ -1700,7 +1798,9 @@ function renderCyclePhysicalSummary(cycle) {
 }
 
 function renderCycleCard(cycle) {
-    const cropText = cycle.crop?.label || '🌾 Sin asociar a cultivo';
+    const cropText = buildCycleCropText(cycle);
+    const statusLabel = readLabel(STATUS_OPTIONS, cycle.status, '🟡 No pagado');
+    const economicTypeLabel = readLabel(ECONOMIC_TYPE_OPTIONS, cycle.economic_type, 'Operación');
     const primaryAmount = formatAmountLabel(cycle.primaryMovement?.amount, cycle.primaryMovement?.currency);
     const dates = cycle.closed_at
         ? `${formatDateLabel(cycle.opened_at)} · Cierre: ${formatDateLabel(cycle.closed_at)}`
@@ -1710,13 +1810,13 @@ function renderCycleCard(cycle) {
         <article class="agro-operational-card" data-cycle-id="${escapeAttr(cycle.id)}">
             <div class="agro-operational-card__head">
                 <div class="agro-operational-card__stack">
-                    <p class="agro-operational-card__eyebrow">${escapeHtml(readLabel(ECONOMIC_TYPE_OPTIONS, cycle.economic_type, 'Operación'))} · ${escapeHtml(readLabel(CATEGORY_OPTIONS, cycle.category, 'Categoría'))}</p>
+                    <p class="agro-operational-card__eyebrow">${escapeHtml(readLabel(CATEGORY_OPTIONS, cycle.category, 'Categoría'))}</p>
                     <h3 class="agro-operational-card__title">${escapeHtml(cycle.name)}</h3>
                     <p class="agro-operational-card__meta">${escapeHtml(cropText)} · ${escapeHtml(dates)}</p>
                 </div>
                 <div class="agro-operational-card__badges">
-                    <span class="agro-operational-status ${buildStatusClass(cycle.status)}">${escapeHtml(readLabel(STATUS_OPTIONS, cycle.status, '🟡 Abierto'))}</span>
-                    <span class="agro-operational-pill">${escapeHtml(directionDetailLabel(cycle.direction, cycle.economic_type))}</span>
+                    <span class="agro-operational-status ${buildStatusClass(cycle.status)}">${escapeHtml(statusLabel)}</span>
+                    <span class="agro-operational-pill ${buildTypeClass(cycle.economic_type)}">${escapeHtml(economicTypeLabel)}</span>
                 </div>
             </div>
 
@@ -1746,6 +1846,7 @@ function renderCycleCard(cycle) {
             <div class="agro-operational-card__footer">
                 <div class="agro-operational-card__support">
                     <span class="agro-operational-card__support-item">📜 ${cycle.movementCount} movimiento${cycle.movementCount === 1 ? '' : 's'}</span>
+                    <span class="agro-operational-card__support-item">${escapeHtml(cycle.crop_id ? '🌱 Asociado al cultivo' : '🌾 No asociado al cultivo')}</span>
                     <span class="agro-operational-card__support-item">${escapeHtml(readLabel(CATEGORY_OPTIONS, cycle.category, '📋 Otro'))}</span>
                 </div>
                 <div class="agro-operational-card__actions">
@@ -1757,7 +1858,7 @@ function renderCycleCard(cycle) {
             <details class="agro-operational-card__details">
                 <summary>
                     <span>📜 Historial (${cycle.movementCount} movimiento${cycle.movementCount === 1 ? '' : 's'})</span>
-                    <span>${escapeHtml(readLabel(STATUS_OPTIONS, cycle.status, '🟡 Abierto'))}</span>
+                    <span>${escapeHtml(statusLabel)}</span>
                 </summary>
                 ${renderMovementRows(cycle)}
             </details>
@@ -1767,11 +1868,11 @@ function renderCycleCard(cycle) {
 
 function renderEmptyState(subview) {
     const title = subview === SUBVIEW_FINISHED
-        ? '✅ Sin finalizados con esos filtros'
+        ? '✅ Sin pagados ni pérdidas con esos filtros'
         : '🟡 Sin activos con esos filtros';
     const copy = subview === SUBVIEW_FINISHED
-        ? 'Ajusta período, categoría o tipo económico para ver cierres y pérdidas.'
-        : 'Ajusta período, categoría o tipo económico para ver ciclos abiertos, en seguimiento o compensándose.';
+        ? 'Ajusta período, categoría o tipo económico para ver pagados, cobrados o pérdidas.'
+        : 'Ajusta período, categoría o tipo económico para ver ciclos no pagados, en seguimiento o compensándose.';
 
     return `
         <div class="agro-operational-empty">
@@ -1807,8 +1908,9 @@ function buildMarkdownSection(title, datasetKey) {
         lines.push(`### ${cycle.name}`);
         lines.push(`- Tipo económico: ${readLabel(ECONOMIC_TYPE_OPTIONS, cycle.economic_type, 'Sin tipo')}`);
         lines.push(`- Categoría: ${readLabel(CATEGORY_OPTIONS, cycle.category, 'Sin categoría')}`);
-        lines.push(`- Estado: ${readLabel(STATUS_OPTIONS, cycle.status, '🟡 Abierto')}`);
-        lines.push(`- Cultivo asociado: ${cycle.crop?.label || '🌾 Sin asociar a cultivo'}`);
+        lines.push(`- Estado: ${readLabel(STATUS_OPTIONS, cycle.status, '🟡 No pagado')}`);
+        lines.push(`- Familia: ${cycle.crop_id ? 'Asociado al cultivo' : 'No asociado al cultivo'}`);
+        lines.push(`- Cultivo asociado: ${buildCycleCropText(cycle)}`);
         lines.push(`- Fechas: ${cycle.closed_at ? `${formatDateLabel(cycle.opened_at)} · Cierre ${formatDateLabel(cycle.closed_at)}` : `${formatDateLabel(cycle.opened_at)} · Sin cierre`}`);
         lines.push(`- ${directionSummaryLabel(cycle.direction, cycle.economic_type)}: ${formatAmountLabel(cycle.primaryMovement?.amount, cycle.primaryMovement?.currency)}`);
         lines.push(`- 📊 Balance del ciclo: ${cycle.balanceText}`);
@@ -1839,13 +1941,13 @@ function buildExportMarkdown() {
         '## 📊 Resumen',
         '',
         `- 🟡 Activos exportados: ${state.datasets[SUBVIEW_ACTIVE].summary.count}`,
-        `- ✅ Finalizados exportados: ${state.datasets[SUBVIEW_FINISHED].summary.count}`,
+        `- ✅ Pagados / pérdidas exportados: ${state.datasets[SUBVIEW_FINISHED].summary.count}`,
         `- 📊 Balance combinado: ${mergeSummaryBalanceText(state.datasets[SUBVIEW_ACTIVE].summary, state.datasets[SUBVIEW_FINISHED].summary)}`,
         ''
     ];
 
     buildMarkdownSection('🟡 Activos', SUBVIEW_ACTIVE).forEach((line) => lines.push(line));
-    buildMarkdownSection('✅ Finalizados', SUBVIEW_FINISHED).forEach((line) => lines.push(line));
+    buildMarkdownSection('✅ Pagados / pérdidas', SUBVIEW_FINISHED).forEach((line) => lines.push(line));
 
     return lines.join('\n');
 }
@@ -1888,6 +1990,7 @@ function renderExportView() {
 function renderCurrentSubview() {
     if (!state.refs?.list || !state.refs?.listStatus || !state.refs?.filtersHost) return;
 
+    renderSubviewSwitch();
     const meta = getSubviewMeta(state.currentSubview);
     const shouldBlockInitialLoading = !state.loadedOnce && !state.schemaMissing;
     const isSoftRefreshing = state.loading && state.loadedOnce;
@@ -1939,14 +2042,14 @@ function renderCurrentSubview() {
     state.refs.filtersHost.innerHTML = renderFilters(state.currentSubview);
     state.refs.listStatus.textContent = isSoftRefreshing
         ? 'Actualizando ciclos operativos sin desmontar la vista...'
-        : `${dataset.summary.count} ciclo${dataset.summary.count === 1 ? '' : 's'} visible${dataset.summary.count === 1 ? '' : 's'} en esta subvista.`;
+        : `${dataset.summary.count} ciclo${dataset.summary.count === 1 ? '' : 's'} visible${dataset.summary.count === 1 ? '' : 's'} en esta subvista, agrupado${dataset.summary.count === 1 ? '' : 's'} por vínculo con cultivo.`;
 
     if (dataset.cycles.length === 0) {
         state.refs.list.innerHTML = renderEmptyState(state.currentSubview);
         return;
     }
 
-    state.refs.list.innerHTML = dataset.cycles.map((cycle) => renderCycleCard(cycle)).join('');
+    state.refs.list.innerHTML = renderGroupedCycleList(dataset.cycles);
 }
 
 function renderAll() {
@@ -2225,6 +2328,18 @@ async function handleRootClick(event) {
         return;
     }
 
+    if (action === 'set-subview') {
+        const nextSubview = normalizeOperationalSubview(button.dataset.subview);
+        window.dispatchEvent(new CustomEvent('agro:shell:set-view', {
+            detail: {
+                view: VIEW_NAME,
+                subview: nextSubview,
+                scroll: false
+            }
+        }));
+        return;
+    }
+
     if (action === 'focus-form') {
         focusForm();
         return;
@@ -2380,6 +2495,7 @@ function buildDatasetSnapshot(datasetKey) {
         summary: {
             count: dataset.summary.count,
             linkedCount: dataset.summary.linkedCount,
+            unlinkedCount: dataset.summary.unlinkedCount,
             movementCount: dataset.summary.movementCount,
             incomingText: dataset.summary.incomingText,
             outgoingText: dataset.summary.outgoingText,
@@ -2393,7 +2509,7 @@ function buildDatasetSnapshot(datasetKey) {
             economic_type: cycle.economic_type,
             category: cycle.category,
             crop_id: cycle.crop_id,
-            crop_label: cycle.crop?.label || '🌾 Sin asociar a cultivo',
+            crop_label: buildCycleCropText(cycle),
             status: cycle.status,
             direction: cycle.direction,
             movementCount: cycle.movementCount,
