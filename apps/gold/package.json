@@ -1,6 +1,6 @@
 {
   "name": "@yavl/gold",
-  "version": "9.8.0",
+  "version": "1.0.0",
   "description": "YavlGold - Plataforma digital para gestionar finca, productividad y modulos del ecosistema",
   "private": true,
   "type": "module",

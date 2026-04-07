@@ -1,7 +1,7 @@
 import { supabase } from '../assets/js/config/supabase-config.js';
 import uxMessages from '../assets/js/ui/uxMessages.js';
 
-const FEEDBACK_VERSION = 'V9.8';
+const FEEDBACK_VERSION = 'V1';
 const FEEDBACK_QUEUE_KEY = 'YG_AGRO_FEEDBACK_QUEUE_V1';
 const FEEDBACK_QUEUE_LIMIT = 30;
 const FEEDBACK_HISTORY_LIMIT = 20;

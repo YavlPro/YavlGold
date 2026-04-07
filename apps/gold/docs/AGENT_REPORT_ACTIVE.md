@@ -10089,3 +10089,33 @@ Soy Yerikson Varela, agricultor y desarrollador de YavlGold, nativo de La Grita,
 ### Build
 
 - `pnpm build:gold` → OK (157 modules, 2.40s, UTF-8 verificado)
+
+---
+
+## Limpieza versionado legacy 9.8 → V1 (2026-04-07)
+
+### Diagnóstico
+
+Búsqueda global de `9.8`, `V9.8`, `v9.8`, `9.8.0` en `apps/gold`. Clasificación:
+
+**Cambiados (activo visible):**
+- `package.json:3` → `"version": "9.8.0"` alimentaba `__APP_VERSION__` que se mostraba en el footer del dashboard. Cambiado a `"1.0.0"`.
+- `dashboard/index.html:1` → comentario `v9.8 Pathfinder`. Cambiado a `v1`.
+- `agro/agro-feedback.js:4` → `FEEDBACK_VERSION = 'V9.8'`. Cambiado a `'V1'`.
+
+**No tocados (histórico legítimo):**
+- Crónicas (2026-01, 02, 03, CRONICA-YAVLGOLD) — registro histórico real.
+- `docs/AGENT_REPORT.md` — histórico legacy.
+- `docs/AGENT_REPORT_ACTIVE.md` — ya auditado en Mar 12, referencias son históricas.
+- `docs/ADN-VISUAL-V10.0.md` — V9.8 como contexto histórico de formalización.
+- `faq.html` — ya dice V9.8 es "contexto historico".
+- `public/llms.txt` — ya lo explica correctamente.
+- `supabase/migrations/` — archivos inmutables.
+- `archive/` — archivado.
+
+**No tocados (técnico interno, no visible):**
+- Comentarios CSS/JS en `agro.css`, `agro.js`, `agro/index.html` — etiquetas de sección internas. Cambiarlas no afecta al usuario y arriesga romper referencias cruzadas.
+
+### Build
+
+- `pnpm build:gold` → OK (`@yavl/gold@1.0.0`, 157 modules, 2.53s, UTF-8 OK)
