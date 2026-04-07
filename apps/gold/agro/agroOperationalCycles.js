@@ -3,6 +3,7 @@ const VIEW_NAME = 'operational';
 const SUBVIEW_ACTIVE = 'active';
 const SUBVIEW_FINISHED = 'finished';
 const SUBVIEW_EXPORT = 'export';
+const SUBVIEW_DONATIONS = 'donations';
 const FAMILY_LINKED = 'linked';
 const FAMILY_UNLINKED = 'unlinked';
 const FAMILY_OPTIONS = Object.freeze([FAMILY_LINKED, FAMILY_UNLINKED]);
@@ -14,7 +15,7 @@ const EMPTY_BALANCE_LABEL = '📝 Sin balance monetario';
 
 const ACTIVE_STATUS_VALUES = Object.freeze(['open', 'in_progress', 'compensating']);
 const FINISHED_STATUS_VALUES = Object.freeze(['closed', 'lost']);
-const SUBVIEW_OPTIONS = Object.freeze([SUBVIEW_ACTIVE, SUBVIEW_FINISHED, SUBVIEW_EXPORT]);
+const SUBVIEW_OPTIONS = Object.freeze([SUBVIEW_ACTIVE, SUBVIEW_FINISHED, SUBVIEW_DONATIONS, SUBVIEW_EXPORT]);
 const CURRENCY_OPTIONS = Object.freeze(['COP', 'USD', 'VES']);
 
 const ECONOMIC_TYPE_OPTIONS = Object.freeze([
@@ -103,6 +104,7 @@ const state = {
     crops: [],
     datasets: createDatasetsState(),
     portfolioByCrop: new Map(),
+    operationalExpensesByCrop: new Map(),
     cycleIndex: new Map(),
     initialized: false,
     loadedOnce: false,
@@ -174,6 +176,7 @@ function serializePortfolioState(entry) {
 
 function rebuildPortfolioByCrop() {
     const index = new Map();
+    const expenseIndex = new Map();
     const registerCycle = (cycle) => {
         const cropId = normalizeId(cycle?.crop_id);
         if (!cropId) return;
@@ -190,11 +193,21 @@ function rebuildPortfolioByCrop() {
         }
 
         index.set(cropId, current);
+
+        const outgoing = cycle?.summary?.outgoing;
+        if (outgoing instanceof Map) {
+            outgoing.forEach((amount, currency) => {
+                if (currency === 'USD' && Number.isFinite(amount) && amount > 0) {
+                    expenseIndex.set(cropId, (expenseIndex.get(cropId) || 0) + amount);
+                }
+            });
+        }
     };
 
     state.datasets[SUBVIEW_ACTIVE].cycles.forEach(registerCycle);
     state.datasets[SUBVIEW_FINISHED].cycles.forEach(registerCycle);
     state.portfolioByCrop = index;
+    state.operationalExpensesByCrop = expenseIndex;
 }
 
 function getPortfolioStateByCrop(cropId) {
@@ -203,6 +216,12 @@ function getPortfolioStateByCrop(cropId) {
     const entry = state.portfolioByCrop.get(normalizedCropId);
     if (!entry) return null;
     return serializePortfolioState(entry);
+}
+
+function getOperationalExpensesByCrop() {
+    return state.operationalExpensesByCrop instanceof Map
+        ? new Map(state.operationalExpensesByCrop)
+        : new Map();
 }
 
 function emitPortfolioSnapshot() {
@@ -1578,6 +1597,16 @@ function getSubviewMeta(subview) {
         };
     }
 
+    if (subview === SUBVIEW_DONATIONS) {
+        return {
+            eyebrow: '🤝 Donaciones',
+            title: `🤝 Donaciones — ${familyLabel}`,
+            copy: state.familyFilter === FAMILY_LINKED
+                ? 'Donaciones y regalos asociados a un cultivo, incluidos como gastos.'
+                : 'Donaciones y regalos sin vínculo con cultivo, incluidos como gastos.'
+        };
+    }
+
     if (subview === SUBVIEW_EXPORT) {
         return {
             eyebrow: '📥 Exportar MD',
@@ -1621,18 +1650,27 @@ function renderFamilyToggle() {
     `).join('');
 }
 
+function getDonationCycles() {
+    const active = state.datasets[SUBVIEW_ACTIVE]?.cycles || [];
+    const finished = state.datasets[SUBVIEW_FINISHED]?.cycles || [];
+    return [...active, ...finished].filter((c) => normalizeToken(c?.economic_type) === 'donation');
+}
+
 function renderSubviewSwitch() {
     if (!state.refs?.subviewHost) return;
 
     const family = state.familyFilter;
     const activeCycles = filterCyclesByFamily(state.datasets[SUBVIEW_ACTIVE]?.cycles, family);
     const finishedCycles = filterCyclesByFamily(state.datasets[SUBVIEW_FINISHED]?.cycles, family);
+    const donationCycles = filterCyclesByFamily(getDonationCycles(), family);
     const activeCount = activeCycles.length;
     const finishedCount = finishedCycles.length;
+    const donationCount = donationCycles.length;
     const totalCount = activeCount + finishedCount;
     const options = [
         { value: SUBVIEW_ACTIVE, label: '🟡 No pagados', count: activeCount },
         { value: SUBVIEW_FINISHED, label: '✅ Pagados / pérdidas', count: finishedCount },
+        { value: SUBVIEW_DONATIONS, label: '🤝 Donaciones', count: donationCount },
         { value: SUBVIEW_EXPORT, label: '📥 Exportar', count: totalCount }
     ];
 
@@ -1865,6 +1903,32 @@ function renderOverview() {
         return;
     }
 
+    if (state.currentSubview === SUBVIEW_DONATIONS) {
+        const donationCycles = filterCyclesByFamily(getDonationCycles(), state.familyFilter);
+        const summary = createDatasetSummary(donationCycles);
+        const familyLabel = getFamilyLabel(state.familyFilter);
+        state.refs.overviewBody.innerHTML = `
+            <div class="agro-operational-summary-grid">
+                <article class="agro-operational-summary-card">
+                    <span class="agro-operational-summary-card__label">🤝 Donaciones</span>
+                    <strong class="agro-operational-summary-card__value">${summary.count}</strong>
+                    <p class="agro-operational-summary-card__hint">${escapeHtml(familyLabel)} — incluidas como gastos.</p>
+                </article>
+                <article class="agro-operational-summary-card">
+                    <span class="agro-operational-summary-card__label">📜 Movimientos</span>
+                    <strong class="agro-operational-summary-card__value">${summary.movementCount}</strong>
+                    <p class="agro-operational-summary-card__hint">Total de movimientos en donaciones.</p>
+                </article>
+                <article class="agro-operational-summary-card" data-tone="${escapeAttr(summary.balanceTone)}">
+                    <span class="agro-operational-summary-card__label">📊 Balance donaciones</span>
+                    <strong class="agro-operational-summary-card__value">${escapeHtml(summary.balanceText)}</strong>
+                    <p class="agro-operational-summary-card__hint">💰 Recibí: ${escapeHtml(summary.incomingText)} · 💸 Gasté: ${escapeHtml(summary.outgoingText)}</p>
+                </article>
+            </div>
+        `;
+        return;
+    }
+
     const dataset = getDataset(state.currentSubview);
     const familyCycles = filterCyclesByFamily(dataset.cycles, state.familyFilter);
     const summary = createDatasetSummary(familyCycles);
@@ -2046,12 +2110,16 @@ function renderCycleCard(cycle) {
 }
 
 function renderEmptyState(subview) {
-    const title = subview === SUBVIEW_FINISHED
-        ? '✅ Sin pagados ni pérdidas con esos filtros'
-        : '🟡 Sin activos con esos filtros';
-    const copy = subview === SUBVIEW_FINISHED
-        ? 'Ajusta período, categoría o tipo económico para ver pagados, cobrados o pérdidas.'
-        : 'Ajusta período, categoría o tipo económico para ver ciclos no pagados, en seguimiento o compensándose.';
+    const title = subview === SUBVIEW_DONATIONS
+        ? '🤝 Sin donaciones en esta familia'
+        : subview === SUBVIEW_FINISHED
+            ? '✅ Sin pagados ni pérdidas con esos filtros'
+            : '🟡 Sin activos con esos filtros';
+    const copy = subview === SUBVIEW_DONATIONS
+        ? 'No hay ciclos operativos de tipo donación registrados para esta familia.'
+        : subview === SUBVIEW_FINISHED
+            ? 'Ajusta período, categoría o tipo económico para ver pagados, cobrados o pérdidas.'
+            : 'Ajusta período, categoría o tipo económico para ver ciclos no pagados, en seguimiento o compensándose.';
 
     return `
         <div class="agro-operational-empty">
@@ -2214,6 +2282,28 @@ function renderCurrentSubview() {
             ? 'Actualizando vista de exportación...'
             : `Exportarás ${activeCount + finishedCount} ciclo${activeCount + finishedCount === 1 ? '' : 's'} respetando los filtros activos.`;
         state.refs.list.innerHTML = renderExportView();
+        return;
+    }
+
+    if (state.currentSubview === SUBVIEW_DONATIONS) {
+        const donationCycles = filterCyclesByFamily(getDonationCycles(), state.familyFilter);
+        state.refs.filtersHost.innerHTML = '';
+        state.refs.listStatus.textContent = isSoftRefreshing
+            ? 'Actualizando donaciones...'
+            : `${donationCycles.length} donación${donationCycles.length === 1 ? '' : 'es'} — ${getFamilyLabel(state.familyFilter)}`;
+
+        if (donationCycles.length === 0) {
+            state.refs.list.innerHTML = renderEmptyState(SUBVIEW_DONATIONS);
+            return;
+        }
+
+        const familyKey = state.familyFilter;
+        state.refs.list.innerHTML = renderCycleFamilySection({
+            familyKey,
+            title: `🤝 Donaciones — ${getFamilyLabel(familyKey)}`,
+            copy: 'Donaciones y regalos registrados como gastos operativos.',
+            cycles: donationCycles
+        });
         return;
     }
 
@@ -2438,6 +2528,7 @@ async function refreshData(options = {}) {
         state.crops = [];
         state.datasets = createDatasetsState();
         state.portfolioByCrop = new Map();
+        state.operationalExpensesByCrop = new Map();
         rebuildCycleIndex();
         renderWizard();
         renderFamilyToggle();
@@ -2799,6 +2890,7 @@ function exposeGlobalApi() {
         refresh: () => refreshData(),
         getSnapshot: buildDebugSnapshot,
         getPortfolioStateByCrop,
+        getOperationalExpensesByCrop,
         createFromPayload,
         updateById,
         deleteById,

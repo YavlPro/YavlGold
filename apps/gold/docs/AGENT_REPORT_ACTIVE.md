@@ -9659,3 +9659,46 @@ El fix anterior era separacion cosmetica (dos secciones en la misma lista). El u
   - "Cartera operativa abierta/cerrada" (basada en ciclos operativos con crop_id)
 - Si un cultivo no tiene fiadosUsd ni ciclos operativos, no debe mostrar ninguna badge
 - En mobile (<=480px), la barra de familia debe stackear vertical
+
+## Sesión: Ciclos Operativos — Donaciones + conexión con stats de cultivo (2026-04-06)
+
+### Diagnóstico
+Faltaban dos piezas funcionales importantes en Ciclos Operativos:
+
+1. **Donaciones** no estaba cerrada como subvista/tag operativa visible en ambas familias:
+   - ciclos operativos **asociados** a cultivo
+   - ciclos operativos **no asociados**
+
+2. Los **gastos operativos asociados a un cultivo** no estaban entrando en las **estadísticas del ciclo de cultivo**, por lo que un pago operativo real (ej. semilla de maíz asociada al cultivo Maíz) quedaba aislado en Operativos y no impactaba el resumen económico del cultivo.
+
+### Cambios aplicados
+
+**`apps/gold/agro/agroOperationalCycles.js`**
+- Se agregó la subvista canónica **`SUBVIEW_DONATIONS`** al set de subviews operativas.
+- Se extendió `getSubviewMeta(...)` para describir correctamente la vista de **Donaciones**.
+- Se incorporó conteo de donaciones en `renderSubviewSwitch(...)`.
+- Se agregó manejo explícito de la subvista de donaciones en `renderCurrentSubview(...)`.
+- Se ajustó `renderOverview(...)` para soportar la lectura de donaciones como vista separada.
+- Se actualizó `renderEmptyState(...)` con copy específico para donaciones.
+- Se extendió la reconstrucción del snapshot por cultivo para acumular también **gastos operativos asociados por `crop_id`**.
+- Se expuso `getOperationalExpensesByCrop()` en la API pública del módulo.
+- Se inicializó `operationalExpensesByCrop` en el state del módulo.
+- Se limpió `operationalExpensesByCrop` en la ruta de error de `refreshData()` para evitar residuos de estado.
+
+**`apps/gold/agro/agro.js`**
+- Se conectó quirúrgicamente la salida de `getOperationalExpensesByCrop()` con `expenseTotalsByCrop`.
+- Resultado: los gastos de ciclos operativos **asociados a cultivo** ahora se suman al total de gastos del ciclo de cultivo correspondiente.
+
+### Resultado funcional
+- La clasificación operativa queda alineada a la regla de producto:
+  - **No pagados**
+  - **Pagados**
+  - **Donaciones**
+- **Donaciones** aplica tanto para ciclos asociados como no asociados.
+- Contablemente, **donaciones computa como gasto**.
+- Cuando un ciclo operativo está asociado a un cultivo, su gasto ahora **sí aparece en las estadísticas del ciclo de cultivo**.
+- La conexión solo se materializa cuando existe asociación real con `crop_id`, evitando ruido en cultivos sin ciclos operativos vinculados.
+
+### Validación
+- Build ejecutado con éxito:
+  - `pnpm build:gold`

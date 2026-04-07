@@ -11345,6 +11345,12 @@ export async function loadCrops() {
                 fetchPendingTransferredUnitTotalsByCropIds(currentUserId, allCropIds)
             ]);
             expenseTotalsByCrop = expenseTotals;
+            const opsApi = window.YGAgroOperationalCycles;
+            if (typeof opsApi?.getOperationalExpensesByCrop === 'function') {
+                opsApi.getOperationalExpensesByCrop().forEach((usd, cropId) => {
+                    expenseTotalsByCrop.set(cropId, (expenseTotalsByCrop.get(cropId) || 0) + usd);
+                });
+            }
             incomeTotalsByCrop = incomeTotals;
             lossTotalsByCrop = lossTotals;
             pendingTotalsByCrop = pendingTotals;
