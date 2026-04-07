@@ -1,3 +1,5 @@
+import { convertToUSD, getRate, initExchangeRates } from './agro-exchange.js';
+
 const ROOT_ID = 'agro-operational-root';
 const VIEW_NAME = 'operational';
 const SUBVIEW_ACTIVE = 'active';
@@ -106,6 +108,7 @@ const state = {
     datasets: createDatasetsState(),
     portfolioByCrop: new Map(),
     operationalExpensesByCrop: new Map(),
+    exchangeRates: { USD: 1, COP: null, VES: null },
     cycleIndex: new Map(),
     initialized: false,
     loadedOnce: false,
@@ -175,7 +178,79 @@ function serializePortfolioState(entry) {
     };
 }
 
-function rebuildPortfolioByCrop() {
+function toFiniteNumber(value) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+}
+
+function toPositiveNumber(value) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function sanitizeExchangeRates(rates = null) {
+    return {
+        USD: 1,
+        COP: toPositiveNumber(rates?.COP),
+        VES: toPositiveNumber(rates?.VES)
+    };
+}
+
+function hasOperationalExchangeRates(rates = null) {
+    const safeRates = sanitizeExchangeRates(rates);
+    return Boolean(safeRates.COP || safeRates.VES);
+}
+
+async function ensureOperationalExchangeRates() {
+    if (hasOperationalExchangeRates(state.exchangeRates)) {
+        return sanitizeExchangeRates(state.exchangeRates);
+    }
+
+    try {
+        state.exchangeRates = sanitizeExchangeRates(await initExchangeRates());
+    } catch (error) {
+        console.warn('[agroOperationalCycles] No se pudieron inicializar tasas de cambio:', error);
+        state.exchangeRates = sanitizeExchangeRates(state.exchangeRates);
+    }
+
+    return sanitizeExchangeRates(state.exchangeRates);
+}
+
+function resolveMovementExchangeRate(movement, exchangeRates = state.exchangeRates) {
+    const currency = String(movement?.currency || 'USD').trim().toUpperCase();
+    if (currency === 'USD') return 1;
+
+    const persistedRate = toPositiveNumber(movement?.exchange_rate);
+    if (persistedRate) return persistedRate;
+
+    return toPositiveNumber(getRate(currency, sanitizeExchangeRates(exchangeRates)));
+}
+
+function resolveMovementAmountUsd(movement, exchangeRates = state.exchangeRates) {
+    const amount = toFiniteNumber(movement?.amount);
+    if (amount == null || amount <= 0) return 0;
+
+    const persistedUsd = toPositiveNumber(movement?.amount_usd);
+    if (persistedUsd) return persistedUsd;
+
+    const currency = String(movement?.currency || 'USD').trim().toUpperCase();
+    if (currency === 'USD') return amount;
+
+    const rate = resolveMovementExchangeRate(movement, exchangeRates);
+    if (!rate) return 0;
+
+    const converted = toFiniteNumber(convertToUSD(amount, currency, rate));
+    return converted != null && converted > 0 ? converted : 0;
+}
+
+function sumOutgoingMovementsUsd(movements = [], exchangeRates = state.exchangeRates) {
+    return (Array.isArray(movements) ? movements : []).reduce((total, movement) => {
+        if (movement?.direction === 'in') return total;
+        return total + resolveMovementAmountUsd(movement, exchangeRates);
+    }, 0);
+}
+
+function rebuildPortfolioByCrop(exchangeRates = state.exchangeRates) {
     const index = new Map();
     const expenseIndex = new Map();
     const registerCycle = (cycle) => {
@@ -195,13 +270,9 @@ function rebuildPortfolioByCrop() {
 
         index.set(cropId, current);
 
-        const outgoing = cycle?.summary?.outgoing;
-        if (outgoing instanceof Map) {
-            outgoing.forEach((amount, currency) => {
-                if (currency === 'USD' && Number.isFinite(amount) && amount > 0) {
-                    expenseIndex.set(cropId, (expenseIndex.get(cropId) || 0) + amount);
-                }
-            });
+        const outgoingUsd = sumOutgoingMovementsUsd(cycle?.movements, exchangeRates);
+        if (outgoingUsd > 0) {
+            expenseIndex.set(cropId, (expenseIndex.get(cropId) || 0) + outgoingUsd);
         }
     };
 
@@ -966,15 +1037,27 @@ function normalizePayload(source = {}, options = {}) {
     };
 }
 
-function deriveMovementPayload(userId, cycleId, payload) {
+async function deriveMovementPayload(userId, cycleId, payload) {
+    const amount = toFiniteNumber(payload.amount);
+    const currency = String(payload.currency || 'USD').trim().toUpperCase();
+    const exchangeRates = currency === 'USD'
+        ? sanitizeExchangeRates(state.exchangeRates)
+        : await ensureOperationalExchangeRates();
+    const exchangeRate = resolveMovementExchangeRate({ currency }, exchangeRates);
+    const amountUsd = amount == null
+        ? null
+        : (currency === 'USD'
+            ? amount
+            : (exchangeRate ? convertToUSD(amount, currency, exchangeRate) : null));
+
     return {
         user_id: userId,
         cycle_id: cycleId,
         direction: deriveMovementDirection(payload.economicType),
-        amount: payload.amount,
-        currency: payload.currency,
-        amount_usd: null,
-        exchange_rate: null,
+        amount,
+        currency,
+        amount_usd: toFiniteNumber(amountUsd),
+        exchange_rate: currency === 'USD' ? 1 : exchangeRate,
         concept: derivePrimaryConcept(payload.name, payload.description),
         movement_date: payload.movementDate,
         quantity: payload.quantity,
@@ -987,7 +1070,7 @@ export function deriveMovementDirection(economicType) {
 }
 
 async function upsertInitialMovement(supabase, userId, cycleId, movementId, payload) {
-    const movementPayload = deriveMovementPayload(userId, cycleId, payload);
+    const movementPayload = await deriveMovementPayload(userId, cycleId, payload);
     if (movementId) {
         const { error } = await supabase
             .from('agro_operational_movements')
@@ -2571,11 +2654,13 @@ async function refreshData(options = {}) {
     try {
         const supabase = await getSupabaseClient();
         const userId = await ensureUserId(options.initialUserId);
-        const [crops, activeRecords, finishedRecords] = await Promise.all([
+        const [exchangeRates, crops, activeRecords, finishedRecords] = await Promise.all([
+            initExchangeRates(),
             fetchCrops(supabase, userId),
             fetchDatasetRecords(supabase, userId, SUBVIEW_ACTIVE, ACTIVE_STATUS_VALUES),
             fetchDatasetRecords(supabase, userId, SUBVIEW_FINISHED, FINISHED_STATUS_VALUES)
         ]);
+        state.exchangeRates = sanitizeExchangeRates(exchangeRates);
 
         const cropMap = new Map(crops.map((crop) => {
             const display = buildCropDisplay(crop);
@@ -2599,7 +2684,7 @@ async function refreshData(options = {}) {
         state.datasets[SUBVIEW_ACTIVE].summary = createDatasetSummary(state.datasets[SUBVIEW_ACTIVE].cycles);
         state.datasets[SUBVIEW_FINISHED].cycles = buildCyclesFromRecords(finishedRecords);
         state.datasets[SUBVIEW_FINISHED].summary = createDatasetSummary(state.datasets[SUBVIEW_FINISHED].cycles);
-        rebuildPortfolioByCrop();
+        rebuildPortfolioByCrop(state.exchangeRates);
         rebuildCycleIndex();
         state.loadedOnce = true;
 

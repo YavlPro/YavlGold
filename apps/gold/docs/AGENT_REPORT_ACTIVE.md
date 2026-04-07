@@ -9844,3 +9844,66 @@ Faltaban dos piezas funcionales importantes en Ciclos Operativos:
   - `Operativos asociados` muestra el monto que viene del módulo operativo;
   - `Pagados/Fiados/Pérdidas cartera viva` quedan identificados como fuente separada;
   - `Costos combinados del ciclo` refleje la suma correcta.
+
+---
+
+## Sesión: Operativos asociados multimoneda + pulido visual de Cartera Viva (2026-04-06)
+
+### Diagnóstico
+
+- La asociación por cultivo **sí** estaba viva:
+  - la card de `Ciclos activos` ya mostraba `Cartera operativa abierta`;
+  - eso confirmaba que `crop_id` y el snapshot de portfolio sí estaban llegando.
+- El motivo por el que `Inversión USD` seguía en `USD 0` era otro:
+  - `apps/gold/agro/agroOperationalCycles.js` reconstruía `operationalExpensesByCrop` usando solo `cycle.summary.outgoing` en moneda `USD`;
+  - cualquier movimiento asociado en `COP` o `VES` quedaba fuera del agregado aunque estuviera correctamente vinculado al cultivo.
+- Además, en `Cartera Viva` la barra de categorías seguía viéndose como tabs legacy y no dialogaba bien con el lenguaje visual de chips/tag pills ya usado en `Ciclos Operativos`.
+
+### Cambios aplicados
+
+**`apps/gold/agro/agroOperationalCycles.js`**
+- Se añadieron imports desde `agro-exchange.js` para reutilizar:
+  - `initExchangeRates`
+  - `getRate`
+  - `convertToUSD`
+- Se incorporó estado local de tasas (`exchangeRates`) y helpers para:
+  - sanear tasas activas;
+  - resolver `exchange_rate` persistido;
+  - calcular `amount_usd` desde:
+    - `amount_usd` existente
+    - `exchange_rate` guardado
+    - tasa efectiva actual cuando faltaba dato persistido
+- `rebuildPortfolioByCrop(...)` dejó de sumar solo buckets `USD` y ahora acumula los movimientos salientes asociados en USD normalizado.
+  - esto cubre `gastos`, `donaciones` y `pérdidas` asociados al cultivo.
+- `refreshData()` ahora inicializa tasas antes de reconstruir el snapshot operativo.
+- `deriveMovementPayload(...)` ahora persiste:
+  - `amount_usd`
+  - `exchange_rate`
+  en los nuevos movimientos o ediciones, para no repetir el mismo hueco en futuros registros.
+
+**`apps/gold/agro/agro-cartera-viva.css`**
+- Se estilizó la nota contextual superior como bloque integrado V10 en lugar de texto suelto.
+- La barra de categorías de `Cartera Viva` se convirtió visualmente en chips/pills:
+  - con borde, fondo, hover y estado activo más cercanos a `Ciclos Operativos`;
+  - contador integrado en cada chip.
+- El ajuste fue solo visual: sin cambiar estructura ni lógica del módulo.
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+- `agent-guard: OK`
+- `agent-report-check: OK`
+- `vite build: OK`
+- `check-llms: OK`
+- `check-dist-utf8: OK`
+- Warning no bloqueante: engine mismatch por Node `v25.6.0` vs `20.x`
+
+### QA sugerido
+
+- Crear o reutilizar un movimiento operativo asociado al cultivo en:
+  - `COP`
+  - `VES`
+  - `USD`
+  y confirmar que `Inversión USD` del cultivo ya suba en los tres casos.
+- Revisar `Ver desglose financiero` del cultivo y confirmar que `Operativos asociados` ya no quede en cero cuando el registro existe.
+- Entrar en `Cartera Viva` y validar que la barra de categorías se perciba coherente con los chips de `Ciclos Operativos`, tanto en desktop como en mobile.
