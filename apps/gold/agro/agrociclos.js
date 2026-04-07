@@ -220,6 +220,16 @@ function renderGlobalBreakdown(ciclo) {
   `;
 }
 
+function renderBreakdownMoneyRow(label, rawValue) {
+  const safeValue = String(rawValue || 'N/D');
+  return `
+    <div class="desglose-row">
+      <span>${escapeHtml(label)}</span>
+      <span data-money="1" data-raw-money="${escapeAttr(safeValue)}">${escapeHtml(safeValue)}</span>
+    </div>
+  `;
+}
+
 function renderCard(ciclo, index = 0) {
   const mode = String(ciclo?.mode || 'active').trim().toLowerCase() === 'finished'
     ? 'finished'
@@ -244,9 +254,12 @@ function renderCard(ciclo, index = 0) {
   const desglose = ciclo?.desglose || {};
   const desgloseBase = String(desglose.base || 'N/D');
   const desgloseGastos = String(desglose.gastos || 'N/D');
+  const desgloseGastosDirectos = String(desglose.gastosDirectos || 'N/D');
+  const desgloseOperativosAsociados = String(desglose.operativosAsociados || 'N/D');
   const desglosePagados = String(desglose.pagados || 'N/D');
   const desgloseCostos = String(desglose.costos || 'N/D');
   const desgloseFiados = String(desglose.fiados || 'N/D');
+  const desglosePerdidasCarteraViva = String(desglose.perdidasCarteraViva || 'N/D');
   const desgloseCotizacion = String(desglose.cotizacion || 'N/D');
   const globalBreakdownMarkup = renderGlobalBreakdown(ciclo);
 
@@ -315,26 +328,14 @@ function renderCard(ciclo, index = 0) {
           </svg>
         </summary>
         <div class="desglose-body">
-          <div class="desglose-row">
-            <span>Base inversión multimoneda</span>
-            <span data-money="1" data-raw-money="${escapeAttr(desgloseBase)}">${escapeHtml(desgloseBase)}</span>
-          </div>
-          <div class="desglose-row">
-            <span>Gastos acumulados</span>
-            <span data-money="1" data-raw-money="${escapeAttr(desgloseGastos)}">${escapeHtml(desgloseGastos)}</span>
-          </div>
-          <div class="desglose-row">
-            <span>Pagados</span>
-            <span data-money="1" data-raw-money="${escapeAttr(desglosePagados)}">${escapeHtml(desglosePagados)}</span>
-          </div>
-          <div class="desglose-row">
-            <span>Costos</span>
-            <span data-money="1" data-raw-money="${escapeAttr(desgloseCostos)}">${escapeHtml(desgloseCostos)}</span>
-          </div>
-          <div class="desglose-row">
-            <span>Fiados</span>
-            <span data-money="1" data-raw-money="${escapeAttr(desgloseFiados)}">${escapeHtml(desgloseFiados)}</span>
-          </div>
+          ${renderBreakdownMoneyRow('Base inversión multimoneda', desgloseBase)}
+          ${renderBreakdownMoneyRow('Gastos totales del cultivo', desgloseGastos)}
+          ${renderBreakdownMoneyRow('Gastos directos del cultivo', desgloseGastosDirectos)}
+          ${renderBreakdownMoneyRow('Operativos asociados (gastos/donaciones/pérdidas)', desgloseOperativosAsociados)}
+          ${renderBreakdownMoneyRow('Pagados cartera viva', desglosePagados)}
+          ${renderBreakdownMoneyRow('Fiados cartera viva', desgloseFiados)}
+          ${renderBreakdownMoneyRow('Pérdidas cartera viva', desglosePerdidasCarteraViva)}
+          ${renderBreakdownMoneyRow('Costos combinados del ciclo', desgloseCostos)}
           ${globalBreakdownMarkup}
           <div class="desglose-row cotizacion">
             <span>${escapeHtml(desgloseCotizacion)}</span>

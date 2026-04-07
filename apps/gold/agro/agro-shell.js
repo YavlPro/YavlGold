@@ -26,6 +26,8 @@ const VIEW_ALIASES = Object.freeze({
     'historial-comercial': Object.freeze({ view: 'cartera-viva', subview: '' }),
     'operational-active': Object.freeze({ view: 'operational', subview: 'active' }),
     'operational-finished': Object.freeze({ view: 'operational', subview: 'finished' }),
+    'operational-donations': Object.freeze({ view: 'operational', subview: 'donations' }),
+    'operational-losses': Object.freeze({ view: 'operational', subview: 'losses' }),
     'operational-export': Object.freeze({ view: 'operational', subview: 'export' })
 });
 
@@ -38,7 +40,7 @@ const NAV_PARENT_GROUPS = Object.freeze({
 
 const VIEW_SUBNAV_CONFIG = Object.freeze({
     ciclos: Object.freeze({ defaultSubview: 'finalizados', allowed: ['activos', 'finalizados', 'comparar', 'estadisticas'] }),
-    operational: Object.freeze({ defaultSubview: 'active', allowed: ['active', 'finished', 'export'] }),
+    operational: Object.freeze({ defaultSubview: 'active', allowed: ['active', 'finished', 'donations', 'losses', 'export'] }),
     pagados: Object.freeze({ defaultSubview: 'historial', allowed: ['historial', 'stats'] }),
     fiados: Object.freeze({ defaultSubview: 'historial', allowed: ['historial', 'stats'] }),
     perdidas: Object.freeze({ defaultSubview: 'historial', allowed: ['historial', 'stats'] }),

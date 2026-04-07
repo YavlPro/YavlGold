@@ -2,8 +2,9 @@ const ROOT_ID = 'agro-operational-root';
 const VIEW_NAME = 'operational';
 const SUBVIEW_ACTIVE = 'active';
 const SUBVIEW_FINISHED = 'finished';
-const SUBVIEW_EXPORT = 'export';
 const SUBVIEW_DONATIONS = 'donations';
+const SUBVIEW_LOSSES = 'losses';
+const SUBVIEW_EXPORT = 'export';
 const FAMILY_LINKED = 'linked';
 const FAMILY_UNLINKED = 'unlinked';
 const FAMILY_OPTIONS = Object.freeze([FAMILY_LINKED, FAMILY_UNLINKED]);
@@ -15,7 +16,7 @@ const EMPTY_BALANCE_LABEL = '📝 Sin balance monetario';
 
 const ACTIVE_STATUS_VALUES = Object.freeze(['open', 'in_progress', 'compensating']);
 const FINISHED_STATUS_VALUES = Object.freeze(['closed', 'lost']);
-const SUBVIEW_OPTIONS = Object.freeze([SUBVIEW_ACTIVE, SUBVIEW_FINISHED, SUBVIEW_DONATIONS, SUBVIEW_EXPORT]);
+const SUBVIEW_OPTIONS = Object.freeze([SUBVIEW_ACTIVE, SUBVIEW_FINISHED, SUBVIEW_DONATIONS, SUBVIEW_LOSSES, SUBVIEW_EXPORT]);
 const CURRENCY_OPTIONS = Object.freeze(['COP', 'USD', 'VES']);
 
 const ECONOMIC_TYPE_OPTIONS = Object.freeze([
@@ -1589,11 +1590,11 @@ function getSubviewMeta(subview) {
 
     if (subview === SUBVIEW_FINISHED) {
         return {
-            eyebrow: '✅ Pagados y pérdidas',
-            title: `✅ Pagados / pérdidas — ${familyLabel}`,
+            eyebrow: '✅ Pagados',
+            title: `✅ Pagados — ${familyLabel}`,
             copy: state.familyFilter === FAMILY_LINKED
-                ? 'Pagados, cobrados o perdidos, asociados a un cultivo.'
-                : 'Pagados, cobrados o perdidos, sin vínculo con cultivo.'
+                ? 'Ciclos ya pagados o cerrados, asociados a un cultivo.'
+                : 'Ciclos ya pagados o cerrados, sin vínculo con cultivo.'
         };
     }
 
@@ -1607,6 +1608,16 @@ function getSubviewMeta(subview) {
         };
     }
 
+    if (subview === SUBVIEW_LOSSES) {
+        return {
+            eyebrow: '💔 Pérdidas',
+            title: `💔 Pérdidas — ${familyLabel}`,
+            copy: state.familyFilter === FAMILY_LINKED
+                ? 'Pérdidas o cancelaciones operativas asociadas a un cultivo.'
+                : 'Pérdidas o cancelaciones operativas sin vínculo con cultivo.'
+        };
+    }
+
     if (subview === SUBVIEW_EXPORT) {
         return {
             eyebrow: '📥 Exportar MD',
@@ -1616,8 +1627,8 @@ function getSubviewMeta(subview) {
     }
 
     return {
-        eyebrow: '🟡 Activos',
-        title: `🟡 Activos — ${familyLabel}`,
+        eyebrow: '🟡 No pagados',
+        title: `🟡 No pagados — ${familyLabel}`,
         copy: state.familyFilter === FAMILY_LINKED
             ? 'No pagados, en seguimiento o compensándose, asociados a un cultivo.'
             : 'No pagados, en seguimiento o compensándose, sin vínculo con cultivo.'
@@ -1651,26 +1662,57 @@ function renderFamilyToggle() {
 }
 
 function getDonationCycles() {
+    return getAllCycles().filter((cycle) => normalizeToken(cycle?.economic_type) === 'donation');
+}
+
+function isDonationCycle(cycle) {
+    return normalizeToken(cycle?.economic_type) === 'donation';
+}
+
+function isLossCycle(cycle) {
+    if (isDonationCycle(cycle)) return false;
+    return normalizeToken(cycle?.economic_type) === 'loss' || normalizeToken(cycle?.status) === 'lost';
+}
+
+function getPendingCycles() {
     const active = state.datasets[SUBVIEW_ACTIVE]?.cycles || [];
+    return active.filter((cycle) => ACTIVE_STATUS_VALUES.includes(normalizeToken(cycle?.status)) && !isDonationCycle(cycle) && !isLossCycle(cycle));
+}
+
+function getPaidCycles() {
     const finished = state.datasets[SUBVIEW_FINISHED]?.cycles || [];
-    return [...active, ...finished].filter((c) => normalizeToken(c?.economic_type) === 'donation');
+    return finished.filter((cycle) => normalizeToken(cycle?.status) === 'closed' && !isDonationCycle(cycle) && !isLossCycle(cycle));
+}
+
+function getLossCycles() {
+    return getAllCycles().filter(isLossCycle);
+}
+
+function getCyclesForSubview(subview) {
+    if (subview === SUBVIEW_FINISHED) return getPaidCycles();
+    if (subview === SUBVIEW_DONATIONS) return getDonationCycles();
+    if (subview === SUBVIEW_LOSSES) return getLossCycles();
+    return getPendingCycles();
 }
 
 function renderSubviewSwitch() {
     if (!state.refs?.subviewHost) return;
 
     const family = state.familyFilter;
-    const activeCycles = filterCyclesByFamily(state.datasets[SUBVIEW_ACTIVE]?.cycles, family);
-    const finishedCycles = filterCyclesByFamily(state.datasets[SUBVIEW_FINISHED]?.cycles, family);
-    const donationCycles = filterCyclesByFamily(getDonationCycles(), family);
+    const activeCycles = filterCyclesByFamily(getCyclesForSubview(SUBVIEW_ACTIVE), family);
+    const paidCycles = filterCyclesByFamily(getCyclesForSubview(SUBVIEW_FINISHED), family);
+    const donationCycles = filterCyclesByFamily(getCyclesForSubview(SUBVIEW_DONATIONS), family);
+    const lossCycles = filterCyclesByFamily(getCyclesForSubview(SUBVIEW_LOSSES), family);
     const activeCount = activeCycles.length;
-    const finishedCount = finishedCycles.length;
+    const paidCount = paidCycles.length;
     const donationCount = donationCycles.length;
-    const totalCount = activeCount + finishedCount;
+    const lossCount = lossCycles.length;
+    const totalCount = activeCount + paidCount + donationCount + lossCount;
     const options = [
         { value: SUBVIEW_ACTIVE, label: '🟡 No pagados', count: activeCount },
-        { value: SUBVIEW_FINISHED, label: '✅ Pagados / pérdidas', count: finishedCount },
+        { value: SUBVIEW_FINISHED, label: '✅ Pagados', count: paidCount },
         { value: SUBVIEW_DONATIONS, label: '🤝 Donaciones', count: donationCount },
+        { value: SUBVIEW_LOSSES, label: '💔 Pérdidas', count: lossCount },
         { value: SUBVIEW_EXPORT, label: '📥 Exportar', count: totalCount }
     ];
 
@@ -1904,7 +1946,7 @@ function renderOverview() {
     }
 
     if (state.currentSubview === SUBVIEW_DONATIONS) {
-        const donationCycles = filterCyclesByFamily(getDonationCycles(), state.familyFilter);
+        const donationCycles = filterCyclesByFamily(getCyclesForSubview(SUBVIEW_DONATIONS), state.familyFilter);
         const summary = createDatasetSummary(donationCycles);
         const familyLabel = getFamilyLabel(state.familyFilter);
         state.refs.overviewBody.innerHTML = `
@@ -1929,8 +1971,34 @@ function renderOverview() {
         return;
     }
 
+    if (state.currentSubview === SUBVIEW_LOSSES) {
+        const lossCycles = filterCyclesByFamily(getCyclesForSubview(SUBVIEW_LOSSES), state.familyFilter);
+        const summary = createDatasetSummary(lossCycles);
+        const familyLabel = getFamilyLabel(state.familyFilter);
+        state.refs.overviewBody.innerHTML = `
+            <div class="agro-operational-summary-grid">
+                <article class="agro-operational-summary-card">
+                    <span class="agro-operational-summary-card__label">💔 Pérdidas</span>
+                    <strong class="agro-operational-summary-card__value">${summary.count}</strong>
+                    <p class="agro-operational-summary-card__hint">${escapeHtml(familyLabel)} — cancelaciones o pérdidas operativas.</p>
+                </article>
+                <article class="agro-operational-summary-card">
+                    <span class="agro-operational-summary-card__label">📜 Movimientos</span>
+                    <strong class="agro-operational-summary-card__value">${summary.movementCount}</strong>
+                    <p class="agro-operational-summary-card__hint">Total de movimientos en pérdidas.</p>
+                </article>
+                <article class="agro-operational-summary-card" data-tone="${escapeAttr(summary.balanceTone)}">
+                    <span class="agro-operational-summary-card__label">📊 Balance pérdidas</span>
+                    <strong class="agro-operational-summary-card__value">${escapeHtml(summary.balanceText)}</strong>
+                    <p class="agro-operational-summary-card__hint">💰 Recibí: ${escapeHtml(summary.incomingText)} · 💸 Gasté: ${escapeHtml(summary.outgoingText)}</p>
+                </article>
+            </div>
+        `;
+        return;
+    }
+
     const dataset = getDataset(state.currentSubview);
-    const familyCycles = filterCyclesByFamily(dataset.cycles, state.familyFilter);
+    const familyCycles = filterCyclesByFamily(getCyclesForSubview(state.currentSubview), state.familyFilter);
     const summary = createDatasetSummary(familyCycles);
     const familyLabel = getFamilyLabel(state.familyFilter);
     state.refs.overviewBody.innerHTML = `
@@ -2112,13 +2180,17 @@ function renderCycleCard(cycle) {
 function renderEmptyState(subview) {
     const title = subview === SUBVIEW_DONATIONS
         ? '🤝 Sin donaciones en esta familia'
+        : subview === SUBVIEW_LOSSES
+            ? '💔 Sin pérdidas en esta familia'
         : subview === SUBVIEW_FINISHED
-            ? '✅ Sin pagados ni pérdidas con esos filtros'
-            : '🟡 Sin activos con esos filtros';
+            ? '✅ Sin pagados con esos filtros'
+            : '🟡 Sin ciclos no pagados con esos filtros';
     const copy = subview === SUBVIEW_DONATIONS
         ? 'No hay ciclos operativos de tipo donación registrados para esta familia.'
+        : subview === SUBVIEW_LOSSES
+            ? 'No hay ciclos operativos clasificados como pérdida para esta familia.'
         : subview === SUBVIEW_FINISHED
-            ? 'Ajusta período, categoría o tipo económico para ver pagados, cobrados o pérdidas.'
+            ? 'Ajusta período, categoría o tipo económico para ver ciclos ya pagados o cerrados.'
             : 'Ajusta período, categoría o tipo económico para ver ciclos no pagados, en seguimiento o compensándose.';
 
     return `
@@ -2286,7 +2358,7 @@ function renderCurrentSubview() {
     }
 
     if (state.currentSubview === SUBVIEW_DONATIONS) {
-        const donationCycles = filterCyclesByFamily(getDonationCycles(), state.familyFilter);
+        const donationCycles = filterCyclesByFamily(getCyclesForSubview(SUBVIEW_DONATIONS), state.familyFilter);
         state.refs.filtersHost.innerHTML = '';
         state.refs.listStatus.textContent = isSoftRefreshing
             ? 'Actualizando donaciones...'
@@ -2307,8 +2379,30 @@ function renderCurrentSubview() {
         return;
     }
 
+    if (state.currentSubview === SUBVIEW_LOSSES) {
+        const lossCycles = filterCyclesByFamily(getCyclesForSubview(SUBVIEW_LOSSES), state.familyFilter);
+        state.refs.filtersHost.innerHTML = '';
+        state.refs.listStatus.textContent = isSoftRefreshing
+            ? 'Actualizando pérdidas...'
+            : `${lossCycles.length} pérdida${lossCycles.length === 1 ? '' : 's'} — ${getFamilyLabel(state.familyFilter)}`;
+
+        if (lossCycles.length === 0) {
+            state.refs.list.innerHTML = renderEmptyState(SUBVIEW_LOSSES);
+            return;
+        }
+
+        const familyKey = state.familyFilter;
+        state.refs.list.innerHTML = renderCycleFamilySection({
+            familyKey,
+            title: `💔 Pérdidas — ${getFamilyLabel(familyKey)}`,
+            copy: 'Pérdidas o cancelaciones registradas como lectura operativa real.',
+            cycles: lossCycles
+        });
+        return;
+    }
+
     const dataset = getDataset(state.currentSubview);
-    const familyCycles = filterCyclesByFamily(dataset.cycles, state.familyFilter);
+    const familyCycles = filterCyclesByFamily(getCyclesForSubview(state.currentSubview), state.familyFilter);
     state.refs.filtersHost.innerHTML = renderFilters(state.currentSubview);
     state.refs.listStatus.textContent = isSoftRefreshing
         ? 'Actualizando ciclos operativos sin desmontar la vista...'

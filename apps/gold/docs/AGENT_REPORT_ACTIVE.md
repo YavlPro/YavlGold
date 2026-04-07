@@ -9702,3 +9702,145 @@ Faltaban dos piezas funcionales importantes en Ciclos Operativos:
 ### Validación
 - Build ejecutado con éxito:
   - `pnpm build:gold`
+
+---
+
+## Sesión: Ciclos Operativos — fix Donaciones + alta real de Pérdidas (2026-04-06)
+
+### Diagnóstico
+
+- El click en **`Donaciones`** no abría esa subvista porque el módulo sí despachaba `subview: 'donations'`, pero `apps/gold/agro/agro-shell.js` solo permitía `active`, `finished` y `export` para `operational`. Resultado: el shell degradaba `donations` a `active`.
+- `apps/gold/agro/agroOperationalCycles.js` todavía modelaba la lectura visible con tres buckets reales:
+  - `active`
+  - `finished`
+  - `donations`
+- Eso dejaba dos problemas de producto:
+  - **Donaciones** existía en UI, pero el shell no la respetaba como vista.
+  - **Pérdidas** seguía absorbida dentro de `finished`, sin tag/subvista propia y sin conteo independiente.
+
+### Cambios aplicados
+
+**`apps/gold/agro/agroOperationalCycles.js`**
+- **L6**: se agregó `SUBVIEW_LOSSES = 'losses'`.
+- **L19**: `SUBVIEW_OPTIONS` ahora acepta `active`, `finished`, `donations`, `losses`, `export`.
+- **L1590-L1626**: `getSubviewMeta(...)` ahora separa copy/título de:
+  - `No pagados`
+  - `Pagados`
+  - `Donaciones`
+  - `Pérdidas`
+- **L1662-L1696**: se añadió clasificación visible derivada:
+  - `getPendingCycles()`
+  - `getPaidCycles()`
+  - `getLossCycles()`
+  - `getCyclesForSubview(...)`
+- **L1698-L1718**: `renderSubviewSwitch(...)` ahora pinta y cuenta 4 tags reales:
+  - `No pagados`
+  - `Pagados`
+  - `Donaciones`
+  - `Pérdidas`
+- **L1867-L2000**: `renderOverview(...)` ya soporta overview específico para `Donaciones` y `Pérdidas`, y deja `Pagados` separado de pérdidas.
+- **L2180-L2195**: `renderEmptyState(...)` ahora tiene empty states propios para `Pagados`, `Donaciones` y `Pérdidas`.
+- **L2309-L2410**: `renderCurrentSubview(...)` ya resuelve correctamente las 4 subviews visibles en ambas familias (`linked` / `unlinked`).
+
+**`apps/gold/agro/agro-shell.js`**
+- **L29-L30**: se agregaron aliases `operational-donations` y `operational-losses`.
+- **L43**: `VIEW_SUBNAV_CONFIG.operational.allowed` ahora permite:
+  - `active`
+  - `finished`
+  - `donations`
+  - `losses`
+  - `export`
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+- `agent-guard: OK`
+- `agent-report-check: OK`
+- `vite build: OK`
+- `check-llms: OK`
+- `check-dist-utf8: OK`
+- Warning no bloqueante: engine mismatch por Node `v25.6.0` vs `20.x`
+
+### QA sugerido
+
+- Verificar en **Asociados al cultivo** que:
+  - `Donaciones` abra su vista real
+  - `Pérdidas` aparezca como tag real y abra su vista
+  - `No pagados` y `Pagados` sigan operando sin mezclar pérdidas
+- Verificar en **No asociados al cultivo** el mismo recorrido.
+- Confirmar que los conteos de los 4 tags cambien al alternar familia.
+- Confirmar empty states correctos cuando una familia no tenga:
+  - pagados
+  - donaciones
+  - pérdidas
+
+---
+
+## Sesión: Ciclos de cultivo — reflejar Operativos asociados y separar fuente en desglose (2026-04-06)
+
+### Diagnóstico
+
+- La card de `Ciclos activos` / `Ciclos finalizados` no estaba absorbiendo de forma fiable los montos asociados desde `Ciclos Operativos` por un problema de **timing de inicialización**:
+  - `apps/gold/agro/agro.js` ejecuta `loadCrops()` antes de que `apps/gold/agro/agroOperationalCycles.js` termine su `refreshData()`;
+  - en esa primera carga, `window.YGAgroOperationalCycles.getOperationalExpensesByCrop()` todavía no tenía snapshot utilizable;
+  - resultado: la card del cultivo podía quedar en `USD 0` aunque ya existieran registros operativos asociados por `crop_id`.
+- Además, la card V10 seguía pintando `inversionUSD` con **solo la inversión base** del cultivo, no con `base + gastos asociados`.
+- En `Ver desglose financiero`, la lectura no distinguía con claridad qué venía de:
+  - **Ciclos Operativos asociados**
+  - **Cartera Viva**
+
+### Cambios aplicados
+
+**`apps/gold/agro/agro.js`**
+- **L75**: se añadió `AGRO_OPERATIONAL_PORTFOLIO_UPDATED_EVENT = 'agro:operational-portfolio-updated'`.
+- **L8701-L8706**: `bindCropRefreshEvents()` ahora escucha el snapshot emitido por `agroOperationalCycles.js` y dispara `scheduleCyclesRefresh(250)`.
+  - esto hace que las cards de cultivo se re-rendericen cuando el módulo operativo termina de cargar o actualizarse.
+- **L10454-L10546**: `buildActiveCycleCardsData(...)` ahora separa:
+  - `directExpenseTotalsByCrop`
+  - `operationalExpenseTotalsByCrop`
+  - total combinado `expenseTotalsByCrop`
+- **L10499-L10541**:
+  - `inversionUSD` ahora usa `baseInvestment + expenseInvestment`;
+  - el payload del card incluye desglose explícito de:
+    - `gastosDirectos`
+    - `operativosAsociados`
+    - `perdidasCarteraViva`
+- **L10556-L10656**: el mismo ajuste se aplicó a `buildFinishedCycleCardsData(...)`.
+- **L11128-L11244**: `renderCropCycleGroup(...)` y `renderCropCycleHistory(...)` ahora propagan los mapas directos y operativos para conservar la separación también en finalizados/perdidos.
+- **L11362-L11517**: `loadCrops()` ahora arma tres capas:
+  - gastos directos del cultivo (`agro_expenses`)
+  - gastos operativos asociados (`getOperationalExpensesByCrop()`)
+  - suma combinada para rentabilidad/costos
+
+**`apps/gold/agro/agrociclos.js`**
+- **L223**: nueva helper `renderBreakdownMoneyRow(...)`.
+- **L254-L259**: la card lee nuevas claves del payload:
+  - `gastosDirectos`
+  - `operativosAsociados`
+  - `perdidasCarteraViva`
+- **L331-L338**: `Ver desglose financiero` ahora explicita la fuente de cada bloque:
+  - `Gastos directos del cultivo`
+  - `Operativos asociados (gastos/donaciones/pérdidas)`
+  - `Pagados cartera viva`
+  - `Fiados cartera viva`
+  - `Pérdidas cartera viva`
+  - `Costos combinados del ciclo`
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+- `agent-guard: OK`
+- `agent-report-check: OK`
+- `vite build: OK`
+- `check-llms: OK`
+- `check-dist-utf8: OK`
+- Warning no bloqueante: engine mismatch por Node `v25.6.0` vs `20.x`
+
+### QA sugerido
+
+- Crear o usar un registro en `Ciclos Operativos` con `crop_id` real del cultivo activo y confirmar que, tras cargar/refrescar, la card ya no quede en cero.
+- Validar lo mismo en `Ciclos finalizados`.
+- Abrir `Ver desglose financiero` y confirmar que:
+  - `Operativos asociados` muestra el monto que viene del módulo operativo;
+  - `Pagados/Fiados/Pérdidas cartera viva` quedan identificados como fuente separada;
+  - `Costos combinados del ciclo` refleje la suma correcta.
