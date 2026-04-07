@@ -3,6 +3,9 @@ const VIEW_NAME = 'operational';
 const SUBVIEW_ACTIVE = 'active';
 const SUBVIEW_FINISHED = 'finished';
 const SUBVIEW_EXPORT = 'export';
+const FAMILY_LINKED = 'linked';
+const FAMILY_UNLINKED = 'unlinked';
+const FAMILY_OPTIONS = Object.freeze([FAMILY_LINKED, FAMILY_UNLINKED]);
 const CROPS_READY_EVENT = 'AGRO_CROPS_READY';
 const VIEW_CHANGED_EVENT = 'agro:shell:view-changed';
 const OPERATIONAL_PORTFOLIO_UPDATED_EVENT = 'agro:operational-portfolio-updated';
@@ -109,6 +112,7 @@ const state = {
     modalOpen: false,
     currentView: '',
     currentSubview: SUBVIEW_ACTIVE,
+    familyFilter: FAMILY_LINKED,
     editId: '',
     schemaMissing: false,
     cropDeletedAtSupported: true,
@@ -249,6 +253,11 @@ function normalizeId(value) {
 function normalizeOperationalSubview(value) {
     const token = normalizeToken(value);
     return SUBVIEW_OPTIONS.includes(token) ? token : SUBVIEW_ACTIVE;
+}
+
+function normalizeFamilyFilter(value) {
+    const token = normalizeToken(value);
+    return FAMILY_OPTIONS.includes(token) ? token : FAMILY_LINKED;
 }
 
 function escapeHtml(value) {
@@ -1166,6 +1175,7 @@ function renderShell() {
             </header>
 
             <div class="agro-operational-feedback agro-operational-feedback--page" id="agro-operational-feedback" data-tone="info"></div>
+            <div class="agro-operational-family-toggle" id="agro-operational-family-toggle" role="group" aria-label="Familia de ciclos operativos"></div>
             <div class="agro-operational-subview-switch" id="agro-operational-subview-switch" role="group" aria-label="Lecturas de ciclos operativos"></div>
 
             <section id="agro-operational-overview-panel" class="agro-operational-panel agro-operational-overview-panel">
@@ -1222,6 +1232,7 @@ function renderShell() {
         overviewCopy: document.getElementById('agro-operational-overview-copy'),
         overviewBody: document.getElementById('agro-operational-overview-body'),
         overviewSection: document.getElementById('agro-operational-overview-panel'),
+        familyToggle: document.getElementById('agro-operational-family-toggle'),
         subviewHost: document.getElementById('agro-operational-subview-switch'),
         listEyebrow: document.getElementById('agro-operational-list-eyebrow'),
         listTitle: document.getElementById('agro-operational-list-title'),
@@ -1316,9 +1327,9 @@ function renderWizard() {
             <div class="agro-operational-form__body">
                 <div class="agro-operational-stepper" role="list">
                     ${WIZARD_STEPS.map((step) => {
-                        const isActive = currentStep === step.id;
-                        const isComplete = currentStep > step.id;
-                        return `
+        const isActive = currentStep === step.id;
+        const isComplete = currentStep > step.id;
+        return `
                             <button type="button" class="agro-operational-step${isActive ? ' is-active' : ''}${isComplete ? ' is-complete' : ''}" data-operational-action="wizard-goto" data-step="${step.id}"${isActive ? ' aria-current="step"' : ''}>
                                 <span class="agro-operational-step__index">${step.id}</span>
                                 <span class="agro-operational-step__copy">
@@ -1327,7 +1338,7 @@ function renderWizard() {
                                 </span>
                             </button>
                         `;
-                    }).join('')}
+    }).join('')}
                 </div>
 
                 <div class="agro-operational-step-panels">
@@ -1495,8 +1506,8 @@ function renderWizard() {
                 <div class="agro-operational-form-actions__nav">
                     ${currentStep > 1 ? '<button type="button" class="btn" data-operational-action="wizard-prev">⬅️ Atrás</button>' : ''}
                     ${currentStep < 4
-                        ? '<button type="button" class="btn btn-primary" data-operational-action="wizard-next">➡️ Siguiente</button>'
-                        : `<button type="submit" class="btn btn-primary">${isEdit ? '💾 Guardar cambios' : '➕ Nuevo ciclo operativo'}</button>`}
+            ? '<button type="button" class="btn btn-primary" data-operational-action="wizard-next">➡️ Siguiente</button>'
+            : `<button type="submit" class="btn btn-primary">${isEdit ? '💾 Guardar cambios' : '➕ Nuevo ciclo operativo'}</button>`}
                 </div>
             </div>
         </form>
@@ -1541,12 +1552,29 @@ function resolveDraftCropLabel(cropId) {
     return match ? buildCropDisplay(match).label : 'Cultivo no valido.';
 }
 
+function filterCyclesByFamily(cycles, family) {
+    if (!Array.isArray(cycles)) return [];
+    if (family === FAMILY_LINKED) return cycles.filter((c) => !!c?.crop_id);
+    if (family === FAMILY_UNLINKED) return cycles.filter((c) => !c?.crop_id);
+    return cycles;
+}
+
+function getFamilyLabel(family) {
+    return family === FAMILY_UNLINKED
+        ? '🌾 No asociados al cultivo'
+        : '🌱 Asociados al cultivo';
+}
+
 function getSubviewMeta(subview) {
+    const familyLabel = getFamilyLabel(state.familyFilter);
+
     if (subview === SUBVIEW_FINISHED) {
         return {
             eyebrow: '✅ Pagados y pérdidas',
-            title: '✅ Ciclos operativos pagados y perdidos',
-            copy: 'Pagados, cobrados o perdidos, agrupados por vínculo con cultivo.'
+            title: `✅ Pagados / pérdidas — ${familyLabel}`,
+            copy: state.familyFilter === FAMILY_LINKED
+                ? 'Pagados, cobrados o perdidos, asociados a un cultivo.'
+                : 'Pagados, cobrados o perdidos, sin vínculo con cultivo.'
         };
     }
 
@@ -1560,16 +1588,47 @@ function getSubviewMeta(subview) {
 
     return {
         eyebrow: '🟡 Activos',
-        title: '🟡 Ciclos operativos activos',
-        copy: 'No pagados, en seguimiento o compensándose, agrupados por vínculo con cultivo.'
+        title: `🟡 Activos — ${familyLabel}`,
+        copy: state.familyFilter === FAMILY_LINKED
+            ? 'No pagados, en seguimiento o compensándose, asociados a un cultivo.'
+            : 'No pagados, en seguimiento o compensándose, sin vínculo con cultivo.'
     };
+}
+
+function renderFamilyToggle() {
+    if (!state.refs?.familyToggle) return;
+
+    const allActive = state.datasets[SUBVIEW_ACTIVE]?.cycles || [];
+    const allFinished = state.datasets[SUBVIEW_FINISHED]?.cycles || [];
+    const linkedCount = allActive.filter((c) => !!c?.crop_id).length + allFinished.filter((c) => !!c?.crop_id).length;
+    const unlinkedCount = allActive.filter((c) => !c?.crop_id).length + allFinished.filter((c) => !c?.crop_id).length;
+
+    const options = [
+        { value: FAMILY_LINKED, label: '🌱 Asociados al cultivo', count: linkedCount },
+        { value: FAMILY_UNLINKED, label: '🌾 No asociados al cultivo', count: unlinkedCount }
+    ];
+
+    state.refs.familyToggle.innerHTML = options.map((option) => `
+        <button
+            type="button"
+            class="agro-operational-family-toggle__btn${state.familyFilter === option.value ? ' is-active' : ''}"
+            data-operational-action="set-family"
+            data-family="${escapeAttr(option.value)}"
+            aria-pressed="${state.familyFilter === option.value ? 'true' : 'false'}">
+            <span class="agro-operational-family-toggle__label">${escapeHtml(option.label)}</span>
+            <span class="agro-operational-family-toggle__count">${option.count}</span>
+        </button>
+    `).join('');
 }
 
 function renderSubviewSwitch() {
     if (!state.refs?.subviewHost) return;
 
-    const activeCount = Number(state.datasets[SUBVIEW_ACTIVE]?.summary?.count || 0);
-    const finishedCount = Number(state.datasets[SUBVIEW_FINISHED]?.summary?.count || 0);
+    const family = state.familyFilter;
+    const activeCycles = filterCyclesByFamily(state.datasets[SUBVIEW_ACTIVE]?.cycles, family);
+    const finishedCycles = filterCyclesByFamily(state.datasets[SUBVIEW_FINISHED]?.cycles, family);
+    const activeCount = activeCycles.length;
+    const finishedCount = finishedCycles.length;
     const totalCount = activeCount + finishedCount;
     const options = [
         { value: SUBVIEW_ACTIVE, label: '🟡 No pagados', count: activeCount },
@@ -1807,26 +1866,23 @@ function renderOverview() {
     }
 
     const dataset = getDataset(state.currentSubview);
-    const summary = dataset.summary;
+    const familyCycles = filterCyclesByFamily(dataset.cycles, state.familyFilter);
+    const summary = createDatasetSummary(familyCycles);
+    const familyLabel = getFamilyLabel(state.familyFilter);
     state.refs.overviewBody.innerHTML = `
         <div class="agro-operational-summary-grid">
             <article class="agro-operational-summary-card">
                 <span class="agro-operational-summary-card__label">🗂️ Ciclos visibles</span>
                 <strong class="agro-operational-summary-card__value">${summary.count}</strong>
-                <p class="agro-operational-summary-card__hint">Conteo propio de esta subvista.</p>
+                <p class="agro-operational-summary-card__hint">${escapeHtml(familyLabel)} en esta subvista.</p>
             </article>
             <article class="agro-operational-summary-card">
-                <span class="agro-operational-summary-card__label">🌱 Asociados al cultivo</span>
-                <strong class="agro-operational-summary-card__value">${summary.linkedCount}</strong>
-                <p class="agro-operational-summary-card__hint">Ciclos con crop_id dentro de esta subvista.</p>
-            </article>
-            <article class="agro-operational-summary-card">
-                <span class="agro-operational-summary-card__label">🌾 No asociados</span>
-                <strong class="agro-operational-summary-card__value">${summary.unlinkedCount}</strong>
-                <p class="agro-operational-summary-card__hint">Movimientos generales separados del cultivo.</p>
+                <span class="agro-operational-summary-card__label">📜 Movimientos</span>
+                <strong class="agro-operational-summary-card__value">${summary.movementCount}</strong>
+                <p class="agro-operational-summary-card__hint">Total de movimientos registrados.</p>
             </article>
             <article class="agro-operational-summary-card" data-tone="${escapeAttr(summary.balanceTone)}">
-                <span class="agro-operational-summary-card__label">📊 Balance del ciclo</span>
+                <span class="agro-operational-summary-card__label">📊 Balance</span>
                 <strong class="agro-operational-summary-card__value">${escapeHtml(summary.balanceText)}</strong>
                 <p class="agro-operational-summary-card__hint">💰 Recibí / Cobré: ${escapeHtml(summary.incomingText)} · 💸 Pagué / Gasté: ${escapeHtml(summary.outgoingText)}</p>
             </article>
@@ -2162,22 +2218,32 @@ function renderCurrentSubview() {
     }
 
     const dataset = getDataset(state.currentSubview);
+    const familyCycles = filterCyclesByFamily(dataset.cycles, state.familyFilter);
     state.refs.filtersHost.innerHTML = renderFilters(state.currentSubview);
     state.refs.listStatus.textContent = isSoftRefreshing
         ? 'Actualizando ciclos operativos sin desmontar la vista...'
-        : `${dataset.summary.count} ciclo${dataset.summary.count === 1 ? '' : 's'} visible${dataset.summary.count === 1 ? '' : 's'} en esta subvista, agrupado${dataset.summary.count === 1 ? '' : 's'} por vínculo con cultivo.`;
+        : `${familyCycles.length} ciclo${familyCycles.length === 1 ? '' : 's'} visible${familyCycles.length === 1 ? '' : 's'} — ${getFamilyLabel(state.familyFilter)}`;
 
-    if (dataset.cycles.length === 0) {
+    if (familyCycles.length === 0) {
         state.refs.list.innerHTML = renderEmptyState(state.currentSubview);
         return;
     }
 
-    state.refs.list.innerHTML = renderGroupedCycleList(dataset.cycles);
+    const familyKey = state.familyFilter;
+    state.refs.list.innerHTML = renderCycleFamilySection({
+        familyKey,
+        title: getFamilyLabel(familyKey),
+        copy: familyKey === FAMILY_LINKED
+            ? 'Tienen crop_id y deben reflejarse también en la lectura de Ciclos de cultivo.'
+            : 'Son movimientos generales sin crop_id, separados de la lectura del cultivo.',
+        cycles: familyCycles
+    });
 }
 
 function renderAll() {
     renderWizard();
     syncCommercialFamilyTabs();
+    renderFamilyToggle();
     renderOverview();
     renderCurrentSubview();
 }
@@ -2364,6 +2430,7 @@ async function refreshData(options = {}) {
             renderWizard();
         }
 
+        renderFamilyToggle();
         renderOverview();
         renderCurrentSubview();
     } catch (error) {
@@ -2373,12 +2440,14 @@ async function refreshData(options = {}) {
         state.portfolioByCrop = new Map();
         rebuildCycleIndex();
         renderWizard();
+        renderFamilyToggle();
         renderOverview();
         renderCurrentSubview();
         setFeedback(normalizeOperationalError(error), 'error');
     } finally {
         state.loading = false;
         setControlsDisabled(state.schemaMissing || state.saving);
+        renderFamilyToggle();
         renderCurrentSubview();
         renderOverview();
         emitPortfolioSnapshot();
@@ -2451,6 +2520,15 @@ async function handleRootClick(event) {
 
     if (action === 'refresh') {
         await refreshData();
+        return;
+    }
+
+    if (action === 'set-family') {
+        state.familyFilter = normalizeFamilyFilter(button.dataset.family);
+        renderFamilyToggle();
+        renderSubviewSwitch();
+        renderOverview();
+        renderCurrentSubview();
         return;
     }
 
@@ -2594,6 +2672,7 @@ function bindEvents() {
         }
 
         syncCommercialFamilyTabs();
+        renderFamilyToggle();
         renderOverview();
         renderCurrentSubview();
         void refreshData();

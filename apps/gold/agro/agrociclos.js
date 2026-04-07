@@ -46,12 +46,12 @@ function statusClassFor(state) {
   return 'status-produccion';
 }
 
-function resolveFallbackPortfolioStatus(fiadosUsd) {
+function resolveCarteraVivaStatus(fiadosUsd) {
   const pending = Number(fiadosUsd);
   if (!Number.isFinite(pending)) return null;
   return pending > 0
-    ? { label: 'Cartera operativa abierta', tone: 'active' }
-    : { label: 'Cartera operativa cerrada', tone: 'closed' };
+    ? { label: 'Cartera viva abierta', tone: 'active' }
+    : { label: 'Cartera viva cerrada', tone: 'closed' };
 }
 
 function resolveOperationalPortfolioStatus(cropId) {
@@ -75,8 +75,10 @@ function resolveOperationalPortfolioStatus(cropId) {
   }
 }
 
-function resolvePortfolioStatus(ciclo) {
-  return resolveOperationalPortfolioStatus(ciclo?.id) || resolveFallbackPortfolioStatus(ciclo?.fiadosUsd);
+function resolveAllPortfolioBadges(ciclo) {
+  const carteraViva = resolveCarteraVivaStatus(ciclo?.fiadosUsd);
+  const carteraOperativa = resolveOperationalPortfolioStatus(ciclo?.id);
+  return { carteraViva, carteraOperativa };
 }
 
 function syncOperationalPortfolioBadges(root = document) {
@@ -86,23 +88,26 @@ function syncOperationalPortfolioBadges(root = document) {
     const statusGroup = card.querySelector('.card-status-group');
     if (!statusGroup) return;
 
-    const portfolioStatus = resolveOperationalPortfolioStatus(card.dataset.cropId)
-      || resolveFallbackPortfolioStatus(card.dataset.fiadosUsd);
-    const currentBadge = statusGroup.querySelector('.portfolio-badge');
+    const carteraViva = resolveCarteraVivaStatus(card.dataset.fiadosUsd);
+    const carteraOperativa = resolveOperationalPortfolioStatus(card.dataset.cropId);
 
-    if (!portfolioStatus) {
-      currentBadge?.remove();
-      return;
-    }
-
-    const badge = currentBadge || document.createElement('span');
-    badge.className = `portfolio-badge portfolio-badge--${escapeAttr(portfolioStatus.tone)}`;
-    badge.textContent = portfolioStatus.label;
-
-    if (!currentBadge) {
-      statusGroup.appendChild(badge);
-    }
+    syncSingleBadge(statusGroup, 'portfolio-badge--cv', carteraViva);
+    syncSingleBadge(statusGroup, 'portfolio-badge--co', carteraOperativa);
   });
+}
+
+function syncSingleBadge(container, marker, status) {
+  const existing = container.querySelector(`.${marker}`);
+  if (!status) {
+    existing?.remove();
+    return;
+  }
+  const badge = existing || document.createElement('span');
+  badge.className = `portfolio-badge portfolio-badge--${escapeAttr(status.tone)} ${marker}`;
+  badge.textContent = status.label;
+  if (!existing) {
+    container.appendChild(badge);
+  }
 }
 
 function bindOperationalPortfolioSync() {
@@ -228,7 +233,7 @@ function renderCard(ciclo, index = 0) {
   const inversionText = formatUsdCompact(ciclo?.inversionUSD);
   const trendIcon = esPositivo ? '↗' : '↘';
   const profitLabel = mode === 'finished' ? 'Rentabilidad Final' : 'Potencial Neto';
-  const portfolioStatus = resolvePortfolioStatus(ciclo);
+  const badges = resolveAllPortfolioBadges(ciclo);
   const progressText = mode === 'finished'
     ? 'Completado'
     : `Día ${toNumber(ciclo?.diaActual, 0)}/${toNumber(ciclo?.diasTotales, 0)} (${porcentaje}%)`;
@@ -259,7 +264,8 @@ function renderCard(ciclo, index = 0) {
         <div class="card-header-side">
           <div class="card-status-group">
             <span class="status-badge ${statusClass}">${escapeHtml(ciclo?.estadoTexto || 'En producción')}</span>
-            ${portfolioStatus ? `<span class="portfolio-badge portfolio-badge--${escapeAttr(portfolioStatus.tone)}">${escapeHtml(portfolioStatus.label)}</span>` : ''}
+            ${badges.carteraViva ? `<span class="portfolio-badge portfolio-badge--${escapeAttr(badges.carteraViva.tone)} portfolio-badge--cv">${escapeHtml(badges.carteraViva.label)}</span>` : ''}
+            ${badges.carteraOperativa ? `<span class="portfolio-badge portfolio-badge--${escapeAttr(badges.carteraOperativa.tone)} portfolio-badge--co">${escapeHtml(badges.carteraOperativa.label)}</span>` : ''}
           </div>
           ${buildActions(ciclo)}
         </div>

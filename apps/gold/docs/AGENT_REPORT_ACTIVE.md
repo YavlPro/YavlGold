@@ -9573,3 +9573,89 @@ La correccion necesaria estaba solo en `apps/gold/agro/agro-cartera-viva-view.js
 - Verificar que cultivos SIN ciclos operativos ya no muestren badge `Cartera operativa cerrada`
 - Verificar que cultivos CON ciclos operativos asociados sigan mostrando `Cartera operativa abierta` o `Cartera operativa cerrada` segun corresponda
 - Confirmar que el ADN V10 se respeta (tokens, tipografia, breakpoints)
+
+---
+
+## Sesion: separacion REAL por vistas + dual badge cartera (2026-04-06 19:48)
+
+### Diagnostico
+
+El fix anterior era separacion cosmetica (dos secciones en la misma lista). El usuario requiere separacion funcional real: DOS vistas/tabs independientes que nunca muestren ambas familias al mismo tiempo.
+
+**Arquitectura actual**:
+- `state.currentSubview` controla `active`|`finished`|`export`
+- `renderSubviewSwitch()` pinta los 3 botones en `#agro-operational-subview-switch`
+- `renderCurrentSubview()` llama `renderGroupedCycleList()` que siempre pinta linked + divider + unlinked juntos
+- Crop cards usan `resolvePortfolioStatus()` que merge `fiadosUsd` y ciclos operativos en UNA sola badge
+
+**Causa raiz**:
+1. No existe dimension de filtro por familia (linked/unlinked). Solo existe dimension por status (active/finished)
+2. `renderGroupedCycleList()` siempre pinta ambas familias
+3. Solo hay una badge en crop cards que mezcla cartera viva con cartera operativa
+
+### Plan minimo
+
+1. Agregar `state.familyFilter = 'linked'` (alternativa: `'unlinked'`)
+2. Insertar barra de toggle de familia en el shell DOM (arriba del subview switch)
+3. En `renderCurrentSubview()`, filtrar `dataset.cycles` por familia ANTES de renderizar
+4. Reemplazar `renderGroupedCycleList()` por render directo de la familia seleccionada
+5. Actualizar overview/summary para reflejar solo la familia activa
+6. En crop cards: separar `resolvePortfolioStatus()` en DOS badges independientes:
+   - Cartera viva abierta/cerrada (de `fiadosUsd`)
+   - Cartera operativa abierta/cerrada (de ciclos operativos por `crop_id`)
+7. `syncOperationalPortfolioBadges()` debe manejar dos badges
+
+### DoD
+- Nunca se ven asociados y no asociados en la misma lista
+- Toggle de familia visible y funcional
+- Crop cards muestran badges independientes segun aplique
+- Build pasa
+
+### Cambios aplicados
+
+**`apps/gold/agro/agroOperationalCycles.js`**
+- Nuevas constantes: `FAMILY_LINKED`, `FAMILY_UNLINKED`, `FAMILY_OPTIONS`
+- Nuevo estado: `state.familyFilter = FAMILY_LINKED`
+- Nuevo normalizador: `normalizeFamilyFilter()`
+- Nuevas funciones: `filterCyclesByFamily()`, `getFamilyLabel()`, `renderFamilyToggle()`
+- Shell DOM: nuevo host `#agro-operational-family-toggle` entre feedback y subview switch
+- `renderSubviewSwitch()`: conteos ahora filtrados por familia activa
+- `getSubviewMeta()`: titulos y copys ahora reflejan familia activa
+- `renderOverview()`: summary recalculado con `createDatasetSummary(familyCycles)` para la familia activa. Cards de resumen reducidas a 3 (ciclos, movimientos, balance)
+- `renderCurrentSubview()`: filtra `dataset.cycles` por `state.familyFilter` antes de renderizar. Usa `renderCycleFamilySection()` directo en vez de `renderGroupedCycleList()`
+- `handleRootClick()`: nuevo handler `set-family` que cambia `state.familyFilter` y re-renderiza
+- `renderAll()` + `refreshData()` + `VIEW_CHANGED_EVENT`: incluyen `renderFamilyToggle()` en el pipeline
+- `renderGroupedCycleList()` queda como dead code (ya no se llama)
+
+**`apps/gold/agro/agrociclos.js`**
+- `resolveFallbackPortfolioStatus()` renombrada a `resolveCarteraVivaStatus()` con labels "Cartera viva abierta/cerrada"
+- `resolvePortfolioStatus()` reemplazada por `resolveAllPortfolioBadges()` que retorna `{ carteraViva, carteraOperativa }` como objetos independientes
+- `renderCard()`: ahora genera DOS badges separadas con markers `.portfolio-badge--cv` y `.portfolio-badge--co`
+- `syncOperationalPortfolioBadges()`: maneja dos badges independientes via `syncSingleBadge()` (nueva funcion helper)
+
+**`apps/gold/agro/agro-operational-cycles.css`**
+- Nuevo bloque: `.agro-operational-family-toggle`, `__btn`, `__btn.is-active`, `__label`, `__count`
+- Estilo: Orbitron, tokens V10, `border: 2px`, gradiente gold, transiciones 180ms
+- Responsive `@media (max-width: 480px)`: toggle stacks vertical, botones full-width
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+- `agent-guard: OK`
+- `agent-report-check: OK`
+- `vite build: OK` (157 modules, 3.56s)
+- `check-llms: OK`
+- `check-dist-utf8: OK`
+
+### QA sugerido
+
+- Verificar que al entrar a Ciclos Operativos aparece la barra de familia con "Asociados al cultivo" y "No asociados al cultivo" como botones
+- Click en cada boton debe mostrar SOLO los ciclos de esa familia, nunca mezclados
+- Los conteos en la barra de familia deben sumar el total correcto
+- Los conteos en la barra de subvista (No pagados / Pagados) deben reflejar solo la familia activa
+- El overview (cards de resumen) debe mostrar datos de la familia activa
+- En Ciclos activos: la card de cultivo debe mostrar dos badges separadas si aplica:
+  - "Cartera viva abierta/cerrada" (basada en fiadosUsd)
+  - "Cartera operativa abierta/cerrada" (basada en ciclos operativos con crop_id)
+- Si un cultivo no tiene fiadosUsd ni ciclos operativos, no debe mostrar ninguna badge
+- En mobile (<=480px), la barra de familia debe stackear vertical

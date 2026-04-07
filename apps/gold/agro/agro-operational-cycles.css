@@ -247,6 +247,58 @@ body.agro-operational-modal-open {
   border-color: color-mix(in srgb, var(--gold-4) 42%, transparent);
 }
 
+.agro-operational-family-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 0.6rem;
+}
+
+.agro-operational-family-toggle__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--border-neutral);
+  background: var(--bg-1);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, color 180ms ease;
+}
+
+.agro-operational-family-toggle__btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--border-gold);
+  color: var(--text-primary);
+}
+
+.agro-operational-family-toggle__btn.is-active {
+  background: color-mix(in srgb, var(--gold-4) 12%, transparent);
+  border-color: var(--gold-4);
+  color: var(--gold-5);
+  box-shadow: var(--shadow-soft);
+}
+
+.agro-operational-family-toggle__label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.agro-operational-family-toggle__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6rem;
+  padding: 0.15rem 0.42rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid currentColor;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.68rem;
+}
+
 .agro-operational-subview-switch {
   display: flex;
   flex-wrap: wrap;
@@ -1152,6 +1204,15 @@ body.agro-operational-modal-open {
 }
 
 @media (max-width: 480px) {
+  .agro-operational-family-toggle {
+    flex-direction: column;
+  }
+
+  .agro-operational-family-toggle__btn {
+    width: 100%;
+    justify-content: center;
+  }
+
   .agro-operational-panel,
   .agro-operational-list-section,
   .agro-operational-family-section,
