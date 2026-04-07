@@ -1,39 +1,73 @@
-# YavlAgro
+# Agro | YavlGold
 
-Sitio estático con HTML, CSS y JS para mostrar hortalizas y frutas de Táchira, Venezuela.
+Modulo operativo principal de YavlGold. Herramienta agricola digital construida como MPA con Vite, Vanilla JS y Supabase.
 
-**YavlAgro** by YAVL Pro - Productos agrícolas frescos directamente del campo tachirense.
+## Estado
 
-## Desarrollo local
+- Agro es el unico modulo liberado del catalogo YavlGold.
+- Las demas superficies (Academia, Social, Tecnologia, Crypto) son placeholders de compatibilidad, no productos activos.
 
-1. Inicia un servidor estático (con Python):
+## Que hace Agro
 
-```bash
-python3 -m http.server 8000
-```
+- Facturero financiero: gastos, ingresos (pagados), fiados, perdidas, donaciones y otros.
+- Gestion de cultivos con ciclos productivos.
+- Clima en tiempo real integrado en el flujo agricola.
+- Rankings y estadisticas financieras.
+- Carrito de insumos.
+- Planificacion y agenda agricola.
+- Inteligencia de mercado.
+- Cartera viva y cartera operativa con desglose por categoria.
+- Tasas de cambio (COP, USD, VES).
+- Notificaciones, feedback, interacciones.
+- Papelera de eliminados con restore (soft-delete via Supabase).
 
-2. Abre en el navegador:
-- http://localhost:8000/
-- La portada redirige a `YavlAgro.html`.
+## Stack
+
+- Vanilla JS (ES6+ Modules) con carga dinamica de submodulos.
+- Vite MPA.
+- Supabase (Auth, DB, Storage).
+- CSS con tokens del ADN Visual V10.
 
 ## Estructura
-- `YavlAgro.html`: Página principal.
-- `index.html`: Redirección a la principal (SEO y compatibilidad con GitHub Pages).
-- `archive/legacy-html/public/agro/roadmap.html`: hoja de ruta histórica archivada del proyecto YavlAgro.
-- `app.js`: Render opcional de productos (si se usa esta versión).
-- `Style.css`: Estilos (si se usa hoja separada).
 
-## Publicación
-El sitio está preparado para GitHub Pages:
-- URL: https://yavlpro.github.io/YavlAgro/
-- `index.html` redirige a `YavlAgro.html`.
+```
+agro/
+  index.html           — entrada del modulo
+  agro.js              — monolito principal (~18k lineas)
+  agro-*.js            — submodulos (feedback, market, planning, etc.)
+  agro.css             — estilos principales
+  agro-dashboard.css   — estilos del dashboard
+  agro-operations.css  — estilos de operaciones financieras
+```
 
-## Contacto
-Todos los botones de WhatsApp apuntan a: `https://wa.me/584247394025`.
+## Submodulos
 
-## Roadmap
-El proyecto conserva una hoja de ruta histórica que muestra la evolución original de YavlAgro desde un proyecto agrícola local hasta un ecosistema agro-blockchain completo. El documento fue archivado y ahora vive en `archive/legacy-html/public/agro/roadmap.html`:
-- Fase 1: Rebrand & Fundación Digital (Q1 2026)
-- Fase 2: E-commerce & Operaciones (Q2 2026)
-- Fase 3: Blockchain & Trazabilidad (Q3-Q4 2026)
-- Fase 4: Expansión & Ecosistema Completo (2027+)
+| Archivo | Funcion |
+| --- | --- |
+| `agro.js` | Monolito: facturero, CRUD, historial |
+| `agro-feedback.js` | Feedback y encuestas |
+| `agro-market.js` | Inteligencia de mercado |
+| `agro-planning.js` | Planificacion |
+| `agro-interactions.js` | Interacciones |
+| `agro-stats.js` | Estadisticas financieras |
+| `agro-notifications.js` | Notificaciones |
+| `agro-trash.js` | Papelera de eliminados |
+| `agro-cart.js` | Carrito de insumos |
+| `agro-agenda.js` | Agenda agricola |
+| `agro-clima.js` | Integracion meteorologica |
+| `agro-crop-report.js` | Reportes por cultivo |
+| `agro-exchange.js` | Tasas de cambio |
+| `agro-privacy.js` | Privacidad de datos |
+| `agro-selection.js` | Seleccion de cultivos |
+| `agro-shell.js` | Shell UI |
+| `agro-stats-report.js` | Reportes estadisticos |
+| `agro-unit-totals.js` | Totales por unidad |
+| `agro-wizard.js` | Wizard de configuracion |
+
+## Reglas de desarrollo
+
+- No agregar features nuevas al monolito `agro.js`; crear submodulos separados.
+- Imports dinamicos en el bootstrap de `index.html`.
+- Para compartir funciones del monolito con submodulos, usar `window._agroXxx` como puente.
+- Estilos en CSS separados con tokens V10.
+- Build obligatorio: `pnpm build:gold`.

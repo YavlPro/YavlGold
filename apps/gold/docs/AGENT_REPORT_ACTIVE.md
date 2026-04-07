@@ -9907,3 +9907,82 @@ Faltaban dos piezas funcionales importantes en Ciclos Operativos:
   y confirmar que `Inversión USD` del cultivo ya suba en los tres casos.
 - Revisar `Ver desglose financiero` del cultivo y confirmar que `Operativos asociados` ya no quede en cero cuando el registro existe.
 - Entrar en `Cartera Viva` y validar que la barra de categorías se perciba coherente con los chips de `Ciclos Operativos`, tanto en desktop como en mobile.
+
+---
+
+## Sesion: Limpieza estrategica "Solo Agro" (2026-04-07)
+
+### Diagnostico
+
+Contradicciones encontradas entre la narrativa documental y la verdad operativa "YavlGold = Agro":
+
+**A. Contradicciones narrativas criticas:**
+1. `apps/gold/agro/README.md` describe "YavlAgro" como sitio estatico GitHub Pages con Python http.server, WhatsApp hardcodeado y roadmap blockchain. Ninguna de esas cosas es Agro hoy.
+2. Root `package.json` dice "Monorepositorio del ecosistema Yavl - Trading, Social, Suite, Agro" con keywords crypto/trading/social.
+3. `FICHA_TECNICA.md` infla el alcance: Crypto con "Funcionalidades Planeadas", tablas academicas como activas, "Plataforma digital multimodulo".
+4. `apps/gold/CHANGELOG.md` titula "YavlGold Academia" (branding erroneo).
+5. `LEGACY_SURFACES.md` lista 5 modulos como "catalogo oficial vigente" cuando la verdad es solo Agro.
+
+**B. Ruido estructural:**
+- `crypto/script_backup.txt` (47KB): backup basura.
+- `build_log.txt`: artefacto de build en el repo.
+- `profile/`: directorio vacio.
+- `academia/lecciones/modulo-1/`: directorio vacio.
+- `social/CNAME` + `social/LICENSE`: branding legacy de "YavlPro Social".
+- `crypto/crypto.js` + `crypto/css`: codigo legacy no activo, referenciado solo desde el placeholder.
+- `herramientas/`: solo package.json + node_modules, sin HTML ni codigo.
+
+**C. Criterio de decision:**
+- Eliminar: lo que es puro ruido sin valor operativo ni historico (script_backup, build_log, dirs vacios, branding legacy).
+- Archivar: lo que tiene codigo real pero no esta activo (crypto.js, crypto.css).
+- Reescribir: lo que es util pero esta narrado con una verdad vieja o inflada (READMEs, FICHA_TECNICA, LEGACY_SURFACES, package.json, CHANGELOG).
+
+### Plan de limpieza
+
+1. Reescribir `apps/gold/agro/README.md` — reflejar Agro real.
+2. Ajustar `README.md` — fortalecer "solo Agro".
+3. Limpiar `FICHA_TECNICA.md` — eliminar scope inflado.
+4. Reescribir `LEGACY_SURFACES.md` — reframar a "solo Agro".
+5. Limpiar root `package.json` — descripcion y keywords.
+6. Corregir `CHANGELOG.md` — titulo.
+7. Eliminar ruido: `script_backup.txt`, `build_log.txt`, dirs vacios, `social/CNAME`, `social/LICENSE`.
+8. Archivar: `crypto/crypto.js` y `crypto/css` a `archive/legacy-js/`.
+9. Validar con `pnpm build:gold`.
+
+### Cambios aplicados
+
+**Reescritos (documentacion desalineada):**
+- `apps/gold/agro/README.md` — reescritura completa. Antes: sitio estatico GitHub Pages "YavlAgro". Ahora: modulo Agro real con stack, submodulos y reglas.
+- `README.md` — alineado con "solo Agro". Eliminada lista de features inflada, fortalecida narrativa.
+- `apps/gold/README.md` — fortalecido mensaje "solo Agro", documentado directorios residuales.
+- `FICHA_TECNICA.md` — eliminada descripcion "plataforma multimodulo", limpiada seccion Crypto (ya no promete features), eliminado objetivo Crypto V1.
+- `LEGACY_SURFACES.md` — reframado completo. Antes: catalogo de 5 modulos "oficiales". Ahora: Agro activo + placeholders de compatibilidad + legado archivado.
+- Root `package.json` — descripcion: "Trading, Social, Suite, Agro" -> "Herramienta agricola digital (Agro)". Keywords limpios.
+- `apps/gold/CHANGELOG.md` — titulo corregido de "YavlGold Academia" a "YavlGold".
+
+**Eliminados (ruido sin valor operativo):**
+- `apps/gold/crypto/script_backup.txt` (47KB backup)
+- `apps/gold/build_log.txt` (artefacto de build)
+- `apps/gold/profile/` (directorio vacio)
+- `apps/gold/academia/lecciones/` (directorio vacio)
+- `apps/gold/social/CNAME` (branding legacy YavlPro Social)
+- `apps/gold/social/LICENSE` (licencia legacy)
+
+**Archivados (codigo legacy no activo):**
+- `apps/gold/crypto/crypto.js` -> `apps/gold/archive/legacy-js/crypto.js`
+- `apps/gold/crypto/crypto.css` -> `apps/gold/archive/legacy-html/crypto/crypto.css`
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+- agent-guard: OK
+- agent-report-check: OK
+- vite build: OK (157 modules, 3.03s)
+- check-llms: OK
+- check-dist-utf8: OK
+
+### QA sugerido
+
+- Verificar que la landing, dashboard y Agro funcionan normalmente en produccion tras el deploy.
+- Confirmar que las rutas /crypto, /academia, /social, /tecnologia siguen mostrando el placeholder "no disponible" (no debio cambiar).
+- Revisar que `pnpm install` sigue limpio si se ejecuta desde cero (no se toco el lockfile).

@@ -1,12 +1,12 @@
-# FICHA TÉCNICA - YavlGold V1
+# FICHA TECNICA - YavlGold V1
 
-**Fecha de Referencia:** 12/03/2026
-**Tipo de Proyecto:** Plataforma digital multimodulo con Agro V1 liberado
+**Fecha de Referencia:** 07/04/2026
+**Tipo de Proyecto:** Herramienta agricola digital (Agro V1 liberado)
 **Arquitectura:** Monorepo Turborepo
 **Release activo visible:** `V1`
-**Instrucciones para agentes:** `AGENTS.md` (raíz del repo)
+**Instrucciones para agentes:** `AGENTS.md` (raiz del repo)
 **Sistema de diseño:** `apps/gold/docs/ADN-VISUAL-V10.0.md` (inmutable)
-**LLMs context:** `apps/gold/public/llms.txt` (servido en producción)
+**LLMs context:** `apps/gold/public/llms.txt` (servido en produccion)
 
 ---
 
@@ -153,17 +153,9 @@ agro-wizard.js       — wizard de configuración
 ### 4.3 Crypto
 **Ubicación:** `apps/gold/crypto/`
 
-**Estado:** No disponible en el catálogo actual (base V1)
+**Estado:** No disponible en el catalogo actual (base V1). Placeholder de compatibilidad.
 
-**Funcionalidades Planeadas:**
-- Market data pública (Binance API)
-- Visualización de precios
-- Sin trading (solo información)
-
-**Restricciones:**
-- Solo endpoints públicos (no requieren autenticación)
-- Sin manejo de fondos
-- Sin operaciones de trading
+**Nota:** Crypto NO es un modulo activo. Su ruta muestra un placeholder "no disponible". Codigo historico archivado en `archive/`. Si se reactiva, debera alinearse con el catalogo vigente.
 
 ### 4.4 Autenticación
 **Archivos Clave:**
@@ -332,13 +324,6 @@ pnpm -C apps/gold build
 - Asegurar prioridad: Manual > GPS > IP
 - Debug no invasivo (activable con `?debug=1`)
 - Mantener comportamiento actual sin cambios
-
-### Crypto V1
-- Página operativa dentro de build MPA
-- Market data pública (REST o WebSocket)
-- UI consistente (negro + dorado)
-- Manejo elegante de errores
-- Sin dependencias pesadas
 
 ---
 

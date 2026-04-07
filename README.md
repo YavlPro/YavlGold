@@ -2,26 +2,24 @@ AI coding agents: read AGENTS.md first and follow it strictly.
 
 # YavlGold V1
 
-> V1 - Producción en Vercel
+> YavlGold hoy es Agro: herramienta agricola digital en produccion en Vercel.
 
 ## Estado actual
 
-- Versión visible: YavlGold V1
-- Fase: Producción en Vercel
-- Estado: V1 (MPA + Supabase) — YavlGold hoy es Agro y la documentación activa ya refleja esa verdad operativa.
+- Release: V1 (MPA + Supabase).
+- Modulo activo: **Agro** (unico modulo liberado).
+- Las demas superficies del repo son placeholders de compatibilidad o legado archivado.
 
-## Modulo Agro (release activo)
+## Que hace Agro
 
-- Registro de cultivos y ciclos productivos.
-- Facturero real para ingresos, gastos, fiados, perdidas y transferencias.
-- Clima y seguimiento operativo dentro del flujo agrícola.
-- Gestion de gastos segura: eliminacion por UUID con Supabase para integridad de datos.
-- Calculadora ROI con boton LIMPIAR para reinicio rapido.
-- Interfaz refinada: footer reubicado via JS al final absoluto y sanitizacion XSS en formularios.
-- Identidad: nombre y avatar sincronizados con Supabase Auth.
-- DOM injection estricta para proteger HTML/CSS congelado.
+- Facturero financiero: gastos, ingresos, fiados, perdidas, donaciones y otros.
+- Gestion de cultivos con ciclos productivos.
+- Clima en tiempo real integrado en el flujo agricola.
+- Rankings, estadisticas financieras y cartera viva.
+- Tasas de cambio multi-moneda (COP, USD, VES).
+- Notificaciones, feedback, planificacion y papelera con restore.
 
-## Tecnologia
+## Stack
 
 - Frontend: Vanilla JS + Vite (DOM injection estricta).
 - Backend: Supabase (Auth, DB, Storage).
@@ -49,14 +47,21 @@ pnpm build:gold
 gold/
   apps/
     gold/              # App principal
-      index.html       # Landing pública enfocada en Agro
+      index.html       # Landing publica enfocada en Agro
       dashboard/       # Entrada del usuario hacia Agro
       agro/            # Modulo Agro (V1 activo)
       assets/          # Recursos compartidos
+      archive/         # Legado archivado (no activo)
   packages/            # Paquetes compartidos
   turbo.json
   package.json
 ```
+
+## Documentacion operativa
+
+- Instrucciones para agentes: `AGENTS.md`
+- Reporte activo: `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+- Sistema de diseño: `apps/gold/docs/ADN-VISUAL-V10.0.md`
 
 ## Licencia
 

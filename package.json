@@ -1,7 +1,7 @@
 {
   "name": "yavl-ecosystem",
   "version": "1.0.0",
-  "description": "Monorepositorio del ecosistema Yavl - Trading, Social, Suite, Agro",
+  "description": "YavlGold — Herramienta agricola digital (Agro)",
   "private": true,
   "scripts": {
     "dev": "turbo run dev",
@@ -30,11 +30,9 @@
   },
   "keywords": [
     "yavl",
-    "monorepo",
-    "crypto",
-    "trading",
-    "social",
-    "agro"
+    "yavlgold",
+    "agro",
+    "monorepo"
   ],
   "author": "YavlPro",
   "license": "MIT",

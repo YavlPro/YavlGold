@@ -1,4 +1,4 @@
-# 📋 Changelog - YavlGold Academia
+# Changelog - YavlGold
 
 ## [1.0.0] - 15 de Octubre de 2025
 

@@ -13,8 +13,8 @@ This file contains the current product, architecture and routing policy for `app
 
 ## 1. Product catalog
 - `Agro` is the only released module in `V1` (facturero, crops, dashboard, stats, cart, planning, trash).
-- `Academia`, `Social`, `Tecnologia` and `Crypto` are official modules but currently unavailable.
-- `Herramientas` and `Suite` are legacy aliases, not official active modules.
+- `Academia`, `Social`, `Tecnologia` and `Crypto` are placeholder routes showing "no disponible". They are not active products and should not be presented as such.
+- `Herramientas` and `Suite` are legacy aliases that redirect to placeholder routes, not official modules.
 
 ## 2. Architecture
 - Vanilla JavaScript only (ES6+ Modules)
@@ -68,10 +68,11 @@ This file contains the current product, architecture and routing policy for `app
 - Supported currencies: COP, USD, VES
 
 ## 9. Legacy note
-- Some HTML files remain in the repo only for archive or redirect purposes
-- Not every HTML file in the tree is part of the official MPA input
-- Archived legacy HTML now lives under `apps/gold/archive/legacy-html/`
-- Archived legacy auth bridge now lives under `apps/gold/archive/legacy-js/`
+- YavlGold today is Agro. Everything else is compatibility or archive.
+- Placeholder routes for unavailable modules exist to avoid 404s, not to suggest active products.
+- Archived legacy HTML lives under `apps/gold/archive/legacy-html/`
+- Archived legacy auth bridge lives under `apps/gold/archive/legacy-js/`
 - `dashboard/music.html` is an internal dashboard utility outside the official module catalog
+- `herramientas/` is a residual directory with no active content
 
 # EOF — YavlGold llms.txt (do not truncate)

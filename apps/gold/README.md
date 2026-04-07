@@ -1,13 +1,13 @@
 # YavlGold
 
-YavlGold hoy es Agro: una herramienta agricola digital construida como MPA con Vite, Vanilla JS y Supabase.
+YavlGold hoy es Agro: herramienta agricola digital construida como MPA con Vite, Vanilla JS y Supabase.
 Release visible activo: `V1`.
 
 ## Estado actual
 
 - `Agro` es la unica superficie operativa real del producto.
-- Landing y dashboard ya estan alineados para presentar YavlGold como Agro.
-- Las demas superficies no activas quedan fuera del discurso publico y se tratan como legado o placeholders de compatibilidad.
+- Las demas superficies del repo (academia, social, tecnologia, crypto) son placeholders de compatibilidad que muestran "no disponible". No son productos activos ni deben presentarse como tal.
+- El legado historico esta archivado en `archive/`. No forma parte del discurso publico.
 
 ## Stack
 
@@ -71,4 +71,9 @@ pnpm -C apps/gold build
 
 ## Nota sobre legado
 
-El repo todavia conserva superficies antiguas y placeholders por compatibilidad. Los HTML huerfanos ya fueron movidos a `archive/legacy-html/`, el bridge auth historico a `archive/legacy-js/` y `music` sigue como utilidad interna del dashboard. El inventario vivo esta en `apps/gold/docs/LEGACY_SURFACES.md`.
+El repo conserva superficies antiguas y placeholders por compatibilidad de routing. Ninguno es producto activo:
+- HTML huerfanos archivados en `archive/legacy-html/`.
+- Bridge auth historico en `archive/legacy-js/`.
+- `music` como utilidad interna del dashboard (no modulo oficial).
+- `herramientas/` como directorio residual sin contenido activo.
+- El inventario vivo esta en `apps/gold/docs/LEGACY_SURFACES.md`.
