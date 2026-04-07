@@ -10052,3 +10052,40 @@ El archivo `conmits marzo.txt` contiene ~130 commits distribuidos del 1 al 31 de
 - Índice maestro actualizado en `CRONICA-YAVLGOLD.md` (addendum append-only)
 - Sin tocar código de producto
 - Sin reescribir crónicas anteriores
+
+---
+
+## Bio Yerikson — corrección semántica en dashboard (2026-04-07)
+
+### Diagnóstico
+
+- La bio de Yerikson en `dashboard/index.html:1830` decía: *"agricultor y desarrollador de La Grita, Táchira, Venezuela"*
+- La construcción "desarrollador de La Grita" puede interpretarse como que Yerikson "desarrolló" La Grita, no que es de ahí.
+- El resto de la bio estaba bien.
+
+### Archivo tocado
+
+- `apps/gold/dashboard/index.html` — línea 1830-1832 (reemplazo de texto en `<p>`)
+
+### Texto anterior
+
+```
+Soy Yerikson Varela, agricultor y desarrollador de La Grita, Táchira, Venezuela. Fundador de YavlGold, un proyecto agrícola digital nacido desde la realidad del campo para convertir cultivos y economía productiva en información clara, útil y humana.
+```
+
+### Texto nuevo (aprobado)
+
+```
+Soy Yerikson Varela, agricultor y desarrollador de YavlGold, nativo de La Grita, Táchira, Venezuela. Fundé YavlGold.com como una herramienta agrícola digital nacida de la realidad del campo, pensada para convertir cultivos y economía productiva en información clara, útil y humana.
+```
+
+### Cambios clave
+
+- "desarrollador de La Grita" → "desarrollador de YavlGold, nativo de La Grita" — elimina ambigüedad
+- "Fundador de YavlGold, un proyecto" → "Fundé YavlGold.com como una herramienta" — voz activa, más directo
+- "nacido desde" → "nacida de" — gramática correcta
+- "pensada para" añadido — refuerza intención
+
+### Build
+
+- `pnpm build:gold` → OK (157 modules, 2.40s, UTF-8 verificado)
