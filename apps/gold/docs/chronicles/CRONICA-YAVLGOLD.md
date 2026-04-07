@@ -485,3 +485,42 @@ Los hechos que marcaron el segundo mes de 2026:
 
 *Fecha de extensión*: 2026-03-16
 *Generado por*: Historiador Forense de Git — Protocolo Append-Only v1.0
+
+---
+
+# ADDENDUM — Marzo 2026 (Append-only)
+
+> *Esta sección extiende la cobertura de la crónica al mes de marzo 2026.*
+
+## Resumen Ejecutivo — Marzo 2026
+
+Los hechos que marcaron el tercer mes de 2026:
+
+1. **UX móvil / facturero (Mar 1-3)**: ~50 commits estabilizando CSS legacy del facturero en móvil — kebab menus, touch targets, footer positioning, tx-card overflow.
+2. **ADN V10 migración progresiva (Mar 1-6)**: Componente por componente, no rediseño. Headers, KPI, acordeones, operations, tx-cards migrados a tokens V10.
+3. **Shell Agro + baseline V1 (Mar 5-6)**: Navegación dedicada, sidebar colapsable, separación activos/historial, baseline formal documentado.
+4. **Agro-only reality (Mar 5-9)**: Catálogo, landing y dashboard alineados — solo Agro disponible. Superficies legacy archivadas.
+5. **Onboarding contextual (Mar 8-11)**: Gate de perfil, wizard guiado, edición persistente, wizard IA contextual.
+6. **Estadísticas por sección (Mar 12)**: Paneles USD/Bs, charts, insights, export, sincronización con cultivo activo (PR #77, #78).
+7. **AgroRepo memoria operativa (Mar 12-13, 19)**: De widget a bitácora local-first con tree workspace, extracción a standalone.
+8. **Ciclos Operativos rollout (Mar 13, 18)**: Wizard, sidebar, filtros, export — rollout real cerrado.
+9. **Cartera Viva buyer-centric (Mar 26-31)**: MVP visual → foundation buyer-centric → historial por comprador → exportación → multimoneda → separación cartera/cultivo.
+10. **Codex como cirujano (Mar 14)**: Documentación formal del rol — diagnóstico fino y fix quirúrgico, no QA por defecto.
+
+---
+
+## Anexo G — Marzo 2026
+
+Archivo: [2026-03.md](./2026-03.md)
+
+**Resumen**: Marzo 2026 consolidó a YavlGold como producto agrícola. Con ~130 commits, el mes estabilizó el móvil, formalizó el shell Agro, alineó toda la superficie pública con la realidad agro-only, lanzó el onboarding contextual, maduró AgroRepo como memoria operativa, cerró el rollout de Ciclos Operativos, y abrió Cartera Viva como superficie buyer-centric.
+
+**Métricas verificadas**:
+- **~130 commits**
+- **4 PRs mergeados**: #77, #78, #79, #80
+- **4 módulos nuevos**: Cartera Viva, Agro-trash, IA wizard, Stats por sección
+
+---
+
+*Fecha de extensión*: 2026-04-07
+*Generado por*: Historiador Forense de Git — Protocolo Append-Only v1.0

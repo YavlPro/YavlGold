@@ -9986,3 +9986,69 @@ Contradicciones encontradas entre la narrativa documental y la verdad operativa 
 - Verificar que la landing, dashboard y Agro funcionan normalmente en produccion tras el deploy.
 - Confirmar que las rutas /crypto, /academia, /social, /tecnologia siguen mostrando el placeholder "no disponible" (no debio cambiar).
 - Revisar que `pnpm install` sigue limpio si se ejecuta desde cero (no se toco el lockfile).
+
+---
+
+## Crónica Oficial Marzo 2026 — Diagnóstico previo a redacción (2026-04-07)
+
+### Diagnóstico del material
+
+El archivo `conmits marzo.txt` contiene ~130 commits distribuidos del 1 al 31 de marzo de 2026. El mes se estructura naturalmente en 7 fases:
+
+1. **Apertura (Mar 1-3): estabilización visual y móvil** — ~40 commits. Intensa batalla con CSS legacy en el facturero móvil, tx-cards, kebab menus, footer positioning, y adopción progresiva de ADN V10. Muchos commits repetidos sobre el mismo dolor (footer, historial facturero, tx-actions) hasta encontrar causa raíz.
+
+2. **Consolidación de shell y foco Agro (Mar 5-6):** ~20 commits. Separación formal de Agro como único módulo liberado, shell de navegación Agro, baseline Agro V1 documentado, catálogo/dashboard alineados con realidad agro-only.
+
+3. **Onboarding, perfil e identidad (Mar 8-11):** ~25 commits. Vistas dedicadas (asistente, perfil, clima, rankings, agenda), wizard IA, onboarding gate contextual, edición guiada de perfil, migración a DNA V10 full metallic, regla de modularidad para agro.js.
+
+4. **Estadísticas, QA y AgroRepo (Mar 12-13):** ~15 commits. Per-section stats panels, sincronización con cultivo activo, QA dataset estabilizado, AgroRepo evoluciona a bitácora árbol local-first, extracción a módulo standalone.
+
+5. **Ciclos Operativos rollout (Mar 18):** 2 commits. Wizard, sidebar, filtros, export — cierre del rollout real.
+
+6. **AgroRepo como workspace (Mar 19):** 4 commits. Rebuild MVP local-first, tree workspace v1.1, Spark mobile UX, blueprint definitivo.
+
+7. **Cartera Viva buyer-centric (Mar 26-31):** ~20 commits. De MVP visual a foundation buyer-centric completa con historial por comprador, exportación, clasificación por cultivo, multimoneda, micrográfica, separación semántica cartera/cultivo, y cierre de mes con paridad operativa.
+
+### Temas estructurales vs polish/QA
+
+**Estructurales:**
+- Shell Agro y navegación dedicada
+- ADN V10 como sistema de diseño adoptado
+- Onboarding contextual + wizard de perfil
+- AgroRepo como memoria operativa local-first
+- Ciclos Operativos con rollout real
+- Cartera Viva buyer-centric como nueva dirección comercial
+- Realidad agro-only alineada en landing/dashboard
+
+**Polish/QA:**
+- Footer positioning (Mar 1, batalla de ~5 commits)
+- KPI cards simétricos y compactos
+- Touch targets y kebab móvil
+- Consola noise, warning guards
+- Legacy CSS overrides (V10 scope)
+
+### Riesgos de exageración a evitar
+
+- No presentar el shell Agro como "completo" — es baseline V1 funcional.
+- No inflar AgroRepo como "sistema completo" — es MVP local-first en evolución.
+- No presentar cartera viva como "cierre comercial" — es fase 1 buyer-centric foundation.
+- No confundir DNA V10 adoption con "rediseño total" — fue migración progresiva.
+- Los commits repetidos sobre kebab/footer/tx-actions son luchas reales, no iteraciones limpias.
+
+### Estructura propuesta para la crónica
+
+1. Título y metadatos
+2. Resumen ejecutivo
+3. Panorama general (transición desde febrero)
+4. Hitos del mes (7 bloques temáticos)
+5. Problemas reales y cómo se resolvieron
+6. Decisiones importantes
+7. Estado al cierre de marzo
+8. Puente hacia abril
+
+### Resultado
+
+- Crónica creada en `apps/gold/docs/chronicles/2026-03.md`
+- Índice maestro actualizado en `CRONICA-YAVLGOLD.md` (addendum append-only)
+- Sin tocar código de producto
+- Sin reescribir crónicas anteriores
