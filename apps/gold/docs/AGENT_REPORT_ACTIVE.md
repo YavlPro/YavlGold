@@ -10458,3 +10458,148 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
   - abrir cada `select` del wizard;
   - navegar opciones sin que el control se cierre solo;
   - confirmar que el valor elegido sigue aplicándose y el flujo del paso no se rompe.
+
+---
+
+## [2026-04-08] Wizard Cartera Operativa — inputs/selects estables sin glow
+
+### Diagnóstico
+
+- El usuario pidió quitar por completo el efecto dorado/glow “saltarín” dentro del wizard de **Cartera Operativa**.
+- El glow venía del estilo global de `.styled-input:focus`, que aplicaba `box-shadow` dorado y transición amplia (`all 0.3s ease`).
+- En este wizard ese comportamiento era innecesario y visualmente intrusivo porque:
+  - amplificaba la sensación de salto al enfocar;
+  - molestaba tanto en inputs de texto como en `select` del modal.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-operational-cycles.css`
+  - se sobreescribió el estilo de todos los `.styled-input` del wizard (`input`, `textarea`, `select`) para dejarlos estables;
+  - se removieron `box-shadow`, `transform` y `animation` dentro del scope del formulario;
+  - el foco queda con borde y fondo estables, sin glow ni halo dorado expansivo;
+  - se limitaron las transiciones a `border-color`, `background` y `color`, sin animaciones invasivas.
+
+### Resultado
+
+- El wizard queda visualmente sobrio y estable.
+- Inputs y selects ya no hacen el efecto dorado saltarín al enfocar.
+- El ajuste queda encapsulado al wizard de **Cartera Operativa**; no invade otros formularios del sistema.
+
+### Build status
+
+- `pnpm build:gold` → **OK**
+- Resultado adicional:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota de entorno:
+  - aparece warning de engine porque el entorno local corre `node v25.6.0` y el proyecto declara `20.x`;
+  - no bloqueó el build.
+
+### QA sugerido
+
+- Validar manualmente el wizard de **Nueva cartera operativa** enfocando:
+  - nombre;
+  - descripción;
+  - selects de clasificación;
+  - monto/moneda/unidad;
+  - status final.
+- Confirmar visualmente que el foco ya no genera glow, halo ni saltos del control.
+
+---
+
+## [2026-04-08] Wizard Cartera Operativa — bloqueo de repaint durante creación
+
+### Diagnóstico
+
+- Persistían dos síntomas reportados por el usuario:
+  - en Paso 2 algunos `select` seguían cayéndose/interrumpiéndose;
+  - en Paso 3 el monto podía entrar “al revés” (`5000` -> `0005`).
+- La explicación más consistente es que el wizard todavía podía ser repintado por `refreshData()` mientras el usuario estaba creando una cartera nueva.
+- En campos como `input[type="number"]`, un refocus forzado tras repintado puede sentirse como cursor reiniciado al inicio, lo que explica la escritura invertida.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agroOperationalCycles.js`
+  - `refreshData()` ahora preserva el wizard abierto en modo `create` y evita llamar `renderWizard()` mientras el usuario está dentro del formulario.
+- `apps/gold/agro/agro-operational-cycles.css`
+  - se endureció el override visual del wizard con `transition: none !important`, `box-shadow: none !important`, `transform: none !important` y `animation: none !important` sobre los campos del formulario;
+  - el foco del wizard queda sin glow y sin transición residual.
+
+### Resultado
+
+- Se elimina otra fuente de interrupción del flujo de escritura/selección durante la creación.
+- El wizard queda más estable tanto por lógica como por CSS:
+  - sin repaint de fondo durante creación;
+  - sin halo/glow/animación en los controles del modal.
+
+### Build status
+
+- `pnpm build:gold` → **OK**
+- Resultado adicional:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota de entorno:
+  - aparece warning de engine porque el entorno local corre `node v25.6.0` y el proyecto declara `20.x`;
+  - no bloqueó el build.
+
+### QA sugerido
+
+- Validar manualmente en el navegador local que quedó abierto:
+  - Paso 2: abrir `Tipo económico`, `Categoría` y `Cultivo asociado` sin cierre abrupto;
+  - Paso 3: escribir `5000` en `Monto` y confirmar que ya no entra invertido;
+  - avanzar de Paso 2 a Paso 3 sin perder el estado del wizard.
+
+---
+
+## [2026-04-08] Cartera Operativa — CTA estable, fallback de cultivos y error final aislado al mock local
+
+### Diagnóstico
+
+- El glow “saltarín” restante ya no viene de los inputs del wizard; viene del estilo global de `.btn-primary` que todavía aplica `transform` y `box-shadow` dorado al CTA de **Nueva cartera operativa**.
+- El selector de **Cultivo asociado** del paso 2 se alimenta de `fetchCrops()` sobre `agro_crops` por `user_id`, pero el navegador local que quedó abierto está montado sobre una sesión mock `qa-user-1` cuyo snapshot actual expone `0` cultivos.
+- El error visual del paso final (`supabase.from(...).insert(...).select is not a function`) no coincide con el cliente real de `@supabase/supabase-js`; apunta a un mock local no chainable en la sesión abierta, no a la API real del módulo.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-operational-cycles.css`
+  - se neutralizó el hover/focus/active de `.btn-primary` dentro del scope `.agro-operational-shell`;
+  - el CTA de **Nueva cartera operativa** queda sin glow dorado, sin `transform` y sin salto visual.
+- `apps/gold/agro/agroOperationalCycles.js`
+  - se agregó `readRuntimeCropsSnapshot()` para leer el snapshot global `__AGRO_CROPS_STATE` solo cuando corresponde al mismo usuario;
+  - se agregó `getAvailableCrops()` para mezclar sin duplicados los cultivos cargados por el módulo y los cultivos ya disponibles en el runtime de Agro;
+  - el wizard ahora usa ese set combinado en:
+    - validación local del `cropId`;
+    - render del selector de **Cultivo asociado**;
+    - label de confirmación y snapshot de depuración.
+- Navegador local abierto (`cartera-local`, fuera del repo)
+  - se corrigió el mock en memoria para que exponga un cultivo visible y para que la cadena `insert().select().single()` deje de romper el submit local;
+  - se dejó la misma ventana abierta en **Cartera Operativa**, con el wizard abierto.
+
+### Resultado
+
+- El CTA principal de Cartera Operativa queda estable, sin halo/glow saltarín.
+- El selector de **Cultivo asociado** ya puede poblarse también desde el snapshot global del runtime cuando la sesión de Agro ya conoce los cultivos.
+- El error final de `.insert(...).select` quedó aislado al mock local del navegador abierto y se corrigió en esa sesión; no fue necesario cambiar el flujo real del cliente Supabase del repo.
+
+### Build status
+
+- `pnpm build:gold` → **OK**
+- Resultado adicional:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota de entorno:
+  - aparece warning de engine porque el entorno local corre `node v25.6.0` y el proyecto declara `20.x`;
+  - no bloqueó el build.
+
+### QA sugerido
+
+- No se ejecutó QA manual extendido por instrucción explícita del usuario.
+- Si se quiere revalidar visualmente después:
+  - abrir el wizard en Paso 2 y confirmar que aparece el cultivo esperado;
+  - avanzar al submit final y confirmar que la sesión local ya no muestra el error del mock.

@@ -433,32 +433,53 @@ body.agro-operational-modal-open {
   grid-column: 1 / -1;
 }
 
-.agro-operational-form-grid .styled-input,
-.agro-operational-form-grid textarea.styled-input,
-.agro-operational-form-grid select.styled-input {
+.agro-operational-form .styled-input,
+.agro-operational-form textarea.styled-input,
+.agro-operational-form select.styled-input {
   min-height: 48px;
-}
-
-.agro-operational-form-grid select.styled-input,
-.agro-operational-confirm-form select.styled-input {
   padding-left: 1rem;
+  transition: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  animation: none !important;
+}
+
+.agro-operational-form select.styled-input {
   cursor: pointer;
-  transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
 }
 
-.agro-operational-form-grid select.styled-input:focus,
-.agro-operational-form-grid select.styled-input:focus-visible,
-.agro-operational-confirm-form select.styled-input:focus,
-.agro-operational-confirm-form select.styled-input:focus-visible {
+.agro-operational-form .styled-input:hover,
+.agro-operational-form .styled-input:focus,
+.agro-operational-form .styled-input:focus-visible {
+  transform: none !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+
+.agro-operational-form .styled-input:focus,
+.agro-operational-form .styled-input:focus-visible {
   background: rgba(26, 26, 26, 0.82);
-  box-shadow:
-    0 0 0 2px var(--bg-0),
-    0 0 0 4px color-mix(in srgb, var(--gold-4) 22%, transparent);
+  border-color: color-mix(in srgb, var(--gold-4) 28%, rgba(255, 255, 255, 0.12));
+  box-shadow: none !important;
 }
 
-.agro-operational-form-grid textarea.styled-input {
+.agro-operational-form textarea.styled-input {
   min-height: 108px;
   resize: vertical;
+}
+
+.agro-operational-shell .btn-primary {
+  transition: background 180ms ease, border-color 180ms ease, color 180ms ease !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.agro-operational-shell .btn-primary:hover,
+.agro-operational-shell .btn-primary:focus,
+.agro-operational-shell .btn-primary:focus-visible,
+.agro-operational-shell .btn-primary:active {
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 .agro-operational-inline-meta {

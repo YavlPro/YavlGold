@@ -556,6 +556,35 @@ function buildCropDisplay(crop) {
     };
 }
 
+function readRuntimeCropsSnapshot() {
+    const snapshot = globalThis?.__AGRO_CROPS_STATE;
+    if (!snapshot || !Array.isArray(snapshot.crops) || snapshot.crops.length === 0) {
+        return [];
+    }
+
+    const runtimeUserId = normalizeId(snapshot.userId);
+    const expectedUserId = normalizeId(state.userId || globalThis?.YG_AGRO_CROPS_USER_ID);
+    if (expectedUserId && runtimeUserId && runtimeUserId !== expectedUserId) {
+        return [];
+    }
+
+    return snapshot.crops.filter((crop) => normalizeId(crop?.id));
+}
+
+function getAvailableCrops() {
+    const cropIndex = new Map();
+
+    [state.crops, readRuntimeCropsSnapshot()].forEach((source) => {
+        (Array.isArray(source) ? source : []).forEach((crop) => {
+            const cropId = normalizeId(crop?.id);
+            if (!cropId || cropIndex.has(cropId)) return;
+            cropIndex.set(cropId, crop);
+        });
+    });
+
+    return Array.from(cropIndex.values());
+}
+
 function sortMovementsAscending(left, right) {
     const leftKey = `${left?.movement_date || ''} ${left?.created_at || ''}`;
     const rightKey = `${right?.movement_date || ''} ${right?.created_at || ''}`;
@@ -964,8 +993,9 @@ function ensureLocalCropSelection(cropId) {
     if (!normalizedId) return '';
     // When crops haven't loaded yet (API path / root not mounted), skip local check;
     // DB validation in createCycleRecord / validateCropId will catch invalid IDs.
-    if (state.crops.length === 0) return normalizedId;
-    const isOwnedCrop = state.crops.some((crop) => buildCropDisplay(crop).id === normalizedId);
+    const availableCrops = getAvailableCrops();
+    if (availableCrops.length === 0) return normalizedId;
+    const isOwnedCrop = availableCrops.some((crop) => buildCropDisplay(crop).id === normalizedId);
     if (!isOwnedCrop) {
         throw new Error('Cultivo no valido.');
     }
@@ -1404,7 +1434,7 @@ function closeComposerModal() {
 function buildCropOptionsMarkup(selectedValue = '') {
     const selected = normalizeId(selectedValue);
     const options = ['<option value="">🌾 Sin asociar a cultivo</option>'];
-    state.crops.forEach((crop) => {
+    getAvailableCrops().forEach((crop) => {
         const display = buildCropDisplay(crop);
         const isSelected = display.id === selected ? ' selected' : '';
         options.push(`<option value="${escapeAttr(display.id)}"${isSelected}>${escapeHtml(display.label)}</option>`);
@@ -1719,7 +1749,7 @@ function setControlsDisabled(disabled) {
 function resolveDraftCropLabel(cropId) {
     const normalizedId = normalizeId(cropId);
     if (!normalizedId) return '🌾 Sin asociar a cultivo';
-    const match = state.crops.find((crop) => buildCropDisplay(crop).id === normalizedId);
+    const match = getAvailableCrops().find((crop) => buildCropDisplay(crop).id === normalizedId);
     return match ? buildCropDisplay(match).label : 'Cultivo no valido.';
 }
 
@@ -2756,6 +2786,10 @@ async function refreshData(options = {}) {
         rebuildCycleIndex();
         state.loadedOnce = true;
 
+        const preserveOpenCreateWizard = state.modalOpen
+            && state.form.mode === 'create'
+            && state.refs?.form;
+
         if (state.editId) {
             const current = readExistingCycle(state.editId);
             if (current) {
@@ -2763,7 +2797,7 @@ async function refreshData(options = {}) {
             } else {
                 resetForm();
             }
-        } else {
+        } else if (!preserveOpenCreateWizard) {
             renderWizard();
         }
 
@@ -3084,7 +3118,7 @@ function buildDebugSnapshot() {
         lastCascadeCheck: state.lastCascadeCheck,
         activeFilters: { ...state.datasets[SUBVIEW_ACTIVE].filters },
         finishedFilters: { ...state.datasets[SUBVIEW_FINISHED].filters },
-        crops: state.crops.map((crop) => buildCropDisplay(crop)),
+        crops: getAvailableCrops().map((crop) => buildCropDisplay(crop)),
         datasets: {
             active: buildDatasetSnapshot(SUBVIEW_ACTIVE),
             finished: buildDatasetSnapshot(SUBVIEW_FINISHED)
