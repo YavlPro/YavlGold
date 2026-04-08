@@ -1346,7 +1346,7 @@ function renderShell() {
                     <button type="button" class="btn" data-operational-action="new-cycle">➕ Nueva cartera operativa</button>
                 </div>
                 <div id="agro-operational-filters-host"></div>
-                <p class="agro-operational-list-section__status" id="agro-operational-list-status">Cargando cartera operativa...</p>
+                <p class="agro-operational-list-section__status" id="agro-operational-list-status" aria-live="polite" aria-atomic="true">Cargando cartera operativa...</p>
                 <div class="agro-operational-list" id="agro-operational-list"></div>
             </section>
 
@@ -2524,6 +2524,17 @@ function renderCurrentSubview() {
                 <p class="agro-operational-empty__copy">Aplica la migración canónica para habilitar <code>agro_operational_cycles</code> y <code>agro_operational_movements</code>.</p>
             </div>
         `;
+        return;
+    }
+
+    if (isSoftRefreshing) {
+        state.refs.listStatus.textContent = state.currentSubview === SUBVIEW_EXPORT
+            ? 'Actualizando vista de exportación...'
+            : state.currentSubview === SUBVIEW_DONATIONS
+                ? 'Actualizando donaciones...'
+                : state.currentSubview === SUBVIEW_LOSSES
+                    ? 'Actualizando pérdidas...'
+                    : 'Actualizando cartera operativa sin desmontar la vista...';
         return;
     }
 

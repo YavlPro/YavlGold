@@ -626,13 +626,58 @@ body.agro-operational-modal-open {
 
 .agro-operational-list-section__status {
   margin-top: 0.3rem;
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-  font-weight: 700;
+  min-height: 1.05rem;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1.2;
+  opacity: 0.78;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  transition: opacity 160ms ease, transform 160ms ease, color 160ms ease;
 }
 
 .agro-operational-list-section__status.is-refreshing {
-  color: var(--gold-5);
+  color: var(--text-muted);
+  opacity: 0.94;
+  transform: translateY(0);
+}
+
+.agro-operational-list-section__status.is-refreshing::before {
+  content: '';
+  display: inline-block;
+  width: 0.65rem;
+  height: 0.65rem;
+  margin-right: 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gold-4) 36%, transparent);
+  opacity: 0.52;
+  transform-origin: center;
+  animation: agro-operational-refresh-pulse 180ms ease-in-out infinite alternate;
+}
+
+@keyframes agro-operational-refresh-pulse {
+  0% {
+    opacity: 0.28;
+    transform: scale(0.96);
+  }
+
+  100% {
+    opacity: 0.52;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agro-operational-list-section__status {
+    transition: none;
+  }
+
+  .agro-operational-list-section__status.is-refreshing::before {
+    animation: none;
+  }
 }
 
 .agro-operational-list {

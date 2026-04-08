@@ -10603,3 +10603,72 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
 - Si se quiere revalidar visualmente después:
   - abrir el wizard en Paso 2 y confirmar que aparece el cultivo esperado;
   - avanzar al submit final y confirmar que la sesión local ya no muestra el error del mock.
+
+---
+
+## [2026-04-08] Cartera Operativa — refresco suave sin desmontar filtros
+
+### Diagnóstico
+
+- El texto `Actualizando cartera operativa sin desmontar la vista...` no vive en `apps/gold/agro/agro-cart.js`; vive en `apps/gold/agro/agroOperationalCycles.js` y usa el nodo `#agro-operational-list-status`.
+- La causa raíz de la molestia no era solo el estilo del mensaje. Durante `state.loading && state.loadedOnce`, `renderCurrentSubview()` seguía reescribiendo:
+  - `filtersHost.innerHTML`
+  - `list.innerHTML`
+- Ese re-render durante el soft refresh desmontaba el DOM visible de la subvista, por eso:
+  - los `select` podían cerrarse;
+  - el foco podía perderse;
+  - el mensaje de actualización se sentía como un shift visual más agresivo de lo real.
+- Además, el estado visual `.agro-operational-list-section__status.is-refreshing` era demasiado prominente: color más brillante y sin contención visual para una sola línea discreta.
+
+### Plan
+
+- Mantener el mensaje de actualización, pero sin re-render del contenido visible mientras la vista ya está montada.
+- Convertir el estado visual de refresh en una señal sutil:
+  - una sola línea;
+  - menor contraste;
+  - transición corta;
+  - sin afectar layout ni foco.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agroOperationalCycles.js`
+  - se marcó `#agro-operational-list-status` con `aria-live="polite"` y `aria-atomic="true"`;
+  - `renderCurrentSubview()` ahora detecta `isSoftRefreshing` y, cuando la vista ya estaba cargada, actualiza solo el mensaje de estado sin reescribir:
+    - `filtersHost.innerHTML`
+    - `list.innerHTML`
+- `apps/gold/agro/agro-operational-cycles.css`
+  - el estado `.agro-operational-list-section__status` se volvió más discreto:
+    - `--text-muted`
+    - `--text-xs`
+    - opacidad baja
+    - una sola línea con `text-overflow: ellipsis`
+  - el refresh ahora usa una microseñal visual con transición de `160ms`;
+  - el punto de actividad usa solo `opacity` y `transform` con `180ms`;
+  - se respetó `prefers-reduced-motion`.
+
+### Resultado
+
+- El mensaje `Actualizando cartera operativa sin desmontar la vista...` sigue existiendo.
+- Durante soft refresh ya no se desmontan filtros ni lista visibles, así que el refresh deja de ser destructivo para `selects` e inputs de esa subvista.
+- El estado visual de actualización queda mucho más sutil y no domina la UI.
+- El layout queda estabilizado al no reconstruir la subvista montada y al mantener el estado en una sola línea reservada.
+
+### Build status
+
+- `pnpm build:gold` → **OK**
+- Resultado adicional:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota de entorno:
+  - aparece warning de engine porque el entorno local corre `node v25.6.0` y el proyecto declara `20.x`;
+  - no bloqueó el build.
+
+### QA sugerido
+
+- No se ejecutó QA manual desktop/mobile en esta iteración.
+- Validación posterior sugerida:
+  - abrir un `select` de filtros y disparar refresh;
+  - escribir en un input del wizard durante refresh;
+  - confirmar que el mensaje de actualización permanece discreto y sin shift visible.
