@@ -1,7 +1,7 @@
 /**
  * YavlGold V1 — Agro Cart (Carrito de Compras Agrícola)
  * Lista de compras con presupuesto, vinculada a cultivos.
- * Items comprados se convierten en gastos del facturero.
+ * Los items se planifican aquí y se registran en Operación Comercial al ejecutarse.
  *
  * Lazy-loaded: only initialized when the Carrito tab is first activated.
  */
@@ -14,7 +14,6 @@ import { getAgroRuntimeUserId, readBestAgroCrops } from '../assets/js/utils/agro
 // ============================================================
 let _supabase = null;
 let _cropsCache = [];
-let _refreshExpenses = null;
 let _exchangeRates = { USD: 1, COP: null, VES: null };
 let _initialized = false;
 let _carts = [];
@@ -24,6 +23,62 @@ let _cartListenerAC = null;
 const CROP_EMOJI_TOKEN_RE = /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u;
 const CROP_TEXT_TOKEN_RE = /[\p{L}\p{N}]/u;
 const INACTIVE_CART_CROP_STATUSES = new Set(['finalizado', 'cancelado', 'harvested', 'cancelled', 'cosechado']);
+const CART_OPERATION_REGISTRATION_OPTIONS = Object.freeze([
+    Object.freeze({
+        value: 'paid',
+        label: '✅ Pagado',
+        helper: 'Se registra como gasto cerrado.',
+        economicType: 'expense',
+        status: 'closed',
+        successLabel: 'Pagado'
+    }),
+    Object.freeze({
+        value: 'credit',
+        label: '💳 Fiado',
+        helper: 'Se registra como deuda pendiente.',
+        economicType: 'expense',
+        status: 'open',
+        successLabel: 'Fiado'
+    }),
+    Object.freeze({
+        value: 'donation',
+        label: '🎁 Donación',
+        helper: 'Se registra como salida sin retorno.',
+        economicType: 'donation',
+        status: 'closed',
+        successLabel: 'Donación'
+    }),
+    Object.freeze({
+        value: 'loss',
+        label: '❌ Pérdida',
+        helper: 'Se registra como merma o daño.',
+        economicType: 'loss',
+        status: 'lost',
+        successLabel: 'Pérdida'
+    })
+]);
+const CART_OPERATIONAL_CATEGORY = 'supplies';
+const CART_OPERATIONAL_UNIT_ALIASES = Object.freeze({
+    unidad: 'unidad',
+    unidades: 'unidad',
+    unit: 'unidad',
+    units: 'unidad',
+    saco: 'saco',
+    sacos: 'saco',
+    bag: 'saco',
+    bags: 'saco',
+    cesta: 'cesta',
+    cestas: 'cesta',
+    basket: 'cesta',
+    baskets: 'cesta',
+    kg: 'kg',
+    kilo: 'kg',
+    kilos: 'kg',
+    kilogramo: 'kg',
+    kilogramos: 'kg',
+    kilogram: 'kg',
+    kilograms: 'kg'
+});
 
 function isCropEmojiToken(token) {
     const value = String(token || '').trim();
@@ -54,7 +109,7 @@ function getCropDisplayLabel(crop, fallbackIcon = '🌱', fallbackName = 'Cultiv
 // ============================================================
 
 /**
- * @param {object} deps - { supabase, cropsCache, refreshFactureroHistory }
+ * @param {object} deps - { supabase, cropsCache }
  */
 export async function initAgroCart(deps) {
     if (_initialized) {
@@ -63,7 +118,6 @@ export async function initAgroCart(deps) {
     }
     _supabase = deps.supabase;
     _cropsCache = deps.cropsCache || [];
-    _refreshExpenses = deps.refreshFactureroHistory || null;
 
     // Fetch exchange rates (non-blocking)
     initExchangeRates().then(r => { if (r) _exchangeRates = r; }).catch(() => { });
@@ -154,13 +208,6 @@ async function createCart(name, cropId, notes) {
 async function deleteCart(cartId) {
     if (!confirm('¿Eliminar este carrito y todos sus items?')) return;
     try {
-        // First delete linked expenses for purchased items
-        const items = _activeCartId === cartId ? _activeCartItems : [];
-        for (const item of items) {
-            if (item.purchased && item.expense_id) {
-                await _supabase.from('agro_expenses').delete().eq('id', item.expense_id);
-            }
-        }
         const { error } = await _supabase.from('agro_cart').delete().eq('id', cartId);
         if (error) throw error;
         _carts = _carts.filter(c => c.id !== cartId);
@@ -170,7 +217,6 @@ async function deleteCart(cartId) {
             else _activeCartItems = [];
         }
         renderCartTab();
-        if (_refreshExpenses) _refreshExpenses('gastos');
     } catch (err) {
         console.error('[AgroCart] deleteCart error:', err.message);
         alert('Error al eliminar: ' + err.message);
@@ -202,7 +248,7 @@ async function loadCartItems(cartId) {
             .order('sort_order', { ascending: true })
             .order('created_at', { ascending: true });
         if (error) throw error;
-        _activeCartItems = data || [];
+        _activeCartItems = Array.isArray(data) ? data.map((item) => normalizeCartItem(item)) : [];
     } catch (err) {
         console.error('[AgroCart] loadCartItems error:', err.message);
         _activeCartItems = [];
@@ -233,7 +279,7 @@ async function addItem(cartId, itemData) {
             .select()
             .single();
         if (error) throw error;
-        _activeCartItems.push(data);
+        _activeCartItems.push(normalizeCartItem(data));
         renderCartTab();
     } catch (err) {
         console.error('[AgroCart] addItem error:', err.message);
@@ -254,7 +300,9 @@ async function updateItem(itemId, updates) {
         const { error } = await _supabase.from('agro_cart_items').update(updates).eq('id', itemId);
         if (error) throw error;
         const idx = _activeCartItems.findIndex(i => i.id === itemId);
-        if (idx !== -1) Object.assign(_activeCartItems[idx], updates);
+        if (idx !== -1) {
+            _activeCartItems[idx] = normalizeCartItem({ ..._activeCartItems[idx], ...updates });
+        }
         renderCartTab();
     } catch (err) {
         console.error('[AgroCart] updateItem error:', err.message);
@@ -265,78 +313,51 @@ async function updateItem(itemId, updates) {
 async function deleteItem(itemId) {
     if (!confirm('¿Eliminar este item?')) return;
     try {
-        const item = _activeCartItems.find(i => i.id === itemId);
-        if (item?.purchased && item.expense_id) {
-            await _supabase.from('agro_expenses').delete().eq('id', item.expense_id);
-        }
         const { error } = await _supabase.from('agro_cart_items').delete().eq('id', itemId);
         if (error) throw error;
         _activeCartItems = _activeCartItems.filter(i => i.id !== itemId);
         renderCartTab();
-        if (item?.purchased && _refreshExpenses) _refreshExpenses('gastos');
     } catch (err) {
         console.error('[AgroCart] deleteItem error:', err.message);
         alert('Error al eliminar: ' + err.message);
     }
 }
 
-async function togglePurchased(itemId) {
+async function handleRegisterPurchase(itemId, option) {
     const item = _activeCartItems.find(i => i.id === itemId);
     if (!item) return;
+    if (isProcessedItem(item)) {
+        notifyCart('Este item ya fue procesado en Operación Comercial.', 'warning');
+        return;
+    }
 
     const cart = _carts.find(c => c.id === _activeCartId);
 
     try {
-        const { data: { user } } = await _supabase.auth.getUser();
-        if (!user) throw new Error('Sesión expirada.');
-
-        if (!item.purchased) {
-            // MARK AS PURCHASED → create expense
-            const today = new Date().toISOString().split('T')[0];
-            const { data: expense, error: expErr } = await _supabase
-                .from('agro_expenses')
-                .insert({
-                    user_id: user.id,
-                    concept: `Compra: ${item.name}`,
-                    amount: Number(item.monto) || 0,
-                    category: 'insumos',
-                    date: today,
-                    crop_id: cart?.crop_id || null,
-                    currency: item.currency || 'USD',
-                    exchange_rate: item.exchange_rate || 1,
-                    monto_usd: item.monto_usd || Number(item.monto) || 0
-                })
-                .select('id')
-                .single();
-            if (expErr) throw expErr;
-
-            const { error } = await _supabase
-                .from('agro_cart_items')
-                .update({ purchased: true, purchased_at: new Date().toISOString(), expense_id: expense.id })
-                .eq('id', itemId);
-            if (error) throw error;
-            item.purchased = true;
-            item.purchased_at = new Date().toISOString();
-            item.expense_id = expense.id;
-        } else {
-            // UNMARK → delete expense
-            if (item.expense_id) {
-                await _supabase.from('agro_expenses').delete().eq('id', item.expense_id);
-            }
-            const { error } = await _supabase
-                .from('agro_cart_items')
-                .update({ purchased: false, purchased_at: null, expense_id: null })
-                .eq('id', itemId);
-            if (error) throw error;
-            item.purchased = false;
-            item.purchased_at = null;
-            item.expense_id = null;
-        }
+        const bridge = await ensureOperationalBridge();
+        const payload = buildOperationalPayloadFromCart(cart, item, option);
+        const result = await bridge.createFromPayload(payload);
+        const processedAt = new Date().toISOString();
+        const operationId = String(result?.cycleId || '').trim() || null;
+        const { error } = await _supabase
+            .from('agro_cart_items')
+            .update({
+                purchased: true,
+                purchased_at: processedAt,
+                expense_id: operationId
+            })
+            .eq('id', itemId);
+        if (error) throw error;
+        syncCartItemState(item, {
+            processed: true,
+            processed_at: processedAt,
+            operation_id: operationId
+        });
         renderCartTab();
-        if (_refreshExpenses) _refreshExpenses('gastos');
+        notifyCart(`Item registrado en Operación Comercial como ${option.successLabel}.`, 'success');
     } catch (err) {
-        console.error('[AgroCart] togglePurchased error:', err.message);
-        alert('Error: ' + err.message);
+        console.error('[AgroCart] handleRegisterPurchase error:', err.message);
+        notifyCart(`Error al registrar compra: ${err.message}`, 'error');
     }
 }
 
@@ -345,27 +366,28 @@ async function togglePurchased(itemId) {
 // ============================================================
 
 function computeSummary(items) {
-    let totalUsd = 0, purchasedUsd = 0;
+    let totalUsd = 0;
+    let processedUsd = 0;
     const byCurrency = {};
 
     for (const item of items) {
         const cur = item.currency || 'USD';
-        const monto = Number(item.monto) || 0;
-        const usd = Number(item.monto_usd) || 0;
-        if (!byCurrency[cur]) byCurrency[cur] = { total: 0, purchased: 0 };
+        const monto = getCartItemTotalAmount(item);
+        const usd = getCartItemTotalUsd(item);
+        if (!byCurrency[cur]) byCurrency[cur] = { total: 0, processed: 0 };
         byCurrency[cur].total += monto;
-        if (item.purchased) byCurrency[cur].purchased += monto;
+        if (isProcessedItem(item)) byCurrency[cur].processed += monto;
         totalUsd += usd;
-        if (item.purchased) purchasedUsd += usd;
+        if (isProcessedItem(item)) processedUsd += usd;
     }
     return {
         totalUsd,
-        purchasedUsd,
-        remainingUsd: totalUsd - purchasedUsd,
-        progress: totalUsd > 0 ? (purchasedUsd / totalUsd) * 100 : 0,
+        processedUsd,
+        remainingUsd: totalUsd - processedUsd,
+        progress: totalUsd > 0 ? (processedUsd / totalUsd) * 100 : 0,
         byCurrency,
         totalItems: items.length,
-        purchasedItems: items.filter(i => i.purchased).length
+        processedItems: items.filter((item) => isProcessedItem(item)).length
     };
 }
 
@@ -390,14 +412,14 @@ function exportCartMD(cartId) {
     md += `|---|--------|------|------|--------|--------|-----|\n`;
 
     items.forEach((item, i) => {
-        const check = item.purchased ? '☑' : '☐';
-        const price = formatCurrencyDisplay(item.monto, item.currency, item.monto_usd);
-        md += `| ${i + 1} | ${check} | ${item.name} | ${item.quantity} | ${item.unit} | ${price} | $${Number(item.monto_usd || 0).toFixed(2)} |\n`;
+        const check = isProcessedItem(item) ? '☑ Procesado' : '☐ Pendiente';
+        const price = formatCurrencyDisplay(getCartItemTotalAmount(item), item.currency, getCartItemTotalUsd(item));
+        md += `| ${i + 1} | ${check} | ${item.name} | ${item.quantity} | ${item.unit} | ${price} | $${getCartItemTotalUsd(item).toFixed(2)} |\n`;
     });
 
     md += `\n## Resumen\n\n`;
     md += `- **Total:** $${summary.totalUsd.toFixed(2)} USD\n`;
-    md += `- **Comprado:** $${summary.purchasedUsd.toFixed(2)} USD (${summary.purchasedItems}/${summary.totalItems})\n`;
+    md += `- **Procesado:** $${summary.processedUsd.toFixed(2)} USD (${summary.processedItems}/${summary.totalItems})\n`;
     md += `- **Falta:** $${summary.remainingUsd.toFixed(2)} USD\n`;
     md += `- **Progreso:** ${summary.progress.toFixed(0)}%\n`;
     md += `\n---\n*Generado por YavlGold Agro*\n`;
@@ -424,6 +446,122 @@ function getCropName(cropId) {
     if (!cropId) return 'General';
     const crop = (_cropsCache || []).find(c => String(c.id) === String(cropId));
     return crop ? getCropDisplayLabel(crop) : 'Cultivo';
+}
+
+function todayLocalIso() {
+    const now = new Date();
+    const offset = now.getTimezoneOffset() * 60000;
+    return new Date(now.getTime() - offset).toISOString().slice(0, 10);
+}
+
+function normalizeCartItem(item = {}) {
+    const processed = Boolean(item?.processed ?? item?.purchased);
+    const processedAt = item?.processed_at || item?.purchased_at || null;
+    const operationId = item?.operation_id || item?.expense_id || null;
+    return {
+        ...item,
+        processed,
+        processed_at: processedAt,
+        operation_id: operationId,
+        purchased: processed,
+        purchased_at: processedAt,
+        expense_id: operationId
+    };
+}
+
+function isProcessedItem(item) {
+    return Boolean(item?.processed || item?.purchased);
+}
+
+function syncCartItemState(item, updates = {}) {
+    if (!item) return null;
+    Object.assign(item, normalizeCartItem({ ...item, ...updates }));
+    return item;
+}
+
+function getCartItemQuantity(item) {
+    const quantity = Number(item?.quantity);
+    return Number.isFinite(quantity) && quantity > 0 ? quantity : 1;
+}
+
+function getCartItemUnitAmount(item) {
+    return Number(item?.monto) || 0;
+}
+
+function getCartItemUnitUsd(item) {
+    return Number(item?.monto_usd) || 0;
+}
+
+function getCartItemTotalAmount(item) {
+    return getCartItemUnitAmount(item) * getCartItemQuantity(item);
+}
+
+function getCartItemTotalUsd(item) {
+    return getCartItemUnitUsd(item) * getCartItemQuantity(item);
+}
+
+function normalizeOperationalUnit(unit) {
+    const token = String(unit || '').trim().toLowerCase();
+    return CART_OPERATIONAL_UNIT_ALIASES[token] || null;
+}
+
+function formatProcessedDate(value) {
+    if (!value) return 'Procesado';
+    try {
+        return `Procesado ${new Date(value).toLocaleDateString()}`;
+    } catch {
+        return 'Procesado';
+    }
+}
+
+function notifyCart(message, type = 'info') {
+    if (typeof window !== 'undefined' && typeof window.showToast === 'function') {
+        window.showToast(message, type);
+        return;
+    }
+    alert(message);
+}
+
+async function ensureOperationalBridge() {
+    if (typeof window !== 'undefined' && typeof window.YGAgroOperationalCycles?.createFromPayload === 'function') {
+        return window.YGAgroOperationalCycles;
+    }
+
+    const mod = await import('./agroOperationalCycles.js');
+    if (typeof mod.initAgroOperationalCycles === 'function') {
+        await mod.initAgroOperationalCycles({ initialUserId: getAgroRuntimeUserId() || undefined });
+    }
+
+    if (typeof window !== 'undefined' && typeof window.YGAgroOperationalCycles?.createFromPayload === 'function') {
+        return window.YGAgroOperationalCycles;
+    }
+
+    throw new Error('Operación Comercial no está disponible en este momento.');
+}
+
+function buildOperationalPayloadFromCart(cart, item, option) {
+    const quantity = getCartItemQuantity(item);
+    const unitType = normalizeOperationalUnit(item?.unit);
+    const lineAmount = getCartItemTotalAmount(item);
+    const descriptionParts = [
+        `Registrado desde Mi Carrito: ${cart?.name || 'Carrito'}`,
+        cart?.notes ? `Notas del carrito: ${cart.notes}` : '',
+        quantity > 0 && item?.unit ? `Cantidad planeada: ${quantity} ${item.unit}` : ''
+    ].filter(Boolean);
+
+    return {
+        name: String(item?.name || '').trim(),
+        description: descriptionParts.join(' · '),
+        economicType: option.economicType,
+        category: CART_OPERATIONAL_CATEGORY,
+        cropId: cart?.crop_id || null,
+        amount: lineAmount > 0 ? Number(lineAmount.toFixed(2)) : null,
+        currency: String(item?.currency || 'COP').trim().toUpperCase(),
+        movementDate: todayLocalIso(),
+        quantity: unitType ? quantity : null,
+        unitType,
+        status: option.status
+    };
 }
 
 function escapeHtml(text) {
@@ -491,11 +629,24 @@ function renderEmptyState() {
 function renderActiveCart(cart, items, summary) {
     const cropName = getCropName(cart.crop_id);
     const progressPct = Math.min(100, summary.progress);
-
-    let itemsHtml = '';
-    for (const item of items) {
-        itemsHtml += renderCartItem(item);
-    }
+    const pendingItems = items.filter((item) => !isProcessedItem(item));
+    const processedItems = items.filter((item) => isProcessedItem(item));
+    const itemsHtml = `
+        ${renderCartItemsSection({
+            title: 'Pendientes por ejecutar',
+            helper: 'Planificados en carrito, aún sin registro contable.',
+            items: pendingItems,
+            emptyCopy: processedItems.length
+                ? 'Todo lo pendiente de este carrito ya fue registrado.'
+                : 'Sin items aún. Agrega uno abajo.'
+        })}
+        ${processedItems.length ? renderCartItemsSection({
+            title: 'Procesados',
+            helper: 'Trazabilidad de lo ya registrado en Operación Comercial.',
+            items: processedItems,
+            variant: 'processed'
+        }) : ''}
+    `;
 
     return `
         <div class="agro-cart-detail">
@@ -522,8 +673,8 @@ function renderActiveCart(cart, items, summary) {
                         <span class="agro-cart-summary-value">$${summary.totalUsd.toFixed(2)}</span>
                     </div>
                     <div class="agro-cart-summary-item">
-                        <span class="agro-cart-summary-label">Comprado</span>
-                        <span class="agro-cart-summary-value" style="color: #4ade80;">$${summary.purchasedUsd.toFixed(2)}</span>
+                        <span class="agro-cart-summary-label">Procesado</span>
+                        <span class="agro-cart-summary-value" style="color: #4ade80;">$${summary.processedUsd.toFixed(2)}</span>
                     </div>
                     <div class="agro-cart-summary-item">
                         <span class="agro-cart-summary-label">Falta</span>
@@ -531,7 +682,7 @@ function renderActiveCart(cart, items, summary) {
                     </div>
                 </div>
                 <div style="text-align: center; font-size: 0.7rem; color: rgba(255,255,255,0.35); margin-top: 0.25rem;">
-                    ${summary.purchasedItems}/${summary.totalItems} items comprados
+                    ${summary.processedItems}/${summary.totalItems} items procesados
                 </div>
             </div>
 
@@ -546,24 +697,49 @@ function renderActiveCart(cart, items, summary) {
     `;
 }
 
+function renderCartItemsSection({ title, helper, items, emptyCopy, variant = '' }) {
+    const body = items.length
+        ? items.map((item) => renderCartItem(item)).join('')
+        : `<div class="agro-cart-items-empty">${escapeHtml(emptyCopy || 'Sin items en esta sección.')}</div>`;
+    const variantClass = variant ? ` agro-cart-items-section--${variant}` : '';
+    return `
+        <section class="agro-cart-items-section${variantClass}">
+            <div class="agro-cart-items-section__head">
+                <div>
+                    <strong class="agro-cart-items-section__title">${escapeHtml(title)}</strong>
+                    <p class="agro-cart-items-section__copy">${escapeHtml(helper || '')}</p>
+                </div>
+                <span class="agro-cart-items-section__count">${items.length}</span>
+            </div>
+            <div class="agro-cart-items-section__body">${body}</div>
+        </section>
+    `;
+}
+
 function renderCartItem(item) {
-    const checked = item.purchased ? 'checked' : '';
-    const lineThrough = item.purchased ? 'text-decoration: line-through; opacity: 0.6;' : '';
-    const price = fmtCur(item.monto, item.currency, item.monto_usd);
+    const processed = isProcessedItem(item);
+    const lineThrough = processed ? 'text-decoration: line-through; opacity: 0.6;' : '';
+    const quantity = getCartItemQuantity(item);
+    const unitPrice = fmtCur(getCartItemUnitAmount(item), item.currency, getCartItemUnitUsd(item));
+    const totalPrice = fmtCur(getCartItemTotalAmount(item), item.currency, getCartItemTotalUsd(item));
+    const statusNode = processed
+        ? `<span class="agro-cart-item-pill agro-cart-item-pill--processed">Procesado</span>`
+        : `<button type="button" class="agro-cart-register-btn" data-action="register-purchase" data-item-id="${item.id}"><i class="fa-solid fa-receipt" aria-hidden="true"></i><span>Registrar compra</span></button>`;
+    const supportMeta = processed
+        ? `<div class="agro-cart-item-meta agro-cart-item-meta--processed">${escapeHtml(formatProcessedDate(item.processed_at))}</div>`
+        : (quantity > 1 ? `<div class="agro-cart-item-meta agro-cart-item-meta--secondary">Unitario ${escapeHtml(unitPrice)}</div>` : '');
 
     return `
-        <div class="agro-cart-item ${item.purchased ? 'is-purchased' : ''}" data-item-id="${item.id}">
-            <label class="agro-cart-checkbox-label">
-                <input type="checkbox" class="agro-cart-checkbox" data-action="toggle-purchased" data-item-id="${item.id}" ${checked}>
-                <span class="agro-cart-checkbox-custom"></span>
-            </label>
+        <div class="agro-cart-item ${processed ? 'is-processed' : ''}" data-item-id="${item.id}">
             <div class="agro-cart-item-info" style="${lineThrough}">
                 <div class="agro-cart-item-name">${escapeHtml(item.name)}</div>
-                <div class="agro-cart-item-meta">${item.quantity} ${escapeHtml(item.unit)}</div>
+                <div class="agro-cart-item-meta">${quantity} ${escapeHtml(item.unit || 'unidad')}</div>
+                ${supportMeta}
             </div>
-            <div class="agro-cart-item-price">${price}</div>
+            <div class="agro-cart-item-price">${escapeHtml(totalPrice)}</div>
             <div class="agro-cart-item-actions">
-                <button type="button" class="agro-cart-item-btn" data-action="edit-item" data-item-id="${item.id}" title="Editar"><i class="fa fa-pen"></i></button>
+                ${statusNode}
+                ${processed ? '' : '<button type="button" class="agro-cart-item-btn" data-action="edit-item" data-item-id="' + item.id + '" title="Editar"><i class="fa fa-pen"></i></button>'}
                 <button type="button" class="agro-cart-item-btn agro-cart-item-btn-danger" data-action="delete-item" data-item-id="${item.id}" title="Eliminar"><i class="fa fa-trash"></i></button>
             </div>
         </div>
@@ -832,6 +1008,52 @@ function renderEditItemModal(item) {
     document.body.appendChild(overlay);
 }
 
+function renderPurchaseStateModal(item) {
+    const overlay = document.createElement('div');
+    overlay.className = 'agro-cart-modal-overlay';
+
+    const modal = document.createElement('div');
+    modal.className = 'agro-cart-modal agro-cart-modal--purchase-state';
+    modal.innerHTML = `
+        <p class="agro-cart-modal__eyebrow">Operación Comercial</p>
+        <h3 class="agro-cart-modal__title">¿Cómo se registró esta compra?</h3>
+        <p class="agro-cart-modal__copy">
+            <strong>${escapeHtml(item?.name || 'Item')}</strong><br>
+            Selecciona el estado real para enviar este item desde Mi Carrito hacia Operación Comercial.
+        </p>
+        <div class="agro-cart-modal__options">
+            ${CART_OPERATION_REGISTRATION_OPTIONS.map((option) => `
+                <button type="button" class="agro-cart-modal__option" data-registration-option="${option.value}">
+                    <strong>${escapeHtml(option.label)}</strong>
+                    <span>${escapeHtml(option.helper)}</span>
+                </button>
+            `).join('')}
+        </div>
+        <div class="agro-cart-modal__actions">
+            <button type="button" class="agro-cart-btn-secondary" data-action="cancel-modal">Cancelar</button>
+        </div>
+    `;
+
+    overlay.appendChild(modal);
+    overlay.addEventListener('click', async (event) => {
+        if (event.target === overlay || event.target.closest('[data-action="cancel-modal"]')) {
+            overlay.remove();
+            return;
+        }
+
+        const optionButton = event.target.closest('[data-registration-option]');
+        if (!optionButton) return;
+
+        const option = CART_OPERATION_REGISTRATION_OPTIONS.find((entry) => entry.value === optionButton.dataset.registrationOption);
+        if (!option) return;
+
+        overlay.remove();
+        await handleRegisterPurchase(item.id, option);
+    });
+
+    document.body.appendChild(overlay);
+}
+
 // ============================================================
 // EVENT DELEGATION
 // ============================================================
@@ -853,9 +1075,10 @@ function attachCartListeners(container) {
         if (action === 'export-cart') { exportCartMD(_activeCartId); return; }
         if (action === 'complete-cart') { updateCartStatus(_activeCartId, 'completado'); return; }
 
-        if (action === 'toggle-purchased') {
+        if (action === 'register-purchase') {
             const itemId = actionEl.dataset.itemId;
-            if (itemId) togglePurchased(itemId);
+            const item = _activeCartItems.find(i => i.id === itemId);
+            if (item) renderPurchaseStateModal(item);
             return;
         }
 
@@ -868,7 +1091,12 @@ function attachCartListeners(container) {
         if (action === 'edit-item') {
             const itemId = actionEl.dataset.itemId;
             const item = _activeCartItems.find(i => i.id === itemId);
-            if (item) renderEditItemModal(item);
+            if (!item) return;
+            if (isProcessedItem(item)) {
+                notifyCart('Este item ya fue procesado. Edita la operación desde Operación Comercial.', 'warning');
+                return;
+            }
+            renderEditItemModal(item);
             return;
         }
 
@@ -1050,6 +1278,54 @@ export function injectCartStyles() {
 
         /* Items */
         .agro-cart-items { margin-bottom: 0.75rem; }
+        .agro-cart-items-section {
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.02);
+            overflow: hidden;
+        }
+        .agro-cart-items-section + .agro-cart-items-section { margin-top: 0.75rem; }
+        .agro-cart-items-section--processed {
+            background: rgba(200,167,82,0.05);
+            border-color: rgba(200,167,82,0.14);
+        }
+        .agro-cart-items-section__head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            background: rgba(0,0,0,0.16);
+        }
+        .agro-cart-items-section__title {
+            display: block;
+            color: #fff;
+            font-size: 0.82rem;
+        }
+        .agro-cart-items-section__copy {
+            margin: 0.2rem 0 0;
+            color: rgba(255,255,255,0.45);
+            font-size: 0.72rem;
+        }
+        .agro-cart-items-section__count {
+            min-width: 28px;
+            height: 28px;
+            padding: 0 0.55rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            border: 1px solid rgba(200,167,82,0.22);
+            color: var(--v10-gold-4, #C8A752);
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+        .agro-cart-items-empty {
+            padding: 1rem 0.9rem;
+            color: rgba(255,255,255,0.45);
+            font-size: 0.82rem;
+        }
 
         .agro-cart-item {
             display: flex;
@@ -1059,36 +1335,9 @@ export function injectCartStyles() {
             border-bottom: 1px solid rgba(255,255,255,0.05);
             transition: opacity 0.15s;
         }
-        .agro-cart-item.is-purchased { opacity: 0.55; }
-
-        /* Custom checkbox 48px touch */
-        .agro-cart-checkbox-label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 48px; height: 48px;
-            flex-shrink: 0;
-            cursor: pointer;
-        }
-        .agro-cart-checkbox { display: none; }
-        .agro-cart-checkbox-custom {
-            width: 24px; height: 24px;
-            border: 2px solid rgba(200,167,82,0.5);
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.15s;
-        }
-        .agro-cart-checkbox:checked + .agro-cart-checkbox-custom {
-            background: var(--v10-gold-4, #C8A752);
-            border-color: var(--v10-gold-4, #C8A752);
-        }
-        .agro-cart-checkbox:checked + .agro-cart-checkbox-custom::after {
-            content: '✓';
-            color: #0a0a0a;
-            font-size: 0.85rem;
-            font-weight: 700;
+        .agro-cart-item:last-child { border-bottom: none; }
+        .agro-cart-item.is-processed {
+            background: rgba(200,167,82,0.04);
         }
 
         .agro-cart-item-info { flex: 1; min-width: 0; }
@@ -1104,6 +1353,13 @@ export function injectCartStyles() {
             color: rgba(255,255,255,0.4);
             font-size: 0.7rem;
         }
+        .agro-cart-item-meta--secondary,
+        .agro-cart-item-meta--processed {
+            margin-top: 0.18rem;
+        }
+        .agro-cart-item-meta--processed {
+            color: var(--v10-gold-4, #C8A752);
+        }
         .agro-cart-item-price {
             color: var(--v10-gold-4, #C8A752);
             font-size: 0.8rem;
@@ -1115,13 +1371,45 @@ export function injectCartStyles() {
             display: flex;
             gap: 0.25rem;
             flex-shrink: 0;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .agro-cart-register-btn,
+        .agro-cart-item-pill {
+            min-height: 30px;
+            padding: 0.35rem 0.65rem;
+            border-radius: 999px;
+            border: 1px solid rgba(200,167,82,0.22);
+            font-size: 0.7rem;
+            font-weight: 700;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .agro-cart-register-btn {
+            background: rgba(200,167,82,0.12);
+            color: var(--v10-gold-4, #C8A752);
+            cursor: pointer;
+            transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+        }
+        .agro-cart-register-btn:hover {
+            background: rgba(200,167,82,0.18);
+            border-color: rgba(200,167,82,0.38);
+            transform: translateY(-1px);
+        }
+        .agro-cart-item-pill {
+            background: rgba(74,222,128,0.08);
+            color: #86efac;
+            border-color: rgba(74,222,128,0.24);
         }
         .agro-cart-item-btn {
             width: 28px; height: 28px;
             border-radius: 50%;
-            border: 1px solid rgba(96,165,250,0.3);
+            border: 1px solid rgba(255,255,255,0.16);
             background: transparent;
-            color: #60a5fa;
+            color: rgba(255,255,255,0.72);
             cursor: pointer;
             display: inline-flex;
             align-items: center;
@@ -1129,7 +1417,11 @@ export function injectCartStyles() {
             font-size: 0.65rem;
             transition: all 0.15s;
         }
-        .agro-cart-item-btn:hover { background: rgba(96,165,250,0.1); }
+        .agro-cart-item-btn:hover {
+            background: rgba(200,167,82,0.12);
+            border-color: rgba(200,167,82,0.3);
+            color: var(--v10-gold-4, #C8A752);
+        }
         .agro-cart-item-btn-danger { border-color: rgba(239,68,68,0.3); color: #ef4444; }
         .agro-cart-item-btn-danger:hover { background: rgba(239,68,68,0.1); }
 
@@ -1240,10 +1532,77 @@ export function injectCartStyles() {
             max-width: 400px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         }
+        .agro-cart-modal--purchase-state { max-width: 460px; }
+        .agro-cart-modal__eyebrow {
+            margin: 0 0 0.4rem;
+            color: var(--v10-gold-4, #C8A752);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .agro-cart-modal__title {
+            margin: 0 0 0.5rem;
+            color: #fff;
+            font-size: 1.2rem;
+        }
+        .agro-cart-modal__copy {
+            margin: 0 0 1rem;
+            color: rgba(255,255,255,0.62);
+            font-size: 0.84rem;
+            line-height: 1.5;
+        }
+        .agro-cart-modal__options {
+            display: grid;
+            gap: 0.6rem;
+        }
+        .agro-cart-modal__option {
+            width: 100%;
+            padding: 0.8rem 0.9rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.03);
+            color: #fff;
+            text-align: left;
+            cursor: pointer;
+            font-family: inherit;
+            transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+        }
+        .agro-cart-modal__option strong {
+            display: block;
+            font-size: 0.9rem;
+        }
+        .agro-cart-modal__option span {
+            display: block;
+            margin-top: 0.3rem;
+            color: rgba(255,255,255,0.52);
+            font-size: 0.78rem;
+        }
+        .agro-cart-modal__option:hover {
+            border-color: rgba(200,167,82,0.34);
+            background: rgba(200,167,82,0.08);
+            transform: translateY(-1px);
+        }
+        .agro-cart-modal__actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 1rem;
+        }
 
         @media (max-width: 480px) {
             .agro-cart-summary-value { font-size: 0.85rem; }
             .agro-cart-item-price { font-size: 0.7rem; }
+            .agro-cart-item {
+                align-items: flex-start;
+                flex-wrap: wrap;
+            }
+            .agro-cart-item-price {
+                width: 100%;
+                margin-left: auto;
+                text-align: right;
+            }
+            .agro-cart-item-actions {
+                width: 100%;
+            }
         }
     `;
     document.head.appendChild(style);

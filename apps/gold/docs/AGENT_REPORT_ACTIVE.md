@@ -10910,3 +10910,103 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
   - abrir el sidebar y confirmar que `Mi Carrito` aparece entre `Cartera Viva` y `Cartera Operativa`;
   - hacer click en `Mi Carrito` y confirmar que la familia `Historial comercial` queda expandida y activa;
   - revisar mobile para confirmar que el drawer sigue cerrando/abriendo sin romper layout.
+
+---
+
+## [2026-04-08] Agro carrito → operación comercial por bridge único
+
+### Diagnóstico
+
+- `apps/gold/agro/agro-cart.js` todavía usa una ruta legacy al marcar un item como comprado:
+  - inserta directo en `agro_expenses`;
+  - guarda el vínculo en `expense_id`;
+  - trata `purchased` como estado final de ejecución.
+- `apps/gold/agro/agroOperationalCycles.js` ya tiene la capa operativa nueva:
+  - crea ciclos en `agro_operational_cycles`;
+  - crea movimientos en `agro_operational_movements`;
+  - expone `window.YGAgroOperationalCycles.createFromPayload(payload)` como bridge canónico.
+- Si el carrito sigue escribiendo directo a `agro_expenses`, se mantiene doble fuente de verdad:
+  - planificación en carrito;
+  - ejecución legacy en `agro_expenses`;
+  - ejecución nueva en `agro_operational_*`.
+- No aparece en el repo una migración vigente para agregar `processed` u `operation_id` a `agro_cart_items`.
+- La opción más segura y de menor diff es:
+  - cortar la escritura a tablas legacy desde el carrito;
+  - reutilizar `createFromPayload(payload)`;
+  - conservar trazabilidad en el schema actual mapeando:
+    - `purchased` -> semántica visual de `processed`;
+    - `expense_id` -> vínculo al `cycleId` de operación comercial mientras no exista columna `operation_id`.
+
+### Plan
+
+- Reemplazar el toggle `Comprado` por una acción explícita `Registrar compra`.
+- Abrir un modal liviano con cuatro estados:
+  - `Pagado`
+  - `Fiado`
+  - `Donación`
+  - `Pérdida`
+- Construir el payload desde el item del carrito y delegar la escritura solo al bridge `window.YGAgroOperationalCycles.createFromPayload(payload)`.
+- Marcar el item como procesado sin borrarlo:
+  - persistiendo en columnas actuales (`purchased`, `purchased_at`, `expense_id`);
+  - reflejándolo en UI como `Procesado`.
+- Ajustar resumen, render y estilos para distinguir planeado vs procesado.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-cart.js`
+  - Se eliminó la escritura directa a `agro_expenses` desde el carrito.
+  - Se reemplazó `togglePurchased()` por `handleRegisterPurchase(itemId, option)`.
+  - El registro ahora fluye por `window.YGAgroOperationalCycles.createFromPayload(payload)`.
+  - Se creó el modal de estado con cuatro opciones:
+    - `Pagado`
+    - `Fiado`
+    - `Donación`
+    - `Pérdida`
+  - El item ya no se borra ni se desmarca contra una tabla legacy:
+    - se persiste usando el schema actual;
+    - `purchased` se reutiliza como semántica de `processed`;
+    - `expense_id` se reutiliza como vínculo temporal al `cycleId` operativo mientras no exista `operation_id`.
+  - Se reorganizó la UI en dos bloques:
+    - `Pendientes por ejecutar`
+    - `Procesados`
+  - El resumen del carrito se alineó a la ejecución:
+    - `Comprado` pasó a `Procesado`;
+    - los montos usan total de línea (`cantidad x precio`) para empatar carrito y registro operativo.
+  - Se ajustaron estilos del item y del modal para el flujo nuevo, sin checkbox legacy.
+
+### Resultado
+
+- `Mi Carrito` deja de escribir en la ruta legacy de gastos al ejecutar compras.
+- El bridge operativo es ahora la única ruta de registro desde carrito hacia la capa ejecutada.
+- El usuario conserva trazabilidad entre:
+  - lo planificado;
+  - lo ya procesado;
+  - el registro real en Operación Comercial.
+- El cambio se hizo sin migración nueva de DB:
+  - se mantiene compatibilidad con el schema actual;
+  - el mapping semántico queda listo para migrar a `processed/operation_id` más adelante si se formaliza la columna.
+
+### Build status
+
+- `pnpm build:gold` → **OK**
+- Resultado adicional:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota de entorno:
+  - warning de engine por `node v25.6.0` vs `20.x`;
+  - no bloqueó el build.
+- Nota adicional:
+  - Vite mostró warning de chunks > 500 kB en bundles grandes existentes;
+  - no bloqueó el build ni provino de un error funcional del cambio.
+
+### QA sugerido
+
+- No se ejecutó QA manual en navegador en esta iteración.
+- Validación posterior sugerida:
+  - abrir `Mi Carrito`, crear un item y pulsar `Registrar compra`;
+  - probar las cuatro opciones del modal y confirmar que cada una aparece en `Operación Comercial`;
+  - revisar que el item pase a `Procesados` sin desaparecer del carrito;
+  - confirmar que `Fiado` siga apareciendo como deuda y no como gasto real en los totales del cultivo.
