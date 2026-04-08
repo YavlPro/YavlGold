@@ -1419,9 +1419,62 @@ function buildSelectOptionsMarkup(options, selectedValue = '') {
     }).join('');
 }
 
+function captureWizardFocusState() {
+    const activeElement = document.activeElement;
+    if (!(activeElement instanceof HTMLElement)) return null;
+
+    const field = activeElement.dataset?.operationalDraft;
+    if (!field) return null;
+
+    const selectionStart = typeof activeElement.selectionStart === 'number'
+        ? activeElement.selectionStart
+        : null;
+    const selectionEnd = typeof activeElement.selectionEnd === 'number'
+        ? activeElement.selectionEnd
+        : null;
+
+    return {
+        field,
+        selectionStart,
+        selectionEnd,
+        selectionDirection: typeof activeElement.selectionDirection === 'string'
+            ? activeElement.selectionDirection
+            : 'none',
+        scrollTop: typeof activeElement.scrollTop === 'number' ? activeElement.scrollTop : null
+    };
+}
+
+function restoreWizardFocusState(snapshot) {
+    if (!snapshot?.field) return;
+
+    const nextField = state.refs?.form?.querySelector(`[data-operational-draft="${snapshot.field}"]`);
+    if (!(nextField instanceof HTMLElement) || nextField.disabled) return;
+
+    nextField.focus({ preventScroll: true });
+
+    if (typeof snapshot.scrollTop === 'number' && 'scrollTop' in nextField) {
+        nextField.scrollTop = snapshot.scrollTop;
+    }
+
+    if (typeof nextField.setSelectionRange !== 'function') return;
+    if (snapshot.selectionStart == null || snapshot.selectionEnd == null) return;
+
+    const safeValue = String(nextField.value ?? '');
+    const maxIndex = safeValue.length;
+    const start = Math.max(0, Math.min(snapshot.selectionStart, maxIndex));
+    const end = Math.max(start, Math.min(snapshot.selectionEnd, maxIndex));
+
+    try {
+        nextField.setSelectionRange(start, end, snapshot.selectionDirection || 'none');
+    } catch (_error) {
+        // Some input types do not allow manual selection restore.
+    }
+}
+
 function renderWizard() {
     if (!state.refs?.wizardHost) return;
 
+    const focusSnapshot = captureWizardFocusState();
     const isEdit = state.form.mode === 'edit';
     const values = state.form.values;
     const currentStep = Number(state.form.step || 1);
@@ -1632,6 +1685,7 @@ function renderWizard() {
 
     cacheDynamicRefs();
     setControlsDisabled(state.schemaMissing || state.saving);
+    restoreWizardFocusState(focusSnapshot);
 }
 
 function cacheDynamicRefs() {
@@ -2909,9 +2963,12 @@ async function handleRootClick(event) {
 }
 
 function handleRootInput(event) {
-    const field = event.target.dataset.operationalDraft;
+    const target = event.target;
+    const field = target.dataset.operationalDraft;
     if (!field) return;
-    const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
+    if (target instanceof HTMLSelectElement) return;
+    if (target instanceof HTMLInputElement && target.type === 'checkbox') return;
+    const value = target.value;
     updateDraftFromField(field, value);
 }
 

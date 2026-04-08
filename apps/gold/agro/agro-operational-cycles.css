@@ -439,6 +439,23 @@ body.agro-operational-modal-open {
   min-height: 48px;
 }
 
+.agro-operational-form-grid select.styled-input,
+.agro-operational-confirm-form select.styled-input {
+  padding-left: 1rem;
+  cursor: pointer;
+  transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.agro-operational-form-grid select.styled-input:focus,
+.agro-operational-form-grid select.styled-input:focus-visible,
+.agro-operational-confirm-form select.styled-input:focus,
+.agro-operational-confirm-form select.styled-input:focus-visible {
+  background: rgba(26, 26, 26, 0.82);
+  box-shadow:
+    0 0 0 2px var(--bg-0),
+    0 0 0 4px color-mix(in srgb, var(--gold-4) 22%, transparent);
+}
+
 .agro-operational-form-grid textarea.styled-input {
   min-height: 108px;
   resize: vertical;

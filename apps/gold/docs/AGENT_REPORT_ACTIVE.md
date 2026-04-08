@@ -10342,3 +10342,119 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
 
 - `pnpm build:gold` → **OK** (0 errores, build en 1.83s)
 - Grep global en `*.md` + `*.txt` → solo quedan ocurrencias en históricos (crónicas y logs de sesiones pasadas)
+
+---
+
+## [2026-04-08] Bug wizard Cartera Operativa — diagnóstico previo al fix
+
+### Diagnóstico
+
+- El wizard real vive en `apps/gold/agro/agroOperationalCycles.js`.
+- Los campos del Paso 1 (`name`, `description`) no tienen sanitización agresiva en cada tecla ni `trim()` en vivo.
+- El problema real no está en `input`, `keydown` o `change` del campo en sí, sino en un re-render completo del wizard mientras el usuario escribe.
+- Causa raíz confirmada:
+  - `refreshData()` llama `renderWizard()` al terminar, incluso si el modal ya está abierto y el usuario está escribiendo;
+  - ese render reemplaza el nodo activo (`sameNode: false`), borra el foco (`activeId: null`) y resetea la selección/caret;
+  - después de ese reemplazo, `space`, `backspace`, `delete` y la edición en medio del texto se sienten rotos o inconsistentes porque el input original ya no existe y el cursor salta/se pierde.
+- Evidencia reproducida en QA local mockeada:
+  - antes de `refresh()`: `value = "Alpha Beta"`, `selectionStart = 6`, foco en `agro-operational-name`;
+  - después de `refresh()`: mismo valor lógico, pero nodo reemplazado, foco perdido y selección reseteada a `0`.
+- El Paso 1 es donde más se nota porque es el primer punto de escritura y coincide con refreshes asíncronos del módulo al entrar a la vista o refrescar datasets.
+
+### Plan quirúrgico
+
+1. Blindar `renderWizard()` para preservar el campo activo y su selección cuando el modal se repinta.
+2. Mantener el diff mínimo, sin refactor grande ni cambios de copy.
+3. Verificar el resto de inputs del wizard contra escritura, espacios, borrado, pegado y edición en medio.
+4. Cerrar con `pnpm build:gold` y completar el reporte con archivos tocados, QA y estado final.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agroOperationalCycles.js`
+  - Se agregaron helpers quirúrgicos para capturar y restaurar el foco/selection del campo activo del wizard.
+  - `renderWizard()` ahora preserva `field`, `selectionStart`, `selectionEnd`, `selectionDirection` y `scrollTop` antes de repintar el modal, y los restaura después del render.
+  - No se tocó CSS, validación, submit, copy, wiring de pasos ni persistencia.
+
+### Resultado
+
+- El fix corrige la causa real del síntoma reportado:
+  - ya no se reemplaza el input activo sin devolverle foco/caret utilizable al usuario;
+  - por eso dejan de romperse los casos percibidos como fallo de espacios, backspace/delete y edición en medio del texto durante refreshes del wizard.
+- Conclusión técnica:
+  - no había evidencia de problema CSS;
+  - el fallo venía del repintado completo del wizard y la pérdida de foco/selección del control activo.
+
+### QA y verificación
+
+- QA local puntual previa al corte:
+  - se reprodujo el bug forzando `refreshData()` durante escritura;
+  - antes del fix el nodo del input cambiaba, el foco se perdía y la selección se reseteaba;
+  - después del fix el campo activo conserva foco y selección al repintar.
+- Barrido completo adicional del wizard:
+  - no ejecutado por instrucción del usuario para ahorrar tokens.
+
+### Build status
+
+- `pnpm build:gold` → **OK**
+- Resultado adicional:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota de entorno:
+  - aparece warning de engine porque el entorno local corre `node v25.6.0` y el proyecto declara `20.x`;
+  - no bloqueó el build.
+
+### QA sugerido
+
+- Validar manualmente en producción/local real el wizard de **Nueva cartera operativa** escribiendo en Paso 1 mientras la vista termina de refrescar:
+  - texto normal con espacios;
+  - backspace/delete;
+  - edición en medio del texto;
+  - pegado;
+  - navegación entre pasos sin perder el draft.
+
+---
+
+## [2026-04-08] Wizard Cartera Operativa — selects del modal no despliegan bien
+
+### Diagnóstico
+
+- El síntoma nuevo se concentra en los `select` del wizard de **Cartera Operativa**.
+- La causa funcional más probable no era un pseudo-elemento encima del control, sino el manejo duplicado de eventos:
+  - el wizard escuchaba `input` y `change` para todos los campos con `data-operational-draft`;
+  - en `select`, ese `input` podía disparar `updateDraftFromField()` mientras el menú nativo seguía interactuando;
+  - como algunos `select` del wizard repintan el modal al cambiar (`economicType`, `cropId`, `unitType`, `status`), el resultado visible era un control que “saltaba” o no dejaba desplegar cómodo las opciones.
+- Además, el glow dorado del foco heredado por `.styled-input:focus` era demasiado agresivo para `select` dentro del modal y reforzaba la sensación de salto visual.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agroOperationalCycles.js`
+  - `handleRootInput()` ya no procesa `HTMLSelectElement` ni `checkbox`; esos controles quedan gobernados por `change`, que es el evento correcto para commit del valor.
+- `apps/gold/agro/agro-operational-cycles.css`
+  - se ajustó el `focus` visual de los `select` del wizard/modal para quitar el glow dorado exagerado;
+  - se dejó un foco más estable, sin transición global “saltarina”, y con padding/cursor explícitos para selects del modal.
+
+### Resultado
+
+- El wizard ya no intenta rehidratar/repaintar un `select` mientras el usuario está desplegando o escogiendo opciones.
+- El foco visual de los `select` queda más sobrio y estable dentro del modal.
+
+### Build status
+
+- `pnpm build:gold` → **OK**
+- Resultado adicional:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota de entorno:
+  - aparece warning de engine porque el entorno local corre `node v25.6.0` y el proyecto declara `20.x`;
+  - no bloqueó el build.
+
+### QA sugerido
+
+- Validar manualmente en el modal de **Nueva cartera operativa**:
+  - abrir cada `select` del wizard;
+  - navegar opciones sin que el control se cierre solo;
+  - confirmar que el valor elegido sigue aplicándose y el flujo del paso no se rompe.
