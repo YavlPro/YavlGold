@@ -10119,3 +10119,35 @@ Búsqueda global de `9.8`, `V9.8`, `v9.8`, `9.8.0` en `apps/gold`. Clasificació
 ### Build
 
 - `pnpm build:gold` → OK (`@yavl/gold@1.0.0`, 157 modules, 2.53s, UTF-8 OK)
+
+---
+
+## Simplificación bloque superior sidebar Agro (2026-04-07)
+
+### Diagnóstico
+
+- El bloque `agro-shell-sidebar__head` en `agro/index.html:1161-1168` contenía texto excesivo:
+  - eyebrow: "Agro V1"
+  - title: "Flujo guiado del agricultor"
+  - copy: "Una sola vista principal a la vez. Paso 1 y Paso 2 siguen dentro de Operaciones."
+  - milestone: "Baseline oficial: dashboard, ciclos de cultivos, ciclos operativos, operaciones, carrito, rankings, clima, agenda y bitácora."
+- La navegación del sidebar ya explica el flujo por sí misma. El texto descriptivo era redundante y recargado.
+
+### Archivo tocado
+
+- `apps/gold/agro/index.html` — líneas 1161-1168
+
+### Texto anterior (eliminado)
+
+- `h2`: "Flujo guiado del agricultor"
+- `p.copy`: "Una sola vista principal a la vez. Paso 1 y Paso 2 siguen dentro de Operaciones."
+- `p.milestone`: "Baseline oficial: dashboard, ciclos de cultivos..."
+
+### Texto nuevo
+
+- eyebrow: "AGRO V1"
+- title: "Herramientas de trabajo para el agricultor"
+
+### Build
+
+- `pnpm build:gold` → OK (157 modules, 2.25s, UTF-8 OK)
