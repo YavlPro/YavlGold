@@ -74,7 +74,7 @@ logs/
 *.log
 .devserver.*
 .playwright-cli/
-output/playwright/
+output/
 
 # Temporary files
 tmp/
