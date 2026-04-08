@@ -1405,7 +1405,7 @@ function resolveCyclePayloadFromContext(context = {}) {
         ? `${buyerName} · ${baseConcept || 'Seguimiento'}`
         : `${buyerName} · Seguimiento comercial`;
     const name = typeof window !== 'undefined' && typeof window.prompt === 'function'
-        ? window.prompt('Nombre del ciclo operativo', suggestedName)
+        ? window.prompt('Nombre de la cartera operativa', suggestedName)
         : suggestedName;
     const unitType = normalizeOperationalUnitType(historyRow?.unit_type || '');
     const quantityRaw = Number(historyRow?.unit_qty);
@@ -1446,7 +1446,7 @@ function resolveCyclePayloadFromContext(context = {}) {
 async function createOperationalCycleFromCartera(context = {}) {
     const opsApi = typeof window !== 'undefined' ? window.YGAgroOperationalCycles : null;
     if (!opsApi?.createFromPayload || !opsApi?.openView) {
-        setDetailExportState('Ciclos Operativos no está disponible en esta sesión.', 'error');
+        setDetailExportState('Cartera Operativa no está disponible en esta sesión.', 'error');
         renderView();
         return;
     }
@@ -1462,11 +1462,11 @@ async function createOperationalCycleFromCartera(context = {}) {
 
     try {
         const result = await opsApi.createFromPayload(payload);
-        setDetailExportState(String(result?.message || 'Ciclo operativo creado desde Cartera Viva.'), 'success');
+        setDetailExportState(String(result?.message || 'Cartera operativa creada desde Cartera Viva.'), 'success');
         opsApi.openView('active');
     } catch (error) {
         console.error('[CarteraViva] create operational cycle failed:', error?.message || error);
-        setDetailExportState(String(error?.message || 'No se pudo crear el ciclo operativo desde Cartera Viva.'), 'error');
+        setDetailExportState(String(error?.message || 'No se pudo crear la cartera operativa desde Cartera Viva.'), 'error');
         renderView();
     }
 }
@@ -1916,7 +1916,7 @@ function renderCommercialFamilyNav(activeView = CARTERA_VIVA_VIEW) {
                     type="button"
                     class="agro-commercial-family__tab${activeView === 'operational' ? ' is-active' : ''}"
                     data-agro-view="operational">
-                    Ciclos Operativos
+                    Cartera Operativa
                 </button>
             </div>
             <p class="agro-commercial-family__note">Legacy disponible temporalmente. Usa la nueva Cartera Viva.</p>
@@ -1927,9 +1927,9 @@ function renderCommercialFamilyNav(activeView = CARTERA_VIVA_VIEW) {
 function renderScopeNote() {
     const selectedCropId = getSelectedCropId();
     if (selectedCropId) {
-        return `Resumen, lista y detalle filtrados por ${escapeHtml(getSelectedCropShortLabel())}. Los clientes sin historial siguen visibles en Sin registro. Otros pertenece a Ciclos Operativos.`;
+        return `Resumen, lista y detalle filtrados por ${escapeHtml(getSelectedCropShortLabel())}. Los clientes sin historial siguen visibles en Sin registro. Otros pertenece a Cartera Operativa.`;
     }
-    return 'Otros pertenece a Ciclos Operativos. Donaciones solo entra cuando la data real la sostiene.';
+    return 'Otros pertenece a Cartera Operativa. Donaciones solo entra cuando la data real la sostiene.';
 }
 
 function renderCategoryControls(counts) {

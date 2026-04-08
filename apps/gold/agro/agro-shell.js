@@ -54,7 +54,7 @@ const VIEW_CONFIG = Object.freeze({
     perfil: { region: 'perfil', label: 'Mi Perfil', focusSelector: '[data-agro-shell-region="perfil"]' },
     dashboard: { region: 'dashboard', label: 'Dashboard Agro', focusSelector: '[data-agro-shell-region="dashboard"]' },
     ciclos: { region: 'cultivos', label: 'Ciclos de cultivos', focusSelector: '#agro-cycles-finished-view' },
-    operational: { region: 'operational', label: 'Ciclos Operativos', focusSelector: '#agro-operational-root' },
+    operational: { region: 'operational', label: 'Cartera Operativa', focusSelector: '#agro-operational-root' },
     'task-cycles': { region: 'task-cycles', label: 'Ciclos de Tareas', focusSelector: '#agro-task-cycles-root' },
     operaciones: { region: 'ops', label: 'Operaciones', resolveTab: resolveOperationsTab, dense: true },
     pagados: { region: 'ops', label: 'Pagados', tab: 'ingresos', focusSelector: '#agro-pagados-dedicated', dense: true },

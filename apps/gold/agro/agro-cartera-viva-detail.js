@@ -1542,7 +1542,7 @@ function renderCommercialFamilyNav(activeView = 'cartera-viva') {
                     type="button"
                     class="agro-commercial-family__tab${activeView === 'operational' ? ' is-active' : ''}"
                     data-agro-view="operational">
-                    Ciclos Operativos
+                    Cartera Operativa
                 </button>
             </div>
             <p class="agro-commercial-family__note">Legacy disponible temporalmente. Usa la nueva Cartera Viva.</p>

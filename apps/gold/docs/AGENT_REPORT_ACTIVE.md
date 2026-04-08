@@ -10251,3 +10251,94 @@ Búsqueda global de `9.8`, `V9.8`, `v9.8`, `9.8.0` en `apps/gold`. Clasificació
 5. Con privacidad activa, refrescar datos en `Ciclos Operativos` y `Ciclos de Tareas` para confirmar que los re-renders no dejan montos visibles.
 6. Revisar en `<=480px` que los strips nuevos hagan wrap y sigan siendo clicables.
 7. Confirmar en tarjetas de cultivos que el badge diga `Cartera operativa cerrada` solo cuando no existan registros `open / in_progress / compensating` asociados a ese cultivo.
+
+---
+
+## [2026-04-08] Rename visible: "Ciclos Operativos" → "Cartera Operativa"
+
+### Diagnóstico
+
+- Se detectaron ~50 ocurrencias de `Ciclos Operativos` / `ciclo operativo` / `ciclos operativos` en copy visible al usuario.
+- Clasificadas en: copy visible (6 archivos fuente), nombres internos técnicos (intactos), documentación histórica (intacta).
+
+### Archivos tocados
+
+| Archivo | Cambios |
+|---|---|
+| `agro/agro-shell.js` | Sidebar label → `Cartera Operativa` |
+| `agro/index.html` | Sidebar sublink → `Cartera Operativa` |
+| `agro/agroOperationalCycles.js` | 25 ediciones: títulos, heading, botones, toasts, empty states, loading states, export heading, aria-labels |
+| `agro/agro-cartera-viva-view.js` | 7 ediciones: prompt, mensajes de error/éxito, tab visible, scope note |
+| `agro/agro-cartera-viva-detail.js` | Tab visible → `Cartera Operativa` |
+| `agro/agroTaskCycles.js` | Copy de panel → `Cartera Operativa` |
+
+### Naming final aplicado
+
+- `Ciclos Operativos` → `Cartera Operativa`
+- `ciclo operativo` → `cartera operativa`
+- `ciclos operativos` → `carteras operativas` / `cartera operativa` según contexto
+- `Nuevo ciclo operativo` → `Nueva cartera operativa`
+- `Editar ciclo operativo` → `Editar cartera operativa`
+- "Cartera Viva" **sin cambios** (concepto distinto, no se toca)
+
+### Nombres internos legacy (no tocados)
+
+- **Archivo**: `agroOperationalCycles.js` — nombre de archivo intacto
+- **Migración SQL**: `20260318120000_create_agro_operational_cycles.sql` — nombre intacto
+- **Tabla DB**: `agro_operational_cycles` — intacta
+- **DOM IDs**: `#agro-operational-root`, `agro-operational-*` — intactos
+- **Globales**: `window.YGAgroOperationalCycles` — intacto
+- **Funciones**: `initAgroOperationalCycles()`, `createOperationalCycleFromCartera()` — intactas
+- **console.error/warn**: mensajes internos de log — intactos
+- **CSS classes**: `agro-operational-*` — intactas
+
+### Riesgos
+
+- **Ningún riesgo funcional**: solo se cambió copy visible en HTML/texto. No se tocó lógica, wiring, rutas ni persistencia.
+- **Deuda técnica futura**: los nombres internos (`operational`, `ciclo`, `OperationalCycles`) siguen haciendo referencia al naming viejo. Una pasada futura podría alinear nombres de archivo y variables si el equipo lo considera necesario.
+
+### Verificación
+
+- `pnpm build:gold` → **OK** (0 errores, 0 warnings)
+- Grep post-edit en `apps/gold/agro/` → **0 ocurrencias** de `Ciclos Operativos` / `ciclo operativo` restantes
+
+---
+
+## [2026-04-08] Barrido documental: "Ciclos Operativos" → "Cartera Operativa" (verificación)
+
+### Diagnóstico
+
+- Se verificaron todas las docs canónicas del proyecto.
+- Las docs ya estaban limpias tras la pasada de rename en UI.
+- Las ~94 ocurrencias restantes son registros históricos en crónicas y logs de sesiones pasadas.
+
+### Documentación canónica verificada (todas limpias, 0 cambios)
+
+| Archivo | Ocurrencias |
+|---|---|
+| `FICHA_TECNICA.md` | 0 |
+| `AGENTS.md` | 0 |
+| `apps/gold/public/llms.txt` | 0 |
+| `docs/AGRO_V1_BASELINE.md` | 0 |
+| `docs/LEGACY_SURFACES.md` | 0 |
+| `docs/AGENT_REPORT.md` | 0 |
+| `docs/LOCAL_FIRST.md` | 0 |
+| `docs/ADN-VISUAL-V10.0.md` | 0 |
+
+### Documentación histórica intacta (no se toca — registro del pasado)
+
+| Archivo | Ocurrencias | Razón |
+|---|---|---|
+| `docs/chronicles/2026-03.md` | ~10 | Crónica histórica de marzo 2026 |
+| `docs/chronicles/CRONICA-YAVLGOLD.md` | 2 | Crónica histórica |
+| `docs/chronicles/libro del samurai especial edicion.md` | 2 | Crónica histórica |
+| `docs/AGENT_REPORT_ACTIVE.md` (líneas 3076-7455) | ~80 | Logs de sesiones pasadas (marzo 2026) |
+
+### Decisión
+
+Las ocurrencias restantes documentan lo que se construyó con el nombre vigente en ese momento. Cambiarlas retroactivamente seria reescribir la historia operativa. La sesión nueva ya usa `Cartera Operativa`.
+
+### Verificación
+
+- `pnpm build:gold` → **OK** (0 errores, build en 1.83s)
+- Grep global en `*.md` + `*.txt` → solo quedan ocurrencias en históricos (crónicas y logs de sesiones pasadas)

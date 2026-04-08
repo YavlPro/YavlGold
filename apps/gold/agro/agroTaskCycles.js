@@ -903,7 +903,7 @@ function renderShell() {
                     <div>
                         <p class="agro-task-panel__eyebrow">Tareas</p>
                         <h3 class="agro-task-panel__title">Trabajo registrado del día a día</h3>
-                        <p class="agro-task-panel__copy">Ordena el trabajo por estado, rango, cultivo, tipo o impacto sin mezclarlo con Cartera Viva ni Ciclos Operativos.</p>
+                        <p class="agro-task-panel__copy">Ordena el trabajo por estado, rango, cultivo, tipo o impacto sin mezclarlo con Cartera Viva ni Cartera Operativa.</p>
                     </div>
                     <button type="button" class="btn" data-task-action="new-task">➕ Nueva tarea</button>
                 </div>

@@ -690,7 +690,7 @@ function buildCycleViewModel(cycle, movementsByCycle, cropMap) {
 
     return {
         id: cycleId,
-        name: String(cycle?.name || 'Ciclo operativo').trim() || 'Ciclo operativo',
+        name: String(cycle?.name || 'Cartera operativa').trim() || 'Cartera operativa',
         description: toNullableText(cycle?.description),
         economic_type: normalizeToken(cycle?.economic_type),
         category: normalizeToken(cycle?.category),
@@ -750,7 +750,7 @@ function createDatasetSummary(cycles = []) {
 function normalizeOperationalError(error) {
     if (error instanceof Error && error.message) {
         if (isSchemaMissingError(error)) {
-            return 'Falta aplicar la migración de Ciclos Operativos en Supabase.';
+            return 'Falta aplicar la migración de Cartera Operativa en Supabase.';
         }
         return error.message;
     }
@@ -1155,8 +1155,8 @@ async function createCycleRecord(payload) {
     return {
         cycleId,
         message: payload.status === 'closed'
-            ? '✅ Ciclo operativo creado y cerrado.'
-            : '✅ Ciclo operativo creado.'
+            ? '✅ Cartera operativa creada y cerrada.'
+            : '✅ Cartera operativa creada.'
     };
 }
 
@@ -1165,7 +1165,7 @@ async function updateCycleRecord(cycleId, payload) {
     const userId = await ensureUserId();
     const existingCycle = state.cycleIndex.get(cycleId);
     if (!existingCycle) {
-        throw new Error('No se encontró el ciclo operativo a editar.');
+        throw new Error('No se encontró la cartera operativa a editar.');
     }
 
     const cropId = await validateCropId(supabase, userId, payload.cropId);
@@ -1203,7 +1203,7 @@ async function updateCycleRecord(cycleId, payload) {
 
     return {
         cycleId,
-        message: '💾 Cambios guardados en el ciclo operativo.'
+        message: '💾 Cambios guardados en la cartera operativa.'
     };
 }
 
@@ -1212,7 +1212,7 @@ async function deleteCycleRecord(cycleId, options = {}) {
     const userId = await ensureUserId();
     const existingCycle = state.cycleIndex.get(cycleId);
     if (!existingCycle) {
-        throw new Error('No se encontró el ciclo operativo a eliminar.');
+        throw new Error('No se encontró la cartera operativa a eliminar.');
     }
 
     if (!options.skipConfirm) {
@@ -1265,7 +1265,7 @@ function renderShell() {
                                 Cartera Viva
                             </button>
                             <button type="button" class="agro-commercial-family__tab is-active" data-agro-view="operational">
-                                Ciclos Operativos
+                                Cartera Operativa
                             </button>
                         </div>
                         <p class="agro-commercial-family__note">Legacy disponible temporalmente. Usa la nueva Cartera Viva.</p>
@@ -1274,26 +1274,26 @@ function renderShell() {
                         <div class="module-icon">💼</div>
                         <div class="module-heading">
                             <p class="ops-module-eyebrow">Historial comercial</p>
-                            <h2 class="module-title">Ciclos Operativos</h2>
+                            <h2 class="module-title">Cartera Operativa</h2>
                             <p class="module-subtitle">Registra, filtra y exporta con movimientos reales sin salir del módulo.</p>
                         </div>
                     </div>
                 </div>
                 <div class="header-actions">
-                    <button type="button" class="btn btn-primary" data-operational-action="new-cycle">➕ Nuevo ciclo operativo</button>
-                    <button type="button" class="agro-operational-refresh-btn" data-operational-action="refresh" aria-label="Actualizar Ciclos Operativos" title="Actualizar">
+                    <button type="button" class="btn btn-primary" data-operational-action="new-cycle">➕ Nueva cartera operativa</button>
+                    <button type="button" class="agro-operational-refresh-btn" data-operational-action="refresh" aria-label="Actualizar Cartera Operativa" title="Actualizar">
                         <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
                     </button>
                 </div>
             </header>
 
             <div class="agro-operational-feedback agro-operational-feedback--page" id="agro-operational-feedback" data-tone="info"></div>
-            <div class="agro-privacy-strip" aria-label="Controles de privacidad de Ciclos Operativos">
+            <div class="agro-privacy-strip" aria-label="Controles de privacidad de Cartera Operativa">
                 <span class="agro-privacy-strip__label">Privacidad</span>
                 <button type="button" class="btn-privacy-toggle" data-money-privacy-control="toggle" aria-pressed="false">Ocultar montos</button>
             </div>
-            <div class="agro-operational-family-toggle" id="agro-operational-family-toggle" role="group" aria-label="Familia de ciclos operativos"></div>
-            <div class="agro-operational-subview-switch" id="agro-operational-subview-switch" role="group" aria-label="Lecturas de ciclos operativos"></div>
+            <div class="agro-operational-family-toggle" id="agro-operational-family-toggle" role="group" aria-label="Familia de cartera operativa"></div>
+            <div class="agro-operational-subview-switch" id="agro-operational-subview-switch" role="group" aria-label="Lecturas de cartera operativa"></div>
 
             <section id="agro-operational-overview-panel" class="agro-operational-panel agro-operational-overview-panel">
                 <div class="agro-operational-panel__head">
@@ -1310,13 +1310,13 @@ function renderShell() {
                 <div class="agro-operational-list-head">
                     <div>
                         <p class="agro-operational-list-eyebrow" id="agro-operational-list-eyebrow">🟡 Activos</p>
-                        <h3 class="agro-operational-list-title" id="agro-operational-list-title">🟡 Ciclos operativos activos</h3>
+                        <h3 class="agro-operational-list-title" id="agro-operational-list-title">🟡 Carteras operativas activas</h3>
                         <p class="agro-operational-list-copy" id="agro-operational-list-copy">No pagados, en seguimiento o compensándose con lectura operativa.</p>
                     </div>
-                    <button type="button" class="btn" data-operational-action="new-cycle">➕ Nuevo ciclo operativo</button>
+                    <button type="button" class="btn" data-operational-action="new-cycle">➕ Nueva cartera operativa</button>
                 </div>
                 <div id="agro-operational-filters-host"></div>
-                <p class="agro-operational-list-section__status" id="agro-operational-list-status">Cargando ciclos operativos...</p>
+                <p class="agro-operational-list-section__status" id="agro-operational-list-status">Cargando cartera operativa...</p>
                 <div class="agro-operational-list" id="agro-operational-list"></div>
             </section>
 
@@ -1325,7 +1325,7 @@ function renderShell() {
                     <div class="modal-header agro-operational-modal__header">
                         <div class="agro-operational-modal__title-group">
                             <p class="agro-operational-modal__eyebrow" id="agro-operational-form-eyebrow">➕ Creación guiada</p>
-                            <h3 class="modal-title agro-operational-modal__title" id="agro-operational-form-title">➕ Nuevo ciclo operativo</h3>
+                            <h3 class="modal-title agro-operational-modal__title" id="agro-operational-form-title">➕ Nueva cartera operativa</h3>
                             <p class="agro-operational-modal__copy" id="agro-operational-form-copy">Describe, clasifica, registra y confirma sin cargar la vista principal.</p>
                         </div>
                         <button type="button" class="modal-close agro-operational-modal__close" data-operational-action="cancel-form" aria-label="Cerrar modal">&times;</button>
@@ -1434,7 +1434,7 @@ function renderWizard() {
         : (values.closeOnSave ? '✅ Pagado' : '🟡 No pagado');
 
     state.refs.formEyebrow.textContent = `${isEdit ? '✏️ Edición guiada' : '➕ Creación guiada'} · ${currentStepMeta.eyebrow}`;
-    state.refs.formTitle.textContent = isEdit ? '✏️ Editar ciclo operativo' : '➕ Nuevo ciclo operativo';
+    state.refs.formTitle.textContent = isEdit ? '✏️ Editar cartera operativa' : '➕ Nueva cartera operativa';
     state.refs.formCopy.textContent = isEdit
         ? 'Ajusta el mismo ciclo con un paso a la vez, igual al ritmo visual de Nuevo Cultivo.'
         : 'Guíate paso a paso para crear el ciclo, registrar el movimiento inicial y decidir si se cierra hoy mismo.';
@@ -1624,7 +1624,7 @@ function renderWizard() {
                     ${currentStep > 1 ? '<button type="button" class="btn" data-operational-action="wizard-prev">⬅️ Atrás</button>' : ''}
                     ${currentStep < 4
             ? '<button type="button" class="btn btn-primary" data-operational-action="wizard-next">➡️ Siguiente</button>'
-            : `<button type="submit" class="btn btn-primary">${isEdit ? '💾 Guardar cambios' : '➕ Nuevo ciclo operativo'}</button>`}
+            : `<button type="submit" class="btn btn-primary">${isEdit ? '💾 Guardar cambios' : '➕ Nueva cartera operativa'}</button>`}
                 </div>
             </div>
         </form>
@@ -1718,7 +1718,7 @@ function getSubviewMeta(subview) {
     if (subview === SUBVIEW_EXPORT) {
         return {
             eyebrow: '📥 Exportar MD',
-            title: '📥 Exportar Ciclos Operativos a Markdown',
+            title: '📥 Exportar Cartera Operativa a Markdown',
             copy: 'Descarga un reporte limpio usando los filtros activos de No pagados y Pagados / pérdidas.'
         };
     }
@@ -2283,9 +2283,9 @@ function renderEmptyState(subview) {
             ? '✅ Sin pagados con esos filtros'
             : '🟡 Sin ciclos no pagados con esos filtros';
     const copy = subview === SUBVIEW_DONATIONS
-        ? 'No hay ciclos operativos de tipo donación registrados para esta familia.'
+        ? 'No hay carteras operativas de tipo donación registradas para esta familia.'
         : subview === SUBVIEW_LOSSES
-            ? 'No hay ciclos operativos clasificados como pérdida para esta familia.'
+            ? 'No hay carteras operativas clasificadas como pérdida para esta familia.'
         : subview === SUBVIEW_FINISHED
             ? 'Ajusta período, categoría o tipo económico para ver ciclos ya pagados o cerrados.'
             : 'Ajusta período, categoría o tipo económico para ver ciclos no pagados, en seguimiento o compensándose.';
@@ -2296,7 +2296,7 @@ function renderEmptyState(subview) {
             <p class="agro-operational-empty__title">${title}</p>
             <p class="agro-operational-empty__copy">${copy}</p>
             <div class="agro-operational-empty__cta">
-                <button type="button" class="btn btn-primary" data-operational-action="new-cycle">➕ Nuevo ciclo operativo</button>
+                <button type="button" class="btn btn-primary" data-operational-action="new-cycle">➕ Nueva cartera operativa</button>
             </div>
         </div>
     `;
@@ -2350,7 +2350,7 @@ function buildMarkdownSection(title, datasetKey) {
 
 function buildExportMarkdown() {
     const lines = [
-        '# 💼 Ciclos Operativos',
+        '# 💼 Cartera Operativa',
         '',
         `Generado: ${formatDateLabel(todayLocalIso())}`,
         '',
@@ -2418,7 +2418,7 @@ function renderCurrentSubview() {
 
     if (shouldBlockInitialLoading) {
         state.refs.filtersHost.innerHTML = state.currentSubview === SUBVIEW_EXPORT ? '' : renderFilters(state.currentSubview);
-        state.refs.listStatus.textContent = 'Cargando ciclos operativos...';
+        state.refs.listStatus.textContent = 'Cargando cartera operativa...';
         state.refs.list.innerHTML = `
             <div class="agro-operational-panel">
                 <div class="agro-operational-loading">
@@ -2502,7 +2502,7 @@ function renderCurrentSubview() {
     const familyCycles = filterCyclesByFamily(getCyclesForSubview(state.currentSubview), state.familyFilter);
     state.refs.filtersHost.innerHTML = renderFilters(state.currentSubview);
     state.refs.listStatus.textContent = isSoftRefreshing
-        ? 'Actualizando ciclos operativos sin desmontar la vista...'
+        ? 'Actualizando cartera operativa sin desmontar la vista...'
         : `${familyCycles.length} ciclo${familyCycles.length === 1 ? '' : 's'} visible${familyCycles.length === 1 ? '' : 's'} — ${getFamilyLabel(state.familyFilter)}`;
 
     if (familyCycles.length === 0) {
