@@ -338,6 +338,26 @@ function markBuyerNameNode(node, rawText) {
     node.dataset.rawName = safeText;
 }
 
+function syncSensitiveIdentityNode(node, rawValue, options = {}) {
+    if (!node) return;
+    const safeText = String(rawValue || '').trim();
+    const fallback = options.fallback == null ? 'Sin definir' : String(options.fallback);
+    const emptyClass = typeof options.emptyClass === 'string' ? options.emptyClass.trim() : '';
+
+    node.textContent = safeText || fallback;
+    if (emptyClass) {
+        node.classList.toggle(emptyClass, !safeText);
+    }
+
+    if (!safeText) {
+        delete node.dataset.buyerName;
+        delete node.dataset.rawName;
+        return;
+    }
+
+    markBuyerNameNode(node, safeText);
+}
+
 function formatDateTime(value) {
     const date = value ? new Date(value) : null;
     if (!date || Number.isNaN(date.getTime())) return 'N/D';
@@ -755,8 +775,10 @@ function syncProfileEditEntrySummary(profile = {}, user = null) {
     Object.entries(summaryMap).forEach(([id, value]) => {
         const node = document.getElementById(id);
         if (!node) return;
-        node.textContent = String(value || '').trim() || 'Sin definir';
-        node.classList.toggle('is-empty', !String(value || '').trim());
+        syncSensitiveIdentityNode(node, value, {
+            fallback: 'Sin definir',
+            emptyClass: 'is-empty'
+        });
     });
 }
 
@@ -1667,9 +1689,10 @@ function syncPerfilDedicatedView() {
     Object.entries(fieldMap).forEach(([id, value]) => {
         const el = document.getElementById(id);
         if (!el) return;
-        const safe = String(value || '').trim();
-        el.textContent = safe || 'Sin definir';
-        el.classList.toggle('perfil-card__value--empty', !safe);
+        syncSensitiveIdentityNode(el, value, {
+            fallback: 'Sin definir',
+            emptyClass: 'perfil-card__value--empty'
+        });
     });
 
     const bioSection = document.getElementById('perfil-view-bio-section');
@@ -1684,11 +1707,16 @@ function syncPerfilDedicatedView() {
 
     const displayName = resolveDisplayName(profile, user);
     const nameEl = document.getElementById('perfil-view-name');
-    if (nameEl) nameEl.textContent = displayName || 'Agricultor';
+    syncSensitiveIdentityNode(nameEl, displayName, { fallback: 'Agricultor' });
 
     const greetingEl = document.getElementById('perfil-view-greeting');
-    if (greetingEl) greetingEl.textContent = `Bienvenido, ${displayName || 'Agricultor'}`;
+    syncSensitiveIdentityNode(greetingEl, displayName, { fallback: 'Agricultor' });
 
     const emailEl = document.getElementById('perfil-view-email');
-    if (emailEl) emailEl.textContent = user?.email || '';
+    syncSensitiveIdentityNode(emailEl, user?.email || '', { fallback: '' });
+
+    const profileSection = document.querySelector('[data-agro-shell-region="perfil"]');
+    if (profileSection) {
+        applyBuyerPrivacy(profileSection, readBuyerNamesHidden());
+    }
 }

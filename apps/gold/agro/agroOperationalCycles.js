@@ -364,6 +364,16 @@ function escapeAttr(value) {
     return escapeHtml(value).replace(/`/g, '&#96;');
 }
 
+function renderMoneyNode(value, { tag = 'span', className = '' } = {}) {
+    const safeValue = String(value ?? '').trim();
+    const classAttr = className ? ` class="${escapeAttr(className)}"` : '';
+    if (!safeValue) return `<${tag}${classAttr}></${tag}>`;
+    if (!/\d/.test(safeValue)) {
+        return `<${tag}${classAttr}>${escapeHtml(safeValue)}</${tag}>`;
+    }
+    return `<${tag}${classAttr} data-money="1" data-raw-money="${escapeAttr(safeValue)}">${escapeHtml(safeValue)}</${tag}>`;
+}
+
 function todayLocalIso() {
     const now = new Date();
     const year = now.getFullYear();
@@ -1278,6 +1288,10 @@ function renderShell() {
             </header>
 
             <div class="agro-operational-feedback agro-operational-feedback--page" id="agro-operational-feedback" data-tone="info"></div>
+            <div class="agro-privacy-strip" aria-label="Controles de privacidad de Ciclos Operativos">
+                <span class="agro-privacy-strip__label">Privacidad</span>
+                <button type="button" class="btn-privacy-toggle" data-money-privacy-control="toggle" aria-pressed="false">Ocultar montos</button>
+            </div>
             <div class="agro-operational-family-toggle" id="agro-operational-family-toggle" role="group" aria-label="Familia de ciclos operativos"></div>
             <div class="agro-operational-subview-switch" id="agro-operational-subview-switch" role="group" aria-label="Lecturas de ciclos operativos"></div>
 
@@ -1996,12 +2010,12 @@ function renderOverview() {
                 <article class="agro-operational-summary-card">
                     <span class="agro-operational-summary-card__label">🟡 Activos exportables</span>
                     <strong class="agro-operational-summary-card__value">${activeSummary.count}</strong>
-                    <p class="agro-operational-summary-card__hint">${escapeHtml(activeSummary.balanceText)}</p>
+                    <p class="agro-operational-summary-card__hint">${renderMoneyNode(activeSummary.balanceText)}</p>
                 </article>
                 <article class="agro-operational-summary-card">
                     <span class="agro-operational-summary-card__label">✅ Pagados / pérdidas exportables</span>
                     <strong class="agro-operational-summary-card__value">${finishedSummary.count}</strong>
-                    <p class="agro-operational-summary-card__hint">${escapeHtml(finishedSummary.balanceText)}</p>
+                    <p class="agro-operational-summary-card__hint">${renderMoneyNode(finishedSummary.balanceText)}</p>
                 </article>
                 <article class="agro-operational-summary-card">
                     <span class="agro-operational-summary-card__label">📦 Total ciclos</span>
@@ -2010,7 +2024,7 @@ function renderOverview() {
                 </article>
                 <article class="agro-operational-summary-card">
                     <span class="agro-operational-summary-card__label">📊 Balance combinado</span>
-                    <strong class="agro-operational-summary-card__value">${escapeHtml(mergeSummaryBalanceText(activeSummary, finishedSummary))}</strong>
+                    ${renderMoneyNode(mergeSummaryBalanceText(activeSummary, finishedSummary), { tag: 'strong', className: 'agro-operational-summary-card__value' })}
                     <p class="agro-operational-summary-card__hint">Respeta filtros activos y finalizados por separado.</p>
                 </article>
             </div>
@@ -2046,8 +2060,8 @@ function renderOverview() {
                 </article>
                 <article class="agro-operational-summary-card" data-tone="${escapeAttr(summary.balanceTone)}">
                     <span class="agro-operational-summary-card__label">📊 Balance donaciones</span>
-                    <strong class="agro-operational-summary-card__value">${escapeHtml(summary.balanceText)}</strong>
-                    <p class="agro-operational-summary-card__hint">💰 Recibí: ${escapeHtml(summary.incomingText)} · 💸 Gasté: ${escapeHtml(summary.outgoingText)}</p>
+                    ${renderMoneyNode(summary.balanceText, { tag: 'strong', className: 'agro-operational-summary-card__value' })}
+                    <p class="agro-operational-summary-card__hint">💰 Recibí: ${renderMoneyNode(summary.incomingText)} · 💸 Gasté: ${renderMoneyNode(summary.outgoingText)}</p>
                 </article>
             </div>
         `;
@@ -2072,8 +2086,8 @@ function renderOverview() {
                 </article>
                 <article class="agro-operational-summary-card" data-tone="${escapeAttr(summary.balanceTone)}">
                     <span class="agro-operational-summary-card__label">📊 Balance pérdidas</span>
-                    <strong class="agro-operational-summary-card__value">${escapeHtml(summary.balanceText)}</strong>
-                    <p class="agro-operational-summary-card__hint">💰 Recibí: ${escapeHtml(summary.incomingText)} · 💸 Gasté: ${escapeHtml(summary.outgoingText)}</p>
+                    ${renderMoneyNode(summary.balanceText, { tag: 'strong', className: 'agro-operational-summary-card__value' })}
+                    <p class="agro-operational-summary-card__hint">💰 Recibí: ${renderMoneyNode(summary.incomingText)} · 💸 Gasté: ${renderMoneyNode(summary.outgoingText)}</p>
                 </article>
             </div>
         `;
@@ -2098,8 +2112,8 @@ function renderOverview() {
             </article>
             <article class="agro-operational-summary-card" data-tone="${escapeAttr(summary.balanceTone)}">
                 <span class="agro-operational-summary-card__label">📊 Balance</span>
-                <strong class="agro-operational-summary-card__value">${escapeHtml(summary.balanceText)}</strong>
-                <p class="agro-operational-summary-card__hint">💰 Recibí / Cobré: ${escapeHtml(summary.incomingText)} · 💸 Pagué / Gasté: ${escapeHtml(summary.outgoingText)}</p>
+                ${renderMoneyNode(summary.balanceText, { tag: 'strong', className: 'agro-operational-summary-card__value' })}
+                <p class="agro-operational-summary-card__hint">💰 Recibí / Cobré: ${renderMoneyNode(summary.incomingText)} · 💸 Pagué / Gasté: ${renderMoneyNode(summary.outgoingText)}</p>
             </article>
         </div>
         ${renderFilterPills(dataset.filters)}
@@ -2221,19 +2235,19 @@ function renderCycleCard(cycle) {
             <div class="agro-operational-money-grid">
                 <div class="agro-operational-money-cell" data-tone="gold">
                     <span class="agro-operational-money-cell__label">${escapeHtml(directionSummaryLabel(cycle.direction, cycle.economic_type))}</span>
-                    <strong class="agro-operational-money-cell__value">${escapeHtml(primaryAmount)}</strong>
+                    ${renderMoneyNode(primaryAmount, { tag: 'strong', className: 'agro-operational-money-cell__value' })}
                 </div>
                 <div class="agro-operational-money-cell">
                     <span class="agro-operational-money-cell__label">💰 Recibí / Cobré</span>
-                    <strong class="agro-operational-money-cell__value">${escapeHtml(cycle.incomingText)}</strong>
+                    ${renderMoneyNode(cycle.incomingText, { tag: 'strong', className: 'agro-operational-money-cell__value' })}
                 </div>
                 <div class="agro-operational-money-cell">
                     <span class="agro-operational-money-cell__label">💸 Pagué / Gasté</span>
-                    <strong class="agro-operational-money-cell__value">${escapeHtml(cycle.outgoingText)}</strong>
+                    ${renderMoneyNode(cycle.outgoingText, { tag: 'strong', className: 'agro-operational-money-cell__value' })}
                 </div>
                 <div class="agro-operational-money-cell" data-tone="${escapeAttr(cycle.balanceTone)}">
                     <span class="agro-operational-money-cell__label">📊 Balance del ciclo</span>
-                    <strong class="agro-operational-money-cell__value">${escapeHtml(cycle.balanceText)}</strong>
+                    ${renderMoneyNode(cycle.balanceText, { tag: 'strong', className: 'agro-operational-money-cell__value' })}
                 </div>
             </div>
 

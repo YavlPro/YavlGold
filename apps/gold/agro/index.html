@@ -1412,13 +1412,17 @@
             <div class="perfil-hero">
                 <div class="perfil-hero__avatar" id="perfil-view-avatar">👨‍🌾</div>
                 <div class="perfil-hero__info">
-                    <p class="perfil-hero__greeting" id="perfil-view-greeting">Bienvenido, Agricultor</p>
+                    <p class="perfil-hero__greeting">Bienvenido, <span id="perfil-view-greeting">Agricultor</span></p>
                     <h2 class="perfil-hero__name" id="perfil-view-name">Agricultor</h2>
                     <p class="perfil-hero__email" id="perfil-view-email"></p>
                 </div>
                 <button type="button" class="perfil-hero__edit-btn" id="perfil-edit-btn" data-profile-edit-trigger>
                     <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Editar Perfil
                 </button>
+            </div>
+            <div class="agro-privacy-strip" aria-label="Controles de privacidad del perfil">
+                <span class="agro-privacy-strip__label">Privacidad</span>
+                <button type="button" class="btn-privacy-toggle" data-buyer-privacy-control="toggle" aria-pressed="false">Ocultar datos</button>
             </div>
 
             <div class="perfil-grid">
@@ -1826,6 +1830,11 @@
                         Cultivo</button>
                 </div>
             </header>
+            <div class="agro-privacy-strip" aria-label="Controles de privacidad de ciclos de cultivo">
+                <span class="agro-privacy-strip__label">Privacidad</span>
+                <button type="button" class="btn-privacy-toggle" data-buyer-privacy-control="toggle" aria-pressed="false">Ocultar nombres</button>
+                <button type="button" class="btn-privacy-toggle" data-money-privacy-control="toggle" aria-pressed="false">Ocultar montos</button>
+            </div>
             <div class="agro-cycle-subview" data-agro-cycle-subview="activos">
                 <div id="cyclesContainer" class="crops-grid"> <!-- Ciclos activos cargados dinámicamente --> </div>
             </div>

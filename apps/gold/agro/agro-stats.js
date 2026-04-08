@@ -208,6 +208,24 @@ function setStatsDateRange(startDateRaw, endDateRaw) {
     return next;
 }
 
+function syncMoneyDataset(node, rawText) {
+    if (!node) return;
+    const safeText = String(rawText || '').trim();
+    if (!safeText || !/\d/.test(safeText)) {
+        delete node.dataset.money;
+        delete node.dataset.rawMoney;
+        return;
+    }
+    node.dataset.money = '1';
+    node.dataset.rawMoney = safeText;
+}
+
+function setMoneyNodeText(node, value) {
+    if (!node) return;
+    node.textContent = String(value ?? '');
+    syncMoneyDataset(node, node.textContent);
+}
+
 function triggerStatsRefreshFromControls() {
     if (typeof window.refreshAgroStats === 'function') {
         Promise.resolve(window.refreshAgroStats()).catch((err) => {
@@ -880,22 +898,22 @@ export function updateUIFromSummary(summary) {
 
     // 1. Facturero KPIs
     const kpiExpenses = document.getElementById('kpi-expenses-total');
-    if (kpiExpenses) kpiExpenses.textContent = formatCurrency(summary.expenseTotal);
+    setMoneyNodeText(kpiExpenses, formatCurrency(summary.expenseTotal));
 
     const kpiInvestment = document.getElementById('kpi-crops-investment');
-    if (kpiInvestment) kpiInvestment.textContent = formatCurrency(summary.cropsInvestmentTotal);
+    setMoneyNodeText(kpiInvestment, formatCurrency(summary.cropsInvestmentTotal));
 
     const kpiGlobal = document.getElementById('kpi-global-total');
-    if (kpiGlobal) kpiGlobal.textContent = formatCurrency(summary.expenseTotal + summary.cropsInvestmentTotal);
+    setMoneyNodeText(kpiGlobal, formatCurrency(summary.expenseTotal + summary.cropsInvestmentTotal));
 
     const kpiPending = document.getElementById('kpi-pending-total');
-    if (kpiPending) kpiPending.textContent = formatCurrency(summary.pendingTotal || 0);
+    setMoneyNodeText(kpiPending, formatCurrency(summary.pendingTotal || 0));
 
     const kpiLosses = document.getElementById('kpi-losses-total');
-    if (kpiLosses) kpiLosses.textContent = formatCurrency(summary.lossesTotal || 0);
+    setMoneyNodeText(kpiLosses, formatCurrency(summary.lossesTotal || 0));
 
     const kpiTransfers = document.getElementById('kpi-transfers-total');
-    if (kpiTransfers) kpiTransfers.textContent = formatCurrency(summary.transfersTotal || 0);
+    setMoneyNodeText(kpiTransfers, formatCurrency(summary.transfersTotal || 0));
 
     // 1.1 Unidades por tipo (facturero)
     const unitTotals = summary.unitTotals || {};
@@ -982,17 +1000,17 @@ export function updateUIFromSummary(summary) {
 
     // 3. Resumen Financiero Panel - V9.5: Solo ingresos REALES
     const summaryRevenue = document.getElementById('summary-revenue');
-    if (summaryRevenue) summaryRevenue.textContent = formatK(summary.incomeTotal);
+    setMoneyNodeText(summaryRevenue, formatK(summary.incomeTotal));
 
     const summaryDirectExpenses = document.getElementById('summary-direct-expenses');
-    if (summaryDirectExpenses) summaryDirectExpenses.textContent = formatK(summary.directExpenseTotal ?? summary.expenseTotal);
+    setMoneyNodeText(summaryDirectExpenses, formatK(summary.directExpenseTotal ?? summary.expenseTotal));
 
     const summaryCost = document.getElementById('summary-cost');
-    if (summaryCost) summaryCost.textContent = formatK(summary.costTotal);
+    setMoneyNodeText(summaryCost, formatK(summary.costTotal));
 
     const summaryProfit = document.getElementById('summary-profit');
     if (summaryProfit) {
-        summaryProfit.textContent = formatK(summary.profitNet);
+        setMoneyNodeText(summaryProfit, formatK(summary.profitNet));
         summaryProfit.style.color = summary.profitNet >= 0 ? 'var(--v10-gold-4, #C8A752)' : '#f87171';
     }
 
@@ -1011,7 +1029,7 @@ export function updateUIFromSummary(summary) {
     // 4. Expenses Total (doughnut center)
     const expensesTotal = document.getElementById('expenses-total');
     if (expensesTotal) {
-        expensesTotal.textContent = formatK(summary.costTotal);
+        setMoneyNodeText(expensesTotal, formatK(summary.costTotal));
         expensesTotal.style.color = summary.costTotal > 0 ? '#fff' : '#666';
     }
 
@@ -1150,19 +1168,19 @@ function updateSummaryPanel(revenue, investment, profit, margin, roi) {
     // 2. Expenses Total - DEPRECATED: handled by updateUIFromSummary
     const expensesTotal = document.getElementById('expenses-total');
     if (expensesTotal) {
-        expensesTotal.textContent = formatK(investment);
+        setMoneyNodeText(expensesTotal, formatK(investment));
     }
 
     // 3. Summary Panel Values
     const revEl = document.getElementById('summary-revenue');
-    if (revEl) revEl.textContent = formatK(revenue);
+    setMoneyNodeText(revEl, formatK(revenue));
 
     const costEl = document.getElementById('summary-cost');
-    if (costEl) costEl.textContent = formatK(investment);
+    setMoneyNodeText(costEl, formatK(investment));
 
     const profitEl = document.getElementById('summary-profit');
     if (profitEl) {
-        profitEl.textContent = formatK(profit);
+        setMoneyNodeText(profitEl, formatK(profit));
         profitEl.style.color = profit >= 0 ? 'var(--v10-gold-4, #C8A752)' : '#f87171';
     }
 

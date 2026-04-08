@@ -103,6 +103,20 @@ function escapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
+function escapeAttr(value) {
+    return escapeHtml(value).replace(/`/g, '&#96;');
+}
+
+function renderMoneyNode(value, { tag = 'span', className = '' } = {}) {
+    const safeValue = String(value ?? '').trim();
+    const classAttr = className ? ` class="${escapeAttr(className)}"` : '';
+    if (!safeValue) return `<${tag}${classAttr}></${tag}>`;
+    if (!/\d/.test(safeValue)) {
+        return `<${tag}${classAttr}>${escapeHtml(safeValue)}</${tag}>`;
+    }
+    return `<${tag}${classAttr} data-money="1" data-raw-money="${escapeAttr(safeValue)}">${escapeHtml(safeValue)}</${tag}>`;
+}
+
 function toNumber(value, fallback = 0) {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : fallback;
@@ -432,19 +446,29 @@ function renderMetric(metric, leftItem, rightItem) {
     const leftToneAttr = leftValue.tone ? ` data-tone="${leftValue.tone}"` : '';
     const rightToneAttr = rightValue.tone ? ` data-tone="${rightValue.tone}"` : '';
     const deltaToneAttr = delta.tone ? ` data-tone="${delta.tone}"` : '';
+    const isMoneyMetric = metric.kind === 'currency' || metric.kind === 'signedCurrency';
+    const leftMain = isMoneyMetric
+        ? renderMoneyNode(leftValue.main, { tag: 'strong', className: 'agro-cycle-compare__metric-main' })
+        : `<strong class="agro-cycle-compare__metric-main">${escapeHtml(leftValue.main)}</strong>`;
+    const deltaValue = isMoneyMetric
+        ? renderMoneyNode(delta.value, { tag: 'strong', className: 'agro-cycle-compare__delta-value' })
+        : `<strong class="agro-cycle-compare__delta-value">${escapeHtml(delta.value)}</strong>`;
+    const rightMain = isMoneyMetric
+        ? renderMoneyNode(rightValue.main, { tag: 'strong', className: 'agro-cycle-compare__metric-main' })
+        : `<strong class="agro-cycle-compare__metric-main">${escapeHtml(rightValue.main)}</strong>`;
     return `
         <article class="agro-cycle-compare__metric">
             <div class="agro-cycle-compare__metric-label">${escapeHtml(metric.label)}</div>
             <div class="agro-cycle-compare__metric-value"${leftToneAttr}>
-                <strong class="agro-cycle-compare__metric-main">${escapeHtml(leftValue.main)}</strong>
+                ${leftMain}
                 <span class="agro-cycle-compare__metric-sub">${escapeHtml(leftValue.sub || metric.helper || '')}</span>
             </div>
             <div class="agro-cycle-compare__delta"${deltaToneAttr}>
                 <span class="agro-cycle-compare__delta-label">${escapeHtml(delta.label)}</span>
-                <strong class="agro-cycle-compare__delta-value">${escapeHtml(delta.value)}</strong>
+                ${deltaValue}
             </div>
             <div class="agro-cycle-compare__metric-value"${rightToneAttr}>
-                <strong class="agro-cycle-compare__metric-main">${escapeHtml(rightValue.main)}</strong>
+                ${rightMain}
                 <span class="agro-cycle-compare__metric-sub">${escapeHtml(rightValue.sub || metric.helper || '')}</span>
             </div>
         </article>

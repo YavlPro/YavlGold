@@ -216,6 +216,16 @@ function escapeAttr(value) {
     return escapeHtml(value).replace(/`/g, '&#96;');
 }
 
+function renderMoneyNode(value, { tag = 'span', className = '' } = {}) {
+    const safeValue = String(value ?? '').trim();
+    const classAttr = className ? ` class="${escapeAttr(className)}"` : '';
+    if (!safeValue) return `<${tag}${classAttr}></${tag}>`;
+    if (!/\d/.test(safeValue)) {
+        return `<${tag}${classAttr}>${escapeHtml(safeValue)}</${tag}>`;
+    }
+    return `<${tag}${classAttr} data-money="1" data-raw-money="${escapeAttr(safeValue)}">${escapeHtml(safeValue)}</${tag}>`;
+}
+
 function toNullableText(value) {
     const raw = String(value ?? '').trim();
     return raw ? raw : null;
@@ -872,6 +882,10 @@ function renderShell() {
             </header>
 
             <div id="agro-task-page-feedback" class="agro-task-feedback agro-task-feedback--page" data-tone="info" hidden></div>
+            <div class="agro-privacy-strip" aria-label="Controles de privacidad de Ciclos de Tareas">
+                <span class="agro-privacy-strip__label">Privacidad</span>
+                <button type="button" class="btn-privacy-toggle" data-money-privacy-control="toggle" aria-pressed="false">Ocultar montos</button>
+            </div>
 
             <section class="agro-task-panel agro-task-shell__tabs">
                 <div class="agro-task-panel__head agro-task-panel__head--compact">
@@ -1035,7 +1049,7 @@ function renderImpactCards(snapshot) {
         <article class="agro-task-impact-card">
             <p class="agro-task-impact-card__eyebrow">${escapeHtml(entry.label)}</p>
             <h4 class="agro-task-impact-card__value">${entry.count}</h4>
-            <p class="agro-task-impact-card__copy">${escapeHtml(entry.value === 'none' ? 'Sin monto asociado' : buildCurrencyBreakdownLabel(entry.totals))}</p>
+            <p class="agro-task-impact-card__copy">${entry.value === 'none' ? 'Sin monto asociado' : renderMoneyNode(buildCurrencyBreakdownLabel(entry.totals))}</p>
         </article>
     `).join('');
 }
@@ -1217,7 +1231,7 @@ function renderTaskMeta(task) {
             <span>${escapeHtml(statusLabel)}</span>
             <span>${escapeHtml(durationText)}</span>
             <span>${escapeHtml(crop.shortLabel)}</span>
-            <span>${escapeHtml(effectLabel)}${task.economic_effect !== 'none' ? ` · ${escapeHtml(amountText)}` : ''}</span>
+            <span>${escapeHtml(effectLabel)}${task.economic_effect !== 'none' ? ` · ${renderMoneyNode(amountText)}` : ''}</span>
         </div>
     `;
 }
@@ -1262,7 +1276,7 @@ function renderTaskCard(task) {
                 </div>
                 <div class="agro-task-card__fact">
                     <small>Impacto</small>
-                    <strong>${escapeHtml(amountText)}</strong>
+                    <strong>${renderMoneyNode(amountText)}</strong>
                 </div>
             </div>
             ${task.notes ? `<p class="agro-task-card__notes">${escapeHtml(task.notes)}</p>` : ''}
@@ -1429,7 +1443,11 @@ function buildFormMarkup() {
                 <div class="agro-task-form__summary-card">
                     <small>Impacto</small>
                     <strong>${escapeHtml(readLabel(ECONOMIC_EFFECT_OPTIONS, values.economicEffect, 'Sin impacto económico'))}</strong>
-                    <p>${escapeHtml(values.economicEffect === 'none' ? 'No registrará monto.' : (values.amount ? formatCurrencyValue(values.amount, values.currency || 'COP') : 'Monta el valor si aplica.'))}</p>
+                    <p>${values.economicEffect === 'none'
+                        ? 'No registrara monto.'
+                        : (values.amount
+                            ? renderMoneyNode(formatCurrencyValue(values.amount, values.currency || 'COP'))
+                            : 'Monta el valor si aplica.')}</p>
                 </div>
             </div>
 

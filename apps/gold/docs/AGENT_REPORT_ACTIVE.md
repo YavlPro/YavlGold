@@ -10191,3 +10191,63 @@ Búsqueda global de `9.8`, `V9.8`, `v9.8`, `9.8.0` en `apps/gold`. Clasificació
 5. Entrar al detalle de un cliente y abrir el menú `⋮` de varios movimientos: deben seguir `Editar`, `Transferir`, `Revertir`, etc., pero ya no `Crear ciclo`.
 6. Ir a ciclos activos/finalizados con un escenario donde existan fiados globales y confirmar que la badge dice `Cartera viva abierta`.
 7. Repetir en mobile (`<=480px`) para confirmar que el strip de privacidad sigue visible y usable.
+
+---
+
+## Privacidad transversal Agro + verificación de cartera operativa (2026-04-08)
+
+### Diagnóstico
+
+- La capa canónica de privacidad ya estaba resuelta en `apps/gold/agro/agro-privacy.js` con dos flags globales:
+  - `YG_HIDE_BUYER_NAMES`
+  - `YG_HIDE_MONEY_VALUES`
+- Esa capa ya funcionaba bien en superficies que sí marcaban nodos o ya tenían strips propios:
+  - Cartera Viva
+  - vistas dedicadas de Operaciones (`pagados`, `fiados`, `perdidas`, `donaciones`, `otros`, `carrito`, `rankings`)
+  - rankings y panel global de perfil (`agroperfil.js`)
+- Los huecos reales detectados antes de editar fueron:
+  - `apps/gold/agro/agroOperationalCycles.js`: renderizaba balances, ingresos, egresos y montos principales sin `data-money`, y no tenía control local visible.
+  - `apps/gold/agro/agroTaskCycles.js`: estadísticas de impacto, cards de tareas y preview del modal mostraban montos sin `data-money`, y no tenía control local visible.
+  - `apps/gold/agro/agro-cycles-workspace.js`: la comparación de cultivos seguía mostrando métricas monetarias sin marcado compatible.
+  - `apps/gold/agro/index.html` en la familia `Ciclos de cultivos`: no había strip local en el header de la sección, así que activos/finalizados/comparar/estadísticas dependían de controles externos.
+  - `apps/gold/agro/agroperfil.js`: la vista dedicada de perfil y el resumen inline seguían mostrando nombre, email, finca, ubicación y contacto sin `data-buyer-name`.
+- Verificación adicional de estado:
+  - `apps/gold/agro/agroOperationalCycles.js` ya resolvía `Cartera operativa cerrada` con `openCycles === 0` en `serializePortfolioState()` y expone ese estado vía `getPortfolioStateByCrop()`.
+  - `apps/gold/agro/agrociclos.js` ya consume ese bridge y pinta el badge en tarjetas de cultivos.
+  - Conclusión: la regla “si no hay no pagados en cartera operativa => cartera operativa cerrada” ya estaba correcta y no necesitó cambio de lógica.
+
+### Cambios aplicados
+
+| Archivo | Líneas aprox. | Cambio |
+| --- | --- | --- |
+| `apps/gold/agro/agroOperationalCycles.js` | 364-374, 1288-1291, 2010-2238 | Helper `renderMoneyNode`, strip local de privacidad para montos y marcado real de balances/ingresos/egresos tanto en overview como en cards |
+| `apps/gold/agro/agroTaskCycles.js` | 216-226, 882-885, 1049, 1231, 1276, 1443-1447 | Helper `renderMoneyNode`, strip local de privacidad y marcado de montos en estadísticas, cards y preview del modal |
+| `apps/gold/agro/agro-cycles-workspace.js` | 103-117, 446-458 | Marcado `data-money` en métricas monetarias y deltas de la comparación entre cultivos |
+| `apps/gold/agro/agro-stats.js` | 208-223, 898-1029, 1168-1180 | Helper `setMoneyNodeText` para que KPIs y resumen financiero queden marcados con `data-money` en cada refresh |
+| `apps/gold/agro/agroperfil.js` | 338-358, 775-779, 1689-1716 | Helper `syncSensitiveIdentityNode` para marcar nombre/email/contacto/finca/ubicación en perfil dedicado y resumen inline |
+| `apps/gold/agro/index.html` | 1412-1424, 1826-1835 | Strip local de privacidad en Perfil y en Ciclos de cultivos; greeting del perfil quedó separado para ocultar solo el nombre sin romper la frase |
+
+### Build status
+
+- `pnpm build:gold` -> OK
+- Warning no bloqueante: `Unsupported engine` porque el repo espera Node `20.x` y la sesión corrió con `v25.6.0`
+- `agent-guard` OK
+- `agent-report-check` OK
+- `vite build` OK
+- `check-llms` OK
+- `check-dist-utf8` OK
+
+### QA sugerido
+
+1. Abrir `Ciclos de cultivos` y confirmar que el strip `Privacidad` aparece en el header de la familia.
+2. Activar `Ocultar nombres` y validar el panel global de estadísticas (`Top Compradores`) y el perfil dedicado.
+3. Activar `Ocultar montos` y validar:
+   - cards activas/finalizadas de cultivos
+   - vista `Comparar`
+   - panel `Mis Estadísticas Globales`
+   - `Ciclos Operativos`
+   - `Ciclos de Tareas`
+4. Abrir el perfil dedicado y confirmar que nombre, greeting, email, finca, ubicación y contactos se enmascaran; `Sin definir` no debe ocultarse.
+5. Con privacidad activa, refrescar datos en `Ciclos Operativos` y `Ciclos de Tareas` para confirmar que los re-renders no dejan montos visibles.
+6. Revisar en `<=480px` que los strips nuevos hagan wrap y sigan siendo clicables.
+7. Confirmar en tarjetas de cultivos que el badge diga `Cartera operativa cerrada` solo cuando no existan registros `open / in_progress / compensating` asociados a ese cultivo.
