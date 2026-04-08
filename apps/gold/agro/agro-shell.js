@@ -33,7 +33,7 @@ const VIEW_ALIASES = Object.freeze({
 
 const NAV_PARENT_GROUPS = Object.freeze({
     'historial-comercial': Object.freeze({
-        views: Object.freeze(['cartera-viva', 'operational']),
+        views: Object.freeze(['cartera-viva', 'carrito', 'operational']),
         defaultView: 'cartera-viva'
     })
 });

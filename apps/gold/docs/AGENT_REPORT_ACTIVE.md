@@ -10839,3 +10839,74 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
   - colapsar `Cartera Viva` y revisar que el card no haga shift brusco;
   - abrir `Cartera Operativa` y confirmar que siguen visibles `Costo real` y `Fiado`;
   - revisar mobile para confirmar que el header de cada sección baja bien a dos líneas.
+
+---
+
+## [2026-04-08] Agro sidebar — mover Mi Carrito dentro de Historial Comercial
+
+### Diagnóstico
+
+- La navegación lateral real de Agro está declarada de forma estática en `apps/gold/agro/index.html`.
+- Hoy `Historial comercial` contiene solo:
+  - `Cartera Viva`
+  - `Cartera Operativa`
+- `Mi Carrito` vive fuera de esa familia, como botón suelto dentro del grupo `Operaciones`, junto a `Rankings`.
+- El estado activo/expandido del sidebar no depende solo del HTML:
+  - `apps/gold/agro/agro-shell.js` usa `NAV_PARENT_GROUPS` para decidir qué familia se expande y qué toggle se pinta activo.
+- Si se mueve `Mi Carrito` solo en HTML, el click seguiría navegando, pero el acordeón de `Historial comercial` no quedaría reconocido como familia activa para la vista `carrito`.
+
+### Plan
+
+- Reordenar el markup del sidebar en `index.html` para que `Historial comercial` quede en este orden:
+  - `Cartera Viva`
+  - `Mi Carrito`
+  - `Cartera Operativa`
+- Quitar el botón top-level `Carrito` del grupo `Operaciones`.
+- Mantener `Rankings` donde ya está.
+- Ajustar `NAV_PARENT_GROUPS` en `agro-shell.js` para incluir `carrito` dentro de `historial-comercial`, sin tocar la carga lazy de `agro-cart.js` ni la lógica financiera.
+
+### Cambios aplicados
+
+- `apps/gold/agro/index.html`
+  - `Mi Carrito` se movió al subnav de `Historial comercial`.
+  - El orden quedó:
+    - `Cartera Viva`
+    - `Mi Carrito`
+    - `Cartera Operativa`
+  - Se eliminó el botón top-level `Carrito` del grupo `Operaciones`.
+  - `Rankings` permaneció en `Operaciones`.
+- `apps/gold/agro/agro-shell.js`
+  - `NAV_PARENT_GROUPS['historial-comercial']` ahora incluye la vista `carrito`.
+  - Eso mantiene correcto:
+    - el estado activo;
+    - la expansión del acordeón;
+    - la detección de familia activa cuando el usuario entra al carrito.
+
+### Resultado
+
+- `Mi Carrito` quedó integrado bajo `Historial comercial` sin tocar la lógica interna de `agro-cart.js`.
+- El click sobre `Mi Carrito` sigue resolviendo la vista `carrito`, que a su vez mantiene el lazy-load del módulo y el tab financiero correspondiente.
+- `Rankings` no fue movido y sigue fuera de `Historial comercial`.
+- El cambio fue quirúrgico:
+  - reordenamiento de DOM en `index.html`;
+  - ajuste de agrupación activa en `agro-shell.js`.
+
+### Build status
+
+- `pnpm build:gold` → **OK**
+- Resultado adicional:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota de entorno:
+  - aparece warning de engine porque el entorno local corre `node v25.6.0` y el proyecto declara `20.x`;
+  - no bloqueó el build.
+
+### QA sugerido
+
+- No se ejecutó QA manual en navegador en esta iteración.
+- Validación posterior sugerida:
+  - abrir el sidebar y confirmar que `Mi Carrito` aparece entre `Cartera Viva` y `Cartera Operativa`;
+  - hacer click en `Mi Carrito` y confirmar que la familia `Historial comercial` queda expandida y activa;
+  - revisar mobile para confirmar que el drawer sigue cerrando/abriendo sin romper layout.
