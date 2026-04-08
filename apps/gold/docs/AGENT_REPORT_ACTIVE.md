@@ -10672,3 +10672,170 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
   - abrir un `select` de filtros y disparar refresh;
   - escribir en un input del wizard durante refresh;
   - confirmar que el mensaje de actualización permanece discreto y sin shift visible.
+
+---
+
+## [2026-04-08] Ciclos de Cultivo — separar fiados operativos de gastos reales
+
+### Diagnóstico
+
+- El desglose `Ver desglose financiero` del ciclo toma sus montos desde `ciclo.desglose`, construido en `apps/gold/agro/agro.js`.
+- La contaminación contable ocurre antes, en `apps/gold/agro/agroOperationalCycles.js`:
+  - `rebuildPortfolioByCrop()` acumula en un solo mapa (`operationalExpensesByCrop`) todo movimiento saliente asociado a `crop_id`;
+  - ese acumulado mezcla sin distinción:
+    - operativos `closed` realmente pagados;
+    - operativos `open / in_progress / compensating` que siguen fiados;
+    - operativos de tipo `loss`;
+    - operativos de tipo `donation`.
+- Luego `loadCrops()` en `apps/gold/agro/agro.js` inyecta ese mapa mixto dentro de `expenseTotalsByCrop`, por lo que el ciclo termina contando deuda operativa como gasto efectivo.
+- Efecto visible:
+  - `Gastos totales del cultivo` queda inflado;
+  - `Potencial Neto` se distorsiona por costos no cerrados;
+  - el desglose no separa la deuda operativa del gasto real.
+
+### Plan
+
+- Separar en cartera operativa tres buckets por `crop_id`:
+  - operativos pagados/cerrados;
+  - fiados operativos no pagados;
+  - pérdidas operativas.
+- Recalcular en `agro.js`:
+  - `Gastos totales` = gastos directos + operativos pagados + pérdidas operativas;
+  - excluir fiados operativos de ese total.
+- Exponer una nueva clave de desglose para UI:
+  - `fiadosCarteraOperativa`.
+- Renderizar en `agrociclos.js` una línea nueva:
+  - `Fiados de cartera operativa`.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agroOperationalCycles.js`
+  - `rebuildPortfolioByCrop()` dejó de mezclar todos los salientes operativos en un solo bucket.
+  - Ahora clasifica por `crop_id` así:
+    - `status = closed` → gasto real;
+    - `status = open / in_progress / compensating` → fiado operativo;
+    - `type/status = loss/lost` → gasto real siempre.
+  - Se agregó `getOperationalPendingByCrop()` para exponer fiados operativos sin contaminar `getOperationalExpensesByCrop()`.
+- `apps/gold/agro/agro.js`
+  - `loadCrops()` ahora consume:
+    - `getOperationalExpensesByCrop()` como gasto operativo real;
+    - `getOperationalPendingByCrop()` como deuda operativa separada.
+  - `expenseTotalsByCrop` ya no suma fiados operativos.
+  - `buildActiveCycleCardsData()` y `buildFinishedCycleCardsData()` ahora agregan al `desglose` la clave:
+    - `fiadosCarteraOperativa`.
+- `apps/gold/agro/agrociclos.js`
+  - `Ver desglose financiero` ahora renderiza la nueva línea:
+    - `Fiados de cartera operativa`.
+
+### Resultado
+
+- Los movimientos de cartera operativa con estado no pagado dejan de entrar en `Gastos totales del cultivo`.
+- Los movimientos `closed` siguen entrando como gasto real.
+- Los movimientos `loss/lost` siguen entrando como gasto real siempre.
+- Los movimientos `donation` abiertos quedan fuera del gasto y se reflejan como fiado operativo; si están `closed`, sí cuentan como gasto.
+- El desglose del ciclo ahora distingue:
+  - `Fiados cartera viva`
+  - `Fiados de cartera operativa`
+
+### Build status
+
+- `pnpm build:gold` → **OK**
+- Resultado adicional:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota de entorno:
+  - aparece warning de engine porque el entorno local corre `node v25.6.0` y el proyecto declara `20.x`;
+  - no bloqueó el build.
+
+### QA sugerido
+
+- No se ejecutó QA manual en navegador en esta iteración.
+- Validación posterior sugerida:
+  - abrir un ciclo con movimiento operativo `No pagado` y confirmar que ese monto ya no entra en `Gastos totales del cultivo`;
+  - cambiar ese movimiento a `Pagado` y confirmar que migra a gasto real;
+  - validar un caso `Pérdida` para confirmar que siempre se contabiliza como costo.
+
+---
+
+## [2026-04-08] Ciclos de Cultivo — agrupar desglose financiero por origen
+
+### Diagnóstico
+
+- El panel `Ver desglose financiero` en `apps/gold/agro/agrociclos.js` hoy renderiza una lista plana de filas dentro de un solo `<details class="desglose">`.
+- El problema ya no es falta de datos, sino densidad visual:
+  - mezcla cifras de `Cartera Viva` y `Cartera Operativa` sin separación semántica clara;
+  - todos los renglones compiten con el mismo peso visual;
+  - el usuario debe escanear demasiadas filas para ubicar solo la parte que quiere analizar.
+- El CSS existente en `apps/gold/agro/agrociclos.css` ya controla el bloque `desglose`, así que el cambio más seguro es reorganizar el interior del panel sin rehacer la tarjeta completa.
+
+### Plan
+
+- Mantener el `<details class="desglose">` principal y convertir su contenido en:
+  - una franja breve de resumen;
+  - una sección `Cartera Viva`;
+  - una sección `Cartera Operativa`.
+- Hacer cada sección colapsable con estructura nativa `details/summary` para evitar wiring JS innecesario y mantener el diff pequeño.
+- Mostrar en el encabezado de cada sección un resumen corto de montos clave para que el usuario no tenga que expandir siempre el detalle completo.
+- Aplicar estilos sutiles en `agrociclos.css`:
+  - `--bg-3`, `--text-primary`, `--border-neutral`;
+  - hover con `--state-hover-overlay`;
+  - transición de `180ms` usando `opacity`, `transform` y `grid-template-rows`.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agrociclos.js`
+  - se agregó un renderer de secciones para el desglose:
+    - `renderBreakdownSectionSummary()`
+    - `renderBreakdownSection()`
+  - `renderCard()` dejó de emitir una lista plana y ahora organiza el panel en:
+    - resumen superior;
+    - sección `Cartera Viva`;
+    - sección `Cartera Operativa`.
+  - cada encabezado muestra un resumen compacto de montos clave (`Total`, `Pagado`, `Fiado`, `Costo real`) para evitar expansión innecesaria.
+  - la apertura por defecto quedó condicionada al tamaño:
+    - secciones cortas abiertas;
+    - secciones largas colapsadas.
+- `apps/gold/agro/agrociclos.css`
+  - se adaptó `.desglose-body` para layout por bloques;
+  - se agregaron estilos nuevos para:
+    - `.desglose-summary`
+    - `.desglose-section`
+    - `.desglose-section-toggle`
+    - `.desglose-section-meta`
+    - `.desglose-section-chip`
+    - `.desglose-section-shell`
+    - `.desglose-section-body`
+  - la apertura/cierre usa transición de `180ms` sobre `grid-template-rows`, `opacity` y rotación del chevron.
+
+### Resultado
+
+- El panel `Ver desglose financiero` deja de presentarse como una lista lineal extensa.
+- Ahora el usuario ve primero un resumen corto y luego dos bloques semánticos:
+  - `Cartera Viva`
+  - `Cartera Operativa`
+- Cada bloque puede abrirse/cerrarse sin perder datos financieros.
+- Los totales resumidos quedan visibles en los headers de sección, reduciendo la necesidad de escanear todas las filas.
+- La intervención se mantuvo dentro del módulo de ciclos, sin tocar otras vistas ni rehacer la tarjeta completa.
+
+### Build status
+
+- `pnpm build:gold` → **OK**
+- Resultado adicional:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota de entorno:
+  - aparece warning de engine porque el entorno local corre `node v25.6.0` y el proyecto declara `20.x`;
+  - no bloqueó el build.
+
+### QA sugerido
+
+- No se ejecutó QA manual en navegador en esta iteración.
+- Validación posterior sugerida:
+  - abrir `Ver desglose financiero` en un ciclo y confirmar que el resumen superior se mantiene visible;
+  - colapsar `Cartera Viva` y revisar que el card no haga shift brusco;
+  - abrir `Cartera Operativa` y confirmar que siguen visibles `Costo real` y `Fiado`;
+  - revisar mobile para confirmar que el header de cada sección baja bien a dos líneas.

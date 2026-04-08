@@ -10520,6 +10520,7 @@ function buildActiveCycleCardsData(crops, options = {}) {
     const expenseTotalsByCrop = options.expenseTotalsByCrop instanceof Map ? options.expenseTotalsByCrop : null;
     const directExpenseTotalsByCrop = options.directExpenseTotalsByCrop instanceof Map ? options.directExpenseTotalsByCrop : null;
     const operationalExpenseTotalsByCrop = options.operationalExpenseTotalsByCrop instanceof Map ? options.operationalExpenseTotalsByCrop : null;
+    const operationalPendingTotalsByCrop = options.operationalPendingTotalsByCrop instanceof Map ? options.operationalPendingTotalsByCrop : null;
     const incomeTotalsByCrop = options.incomeTotalsByCrop instanceof Map ? options.incomeTotalsByCrop : null;
     const lossTotalsByCrop = options.lossTotalsByCrop instanceof Map ? options.lossTotalsByCrop : null;
     const pendingTotalsByCrop = options.pendingTotalsByCrop instanceof Map ? options.pendingTotalsByCrop : null;
@@ -10546,6 +10547,9 @@ function buildActiveCycleCardsData(crops, options = {}) {
             : 0;
         const operationalExpenseInvestment = normalizedCropId && operationalExpenseTotalsByCrop
             ? (Number(operationalExpenseTotalsByCrop.get(normalizedCropId)) || 0)
+            : 0;
+        const operationalPendingTotal = normalizedCropId && operationalPendingTotalsByCrop
+            ? (Number(operationalPendingTotalsByCrop.get(normalizedCropId)) || 0)
             : 0;
         const expenseInvestment = normalizedCropId && expenseTotalsByCrop
             ? (Number(expenseTotalsByCrop.get(normalizedCropId)) || 0)
@@ -10598,6 +10602,7 @@ function buildActiveCycleCardsData(crops, options = {}) {
             pagadosUsd: incomeTotal,
             costosUsd: totalCosts,
             fiadosUsd: pendingTotal,
+            fiadosCarteraOperativaUsd: operationalPendingTotal,
             perdidasUsd: lossesTotal,
             globalBreakdown: buildCycleGlobalBreakdown(crop, {
                 globalTotalsByCropType,
@@ -10611,6 +10616,7 @@ function buildActiveCycleCardsData(crops, options = {}) {
                 pagados: formatCurrency(incomeTotal),
                 costos: formatCurrency(totalCosts),
                 fiados: formatCurrency(pendingTotal),
+                fiadosCarteraOperativa: formatCurrency(operationalPendingTotal),
                 perdidasCarteraViva: formatCurrency(lossesTotal),
                 cotizacion
             }
@@ -10622,6 +10628,7 @@ function buildFinishedCycleCardsData(crops, options = {}) {
     const expenseTotalsByCrop = options.expenseTotalsByCrop instanceof Map ? options.expenseTotalsByCrop : null;
     const directExpenseTotalsByCrop = options.directExpenseTotalsByCrop instanceof Map ? options.directExpenseTotalsByCrop : null;
     const operationalExpenseTotalsByCrop = options.operationalExpenseTotalsByCrop instanceof Map ? options.operationalExpenseTotalsByCrop : null;
+    const operationalPendingTotalsByCrop = options.operationalPendingTotalsByCrop instanceof Map ? options.operationalPendingTotalsByCrop : null;
     const incomeTotalsByCrop = options.incomeTotalsByCrop instanceof Map ? options.incomeTotalsByCrop : null;
     const lossTotalsByCrop = options.lossTotalsByCrop instanceof Map ? options.lossTotalsByCrop : null;
     const pendingTotalsByCrop = options.pendingTotalsByCrop instanceof Map ? options.pendingTotalsByCrop : null;
@@ -10648,6 +10655,9 @@ function buildFinishedCycleCardsData(crops, options = {}) {
             : 0;
         const operationalExpenseInvestment = normalizedCropId && operationalExpenseTotalsByCrop
             ? (Number(operationalExpenseTotalsByCrop.get(normalizedCropId)) || 0)
+            : 0;
+        const operationalPendingTotal = normalizedCropId && operationalPendingTotalsByCrop
+            ? (Number(operationalPendingTotalsByCrop.get(normalizedCropId)) || 0)
             : 0;
         const expenseInvestment = normalizedCropId && expenseTotalsByCrop
             ? (Number(expenseTotalsByCrop.get(normalizedCropId)) || 0)
@@ -10707,6 +10717,7 @@ function buildFinishedCycleCardsData(crops, options = {}) {
             pagadosUsd: incomeTotal,
             costosUsd: totalCosts,
             fiadosUsd: pendingTotal,
+            fiadosCarteraOperativaUsd: operationalPendingTotal,
             perdidasUsd: lossesTotal,
             mode: 'finished',
             globalBreakdown: buildCycleGlobalBreakdown(crop, {
@@ -10721,6 +10732,7 @@ function buildFinishedCycleCardsData(crops, options = {}) {
                 pagados: formatCurrency(incomeTotal),
                 costos: formatCurrency(totalCosts),
                 fiados: formatCurrency(pendingTotal),
+                fiadosCarteraOperativa: formatCurrency(operationalPendingTotal),
                 perdidasCarteraViva: formatCurrency(lossesTotal),
                 cotizacion
             }
@@ -11195,6 +11207,7 @@ function renderCropCycleGroup(gridEl, crops, emptyText, options = {}) {
     const expenseTotalsByCrop = options.expenseTotalsByCrop instanceof Map ? options.expenseTotalsByCrop : null;
     const directExpenseTotalsByCrop = options.directExpenseTotalsByCrop instanceof Map ? options.directExpenseTotalsByCrop : null;
     const operationalExpenseTotalsByCrop = options.operationalExpenseTotalsByCrop instanceof Map ? options.operationalExpenseTotalsByCrop : null;
+    const operationalPendingTotalsByCrop = options.operationalPendingTotalsByCrop instanceof Map ? options.operationalPendingTotalsByCrop : null;
     const incomeTotalsByCrop = options.incomeTotalsByCrop instanceof Map ? options.incomeTotalsByCrop : null;
     const lossTotalsByCrop = options.lossTotalsByCrop instanceof Map ? options.lossTotalsByCrop : null;
     const pendingTotalsByCrop = options.pendingTotalsByCrop instanceof Map ? options.pendingTotalsByCrop : null;
@@ -11207,6 +11220,7 @@ function renderCropCycleGroup(gridEl, crops, emptyText, options = {}) {
             expenseTotalsByCrop,
             directExpenseTotalsByCrop,
             operationalExpenseTotalsByCrop,
+            operationalPendingTotalsByCrop,
             incomeTotalsByCrop,
             lossTotalsByCrop,
             pendingTotalsByCrop,
@@ -11252,6 +11266,7 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
     const expenseTotalsByCrop = options.expenseTotalsByCrop instanceof Map ? options.expenseTotalsByCrop : null;
     const directExpenseTotalsByCrop = options.directExpenseTotalsByCrop instanceof Map ? options.directExpenseTotalsByCrop : null;
     const operationalExpenseTotalsByCrop = options.operationalExpenseTotalsByCrop instanceof Map ? options.operationalExpenseTotalsByCrop : null;
+    const operationalPendingTotalsByCrop = options.operationalPendingTotalsByCrop instanceof Map ? options.operationalPendingTotalsByCrop : null;
     const incomeTotalsByCrop = options.incomeTotalsByCrop instanceof Map ? options.incomeTotalsByCrop : null;
     const lossTotalsByCrop = options.lossTotalsByCrop instanceof Map ? options.lossTotalsByCrop : null;
     const pendingTotalsByCrop = options.pendingTotalsByCrop instanceof Map ? options.pendingTotalsByCrop : null;
@@ -11296,6 +11311,7 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
         expenseTotalsByCrop,
         directExpenseTotalsByCrop,
         operationalExpenseTotalsByCrop,
+        operationalPendingTotalsByCrop,
         incomeTotalsByCrop,
         lossTotalsByCrop,
         pendingTotalsByCrop,
@@ -11307,6 +11323,7 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
         expenseTotalsByCrop,
         directExpenseTotalsByCrop,
         operationalExpenseTotalsByCrop,
+        operationalPendingTotalsByCrop,
         incomeTotalsByCrop,
         lossTotalsByCrop,
         pendingTotalsByCrop,
@@ -11426,6 +11443,7 @@ export async function loadCrops() {
         let expenseTotalsByCrop = new Map();
         let directExpenseTotalsByCrop = new Map();
         let operationalExpenseTotalsByCrop = new Map();
+        let operationalPendingTotalsByCrop = new Map();
         let incomeTotalsByCrop = new Map();
         let lossTotalsByCrop = new Map();
         let pendingTotalsByCrop = new Map();
@@ -11464,6 +11482,9 @@ export async function loadCrops() {
                 operationalExpenseTotalsByCrop.forEach((usd, cropId) => {
                     expenseTotalsByCrop.set(cropId, (expenseTotalsByCrop.get(cropId) || 0) + usd);
                 });
+            }
+            if (typeof opsApi?.getOperationalPendingByCrop === 'function') {
+                operationalPendingTotalsByCrop = opsApi.getOperationalPendingByCrop();
             }
             incomeTotalsByCrop = incomeTotals;
             lossTotalsByCrop = lossTotals;
@@ -11508,6 +11529,7 @@ export async function loadCrops() {
                 expenseTotalsByCrop,
                 directExpenseTotalsByCrop,
                 operationalExpenseTotalsByCrop,
+                operationalPendingTotalsByCrop,
                 incomeTotalsByCrop,
                 lossTotalsByCrop,
                 pendingTotalsByCrop,
@@ -11558,6 +11580,7 @@ export async function loadCrops() {
             expenseTotalsByCrop,
             directExpenseTotalsByCrop,
             operationalExpenseTotalsByCrop,
+            operationalPendingTotalsByCrop,
             incomeTotalsByCrop,
             lossTotalsByCrop,
             pendingTotalsByCrop,
@@ -11576,6 +11599,7 @@ export async function loadCrops() {
             expenseTotalsByCrop,
             directExpenseTotalsByCrop,
             operationalExpenseTotalsByCrop,
+            operationalPendingTotalsByCrop,
             incomeTotalsByCrop,
             lossTotalsByCrop,
             pendingTotalsByCrop,
@@ -11587,6 +11611,7 @@ export async function loadCrops() {
             expenseTotalsByCrop,
             directExpenseTotalsByCrop,
             operationalExpenseTotalsByCrop,
+            operationalPendingTotalsByCrop,
             incomeTotalsByCrop,
             lossTotalsByCrop,
             pendingTotalsByCrop,
@@ -11598,6 +11623,7 @@ export async function loadCrops() {
             expenseTotalsByCrop,
             directExpenseTotalsByCrop,
             operationalExpenseTotalsByCrop,
+            operationalPendingTotalsByCrop,
             incomeTotalsByCrop,
             lossTotalsByCrop,
             pendingTotalsByCrop,

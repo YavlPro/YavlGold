@@ -255,6 +255,53 @@ function renderBreakdownMoneyRow(label, rawValue) {
   `;
 }
 
+function renderBreakdownSectionSummary(items = []) {
+  const rows = (Array.isArray(items) ? items : []).filter((item) => item && item.label && item.value);
+  if (!rows.length) return '';
+  return `
+    <div class="desglose-section-meta">
+      ${rows.map((item) => `
+        <span class="desglose-section-chip">
+          <span class="desglose-section-chip__label">${escapeHtml(item.label)}</span>
+          <span class="desglose-section-chip__value" data-money="1" data-raw-money="${escapeAttr(item.value)}">${escapeHtml(item.value)}</span>
+        </span>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderBreakdownSection(options = {}) {
+  const title = String(options.title || '').trim();
+  const subtitle = String(options.subtitle || '').trim();
+  const bodyMarkup = String(options.bodyMarkup || '').trim();
+  if (!title || !bodyMarkup) return '';
+
+  const defaultOpen = options.defaultOpen !== false;
+  const openAttr = defaultOpen ? ' open' : '';
+  const summaryMarkup = renderBreakdownSectionSummary(options.summaryItems);
+  const modifierClass = String(options.modifierClass || '').trim();
+
+  return `
+    <details class="desglose-section${modifierClass ? ` ${modifierClass}` : ''}"${openAttr}>
+      <summary class="desglose-section-toggle">
+        <span class="desglose-section-heading">
+          <span class="desglose-section-title">${escapeHtml(title)}</span>
+          ${subtitle ? `<span class="desglose-section-subtitle">${escapeHtml(subtitle)}</span>` : ''}
+        </span>
+        ${summaryMarkup}
+        <svg class="desglose-section-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </summary>
+      <div class="desglose-section-shell">
+        <div class="desglose-section-body">
+          ${bodyMarkup}
+        </div>
+      </div>
+    </details>
+  `;
+}
+
 function renderCard(ciclo, index = 0) {
   const mode = String(ciclo?.mode || 'active').trim().toLowerCase() === 'finished'
     ? 'finished'
@@ -284,9 +331,70 @@ function renderCard(ciclo, index = 0) {
   const desglosePagados = String(desglose.pagados || 'N/D');
   const desgloseCostos = String(desglose.costos || 'N/D');
   const desgloseFiados = String(desglose.fiados || 'N/D');
+  const desgloseFiadosCarteraOperativa = String(desglose.fiadosCarteraOperativa || 'N/D');
   const desglosePerdidasCarteraViva = String(desglose.perdidasCarteraViva || 'N/D');
   const desgloseCotizacion = String(desglose.cotizacion || 'N/D');
   const globalBreakdownMarkup = renderGlobalBreakdown(ciclo);
+  const baseInvestmentUsd = toNumber(ciclo?.baseInvestmentUsd, 0);
+  const directGastosUsd = toNumber(ciclo?.directGastosUsd, 0);
+  const operativosAsociadosUsd = toNumber(ciclo?.operativosAsociadosUsd, 0);
+  const pagadosUsd = toNumber(ciclo?.pagadosUsd, 0);
+  const fiadosUsd = toNumber(ciclo?.fiadosUsd, 0);
+  const fiadosOperativosUsd = toNumber(ciclo?.fiadosCarteraOperativaUsd, 0);
+  const perdidasUsd = toNumber(ciclo?.perdidasUsd, 0);
+  const carteraVivaTotal = baseInvestmentUsd + directGastosUsd + perdidasUsd;
+  const carteraOperativaTotal = operativosAsociadosUsd + fiadosOperativosUsd;
+  const carteraVivaRows = [
+    renderBreakdownMoneyRow('Base inversión multimoneda', desgloseBase),
+    renderBreakdownMoneyRow('Gastos directos del cultivo', desgloseGastosDirectos),
+    renderBreakdownMoneyRow('Pagados cartera viva', desglosePagados),
+    renderBreakdownMoneyRow('Fiados cartera viva', desgloseFiados),
+    renderBreakdownMoneyRow('Pérdidas cartera viva', desglosePerdidasCarteraViva)
+  ];
+  if (globalBreakdownMarkup) {
+    carteraVivaRows.push(globalBreakdownMarkup);
+  }
+  carteraVivaRows.push(`
+    <div class="desglose-row cotizacion">
+      <span>${escapeHtml(desgloseCotizacion)}</span>
+    </div>
+  `);
+  const carteraOperativaRows = [
+    renderBreakdownMoneyRow('Operativos asociados (gastos/donaciones/pérdidas)', desgloseOperativosAsociados),
+    renderBreakdownMoneyRow('Fiados de cartera operativa', desgloseFiadosCarteraOperativa)
+  ];
+  const carteraVivaIsShort = carteraVivaRows.length <= 5;
+  const carteraOperativaIsShort = carteraOperativaRows.length <= 5;
+  const breakdownSectionsMarkup = `
+    <div class="desglose-summary">
+      ${renderBreakdownMoneyRow('Gastos totales del cultivo', desgloseGastos)}
+      ${renderBreakdownMoneyRow('Costos combinados del ciclo', desgloseCostos)}
+    </div>
+    ${renderBreakdownSection({
+      title: 'Cartera Viva',
+      subtitle: 'Facturación histórica del ciclo',
+      modifierClass: 'is-viva',
+      defaultOpen: carteraVivaIsShort,
+      summaryItems: [
+        { label: 'Total', value: formatUsdCompact(carteraVivaTotal) },
+        { label: 'Pagado', value: formatUsdCompact(pagadosUsd) },
+        { label: 'Fiado', value: formatUsdCompact(fiadosUsd) }
+      ],
+      bodyMarkup: carteraVivaRows.join('')
+    })}
+    ${renderBreakdownSection({
+      title: 'Cartera Operativa',
+      subtitle: 'Gastos y fiados vigentes del ciclo',
+      modifierClass: 'is-operational',
+      defaultOpen: carteraOperativaIsShort,
+      summaryItems: [
+        { label: 'Total', value: formatUsdCompact(carteraOperativaTotal) },
+        { label: 'Costo real', value: formatUsdCompact(operativosAsociadosUsd) },
+        { label: 'Fiado', value: formatUsdCompact(fiadosOperativosUsd) }
+      ],
+      bodyMarkup: carteraOperativaRows.join('')
+    })}
+  `;
 
   return `
     <article class="cycle-card crop-card" data-crop-id="${escapeAttr(dataId)}" data-fiados-usd="${escapeAttr(ciclo?.fiadosUsd ?? '')}"${orphanData} style="animation-delay:${index * 70}ms;">
@@ -353,18 +461,7 @@ function renderCard(ciclo, index = 0) {
           </svg>
         </summary>
         <div class="desglose-body">
-          ${renderBreakdownMoneyRow('Base inversión multimoneda', desgloseBase)}
-          ${renderBreakdownMoneyRow('Gastos totales del cultivo', desgloseGastos)}
-          ${renderBreakdownMoneyRow('Gastos directos del cultivo', desgloseGastosDirectos)}
-          ${renderBreakdownMoneyRow('Operativos asociados (gastos/donaciones/pérdidas)', desgloseOperativosAsociados)}
-          ${renderBreakdownMoneyRow('Pagados cartera viva', desglosePagados)}
-          ${renderBreakdownMoneyRow('Fiados cartera viva', desgloseFiados)}
-          ${renderBreakdownMoneyRow('Pérdidas cartera viva', desglosePerdidasCarteraViva)}
-          ${renderBreakdownMoneyRow('Costos combinados del ciclo', desgloseCostos)}
-          ${globalBreakdownMarkup}
-          <div class="desglose-row cotizacion">
-            <span>${escapeHtml(desgloseCotizacion)}</span>
-          </div>
+          ${breakdownSectionsMarkup}
         </div>
       </details>
     </article>

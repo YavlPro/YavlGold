@@ -108,6 +108,7 @@ const state = {
     datasets: createDatasetsState(),
     portfolioByCrop: new Map(),
     operationalExpensesByCrop: new Map(),
+    operationalPendingByCrop: new Map(),
     exchangeRates: { USD: 1, COP: null, VES: null },
     cycleIndex: new Map(),
     initialized: false,
@@ -253,6 +254,11 @@ function sumOutgoingMovementsUsd(movements = [], exchangeRates = state.exchangeR
 function rebuildPortfolioByCrop(exchangeRates = state.exchangeRates) {
     const index = new Map();
     const expenseIndex = new Map();
+    const pendingIndex = new Map();
+    const registerAmount = (targetIndex, cropId, amountUsd) => {
+        if (!(amountUsd > 0)) return;
+        targetIndex.set(cropId, (targetIndex.get(cropId) || 0) + amountUsd);
+    };
     const registerCycle = (cycle) => {
         const cropId = normalizeId(cycle?.crop_id);
         if (!cropId) return;
@@ -271,8 +277,19 @@ function rebuildPortfolioByCrop(exchangeRates = state.exchangeRates) {
         index.set(cropId, current);
 
         const outgoingUsd = sumOutgoingMovementsUsd(cycle?.movements, exchangeRates);
-        if (outgoingUsd > 0) {
-            expenseIndex.set(cropId, (expenseIndex.get(cropId) || 0) + outgoingUsd);
+        if (!(outgoingUsd > 0)) return;
+
+        const status = normalizeToken(cycle?.status);
+        if (isLossCycle(cycle)) {
+            registerAmount(expenseIndex, cropId, outgoingUsd);
+            return;
+        }
+        if (status === 'closed') {
+            registerAmount(expenseIndex, cropId, outgoingUsd);
+            return;
+        }
+        if (ACTIVE_STATUS_VALUES.includes(status)) {
+            registerAmount(pendingIndex, cropId, outgoingUsd);
         }
     };
 
@@ -280,6 +297,7 @@ function rebuildPortfolioByCrop(exchangeRates = state.exchangeRates) {
     state.datasets[SUBVIEW_FINISHED].cycles.forEach(registerCycle);
     state.portfolioByCrop = index;
     state.operationalExpensesByCrop = expenseIndex;
+    state.operationalPendingByCrop = pendingIndex;
 }
 
 function getPortfolioStateByCrop(cropId) {
@@ -293,6 +311,12 @@ function getPortfolioStateByCrop(cropId) {
 function getOperationalExpensesByCrop() {
     return state.operationalExpensesByCrop instanceof Map
         ? new Map(state.operationalExpensesByCrop)
+        : new Map();
+}
+
+function getOperationalPendingByCrop() {
+    return state.operationalPendingByCrop instanceof Map
+        ? new Map(state.operationalPendingByCrop)
         : new Map();
 }
 
@@ -2821,6 +2845,7 @@ async function refreshData(options = {}) {
         state.datasets = createDatasetsState();
         state.portfolioByCrop = new Map();
         state.operationalExpensesByCrop = new Map();
+        state.operationalPendingByCrop = new Map();
         rebuildCycleIndex();
         renderWizard();
         renderFamilyToggle();
@@ -3186,6 +3211,7 @@ function exposeGlobalApi() {
         getSnapshot: buildDebugSnapshot,
         getPortfolioStateByCrop,
         getOperationalExpensesByCrop,
+        getOperationalPendingByCrop,
         createFromPayload,
         updateById,
         deleteById,

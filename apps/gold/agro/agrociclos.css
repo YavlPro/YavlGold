@@ -478,7 +478,129 @@
 .agro-cycles .desglose-body {
   border-top: 1px solid var(--border-neutral);
   background: var(--bg-4);
+  display: grid;
+  gap: 0.75rem;
   padding: 0.2rem 0.6rem 0.45rem;
+}
+
+.agro-cycles .desglose-summary {
+  display: grid;
+  gap: 0.12rem;
+  padding-bottom: 0.15rem;
+  border-bottom: 1px dashed var(--border-neutral);
+}
+
+.agro-cycles .desglose-section {
+  border: 1px solid var(--border-neutral);
+  border-radius: var(--radius-md);
+  background: var(--bg-3);
+  overflow: hidden;
+}
+
+.agro-cycles .desglose-section-toggle {
+  list-style: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.72rem;
+  cursor: pointer;
+  color: var(--text-primary);
+  background: var(--bg-3);
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.agro-cycles .desglose-section-toggle:hover {
+  background: var(--state-hover-overlay);
+}
+
+.agro-cycles .desglose-section-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.agro-cycles .desglose-section-heading {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.agro-cycles .desglose-section-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.agro-cycles .desglose-section-subtitle {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.agro-cycles .desglose-section-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+.agro-cycles .desglose-section-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.18rem 0.5rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-neutral);
+  background: color-mix(in srgb, var(--bg-4) 84%, transparent);
+  line-height: 1.2;
+}
+
+.agro-cycles .desglose-section-chip__label {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.agro-cycles .desglose-section-chip__value {
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.agro-cycles .desglose-section.is-operational .desglose-section-chip__value,
+.agro-cycles .desglose-section.is-operational .desglose-section-chevron {
+  color: var(--gold-4);
+}
+
+.agro-cycles .desglose-section-chevron {
+  color: var(--text-muted);
+  transition: transform 180ms ease, color 180ms ease;
+}
+
+.agro-cycles .desglose-section[open] .desglose-section-chevron {
+  transform: rotate(180deg);
+}
+
+.agro-cycles .desglose-section-shell {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0.72;
+  transition: grid-template-rows 180ms ease, opacity 180ms ease;
+}
+
+.agro-cycles .desglose-section[open] .desglose-section-shell {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.agro-cycles .desglose-section-body {
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 0.72rem;
+}
+
+.agro-cycles .desglose-section[open] .desglose-section-body {
+  padding: 0 0.72rem 0.72rem;
 }
 
 .agro-cycles .desglose-row {
@@ -920,6 +1042,16 @@ body[data-agro-active-view='ciclos'][data-agro-subview='finalizados'] #crops-cyc
 
   .agro-cycles .desglose {
     margin: 0 0.6rem 0.6rem;
+  }
+
+  .agro-cycles .desglose-section-toggle {
+    grid-template-columns: 1fr auto;
+    align-items: start;
+  }
+
+  .agro-cycles .desglose-section-meta {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
   }
 
   .agro-cycle-overview__grid {
