@@ -3,11 +3,11 @@ const AGRO_DEFAULT_VIEW = 'dashboard';
 
 const TAB_TO_VIEW = Object.freeze({
     gastos: 'operaciones',
-    ingresos: 'pagados',
-    pendientes: 'fiados',
-    perdidas: 'perdidas',
-    transferencias: 'donaciones',
-    otros: 'otros',
+    ingresos: 'operaciones',
+    pendientes: 'operaciones',
+    perdidas: 'operaciones',
+    transferencias: 'operaciones',
+    otros: 'operaciones',
     carrito: 'carrito',
     rankings: 'rankings'
 });
@@ -31,7 +31,13 @@ const VIEW_ALIASES = Object.freeze({
     'operational-export': Object.freeze({ view: 'operational', subview: 'export' })
 });
 
-const LEGACY_SIDEBAR_VIEWS = new Set(['pagados', 'fiados', 'perdidas', 'donaciones']);
+const LEGACY_VIEW_REDIRECTS = Object.freeze({
+    pagados: 'operaciones',
+    fiados: 'operaciones',
+    perdidas: 'operaciones',
+    donaciones: 'operaciones',
+    otros: 'operaciones'
+});
 
 const NAV_PARENT_GROUPS = Object.freeze({
     'historial-comercial': Object.freeze({
@@ -42,12 +48,7 @@ const NAV_PARENT_GROUPS = Object.freeze({
 
 const VIEW_SUBNAV_CONFIG = Object.freeze({
     ciclos: Object.freeze({ defaultSubview: 'finalizados', allowed: ['activos', 'finalizados', 'comparar', 'estadisticas'] }),
-    operational: Object.freeze({ defaultSubview: 'active', allowed: ['active', 'finished', 'donations', 'losses', 'export'] }),
-    pagados: Object.freeze({ defaultSubview: 'historial', allowed: ['historial', 'stats'] }),
-    fiados: Object.freeze({ defaultSubview: 'historial', allowed: ['historial', 'stats'] }),
-    perdidas: Object.freeze({ defaultSubview: 'historial', allowed: ['historial', 'stats'] }),
-    donaciones: Object.freeze({ defaultSubview: 'historial', allowed: ['historial', 'stats'] }),
-    otros: Object.freeze({ defaultSubview: 'historial', allowed: ['historial', 'stats'] })
+    operational: Object.freeze({ defaultSubview: 'active', allowed: ['active', 'finished', 'donations', 'losses', 'export'] })
 });
 
 const VIEWS_WITH_SUBNAV = new Set(Object.keys(VIEW_SUBNAV_CONFIG));
@@ -59,11 +60,6 @@ const VIEW_CONFIG = Object.freeze({
     operational: { region: 'operational', label: 'Cartera Operativa', focusSelector: '#agro-operational-root' },
     'task-cycles': { region: 'task-cycles', label: 'Ciclos de Tareas', focusSelector: '#agro-task-cycles-root' },
     operaciones: { region: 'ops', label: 'Operaciones', resolveTab: resolveOperationsTab, dense: true },
-    pagados: { region: 'ops', label: 'Pagados', tab: 'ingresos', focusSelector: '#agro-pagados-dedicated', dense: true },
-    fiados: { region: 'ops', label: 'Fiados', tab: 'pendientes', focusSelector: '#agro-fiados-dedicated', dense: true },
-    perdidas: { region: 'ops', label: 'Perdidas', tab: 'perdidas', focusSelector: '#agro-perdidas-dedicated', dense: true },
-    donaciones: { region: 'ops', label: 'Donaciones', tab: 'transferencias', focusSelector: '#agro-donaciones-dedicated', dense: true },
-    otros: { region: 'ops', label: 'Otros', tab: 'otros', focusSelector: '#agro-otros-dedicated', dense: true },
     carrito: { region: 'ops', label: 'Carrito', tab: 'carrito', focusSelector: '#agro-carrito-dedicated', dense: true },
     rankings: { region: 'ops', label: 'Rankings', tab: 'rankings', focusSelector: '#agro-rankings-dedicated', dense: true },
     'cartera-viva': { region: 'cartera-viva', label: 'Cartera Viva', focusSelector: '#agro-cartera-viva-root' },
@@ -91,6 +87,9 @@ function resolveViewAlias(value) {
 
 function normalizeView(value) {
     const token = normalizeViewToken(value);
+    if (LEGACY_VIEW_REDIRECTS[token]) {
+        return LEGACY_VIEW_REDIRECTS[token];
+    }
     if (VIEW_ALIASES[token]) {
         return VIEW_ALIASES[token].view;
     }
@@ -98,8 +97,7 @@ function normalizeView(value) {
 }
 
 function normalizeBootView(value) {
-    const view = normalizeView(value);
-    return LEGACY_SIDEBAR_VIEWS.has(view) ? 'cartera-viva' : view;
+    return normalizeView(value);
 }
 
 function normalizeSubview(view, subview) {

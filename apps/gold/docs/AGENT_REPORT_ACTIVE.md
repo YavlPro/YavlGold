@@ -11170,3 +11170,63 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
   - confirmar que en `Acciones` solo queda `Nuevo cultivo`;
   - recargar Agro con una sesión que antes hubiera quedado en `Pagados` o `Fiados` y verificar que ya no reaparece esa vista al boot;
   - confirmar que `Rankings`, `Mi Carrito`, `Cartera Viva` y `Operación Comercial` siguen navegando normal.
+
+---
+
+## 2026-04-08 - Limpieza de vistas legacy duplicadas en Agro
+
+### Diagnóstico
+
+- El código zombie real no estaba en el motor base del facturero, sino en cinco vistas dedicadas duplicadas dentro de `agro.js` e `index.html`: `Pagados`, `Fiados`, `Pérdidas`, `Donaciones` y `Otros`.
+- Esas vistas seguían vivas por tres motivos:
+  - `initAgro()` todavía ejecutaba `initPagadosDedicatedView()`, `initFiadosDedicatedView()`, `initPerdidasDedicatedView()`, `initDonacionesDedicatedView()` e `initOtrosDedicatedView()`.
+  - `index.html` seguía montando todo el DOM dedicado de esas pantallas, aunque el sidebar principal ya no las expusiera.
+  - `agro-shell.js` seguía aceptando vistas legacy (`pagados`, `fiados`, `perdidas`, `donaciones`, `otros`) como `activeView`.
+- El motor viejo de tabs del facturero (`gastos`, `ingresos`, `pendientes`, `perdidas`, `transferencias`, `otros`) no se eliminó en esta pasada porque todavía soporta deep links y notificaciones (`window.YG_AGRO_NAV.openFacturero(...)`). Se preservó para no romper ese flujo.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro.js`
+  - Se eliminó el bloque completo de vistas dedicadas duplicadas de `Pagados`, `Fiados`, `Pérdidas`, `Donaciones` y `Otros`.
+  - Se removieron sus estados/cachés auxiliares y su actualización de stats dedicadas.
+  - `loadIncomes()` ya no alimenta ni re-renderiza la vista dedicada de pagados.
+  - `refreshFactureroHistory(...)` ya no rellena `lossCache`, `transferCache` ni `otherDedicatedCache`, que solo servían al legacy duplicado.
+  - `initAgro()` dejó de inicializar las cinco vistas dedicadas eliminadas.
+
+- `apps/gold/agro/index.html`
+  - Se eliminó el item lateral `Otros` del grupo `Operaciones`.
+  - Se removió todo el DOM de las vistas dedicadas legacy: `agro-pagados-dedicated`, `agro-fiados-dedicated`, `agro-perdidas-dedicated`, `agro-donaciones-dedicated` y `agro-otros-dedicated`.
+  - Se removieron los títulos/subtítulos de header específicos de esas vistas.
+  - `window.refreshAgroStats()` dejó de invocar `window._updateDedicatedViewStats(...)`.
+
+- `apps/gold/agro/agro-shell.js`
+  - Se reemplazó `LEGACY_SIDEBAR_VIEWS` por `LEGACY_VIEW_REDIRECTS`.
+  - Cualquier token legacy (`pagados`, `fiados`, `perdidas`, `donaciones`, `otros`) ahora se redirige a `operaciones`.
+  - `TAB_TO_VIEW` ya no intenta abrir vistas eliminadas; los tabs legacy caen en `operaciones`, mientras `carrito` y `rankings` conservan sus vistas dedicadas activas.
+  - Se eliminaron del `VIEW_CONFIG` y `VIEW_SUBNAV_CONFIG` las vistas legacy retiradas.
+
+- `apps/gold/agro/agro-selection.js`
+  - Se simplificó el estado de selección: ya no existe tratamiento especial para `pagados` dedicado ni listener a `agro:pagados:view-rendered`.
+
+- `apps/gold/agro/agro-operations.css`
+  - Se eliminaron selectores huérfanos específicos de `pagados`, `fiados`, `perdidas`, `donaciones` y `otros`.
+  - Se preservó la base `.agro-pagados-dedicated` porque aún la reutilizan `carrito` y `rankings`.
+
+### Build status
+
+- `pnpm build:gold` → **OK**
+- Resultado adicional:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota de entorno:
+  - warning de engine por `node v25.6.0` vs `20.x`;
+  - no bloqueó el build.
+
+### QA sugerido
+
+- Abrir Agro y verificar que ya no exista ninguna ruta visible hacia `Pagados`, `Fiados`, `Pérdidas`, `Donaciones` u `Otros` como vistas dedicadas.
+- Confirmar que `Mi Carrito` y `Rankings` siguen abriendo sus vistas dedicadas.
+- Probar al menos una notificación con deep link a `Facturero` y validar que todavía cae en `Operaciones` sin error.
