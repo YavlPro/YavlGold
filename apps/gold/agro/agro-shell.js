@@ -31,6 +31,8 @@ const VIEW_ALIASES = Object.freeze({
     'operational-export': Object.freeze({ view: 'operational', subview: 'export' })
 });
 
+const LEGACY_SIDEBAR_VIEWS = new Set(['pagados', 'fiados', 'perdidas', 'donaciones']);
+
 const NAV_PARENT_GROUPS = Object.freeze({
     'historial-comercial': Object.freeze({
         views: Object.freeze(['cartera-viva', 'carrito', 'operational']),
@@ -93,6 +95,11 @@ function normalizeView(value) {
         return VIEW_ALIASES[token].view;
     }
     return Object.prototype.hasOwnProperty.call(VIEW_CONFIG, token) ? token : AGRO_DEFAULT_VIEW;
+}
+
+function normalizeBootView(value) {
+    const view = normalizeView(value);
+    return LEGACY_SIDEBAR_VIEWS.has(view) ? 'cartera-viva' : view;
 }
 
 function normalizeSubview(view, subview) {
@@ -299,7 +306,7 @@ export function initAgroShell() {
     if (!sidebar || !backdrop || !toggle) return null;
 
     const storedViewToken = readStoredViewToken();
-    let activeView = normalizeView(storedViewToken);
+    let activeView = normalizeBootView(storedViewToken);
     let activeSubview = normalizeSubview(activeView, resolveViewAlias(storedViewToken)?.subview);
     let sidebarOpen = false;
     let ignoreToggleHitClose = false;

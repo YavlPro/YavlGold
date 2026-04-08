@@ -11097,3 +11097,76 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
   - abrir Rankings y confirmar que `Top Cultivos` muestre `Rentabilidad real`;
   - registrar un gasto cerrado y una pérdida en Operación Comercial y verificar que el ranking reacciona en la siguiente carga;
   - confirmar que un fiado abierto no reduzca la rentabilidad del cultivo.
+
+## [2026-04-08] Sidebar Agro — retiro de historial legacy y acción lateral redundante
+
+### Diagnóstico
+
+- El bloque visible `Historial legacy` no nace en `agro.js`; está declarado directamente en `apps/gold/agro/index.html` dentro del sidebar shell.
+- Sus accesos laterales exponen vistas legacy dedicadas:
+  - `pagados`
+  - `fiados`
+  - `perdidas`
+  - `donaciones`
+- Esas vistas siguen cableadas en `apps/gold/agro/agro-shell.js`, por lo que quitar solo el HTML dejaría dos riesgos:
+  - una vista legacy persistida en `localStorage` podría seguir reabriendo al cargar;
+  - el shell seguiría considerándolas rutas válidas aunque ya no existan accesos visibles.
+- El botón lateral `Nuevo registro` también está en `apps/gold/agro/index.html`, dentro del grupo `Acciones`. La acción global `new-record` continúa existiendo en `apps/gold/agro/agro-shell.js` y además se usa en el header superior, así que no conviene eliminar la acción global; solo el acceso redundante del sidebar.
+
+### Plan
+
+- Retirar del sidebar el grupo `Historial legacy` en `apps/gold/agro/index.html`.
+- Retirar del sidebar el botón lateral `Nuevo registro`, preservando el acceso superior y el wiring global `new-record`.
+- Blindar `apps/gold/agro/agro-shell.js` para que si existe una vista legacy persistida del sidebar, el boot redirija a una vista vigente en vez de restaurarla.
+- Ejecutar `pnpm build:gold` y cerrar esta sesión en el reporte activo.
+
+### Cambios aplicados
+
+- `apps/gold/agro/index.html`
+  - Se eliminó del sidebar el grupo completo `Historial legacy` con sus accesos:
+    - `Pagados`
+    - `Fiados`
+    - `Pérdidas`
+    - `Donaciones`
+  - Se eliminó del grupo `Acciones` el botón lateral `Nuevo registro`.
+  - Se preservó el botón superior `Nuevo registro` del header para no romper el acceso global al wizard.
+- `apps/gold/agro/agro-shell.js`
+  - Se agregó `LEGACY_SIDEBAR_VIEWS` para identificar vistas legacy retiradas del menú lateral.
+  - Se agregó `normalizeBootView(...)` y el boot del shell ya no restaura `pagados`, `fiados`, `perdidas` ni `donaciones` desde storage.
+  - La redirección de arranque cae en `cartera-viva`, que es la familia vigente del historial comercial.
+  - No se removieron todavía las vistas legacy del `VIEW_CONFIG` ni del monolito; quedan dormidas para evitar regresiones en wiring interno no auditado en esta pasada.
+
+### Resultado
+
+- El sidebar ya no expone el historial legacy como navegación primaria.
+- El botón lateral `Nuevo registro` deja de duplicar la acción disponible arriba.
+- Un usuario que tenga persistida una vista legacy ya no reingresa a ella al recargar Agro; aterriza en una vista vigente.
+- La cirugía fue deliberadamente conservadora:
+  - se retiró navegación visible;
+  - se corrigió persistencia de arranque;
+  - no se purgó todavía el código legacy renderizado en `agro.js`.
+
+### Build status
+
+- `pnpm build:gold` → **OK**
+- Resultado adicional:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota de entorno:
+  - warning de engine por `node v25.6.0` vs `20.x`;
+  - no bloqueó el build.
+- Nota adicional:
+  - warning de chunks > 500 kB en bundles existentes;
+  - no bloqueó el build.
+
+### QA sugerido
+
+- No se ejecutó QA manual en navegador en esta iteración.
+- Validación posterior sugerida:
+  - abrir el sidebar y confirmar que ya no existe el bloque `Historial legacy`;
+  - confirmar que en `Acciones` solo queda `Nuevo cultivo`;
+  - recargar Agro con una sesión que antes hubiera quedado en `Pagados` o `Fiados` y verificar que ya no reaparece esa vista al boot;
+  - confirmar que `Rankings`, `Mi Carrito`, `Cartera Viva` y `Operación Comercial` siguen navegando normal.
