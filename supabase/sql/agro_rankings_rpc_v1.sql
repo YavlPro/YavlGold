@@ -11,12 +11,12 @@ BEGIN
         EXECUTE 'ALTER TABLE public.agro_income ENABLE ROW LEVEL SECURITY';
     END IF;
 
-    IF to_regclass('public.agro_expenses') IS NOT NULL THEN
-        EXECUTE 'ALTER TABLE public.agro_expenses ENABLE ROW LEVEL SECURITY';
+    IF to_regclass('public.agro_operational_cycles') IS NOT NULL THEN
+        EXECUTE 'ALTER TABLE public.agro_operational_cycles ENABLE ROW LEVEL SECURITY';
     END IF;
 
-    IF to_regclass('public.agro_expense') IS NOT NULL THEN
-        EXECUTE 'ALTER TABLE public.agro_expense ENABLE ROW LEVEL SECURITY';
+    IF to_regclass('public.agro_operational_movements') IS NOT NULL THEN
+        EXECUTE 'ALTER TABLE public.agro_operational_movements ENABLE ROW LEVEL SECURITY';
     END IF;
 
     IF to_regclass('public.agro_pending') IS NOT NULL THEN
@@ -390,11 +390,10 @@ AS $$
 DECLARE
     v_uid uuid := auth.uid();
     v_limit integer := LEAST(GREATEST(COALESCE(p_limit, 5), 1), 20);
-    v_expense_table text;
     v_income_amount_expr text := 'COALESCE(monto, 0)';
-    v_expense_amount_expr text := 'COALESCE(amount, 0)';
+    v_operational_amount_expr text := 'COALESCE(m.amount, 0)';
     v_income_date_field text := 'fecha';
-    v_expense_date_field text := 'date';
+    v_operational_date_expr text := 'm.movement_date';
     v_inc_sql text;
     v_exp_sql text;
     v_sql text;
@@ -404,14 +403,6 @@ BEGIN
     END IF;
 
     IF to_regclass('public.agro_income') IS NULL THEN
-        RETURN;
-    END IF;
-
-    IF to_regclass('public.agro_expenses') IS NOT NULL THEN
-        v_expense_table := 'agro_expenses';
-    ELSIF to_regclass('public.agro_expense') IS NOT NULL THEN
-        v_expense_table := 'agro_expense';
-    ELSE
         RETURN;
     END IF;
 
@@ -446,30 +437,6 @@ BEGIN
 
     IF EXISTS (
         SELECT 1 FROM information_schema.columns
-        WHERE table_schema = 'public' AND table_name = v_expense_table AND column_name = 'monto_usd'
-    ) THEN
-        IF EXISTS (
-            SELECT 1 FROM information_schema.columns
-            WHERE table_schema = 'public' AND table_name = v_expense_table AND column_name = 'monto'
-        ) THEN
-            v_expense_amount_expr := 'COALESCE(monto_usd, monto, 0)';
-        ELSIF EXISTS (
-            SELECT 1 FROM information_schema.columns
-            WHERE table_schema = 'public' AND table_name = v_expense_table AND column_name = 'amount'
-        ) THEN
-            v_expense_amount_expr := 'COALESCE(monto_usd, amount, 0)';
-        ELSE
-            v_expense_amount_expr := 'COALESCE(monto_usd, 0)';
-        END IF;
-    ELSIF EXISTS (
-        SELECT 1 FROM information_schema.columns
-        WHERE table_schema = 'public' AND table_name = v_expense_table AND column_name = 'monto'
-    ) THEN
-        v_expense_amount_expr := 'COALESCE(monto, 0)';
-    END IF;
-
-    IF EXISTS (
-        SELECT 1 FROM information_schema.columns
         WHERE table_schema = 'public' AND table_name = 'agro_income' AND column_name = 'date'
     ) THEN
         v_income_date_field := 'date';
@@ -480,16 +447,38 @@ BEGIN
         v_income_date_field := 'created_at';
     END IF;
 
-    IF EXISTS (
-        SELECT 1 FROM information_schema.columns
-        WHERE table_schema = 'public' AND table_name = v_expense_table AND column_name = 'fecha'
-    ) THEN
-        v_expense_date_field := 'fecha';
-    ELSIF EXISTS (
-        SELECT 1 FROM information_schema.columns
-        WHERE table_schema = 'public' AND table_name = v_expense_table AND column_name = 'created_at'
-    ) THEN
-        v_expense_date_field := 'created_at';
+    IF to_regclass('public.agro_operational_cycles') IS NOT NULL
+       AND to_regclass('public.agro_operational_movements') IS NOT NULL THEN
+        IF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = 'agro_operational_movements' AND column_name = 'amount_usd'
+        ) THEN
+            IF EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_schema = 'public' AND table_name = 'agro_operational_movements' AND column_name = 'amount'
+            ) THEN
+                v_operational_amount_expr := 'COALESCE(m.amount_usd, m.amount, 0)';
+            ELSE
+                v_operational_amount_expr := 'COALESCE(m.amount_usd, 0)';
+            END IF;
+        ELSIF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = 'agro_operational_movements' AND column_name = 'amount'
+        ) THEN
+            v_operational_amount_expr := 'COALESCE(m.amount, 0)';
+        END IF;
+
+        IF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = 'agro_operational_movements' AND column_name = 'movement_date'
+        ) THEN
+            v_operational_date_expr := 'm.movement_date';
+        ELSIF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = 'agro_operational_movements' AND column_name = 'created_at'
+        ) THEN
+            v_operational_date_expr := 'm.created_at';
+        END IF;
     END IF;
 
     v_inc_sql := format('
@@ -520,26 +509,51 @@ BEGIN
 
     v_inc_sql := v_inc_sql || ' GROUP BY crop_id';
 
-    v_exp_sql := format('
-        SELECT
-            crop_id,
-            SUM(%1$s)::numeric AS gastos
-        FROM public.%2$I
-        WHERE user_id = $1
-          AND crop_id IS NOT NULL
-          AND ($2::date IS NULL OR %3$I >= $2::date)
-          AND ($3::date IS NULL OR %3$I <= $3::date)
-          AND ($4::uuid IS NULL OR crop_id = $4::uuid)
-    ', v_expense_amount_expr, v_expense_table, v_expense_date_field);
+    IF to_regclass('public.agro_operational_cycles') IS NOT NULL
+       AND to_regclass('public.agro_operational_movements') IS NOT NULL THEN
+        v_exp_sql := format('
+            SELECT
+                c.crop_id,
+                SUM(%1$s)::numeric AS gastos
+            FROM public.agro_operational_cycles c
+            INNER JOIN public.agro_operational_movements m
+                ON m.cycle_id = c.id
+               AND m.user_id = c.user_id
+            WHERE c.user_id = $1
+              AND c.crop_id IS NOT NULL
+              AND m.direction = ''out''
+              AND (
+                    c.economic_type = ''loss''
+                    OR c.status IN (''closed'', ''lost'')
+              )
+              AND ($2::date IS NULL OR %2$s >= $2::date)
+              AND ($3::date IS NULL OR %2$s <= $3::date)
+              AND ($4::uuid IS NULL OR c.crop_id = $4::uuid)
+        ', v_operational_amount_expr, v_operational_date_expr);
 
-    IF EXISTS (
-        SELECT 1 FROM information_schema.columns
-        WHERE table_schema = 'public' AND table_name = v_expense_table AND column_name = 'deleted_at'
-    ) THEN
-        v_exp_sql := v_exp_sql || ' AND deleted_at IS NULL';
+        IF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = 'agro_operational_cycles' AND column_name = 'deleted_at'
+        ) THEN
+            v_exp_sql := v_exp_sql || ' AND c.deleted_at IS NULL';
+        END IF;
+
+        IF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = 'agro_operational_movements' AND column_name = 'deleted_at'
+        ) THEN
+            v_exp_sql := v_exp_sql || ' AND m.deleted_at IS NULL';
+        END IF;
+
+        v_exp_sql := v_exp_sql || ' GROUP BY c.crop_id';
+    ELSE
+        v_exp_sql := '
+            SELECT
+                NULL::uuid AS crop_id,
+                NULL::numeric AS gastos
+            WHERE FALSE
+        ';
     END IF;
-
-    v_exp_sql := v_exp_sql || ' GROUP BY crop_id';
 
     v_sql := format('
         WITH inc AS (

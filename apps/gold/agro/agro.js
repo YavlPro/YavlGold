@@ -15489,8 +15489,8 @@ function renderOpsRankings() {
 
     if (topCropsTitle) {
         topCropsTitle.textContent = hasSelectedCrop
-            ? 'Pagados del cultivo'
-            : 'Top Cultivos (Pagados)';
+            ? 'Rentabilidad real del cultivo'
+            : 'Top Cultivos (Rentabilidad real)';
     }
 
     if (opsRankingsState.loading) {
@@ -15562,14 +15562,14 @@ function renderOpsRankings() {
             index,
             name: resolveOpsRankingCropLabel(row),
             value: formatOpsRankingCurrency(profit),
-            meta: `Pagados: ${formatOpsRankingCurrency(row?.ingresos)} · Gastos vinculados: ${formatOpsRankingCurrency(row?.gastos)}`,
+            meta: `Ingresos cobrados: ${formatOpsRankingCurrency(row?.ingresos)} · Gastos cerrados / pérdidas: ${formatOpsRankingCurrency(row?.gastos)}`,
             valueColor: profitColor,
             maskMetaMoney: true
         });
     }, {
         emptyText: hasSelectedCrop
-            ? 'Sin pagados registrados para este cultivo en el rango seleccionado.'
-            : 'Sin pagados registrados en el rango seleccionado.'
+            ? 'Sin ingresos cobrados para este cultivo en el rango seleccionado.'
+            : 'Sin ingresos cobrados en el rango seleccionado.'
     });
 
     applyBuyerPrivacy(panel, opsRankingsState.hideNames);
@@ -15726,7 +15726,7 @@ function exportOpsRankingsMarkdown() {
         return acc;
     }, { operations: 0, total: 0 });
 
-    appendSection('Top Clientes (Compras)', namedTopClientsMd, (row) => {
+    appendSection('Top Clientes (Cobrado)', namedTopClientsMd, (row) => {
         const name = getOpsRankingDisplayName(pickOpsBuyerName(row));
         const operationsLabel = formatOpsRankingCount(row?.operations, 'operación', 'operaciones');
         return `${name} · ${formatOpsRankingCurrency(row?.total)} · ${operationsLabel} · última ${formatOpsRankingDate(row?.last_date)}`;
@@ -15741,17 +15741,17 @@ function exportOpsRankingsMarkdown() {
         return `${name} · ${formatOpsRankingCurrency(row?.total_pending)} · ${pendingLabel} · próximo ${formatOpsRankingDate(row?.next_due_date)}`;
     });
 
-    const topCropsTitle = selectedCropId ? 'Pagados del cultivo' : 'Top Cultivos (Pagados)';
+    const topCropsTitle = selectedCropId ? 'Rentabilidad real del cultivo' : 'Top Cultivos (Rentabilidad real)';
     md += `## ${topCropsTitle}\n\n`;
-    md += `> Nota: No incluye inversión base ni fiados. Ver card del cultivo para rentabilidad completa.\n\n`;
+    md += `> Nota: Usa ingresos cobrados menos gastos cerrados y pérdidas confirmadas de Operación Comercial. No incluye inversión base ni fiados.\n\n`;
     if (!Array.isArray(opsRankingsState.topCrops) || opsRankingsState.topCrops.length === 0) {
         md += selectedCropId
-            ? 'Sin pagados registrados para este cultivo en el rango seleccionado.\n\n'
-            : 'Sin pagados registrados en el rango seleccionado.\n\n';
+            ? 'Sin ingresos cobrados para este cultivo en el rango seleccionado.\n\n'
+            : 'Sin ingresos cobrados en el rango seleccionado.\n\n';
     } else {
         opsRankingsState.topCrops.forEach((row, index) => {
             const label = resolveOpsRankingCropLabel(row);
-            md += `${index + 1}. ${label} · Neto cobrado (Pagados - Gastos) ${formatOpsRankingCurrency(row?.profit)} · Pagados: ${formatOpsRankingCurrency(row?.ingresos)} · Gastos vinculados: ${formatOpsRankingCurrency(row?.gastos)}\n`;
+            md += `${index + 1}. ${label} · Rentabilidad real ${formatOpsRankingCurrency(row?.profit)} · Ingresos cobrados: ${formatOpsRankingCurrency(row?.ingresos)} · Gastos cerrados / pérdidas: ${formatOpsRankingCurrency(row?.gastos)}\n`;
         });
         md += `\n`;
     }
@@ -15811,6 +15811,7 @@ function initOpsRankingsPanel() {
         document.addEventListener('data-refresh', refreshOpsRankingsIfVisible);
         document.addEventListener('agro:income:changed', refreshOpsRankingsIfVisible);
         document.addEventListener('agro:crop:changed', refreshOpsRankingsIfVisible);
+        window.addEventListener(AGRO_OPERATIONAL_PORTFOLIO_UPDATED_EVENT, refreshOpsRankingsIfVisible);
     }
 
     opsRankingsState.range = readOpsRankingsRange();

@@ -11010,3 +11010,90 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
   - probar las cuatro opciones del modal y confirmar que cada una aparece en `Operación Comercial`;
   - revisar que el item pase a `Procesados` sin desaparecer del carrito;
   - confirmar que `Fiado` siga apareciendo como deuda y no como gasto real en los totales del cultivo.
+
+---
+
+## [2026-04-08] Rankings — rentabilidad real desde cartera consolidada
+
+### Diagnóstico
+
+- `Top Clientes` ya venía leyendo únicamente `agro_income`, por lo que el problema no estaba en esa RPC sino en el copy del panel y en la mezcla conceptual con otras tarjetas.
+- La distorsión real estaba en `public.agro_rank_top_crops_profit`:
+  - seguía restando `agro_expenses` / `agro_expense`;
+  - eso dejaba fuera la nueva capa de `Operación Comercial`;
+  - y mantenía una dependencia legacy justo en el cálculo de rentabilidad.
+- El render de rankings seguía comunicando esa lectura vieja con textos como:
+  - `Top Clientes (Compras)`
+  - `Top Cultivos (Pagados)`
+  - `Gastos vinculados`
+- Además, Rankings no estaba escuchando explícitamente el evento `agro:operational-portfolio-updated`, así que los cambios en operación comercial no tenían un refresh dedicado sobre esa vista.
+
+### Plan
+
+- Mantener `agro_rank_top_clients` sobre `agro_income` y alinear solo su copy a `Cobrado`.
+- Reescribir `agro_rank_top_crops_profit` para calcular:
+  - ingresos desde `agro_income`;
+  - gastos desde `agro_operational_cycles` + `agro_operational_movements`;
+  - incluyendo solo salidas `out` de ciclos `closed` o `loss/lost`.
+- No tocar `agro_rank_pending_clients` en esta cirugía, porque su tarjeta sigue siendo una lectura explícita de deuda pendiente.
+- Ajustar el render y export Markdown para hablar de:
+  - `Rentabilidad real`
+  - `Ingresos cobrados`
+  - `Gastos cerrados / pérdidas`
+- Enlazar el refresh de rankings al evento `agro:operational-portfolio-updated`.
+
+### Cambios aplicados
+
+- `supabase/sql/agro_rankings_rpc_v1.sql`
+  - Se removió la dependencia de `agro_expenses/agro_expense` para `agro_rank_top_crops_profit`.
+  - La RPC ahora suma:
+    - `ingresos` desde `agro_income`;
+    - `gastos` desde `agro_operational_cycles` + `agro_operational_movements`.
+  - Fórmula aplicada:
+    - solo movimientos `direction = 'out'`;
+    - solo ciclos con `status IN ('closed', 'lost')` o `economic_type = 'loss'`;
+    - sin restar fiados ni estados abiertos.
+  - También se habilitó RLS en `agro_operational_cycles` y `agro_operational_movements` dentro del bloque defensivo inicial.
+- `apps/gold/agro/index.html`
+  - `Top Clientes (Compras)` pasó a `Top Clientes (Cobrado)`.
+  - `Top Cultivos (Pagados)` pasó a `Top Cultivos (Rentabilidad real)`.
+  - La nota ahora explica que el cálculo usa ingresos cobrados menos gastos cerrados y pérdidas confirmadas de Operación Comercial.
+- `apps/gold/agro/agro.js`
+  - Se actualizó el copy del panel y del export Markdown:
+    - `Ingresos cobrados`
+    - `Gastos cerrados / pérdidas`
+    - `Rentabilidad real del cultivo`
+  - Se cambió el texto de estados vacíos para dejar de hablar de `pagados` ambiguamente.
+  - Rankings ahora escucha `agro:operational-portfolio-updated` para refrescar cuando cambie la cartera operativa.
+
+### Resultado
+
+- `Top Clientes` queda explícitamente anclado a dinero cobrado real (`agro_income`).
+- `Top Cultivos` ya no depende de `agro_expenses` legacy para calcular rentabilidad.
+- Las deudas abiertas (`fiados`) dejan de contaminar la rentabilidad del cultivo en rankings.
+- La UI comunica correctamente el origen de los datos y ya no mezcla copy legacy con la capa consolidada actual.
+
+### Build status
+
+- `pnpm build:gold` → **OK**
+- Resultado adicional:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota de entorno:
+  - warning de engine por `node v25.6.0` vs `20.x`;
+  - no bloqueó el build.
+- Nota adicional:
+  - Vite mostró warning de chunks > 500 kB en bundles grandes existentes;
+  - no bloqueó el build ni provino de un error funcional del cambio.
+
+### QA sugerido
+
+- No se ejecutó QA manual en navegador en esta iteración.
+- Validación posterior sugerida:
+  - abrir Rankings y confirmar que `Top Clientes` muestre `Cobrado`;
+  - abrir Rankings y confirmar que `Top Cultivos` muestre `Rentabilidad real`;
+  - registrar un gasto cerrado y una pérdida en Operación Comercial y verificar que el ranking reacciona en la siguiente carga;
+  - confirmar que un fiado abierto no reduzca la rentabilidad del cultivo.
