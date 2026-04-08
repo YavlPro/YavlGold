@@ -301,6 +301,29 @@ function escapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
+function escapeAttribute(value) {
+    return escapeHtml(value).replace(/"/g, '&quot;');
+}
+
+function renderBuyerNameNode(value, options = {}) {
+    const tag = String(options.tag || 'span').trim() || 'span';
+    const className = String(options.className || '').trim();
+    const fallback = String(options.fallback || 'Cliente').trim() || 'Cliente';
+    const safeValue = String(value || '').trim() || fallback;
+    const classAttr = className ? ` class="${escapeAttribute(className)}"` : '';
+
+    return `<${tag}${classAttr} data-buyer-name="1" data-raw-name="${escapeAttribute(safeValue)}">${escapeHtml(safeValue)}</${tag}>`;
+}
+
+function renderMoneyNode(value, options = {}) {
+    const tag = String(options.tag || 'span').trim() || 'span';
+    const className = String(options.className || '').trim();
+    const safeValue = String(value || '').trim() || '$0.00';
+    const classAttr = className ? ` class="${escapeAttribute(className)}"` : '';
+
+    return `<${tag}${classAttr} data-money="1" data-raw-money="${escapeAttribute(safeValue)}">${escapeHtml(safeValue)}</${tag}>`;
+}
+
 function normalizeCropId(value) {
     const token = String(value || '').trim();
     return token || null;
@@ -1627,6 +1650,7 @@ function resolveCategorySummary(rows, category) {
                 mode: 'family',
                 label: familySummary.label,
                 amount: categoryAmount,
+                amountIsMoney: false,
                 copy,
                 stats: [
                     { label: 'Pendiente', value: familySummary.pendingConcrete },
@@ -1641,6 +1665,7 @@ function resolveCategorySummary(rows, category) {
             mode: 'family-empty',
             label: getOperationalFamilyMeta(activeOperationalFamily).label,
             amount: 'Sin base operativa',
+            amountIsMoney: false,
             copy: 'No hay registros visibles de esta familia en el contexto actual.',
             stats: [
                 { label: 'Pendiente', value: '0 unidades' },
@@ -1656,6 +1681,7 @@ function resolveCategorySummary(rows, category) {
             mode: 'overview',
             label: 'Base operativa',
             amount: 'Separada por unidad',
+            amountIsMoney: false,
             copy: 'Sacos, cestas y kilogramos se leen como familias independientes.',
             stats: familySummaries.map((summary) => ({
                 label: summary.label,
@@ -1684,11 +1710,12 @@ function resolveCategorySummary(rows, category) {
         return {
             label: 'Cobrado',
             amount: formatMoney(paid),
+            amountIsMoney: true,
             copy: `${formatCount(count)} cliente${count === 1 ? '' : 's'} con saldo cerrado`,
             stats: [
                 { label: 'Clientes', value: formatCount(count) },
-                { label: 'Fiado total', value: formatMoney(sumField(rows, 'credited_total')) },
-                { label: 'Por revisar', value: formatMoney(review) }
+                { label: 'Fiado total', value: formatMoney(sumField(rows, 'credited_total')), isMoney: true },
+                { label: 'Por revisar', value: formatMoney(review), isMoney: true }
             ]
         };
     }
@@ -1697,11 +1724,12 @@ function resolveCategorySummary(rows, category) {
         return {
             label: 'Pérdidas',
             amount: formatMoney(loss),
+            amountIsMoney: true,
             copy: `${formatCount(count)} caso${count === 1 ? '' : 's'} cerrados fuera de cartera`,
             stats: [
                 { label: 'Casos', value: formatCount(count) },
-                { label: 'Cobrado antes', value: formatMoney(paid) },
-                { label: 'Por revisar', value: formatMoney(review) }
+                { label: 'Cobrado antes', value: formatMoney(paid), isMoney: true },
+                { label: 'Por revisar', value: formatMoney(review), isMoney: true }
             ]
         };
     }
@@ -1709,13 +1737,14 @@ function resolveCategorySummary(rows, category) {
     return {
         label: 'Por cobrar',
         amount: formatMoney(pending),
+        amountIsMoney: true,
         copy: pendingClients > 0
             ? `${formatCount(pendingClients)} cliente${pendingClients === 1 ? '' : 's'} con saldo activo${readyClients > 0 ? ` · ${formatCount(readyClients)} listos para registrar` : ''}`
             : `${formatCount(count)} cliente${count === 1 ? '' : 's'} listos para registrar`,
         stats: [
             { label: 'Clientes', value: formatCount(count) },
-            { label: 'Ya cobrado', value: formatMoney(paid) },
-            { label: 'Por revisar', value: formatMoney(review) }
+            { label: 'Ya cobrado', value: formatMoney(paid), isMoney: true },
+            { label: 'Por revisar', value: formatMoney(review), isMoney: true }
         ]
     };
 }
@@ -1740,12 +1769,18 @@ function renderHeaderSummary(filteredRows, options = {}) {
     }
 
     const summary = resolveCategorySummary(filteredRows, activeCategory);
+    const amountMarkup = summary.amountIsMoney
+        ? renderMoneyNode(summary.amount, {
+            tag: 'strong',
+            className: 'cartera-viva-summary-strip__amount'
+        })
+        : `<strong class="cartera-viva-summary-strip__amount">${escapeHtml(summary.amount)}</strong>`;
     return `
         <div class="cartera-viva-summary-strip">
             <div class="cartera-viva-summary-strip__main">
                 <p class="cartera-viva-summary-strip__label">${summary.label}</p>
                 <div class="cartera-viva-summary-strip__amount-row">
-                    <strong class="cartera-viva-summary-strip__amount">${summary.amount}</strong>
+                    ${amountMarkup}
                     <p class="cartera-viva-summary-strip__copy">${summary.copy}</p>
                 </div>
             </div>
@@ -1758,7 +1793,12 @@ function renderHeaderSummary(filteredRows, options = {}) {
                 ${summary.stats.map((stat) => `
                         <div class="cartera-viva-summary-strip__stat">
                             <span class="cartera-viva-summary-strip__stat-label">${stat.label}</span>
-                            <strong class="cartera-viva-summary-strip__stat-value">${stat.value}</strong>
+                            ${stat.isMoney
+                ? renderMoneyNode(stat.value, {
+                    tag: 'strong',
+                    className: 'cartera-viva-summary-strip__stat-value'
+                })
+                : `<strong class="cartera-viva-summary-strip__stat-value">${escapeHtml(stat.value)}</strong>`}
                             ${stat.copy ? `<span class="cartera-viva-summary-strip__stat-copy">${stat.copy}</span>` : ''}
                         </div>
                     `).join('')}
@@ -1831,6 +1871,20 @@ function renderCropSelector() {
     `;
 }
 
+function renderPrivacyStrip() {
+    return `
+        <div class="agro-privacy-strip cartera-viva-privacy-strip" aria-label="Controles de privacidad">
+            <span class="agro-privacy-strip__label">Privacidad</span>
+            <button type="button" class="btn-privacy-toggle" data-buyer-privacy-control="toggle" aria-pressed="false">
+                👁 Ocultar nombres
+            </button>
+            <button type="button" class="btn-privacy-toggle" data-money-privacy-control="toggle" aria-pressed="false">
+                💰 Ocultar montos
+            </button>
+        </div>
+    `;
+}
+
 function renderToolbarControls() {
     return `
         <div class="cartera-viva-toolbar">
@@ -1843,6 +1897,7 @@ function renderToolbarControls() {
                     Nuevo cliente
                 </button>
             </div>
+            ${renderPrivacyStrip()}
         </div>
     `;
 }
@@ -2065,13 +2120,13 @@ function renderSupportChips(row) {
         chips.push(`<span class="cartera-viva-chip">${partialChip}</span>`);
     }
     if (Number(row?.loss_total || 0) > 0) {
-        chips.push(`<span class="cartera-viva-chip is-loss">Pérdida ${formatMoney(row.loss_total)}</span>`);
+        chips.push(`<span class="cartera-viva-chip is-loss">Pérdida ${renderMoneyNode(formatMoney(row.loss_total))}</span>`);
     }
     if (review > 0) {
-        chips.push(`<span class="cartera-viva-chip is-review">Por revisar ${formatMoney(review)}</span>`);
+        chips.push(`<span class="cartera-viva-chip is-review">Por revisar ${renderMoneyNode(formatMoney(review))}</span>`);
     }
     if (Number(row?.non_debt_income_total || 0) > 0) {
-        chips.push(`<span class="cartera-viva-chip">Ingreso registrado ${formatMoney(row.non_debt_income_total)}</span>`);
+        chips.push(`<span class="cartera-viva-chip">Ingreso registrado ${renderMoneyNode(formatMoney(row.non_debt_income_total))}</span>`);
     }
 
     if (chips.length <= 0) return '';
@@ -2148,7 +2203,11 @@ function renderPortfolioCard(row) {
             data-portfolio-entry-key="${safeEntryKey}">
             <header class="cartera-viva-card__head">
                 <div class="cartera-viva-card__identity">
-                    <h3 class="cartera-viva-card__title">${escapeHtml(row?.display_name || 'Cliente sin nombre')}</h3>
+                    ${renderBuyerNameNode(row?.display_name, {
+            tag: 'h3',
+            className: 'cartera-viva-card__title',
+            fallback: 'Cliente sin nombre'
+        })}
                     <p class="cartera-viva-card__subtitle">${escapeHtml(status.detail)}</p>
                 </div>
                 <div class="cartera-viva-card__head-side">

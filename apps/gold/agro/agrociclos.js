@@ -4,6 +4,7 @@
 import supabase from '../assets/js/config/supabase-config.js';
 
 const OPERATIONAL_PORTFOLIO_UPDATED_EVENT = 'agro:operational-portfolio-updated';
+const BUYER_PORTFOLIO_STATE_UPDATED_EVENT = 'agro:buyer-portfolio-state-updated';
 let isOperationalPortfolioSyncBound = false;
 
 function escapeHtml(value) {
@@ -47,11 +48,32 @@ function statusClassFor(state) {
 }
 
 function resolveCarteraVivaStatus(fiadosUsd) {
+  const globalState = readBuyerPortfolioState();
+  if (globalState?.known === true) {
+    return globalState.hasActivePending
+      ? { label: 'Cartera viva abierta', tone: 'active' }
+      : { label: 'Cartera viva cerrada', tone: 'closed' };
+  }
+
   const pending = Number(fiadosUsd);
   if (!Number.isFinite(pending)) return null;
   return pending > 0
     ? { label: 'Cartera viva abierta', tone: 'active' }
     : { label: 'Cartera viva cerrada', tone: 'closed' };
+}
+
+function readBuyerPortfolioState() {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const api = window._agroBuyerPortfolioState;
+    if (typeof api?.getState !== 'function') return null;
+    const snapshot = api.getState();
+    return snapshot && typeof snapshot === 'object' ? snapshot : null;
+  } catch (error) {
+    console.warn('[agrociclos] No se pudo leer estado global de Cartera Viva:', error);
+    return null;
+  }
 }
 
 function resolveOperationalPortfolioStatus(cropId) {
@@ -114,6 +136,9 @@ function bindOperationalPortfolioSync() {
   if (isOperationalPortfolioSyncBound || typeof window === 'undefined') return;
   isOperationalPortfolioSyncBound = true;
   window.addEventListener(OPERATIONAL_PORTFOLIO_UPDATED_EVENT, () => {
+    syncOperationalPortfolioBadges(document);
+  });
+  window.addEventListener(BUYER_PORTFOLIO_STATE_UPDATED_EVENT, () => {
     syncOperationalPortfolioBadges(document);
   });
 }

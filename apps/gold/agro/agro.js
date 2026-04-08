@@ -73,6 +73,17 @@ let cropsRefreshEventsBound = false;
 const pendingTransferInFlightLocks = new Set();
 let cyclesWorkspaceSnapshot = createEmptyCyclesWorkspaceSnapshot();
 const AGRO_OPERATIONAL_PORTFOLIO_UPDATED_EVENT = 'agro:operational-portfolio-updated';
+const AGRO_BUYER_PORTFOLIO_UPDATED_EVENT = 'agro:buyer-portfolio-state-updated';
+let buyerPortfolioState = createEmptyBuyerPortfolioState();
+
+function createEmptyBuyerPortfolioState() {
+    return {
+        known: false,
+        hasActivePending: false,
+        pendingGeneralTotalUsd: 0,
+        updatedAt: null
+    };
+}
 
 function createEmptyCyclesWorkspaceSnapshot() {
     return {
@@ -130,9 +141,31 @@ function publishCyclesWorkspaceSnapshot(snapshot = null) {
     }));
 }
 
+function publishBuyerPortfolioState(nextState = null) {
+    const safeState = nextState && typeof nextState === 'object'
+        ? {
+            known: nextState.known === true,
+            hasActivePending: nextState.hasActivePending === true,
+            pendingGeneralTotalUsd: Number(nextState.pendingGeneralTotalUsd || 0),
+            updatedAt: String(nextState.updatedAt || new Date().toISOString())
+        }
+        : createEmptyBuyerPortfolioState();
+    buyerPortfolioState = safeState;
+    if (typeof window === 'undefined') return;
+    window._agroBuyerPortfolioState = Object.assign(window._agroBuyerPortfolioState || {}, {
+        getState: () => buyerPortfolioState
+    });
+    window.dispatchEvent(new CustomEvent(AGRO_BUYER_PORTFOLIO_UPDATED_EVENT, {
+        detail: buyerPortfolioState
+    }));
+}
+
 if (typeof window !== 'undefined') {
     window._agroCyclesWorkspace = Object.assign(window._agroCyclesWorkspace || {}, {
         getSnapshot: () => cyclesWorkspaceSnapshot
+    });
+    window._agroBuyerPortfolioState = Object.assign(window._agroBuyerPortfolioState || {}, {
+        getState: () => buyerPortfolioState
     });
 }
 
@@ -9469,6 +9502,38 @@ async function fetchPendingTotalsByCropIds(userId, cropIds, options = {}) {
     });
 }
 
+async function fetchPendingGeneralTotalUsd(userId, options = {}) {
+    const normalizedUserId = normalizeCropId(userId);
+    if (!normalizedUserId) return null;
+
+    try {
+        const { data, error } = await supabase
+            .from('agro_pending')
+            .select('monto,monto_usd,currency,exchange_rate,deleted_at,crop_id,transfer_state,transferred_at,transferred_income_id,transferred_to,reverted_at,reverted_reason')
+            .eq('user_id', normalizedUserId)
+            .is('deleted_at', null)
+            .is('crop_id', null);
+
+        if (error) {
+            console.warn('[Agro] No se pudo leer fiados generales para badge de Cartera Viva:', error?.message || error);
+            return null;
+        }
+
+        const rows = Array.isArray(data) ? data : [];
+        let total = 0;
+        rows.forEach((row) => {
+            if (getPendingTransferToken(row) === 'transferred') return;
+            const usd = resolveRecordAmountUsd(row, ['monto'], {}, options.fallbackRates || editExchangeRates);
+            if (!Number.isFinite(usd)) return;
+            total += usd;
+        });
+        return total;
+    } catch (error) {
+        console.warn('[Agro] Error leyendo fiados generales para badge de Cartera Viva:', error);
+        return null;
+    }
+}
+
 function createCycleUnitTotalsAccumulator() {
     return {
         sacos: 0,
@@ -11366,6 +11431,7 @@ export async function loadCrops() {
         let pendingTotalsByCrop = new Map();
         let unitTotalsByCrop = new Map();
         let missingRateCountsByCrop = new Map();
+        let pendingGeneralTotalUsd = null;
         if (source === 'supabase' && currentUserId && crops.length > 0) {
             const allCropIds = crops.map((crop) => crop?.id);
             const totalsOptions = { missingRateCountsByCrop };
@@ -11374,6 +11440,7 @@ export async function loadCrops() {
                 incomeTotals,
                 lossTotals,
                 pendingTotals,
+                pendingGeneralTotal,
                 incomeUnitTotals,
                 lossUnitTotals,
                 pendingUnitTotals,
@@ -11383,6 +11450,7 @@ export async function loadCrops() {
                 fetchIncomeTotalsByCropIds(currentUserId, allCropIds, totalsOptions),
                 fetchLossTotalsByCropIds(currentUserId, allCropIds, totalsOptions),
                 fetchPendingTotalsByCropIds(currentUserId, allCropIds, totalsOptions),
+                fetchPendingGeneralTotalUsd(currentUserId, totalsOptions),
                 fetchIncomeUnitTotalsByCropIds(currentUserId, allCropIds),
                 fetchLossUnitTotalsByCropIds(currentUserId, allCropIds),
                 fetchPendingUnitTotalsByCropIds(currentUserId, allCropIds),
@@ -11400,6 +11468,9 @@ export async function loadCrops() {
             incomeTotalsByCrop = incomeTotals;
             lossTotalsByCrop = lossTotals;
             pendingTotalsByCrop = pendingTotals;
+            pendingGeneralTotalUsd = Number.isFinite(Number(pendingGeneralTotal))
+                ? Number(pendingGeneralTotal)
+                : null;
             const baseUnitTotalsByCrop = mergeCycleUnitTotalsMaps([
                 incomeUnitTotals,
                 lossUnitTotals,
@@ -11410,6 +11481,18 @@ export async function loadCrops() {
                 pendingTransferredUnitTotals
             );
             if (requestId !== cropsLoadSeq) return;
+        } else {
+            publishBuyerPortfolioState();
+        }
+
+        if (source === 'supabase' && currentUserId) {
+            const hasCropPending = Array.from(pendingTotalsByCrop.values()).some((value) => Number(value) > 0);
+            const hasGeneralPending = Number(pendingGeneralTotalUsd || 0) > 0;
+            publishBuyerPortfolioState({
+                known: true,
+                hasActivePending: hasCropPending || hasGeneralPending,
+                pendingGeneralTotalUsd: Number(pendingGeneralTotalUsd || 0)
+            });
         }
 
         // Actualizar Estadísticas siempre (aunque esté vacío)

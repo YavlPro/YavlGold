@@ -10151,3 +10151,43 @@ Búsqueda global de `9.8`, `V9.8`, `v9.8`, `9.8.0` en `apps/gold`. Clasificació
 ### Build
 
 - `pnpm build:gold` → OK (157 modules, 2.25s, UTF-8 OK)
+
+---
+
+## Cartera Viva — privacidad local, limpieza de menú y badge global real (2026-04-08)
+
+### Diagnóstico
+
+- La privacidad visual ya existía globalmente en `apps/gold/agro/agro-privacy.js` usando `localStorage` (`YG_HIDE_BUYER_NAMES`, `YG_HIDE_MONEY_VALUES`) y auto-bind por `data-buyer-privacy-control` / `data-money-privacy-control`.
+- Cartera Viva no exponía toggles locales en su shell propio ni marcaba sus nodos principales de nombre/monto con `data-buyer-name` / `data-money`, por eso el sistema no podía ocultarlos en esa vista.
+- En el detalle de Cartera Viva, el kebab menu seguía inyectando `Crear ciclo` desde `resolveHistoryMenuActions()`, mezclando una acción que no corresponde a ese menú contextual.
+- El badge `Cartera viva cerrada` en ciclos dependía solo de `fiadosUsd` por cultivo. Si existían fiados activos globales fuera de ese `crop_id` (por ejemplo registros generales en fiados), la badge quedaba cerrada aunque la cartera siguiera abierta.
+
+### Cambios aplicados
+
+| Archivo | Líneas aprox. | Cambio |
+| --- | --- | --- |
+| `apps/gold/agro/agro-cartera-viva-view.js` | 308-324, 1653-1797, 1874-1900, 2123-2209 | Helpers `renderBuyerNameNode` / `renderMoneyNode`, strip local de privacidad, summary con montos ocultables, nombres de cards marcados y chips monetarios compatibles con privacidad |
+| `apps/gold/agro/agro-cartera-viva-detail.js` | 879-889, 1161-1177, 1202-1299, 1348-1682, 1790-1804 | Strip local de privacidad en detalle, nombre/montos del summary y timeline marcados, montos secundarios ocultables y eliminación de `Crear ciclo` del menú kebab |
+| `apps/gold/agro/agro.js` | 76-83, 144-158, 9505-9537, 11434-11494 | Bridge global `_agroBuyerPortfolioState`, query mínima para fiados generales sin `crop_id` y publicación de estado global abierto/cerrado de Cartera Viva |
+| `apps/gold/agro/agrociclos.js` | 7, 50-74, 138-142 | Badge `Cartera viva abierta/cerrada` ahora consulta el estado global publicado y se resincroniza por evento |
+| `apps/gold/agro/agro-cycles-workspace.js` | 119-144 | Workspace comparativo alinea su lectura `Cartera activa/cerrada` con el mismo estado global |
+
+### Build status
+
+- `pnpm build:gold` → OK
+- `agent-guard` OK
+- `agent-report-check` OK
+- `vite build` OK (157 modules)
+- `check-llms` OK
+- `check-dist-utf8` OK
+
+### QA sugerido
+
+1. Abrir `Cartera Viva` en vista principal y confirmar que aparece el bloque `Privacidad`.
+2. Pulsar `Ocultar nombres` y verificar que el nombre del cliente se enmascara en cards y en el header del detalle.
+3. Pulsar `Ocultar montos` y verificar summary, chips monetarios, panel principal del detalle y montos del timeline.
+4. Recargar la página y confirmar que el estado de privacidad se conserva.
+5. Entrar al detalle de un cliente y abrir el menú `⋮` de varios movimientos: deben seguir `Editar`, `Transferir`, `Revertir`, etc., pero ya no `Crear ciclo`.
+6. Ir a ciclos activos/finalizados con un escenario donde existan fiados globales y confirmar que la badge dice `Cartera viva abierta`.
+7. Repetir en mobile (`<=480px`) para confirmar que el strip de privacidad sigue visible y usable.

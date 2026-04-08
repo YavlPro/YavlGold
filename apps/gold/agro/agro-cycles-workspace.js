@@ -117,6 +117,13 @@ function extractNumericValue(value) {
 }
 
 function resolvePortfolioStatus(fiadosUsd) {
+    const globalState = readBuyerPortfolioState();
+    if (globalState?.known === true) {
+        return globalState.hasActivePending
+            ? { label: 'Cartera activa', tone: 'active' }
+            : { label: 'Cartera cerrada', tone: 'closed' };
+    }
+
     const pending = Number(fiadosUsd);
     if (!Number.isFinite(pending)) {
         return { label: '', tone: '' };
@@ -124,6 +131,19 @@ function resolvePortfolioStatus(fiadosUsd) {
     return pending > 0
         ? { label: 'Cartera activa', tone: 'active' }
         : { label: 'Cartera cerrada', tone: 'closed' };
+}
+
+function readBuyerPortfolioState() {
+    if (typeof window === 'undefined') return null;
+
+    try {
+        const api = window._agroBuyerPortfolioState;
+        if (typeof api?.getState !== 'function') return null;
+        const snapshot = api.getState();
+        return snapshot && typeof snapshot === 'object' ? snapshot : null;
+    } catch (_error) {
+        return null;
+    }
 }
 
 function formatUsd(value, options = {}) {

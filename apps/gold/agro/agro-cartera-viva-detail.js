@@ -874,11 +874,18 @@ function renderEmptyState(config = {}) {
     `;
 }
 
-function renderDetailInsight(label, value) {
+function renderDetailInsight(label, value, options = {}) {
+    const valueMarkup = options.isMoney
+        ? renderMoneyNode(value, {
+            tag: 'strong',
+            className: 'cartera-viva-insight__value'
+        })
+        : `<strong class="cartera-viva-insight__value">${escapeHtml(value)}</strong>`;
+
     return `
         <article class="cartera-viva-insight">
             <span class="cartera-viva-insight__label">${escapeHtml(label)}</span>
-            <strong class="cartera-viva-insight__value">${escapeHtml(value)}</strong>
+            ${valueMarkup}
         </article>
     `;
 }
@@ -1151,6 +1158,25 @@ function escapeAttribute(value) {
     return escapeHtml(value).replace(/"/g, '&quot;');
 }
 
+function renderBuyerNameNode(value, options = {}) {
+    const tag = String(options.tag || 'span').trim() || 'span';
+    const className = String(options.className || '').trim();
+    const fallback = String(options.fallback || 'Cliente').trim() || 'Cliente';
+    const safeValue = String(value || '').trim() || fallback;
+    const classAttr = className ? ` class="${escapeAttribute(className)}"` : '';
+
+    return `<${tag}${classAttr} data-buyer-name="1" data-raw-name="${escapeAttribute(safeValue)}">${escapeHtml(safeValue)}</${tag}>`;
+}
+
+function renderMoneyNode(value, options = {}) {
+    const tag = String(options.tag || 'span').trim() || 'span';
+    const className = String(options.className || '').trim();
+    const safeValue = String(value || '').trim() || '$0.00';
+    const classAttr = className ? ` class="${escapeAttribute(className)}"` : '';
+
+    return `<${tag}${classAttr} data-money="1" data-raw-money="${escapeAttribute(safeValue)}">${escapeHtml(safeValue)}</${tag}>`;
+}
+
 function renderHistoryActionButton(config = {}) {
     const className = String(config.className || '').trim();
     const label = String(config.label || 'Acción').trim();
@@ -1273,18 +1299,6 @@ function resolveHistoryMenuActions(row, options = {}) {
         }
     }
 
-    if (typeof options.onCreateCycle === 'function') {
-        actions.push({
-            action: 'create-cycle',
-            label: 'Crear ciclo',
-            iconClass: 'fa fa-seedling',
-            historyId: String(row?.history_id || '').trim(),
-            sourceTab,
-            sourceId,
-            disabled: !cropId
-        });
-    }
-
     return actions;
 }
 
@@ -1331,7 +1345,10 @@ function createActionRowElement(row) {
     const label = escapeHtml(row?.label || 'Acción');
     const amount = Number(row?.amount);
     const amountMarkup = Number.isFinite(amount) && amount > 0
-        ? `<strong class="cartera-viva-history-action__amount">${formatMoney(amount)}</strong>`
+        ? renderMoneyNode(formatMoney(amount), {
+            tag: 'strong',
+            className: 'cartera-viva-history-action__amount'
+        })
         : '';
     const meta = row?.meta ? `<p class="cartera-viva-history-action__meta">${escapeHtml(row.meta)}</p>` : '';
     const concept = row?.concept ? `<p class="cartera-viva-history-action__concept">${escapeHtml(row.concept)}</p>` : '';
@@ -1492,7 +1509,21 @@ function renderEquivalentItem(label, value) {
     return `
         <div class="cartera-viva-detail__equivalent">
             <span>${escapeHtml(label)}</span>
-            <strong>${escapeHtml(value)}</strong>
+            ${renderMoneyNode(value, { tag: 'strong' })}
+        </div>
+    `;
+}
+
+function renderPrivacyStrip() {
+    return `
+        <div class="agro-privacy-strip cartera-viva-privacy-strip" aria-label="Controles de privacidad">
+            <span class="agro-privacy-strip__label">Privacidad</span>
+            <button type="button" class="btn-privacy-toggle" data-buyer-privacy-control="toggle" aria-pressed="false">
+                👁 Ocultar nombres
+            </button>
+            <button type="button" class="btn-privacy-toggle" data-money-privacy-control="toggle" aria-pressed="false">
+                💰 Ocultar montos
+            </button>
         </div>
     `;
 }
@@ -1545,7 +1576,11 @@ function renderBuyerSummary(buyerRow, options = {}) {
         <section class="cartera-viva-detail__summary">
             <header class="cartera-viva-detail__summary-head">
                 <div class="cartera-viva-detail__identity">
-                    <h2 class="cartera-viva-detail__title">${escapeHtml(buyerRow?.display_name || 'Cliente no encontrado')}</h2>
+                    ${renderBuyerNameNode(buyerRow?.display_name, {
+            tag: 'h2',
+            className: 'cartera-viva-detail__title',
+            fallback: 'Cliente no encontrado'
+        })}
                     <p class="cartera-viva-detail__subtitle">${escapeHtml(primaryMetric.copy)}</p>
                 </div>
                 <div class="cartera-viva-card__badges">
@@ -1558,7 +1593,10 @@ function renderBuyerSummary(buyerRow, options = {}) {
             <div class="cartera-viva-detail__hero">
                 <section class="cartera-viva-detail__amount-panel">
                     <p class="cartera-viva-detail__amount-label">${escapeHtml(primaryMetric.label)}</p>
-                    <strong class="cartera-viva-detail__amount">${formatMoney(primaryMetric.amountUsd)}</strong>
+                    ${renderMoneyNode(formatMoney(primaryMetric.amountUsd), {
+            tag: 'strong',
+            className: 'cartera-viva-detail__amount'
+        })}
                     <div class="cartera-viva-detail__equivalents">
                         ${renderEquivalentItem('COP', copEquivalent.display)}
                         ${renderEquivalentItem('Bs', vesEquivalent.display)}
@@ -1590,15 +1628,15 @@ function renderBuyerSummary(buyerRow, options = {}) {
                     ${progress.lossShare > 0 ? `<span class="cartera-viva-progress__segment is-loss" style="width:${progress.lossShare}%"></span>` : ''}
                 </div>
                 <div class="cartera-viva-progress__legend">
-                    <span>Base ${formatMoney(progress.base)}</span>
-                    <span>${secondaryLabel} ${secondaryValue}</span>
+                    <span>Base ${renderMoneyNode(formatMoney(progress.base))}</span>
+                    <span>${escapeHtml(secondaryLabel)} ${renderMoneyNode(secondaryValue)}</span>
                 </div>
             </section>
 
             <div class="cartera-viva-insight-strip cartera-viva-insight-strip--detail">
-                ${renderDetailInsight('Fiado', formatMoney(buyerRow?.credited_total))}
-                ${renderDetailInsight('Cobrado', formatMoney(buyerRow?.paid_total))}
-                ${renderDetailInsight(secondaryLabel, secondaryValue)}
+                ${renderDetailInsight('Fiado', formatMoney(buyerRow?.credited_total), { isMoney: true })}
+                ${renderDetailInsight('Cobrado', formatMoney(buyerRow?.paid_total), { isMoney: true })}
+                ${renderDetailInsight(secondaryLabel, secondaryValue, { isMoney: true })}
             </div>
 
             <div class="cartera-viva-card__footer">
@@ -1641,7 +1679,10 @@ function createTimelineRowElement(row, options = {}) {
                 ${supportLink}
             </div>
             <div class="cartera-viva-history-item__side">
-                <strong class="cartera-viva-history-item__amount">${amountValue}</strong>
+                ${renderMoneyNode(amountValue, {
+        tag: 'strong',
+        className: 'cartera-viva-history-item__amount'
+    })}
                 ${renderHistoryActionMenu(row, options)}
             </div>
         </div>
@@ -1756,6 +1797,7 @@ export function renderBuyerHistoryDetail(root, options = {}) {
                     </button>
                 </div>
             </div>
+            ${renderPrivacyStrip()}
 
             ${exportStatus}
 
