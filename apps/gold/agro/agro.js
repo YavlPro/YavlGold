@@ -15442,7 +15442,6 @@ export function initAgro() {
     injectRoiClearButton(calcBtn);
     initRoiCurrencySelector(); // V9.8: ROI multi-currency display
     setupHeaderIdentity();
-    initIncomeHistory();
     initFinanceTabs();
     initClimaWeeklyEmbed();
     initBuyerPrivacy(document);

@@ -11230,3 +11230,29 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
 - Abrir Agro y verificar que ya no exista ninguna ruta visible hacia `Pagados`, `Fiados`, `Pérdidas`, `Donaciones` u `Otros` como vistas dedicadas.
 - Confirmar que `Mi Carrito` y `Rankings` siguen abriendo sus vistas dedicadas.
 - Probar al menos una notificación con deep link a `Facturero` y validar que todavía cae en `Operaciones` sin error.
+
+---
+
+## Fix: Agro Navigation Loop (2026-04-08)
+
+### Diagnóstico
+1. **Problema Reportado:** Al hacer clic en "Abrir Agro" desde el dashboard (con sesión activa), el usuario era redirigido de vuelta al dashboard de forma iterativa.
+2. **Causa Raíz:**
+   - La inicialización de la página `/agro/index.html` llama a `bootstrapAgro()`, la cual importa `agro.js`.
+   - Dentro de `agro.js`, la función `initAgro()` invocaba a la función `initIncomeHistory()`.
+   - Dicha función (`initIncomeHistory()`) **no existía** porque había sido removida/refactorizada (su funcionalidad ya estaba asumida por `initFactureroHistories()`).
+   - El `ReferenceError` disparado por llamar a una función indefinida rompía todo el bloque `try/catch` principal (`AgroGuard`).
+   - El bloque `catch` de `bootstrapAgro()` mandaba al usuario como fallback de emergencia a `/index.html#login`.
+   - La landing page detectaba correctamente que sí había sesión, y rebotaba inmediatamente al `/dashboard/`.
+3. **Evidencia:** Logs del navegador en producción durante una sesión de subagente browser reproduciendo detalladamente el fallback por el crash en línea 15445 de `agro.js`.
+
+### Plan Quirúrgico
+- Remover la llamada muerta a `initIncomeHistory();` en `agro.js` para evitar el crash del runtime.
+
+### Cambios Aplicados
+- **`apps/gold/agro/agro.js`**: Se eliminó la línea `initIncomeHistory();` dentro de `initAgro()`. La funcionalidad equivalente persiste vía `initFactureroHistories();` unas líneas abajo.
+
+### Build & QA
+- `pnpm build:gold` ejecutado con éxito.
+- Validado archivo final sin errores de UTF-8 ni dependencias en Vite.
+- Sugerencia de QA Manual: El usuario puede recargar el dashboard, intentar acceder a Agro de nuevo, y debería entrar exitosamente a la UI de Agro sin crashes ni ciclo de redirección al landing page.
