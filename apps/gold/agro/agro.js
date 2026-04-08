@@ -12412,6 +12412,25 @@ async function loadIncomes() {
 const FIN_TAB_STORAGE_KEY = 'YG_AGRO_FIN_TAB_V1';
 const FIN_TAB_STORAGE_LEGACY_KEY = 'lastTab';
 const FIN_TAB_NAMES = new Set(['gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias', 'otros', 'carrito', 'rankings']);
+
+function readStoredTab() {
+    try {
+        const val = localStorage.getItem(FIN_TAB_STORAGE_KEY) || localStorage.getItem(FIN_TAB_STORAGE_LEGACY_KEY) || '';
+        const tab = String(val).toLowerCase().trim();
+        return FIN_TAB_NAMES.has(tab) ? tab : '';
+    } catch (_e) { return ''; }
+}
+
+function writeStoredTab(tabName) {
+    try {
+        const tab = String(tabName || '').toLowerCase().trim();
+        if (FIN_TAB_NAMES.has(tab)) {
+            localStorage.setItem(FIN_TAB_STORAGE_KEY, tab);
+            localStorage.removeItem(FIN_TAB_STORAGE_LEGACY_KEY);
+        }
+    } catch (_e) { /* ignore */ }
+}
+
 const OPS_CULTIVOS_ALLOWED_TABS = new Set(['gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias', 'otros', 'rankings']);
 const OPS_CONTEXT_STORAGE_KEY = 'paso1Context';
 const OPS_LAST_CULTIVOS_TAB_KEY = 'YG_AGRO_OPS_LAST_CULTIVOS_TAB_V1';
@@ -12428,6 +12447,40 @@ const OPS_MOVEMENT_SUMMARY_LABELS = Object.freeze({
     otros: 'Otros'
 });
 const OPS_MOVEMENT_COUNT_TABS = ['gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias'];
+
+function readOpsLastCultivosTab() {
+    try {
+        const val = localStorage.getItem(OPS_LAST_CULTIVOS_TAB_KEY) || '';
+        const tab = String(val).toLowerCase().trim();
+        return OPS_CULTIVOS_ALLOWED_TABS.has(tab) ? tab : '';
+    } catch (_e) { return ''; }
+}
+
+function writeOpsLastCultivosTab(tabName) {
+    try {
+        const tab = String(tabName || '').toLowerCase().trim();
+        if (OPS_CULTIVOS_ALLOWED_TABS.has(tab)) {
+            localStorage.setItem(OPS_LAST_CULTIVOS_TAB_KEY, tab);
+        }
+    } catch (_e) { /* ignore */ }
+}
+
+function readOpsContextMode() {
+    try {
+        const val = localStorage.getItem(OPS_CONTEXT_STORAGE_KEY) || '';
+        const mode = String(val).toLowerCase().trim();
+        return OPS_CONTEXT_MODES.has(mode) ? mode : 'cultivos';
+    } catch (_e) { return 'cultivos'; }
+}
+
+function writeOpsContextMode(mode) {
+    try {
+        const m = String(mode || '').toLowerCase().trim();
+        if (OPS_CONTEXT_MODES.has(m)) {
+            localStorage.setItem(OPS_CONTEXT_STORAGE_KEY, m);
+        }
+    } catch (_e) { /* ignore */ }
+}
 
 let opsContextMode = 'cultivos';
 let opsLastCultivosTab = 'gastos';
