@@ -11435,3 +11435,53 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
 - `pnpm build:gold` ejecutado con éxito.
 - Validado archivo final sin errores de UTF-8 ni dependencias en Vite.
 - Sugerencia de QA Manual: El usuario puede recargar el dashboard, intentar acceder a Agro de nuevo, y debería entrar exitosamente a la UI de Agro sin crashes ni ciclo de redirección al landing page.
+
+---
+
+## 2026-04-08 - Fix quirúrgico render de ciclos por `refreshAvailableCropSelectors`
+
+### Diagnóstico
+
+- La vista de ciclos no estaba vacía por CSS ni por falta de datos en Supabase.
+- `loadCrops()` sí llegaba a traer cultivos, pero se rompía antes de renderizar activos/finalizados por `ReferenceError: refreshAvailableCropSelectors is not defined`.
+- La llamada sigue viva en `apps/gold/agro/agro.js` dentro del flujo de `loadCrops()`.
+- En el historial del archivo, `refreshAvailableCropSelectors()` existía como helper de refresco de selectores tras cargar cultivos, pero fue eliminada durante la limpieza de vistas legacy.
+
+### Plan
+
+- Restaurar una versión mínima de `refreshAvailableCropSelectors()` alineada al estado actual del módulo.
+- No revivir vistas legacy eliminadas.
+- Validar con `pnpm build:gold`.
+
+### DoD
+
+- `loadCrops()` ya no explota por `refreshAvailableCropSelectors is not defined`.
+- Los ciclos activos/finalizados vuelven a poder renderizarse.
+- El fix queda encapsulado en `agro.js` sin expandir alcance.
+- `pnpm build:gold` pasa limpio.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro.js`
+  - Se restauró `refreshAvailableCropSelectors()` con semántica mínima y actual:
+    - refresca `renderOpsCultivosPanel()`
+    - repuebla los dropdowns compartidos mediante `populateCropDropdowns()`
+  - No se reintrodujeron renderizadores legacy eliminados.
+
+### Build
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por `node v25.6.0` vs `20.x`
+
+### QA sugerido
+
+- Recargar `/agro` y verificar que vuelven a verse los ciclos activos.
+- Entrar a la subvista de finalizados y confirmar que la lista vuelve a pintar.
+- Abrir un selector de cultivo del módulo y confirmar que conserva las opciones cargadas.

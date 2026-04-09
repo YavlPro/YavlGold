@@ -12530,6 +12530,11 @@ function selectOpsCultivo(cropId) {
     }
 }
 
+function refreshAvailableCropSelectors() {
+    renderOpsCultivosPanel();
+    populateCropDropdowns();
+}
+
 function renderOpsCultivosPanel() {
     const { panel, activeRow, finishedWrap, finishedCount } = getOpsContextElements();
     if (!panel || !activeRow) return;
