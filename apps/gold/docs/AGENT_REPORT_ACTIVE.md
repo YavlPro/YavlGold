@@ -11325,6 +11325,66 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
 
 ---
 
+## 2026-04-08 - Fix quirúrgico crash Agro por `updateOpsMovementSummaryUI`
+
+### Diagnóstico
+
+- El nuevo crash de producción no es de auth; es otro `ReferenceError` dentro del bootstrap de Agro.
+- `apps/gold/agro/agro.js` sigue llamando `updateOpsMovementSummaryUI()` y `scheduleOpsMovementSummaryRefresh()` al cerrar `loadCrops()` y al inicializar el contexto operativo.
+- Esas helpers ya no existen en el archivo actual.
+- La evidencia del historial muestra que ese resumen operativo formaba un bloque cohesivo con:
+  - `createEmptyOpsMovementSummary()`
+  - `getOpsMovementSummaryState()`
+  - `formatOpsMovementSummaryLine()`
+  - `updateOpsMovementSummaryUI()`
+  - `fetchFactureroCount()`
+  - `loadOpsMovementSummary()`
+  - `refreshOpsMovementSummary()`
+  - `scheduleOpsMovementSummaryRefresh()`
+- La limpieza previa dejó llamadas vivas a ese bloque, pero sin la implementación. Por eso Agro vuelve a romper y cae al fallback superior.
+
+### Plan
+
+- Restaurar únicamente el bloque mínimo del resumen operativo.
+- No tocar auth, shell ni copy visible fuera del propio resumen ya existente.
+- Validar solo con `pnpm build:gold`.
+
+### DoD
+
+- Agro ya no explota por `updateOpsMovementSummaryUI is not defined`.
+- El resumen operativo vuelve a tener implementación mínima compatible con el estado actual.
+- No se altera la lógica de negocio fuera del conteo/resumen de tabs.
+- `pnpm build:gold` pasa limpio.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro.js`
+  - Se restauró el bloque mínimo del resumen operativo que había quedado huérfano:
+    - `createEmptyOpsMovementSummary()`
+    - `getOpsMovementSummaryState()`
+    - `formatOpsMovementSummaryLine()`
+    - `updateOpsMovementSummaryUI()`
+    - `shouldUseSelectedCropForCounts()`
+    - `fetchFactureroCount()`
+    - `loadOpsMovementSummary()`
+    - `refreshOpsMovementSummary()`
+    - `scheduleOpsMovementSummaryRefresh()`
+  - La implementación quedó alineada con el estado actual del facturero y reutiliza helpers existentes (`FACTURERO_CONFIG`, `FACTURERO_OTHER_SOURCE_TABS`, `isMissingColumnError`, `selectedCropId`, `supabase`).
+
+### Build
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por `node v25.6.0` vs `20.x`
+
+---
+
 ## Fix: Agro Navigation Loop (2026-04-08)
 
 ### Diagnóstico

@@ -12648,6 +12648,205 @@ const OPS_RANKINGS_BUYER_NAME_FIELDS = Object.freeze([
     'label'
 ]);
 const OPS_RANKINGS_MISSING_NAME_TOKENS = new Set(['', 'sin nombre', 'sin comprador']);
+
+function createEmptyOpsMovementSummary() {
+    const globalByTab = {};
+    const contextByTab = {};
+    OPS_MOVEMENT_SUMMARY_ORDER.forEach((tabName) => {
+        globalByTab[tabName] = 0;
+        contextByTab[tabName] = 0;
+    });
+    return { globalTotal: 0, contextTotal: 0, globalByTab, contextByTab };
+}
+
+function getOpsMovementSummaryState() {
+    if (!opsMovementSummaryState) {
+        opsMovementSummaryState = createEmptyOpsMovementSummary();
+    }
+    return opsMovementSummaryState;
+}
+
+function formatOpsMovementSummaryLine(summaryState = getOpsMovementSummaryState(), scope = 'global') {
+    const sourceByTab = scope === 'context'
+        ? (summaryState?.contextByTab || {})
+        : (summaryState?.globalByTab || {});
+
+    const parts = OPS_MOVEMENT_SUMMARY_ORDER
+        .map((tabName) => {
+            const count = Number(sourceByTab[tabName] || 0);
+            if (count <= 0) return '';
+            const label = OPS_MOVEMENT_SUMMARY_LABELS[tabName] || tabName;
+            return `${label}: ${count}`;
+        })
+        .filter(Boolean);
+
+    return parts.length ? parts.join(' • ') : 'Sin movimientos registrados.';
+}
+
+function updateOpsMovementSummaryUI() {
+    const summaryState = getOpsMovementSummaryState();
+    const summaryLine = formatOpsMovementSummaryLine(summaryState, 'global');
+    const activeTab = String(getCurrentFinanceTab() || '').toLowerCase().trim();
+    const hasActiveSummary = OPS_MOVEMENT_SUMMARY_ORDER.includes(activeTab);
+    const total = hasActiveSummary
+        ? Number(summaryState?.contextByTab?.[activeTab] || 0)
+        : Number(summaryState?.contextTotal || 0);
+
+    document.querySelectorAll('.general-movement-summary').forEach((node) => {
+        node.textContent = summaryLine;
+    });
+
+    const totalDisplay = document.getElementById('ops-total-display');
+    if (totalDisplay) {
+        totalDisplay.textContent = `Todos los movimientos (Total: ${total})`;
+    }
+}
+
+function shouldUseSelectedCropForCounts(tabName) {
+    if (opsContextMode !== 'cultivos') return false;
+    if (!selectedCropId) return false;
+    if (tabName === 'otros') return false;
+    return true;
+}
+
+async function fetchFactureroCount(tabName, userId, options = {}) {
+    const config = FACTURERO_CONFIG[tabName];
+    if (!config?.table || !userId) return 0;
+
+    let includeDeletedAt = config.supportsDeletedAt !== false;
+    let includeRevertedAt = ['pendientes', 'ingresos', 'perdidas'].includes(tabName);
+    let includeTransferState = tabName === 'pendientes' && options.excludeTransferred === true;
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+        let query = supabase
+            .from(config.table)
+            .select('id', { head: true, count: 'exact' })
+            .eq('user_id', userId);
+
+        if (includeDeletedAt) query = query.is('deleted_at', null);
+
+        if (options.cropMode === 'null') {
+            query = query.is('crop_id', null);
+        } else if (options.cropMode === 'selected' && shouldUseSelectedCropForCounts(tabName)) {
+            query = query.eq('crop_id', selectedCropId);
+        }
+
+        if (includeTransferState) query = query.neq('transfer_state', 'transferred');
+        if (includeRevertedAt) query = query.is('reverted_at', null);
+
+        const { count, error } = await query;
+        if (!error) {
+            return Number.isFinite(count) ? count : 0;
+        }
+
+        if (includeRevertedAt && isMissingColumnError(error, 'reverted_at')) {
+            includeRevertedAt = false;
+            continue;
+        }
+        if (includeTransferState && isMissingColumnError(error, 'transfer_state')) {
+            includeTransferState = false;
+            continue;
+        }
+        if (includeDeletedAt && isMissingColumnError(error, 'deleted_at')) {
+            includeDeletedAt = false;
+            continue;
+        }
+
+        console.warn(`[AGRO] Count query failed for ${tabName}:`, error?.message || error);
+        return 0;
+    }
+
+    return 0;
+}
+
+async function loadOpsMovementSummary() {
+    const empty = createEmptyOpsMovementSummary();
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user?.id) return empty;
+
+        const globalByTab = { ...empty.globalByTab };
+        const contextByTab = { ...empty.contextByTab };
+        const needsContextCropCounts = shouldUseSelectedCropForCounts('gastos');
+
+        await Promise.all(OPS_MOVEMENT_COUNT_TABS.map(async (tabName) => {
+            const baseOptions = { excludeTransferred: tabName === 'pendientes' };
+            const globalPromise = fetchFactureroCount(tabName, user.id, {
+                ...baseOptions,
+                cropMode: 'all'
+            });
+            const contextPromise = needsContextCropCounts
+                ? fetchFactureroCount(tabName, user.id, {
+                    ...baseOptions,
+                    cropMode: 'selected'
+                })
+                : globalPromise;
+
+            const [globalCount, contextCount] = await Promise.all([globalPromise, contextPromise]);
+            globalByTab[tabName] = globalCount;
+            contextByTab[tabName] = contextCount;
+        }));
+
+        const otherCounts = await Promise.all(FACTURERO_OTHER_SOURCE_TABS.map((sourceTab) => (
+            fetchFactureroCount(sourceTab, user.id, {
+                cropMode: 'null',
+                excludeTransferred: sourceTab === 'pendientes'
+            })
+        )));
+        const otherTotal = otherCounts.reduce((sum, value) => sum + (Number(value) || 0), 0);
+        globalByTab.otros = otherTotal;
+        contextByTab.otros = otherTotal;
+
+        const globalTotal = OPS_MOVEMENT_SUMMARY_ORDER
+            .reduce((sum, tabName) => sum + (Number(globalByTab[tabName]) || 0), 0);
+        const contextTotal = OPS_MOVEMENT_SUMMARY_ORDER
+            .reduce((sum, tabName) => sum + (Number(contextByTab[tabName]) || 0), 0);
+
+        return { globalTotal, contextTotal, globalByTab, contextByTab };
+    } catch (err) {
+        console.warn('[AGRO] Movement summary load failed:', err?.message || err);
+        return empty;
+    }
+}
+
+async function refreshOpsMovementSummary() {
+    if (opsMovementSummaryInFlight) {
+        opsMovementSummaryQueued = true;
+        return opsMovementSummaryInFlight;
+    }
+
+    opsMovementSummaryInFlight = (async () => {
+        const summary = await loadOpsMovementSummary();
+        opsMovementSummaryState = summary;
+        updateOpsMovementSummaryUI();
+        return summary;
+    })();
+
+    try {
+        return await opsMovementSummaryInFlight;
+    } finally {
+        opsMovementSummaryInFlight = null;
+        if (opsMovementSummaryQueued) {
+            opsMovementSummaryQueued = false;
+            refreshOpsMovementSummary().catch((err) => {
+                console.warn('[AGRO] Movement summary refresh retry failed:', err?.message || err);
+            });
+        }
+    }
+}
+
+function scheduleOpsMovementSummaryRefresh() {
+    if (opsMovementSummaryTimer) {
+        clearTimeout(opsMovementSummaryTimer);
+    }
+    opsMovementSummaryTimer = setTimeout(() => {
+        opsMovementSummaryTimer = null;
+        refreshOpsMovementSummary().catch((err) => {
+            console.warn('[AGRO] Movement summary refresh failed:', err?.message || err);
+        });
+    }, 90);
+}
+
 // V9.8: CARRITO DEDICATED VIEW (reparent pattern)
 // ============================================================
 
