@@ -20,8 +20,25 @@ let _carts = [];
 let _activeCartId = null;
 let _activeCartItems = [];
 let _cartListenerAC = null;
+let _cartPlanningSnapshot = {
+    loading: true,
+    todayItems: [],
+    upcomingItems: [],
+    overdueCount: 0,
+    focusCrop: 'Plan general'
+};
+let _cartPlanningSnapshotPromise = null;
+let _cartShellSyncBound = false;
+let _pendingCartSubviewFocus = '';
+let _cartInlineCalculator = {
+    investment: '',
+    revenue: '',
+    quantity: '',
+    result: null
+};
 const CROP_EMOJI_TOKEN_RE = /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u;
 const CROP_TEXT_TOKEN_RE = /[\p{L}\p{N}]/u;
+const CART_SUBVIEW_ALLOWED = new Set(['summary', 'planning', 'calculator']);
 const INACTIVE_CART_CROP_STATUSES = new Set(['finalizado', 'cancelado', 'harvested', 'cancelled', 'cosechado']);
 const CART_OPERATION_REGISTRATION_OPTIONS = Object.freeze([
     Object.freeze({
@@ -123,7 +140,10 @@ export async function initAgroCart(deps) {
     initExchangeRates().then(r => { if (r) _exchangeRates = r; }).catch(() => { });
 
     _initialized = true;
+    bindCartShellSync();
     await loadCarts();
+    await refreshCartPlanningSnapshot();
+    _pendingCartSubviewFocus = readRequestedCartSubview();
     renderCartTab();
 }
 
@@ -454,6 +474,42 @@ function todayLocalIso() {
     return new Date(now.getTime() - offset).toISOString().slice(0, 10);
 }
 
+function prefersReducedMotion() {
+    return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true;
+}
+
+function normalizeCartSubview(value) {
+    const token = String(value || '').trim().toLowerCase();
+    return CART_SUBVIEW_ALLOWED.has(token) ? token : 'summary';
+}
+
+function readRequestedCartSubview() {
+    return normalizeCartSubview(document.body?.dataset?.agroSubview || 'summary');
+}
+
+function formatCartAgendaDateLabel(dateStr) {
+    const safeDate = String(dateStr || '').trim();
+    if (!safeDate) return 'Sin fecha';
+    const today = todayLocalIso();
+    if (safeDate === today) return 'Hoy';
+
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowIso = tomorrow.toISOString().slice(0, 10);
+    if (safeDate === tomorrowIso) return 'Mañana';
+
+    const [year, month, day] = safeDate.split('-').map(Number);
+    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+        return safeDate;
+    }
+
+    const date = new Date(year, month - 1, day);
+    const weekdayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    return `${weekdayNames[date.getDay()]} ${day} ${monthNames[month - 1] || ''}`.trim();
+}
+
 function normalizeCartItem(item = {}) {
     const processed = Boolean(item?.processed ?? item?.purchased);
     const processedAt = item?.processed_at || item?.purchased_at || null;
@@ -574,6 +630,127 @@ function fmtCur(monto, currency, montoUsd) {
     return formatCurrencyDisplay(monto, currency, montoUsd);
 }
 
+async function refreshCartPlanningSnapshot() {
+    if (!_supabase) return _cartPlanningSnapshot;
+    if (_cartPlanningSnapshotPromise) return _cartPlanningSnapshotPromise;
+
+    _cartPlanningSnapshotPromise = (async () => {
+        try {
+            const { data: { user } } = await _supabase.auth.getUser();
+            if (!user) {
+                _cartPlanningSnapshot = {
+                    loading: false,
+                    todayItems: [],
+                    upcomingItems: [],
+                    overdueCount: 0,
+                    focusCrop: 'Plan general'
+                };
+                return _cartPlanningSnapshot;
+            }
+
+            const today = todayLocalIso();
+            const [agendaRes, overdueRes] = await Promise.all([
+                _supabase
+                    .from('agro_agenda')
+                    .select('id, title, scheduled_date, scheduled_time, crop_id, notes, completed')
+                    .eq('user_id', user.id)
+                    .eq('completed', false)
+                    .gte('scheduled_date', today)
+                    .order('scheduled_date', { ascending: true })
+                    .order('scheduled_time', { ascending: true })
+                    .limit(6),
+                _supabase
+                    .from('agro_agenda')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('user_id', user.id)
+                    .eq('completed', false)
+                    .lt('scheduled_date', today)
+            ]);
+
+            if (agendaRes.error) throw agendaRes.error;
+            if (overdueRes.error) throw overdueRes.error;
+
+            const upcomingSource = Array.isArray(agendaRes.data) ? agendaRes.data : [];
+            const todayItems = upcomingSource.filter((item) => String(item?.scheduled_date || '') === today).slice(0, 3);
+            const upcomingItems = upcomingSource.filter((item) => String(item?.scheduled_date || '') > today).slice(0, 3);
+            const focusItem = [...todayItems, ...upcomingItems].find((item) => String(item?.crop_id || '').trim());
+
+            _cartPlanningSnapshot = {
+                loading: false,
+                todayItems,
+                upcomingItems,
+                overdueCount: Number(overdueRes.count) || 0,
+                focusCrop: focusItem ? getCropName(focusItem.crop_id) : 'Plan general'
+            };
+        } catch (err) {
+            console.warn('[AgroCart] planning snapshot error:', err?.message || err);
+            _cartPlanningSnapshot = {
+                loading: false,
+                todayItems: [],
+                upcomingItems: [],
+                overdueCount: 0,
+                focusCrop: 'Plan general'
+            };
+        } finally {
+            _cartPlanningSnapshotPromise = null;
+        }
+
+        return _cartPlanningSnapshot;
+    })();
+
+    return _cartPlanningSnapshotPromise;
+}
+
+function bindCartShellSync() {
+    if (_cartShellSyncBound) return;
+    _cartShellSyncBound = true;
+
+    window.addEventListener('agro:shell:view-changed', (event) => {
+        if (event.detail?.view !== 'carrito') return;
+        _pendingCartSubviewFocus = normalizeCartSubview(event.detail?.subview || readRequestedCartSubview());
+        refreshCartPlanningSnapshot().then(() => {
+            if (_initialized) renderCartTab();
+        }).catch(() => {
+            if (_initialized) renderCartTab();
+        });
+    });
+}
+
+function focusPendingCartSubview() {
+    if (!_pendingCartSubviewFocus) return;
+    const subview = normalizeCartSubview(_pendingCartSubviewFocus);
+    _pendingCartSubviewFocus = '';
+    if (subview === 'summary') return;
+
+    const panelId = subview === 'planning'
+        ? 'agro-cart-planning-panel'
+        : 'agro-cart-calculator-panel';
+    const panel = document.getElementById(panelId);
+    if (!panel) return;
+
+    document.querySelectorAll('.agro-cart-mini.is-focus-target').forEach((node) => {
+        node.classList.remove('is-focus-target');
+    });
+    panel.classList.add('is-focus-target');
+
+    panel.scrollIntoView({
+        behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+        block: 'start',
+        inline: 'nearest'
+    });
+
+    const focusable = panel.querySelector('button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    if (focusable && typeof focusable.focus === 'function') {
+        requestAnimationFrame(() => {
+            focusable.focus({ preventScroll: true });
+        });
+    }
+
+    window.setTimeout(() => {
+        panel.classList.remove('is-focus-target');
+    }, 1400);
+}
+
 // ============================================================
 // RENDER
 // ============================================================
@@ -609,6 +786,9 @@ function renderCartTab() {
 
     container.innerHTML = html;
     attachCartListeners(container);
+    requestAnimationFrame(() => {
+        focusPendingCartSubview();
+    });
 }
 
 function renderEmptyState() {
@@ -685,6 +865,8 @@ function renderActiveCart(cart, items, summary) {
                     ${summary.processedItems}/${summary.totalItems} items procesados
                 </div>
             </div>
+
+            ${renderCartWorkspacePanels()}
 
             <!-- Items -->
             <div class="agro-cart-items">
@@ -770,6 +952,159 @@ function renderAddItemForm() {
                 ✅ Agregar
             </button>
         </div>
+    `;
+}
+
+function renderCartWorkspacePanels() {
+    return `
+        <section class="agro-cart-workspace" aria-label="Planificación y cálculo dentro de Mi Carrito">
+            ${renderCartPlanningPanel()}
+            ${renderCartCalculatorPanel()}
+        </section>
+    `;
+}
+
+function renderCartPlanningPanel() {
+    const snapshot = _cartPlanningSnapshot || {};
+    const todayItems = Array.isArray(snapshot.todayItems) ? snapshot.todayItems : [];
+    const upcomingItems = Array.isArray(snapshot.upcomingItems) ? snapshot.upcomingItems : [];
+    const previewItems = todayItems.length ? todayItems : upcomingItems;
+    const statusCopy = snapshot.loading
+        ? 'Leyendo planificación activa...'
+        : `Hoy ${todayItems.length} · Próximas ${upcomingItems.length} · Atrasos ${Number(snapshot.overdueCount) || 0}`;
+    const helperCopy = snapshot.loading
+        ? 'Sincronizando agenda operativa para no sacar esta lectura del carrito.'
+        : `Contexto actual: ${escapeHtml(snapshot.focusCrop || 'Plan general')}.`;
+    const listBody = previewItems.length
+        ? previewItems.map((item) => {
+            const cropName = getCropName(item.crop_id);
+            const time = item?.scheduled_time ? ` · ${String(item.scheduled_time).slice(0, 5)}` : '';
+            return `
+                <li class="agro-cart-mini-list__item">
+                    <span class="agro-cart-mini-list__date">${escapeHtml(formatCartAgendaDateLabel(item.scheduled_date))}</span>
+                    <div class="agro-cart-mini-list__content">
+                        <strong>${escapeHtml(item.title || 'Actividad')}</strong>
+                        <span>${escapeHtml(cropName)}${escapeHtml(time)}</span>
+                    </div>
+                </li>
+            `;
+        }).join('')
+        : `<div class="agro-cart-mini-state">${snapshot.loading
+            ? 'Cargando resumen de agenda...'
+            : 'Sin actividades inmediatas. La planificación queda despejada por ahora.'}</div>`;
+
+    return `
+        <article class="agro-cart-mini agro-cart-mini--planning" id="agro-cart-planning-panel" tabindex="-1">
+            <div class="agro-cart-mini__head">
+                <div class="agro-cart-mini__copywrap">
+                    <p class="agro-cart-mini__eyebrow">Planificación</p>
+                    <h4 class="agro-cart-mini__title">Agenda operativa</h4>
+                    <p class="agro-cart-mini__copy">${helperCopy}</p>
+                </div>
+                <div class="agro-cart-mini__actions">
+                    <button type="button" class="agro-cart-mini-btn" data-action="open-agenda-view" id="agro-cart-planning-open-btn">
+                        <i class="fa-solid fa-calendar-days" aria-hidden="true"></i><span>Agenda completa</span>
+                    </button>
+                </div>
+            </div>
+            <div class="agro-cart-mini-stats">
+                <span class="agro-cart-mini-stat"><strong>Hoy</strong>${todayItems.length}</span>
+                <span class="agro-cart-mini-stat"><strong>Próximas</strong>${upcomingItems.length}</span>
+                <span class="agro-cart-mini-stat"><strong>Atrasos</strong>${Number(snapshot.overdueCount) || 0}</span>
+            </div>
+            <p class="agro-cart-mini__status">${statusCopy}</p>
+            <div class="agro-cart-mini-list">
+                <ul class="agro-cart-mini-list__wrap">${listBody.includes('<li') ? listBody : ''}</ul>
+                ${listBody.includes('<li') ? '' : listBody}
+            </div>
+        </article>
+    `;
+}
+
+function computeInlineCartRoiResult() {
+    const investment = Number(_cartInlineCalculator.investment) || 0;
+    const revenue = Number(_cartInlineCalculator.revenue) || 0;
+    const quantity = Number(_cartInlineCalculator.quantity) || 0;
+    if (investment <= 0 && revenue <= 0) return null;
+
+    const profit = revenue - investment;
+    const roi = investment > 0 ? (profit / investment) * 100 : 0;
+    const marginPerUnit = quantity > 0 ? profit / quantity : null;
+
+    return {
+        investment,
+        revenue,
+        quantity,
+        profit,
+        roi,
+        marginPerUnit
+    };
+}
+
+function renderCartCalculatorPanel() {
+    const result = _cartInlineCalculator.result;
+    const valueInvestment = escapeHtml(_cartInlineCalculator.investment || '');
+    const valueRevenue = escapeHtml(_cartInlineCalculator.revenue || '');
+    const valueQuantity = escapeHtml(_cartInlineCalculator.quantity || '');
+    const resultBody = result
+        ? `
+            <div class="agro-cart-inline-roi__result-grid">
+                <div class="agro-cart-inline-roi__result-item">
+                    <span>ROI</span>
+                    <strong class="${result.roi >= 0 ? 'is-positive' : 'is-negative'}">${result.roi.toFixed(1)}%</strong>
+                </div>
+                <div class="agro-cart-inline-roi__result-item">
+                    <span>Ganancia</span>
+                    <strong class="${result.profit >= 0 ? 'is-positive' : 'is-negative'}">$${result.profit.toFixed(2)}</strong>
+                </div>
+                <div class="agro-cart-inline-roi__result-item">
+                    <span>$/kg</span>
+                    <strong>${result.marginPerUnit != null ? `$${result.marginPerUnit.toFixed(2)}` : '—'}</strong>
+                </div>
+            </div>
+        `
+        : `<div class="agro-cart-mini-state">Carga inversión y venta para leer rentabilidad sin salir del carrito.</div>`;
+
+    return `
+        <article class="agro-cart-mini agro-cart-mini--calculator" id="agro-cart-calculator-panel" tabindex="-1">
+            <div class="agro-cart-mini__head">
+                <div class="agro-cart-mini__copywrap">
+                    <p class="agro-cart-mini__eyebrow">Cálculo rápido</p>
+                    <h4 class="agro-cart-mini__title">Calculadora ROI</h4>
+                    <p class="agro-cart-mini__copy">Lectura compacta para validar margen antes de registrar o comprar.</p>
+                </div>
+                <div class="agro-cart-mini__actions">
+                    <button type="button" class="agro-cart-mini-btn agro-cart-mini-btn--ghost" data-action="open-calculator-modal">
+                        <i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i><span>Modal completa</span>
+                    </button>
+                </div>
+            </div>
+            <div class="agro-cart-inline-roi">
+                <div class="agro-cart-inline-roi__fields">
+                    <label class="agro-cart-inline-roi__field">
+                        <span>Inversión</span>
+                        <input type="number" id="agro-cart-roi-investment" class="agro-cart-input" min="0" step="0.01" inputmode="decimal" value="${valueInvestment}" placeholder="0.00">
+                    </label>
+                    <label class="agro-cart-inline-roi__field">
+                        <span>Venta</span>
+                        <input type="number" id="agro-cart-roi-revenue" class="agro-cart-input" min="0" step="0.01" inputmode="decimal" value="${valueRevenue}" placeholder="0.00">
+                    </label>
+                    <label class="agro-cart-inline-roi__field">
+                        <span>Cantidad kg</span>
+                        <input type="number" id="agro-cart-roi-quantity" class="agro-cart-input" min="0" step="0.01" inputmode="decimal" value="${valueQuantity}" placeholder="0">
+                    </label>
+                </div>
+                <div class="agro-cart-inline-roi__actions">
+                    <button type="button" class="agro-cart-mini-btn agro-cart-mini-btn--primary" data-action="calculate-inline-roi">
+                        <i class="fa-solid fa-bolt" aria-hidden="true"></i><span>Calcular</span>
+                    </button>
+                    <button type="button" class="agro-cart-mini-btn" data-action="clear-inline-roi">
+                        <i class="fa-solid fa-rotate-left" aria-hidden="true"></i><span>Limpiar</span>
+                    </button>
+                </div>
+                ${resultBody}
+            </div>
+        </article>
     `;
 }
 
@@ -1070,6 +1405,37 @@ function attachCartListeners(container) {
         if (!actionEl) return;
         const action = actionEl.dataset.action;
 
+        if (action === 'open-agenda-view') {
+            window.dispatchEvent(new CustomEvent('agro:shell:set-view', {
+                detail: { view: 'agenda', scroll: true }
+            }));
+            return;
+        }
+
+        if (action === 'open-calculator-modal') {
+            document.getElementById('btn-open-agro-calculator')?.click();
+            return;
+        }
+
+        if (action === 'calculate-inline-roi') {
+            _cartInlineCalculator.result = computeInlineCartRoiResult();
+            _pendingCartSubviewFocus = 'calculator';
+            renderCartTab();
+            return;
+        }
+
+        if (action === 'clear-inline-roi') {
+            _cartInlineCalculator = {
+                investment: '',
+                revenue: '',
+                quantity: '',
+                result: null
+            };
+            _pendingCartSubviewFocus = 'calculator';
+            renderCartTab();
+            return;
+        }
+
         if (action === 'new-cart') { renderNewCartModal(); return; }
         if (action === 'delete-cart') { deleteCart(_activeCartId); return; }
         if (action === 'export-cart') { exportCartMD(_activeCartId); return; }
@@ -1144,6 +1510,22 @@ function attachCartListeners(container) {
     if (priceInput) {
         priceInput.addEventListener('input', () => updateAddPreview(addCurrency), { signal });
     }
+
+    container.addEventListener('input', (e) => {
+        const field = e.target;
+        if (!(field instanceof HTMLInputElement)) return;
+        if (field.id === 'agro-cart-roi-investment') {
+            _cartInlineCalculator.investment = field.value;
+            return;
+        }
+        if (field.id === 'agro-cart-roi-revenue') {
+            _cartInlineCalculator.revenue = field.value;
+            return;
+        }
+        if (field.id === 'agro-cart-roi-quantity') {
+            _cartInlineCalculator.quantity = field.value;
+        }
+    }, { signal });
 }
 
 function updateAddPreview(currency) {
@@ -1274,6 +1656,234 @@ export function injectCartStyles() {
             font-size: 1rem;
             font-weight: 700;
             color: #fff;
+        }
+
+        .agro-cart-workspace {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 0.9rem;
+        }
+        .agro-cart-mini {
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px;
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)),
+                var(--bg-3, #111113);
+            padding: 0.95rem;
+            transition: box-shadow 180ms ease, border-color 180ms ease, transform 180ms ease;
+        }
+        .agro-cart-mini.is-focus-target {
+            border-color: var(--v10-gold-4, #C8A752);
+            box-shadow: 0 0 0 1px rgba(200,167,82,0.22), 0 10px 24px rgba(200,167,82,0.12);
+        }
+        .agro-cart-mini--planning {
+            border-color: rgba(200,167,82,0.18);
+        }
+        .agro-cart-mini__head {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.75rem;
+            align-items: flex-start;
+            margin-bottom: 0.8rem;
+        }
+        .agro-cart-mini__copywrap {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.18rem;
+        }
+        .agro-cart-mini__eyebrow {
+            margin: 0;
+            color: var(--v10-gold-4, #C8A752);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+        .agro-cart-mini__title {
+            margin: 0;
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.95rem;
+            line-height: 1.25;
+        }
+        .agro-cart-mini__copy,
+        .agro-cart-mini__status {
+            margin: 0;
+            color: rgba(255,255,255,0.62);
+            font-size: 0.78rem;
+            line-height: 1.45;
+        }
+        .agro-cart-mini__actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.4rem;
+            flex-shrink: 0;
+        }
+        .agro-cart-mini-btn {
+            min-height: 38px;
+            border-radius: 10px;
+            border: 1px solid rgba(200,167,82,0.22);
+            background: rgba(200,167,82,0.06);
+            color: var(--v10-gold-4, #C8A752);
+            padding: 0.45rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            cursor: pointer;
+            transition: background 180ms ease, border-color 180ms ease, transform 180ms ease, color 180ms ease;
+        }
+        .agro-cart-mini-btn:hover {
+            background: rgba(200,167,82,0.12);
+            border-color: rgba(200,167,82,0.36);
+            transform: translateY(-1px);
+        }
+        .agro-cart-mini-btn--primary {
+            background: var(--v10-metallic-btn, linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e));
+            color: var(--bg-1, #0a0a0a);
+            border-color: transparent;
+        }
+        .agro-cart-mini-btn--ghost {
+            background: transparent;
+        }
+        .agro-cart-mini-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            margin-bottom: 0.6rem;
+        }
+        .agro-cart-mini-stat {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            min-height: 30px;
+            padding: 0.25rem 0.6rem;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+            color: rgba(255,255,255,0.72);
+            font-size: 0.72rem;
+        }
+        .agro-cart-mini-stat strong {
+            color: var(--v10-gold-4, #C8A752);
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .agro-cart-mini-list {
+            margin-top: 0.75rem;
+        }
+        .agro-cart-mini-list__wrap {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .agro-cart-mini-list__item {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr);
+            gap: 0.65rem;
+            align-items: flex-start;
+            padding: 0.6rem 0.7rem;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.025);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .agro-cart-mini-list__date {
+            color: var(--v10-gold-4, #C8A752);
+            font-size: 0.72rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .agro-cart-mini-list__content {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+        }
+        .agro-cart-mini-list__content strong {
+            color: #fff;
+            font-size: 0.8rem;
+            line-height: 1.35;
+        }
+        .agro-cart-mini-list__content span {
+            color: rgba(255,255,255,0.55);
+            font-size: 0.72rem;
+            line-height: 1.35;
+        }
+        .agro-cart-mini-state {
+            padding: 0.8rem;
+            border-radius: 10px;
+            border: 1px dashed rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.02);
+            color: rgba(255,255,255,0.58);
+            font-size: 0.78rem;
+            line-height: 1.45;
+        }
+        .agro-cart-inline-roi {
+            display: flex;
+            flex-direction: column;
+            gap: 0.7rem;
+        }
+        .agro-cart-inline-roi__fields {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.55rem;
+        }
+        .agro-cart-inline-roi__field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.28rem;
+        }
+        .agro-cart-inline-roi__field span {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .agro-cart-inline-roi__actions {
+            display: flex;
+            gap: 0.45rem;
+            flex-wrap: wrap;
+        }
+        .agro-cart-inline-roi__result-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.5rem;
+        }
+        .agro-cart-inline-roi__result-item {
+            padding: 0.7rem;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.06);
+            background: rgba(255,255,255,0.025);
+        }
+        .agro-cart-inline-roi__result-item span {
+            display: block;
+            color: rgba(255,255,255,0.45);
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .agro-cart-inline-roi__result-item strong {
+            display: block;
+            margin-top: 0.22rem;
+            color: #fff;
+            font-size: 0.92rem;
+            line-height: 1.2;
+        }
+        .agro-cart-inline-roi__result-item strong.is-positive {
+            color: #86efac;
+        }
+        .agro-cart-inline-roi__result-item strong.is-negative {
+            color: #fca5a5;
         }
 
         /* Items */
@@ -1589,6 +2199,21 @@ export function injectCartStyles() {
         }
 
         @media (max-width: 480px) {
+            .agro-cart-workspace,
+            .agro-cart-inline-roi__fields,
+            .agro-cart-inline-roi__result-grid {
+                grid-template-columns: 1fr;
+            }
+            .agro-cart-mini__head {
+                flex-direction: column;
+            }
+            .agro-cart-mini__actions,
+            .agro-cart-inline-roi__actions {
+                width: 100%;
+            }
+            .agro-cart-mini-btn {
+                width: 100%;
+            }
             .agro-cart-summary-value { font-size: 0.85rem; }
             .agro-cart-item-price { font-size: 0.7rem; }
             .agro-cart-item {
@@ -1602,6 +2227,20 @@ export function injectCartStyles() {
             }
             .agro-cart-item-actions {
                 width: 100%;
+            }
+        }
+        @media (max-width: 820px) {
+            .agro-cart-workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .agro-cart-mini,
+            .agro-cart-mini-btn {
+                transition: none !important;
+            }
+            .agro-cart-mini-btn:hover {
+                transform: none !important;
             }
         }
     `;

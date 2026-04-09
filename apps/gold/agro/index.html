@@ -1208,9 +1208,20 @@
                             <i class="fa-solid fa-users agro-shell-link__icon" aria-hidden="true"></i><span
                                 class="agro-shell-link__label">Cartera Viva</span>
                         </button>
-                        <button type="button" class="agro-shell-sublink" data-agro-view="carrito">
+                        <button type="button" class="agro-shell-sublink" data-agro-view="carrito"
+                            data-agro-subview="summary">
                             <i class="fa-solid fa-cart-shopping agro-shell-link__icon" aria-hidden="true"></i><span
                                 class="agro-shell-link__label">Mi Carrito</span>
+                        </button>
+                        <button type="button" class="agro-shell-sublink" data-agro-view="carrito"
+                            data-agro-subview="planning">
+                            <i class="fa-solid fa-calendar-check agro-shell-link__icon" aria-hidden="true"></i><span
+                                class="agro-shell-link__label">Planificación</span>
+                        </button>
+                        <button type="button" class="agro-shell-sublink" data-agro-view="carrito"
+                            data-agro-subview="calculator">
+                            <i class="fa-solid fa-calculator agro-shell-link__icon" aria-hidden="true"></i><span
+                                class="agro-shell-link__label">Calculadora ROI</span>
                         </button>
                         <button type="button" class="agro-shell-sublink" data-agro-view="operational">
                             <i class="fa-solid fa-wallet agro-shell-link__icon" aria-hidden="true"></i><span
@@ -1244,9 +1255,6 @@
                         aria-hidden="true"></i><span>Herramientas</span></p>
                 <button type="button" class="agro-shell-link" data-agro-view="clima"><i class="fa-solid fa-cloud-sun agro-shell-link__icon"
                         aria-hidden="true"></i><span class="agro-shell-link__label">Clima Agro</span></button>
-                <button type="button" class="agro-shell-link" data-agro-view="agenda"><i
-                        class="fa-solid fa-calendar-days agro-shell-link__icon" aria-hidden="true"></i><span
-                        class="agro-shell-link__label">Agenda</span></button>
                 <button type="button" class="agro-shell-link" data-agro-view="herramientas"><i
                         class="fa-solid fa-toolbox agro-shell-link__icon" aria-hidden="true"></i><span
                         class="agro-shell-link__label">Herramientas</span></button>
@@ -2556,9 +2564,9 @@
             <div class="agro-pagados-dedicated__hero">
                 <div class="agro-pagados-dedicated__copy">
                     <p class="agro-pagados-dedicated__eyebrow">Vista dedicada</p>
-                    <h3 class="agro-pagados-dedicated__title">Carrito de Compras</h3>
-                    <p class="agro-pagados-dedicated__subtitle">Gestiona tu lista de compras agro. Agrega insumos,
-                        revisa totales y exporta el pedido sin mezclar otros movimientos.</p>
+                    <h3 class="agro-pagados-dedicated__title">Mi Carrito y Planificación</h3>
+                    <p class="agro-pagados-dedicated__subtitle">Gestiona compras, revisa agenda operativa y calcula
+                        rentabilidad desde una sola superficie de trabajo.</p>
                 </div>
                 <div class="agro-privacy-strip">
                     <span class="agro-privacy-strip__label">Privacidad</span>
@@ -2626,8 +2634,9 @@
                         <h3 class="agro-tool-card__title">Agenda operativa</h3>
                         <p class="agro-tool-card__copy">Qué toca hoy, próximos pendientes y contexto lunar en una sola
                             lectura de trabajo.</p>
-                        <button type="button" class="agro-tool-card__action" data-agro-view="agenda">
-                            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Abrir planificación
+                        <button type="button" class="agro-tool-card__action" data-agro-view="carrito"
+                            data-agro-subview="planning">
+                            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Ir a Mi Carrito
                         </button>
                     </article>
                     <article class="agro-tool-card">
@@ -2650,8 +2659,9 @@
                         <h3 class="agro-tool-card__title">Calculadora ROI</h3>
                         <p class="agro-tool-card__copy">Compara rentabilidad por cultivo con datos directos del
                             facturero.</p>
-                        <button type="button" class="agro-tool-card__action" data-agro-action="calculator">
-                            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Calcular
+                        <button type="button" class="agro-tool-card__action" data-agro-view="carrito"
+                            data-agro-subview="calculator">
+                            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Usar en Mi Carrito
                         </button>
                     </article>
                     <article class="agro-tool-card">

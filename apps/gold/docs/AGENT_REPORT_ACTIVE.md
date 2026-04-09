@@ -11961,3 +11961,106 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
   - disclosure usable;
   - sin desbordes en acciones y métricas.
 - Activar `prefers-reduced-motion` y confirmar que desaparecen las transiciones nuevas del bloque de planificación.
+
+---
+
+## 2026-04-09 - Diagnóstico previo para integrar Agenda y Calculadora dentro de Mi Carrito
+
+### Diagnóstico
+
+- La jerarquía actual del shell no acompaña la intención operativa:
+  - `Operación comercial` contiene `Cartera Viva`, `Mi Carrito` y `Cartera Operativa`;
+  - `Agenda` sigue viviendo como link separado dentro de `Herramientas`;
+  - `Calculadora` no existe como hijo del shell, sino como modal disparado desde el header de operaciones.
+- `Mi Carrito` ya tiene una vista dedicada real y estable:
+  - el contenido lo renderiza `apps/gold/agro/agro-cart.js`;
+  - el root se reubica a la vista dedicada mediante `syncCarritoDedicatedView()` en `apps/gold/agro/agro.js`;
+  - por arquitectura, es el mejor punto para absorber planificación y calculadora sin crear otra superficie.
+- `Agenda` ya fue compactada funcionalmente en `apps/gold/agro/agro-agenda.js`, pero sigue siendo una región independiente.
+- `Calculadora ROI` ya existe como modal funcional en `apps/gold/agro/index.html` y su wiring está en `apps/gold/agro/agrocalculadora.js`.
+- La opción más limpia y de menor riesgo es:
+  - mover la jerarquía del sidebar para que `Planificación` y `Calculadora ROI` cuelguen de `Operación comercial`;
+  - hacer que ambos caminos aterricen en `Mi Carrito`;
+  - insertar dentro del carrito dos micro-paneles sobrios:
+    - planificación / agenda operativa;
+    - calculadora ROI compacta.
+
+### Plan
+
+- Ajustar la subnavegación de `Operación comercial` para incluir accesos a planificación y calculadora sobre la misma vista `carrito`.
+- Extender `agro-shell.js` para que `carrito` soporte focos internos (`summary`, `planning`, `calculator`) sin romper la navegación existente.
+- Integrar en `agro-cart.js` un bloque minimalista de planificación y otro de calculadora ROI compacta.
+- Mantener `Agenda` completa como herramienta secundaria accesible desde el panel interno, no como héroe ni como ruta dominante del shell.
+- Validar con `pnpm build:gold`.
+
+### DoD
+
+- `Agenda` deja de sentirse como módulo separado en el shell y pasa a la familia de `Operación comercial`.
+- `Mi Carrito` incorpora planificación y calculadora de forma minimalista.
+- No se abre una vista nueva ni se rompe la arquitectura actual.
+- La navegación sigue clara en desktop y móvil.
+- `pnpm build:gold` pasa limpio.
+
+### Cambios aplicados
+
+- `apps/gold/agro/index.html`
+  - `Operación comercial` ahora incorpora dos hijos nuevos sobre la misma experiencia `carrito`:
+    - `Planificación`
+    - `Calculadora ROI`
+  - Se retiró `Agenda` como link separado del grupo `Herramientas` del sidebar.
+  - El hero dedicado de `Mi Carrito` ahora presenta explícitamente la experiencia como `Mi Carrito y Planificación`.
+  - Los cards de `Agenda operativa` y `Calculadora ROI` en `Herramientas` ya no abren superficies separadas:
+    - redirigen a `Mi Carrito`;
+    - aterrizan en el subpanel interno correspondiente.
+
+- `apps/gold/agro/agro-shell.js`
+  - Se extendió la navegación de `carrito` con subviews internos:
+    - `summary`
+    - `planning`
+    - `calculator`
+  - Con esto, el shell mantiene una sola vista real (`carrito`) pero permite jerarquía operativa limpia dentro de `Operación comercial`.
+
+- `apps/gold/agro/agro-cart.js`
+  - Se integró un bloque `workspace` dentro de `Mi Carrito` con dos micro-paneles:
+    - `Agenda operativa`
+    - `Calculadora ROI`
+  - La agenda interna ahora muestra una lectura mínima y útil:
+    - hoy;
+    - próximas;
+    - atrasos;
+    - cultivo/contexto en foco.
+  - La calculadora interna ahora permite cálculo rápido de:
+    - inversión;
+    - venta;
+    - cantidad;
+    - ROI;
+    - ganancia;
+    - margen por kg.
+  - Se mantuvo la calculadora modal completa como salida secundaria desde el panel interno.
+  - Se añadió sincronización con el shell para que `Planificación` y `Calculadora ROI` enfoquen el panel correcto dentro del carrito sin crear una vista nueva ni romper la arquitectura actual.
+
+### Build
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por `node v25.6.0` vs `20.x`
+
+### QA sugerido
+
+- Abrir `/agro` y validar en el sidebar que `Planificación` y `Calculadora ROI` cuelgan de `Operación comercial`.
+- Confirmar que al entrar en:
+  - `Mi Carrito` se muestra el resumen normal;
+  - `Planificación` se aterriza en el panel interno de agenda;
+  - `Calculadora ROI` se aterriza en el panel interno de cálculo.
+- Revisar que `Agenda operativa` dentro del carrito se sienta auxiliar y sobria, no otro módulo gigante.
+- Verificar que la calculadora compacta funcione bien con valores reales y que el botón de modal completa siga abriendo la calculadora existente.
+- Revisar móvil pequeño para confirmar:
+  - apilado correcto de los micro-paneles;
+  - botones a ancho completo;
+  - sin scrolls horizontales ni desbordes.
