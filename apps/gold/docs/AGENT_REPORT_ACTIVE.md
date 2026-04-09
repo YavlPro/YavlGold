@@ -11864,3 +11864,100 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
 - Revisar que icono, título, copy y CTA queden mejor balanceados en desktop.
 - Verificar que en mobile las cards siguen siendo tocables, legibles y sin desbordes.
 - Confirmar que el accordion y la navegación por botones siguen funcionando sin cambios.
+
+---
+
+## 2026-04-09 - Diagnóstico previo para fusionar Agenda Agrícola con planificación
+
+### Diagnóstico
+
+- La vista `Agenda` vive como región dedicada en `apps/gold/agro/index.html`, pero el render real está concentrado en `apps/gold/agro/agro-agenda.js`.
+- `agro-agenda.js` construye toda la interfaz y además inyecta su CSS con `injectAgendaStyles()`, por lo que el cambio seguro debe vivir allí.
+- La lógica sensible actual es simple y reutilizable:
+  - carga de items por mes desde `agro_agenda`;
+  - creación, completado y borrado de actividades;
+  - cálculo de contexto lunar y lectura básica del clima.
+- El problema de producto/UX está en la jerarquía del render:
+  - `renderAgendaContent()` coloca el calendario mensual como bloque principal;
+  - el detalle del día queda subordinado a la selección del calendario;
+  - la vista se percibe como “calendario grande” y no como panel operativo.
+- `Mi Carrito` ya funciona como capa de planificación táctica desde `apps/gold/agro/agro-cart.js`, así que la fusión conceptual puede resolverse sin unir persistencias: basta con reorientar Agenda hacia planificación operativa y dar un puente visual/funcional a `carrito`.
+- La opción más segura es:
+  - reordenar el render de Agenda para priorizar “qué toca hoy / próximas / pendientes / quick add / contexto”;
+  - mover el calendario mensual a un bloque colapsable secundario;
+  - mantener la lógica de CRUD actual y la selección de fecha como herramienta secundaria.
+
+### Plan
+
+- Reconfigurar `renderAgendaContent()` para que la vista principal sea de planificación operativa.
+- Introducir un bloque principal con foco del día, próximas actividades, pendientes y CTA rápidos.
+- Llevar el calendario mensual a un disclosure/acordeón secundario sin eliminarlo.
+- Ajustar el CSS inyectado para que la pantalla se lea como planificación minimalista y no como calendario protagonista.
+- Añadir un puente simple hacia `Mi Carrito` sin tocar la arquitectura ni la persistencia.
+- Validar con `pnpm build:gold`.
+
+### DoD
+
+- La experiencia deja de sentirse como “calendario gigante”.
+- La vista principal se centra en planificación operativa.
+- `Mi Carrito / Planificación` gana coherencia funcional.
+- El calendario mensual queda relegado a un rol secundario o expandible.
+- La UI queda más minimalista, enfocada y útil.
+- `pnpm build:gold` pasa limpio.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-agenda.js`
+  - Se reordenó `renderAgendaContent()` para que la vista abra con foco operativo y no con el calendario mensual como héroe.
+  - El header ahora presenta la superficie como `Mi Carrito / Planificación` y resume la lectura útil del día.
+  - Se añadió un bloque principal con:
+    - `Qué toca hoy`
+    - `Próximas actividades`
+    - `Pendientes y atrasos`
+    - quick add
+    - puente directo a `Mi Carrito`
+    - métricas/contexto de lectura rápida
+  - El calendario mensual se movió a un bloque `details` secundario (`Calendario mensual / Vista secundaria por fecha`) conservando:
+    - navegación por mes
+    - selección de día
+    - detalle del día seleccionado
+  - Se conectó el CTA `Abrir Mi Carrito` al evento `agro:shell:set-view` con `view: 'carrito'`, sin tocar la lógica base del shell.
+  - La lista principal de `Qué toca hoy` quedó enfocada en pendientes abiertos del día para que la lectura operativa sea consistente.
+  - Se añadieron overrides de estilo dentro de `injectAgendaStyles()` para:
+    - tarjetas métricas;
+    - secciones de planificación;
+    - acciones rápidas;
+    - disclosure del calendario;
+    - estados vacíos;
+    - responsive y `prefers-reduced-motion`.
+
+- `apps/gold/agro/index.html`
+  - Se ajustó el acceso visual de la herramienta `Agenda` para que ya se lea como `Planificación / Agenda operativa`, no como `Calendario lunar` aislado.
+
+### Build
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por `node v25.6.0` vs `20.x`
+
+### QA sugerido
+
+- Abrir `/agro` en desktop y validar que la vista `Agenda` ahora entra con foco en:
+  - hoy;
+  - próximas actividades;
+  - pendientes;
+  - CTA rápido.
+- Confirmar que el calendario mensual ya no domina visualmente y que queda claro como bloque secundario expandible.
+- Verificar que `Abrir Mi Carrito` lleva a `carrito` sin romper navegación ni scroll.
+- Revisar móvil pequeño para asegurar:
+  - lectura compacta;
+  - targets táctiles claros;
+  - disclosure usable;
+  - sin desbordes en acciones y métricas.
+- Activar `prefers-reduced-motion` y confirmar que desaparecen las transiciones nuevas del bloque de planificación.

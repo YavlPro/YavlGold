@@ -298,6 +298,191 @@ function getWeatherFromDOM() {
     };
 }
 
+function sortAgendaItems(items) {
+    return (Array.isArray(items) ? items.slice() : []).sort((left, right) => {
+        const leftDate = String(left?.scheduled_date || '');
+        const rightDate = String(right?.scheduled_date || '');
+        if (leftDate !== rightDate) return leftDate.localeCompare(rightDate);
+
+        const leftTime = String(left?.scheduled_time || '99:99');
+        const rightTime = String(right?.scheduled_time || '99:99');
+        if (leftTime !== rightTime) return leftTime.localeCompare(rightTime);
+
+        return String(left?.title || '').localeCompare(String(right?.title || ''), 'es');
+    });
+}
+
+function getTomorrowString(baseDate = new Date()) {
+    const next = new Date(baseDate);
+    next.setDate(next.getDate() + 1);
+    return next.toISOString().split('T')[0];
+}
+
+function formatAgendaDateLabel(dateStr) {
+    const safeDate = String(dateStr || '').trim();
+    if (!safeDate) return 'Sin fecha';
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (safeDate === todayStr) return 'Hoy';
+    if (safeDate === getTomorrowString()) return 'Mañana';
+
+    const [year, month, day] = safeDate.split('-').map(Number);
+    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+        return safeDate;
+    }
+
+    const date = new Date(year, month - 1, day);
+    const weekdayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    const monthLabel = MONTHS_ES[month - 1] ? MONTHS_ES[month - 1].slice(0, 3) : '';
+    return `${weekdayNames[date.getDay()]} ${day} ${monthLabel}`.trim();
+}
+
+function getAgendaPlanningSnapshot(todayStr) {
+    const pending = sortAgendaItems(_agendaItems.filter((item) => !item.completed));
+    const todayItems = pending.filter((item) => String(item?.scheduled_date || '') === todayStr);
+    const upcomingItems = pending.filter((item) => String(item?.scheduled_date || '') > todayStr).slice(0, 4);
+    const overdueItems = pending.filter((item) => String(item?.scheduled_date || '') < todayStr).slice(0, 4);
+    const pendingCropIds = new Set(
+        pending
+            .map((item) => String(item?.crop_id || '').trim())
+            .filter(Boolean)
+    );
+
+    return {
+        pending,
+        todayItems,
+        upcomingItems,
+        overdueItems,
+        pendingCount: pending.length,
+        cropCount: pendingCropIds.size
+    };
+}
+
+function resolvePlanningCropFocus(planning) {
+    const focusItem = [...(planning?.todayItems || []), ...(planning?.upcomingItems || [])]
+        .find((item) => String(item?.crop_id || '').trim());
+    return focusItem ? getCropName(focusItem.crop_id) : 'Plan general';
+}
+
+function createAgendaMetricCard({ label, value, copy = '', tone = 'default' }) {
+    const card = document.createElement('article');
+    card.className = `aga-metric-card${tone ? ` aga-metric-card--${tone}` : ''}`;
+
+    const labelEl = document.createElement('span');
+    labelEl.className = 'aga-metric-card__label';
+    labelEl.textContent = label;
+
+    const valueEl = document.createElement('strong');
+    valueEl.className = 'aga-metric-card__value';
+    valueEl.textContent = String(value || '0');
+
+    card.append(labelEl, valueEl);
+
+    if (copy) {
+        const copyEl = document.createElement('span');
+        copyEl.className = 'aga-metric-card__copy';
+        copyEl.textContent = copy;
+        card.appendChild(copyEl);
+    }
+
+    return card;
+}
+
+function createAgendaStateMessage(copy, variant = 'muted') {
+    const state = document.createElement('div');
+    state.className = `aga-state-message${variant ? ` aga-state-message--${variant}` : ''}`;
+    state.textContent = copy;
+    return state;
+}
+
+function createAgendaActivityNode(item, options = {}) {
+    const tc = TYPE_CONFIG[item?.type] || TYPE_CONFIG.otro;
+    const cropName = getCropName(item?.crop_id);
+    const timeStr = item?.scheduled_time ? String(item.scheduled_time).substring(0, 5) : '';
+    const showDate = options.showDate === true;
+    const compact = options.compact === true;
+
+    const activity = document.createElement('div');
+    activity.className = `aga-activity${item?.completed ? ' aga-completed' : ''}${compact ? ' aga-activity--compact' : ''}`.trim();
+    activity.dataset.itemId = String(item?.id || '');
+
+    const checkBtn = document.createElement('button');
+    checkBtn.type = 'button';
+    checkBtn.className = 'aga-check';
+    checkBtn.dataset.action = 'toggle-complete';
+    checkBtn.dataset.itemId = String(item?.id || '');
+    checkBtn.textContent = item?.completed ? '☑' : '☐';
+
+    const info = document.createElement('div');
+    info.className = 'aga-activity-info';
+
+    const activityTitle = document.createElement('div');
+    activityTitle.className = 'aga-activity-title';
+    activityTitle.textContent = `${tc.icon} ${String(item?.title || '')}`;
+
+    const activityMeta = document.createElement('div');
+    activityMeta.className = 'aga-activity-meta';
+
+    if (showDate) {
+        const dateSpan = document.createElement('span');
+        dateSpan.textContent = formatAgendaDateLabel(item?.scheduled_date);
+        activityMeta.appendChild(dateSpan);
+    }
+
+    if (cropName !== 'General') {
+        const cropSpan = document.createElement('span');
+        cropSpan.textContent = cropName;
+        activityMeta.appendChild(cropSpan);
+    }
+
+    if (timeStr) {
+        const timeSpan = document.createElement('span');
+        timeSpan.textContent = `Hora ${timeStr}`;
+        activityMeta.appendChild(timeSpan);
+    }
+
+    if (item?.notes && compact) {
+        const noteSpan = document.createElement('span');
+        noteSpan.textContent = 'Con nota';
+        activityMeta.appendChild(noteSpan);
+    }
+
+    info.append(activityTitle, activityMeta);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'aga-delete-btn';
+    deleteBtn.dataset.action = 'delete-item';
+    deleteBtn.dataset.itemId = String(item?.id || '');
+    deleteBtn.title = 'Eliminar';
+    const deleteIcon = document.createElement('i');
+    deleteIcon.className = 'fa fa-trash';
+    deleteBtn.appendChild(deleteIcon);
+
+    activity.append(checkBtn, info, deleteBtn);
+    return activity;
+}
+
+function createAgendaActivityList(items, options = {}) {
+    const list = document.createElement('div');
+    list.className = options.listClassName || 'aga-activities-list';
+
+    const safeItems = Array.isArray(items) ? items : [];
+    if (!safeItems.length) {
+        list.appendChild(createAgendaStateMessage(
+            options.emptyCopy || 'No hay actividades en esta lectura.',
+            options.emptyVariant || 'muted'
+        ));
+        return list;
+    }
+
+    safeItems.forEach((item) => {
+        list.appendChild(createAgendaActivityNode(item, options));
+    });
+
+    return list;
+}
+
 // ============================================================
 // RENDER: MODAL
 // ============================================================
@@ -359,6 +544,10 @@ function renderAgendaContent(container, isInline) {
     }
 
     const selectedItems = itemsByDate[_selectedDate] || [];
+    const planning = getAgendaPlanningSnapshot(todayStr);
+    const planningCropFocus = resolvePlanningCropFocus(planning);
+    const todayOpenItems = sortAgendaItems(planning.todayItems);
+    const futureOpenItems = planning.pending.filter((item) => String(item?.scheduled_date || '') > todayStr);
 
     const selDate = new Date(_selectedDate + 'T12:00:00');
     const selMoon = getPhaseInfo(getMoonPhase(selDate));
@@ -378,9 +567,20 @@ function renderAgendaContent(container, isInline) {
     const headerTop = document.createElement('div');
     headerTop.className = 'aga-header-top';
 
+    const headerCopy = document.createElement('div');
+    headerCopy.className = 'aga-header-copy';
+
+    const eyebrow = document.createElement('p');
+    eyebrow.className = 'aga-eyebrow';
+    eyebrow.textContent = 'Mi Carrito / Planificación';
+
     const title = document.createElement('h3');
     title.className = 'aga-title';
-    title.textContent = '🌾 Agenda Agrícola';
+    title.textContent = 'Planificación operativa';
+
+    const subtitle = document.createElement('p');
+    subtitle.className = 'aga-subtitle';
+    subtitle.textContent = 'Qué toca hoy, próximas actividades y contexto lunar en una lectura de trabajo. El calendario mensual queda como referencia secundaria.';
 
     const headerRight = document.createElement('div');
     headerRight.className = 'aga-header-right';
@@ -401,7 +601,8 @@ function renderAgendaContent(container, isInline) {
     } else {
         headerRight.append(monthLabel);
     }
-    headerTop.append(title, headerRight);
+    headerCopy.append(eyebrow, title, subtitle);
+    headerTop.append(headerCopy, headerRight);
     header.appendChild(headerTop);
 
     const weatherBar = document.createElement('div');
@@ -424,8 +625,175 @@ function renderAgendaContent(container, isInline) {
         header.appendChild(moonRecEl);
     }
 
+    const contextGrid = document.createElement('div');
+    contextGrid.className = 'aga-context-grid';
+    contextGrid.append(
+        createAgendaMetricCard({
+            label: 'Hoy',
+            value: planning.todayItems.length,
+            copy: planning.todayItems.length === 1 ? 'actividad operativa' : 'actividades operativas',
+            tone: 'gold'
+        }),
+        createAgendaMetricCard({
+            label: 'Próximas',
+            value: futureOpenItems.length,
+            copy: 'pendientes del mes visible'
+        }),
+        createAgendaMetricCard({
+            label: 'Pendientes',
+            value: planning.pendingCount,
+            copy: planning.overdueItems.length > 0
+                ? `${planning.overdueItems.length} con atraso`
+                : 'sin atrasos críticos',
+            tone: planning.overdueItems.length > 0 ? 'warning' : 'default'
+        }),
+        createAgendaMetricCard({
+            label: 'Contexto',
+            value: todayPhase.name,
+            copy: planningCropFocus,
+            tone: 'context'
+        })
+    );
+    header.appendChild(contextGrid);
+
     const body = document.createElement('div');
     body.className = 'aga-body';
+
+    const plannerMain = document.createElement('div');
+    plannerMain.className = 'aga-planner-main';
+
+    const todaySection = document.createElement('section');
+    todaySection.className = 'aga-planner-section aga-planner-section--primary';
+
+    const todayHead = document.createElement('div');
+    todayHead.className = 'aga-planner-section__head';
+
+    const todayCopy = document.createElement('div');
+    todayCopy.className = 'aga-planner-section__copy';
+    const todayLabel = document.createElement('span');
+    todayLabel.className = 'aga-planner-section__eyebrow';
+    todayLabel.textContent = 'Qué toca hoy';
+    const todayTitle = document.createElement('h4');
+    todayTitle.className = 'aga-planner-section__title';
+    todayTitle.textContent = formatAgendaDateLabel(todayStr);
+    const todayMeta = document.createElement('p');
+    todayMeta.className = 'aga-planner-section__meta';
+    todayMeta.textContent = planning.todayItems.length > 0
+        ? `${planning.todayItems.length} actividad${planning.todayItems.length === 1 ? '' : 'es'} programada${planning.todayItems.length === 1 ? '' : 's'} para hoy.`
+        : 'No hay tareas cargadas para hoy. Usa esta vista para planificar lo inmediato.';
+    todayCopy.append(todayLabel, todayTitle, todayMeta);
+
+    const plannerActions = document.createElement('div');
+    plannerActions.className = 'aga-planner-actions';
+
+    const cartLink = document.createElement('button');
+    cartLink.type = 'button';
+    cartLink.className = 'aga-inline-link';
+    cartLink.dataset.action = 'open-cart-view';
+    cartLink.textContent = 'Abrir Mi Carrito';
+
+    const addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.className = 'aga-add-btn';
+    addBtn.dataset.action = 'open-create';
+    addBtn.textContent = 'Agregar actividad';
+
+    plannerActions.append(cartLink, addBtn);
+    todayHead.append(todayCopy, plannerActions);
+    todaySection.appendChild(todayHead);
+    todaySection.appendChild(createAgendaActivityList(todayOpenItems, {
+        emptyCopy: 'Día libre. Si algo debe moverse hoy, agrégalo aquí y úsalo como foco operativo.'
+    }));
+    plannerMain.appendChild(todaySection);
+
+    const upcomingSection = document.createElement('section');
+    upcomingSection.className = 'aga-planner-section';
+    const upcomingHead = document.createElement('div');
+    upcomingHead.className = 'aga-planner-section__head';
+    const upcomingCopy = document.createElement('div');
+    upcomingCopy.className = 'aga-planner-section__copy';
+    const upcomingLabel = document.createElement('span');
+    upcomingLabel.className = 'aga-planner-section__eyebrow';
+    upcomingLabel.textContent = 'Próximas actividades';
+    const upcomingTitle = document.createElement('h4');
+    upcomingTitle.className = 'aga-planner-section__title';
+    upcomingTitle.textContent = 'Lo siguiente en la agenda';
+    const upcomingMeta = document.createElement('p');
+    upcomingMeta.className = 'aga-planner-section__meta';
+    upcomingMeta.textContent = futureOpenItems.length > 0
+        ? 'Lectura rápida de lo siguiente para no trabajar a ciegas.'
+        : 'No hay nuevas actividades programadas más adelante en este mes.';
+    upcomingCopy.append(upcomingLabel, upcomingTitle, upcomingMeta);
+    upcomingHead.appendChild(upcomingCopy);
+    upcomingSection.append(upcomingHead, createAgendaActivityList(planning.upcomingItems, {
+        emptyCopy: 'Sin próximas actividades. La agenda del mes está despejada por ahora.',
+        showDate: true,
+        compact: true,
+        listClassName: 'aga-activities-list aga-activities-list--compact'
+    }));
+    plannerMain.appendChild(upcomingSection);
+
+    const pendingSection = document.createElement('section');
+    pendingSection.className = 'aga-planner-section';
+    const pendingHead = document.createElement('div');
+    pendingHead.className = 'aga-planner-section__head';
+    const pendingCopy = document.createElement('div');
+    pendingCopy.className = 'aga-planner-section__copy';
+    const pendingLabel = document.createElement('span');
+    pendingLabel.className = 'aga-planner-section__eyebrow';
+    pendingLabel.textContent = planning.overdueItems.length > 0 ? 'Pendientes y atrasos' : 'Pendientes abiertos';
+    const pendingTitle = document.createElement('h4');
+    pendingTitle.className = 'aga-planner-section__title';
+    pendingTitle.textContent = planning.overdueItems.length > 0 ? 'Lo que requiere atención' : 'Panel limpio';
+    const pendingMeta = document.createElement('p');
+    pendingMeta.className = 'aga-planner-section__meta';
+    pendingMeta.textContent = planning.overdueItems.length > 0
+        ? 'Estas actividades quedaron por detrás de la fecha y conviene resolverlas primero.'
+        : 'No hay atrasos en el periodo visible. Mantén el ritmo desde la planificación.';
+    pendingCopy.append(pendingLabel, pendingTitle, pendingMeta);
+    pendingHead.appendChild(pendingCopy);
+    pendingSection.append(
+        pendingHead,
+        createAgendaActivityList(planning.overdueItems, {
+            emptyCopy: 'Todo al día. No hay actividades vencidas en la agenda visible.',
+            emptyVariant: 'success',
+            showDate: true,
+            compact: true,
+            listClassName: 'aga-activities-list aga-activities-list--compact'
+        })
+    );
+    plannerMain.appendChild(pendingSection);
+
+    body.appendChild(plannerMain);
+
+    const calendarDisclosure = document.createElement('details');
+    calendarDisclosure.className = 'aga-calendar-disclosure';
+
+    const calendarSummary = document.createElement('summary');
+    calendarSummary.className = 'aga-calendar-summary';
+
+    const calendarSummaryCopy = document.createElement('div');
+    calendarSummaryCopy.className = 'aga-calendar-summary__copy';
+    const calendarSummaryEyebrow = document.createElement('span');
+    calendarSummaryEyebrow.className = 'aga-calendar-summary__eyebrow';
+    calendarSummaryEyebrow.textContent = 'Calendario mensual';
+    const calendarSummaryTitle = document.createElement('strong');
+    calendarSummaryTitle.className = 'aga-calendar-summary__title';
+    calendarSummaryTitle.textContent = 'Vista secundaria por fecha';
+    const calendarSummaryMeta = document.createElement('span');
+    calendarSummaryMeta.className = 'aga-calendar-summary__meta';
+    calendarSummaryMeta.textContent = `${MONTHS_ES[_currentMonth]} ${_currentYear} · Foco ${formatAgendaDateLabel(_selectedDate)}`;
+    calendarSummaryCopy.append(calendarSummaryEyebrow, calendarSummaryTitle, calendarSummaryMeta);
+
+    const calendarSummaryIcon = document.createElement('span');
+    calendarSummaryIcon.className = 'aga-calendar-summary__icon';
+    calendarSummaryIcon.innerHTML = '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i>';
+
+    calendarSummary.append(calendarSummaryCopy, calendarSummaryIcon);
+    calendarDisclosure.appendChild(calendarSummary);
+
+    const calendarShell = document.createElement('div');
+    calendarShell.className = 'aga-calendar-shell';
 
     const calendarSection = document.createElement('div');
     calendarSection.className = 'aga-calendar-section';
@@ -506,20 +874,26 @@ function renderAgendaContent(container, isInline) {
     }
 
     calendarSection.appendChild(calendarGrid);
-    body.appendChild(calendarSection);
+    calendarShell.appendChild(calendarSection);
 
     const dayDetail = document.createElement('div');
     dayDetail.className = 'aga-day-detail';
 
     const dayDetailHeader = document.createElement('div');
     dayDetailHeader.className = 'aga-day-detail-header';
+    const dayCopy = document.createElement('div');
+    dayCopy.className = 'aga-day-detail-copy';
+    const dayEyebrow = document.createElement('span');
+    dayEyebrow.className = 'aga-planner-section__eyebrow';
+    dayEyebrow.textContent = 'Fecha en foco';
     const dayTitle = document.createElement('h4');
     dayTitle.className = 'aga-day-title';
     dayTitle.textContent = `${selDay} ${selMonthName}`;
+    dayCopy.append(dayEyebrow, dayTitle);
     const dayMoon = document.createElement('span');
     dayMoon.className = 'aga-day-moon';
     dayMoon.textContent = `${selMoon.icon} ${selMoon.name}`;
-    dayDetailHeader.append(dayTitle, dayMoon);
+    dayDetailHeader.append(dayCopy, dayMoon);
     dayDetail.appendChild(dayDetailHeader);
 
     if (selMoonRec) {
@@ -529,78 +903,14 @@ function renderAgendaContent(container, isInline) {
         dayDetail.appendChild(dayMoonRec);
     }
 
-    const activitiesList = document.createElement('div');
-    activitiesList.className = 'aga-activities-list';
+    dayDetail.appendChild(createAgendaActivityList(sortAgendaItems(selectedItems), {
+        emptyCopy: 'Sin actividades en esta fecha. Selecciona otro día o usa el botón principal para programar.',
+        listClassName: 'aga-activities-list aga-activities-list--compact'
+    }));
+    calendarShell.appendChild(dayDetail);
 
-    if (selectedItems.length === 0) {
-        const emptyDay = document.createElement('div');
-        emptyDay.className = 'aga-empty-day';
-        emptyDay.textContent = 'Día libre 🌤️';
-        activitiesList.appendChild(emptyDay);
-    } else {
-        selectedItems.forEach((item) => {
-            const tc = TYPE_CONFIG[item.type] || TYPE_CONFIG.otro;
-            const cropName = getCropName(item.crop_id);
-            const timeStr = item.scheduled_time ? item.scheduled_time.substring(0, 5) : '';
-
-            const activity = document.createElement('div');
-            activity.className = `aga-activity ${item.completed ? 'aga-completed' : ''}`.trim();
-            activity.dataset.itemId = String(item.id || '');
-
-            const checkBtn = document.createElement('button');
-            checkBtn.type = 'button';
-            checkBtn.className = 'aga-check';
-            checkBtn.dataset.action = 'toggle-complete';
-            checkBtn.dataset.itemId = String(item.id || '');
-            checkBtn.textContent = item.completed ? '☑' : '☐';
-
-            const info = document.createElement('div');
-            info.className = 'aga-activity-info';
-
-            const activityTitle = document.createElement('div');
-            activityTitle.className = 'aga-activity-title';
-            activityTitle.textContent = `${tc.icon} ${String(item.title || '')}`;
-
-            const activityMeta = document.createElement('div');
-            activityMeta.className = 'aga-activity-meta';
-            if (cropName !== 'General') {
-                const cropSpan = document.createElement('span');
-                cropSpan.textContent = cropName;
-                activityMeta.appendChild(cropSpan);
-            }
-            if (timeStr) {
-                const timeSpan = document.createElement('span');
-                timeSpan.textContent = `🕐 ${timeStr}`;
-                activityMeta.appendChild(timeSpan);
-            }
-
-            info.append(activityTitle, activityMeta);
-
-            const deleteBtn = document.createElement('button');
-            deleteBtn.type = 'button';
-            deleteBtn.className = 'aga-delete-btn';
-            deleteBtn.dataset.action = 'delete-item';
-            deleteBtn.dataset.itemId = String(item.id || '');
-            deleteBtn.title = 'Eliminar';
-            const deleteIcon = document.createElement('i');
-            deleteIcon.className = 'fa fa-trash';
-            deleteBtn.appendChild(deleteIcon);
-
-            activity.append(checkBtn, info, deleteBtn);
-            activitiesList.appendChild(activity);
-        });
-    }
-
-    dayDetail.appendChild(activitiesList);
-
-    const addBtn = document.createElement('button');
-    addBtn.type = 'button';
-    addBtn.className = 'aga-add-btn';
-    addBtn.dataset.action = 'open-create';
-    addBtn.textContent = '+ Agregar actividad';
-    dayDetail.appendChild(addBtn);
-
-    body.appendChild(dayDetail);
+    calendarDisclosure.appendChild(calendarShell);
+    body.appendChild(calendarDisclosure);
 
     card.append(header, body);
     modal.appendChild(card);
@@ -872,6 +1182,14 @@ function attachAgendaListeners(container, isInline) {
         }
 
         if (action === 'open-create') { openCreateModal(); return; }
+
+        if (action === 'open-cart-view') {
+            window.dispatchEvent(new CustomEvent('agro:shell:set-view', {
+                detail: { view: 'carrito', scroll: true }
+            }));
+            if (!inlineCtx) closeAgendaModal();
+            return;
+        }
 
         if (action === 'toggle-complete') {
             const itemId = actionEl.dataset.itemId;
@@ -1481,11 +1799,412 @@ function injectAgendaStyles() {
         }
 
         /* Mobile responsive */
+        .aga-header-copy {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-1, 0.25rem);
+            min-width: 0;
+        }
+        .aga-eyebrow,
+        .aga-planner-section__eyebrow,
+        .aga-calendar-summary__eyebrow {
+            margin: 0;
+            font-family: 'Orbitron', sans-serif;
+            font-size: var(--text-xs, 0.7rem);
+            font-weight: 700;
+            line-height: 1.2;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--gold-4, #C8A752);
+        }
+        .aga-subtitle,
+        .aga-planner-section__meta,
+        .aga-calendar-summary__meta {
+            margin: 0;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: var(--text-sm, 0.8rem);
+            line-height: 1.45;
+            color: var(--text-secondary, #cccccc);
+        }
+        .aga-title {
+            font-size: clamp(1.18rem, 2vw, 1.5rem);
+            letter-spacing: 0.04em;
+        }
+        .aga-inline .aga-title {
+            font-size: clamp(1.3rem, 2.4vw, 1.7rem);
+        }
+        .aga-weather-bar {
+            gap: var(--space-3, 0.75rem);
+            color: var(--text-muted, #94A3B8);
+        }
+        .aga-weather-bar span {
+            padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
+            border-radius: var(--radius-pill, 9999px);
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .aga-moon-rec {
+            margin-top: var(--space-3, 0.75rem);
+            padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+            border-radius: var(--radius-md, 12px);
+            border: 1px solid var(--border-gold, rgba(200,167,82,0.25));
+            background: linear-gradient(135deg, rgba(200,167,82,0.1), rgba(200,167,82,0.03));
+            color: var(--gold-5, #E8D48B);
+        }
+        .aga-context-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: var(--space-3, 0.75rem);
+            margin-top: var(--space-4, 1rem);
+        }
+        .aga-metric-card {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-1, 0.25rem);
+            min-height: 96px;
+            padding: var(--space-4, 1rem);
+            border-radius: var(--radius-md, 12px);
+            border: 1px solid var(--border-neutral, rgba(255,255,255,0.08));
+            background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015));
+        }
+        .aga-metric-card--gold {
+            border-color: var(--border-gold, rgba(200,167,82,0.25));
+            box-shadow: 0 8px 20px rgba(200,167,82,0.08);
+        }
+        .aga-metric-card--warning {
+            border-color: rgba(245,158,11,0.35);
+            background: linear-gradient(180deg, rgba(245,158,11,0.08), rgba(245,158,11,0.03));
+        }
+        .aga-metric-card--context {
+            border-color: rgba(229,213,160,0.18);
+        }
+        .aga-metric-card__label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: var(--text-xs, 0.7rem);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-muted, #94A3B8);
+        }
+        .aga-metric-card__value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: var(--text-xl, 1.3rem);
+            font-weight: 700;
+            color: var(--text-primary, #ffffff);
+            line-height: 1.15;
+        }
+        .aga-metric-card--gold .aga-metric-card__value,
+        .aga-metric-card--context .aga-metric-card__value {
+            color: var(--gold-4, #C8A752);
+        }
+        .aga-metric-card--warning .aga-metric-card__value {
+            color: var(--color-warning, #F59E0B);
+        }
+        .aga-metric-card__copy {
+            font-size: var(--text-sm, 0.8rem);
+            color: var(--text-secondary, #cccccc);
+        }
+        .aga-body {
+            gap: var(--space-5, 1.25rem);
+            padding: var(--space-5, 1.25rem);
+        }
+        .aga-inline .aga-body {
+            min-height: auto;
+            padding: var(--space-6, 1.5rem);
+            gap: var(--space-6, 1.5rem);
+        }
+        .aga-planner-main {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4, 1rem);
+            min-width: 0;
+        }
+        .aga-planner-section,
+        .aga-calendar-disclosure {
+            border-radius: var(--radius-lg, 16px);
+            border: 1px solid var(--border-neutral, rgba(255,255,255,0.08));
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)),
+                var(--bg-3, #111113);
+            overflow: hidden;
+        }
+        .aga-planner-section--primary {
+            border-color: var(--border-gold, rgba(200,167,82,0.25));
+            background:
+                linear-gradient(180deg, rgba(200,167,82,0.08), rgba(200,167,82,0.02)),
+                var(--bg-3, #111113);
+            box-shadow: var(--shadow-gold-xs, 0 1px 6px rgba(200,167,82,0.1));
+        }
+        .aga-planner-section__head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: var(--space-4, 1rem);
+            padding: var(--space-5, 1.25rem) var(--space-5, 1.25rem) 0;
+        }
+        .aga-planner-section__copy {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-1, 0.25rem);
+            min-width: 0;
+        }
+        .aga-planner-section__title {
+            margin: 0;
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(0.95rem, 1.6vw, 1.12rem);
+            line-height: 1.25;
+            color: var(--text-primary, #ffffff);
+            letter-spacing: 0.02em;
+        }
+        .aga-planner-actions {
+            display: inline-flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: var(--space-2, 0.5rem);
+            flex-shrink: 0;
+        }
+        .aga-inline-link,
+        .aga-planner-actions .aga-add-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: var(--a11y-touch-min, 44px);
+            padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+            border-radius: var(--radius-sm, 8px);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: var(--text-sm, 0.8rem);
+            font-weight: 700;
+            transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+        }
+        .aga-inline-link {
+            border: 1px solid var(--border-gold, rgba(200,167,82,0.25));
+            background: transparent;
+            color: var(--gold-4, #C8A752);
+            cursor: pointer;
+        }
+        .aga-inline-link:hover,
+        .aga-inline-link:focus-visible {
+            background: var(--state-hover-overlay, rgba(200,167,82,0.08));
+            color: var(--gold-5, #E8D48B);
+            box-shadow: var(--a11y-focus-ring, 0 0 0 2px var(--bg-1, #0a0a0a), 0 0 0 4px var(--gold-4, #C8A752));
+            outline: none;
+        }
+        .aga-inline-link:active {
+            transform: scale(0.98);
+        }
+        .aga-planner-actions .aga-add-btn {
+            width: auto;
+            border-style: solid;
+            background: rgba(200,167,82,0.08);
+        }
+        .aga-planner-actions .aga-add-btn:hover,
+        .aga-add-btn:focus-visible {
+            box-shadow: var(--a11y-focus-ring, 0 0 0 2px var(--bg-1, #0a0a0a), 0 0 0 4px var(--gold-4, #C8A752));
+            outline: none;
+        }
+        .aga-activities-list {
+            gap: var(--space-3, 0.75rem);
+            padding: var(--space-4, 1rem) var(--space-5, 1.25rem) var(--space-5, 1.25rem);
+            max-height: none;
+            overflow: visible;
+        }
+        .aga-activities-list--compact {
+            gap: var(--space-2, 0.5rem);
+        }
+        .aga-activity {
+            align-items: flex-start;
+            gap: var(--space-3, 0.75rem);
+            padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+            border-radius: var(--radius-md, 12px);
+            border-color: rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.025);
+        }
+        .aga-activity:hover {
+            border-color: var(--border-gold, rgba(200,167,82,0.25));
+            transform: translateY(-1px);
+        }
+        .aga-activity--compact {
+            padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+        }
+        .aga-activity--compact .aga-check {
+            width: 32px;
+            height: 32px;
+            font-size: 1rem;
+        }
+        .aga-activity-title {
+            white-space: normal;
+            overflow: visible;
+            text-overflow: unset;
+            line-height: 1.35;
+        }
+        .aga-activity-meta {
+            flex-wrap: wrap;
+            gap: var(--space-2, 0.5rem);
+            margin-top: var(--space-1, 0.25rem);
+            color: var(--text-muted, #94A3B8);
+        }
+        .aga-state-message {
+            padding: var(--space-4, 1rem);
+            border-radius: var(--radius-md, 12px);
+            border: 1px dashed rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.02);
+            color: var(--text-secondary, #cccccc);
+            font-size: var(--text-sm, 0.8rem);
+            line-height: 1.45;
+        }
+        .aga-state-message--success {
+            border-color: rgba(16,185,129,0.3);
+            background: rgba(16,185,129,0.08);
+            color: var(--color-success, #10B981);
+        }
+        .aga-calendar-disclosure {
+            align-self: stretch;
+        }
+        .aga-calendar-disclosure summary {
+            list-style: none;
+        }
+        .aga-calendar-disclosure summary::-webkit-details-marker {
+            display: none;
+        }
+        .aga-calendar-summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--space-4, 1rem);
+            padding: var(--space-4, 1rem) var(--space-5, 1.25rem);
+            cursor: pointer;
+            transition: background-color 180ms ease;
+        }
+        .aga-calendar-summary:hover {
+            background: rgba(255,255,255,0.02);
+        }
+        .aga-calendar-summary:focus-visible {
+            outline: none;
+            box-shadow: var(--a11y-focus-ring, 0 0 0 2px var(--bg-1, #0a0a0a), 0 0 0 4px var(--gold-4, #C8A752));
+        }
+        .aga-calendar-summary__copy {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-1, 0.25rem);
+            min-width: 0;
+        }
+        .aga-calendar-summary__title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: var(--text-sm, 0.8rem);
+            color: var(--text-primary, #ffffff);
+            letter-spacing: 0.03em;
+        }
+        .aga-calendar-summary__icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-gold, rgba(200,167,82,0.25));
+            color: var(--gold-4, #C8A752);
+            transition: transform 180ms ease;
+            flex-shrink: 0;
+        }
+        .aga-calendar-disclosure[open] .aga-calendar-summary__icon {
+            transform: rotate(180deg);
+        }
+        .aga-calendar-shell {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4, 1rem);
+            padding: 0 var(--space-5, 1.25rem) var(--space-5, 1.25rem);
+        }
+        .aga-calendar-section,
+        .aga-day-detail {
+            border-radius: var(--radius-md, 12px);
+            border: 1px solid rgba(255,255,255,0.06);
+            background: rgba(5,5,5,0.45);
+        }
+        .aga-day-detail {
+            gap: var(--space-3, 0.75rem);
+        }
+        .aga-day-detail-copy {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-1, 0.25rem);
+            min-width: 0;
+        }
+        .aga-day-title {
+            font-size: 0.95rem;
+        }
+        .aga-day-moon {
+            color: var(--gold-5, #E8D48B);
+        }
+        .aga-day-moon-rec {
+            border: 1px solid rgba(200,167,82,0.18);
+            background: rgba(200,167,82,0.04);
+            color: var(--text-secondary, #cccccc);
+        }
+        @media (min-width: 820px) {
+            .aga-calendar-shell {
+                display: grid;
+                grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+                align-items: start;
+            }
+        }
+        @media (max-width: 700px) {
+            .aga-header-top,
+            .aga-planner-section__head {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .aga-header-right,
+            .aga-planner-actions {
+                justify-content: flex-start;
+            }
+            .aga-inline-link,
+            .aga-planner-actions .aga-add-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
         @media (max-width: 599px) {
             .aga-modal:not(.aga-inline) { max-height: 95vh; border-radius: 12px; }
+            .aga-body,
+            .aga-inline .aga-body {
+                padding: var(--space-4, 1rem);
+                gap: var(--space-4, 1rem);
+            }
+            .aga-context-grid {
+                grid-template-columns: 1fr 1fr;
+            }
             .aga-day-cell { min-height: 40px; min-width: 40px; }
             .aga-day-num { font-size: 0.8rem; }
+            .aga-calendar-summary,
+            .aga-calendar-shell,
+            .aga-activities-list,
+            .aga-planner-section__head {
+                padding-left: var(--space-4, 1rem);
+                padding-right: var(--space-4, 1rem);
+            }
+            .aga-calendar-shell {
+                padding-bottom: var(--space-4, 1rem);
+            }
             .aga-day-detail { border-top: 1px solid rgba(200,167,82,0.1); }
+        }
+        @media (max-width: 420px) {
+            .aga-context-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .aga-activity,
+            .aga-inline-link,
+            .aga-planner-actions .aga-add-btn,
+            .aga-calendar-summary,
+            .aga-calendar-summary__icon {
+                transition: none !important;
+            }
+            .aga-activity:hover,
+            .aga-inline-link:active,
+            .aga-calendar-disclosure[open] .aga-calendar-summary__icon {
+                transform: none !important;
+            }
         }
     `;
     document.head.appendChild(style);
