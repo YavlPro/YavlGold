@@ -11538,3 +11538,49 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
 
 - Recargar `/agro` y abrir `Rankings` para confirmar que desaparece el mensaje de error y vuelven a pintarse las tarjetas.
 - Revisar el sidebar y la cabecera del módulo operativo para confirmar el rename a `Operación comercial`.
+
+---
+
+## 2026-04-08 - Ajuste visual V10 para Rankings de clientes en Agro
+
+### Diagnóstico
+
+- El bloque `Rankings del Centro` no estaba roto funcionalmente; el problema era visual.
+- `apps/gold/agro/agro.css` mantenía una paleta híbrida con muchos `rgba(...)` sueltos, contraste inconsistente entre cards/items y estados de interacción sin anclaje completo al DNA V10.
+- La zona exacta afectada vive en el bloque de estilos de rankings del facturero, no en RPCs ni en el render JS.
+- La corrección más segura era una cirugía CSS localizada para:
+  - reusar tokens V10 (`--gold-*`, `--bg-*`, `--text-*`, `--border-*`, `--shadow-*`, `--state-*`);
+  - eliminar la sensación cromática “gris/lavada”;
+  - mejorar foco, hover y jerarquía visual sin tocar lógica ni markup.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro.css`
+  - Bloque `Rankings` actualizado entre aprox. `3781-4162`.
+  - Se rediseñó el panel principal con fondo metallic dark, shimmer superior estático, borde y sombra alineados al DNA V10.
+  - Se migraron título, subtítulo, toolbar, filtros de rango, toggle de privacidad, status, cards, items y notas hacia tokens canónicos.
+  - El botón `Exportar Markdown` pasó a CTA gold DNA V10 con estados `hover`, `active` y `focus-visible`.
+  - Los chips de rango ahora usan estados y contraste coherentes con V10.
+  - Los cards/list items del ranking ahora tienen jerarquía cromática más clara para top 1, 2 y 3 sin salir del sistema metallic gold.
+  - Se reforzó accesibilidad visual mínima con touch targets y focus ring por token.
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por `node v25.6.0` vs `20.x`
+
+### QA sugerido
+
+- Abrir `/agro` y entrar a `Rankings` en desktop para validar que el panel ahora se sienta integrado al DNA V10.
+- Revisar mobile (`<= 480px`) y confirmar que:
+  - el botón `Exportar Markdown` no se rompe;
+  - los filtros de rango envuelven bien;
+  - las cards mantienen contraste y lectura.
+- Confirmar visualmente que los top 3 se distinguen mejor sin introducir acento azul/morado.

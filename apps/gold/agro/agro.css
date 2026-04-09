@@ -3779,309 +3779,386 @@ body.modal-open {
 .agro-global-stats-status[data-level="error"] { color: #ef4444; }
 
 .ops-rankings-panel {
-  border: 1px solid rgba(200, 167, 82, 0.25);
-  border-radius: 20px;
-  padding: 1.4rem;
-  background:
-    linear-gradient(180deg, rgba(200, 167, 82, 0.07) 0%, rgba(200, 167, 82, 0.02) 35%, rgba(6, 6, 6, 0.97) 100%);
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 40px rgba(200, 167, 82, 0.03);
+  gap: var(--space-5, 1.25rem);
+  border: 1px solid var(--border-gold, rgba(200, 167, 82, 0.3));
+  border-radius: var(--radius-xl, 20px);
+  padding: var(--layout-card-padding, 1.5rem);
+  background:
+    radial-gradient(circle at top right, rgba(229, 213, 160, 0.16) 0%, rgba(229, 213, 160, 0) 32%),
+    linear-gradient(180deg, rgba(200, 167, 82, 0.12) 0%, rgba(17, 17, 19, 0.94) 20%, rgba(10, 10, 10, 0.98) 100%);
+  box-shadow: var(--shadow-metallic, 0 4px 20px rgba(200, 167, 82, 0.3), 0 0 40px rgba(200, 167, 82, 0.08));
+  backdrop-filter: var(--backdrop-blur, blur(12px));
+}
+
+.ops-rankings-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: var(--metallic-border, linear-gradient(90deg, transparent, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e, transparent));
+  opacity: 0.95;
+  pointer-events: none;
 }
 
 .ops-rankings-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 0.7rem;
+  gap: var(--space-3, 0.75rem);
 }
 
 .ops-rankings-title {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading, 'Orbitron', sans-serif);
   font-size: 1rem;
-  letter-spacing: 1.5px;
-  color: #fff;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  text-shadow: 0 1px 8px rgba(200, 167, 82, 0.12);
+  color: var(--text-gold-prestige, #E5D5A0);
+  background: var(--metallic-text, linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .ops-rankings-subtitle {
-  margin: 0.3rem 0 0;
-  font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.5);
-  line-height: 1.4;
-  font-family: 'Rajdhani', sans-serif;
+  margin: var(--space-1, 0.25rem) 0 0;
+  font-family: var(--font-body, 'Rajdhani', sans-serif);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--text-secondary, #cccccc);
+  opacity: 0.82;
 }
 
 .ops-rankings-export-btn {
-  border: 1px solid rgba(200, 167, 82, 0.45);
-  background: rgba(200, 167, 82, 0.12);
-  color: #C8A752;
-  border-radius: 10px;
-  min-height: 38px;
-  padding: 0.45rem 0.75rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  justify-content: center;
+  gap: var(--comp-icon-gap, 0.5rem);
+  min-height: var(--a11y-touch-recommended, 48px);
+  padding: var(--comp-btn-py, 0.75rem) var(--comp-btn-px, 1.5rem);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm, 8px);
+  background: var(--metallic-btn, linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e));
+  color: var(--bg-2, #0B0C0F);
+  font-family: var(--font-body, 'Rajdhani', sans-serif);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  box-shadow: var(--shadow-gold-sm, 0 2px 10px rgba(200, 167, 82, 0.15));
+  transition: var(--state-transition, all 180ms ease);
 }
 
 .ops-rankings-export-btn:hover {
-  background: rgba(200, 167, 82, 0.2);
-  border-color: rgba(200, 167, 82, 0.7);
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-gold-md, 0 5px 20px rgba(200, 167, 82, 0.25));
+}
+
+.ops-rankings-export-btn:active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-gold-xs, 0 1px 6px rgba(200, 167, 82, 0.1));
+}
+
+.ops-rankings-export-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--state-focus-ring, 0 0 0 2px var(--bg-1), 0 0 0 4px var(--gold-4));
 }
 
 .ops-rankings-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: var(--space-3, 0.75rem);
   flex-wrap: wrap;
+  padding: var(--space-3, 0.75rem);
+  border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
+  border-radius: var(--radius-md, 12px);
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .ops-rankings-range {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--space-2, 0.5rem);
   flex-wrap: wrap;
 }
 
 .ops-rankings-range-btn {
-  border: 1px solid rgba(200, 167, 82, 0.35);
-  background: rgba(10, 10, 10, 0.75);
-  color: rgba(255, 255, 255, 0.76);
-  border-radius: 999px;
-  min-height: 34px;
-  padding: 0.3rem 0.72rem;
-  font-size: var(--text-xs);
+  min-height: var(--a11y-touch-min, 44px);
+  padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+  border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
+  border-radius: var(--radius-pill, 9999px);
+  background: linear-gradient(180deg, rgba(17, 17, 19, 0.92) 0%, rgba(10, 10, 10, 0.96) 100%);
+  color: var(--text-secondary, #cccccc);
+  font-family: var(--font-heading, 'Orbitron', sans-serif);
+  font-size: var(--text-xs, 0.75rem);
   font-weight: 700;
-  letter-spacing: 0.45px;
+  letter-spacing: 0.08em;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--state-transition, all 180ms ease);
 }
 
 .ops-rankings-range-btn:hover {
-  border-color: rgba(200, 167, 82, 0.62);
-  color: #fff;
+  border-color: var(--border-gold, rgba(200, 167, 82, 0.3));
+  color: var(--text-primary, #ffffff);
+  background: linear-gradient(180deg, rgba(200, 167, 82, 0.08) 0%, rgba(10, 10, 10, 0.96) 100%);
 }
 
 .ops-rankings-range-btn.is-active {
-  color: #0a0a0a;
   border-color: transparent;
-  background: linear-gradient(135deg, var(--gold-primary, #C8A752), var(--gold-dark, #9a7f3c));
+  background: var(--metallic-btn, linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e));
+  color: var(--bg-2, #0B0C0F);
+  box-shadow: var(--shadow-gold-sm, 0 2px 10px rgba(200, 167, 82, 0.15));
+}
+
+.ops-rankings-range-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--state-focus-ring, 0 0 0 2px var(--bg-1), 0 0 0 4px var(--gold-4));
 }
 
 .ops-rankings-privacy {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  font-size: 0.72rem;
+  gap: var(--comp-icon-gap, 0.5rem);
+  min-height: var(--a11y-touch-min, 44px);
+  padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+  border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
+  border-radius: var(--radius-pill, 9999px);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary, #ffffff);
+  font-family: var(--font-body, 'Rajdhani', sans-serif);
+  font-size: 0.78rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.82);
+  cursor: pointer;
+  transition: var(--state-transition, all 180ms ease);
+}
+
+.ops-rankings-privacy:hover {
+  border-color: var(--border-gold, rgba(200, 167, 82, 0.3));
+  background: rgba(200, 167, 82, 0.06);
+}
+
+.ops-rankings-privacy:focus-within {
+  outline: none;
+  box-shadow: var(--state-focus-ring, 0 0 0 2px var(--bg-1), 0 0 0 4px var(--gold-4));
 }
 
 .ops-rankings-privacy input {
-  accent-color: #C8A752;
+  accent-color: var(--gold-4, #C8A752);
+}
+
+.ops-rankings-status,
+.ops-rankings-privacy-hint {
+  margin: 0;
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  border-radius: var(--radius-sm, 8px);
+  border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
+  background: rgba(255, 255, 255, 0.02);
+  font-family: var(--font-body, 'Rajdhani', sans-serif);
+  line-height: 1.4;
 }
 
 .ops-rankings-status {
-  margin: 0;
-  font-size: 0.74rem;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--text-gold-prestige, #E5D5A0);
+  font-size: 0.78rem;
+  border-color: var(--border-gold, rgba(200, 167, 82, 0.3));
 }
 
 .ops-rankings-privacy-hint {
-  margin: 0;
-  font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.68);
+  color: var(--text-secondary, #cccccc);
+  font-size: 0.76rem;
+  opacity: 0.88;
 }
 
 .ops-rankings-grid {
   display: grid;
-  gap: 0.85rem;
+  gap: var(--layout-card-gap, 1.5rem);
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
 .ops-ranking-card {
-  border: 1px solid rgba(200, 167, 82, 0.2);
-  border-radius: 16px;
-  background:
-    linear-gradient(180deg, rgba(200, 167, 82, 0.04) 0%, rgba(200, 167, 82, 0.01) 40%, rgba(10, 10, 10, 0.95) 100%);
-  padding: 1rem 1rem;
+  position: relative;
+  overflow: hidden;
   min-height: 220px;
-  transition: border-color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+  padding: var(--layout-card-padding, 1.5rem);
+  border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
+  border-radius: var(--radius-lg, 16px);
+  background:
+    radial-gradient(circle at top right, rgba(229, 213, 160, 0.08) 0%, rgba(229, 213, 160, 0) 30%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(17, 17, 19, 0.94) 18%, rgba(10, 10, 10, 0.98) 100%);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.24);
+  transition: var(--state-transition, all 180ms ease);
+}
+
+.ops-ranking-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: var(--metallic-border, linear-gradient(90deg, transparent, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e, transparent));
+  opacity: 0.6;
 }
 
 .ops-ranking-card:hover {
-  border-color: rgba(200, 167, 82, 0.45);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), 0 0 20px rgba(200, 167, 82, 0.06);
-  transform: translateY(-1px);
+  border-color: var(--border-gold, rgba(200, 167, 82, 0.3));
+  box-shadow: var(--shadow-gold-md, 0 5px 20px rgba(200, 167, 82, 0.25));
+  transform: translateY(-2px);
 }
 
 .ops-ranking-card h5 {
-  margin: 0 0 0.75rem;
-  font-size: 0.72rem;
-  letter-spacing: 1px;
+  margin: 0 0 var(--space-4, 1rem);
+  padding-bottom: var(--space-3, 0.75rem);
+  border-bottom: 1px solid var(--border-prestige, rgba(229, 213, 160, 0.18));
+  color: var(--text-gold-prestige, #E5D5A0);
+  font-family: var(--font-heading, 'Orbitron', sans-serif);
+  font-size: 0.76rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #C8A752;
-  font-family: 'Orbitron', sans-serif;
-  padding-bottom: 0.55rem;
-  border-bottom: 1px solid rgba(200, 167, 82, 0.18);
 }
 
 .ops-ranking-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-3, 0.75rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .ops-ranking-item {
-  border: 1px solid rgba(200, 167, 82, 0.12);
-  border-radius: 12px;
-  padding: 0.6rem 0.75rem;
-  background: rgba(15, 15, 15, 0.65);
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
-  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+  gap: var(--space-1, 0.25rem);
+  padding: var(--space-4, 1rem);
+  border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
+  border-radius: var(--radius-md, 12px);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(10, 10, 10, 0.94) 100%);
+  transition: var(--state-transition-fast, all 120ms ease);
 }
 
 .ops-ranking-item:hover {
-  border-color: rgba(200, 167, 82, 0.25);
-  background: rgba(200, 167, 82, 0.03);
+  border-color: var(--border-gold, rgba(200, 167, 82, 0.3));
+  background:
+    linear-gradient(180deg, rgba(200, 167, 82, 0.06) 0%, rgba(10, 10, 10, 0.94) 100%);
+  transform: translateY(-1px);
 }
 
-/* #1 — Gold champion */
 .ops-ranking-item:first-child {
-  border-color: rgba(200, 167, 82, 0.5);
+  border-color: var(--border-gold, rgba(200, 167, 82, 0.3));
   background:
-    linear-gradient(135deg, rgba(200, 167, 82, 0.14) 0%, rgba(200, 167, 82, 0.04) 100%),
-    rgba(10, 10, 10, 0.9);
-  box-shadow: 0 2px 12px rgba(200, 167, 82, 0.08);
+    linear-gradient(135deg, rgba(229, 213, 160, 0.18) 0%, rgba(200, 167, 82, 0.08) 48%, rgba(10, 10, 10, 0.94) 100%);
+  box-shadow: var(--shadow-gold-sm, 0 2px 10px rgba(200, 167, 82, 0.15));
 }
 
 .ops-ranking-item:first-child .ops-ranking-position {
-  color: #C8A752;
-  font-size: 0.88rem;
-  text-shadow: 0 0 8px rgba(200, 167, 82, 0.3);
+  color: var(--gold-5, #E8D48B);
+  font-size: 0.9rem;
 }
 
 .ops-ranking-item:first-child .ops-ranking-name {
-  color: #fff;
+  color: var(--text-primary, #ffffff);
   font-size: 0.9rem;
 }
 
 .ops-ranking-item:first-child .ops-ranking-value {
-  color: #e8d48b;
-  font-size: 0.95rem;
-  text-shadow: 0 0 6px rgba(200, 167, 82, 0.15);
+  color: var(--gold-5, #E8D48B);
+  font-size: 0.96rem;
 }
 
-/* #2 — Light gold accent */
 .ops-ranking-item:nth-child(2) {
-  border-color: rgba(200, 167, 82, 0.28);
+  border-color: rgba(229, 213, 160, 0.28);
   background:
-    linear-gradient(135deg, rgba(200, 167, 82, 0.08) 0%, transparent 100%),
-    rgba(12, 12, 12, 0.85);
+    linear-gradient(135deg, rgba(229, 213, 160, 0.12) 0%, rgba(17, 17, 19, 0.95) 100%);
 }
 
-.ops-ranking-item:nth-child(2) .ops-ranking-position {
-  color: rgba(232, 212, 139, 0.85);
-}
-
+.ops-ranking-item:nth-child(2) .ops-ranking-position,
 .ops-ranking-item:nth-child(2) .ops-ranking-value {
-  color: rgba(232, 212, 139, 0.9);
+  color: var(--text-gold-prestige, #E5D5A0);
 }
 
-/* #3 — Muted gold accent */
 .ops-ranking-item:nth-child(3) {
-  border-color: rgba(154, 127, 60, 0.25);
+  border-color: rgba(107, 90, 62, 0.55);
   background:
-    linear-gradient(135deg, rgba(154, 127, 60, 0.06) 0%, transparent 100%),
-    rgba(12, 12, 12, 0.85);
+    linear-gradient(135deg, rgba(107, 90, 62, 0.24) 0%, rgba(17, 17, 19, 0.95) 100%);
 }
 
-.ops-ranking-item:nth-child(3) .ops-ranking-position {
-  color: rgba(200, 167, 82, 0.7);
-}
-
+.ops-ranking-item:nth-child(3) .ops-ranking-position,
 .ops-ranking-item:nth-child(3) .ops-ranking-value {
-  color: rgba(200, 167, 82, 0.8);
+  color: var(--gold-4, #C8A752);
 }
 
 .ops-ranking-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.45rem;
+  gap: var(--space-2, 0.5rem);
 }
 
 .ops-ranking-position {
-  color: rgba(200, 167, 82, 0.65);
-  font-size: 0.74rem;
-  font-weight: 700;
   min-width: 26px;
-  font-family: 'Orbitron', sans-serif;
-  letter-spacing: 0.3px;
+  color: var(--gold-4, #C8A752);
+  font-family: var(--font-heading, 'Orbitron', sans-serif);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
 }
 
 .ops-ranking-name {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.84rem;
-  font-weight: 700;
   flex: 1;
-  white-space: nowrap;
   overflow: hidden;
+  white-space: nowrap;
   text-overflow: ellipsis;
-  font-family: 'Rajdhani', sans-serif;
+  color: var(--text-primary, #ffffff);
+  font-family: var(--font-body, 'Rajdhani', sans-serif);
+  font-size: 0.85rem;
+  font-weight: 700;
 }
 
 .ops-ranking-value {
-  color: #C8A752;
-  font-size: 0.88rem;
+  color: var(--gold-4, #C8A752);
+  font-family: var(--font-body, 'Rajdhani', sans-serif);
+  font-size: 0.9rem;
   font-weight: 700;
-  font-family: 'Rajdhani', sans-serif;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.03em;
 }
 
 .ops-ranking-meta {
-  color: rgba(255, 255, 255, 0.48);
-  font-size: var(--text-xs);
-  line-height: 1.3;
+  color: var(--text-secondary, #cccccc);
+  font-size: var(--text-xs, 0.75rem);
+  line-height: 1.35;
+  opacity: 0.76;
 }
 
 .ops-ranking-empty {
   margin: 0;
-  border: 1px dashed rgba(200, 167, 82, 0.15);
-  border-radius: 12px;
-  padding: 1.5rem 1rem;
-  text-align: center;
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 0.76rem;
+  padding: var(--space-6, 1.5rem) var(--space-4, 1rem);
+  border: 1px dashed var(--border-gold, rgba(200, 167, 82, 0.3));
+  border-radius: var(--radius-md, 12px);
+  background: rgba(200, 167, 82, 0.04);
+  color: var(--text-secondary, #cccccc);
+  font-family: var(--font-body, 'Rajdhani', sans-serif);
+  font-size: 0.78rem;
   line-height: 1.5;
-  background: rgba(200, 167, 82, 0.02);
-  font-family: 'Rajdhani', sans-serif;
+  text-align: center;
+  opacity: 0.82;
 }
 
 .ops-rankings-note {
-  margin-top: 0.6rem;
-  padding: 0.65rem 0.85rem;
-  border-radius: 12px;
-  background: rgba(200, 167, 82, 0.04);
-  color: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(200, 167, 82, 0.12);
-  font-size: 0.72rem;
+  margin-top: var(--space-3, 0.75rem);
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  border: 1px solid var(--border-prestige, rgba(229, 213, 160, 0.18));
+  border-radius: var(--radius-md, 12px);
+  background: rgba(229, 213, 160, 0.05);
+  color: var(--text-secondary, #cccccc);
+  font-family: var(--font-body, 'Rajdhani', sans-serif);
+  font-size: 0.74rem;
   line-height: 1.45;
-  font-family: 'Rajdhani', sans-serif;
 }
 
 .financial-tabs {
