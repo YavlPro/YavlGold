@@ -11356,6 +11356,33 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
 - No se altera la lógica de negocio fuera del conteo/resumen de tabs.
 - `pnpm build:gold` pasa limpio.
 
+---
+
+## 2026-04-08 - Fix quirúrgico crash Agro por `opsRankingsInitBound`
+
+### Diagnóstico
+
+- El siguiente crash en producción ya no viene del resumen operativo sino del bloque de Rankings.
+- La lógica de `initOpsRankingsPanel()` sigue viva, pero faltan las variables base de estado:
+  - `opsRankingsState`
+  - `opsRankingsInitBound`
+  - `opsRankingsInFlight`
+  - `opsRankingsQueued`
+- Las funciones de render, refresh y export de Rankings siguen presentes y correctas; el problema es que el bloque perdió su estado inicial durante la limpieza previa.
+
+### Plan
+
+- Restaurar únicamente el estado base de Rankings junto a sus constantes ya existentes.
+- No tocar RPCs, UI ni wiring de eventos.
+- Validar solo con `pnpm build:gold`.
+
+### DoD
+
+- Agro ya no explota por `opsRankingsInitBound is not defined`.
+- Rankings vuelve a inicializar con estado mínimo compatible.
+- No se altera la lógica de negocio del panel.
+- `pnpm build:gold` pasa limpio.
+
 ### Cambios aplicados
 
 - `apps/gold/agro/agro.js`

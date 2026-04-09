@@ -12648,6 +12648,19 @@ const OPS_RANKINGS_BUYER_NAME_FIELDS = Object.freeze([
     'label'
 ]);
 const OPS_RANKINGS_MISSING_NAME_TOKENS = new Set(['', 'sin nombre', 'sin comprador']);
+let opsRankingsState = {
+    range: OPS_RANKINGS_DEFAULT_RANGE,
+    hideNames: true,
+    loading: false,
+    error: '',
+    updatedAt: null,
+    topClients: [],
+    pendingClients: [],
+    topCrops: []
+};
+let opsRankingsInitBound = false;
+let opsRankingsInFlight = null;
+let opsRankingsQueued = false;
 
 function createEmptyOpsMovementSummary() {
     const globalByTab = {};
