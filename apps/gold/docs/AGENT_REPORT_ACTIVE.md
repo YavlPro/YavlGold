@@ -11797,3 +11797,70 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
 - Verificar que badges de `Fiado`, `Pagado`, `Pérdida`, `Revisar` y `Archivado` siguen claros pero sobrios.
 - Revisar viewport móvil pequeño para validar wrapping de header, stats y acciones.
 - Activar `prefers-reduced-motion` y confirmar que desaparecen las animaciones del branding y las elevaciones activas.
+
+---
+
+## 2026-04-09 - Diagnóstico previo para compactar Herramientas en Agro
+
+### Diagnóstico
+
+- La sección `Herramientas` vive en `apps/gold/agro/index.html` como markup estático dentro de `#agro-tools-section`.
+- La navegación y el wiring no necesitan cambios; el problema es visual y está concentrado en `apps/gold/agro/agro.css`.
+- Los selectores reales responsables son:
+  - layout: `.agro-tools-grid`
+  - card: `.agro-tool-card`
+  - iconografía: `.agro-tool-card__icon-box`
+  - texto: `.agro-tool-card__eyebrow`, `.agro-tool-card__title`, `.agro-tool-card__copy`
+  - CTA: `.agro-tool-card__action`
+- La causa del exceso de peso visual es clara:
+  - padding vertical generoso;
+  - icon box relativamente grande;
+  - CTA tipo pill demasiado protagonista;
+  - copy con respiración más cercana a una card promocional que a un launcher operativo.
+- La opción más segura es compactar solo estos selectores y mantener intacto el markup, el accordion y la lógica de navegación.
+
+### Plan
+
+- Reducir densidad vertical y espacios muertos en `.agro-tool-card`.
+- Hacer iconos y CTA más discretos sin perder identidad V10.
+- Controlar mejor la longitud visual de la copy para que la card se lea como acceso rápido.
+- Ajustar responsive para que desktop aproveche mejor el espacio y móvil siga siendo tocable.
+- Validar con `pnpm build:gold`.
+
+### DoD
+
+- Las cards de Herramientas tienen menos altura y menos peso visual.
+- La sección se siente más compacta y utilitaria.
+- Iconos, títulos, descripción y CTA quedan mejor balanceados.
+- No se rompe desktop ni móvil.
+- `pnpm build:gold` pasa limpio.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro.css`
+  - Se compactó `.agro-tool-card` reduciendo padding, radio y peso visual general.
+  - Se refinó `.agro-tools-grid` para aprovechar mejor el espacio con columnas auto-fit y gap más contenido.
+  - Se hizo más discreta la iconografía con `.agro-tool-card__icon-box` más pequeña y sobria.
+  - Se ajustó la jerarquía tipográfica de `.agro-tool-card__eyebrow`, `.agro-tool-card__title` y `.agro-tool-card__copy`.
+  - La descripción quedó controlada a 2 líneas con clamp para evitar cards demasiado altas.
+  - El CTA `.agro-tool-card__action` pasó a un lenguaje más integrado y menos dominante, con estados `hover`, `focus-visible` y `active` coherentes.
+  - En móvil se mantuvo target táctil claro y se redujo un poco más el padding de la card.
+
+### Build
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por `node v25.6.0` vs `20.x`
+
+### QA sugerido
+
+- Abrir `/agro` en la vista `Herramientas` y confirmar que las cards se leen como launcher operativo, no como módulos hero.
+- Revisar que icono, título, copy y CTA queden mejor balanceados en desktop.
+- Verificar que en mobile las cards siguen siendo tocables, legibles y sin desbordes.
+- Confirmar que el accordion y la navegación por botones siguen funcionando sin cambios.
