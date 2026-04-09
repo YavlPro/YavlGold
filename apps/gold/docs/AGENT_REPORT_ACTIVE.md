@@ -11655,3 +11655,40 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
   - `Mi Carrito`
   - `Cartera Operativa`
 - Revisar viewport móvil pequeño para confirmar scroll, touch targets y legibilidad del submenú.
+
+---
+
+## 2026-04-09 - Sidebar Agro con profundidad V10 usando `--bg-0`
+
+### Diagnóstico
+
+- El sidebar ya estaba alineado en iconografía y estados, pero seguía usando un fondo compuesto por gradientes y tonos intermedios.
+- Eso reducía la separación visual respecto al contenido principal y no aprovechaba el nivel más profundo del sistema V10.
+- La fuente real del fondo visible está en `apps/gold/agro/agro.css`, selector `.agro-shell-sidebar__inner`.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro.css`
+  - Se eliminó el fondo con gradientes del contenedor visible del sidebar.
+  - Se reemplazó por `background: var(--bg-0)`.
+  - Se dejó la separación con borde tokenizado:
+    - borde general con `var(--border-neutral)`
+    - borde derecho con `var(--border-gold)`
+
+### Build
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por `node v25.6.0` vs `20.x`
+
+### QA sugerido
+
+- Abrir `/agro` y confirmar que el sidebar ahora se percibe más profundo que el contenido principal.
+- Verificar que textos e iconos dorados ganan contraste sobre `--bg-0`.
+- Confirmar que el borde lateral sigue separando bien la navegación del resto de la shell.

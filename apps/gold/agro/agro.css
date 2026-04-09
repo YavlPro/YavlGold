@@ -7369,11 +7369,9 @@ body.agro-view-dense::after {
   height: 100%;
   padding: var(--space-5, 1.25rem);
   border-radius: var(--radius-xl, 24px);
-  border: 1px solid var(--border-gold, rgba(200, 167, 82, 0.3));
-  background:
-    radial-gradient(circle at top right, rgba(229, 213, 160, 0.12) 0%, rgba(229, 213, 160, 0) 28%),
-    linear-gradient(180deg, rgba(200, 167, 82, 0.08), rgba(200, 167, 82, 0.02)),
-    linear-gradient(180deg, rgba(14, 14, 16, 0.98), rgba(5, 5, 5, 0.98));
+  border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
+  border-right-color: var(--border-gold, rgba(200, 167, 82, 0.3));
+  background: var(--bg-0, #050505);
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.4), 0 10px 26px rgba(200, 167, 82, 0.08);
   overflow-y: auto;
 }
