@@ -11692,3 +11692,46 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
 - Abrir `/agro` y confirmar que el sidebar ahora se percibe más profundo que el contenido principal.
 - Verificar que textos e iconos dorados ganan contraste sobre `--bg-0`.
 - Confirmar que el borde lateral sigue separando bien la navegación del resto de la shell.
+
+---
+
+## 2026-04-09 - Título principal del sidebar Agro con dorado metálico V10
+
+### Diagnóstico
+
+- El branding principal del sidebar vive en `apps/gold/agro/index.html` como `h2.agro-shell-sidebar__title`.
+- Su estilo base estaba agrupado en `apps/gold/agro/agro.css` junto con otros títulos (`.agro-dash-guide__title`, `.agro-tool-card__title`), con color plano `var(--text-primary)`.
+- El ajuste debía ser quirúrgico: elevar solo ese título al tratamiento metálico del ADN sin contaminar headers de sección, subitems ni estados del menú.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro.css`
+  - Se agregó un override específico para `.agro-shell-sidebar__title`.
+  - Se dejó fallback legible con `color: var(--gold-4)`.
+  - Bajo `@supports`, se aplicó:
+    - `background: var(--metallic-text)`
+    - `background-size: 200% 100%`
+    - `background-clip: text`
+    - `-webkit-background-clip: text`
+    - `color: transparent`
+    - `-webkit-text-fill-color: transparent`
+    - `animation: metallicShift 6s ease-in-out infinite`
+  - Se agregó `@media (prefers-reduced-motion: reduce)` para desactivar la animación y dejar el título estable.
+
+### Build
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por `node v25.6.0` vs `20.x`
+
+### QA sugerido
+
+- Abrir `/agro` y confirmar que solo el título principal del sidebar usa el tratamiento metálico.
+- Verificar que headers de sección, links y subitems se mantuvieron intactos.
+- Validar que en `prefers-reduced-motion: reduce` el título sigue legible y sin animación.

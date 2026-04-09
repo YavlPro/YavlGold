@@ -7405,6 +7405,31 @@ body.agro-view-dense::after {
   color: var(--text-primary, #ffffff);
 }
 
+.agro-shell-sidebar__title {
+  color: var(--gold-4);
+}
+
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .agro-shell-sidebar__title {
+    background: var(--metallic-text);
+    background-position: 0% 50%;
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    animation: metallicShift 6s ease-in-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agro-shell-sidebar__title {
+    animation: none;
+    background-position: 50% 50%;
+    background-size: 100% 100%;
+  }
+}
+
 .agro-shell-sidebar__copy,
 .agro-dash-guide__copy,
 .agro-tool-card__copy,
