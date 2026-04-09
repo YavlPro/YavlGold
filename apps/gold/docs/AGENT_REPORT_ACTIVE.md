@@ -11233,6 +11233,98 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
 
 ---
 
+## 2026-04-08 - Validación final y cierre de iteración Agro V1.1
+
+### Diagnóstico
+
+- No se requirieron cambios funcionales nuevos.
+- La validación final se enfocó en confirmar que la limpieza de legado y la unificación de flujo no dejaron errores de runtime ni rompieron el build.
+- La carga local de `/agro` redirige a login por autenticación, pero no generó `ReferenceError` ni `pageerror`; solo aparecieron warnings esperados de hCaptcha por correr sobre `localhost`.
+
+### Archivos validados con valor en esta iteración
+
+- `apps/gold/agro/agro.js`
+  - Se confirmó estable el monolito tras retirar wiring y vistas dedicadas duplicadas legacy.
+- `apps/gold/agro/agro-shell.js`
+  - Se validó la redirección de tokens legacy a `operaciones`.
+- `apps/gold/agro/index.html`
+  - Se verificó que la UI visible mantiene solo `Cartera Viva`, `Mi Carrito`, `Operación Comercial` y `Rankings`, sin bloques legacy visibles.
+- `apps/gold/agro/agro-selection.js`
+  - Se confirmó la simplificación del estado de selección sin eventos legacy.
+- `apps/gold/agro/agro-operations.css`
+  - Se validó que permanezcan solo estilos activos para `carrito` y `rankings` sobre la base reutilizada.
+
+### Resultado de validación
+
+- Build final: `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Consola al cargar `http://localhost:3000/agro/`:
+  - `pageerror`: ninguno
+  - `ReferenceError` / `TypeError` / `SyntaxError` en consola: ninguno
+  - Warnings vistos: hCaptcha sobre `localhost`
+
+### QA sugerido
+
+- Abrir `/agro` y entrar manualmente a `Cartera Viva`, `Mi Carrito` y `Operación Comercial` para confirmar que no hay redirecciones inesperadas.
+- Abrir un ciclo y expandir `Ver desglose financiero` para validar que sigan visibles las secciones colapsables y sus totales.
+- Revisar `Rankings` y confirmar visualmente el copy nuevo de rentabilidad real y clientes cobrados.
+
+---
+
+## 2026-04-08 - Fix quirúrgico crash Agro por `normalizeOpsCultivosTab`
+
+### Diagnóstico
+
+- El crash productivo no viene de auth ni de Supabase; viene de runtime JS durante el arranque de Agro.
+- `apps/gold/agro/agro.js` conserva cuatro llamadas vivas a `normalizeOpsCultivosTab(...)` dentro del contexto de tabs operativos/cultivos.
+- La helper ya no existe en el archivo ni fue reemplazada por import/export equivalente, así que el bootstrap explota con `ReferenceError` al intentar restaurar o recordar el tab activo.
+- Ese `ReferenceError` rompe el init de Agro y dispara el fallback superior, lo que termina expulsando al usuario del módulo.
+
+### Plan
+
+- Restaurar una helper mínima `normalizeOpsCultivosTab(value)` alineada con `OPS_CULTIVOS_ALLOWED_TABS`.
+- No tocar auth, ni naming visible, ni flujo de negocio.
+- Correr `pnpm build:gold` al final para validar que el fix no rompe el módulo.
+
+### DoD
+
+- Entrar a `/agro` ya no depende de una referencia inexistente a `normalizeOpsCultivosTab`.
+- La restauración queda localizada en `agro.js` con semántica mínima.
+- No se altera la lógica actual de tabs operativos fuera de la normalización.
+- `pnpm build:gold` pasa limpio.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro.js`
+  - Se restauraron las helpers mínimas faltantes del panel operativo:
+    - `normalizeOpsContextMode(...)`
+    - `normalizeOpsCultivosTab(...)`
+    - `getOpsForcedTab(...)`
+    - `getOpsContextElements(...)`
+    - `syncOpsContextTagsUI(...)`
+    - `selectOpsCultivo(...)`
+    - `renderOpsCultivosPanel(...)`
+  - El objetivo fue cerrar la referencia rota y recomponer el bloque mínimo que hoy usa el bootstrap de Agro para tabs/contexto de cultivos.
+
+### Build
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por `node v25.6.0` vs `20.x`
+
+---
+
 ## Fix: Agro Navigation Loop (2026-04-08)
 
 ### Diagnóstico
