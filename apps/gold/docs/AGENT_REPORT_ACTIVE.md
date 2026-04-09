@@ -11735,3 +11735,65 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
 - Abrir `/agro` y confirmar que solo el título principal del sidebar usa el tratamiento metálico.
 - Verificar que headers de sección, links y subitems se mantuvieron intactos.
 - Validar que en `prefers-reduced-motion: reduce` el título sigue legible y sin animación.
+
+---
+
+## 2026-04-09 - Diagnóstico previo para elevación visual de Cartera Viva
+
+### Diagnóstico
+
+- La región de `Cartera Viva` vive en `apps/gold/agro/index.html` como contenedor vacío `#agro-cartera-viva-root`, pero el render real se monta desde `apps/gold/agro/agro-cartera-viva-view.js`.
+- La capa visual principal está concentrada en `apps/gold/agro/agro-cartera-viva.css`; no hace falta tocar lógica de negocio para elevar la superficie.
+- Los puntos que hoy se sienten por debajo del ADN V10 están localizados en selectores concretos:
+  - header: `.cartera-viva-view__header`, `.cartera-viva-view__title`, `.cartera-viva-summary-strip`
+  - cards: `.cartera-viva-card`, `.cartera-viva-card__metric`, `.cartera-viva-card__title`
+  - estados: `.cartera-viva-badge--*`, `.cartera-viva-chip`, `.cartera-viva-category`, `.cartera-viva-family-chip`
+  - microinteracciones: cards sin elevación/focus visual suficiente y controles con estados todavía demasiado planos
+- La opción de arreglo más segura es una intervención CSS quirúrgica sobre esa superficie, sin cambiar markup estructural ni wiring de `agro-cartera-viva-view.js`.
+
+### Plan
+
+- Reforzar la jerarquía visual del header de Cartera Viva con un tratamiento más ADN V10 en título, eyebrow y summary strip.
+- Refinar cards, métricas y bloques financieros usando tokens canónicos, mejores bordes/sombras y un acabado menos legacy.
+- Ajustar badges, chips y estados para que sean más sobrios, claros y consistentes.
+- Subir la calidad de hover/focus/microinteracción sin exagerar glow ni abrir un rediseño.
+- Validar con `pnpm build:gold`.
+
+### DoD
+
+- El header de Cartera Viva tiene mejor jerarquía visual.
+- Las cards principales se sienten ADN V10 y no legacy.
+- Los estados visuales son claros y sobrios.
+- Resumen, badges y bloques financieros tienen mejor ritmo visual.
+- Las microinteracciones son sutiles y coherentes.
+- Mobile sigue usable.
+- `pnpm build:gold` pasa limpio.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-cartera-viva.css`
+  - Se elevó el header principal de Cartera Viva con mejor profundidad visual, borde superior metálico y jerarquía más clara.
+  - Se reforzó el branding del título y del monto principal del summary strip con tratamiento metálico canónico y fallback en `var(--gold-4)`.
+  - Se refinó la lectura de cards, métricas y bloques financieros con fondos más profundos, bordes tokenizados y mejor separación visual.
+  - Se suavizaron y clarificaron badges/chips/estados usando tonos semánticos y gold del ADN V10, sin sobresaturar la UI.
+  - Se agregaron microinteracciones sutiles para cards y controles (`hover`, `focus-visible`, `active`) manteniendo `prefers-reduced-motion`.
+
+### Build
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por `node v25.6.0` vs `20.x`
+
+### QA sugerido
+
+- Abrir `/agro` en `Cartera Viva` y revisar que el header se percibe más sólido que el contenido base.
+- Confirmar que cards y métricas se sienten más premium sin perder legibilidad en desktop.
+- Verificar que badges de `Fiado`, `Pagado`, `Pérdida`, `Revisar` y `Archivado` siguen claros pero sobrios.
+- Revisar viewport móvil pequeño para validar wrapping de header, stats y acciones.
+- Activar `prefers-reduced-motion` y confirmar que desaparecen las animaciones del branding y las elevaciones activas.

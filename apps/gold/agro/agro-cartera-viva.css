@@ -1619,6 +1619,243 @@
   cursor: not-allowed;
 }
 
+/* ==========================================================
+   Cartera Viva — Elevacion visual ADN V10
+   ========================================================== */
+
+.cartera-viva-view__header,
+.cartera-viva-summary-strip,
+.cartera-viva-card,
+.cartera-viva-detail__summary {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.cartera-viva-view__header,
+.cartera-viva-summary-strip,
+.cartera-viva-detail__summary {
+  border-color: var(--border-neutral);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--gold-5) 8%, transparent), transparent 18%),
+    linear-gradient(135deg, color-mix(in srgb, var(--gold-4) 8%, transparent), transparent 54%),
+    var(--bg-0);
+  box-shadow:
+    var(--shadow-gold-xs),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.cartera-viva-view__header::before,
+.cartera-viva-summary-strip::before,
+.cartera-viva-card::before,
+.cartera-viva-detail__summary::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: var(--metallic-border);
+  opacity: 0.78;
+  pointer-events: none;
+}
+
+.cartera-viva-view__eyebrow {
+  font-family: var(--font-heading, 'Orbitron', sans-serif);
+  font-size: var(--text-xs, 0.7rem);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--text-gold-prestige, var(--gold-prestige));
+}
+
+.cartera-viva-view__title {
+  max-width: 16ch;
+  font-size: clamp(1.28rem, 2.6vw, 1.9rem);
+  letter-spacing: 0.02em;
+  color: var(--gold-4);
+}
+
+.cartera-viva-summary-strip__amount {
+  color: var(--gold-4);
+}
+
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .cartera-viva-view__title,
+  .cartera-viva-summary-strip__amount {
+    background: var(--metallic-text);
+    background-position: 0% 50%;
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    animation: metallicShift 6s ease-in-out infinite;
+  }
+}
+
+.cartera-viva-view__subtitle {
+  max-width: 34rem;
+  color: var(--text-secondary);
+}
+
+.cartera-viva-summary-strip__stat,
+.cartera-viva-insight,
+.cartera-viva-card__metric,
+.cartera-viva-progress,
+.cartera-viva-detail__amount-panel,
+.cartera-viva-pair {
+  border-color: var(--border-neutral);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 4%, transparent), transparent 68%),
+    var(--bg-4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.cartera-viva-summary-strip__stat,
+.cartera-viva-insight,
+.cartera-viva-card__metric {
+  padding: 0.5rem 0.56rem;
+}
+
+.cartera-viva-summary-strip__stat-value,
+.cartera-viva-insight__value,
+.cartera-viva-card__metric dd {
+  font-family: var(--font-heading, 'Orbitron', sans-serif);
+}
+
+.cartera-viva-card {
+  gap: 0.58rem;
+  padding: 0.78rem 0.84rem;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 6%, transparent), transparent 20%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.02), transparent 62%),
+    var(--bg-0);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease;
+}
+
+.cartera-viva-card:hover,
+.cartera-viva-card:focus-within {
+  border-color: var(--border-gold);
+  box-shadow:
+    var(--shadow-gold-sm),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  transform: translateY(-2px);
+}
+
+.cartera-viva-card__title {
+  font-size: 0.92rem;
+  letter-spacing: 0.01em;
+}
+
+.cartera-viva-badge {
+  font-family: var(--font-heading, 'Orbitron', sans-serif);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.cartera-viva-badge--fiado {
+  color: var(--gold-4);
+  border-color: var(--border-gold);
+  background: color-mix(in srgb, var(--gold-4) 12%, transparent);
+}
+
+.cartera-viva-badge--empty,
+.cartera-viva-badge--seguimiento {
+  color: var(--text-secondary);
+  border-color: var(--border-neutral);
+  background: color-mix(in srgb, var(--text-muted) 10%, transparent);
+}
+
+.cartera-viva-badge--pagado {
+  color: var(--color-success);
+  border-color: color-mix(in srgb, var(--color-success) 36%, transparent);
+  background: color-mix(in srgb, var(--color-success) 12%, transparent);
+}
+
+.cartera-viva-badge--perdido {
+  color: var(--color-error);
+  border-color: color-mix(in srgb, var(--color-error) 34%, transparent);
+  background: color-mix(in srgb, var(--color-error) 12%, transparent);
+}
+
+.cartera-viva-badge--review {
+  color: var(--color-warning);
+  border-color: color-mix(in srgb, var(--color-warning) 34%, transparent);
+  background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+}
+
+.cartera-viva-chip {
+  border-color: var(--border-neutral);
+  background: color-mix(in srgb, var(--text-muted) 8%, transparent);
+  color: var(--text-secondary);
+}
+
+.cartera-viva-chip.is-loss {
+  border-color: color-mix(in srgb, var(--color-error) 28%, transparent);
+  background: color-mix(in srgb, var(--color-error) 10%, transparent);
+}
+
+.cartera-viva-chip.is-review {
+  border-color: color-mix(in srgb, var(--color-warning) 28%, transparent);
+  background: color-mix(in srgb, var(--color-warning) 10%, transparent);
+}
+
+.cartera-viva-refresh,
+.cartera-viva-empty__action,
+.cartera-viva-back,
+.cartera-viva-quick-action,
+.cartera-viva-crop-chip,
+.cartera-viva-family-chip,
+.cartera-viva-category,
+.cartera-viva-detail-link {
+  transition:
+    color 180ms ease,
+    background 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    opacity 180ms ease;
+}
+
+.cartera-viva-refresh:focus-visible,
+.cartera-viva-empty__action:focus-visible,
+.cartera-viva-back:focus-visible,
+.cartera-viva-quick-action:focus-visible,
+.cartera-viva-crop-chip:focus-visible,
+.cartera-viva-family-chip:focus-visible,
+.cartera-viva-category:focus-visible,
+.cartera-viva-detail-link:focus-visible {
+  outline: none;
+  box-shadow: var(--state-focus-ring, 0 0 0 2px var(--bg-1), 0 0 0 4px var(--gold-4));
+}
+
+.cartera-viva-refresh:active,
+.cartera-viva-empty__action:active,
+.cartera-viva-back:active,
+.cartera-viva-quick-action:active,
+.cartera-viva-crop-chip:active,
+.cartera-viva-family-chip:active,
+.cartera-viva-category:active {
+  transform: scale(0.98);
+}
+
+.cartera-viva-detail-link {
+  color: var(--gold-4);
+  opacity: 0.86;
+}
+
+.cartera-viva-detail-link:hover {
+  color: var(--gold-5);
+  text-decoration: underline;
+  text-underline-offset: 0.18rem;
+}
+
 .cartera-viva-empty {
   display: grid;
   gap: 0.65rem;
@@ -1806,11 +2043,14 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .cartera-viva-view__title,
+  .cartera-viva-summary-strip__amount,
   .agro-commercial-family__tab,
   .cartera-viva-refresh,
   .cartera-viva-empty__action,
   .cartera-viva-back,
   .cartera-viva-detail-link,
+  .cartera-viva-card,
   .cartera-viva-category,
   .cartera-viva-hero__signal-track::before,
   .cartera-viva-progress__track::before,
@@ -1821,5 +2061,23 @@
   .cartera-viva-loading-dot {
     transition: none;
     animation: none;
+  }
+
+  .cartera-viva-card:hover,
+  .cartera-viva-card:focus-within,
+  .cartera-viva-refresh:active,
+  .cartera-viva-empty__action:active,
+  .cartera-viva-back:active,
+  .cartera-viva-quick-action:active,
+  .cartera-viva-crop-chip:active,
+  .cartera-viva-family-chip:active,
+  .cartera-viva-category:active {
+    transform: none;
+  }
+
+  .cartera-viva-view__title,
+  .cartera-viva-summary-strip__amount {
+    background-position: 50% 50%;
+    background-size: 100% 100%;
   }
 }
