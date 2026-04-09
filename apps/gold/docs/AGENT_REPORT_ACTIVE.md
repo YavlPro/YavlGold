@@ -11485,3 +11485,56 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
 - Recargar `/agro` y verificar que vuelven a verse los ciclos activos.
 - Entrar a la subvista de finalizados y confirmar que la lista vuelve a pintar.
 - Abrir un selector de cultivo del módulo y confirmar que conserva las opciones cargadas.
+
+---
+
+## 2026-04-08 - Fix Rankings vacío + rename `Historial comercial`
+
+### Diagnóstico
+
+- El panel de Rankings no estaba vacío por RPC ni por CSS; el runtime mostraba `Error: opsRankingsDebugSampleLogged is not defined`.
+- El bloque de Rankings en `apps/gold/agro/agro.js` seguía leyendo esa bandera dentro de `fetchOpsRankingsData()`, pero la variable base ya no existía.
+- En paralelo, el copy visible de navegación y del header operativo seguía mostrando `Historial comercial`, aunque la dirección actual del módulo pide `Operación comercial`.
+
+### Plan
+
+- Restaurar solo la bandera mínima `opsRankingsDebugSampleLogged`.
+- Renombrar `Historial comercial` a `Operación comercial` en textos visibles y etiquetas accesibles relevantes.
+- Validar con `pnpm build:gold`.
+
+### DoD
+
+- Rankings deja de romper por `opsRankingsDebugSampleLogged is not defined`.
+- El panel puede volver a renderizar sus listas con los datos existentes.
+- El copy visible deja de mostrar `Historial comercial` en navegación y cabecera operativa.
+- `pnpm build:gold` pasa limpio.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro.js`
+  - Se restauró `opsRankingsDebugSampleLogged` como bandera mínima de debug para evitar el `ReferenceError` dentro de `fetchOpsRankingsData()`.
+- `apps/gold/agro/index.html`
+  - El grupo visible del sidebar pasó de `Historial comercial` a `Operación comercial`.
+- `apps/gold/agro/agroOperationalCycles.js`
+  - Se renombró `Historial comercial` a `Operación comercial` en la cabecera/aria-label del módulo operativo.
+- `apps/gold/agro/agro-cartera-viva-view.js`
+  - Se actualizó el `aria-label` de la familia comercial.
+- `apps/gold/agro/agro-cartera-viva-detail.js`
+  - Se actualizó el `aria-label` de la familia comercial.
+
+### Build
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por `node v25.6.0` vs `20.x`
+
+### QA sugerido
+
+- Recargar `/agro` y abrir `Rankings` para confirmar que desaparece el mensaje de error y vuelven a pintarse las tarjetas.
+- Revisar el sidebar y la cabecera del módulo operativo para confirmar el rename a `Operación comercial`.

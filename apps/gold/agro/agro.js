@@ -12666,6 +12666,7 @@ let opsRankingsState = {
 let opsRankingsInitBound = false;
 let opsRankingsInFlight = null;
 let opsRankingsQueued = false;
+let opsRankingsDebugSampleLogged = false;
 
 function createEmptyOpsMovementSummary() {
     const globalByTab = {};

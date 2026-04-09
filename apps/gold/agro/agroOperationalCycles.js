@@ -1313,7 +1313,7 @@ function renderShell() {
         <div class="agro-operational-shell agro-ops-v10">
             <header class="module-header animate-in delay-3">
                 <div class="module-title-group agro-operational-shell__heading">
-                    <div class="agro-commercial-family" aria-label="Historial comercial">
+                    <div class="agro-commercial-family" aria-label="Operación comercial">
                         <div class="agro-commercial-family__tabs" role="group" aria-label="Familia comercial">
                             <button type="button" class="agro-commercial-family__tab" data-agro-view="cartera-viva">
                                 Cartera Viva
@@ -1327,7 +1327,7 @@ function renderShell() {
                     <div class="module-title-group">
                         <div class="module-icon">💼</div>
                         <div class="module-heading">
-                            <p class="ops-module-eyebrow">Historial comercial</p>
+                            <p class="ops-module-eyebrow">Operación comercial</p>
                             <h2 class="module-title">Cartera Operativa</h2>
                             <p class="module-subtitle">Registra, filtra y exporta con movimientos reales sin salir del módulo.</p>
                         </div>

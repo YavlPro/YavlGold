@@ -1530,7 +1530,7 @@ function renderPrivacyStrip() {
 
 function renderCommercialFamilyNav(activeView = 'cartera-viva') {
     return `
-        <div class="agro-commercial-family" aria-label="Historial comercial">
+        <div class="agro-commercial-family" aria-label="Operación comercial">
             <div class="agro-commercial-family__tabs" role="group" aria-label="Familia comercial">
                 <button
                     type="button"
