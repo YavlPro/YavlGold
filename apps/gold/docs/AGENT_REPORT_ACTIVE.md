@@ -11584,3 +11584,74 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
   - los filtros de rango envuelven bien;
   - las cards mantienen contraste y lectura.
 - Confirmar visualmente que los top 3 se distinguen mejor sin introducir acento azul/morado.
+
+---
+
+## 2026-04-09 - Alineación visual sidebar Agro al ADN V10.0
+
+### Diagnóstico
+
+- La fuente real del sidebar visible está en `apps/gold/agro/index.html`.
+- El estado activo, hover, focus, radios y jerarquía visual del sidebar viven en `apps/gold/agro/agro.css`.
+- La lógica de navegación y activación vive en `apps/gold/agro/agro-shell.js` y no debe tocarse salvo necesidad real.
+- El problema no es estructural sino visual:
+  - el sidebar todavía usa emojis en headers, ítems y CTA;
+  - el activo principal sigue usando un bloque gold demasiado saturado;
+  - headers e iconografía no están totalmente alineados al DNA V10.
+
+### Plan
+
+- Reemplazar emojis del sidebar por iconografía canónica con Font Awesome ya cargado en Agro.
+- Ajustar solo markup y CSS del sidebar para llevar headers, links, sublinks y CTA al lenguaje V10.
+- Mantener intacta la shell `Operación comercial` y toda la lógica de navegación actual.
+- Validar con `pnpm build:gold`.
+
+### DoD
+
+- No quedan emojis en el sidebar.
+- `Operación comercial` conserva su rol de contenedor visual padre.
+- El activo deja de usar fondo gold saturado y pasa a un estado más sobrio.
+- Hover, focus, radios e iconos quedan consistentes con V10.
+- `pnpm build:gold` pasa limpio.
+
+### Cambios aplicados
+
+- `apps/gold/agro/index.html`
+  - Se reemplazaron los emojis del sidebar por iconografía Font Awesome canónica.
+  - Se mantuvo intacta la jerarquía visible:
+    - `Operación comercial`
+    - `Cartera Viva`
+    - `Mi Carrito`
+    - `Cartera Operativa`
+  - Se homogenizó también la iconografía de subítems y del CTA `Nuevo cultivo`.
+
+- `apps/gold/agro/agro.css`
+  - Se alineó el bloque visual del sidebar al ADN V10:
+    - labels de sección más sobrios y tipográficos;
+    - iconos con escala y color consistentes;
+    - links y sublinks con radios/touch targets V10;
+    - hover y focus con estados canónicos;
+    - activo sin bloque gold saturado, reemplazado por overlay controlado + acento lateral.
+  - El ajuste quedó restringido al sidebar para no contaminar otras superficies.
+
+### Build
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por `node v25.6.0` vs `20.x`
+
+### QA sugerido
+
+- Abrir `/agro` y validar que el sidebar ya no contiene emojis en desktop.
+- Confirmar que el activo se lee como estado V10 sobrio, no como bloque gold dominante.
+- Verificar que `Operación comercial` sigue funcionando como contenedor padre de:
+  - `Cartera Viva`
+  - `Mi Carrito`
+  - `Cartera Operativa`
+- Revisar viewport móvil pequeño para confirmar scroll, touch targets y legibilidad del submenú.
