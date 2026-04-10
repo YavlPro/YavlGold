@@ -1070,7 +1070,7 @@ function renderCartCalculatorPanel() {
             <div class="agro-cart-mini__head">
                 <div class="agro-cart-mini__copywrap">
                     <p class="agro-cart-mini__eyebrow">Cálculo rápido</p>
-                    <h4 class="agro-cart-mini__title">Calculadora ROI</h4>
+                    <h4 class="agro-cart-mini__title">Calculadora</h4>
                     <p class="agro-cart-mini__copy">Lectura compacta para validar margen antes de registrar o comprar.</p>
                 </div>
                 <div class="agro-cart-mini__actions">

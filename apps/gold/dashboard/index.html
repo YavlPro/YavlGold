@@ -2450,6 +2450,32 @@
       return null;
     }
 
+    function resolveAgroReadyFallback(modules) {
+      const agroModule = (modules || []).find((mod) => getModuleId(mod) === 'agro' && isNavigableModule(mod));
+      if (agroModule) {
+        return {
+          id: getModuleId(agroModule),
+          title: 'Agro listo',
+          path: getModuleRoute(agroModule),
+          reason: 'Tu area activa esta disponible'
+        };
+      }
+
+      const fallbackModule = normalizeDashboardModule({
+        module_key: 'agro',
+        route: '/agro/',
+        path: '/agro/',
+        title: 'Agro'
+      });
+
+      return {
+        id: getModuleId(fallbackModule) || 'agro',
+        title: 'Agro listo',
+        path: getModuleRoute(fallbackModule) || '/agro/',
+        reason: 'Tu area activa esta disponible'
+      };
+    }
+
     function updateInsightCard(prefix, data, fallbackTitle, fallbackMeta) {
       const titleEl = document.getElementById(`${prefix}-title`);
       const metaEl = document.getElementById(`${prefix}-meta`);
@@ -2472,8 +2498,13 @@
     }
 
     function setInsightsEmptyState() {
+      const agroReady = resolveAgroReadyFallback();
       updateInsightCard('continue', null, 'Aun no has entrado a Agro', 'Abre Agro para empezar');
-      updateInsightCard('recommend', null, 'Agro listo', 'Tu area activa esta disponible');
+      updateInsightCard('recommend', {
+        title: agroReady.title,
+        path: agroReady.path,
+        meta: agroReady.reason
+      }, 'Agro listo', 'Tu area activa esta disponible');
 
       const visitedEl = document.getElementById('summary-visited');
       const lastEl = document.getElementById('summary-last');
@@ -2514,11 +2545,12 @@
         visits,
         continueData?.id
       );
+      const effectiveRecommendation = recommended || resolveAgroReadyFallback(modules);
 
-      updateInsightCard('recommend', recommended ? {
-        title: recommended.title,
-        path: recommended.path,
-        meta: recommended.reason
+      updateInsightCard('recommend', effectiveRecommendation ? {
+        title: effectiveRecommendation.title,
+        path: effectiveRecommendation.path,
+        meta: effectiveRecommendation.reason
       } : null, 'Agro listo', 'Tu area activa esta disponible');
     }
 

@@ -12064,3 +12064,83 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
   - apilado correcto de los micro-paneles;
   - botones a ancho completo;
   - sin scrolls horizontales ni desbordes.
+
+---
+
+## 2026-04-09 - Diagnóstico inicial para fix quirúrgico de navegación Agro y CTA de dashboard
+
+### Diagnóstico inicial
+
+- Bug 1 `Calculadora ROI`:
+  - La causa probable vive en `apps/gold/agro/index.html`, donde el sidebar y la card de herramientas fueron recableados a `data-agro-view="carrito"` con `data-agro-subview="calculator"`.
+  - La calculadora real hoy no es una vista shell separada: el origen real disponible es el modal controlado por `apps/gold/agro/agrocalculadora.js` y disparado por `runAction('calculator')` desde `apps/gold/agro/agro-shell.js`.
+  - El label visible del launcher quedó desactualizado (`Calculadora ROI`) y el destino quedó engañoso porque aterriza en `Mi Carrito`.
+
+- Bug 2 `Planificación`:
+  - La causa probable también vive en `apps/gold/agro/index.html`, donde `Planificación` fue redirigido a `carrito` con `data-agro-subview="planning"`.
+  - La vista real de planificación sigue existiendo en `apps/gold/agro/agro-agenda.js` y el shell todavía soporta `view: 'agenda'` en `apps/gold/agro/agro-shell.js`.
+  - La colisión actual nace de una sesión previa que fusionó naming de planificación dentro de `Mi Carrito`, dejando dos entradas distintas con destino práctico al carrito.
+
+- Bug 3 `Dashboard / Agro listo`:
+  - La causa probable vive en `apps/gold/dashboard/index.html`.
+  - `updateRecommendCard()` desactiva el CTA cuando no encuentra un módulo alternativo a `continue`, pero hoy `Dashboard` filtra a un solo módulo liberado (`Agro`), así que `recommended` puede quedar en `null` aunque Agro sí sea navegable.
+  - `setInsightsEmptyState()` además deja `recommend-link` en estado disabled con el copy `Agro listo`, reforzando la inconsistencia.
+
+- Hipótesis de fuentes de verdad:
+  - Sidebar/routing Agro: `apps/gold/agro/index.html` + `apps/gold/agro/agro-shell.js`
+  - Calculadora real: `apps/gold/agro/agrocalculadora.js`
+  - Planificación real: `apps/gold/agro/agro-agenda.js`
+  - CTA recomendado dashboard: `apps/gold/dashboard/index.html`
+
+### Plan mínimo
+
+- Tocar solo las fuentes reales de navegación y estado:
+  - `apps/gold/agro/index.html`
+  - `apps/gold/agro/agro-shell.js`
+  - `apps/gold/dashboard/index.html`
+- No tocar arquitectura de `agro.js`, persistencia, Supabase ni layout visual amplio.
+- Reencaminar `Planificación` hacia `agenda`, reencaminar `Calculadora` hacia su launcher real y limpiar el naming visible mínimo necesario.
+- Corregir el fallback del CTA recomendado para que `Agro listo` siga siendo clickeable cuando Agro es el único módulo disponible.
+- Validar con `pnpm build:gold` y revisión manual básica de navegación.
+
+### Cambios aplicados
+
+- `apps/gold/agro/index.html`
+  - `Planificación` del sidebar dejó de apuntar a `carrito` y ahora abre la vista real `agenda`.
+  - `Calculadora ROI` del sidebar pasó a llamarse `Calculadora` y ahora dispara el launcher real de la calculadora, sin redirigir a `Mi Carrito`.
+  - La card de herramientas de planificación ahora abre `agenda` en vez de `Mi Carrito`.
+  - La card de cálculo ahora abre la calculadora real y se limpió el naming visible a `Calculadora`.
+  - El modal visible también quedó alineado con el naming `Calculadora / Calculadora rápida`.
+
+- `apps/gold/agro/agro-shell.js`
+  - Se agregó `agenda` al grupo de navegación `Operación comercial` para que el padre siga siendo coherente cuando la planificación está activa.
+  - Se ajustó `syncSubnav()` para ignorar sublinks que son acciones y no vistas, evitando estados activos falsos en el sidebar.
+
+- `apps/gold/agro/agro-cart.js`
+  - Se actualizó el título visible del micro-panel interno de cálculo a `Calculadora` para mantener consistencia de naming.
+
+- `apps/gold/dashboard/index.html`
+  - Se agregó un fallback honesto `resolveAgroReadyFallback()` para que la card `Recomendado / Agro listo` mantenga CTA funcional incluso cuando Agro es el único módulo liberado.
+  - `setInsightsEmptyState()` ya no deja `recommend-link` desactivado cuando Agro está disponible.
+  - `updateRecommendCard()` ahora reutiliza ese fallback cuando no existe un módulo alternativo distinto al de `Continuar`.
+
+### Build
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por `node v25.6.0` vs `20.x`
+
+### QA sugerido
+
+- Confirmar en `/agro` que:
+  - `Planificación` abre la vista real de agenda;
+  - `Mi Carrito` sigue abriendo el carrito resumen;
+  - `Calculadora` abre la calculadora real y no aterriza en `Mi Carrito`.
+- Confirmar en `/dashboard/` que la card `Recomendado / Agro listo` deja el botón `Entrar` activo y navegable hacia `/agro/`.
+- QA manual en navegador no ejecutada en esta sesión por solicitud explícita del usuario.

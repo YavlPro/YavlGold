@@ -41,7 +41,7 @@ const LEGACY_VIEW_REDIRECTS = Object.freeze({
 
 const NAV_PARENT_GROUPS = Object.freeze({
     'historial-comercial': Object.freeze({
-        views: Object.freeze(['cartera-viva', 'carrito', 'operational']),
+        views: Object.freeze(['cartera-viva', 'carrito', 'agenda', 'operational']),
         defaultView: 'cartera-viva'
     })
 });
@@ -355,6 +355,11 @@ export function initAgroShell() {
         });
 
         document.querySelectorAll('.agro-shell-sublink').forEach((btn) => {
+            const rawView = String(btn.dataset.agroView || '').trim();
+            if (!rawView) {
+                btn.classList.remove('is-active');
+                return;
+            }
             const btnView = normalizeView(btn.dataset.agroView);
             const hasSubview = String(btn.dataset.agroSubview || '').trim().length > 0;
             const btnSub = hasSubview ? normalizeSubview(btnView, btn.dataset.agroSubview) : '';
