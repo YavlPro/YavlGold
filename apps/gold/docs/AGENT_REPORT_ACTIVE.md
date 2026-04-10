@@ -12387,3 +12387,37 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
   - la composición ahora se siente cercana al resto de Agro;
   - calculadora y calendario viven como lateral útil y no como ruido visual.
 - QA manual en navegador no ejecutada en esta sesión por solicitud explícita del usuario.
+
+---
+
+## 2026-04-10 — AGENTS.md §11 Deuda Técnica + Limpieza de duplicación
+
+### Diagnóstico
+
+- `AGENTS.md` tenía §8 (Orquestación operativa) duplicado íntegramente (líneas 186-358 y 361-533).
+- Faltaba sección formal de Deuda Técnica Documentada.
+- El usuario proporcionó la propuesta completa de §11 para incorporar.
+
+### Cambios aplicados
+
+- **`AGENTS.md`** — 1 archivo, +30 / -172 líneas
+  - Eliminada duplicación completa de §8 (172 líneas removidas).
+  - Agregado §11 "Deuda Técnica Documentada y Política de Mejora Continua" con 6 subsecciones:
+    - 11.1 Monolito `agro.js` (~16,500 líneas)
+    - 11.2 Gestión de Memoria y Eventos (setInterval/addEventListener cleanup)
+    - 11.3 CSS Inline vs Tokens ADN V10
+    - 11.4 Naming y Convenciones (agro-kebab-case.js)
+    - 11.5 Market Ticker (Binance polling duplicado)
+    - 11.6 Filosofía de Ejecución (Boy Scout Rule)
+
+### Build status
+
+- Commit: `128982e`
+- Pushed a `origin/main` exitosamente.
+- No se requiere `pnpm build:gold` (cambio exclusivamente documental, sin código ni assets).
+
+### QA sugerido
+
+- Revisar que §8 aparece una sola vez en `AGENTS.md`.
+- Confirmar que §11 está completo y posicionado antes del copyright.
+- Validar que la numeración de secciones es coherente (§1–§8, §11).
