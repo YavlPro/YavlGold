@@ -9,9 +9,12 @@
   border: 1px solid var(--border-gold, rgba(200, 167, 82, 0.25));
   border-radius: var(--radius-xl, 24px);
   background:
-    linear-gradient(180deg, rgba(200, 167, 82, 0.04), rgba(200, 167, 82, 0.01)),
+    linear-gradient(180deg, rgba(200, 167, 82, 0.05), transparent 18%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.018), transparent 62%),
     var(--bg-2, #0b0c0f);
-  box-shadow: var(--shadow-gold-md, 0 5px 20px rgba(200, 167, 82, 0.25));
+  box-shadow:
+    0 18px 38px rgba(0, 0, 0, 0.28),
+    0 0 32px rgba(200, 167, 82, 0.06);
 }
 
 .agro-agenda-inline-root .aga-inline .aga-header {
@@ -37,8 +40,9 @@
 }
 
 .agro-agenda-inline-root .aga-inline .aga-subtitle {
-  max-width: 64ch;
+  max-width: 58ch;
   color: var(--text-secondary, #cccccc);
+  line-height: 1.5;
 }
 
 .agro-agenda-inline-root .aga-inline .aga-header-right {
@@ -108,39 +112,89 @@
 }
 
 .agro-agenda-inline-root .aga-inline .aga-body {
-  gap: var(--space-5, 1.25rem);
+  gap: var(--space-6, 1.5rem);
   padding: var(--layout-card-padding, var(--space-6, 1.5rem));
   border: 0;
   border-radius: 0;
   background: transparent;
 }
 
-.agro-agenda-inline-root .aga-inline .aga-planner-main {
+.agro-agenda-inline-root .aga-inline .aga-planner-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(18rem, 1fr);
-  gap: var(--space-4, 1rem);
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.98fr);
+  gap: var(--space-5, 1.25rem);
   align-items: start;
+}
+
+.agro-agenda-inline-root .aga-inline .aga-planner-main,
+.agro-agenda-inline-root .aga-inline .aga-planner-side {
+  display: grid;
+  gap: var(--space-4, 1rem);
+  align-content: start;
+  min-width: 0;
 }
 
 .agro-agenda-inline-root .aga-inline .aga-planner-section,
 .agro-agenda-inline-root .aga-inline .aga-calendar-disclosure {
+  position: relative;
+  overflow: hidden;
   border-radius: var(--radius-lg, 16px);
-  border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
+  border: 1px solid color-mix(in srgb, var(--gold-4, #c8a752) 18%, rgba(255, 255, 255, 0.08));
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01)),
+    linear-gradient(180deg, color-mix(in srgb, var(--gold-4, #c8a752) 5%, transparent), transparent 22%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.015), transparent 58%),
     var(--bg-3, #111113);
-  box-shadow: none;
+  box-shadow:
+    0 16px 32px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}
+
+.agro-agenda-inline-root .aga-inline .aga-planner-section::before,
+.agro-agenda-inline-root .aga-inline .aga-calendar-disclosure::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--metallic-border, linear-gradient(90deg, transparent, rgba(200, 167, 82, 0.8), transparent));
+  background-size: 200% 100%;
+  opacity: 0.72;
+  animation: borderShimmer 4s linear infinite;
 }
 
 .agro-agenda-inline-root .aga-inline .aga-planner-section--primary {
-  border-color: var(--border-gold, rgba(200, 167, 82, 0.25));
+  border-color: color-mix(in srgb, var(--gold-4, #c8a752) 28%, rgba(255, 255, 255, 0.08));
   background:
-    linear-gradient(180deg, rgba(200, 167, 82, 0.05), rgba(200, 167, 82, 0.01)),
+    linear-gradient(180deg, color-mix(in srgb, var(--gold-4, #c8a752) 8%, transparent), transparent 20%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.02), transparent 58%),
     var(--bg-3, #111113);
 }
 
 .agro-agenda-inline-root .aga-inline .aga-planner-section__head {
   padding: var(--space-5, 1.25rem) var(--space-5, 1.25rem) 0;
+  gap: var(--space-4, 1rem);
+  align-items: flex-start;
+}
+
+.agro-agenda-inline-root .aga-inline .aga-planner-section__eyebrow,
+.agro-agenda-inline-root .aga-inline .aga-calendar-summary__eyebrow {
+  color: var(--gold-5, #e8d48b);
+  opacity: 0.82;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+}
+
+.agro-agenda-inline-root .aga-inline .aga-planner-section__title,
+.agro-agenda-inline-root .aga-inline .aga-calendar-summary__title {
+  color: var(--text-primary, #ffffff);
+  font-size: clamp(1rem, 2vw, 1.2rem);
+}
+
+.agro-agenda-inline-root .aga-inline .aga-planner-section__meta,
+.agro-agenda-inline-root .aga-inline .aga-calendar-summary__meta {
+  color: var(--text-secondary, #cccccc);
+  line-height: 1.45;
 }
 
 .agro-agenda-inline-root .aga-inline .aga-planner-actions {
@@ -150,8 +204,8 @@
 .agro-agenda-inline-root .aga-inline .aga-inline-link,
 .agro-agenda-inline-root .aga-inline .aga-planner-actions .aga-add-btn {
   min-height: var(--a11y-touch-min, 44px);
-  padding: var(--comp-btn-py, var(--space-3, 0.75rem)) var(--comp-btn-px, var(--space-6, 1.5rem));
-  border-radius: var(--radius-sm, 8px);
+  padding: 0.55rem 0.95rem;
+  border-radius: var(--radius-pill, 9999px);
   font-family: 'Rajdhani', sans-serif;
   font-size: var(--text-sm, 0.8rem);
   font-weight: 700;
@@ -173,6 +227,7 @@
 .agro-agenda-inline-root .aga-inline .aga-inline-link:hover,
 .agro-agenda-inline-root .aga-inline .aga-planner-actions .aga-add-btn:hover {
   transform: translateY(-1px);
+  box-shadow: var(--shadow-gold-xs, 0 1px 6px rgba(200, 167, 82, 0.1));
 }
 
 .agro-agenda-inline-root .aga-inline .aga-inline-link:focus-visible,
@@ -195,7 +250,10 @@
   padding: var(--space-4, 1rem);
   border-radius: var(--radius-md, 12px);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  background: var(--bg-4, #1a1a1f);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.015), transparent 60%),
+    var(--bg-4, #1a1a1f);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.015);
 }
 
 .agro-agenda-inline-root .aga-inline .aga-activity:hover {
@@ -319,40 +377,6 @@ body .aga-create-overlay .aga-btn-secondary {
   color: var(--text-secondary, #cccccc);
 }
 
-.aga-section-rail {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, max-content));
-  gap: var(--space-2, 0.5rem);
-  align-items: center;
-}
-
-.aga-section-chip {
-  min-height: var(--a11y-touch-min, 44px);
-  padding: var(--comp-badge-py, var(--space-2, 0.5rem)) var(--comp-btn-px, var(--space-6, 1.5rem));
-  border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
-  border-radius: var(--radius-pill, 9999px);
-  background: rgba(255, 255, 255, 0.02);
-  color: var(--text-secondary, #cccccc);
-  font-family: 'Orbitron', sans-serif;
-  font-size: var(--text-xs, 0.7rem);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  transition: var(--state-transition, all 180ms ease);
-}
-
-.aga-section-chip:hover {
-  border-color: var(--border-gold, rgba(200, 167, 82, 0.25));
-  color: var(--gold-5, #e8d48b);
-}
-
-.aga-section-chip.is-active {
-  border-color: var(--border-gold, rgba(200, 167, 82, 0.25));
-  background: rgba(200, 167, 82, 0.08);
-  color: var(--gold-4, #c8a752);
-  box-shadow: var(--shadow-gold-xs, 0 1px 6px rgba(200, 167, 82, 0.1));
-}
-
-.aga-section-chip:focus-visible,
 .aga-calculator-field__input:focus-visible,
 .aga-calculator-secondary:focus-visible,
 .aga-calculator-primary:focus-visible {
@@ -361,16 +385,16 @@ body .aga-create-overlay .aga-btn-secondary {
 }
 
 .agro-agenda-inline-root .aga-inline .aga-planner-section--calculator {
-  border-color: var(--border-gold, rgba(200, 167, 82, 0.25));
+  border-color: color-mix(in srgb, var(--gold-4, #c8a752) 24%, rgba(255, 255, 255, 0.08));
   background:
-    linear-gradient(180deg, rgba(200, 167, 82, 0.06), rgba(200, 167, 82, 0.015)),
+    linear-gradient(180deg, color-mix(in srgb, var(--gold-4, #c8a752) 7%, transparent), transparent 22%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.018), transparent 58%),
     var(--bg-3, #111113);
-  box-shadow: var(--shadow-gold-xs, 0 1px 6px rgba(200, 167, 82, 0.1));
 }
 
 .aga-calculator-shell {
   display: grid;
-  gap: var(--space-4, 1rem);
+  gap: var(--space-5, 1.25rem);
   padding: var(--space-4, 1rem) var(--space-5, 1.25rem) var(--space-5, 1.25rem);
 }
 
@@ -378,12 +402,17 @@ body .aga-create-overlay .aga-btn-secondary {
   margin: 0;
   color: var(--text-secondary, #cccccc);
   line-height: 1.45;
+  max-width: 38ch;
 }
 
 .aga-calculator-fields {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-3, 0.75rem);
+}
+
+.aga-calculator-field:last-child {
+  grid-column: 1 / -1;
 }
 
 .aga-calculator-field {
@@ -392,10 +421,11 @@ body .aga-create-overlay .aga-btn-secondary {
 }
 
 .aga-calculator-field__label {
-  color: var(--text-muted, #94a3b8);
+  color: var(--gold-5, #e8d48b);
+  opacity: 0.78;
   font-family: 'Orbitron', sans-serif;
-  font-size: var(--text-xs, 0.7rem);
-  letter-spacing: 0.06em;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
@@ -440,22 +470,30 @@ body .aga-create-overlay .aga-btn-secondary {
   display: grid;
   gap: var(--space-1, 0.25rem);
   padding: var(--space-4, 1rem);
-  border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
+  border: 1px solid color-mix(in srgb, var(--gold-4, #c8a752) 12%, rgba(255, 255, 255, 0.08));
   border-radius: var(--radius-md, 12px);
-  background: var(--bg-4, #1a1a1f);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.015), transparent 60%),
+    var(--bg-4, #1a1a1f);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.015);
 }
 
 .aga-calculator-result__label {
-  color: var(--text-muted, #94a3b8);
-  font-size: var(--text-sm, 0.8rem);
-  letter-spacing: 0.03em;
+  color: var(--gold-5, #e8d48b);
+  opacity: 0.74;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .aga-calculator-result__value {
   color: var(--text-primary, #ffffff);
-  font-family: 'Orbitron', sans-serif;
-  font-size: clamp(0.95rem, 1.4vw, 1.1rem);
-  letter-spacing: 0.03em;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(1.4rem, 1.9vw, 1.7rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.01em;
 }
 
 .aga-calculator-result__value.is-positive {
@@ -468,8 +506,10 @@ body .aga-create-overlay .aga-btn-secondary {
 
 .aga-calculator-note {
   margin: 0;
-  color: var(--text-secondary, #cccccc);
-  line-height: 1.45;
+  padding-top: var(--space-2, 0.5rem);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--text-muted, #94a3b8);
+  line-height: 1.55;
 }
 
 body .aga-create-overlay {
@@ -540,12 +580,8 @@ body .aga-create-overlay .aga-btn-secondary {
     padding: var(--space-5, 1.25rem);
   }
 
-  .agro-agenda-inline-root .aga-inline .aga-planner-main {
+  .agro-agenda-inline-root .aga-inline .aga-planner-layout {
     grid-template-columns: 1fr;
-  }
-
-  .aga-calculator-fields {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -571,7 +607,6 @@ body .aga-create-overlay .aga-btn-secondary {
     width: 100%;
   }
 
-  .aga-section-rail,
   .aga-calculator-fields,
   .aga-calculator-results {
     grid-template-columns: 1fr;

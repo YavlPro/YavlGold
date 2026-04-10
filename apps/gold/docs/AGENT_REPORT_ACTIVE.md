@@ -12317,3 +12317,73 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
   - `Calculadora`
 - Confirmar que `Mi Carrito` sigue entrando a su propia vista sin renombrarse ni absorber planificación.
 - QA manual en navegador no ejecutada en esta sesión por solicitud explícita del usuario.
+
+---
+
+## 2026-04-09 - Revisión visual de Planificación tras feedback de producto
+
+### Diagnóstico inicial
+
+- La integración funcional de `Calculadora` dentro de `Planificación` quedó correcta, pero la composición visual no quedó a la altura del resto de Agro.
+- Los principales problemas reportados y confirmados en la superficie actual:
+  - el rail `Agenda operativa / Calculadora` se ve como chrome sobrante y no como jerarquía útil;
+  - la grilla no está distribuyendo el peso visual como lo hacen `Dashboard Agro` y `Cartera Operativa`;
+  - la vista quedó demasiado “tarjeteada” en algunas microzonas y demasiado vacía en otras.
+- La corrección correcta es visual y compositiva:
+  - quitar el rail de pills;
+  - pasar a layout `workspace principal + aside`;
+  - reusar el lenguaje de panel premium ya presente en módulos más logrados.
+
+### Plan mínimo
+
+- Tocar solo `apps/gold/agro/agro-agenda.js` y `apps/gold/agro/agro-agenda.css`.
+- Reorganizar la vista para que:
+  - agenda y pendientes vivan en la columna principal;
+  - calculadora y calendario vivan en la columna lateral;
+  - no existan tags o chips visualmente pobres compitiendo con el header.
+- Mantener intacta la integración funcional ya corregida y cerrar con `pnpm build:gold`.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-agenda.js`
+  - Se eliminó el rail visual `Agenda operativa / Calculadora`.
+  - La vista pasó a composición `workspace principal + lateral`.
+  - La columna principal concentra:
+    - hoy;
+    - próximas actividades;
+    - pendientes.
+  - La columna lateral concentra:
+    - calculadora integrada;
+    - calendario mensual.
+  - Se refinó el copy del header y el naming interno del panel de cálculo.
+
+- `apps/gold/agro/agro-agenda.css`
+  - Se reestiló la superficie inline para acercarla al lenguaje de `Dashboard Agro` y `Cartera Operativa`.
+  - Se reforzó:
+    - composición;
+    - ritmo vertical;
+    - peso visual de paneles;
+    - sombras y bordes metálicos;
+    - lectura lateral de la calculadora;
+    - reducción de chrome sobrante.
+  - Los resultados de la calculadora ahora viven como bloque de soporte del aside y no como widgets aislados.
+
+### Build
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por `node v25.6.0` vs `20.x`
+
+### QA sugerido
+
+- Revisar visualmente `Planificación` en `/agro` para confirmar que:
+  - desapareció el rail de pills;
+  - la composición ahora se siente cercana al resto de Agro;
+  - calculadora y calendario viven como lateral útil y no como ruido visual.
+- QA manual en navegador no ejecutada en esta sesión por solicitud explícita del usuario.

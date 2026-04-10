@@ -441,33 +441,6 @@ function computePlanningRoiResult(values = {}) {
     };
 }
 
-function setPlanningRailActive(container, panel) {
-    container.querySelectorAll('[data-aga-rail]').forEach((node) => {
-        node.classList.toggle('is-active', node.dataset.agaRail === panel);
-    });
-}
-
-function focusPlanningPanel(container, panel) {
-    setPlanningRailActive(container, panel);
-
-    const target = container.querySelector(`[data-aga-panel="${panel}"]`);
-    if (!target) return;
-
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    target.scrollIntoView({
-        block: 'start',
-        behavior: prefersReducedMotion ? 'auto' : 'smooth'
-    });
-
-    const focusTarget = panel === 'calculator'
-        ? target.querySelector('[data-aga-roi-input="investment"], button')
-        : target.querySelector('button, [href], input, select, textarea');
-
-    if (focusTarget && typeof focusTarget.focus === 'function') {
-        focusTarget.focus({ preventScroll: true });
-    }
-}
-
 function createPlanningCalculatorField({ key, label, placeholder = '0.00', step = '0.01' }) {
     const field = document.createElement('label');
     field.className = 'aga-calculator-field';
@@ -568,15 +541,15 @@ function createPlanningCalculatorSection() {
 
     const eyebrow = document.createElement('span');
     eyebrow.className = 'aga-planner-section__eyebrow';
-    eyebrow.textContent = 'Calculadora';
+    eyebrow.textContent = 'Soporte de cálculo';
 
     const title = document.createElement('h4');
     title.className = 'aga-planner-section__title';
-    title.textContent = 'ROI operativo';
+    title.textContent = 'Retorno proyectado';
 
     const meta = document.createElement('p');
     meta.className = 'aga-planner-section__meta';
-    meta.textContent = 'Proyecta inversión, ingreso y margen sin salir de la planificación. Si necesitas la vista completa, ábrela desde aquí.';
+    meta.textContent = 'Haz cuentas rápidas antes de comprar, sembrar o mover gasto. Si necesitas más detalle, abre la calculadora completa.';
 
     copy.append(eyebrow, title, meta);
 
@@ -855,7 +828,7 @@ function renderAgendaContent(container, isInline) {
 
     const subtitle = document.createElement('p');
     subtitle.className = 'aga-subtitle';
-    subtitle.textContent = 'Agenda operativa, cálculo rápido y lectura mensual dentro de una sola superficie de trabajo. Mi Carrito sigue como flujo aparte.';
+    subtitle.textContent = 'Agenda, retorno estimado y lectura mensual para operar con mejor contexto desde una sola superficie.';
 
     const headerRight = document.createElement('div');
     headerRight.className = 'aga-header-right';
@@ -934,32 +907,17 @@ function renderAgendaContent(container, isInline) {
     const body = document.createElement('div');
     body.className = 'aga-body';
 
-    const sectionRail = document.createElement('div');
-    sectionRail.className = 'aga-section-rail';
-
-    const agendaRail = document.createElement('button');
-    agendaRail.type = 'button';
-    agendaRail.className = 'aga-section-chip is-active';
-    agendaRail.dataset.action = 'focus-agenda-section';
-    agendaRail.dataset.agaRail = 'agenda';
-    agendaRail.textContent = 'Agenda operativa';
-
-    const calculatorRail = document.createElement('button');
-    calculatorRail.type = 'button';
-    calculatorRail.className = 'aga-section-chip';
-    calculatorRail.dataset.action = 'focus-calculator-section';
-    calculatorRail.dataset.agaRail = 'calculator';
-    calculatorRail.textContent = 'Calculadora';
-
-    sectionRail.append(agendaRail, calculatorRail);
-    body.appendChild(sectionRail);
+    const plannerLayout = document.createElement('div');
+    plannerLayout.className = 'aga-planner-layout';
 
     const plannerMain = document.createElement('div');
     plannerMain.className = 'aga-planner-main';
 
+    const plannerSide = document.createElement('div');
+    plannerSide.className = 'aga-planner-side';
+
     const todaySection = document.createElement('section');
     todaySection.className = 'aga-planner-section aga-planner-section--primary';
-    todaySection.dataset.agaPanel = 'agenda';
 
     const todayHead = document.createElement('div');
     todayHead.className = 'aga-planner-section__head';
@@ -1003,7 +961,6 @@ function renderAgendaContent(container, isInline) {
     plannerMain.appendChild(todaySection);
 
     const calculatorSection = createPlanningCalculatorSection();
-    plannerMain.appendChild(calculatorSection);
 
     const upcomingSection = document.createElement('section');
     upcomingSection.className = 'aga-planner-section';
@@ -1062,8 +1019,6 @@ function renderAgendaContent(container, isInline) {
         })
     );
     plannerMain.appendChild(pendingSection);
-
-    body.appendChild(plannerMain);
 
     const calendarDisclosure = document.createElement('details');
     calendarDisclosure.className = 'aga-calendar-disclosure';
@@ -1209,7 +1164,10 @@ function renderAgendaContent(container, isInline) {
     calendarShell.appendChild(dayDetail);
 
     calendarDisclosure.appendChild(calendarShell);
-    body.appendChild(calendarDisclosure);
+
+    plannerSide.append(calculatorSection, calendarDisclosure);
+    plannerLayout.append(plannerMain, plannerSide);
+    body.appendChild(plannerLayout);
 
     card.append(header, body);
     modal.appendChild(card);
@@ -1480,30 +1438,17 @@ function attachAgendaListeners(container, isInline) {
             return;
         }
 
-        if (action === 'focus-agenda-section') {
-            focusPlanningPanel(modal, 'agenda');
-            return;
-        }
-
-        if (action === 'focus-calculator-section') {
-            focusPlanningPanel(modal, 'calculator');
-            return;
-        }
-
         if (action === 'calculate-planning-roi') {
             syncPlanningCalculatorResults(modal);
-            setPlanningRailActive(modal, 'calculator');
             return;
         }
 
         if (action === 'clear-planning-roi') {
             resetPlanningCalculator(modal);
-            setPlanningRailActive(modal, 'calculator');
             return;
         }
 
         if (action === 'open-full-calculator') {
-            setPlanningRailActive(modal, 'calculator');
             openAgroCalculadora(actionEl);
             return;
         }
