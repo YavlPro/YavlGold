@@ -358,178 +358,36 @@ Es el que:
 
 ---
 
-## §8 — Orquestación operativa del agente
+## §11 — Deuda Técnica Documentada y Política de Mejora Continua
 
-Este bloque define cómo debe trabajar un agente dentro de YavlGold cuando la tarea tenga riesgo real, varios pasos, o impacto en partes sensibles del sistema.
+### 11.1 Monolito `agro.js`
+- **Estado actual:** ~16,500 líneas. Núcleo funcional pero denso.
+- **Regla:** NO agregar features nuevas. NUEVAS funcionalidades SIEMPRE en `agro-*.js` separado.
+- **Migración gradual:** `window.XXX` (104+ asignaciones) se irá migrando a imports ES6 solo cuando se toquen esos bloques por otros motivos.
 
-Su propósito no es volver lento el trabajo.  
-Su propósito es reducir improvisación, proteger el producto y aumentar la calidad de ejecución.
+### 11.2 Gestión de Memoria y Eventos
+- Todo `setInterval` DEBE tener su `clearInterval` en cleanup (`beforeunload` o destrucción de vista).
+- Todo `addEventListener` debe contemplar `removeEventListener` o usarse con `{ once: true }`/delegación cuando aplique.
+- **Verificación obligatoria** en cada PR que toque módulos con temporizadores o listeners.
 
-### 8.1 — Planificación por defecto en tareas no triviales
+### 11.3 CSS Inline vs Tokens ADN V10
+- `index.html` contiene ~1,144L de CSS inline con hex hardcodeados (deuda heredada).
+- **Política:** No refactorizar de golpe. Migrar progresivamente a archivos `.css` usando tokens `--gold-*`, `--bg-*`, `--space-*`, etc.
+- **Nuevos estilos:** SIEMPRE en archivos CSS separados, NUNCA inline masivo.
 
-Entrar en modo planificación cuando ocurra al menos una de estas condiciones:
+### 11.4 Naming y Convenciones
+- Nuevos archivos JS: `agro-kebab-case.js` (estándar del proyecto).
+- NO renombrar archivos legacy existentes salvo que se refactorice el módulo completo y se validen imports.
 
-- la tarea tenga más de 3 pasos relevantes;
-- toque arquitectura, wiring, imports, contratos de datos o persistencia;
-- afecte UX + lógica + estado + datos;
-- exista ambigüedad real sobre la causa raíz;
-- haya riesgo de romper una zona estable del sistema.
+### 11.5 Market Ticker (Binance)
+- `agro-market.js` y `agro-interactions.js` hacen polling duplicado.
+- **Plan:** Consolidar en un único singleton centralizado cuando se toque esa área de negocio.
 
-En esos casos, el agente debe:
-
-1. diagnosticar primero;
-2. escribir un plan breve y verificable;
-3. definir DoD claro;
-4. recién después editar.
-
-**Excepción:**  
-Si el cambio es pequeño, obvio y de bajo riesgo, se permite ejecución directa sin burocracia innecesaria.
-
----
-
-### 8.2 — Diagnóstico antes de tocar código
-
-Antes de modificar archivos, el agente debe dejar claro:
-
-- cuál es el problema exacto;
-- dónde vive;
-- cuál es la causa raíz probable;
-- qué archivo(s) son realmente responsables;
-- cuál es la opción de arreglo más segura.
-
-No basta con decir "parece ser".  
-Hay que señalar funciones, flujos, condiciones, estilos, wiring o contratos concretos.
-
-En YavlGold, el diagnóstico vale más que la prisa.
-
----
-
-### 8.3 — Subagentes con criterio, no por moda
-
-Los subagentes pueden usarse para:
-
-- exploración;
-- lectura paralela;
-- comparación de opciones;
-- auditoría visual o estructural;
-- verificación independiente.
-
-Pero no deben fragmentar sin control el corazón del sistema.
-
-Reglas:
-
-- una responsabilidad clara por subagente;
-- no duplicar análisis del mismo punto sin propósito;
-- no repartir en paralelo la misma zona crítica;
-- la decisión final siempre pertenece al agente principal.
-
-Los subagentes ayudan a limpiar contexto.  
-No sustituyen criterio técnico.
-
----
-
-### 8.4 — Lecciones reutilizables
-
-Después de una corrección importante, el agente debe preguntarse:
-
-- ¿qué error se repitió?
-- ¿qué señal se ignoró?
-- ¿qué regla concreta habría evitado este fallo?
-
-Solo si la lección es reutilizable y de valor real, debe registrarse en la documentación operativa correspondiente.
-
-**No convertir esto en ritual vacío.**  
-No documentar obviedades ni ruido.
-
----
-
-### 8.5 — Verificación antes de declarar "completado"
-
-Ninguna tarea se marca como cerrada sin demostrar funcionamiento.
-
-El agente debe, según el caso:
-
-- ejecutar `pnpm build:gold`;
-- revisar errores, logs o warnings relevantes;
-- validar el flujo tocado;
-- comparar antes vs después cuando haga falta;
-- explicar qué quedó corregido y cómo se comprobó.
-
-Pregunta obligatoria antes de cerrar:
-
-> "¿Yo mismo confiaría en este cambio para dejarlo vivo en el proyecto sin sentir que estoy improvisando?"
-
-Si la respuesta no es claramente sí, la tarea no está cerrada.
-
----
-
-### 8.6 — Elegancia con equilibrio
-
-Para cambios no triviales, el agente debe hacer una pausa mental y preguntarse:
-
-> "¿Existe una solución más limpia, más pequeña o más robusta?"
-
-Pero esta búsqueda de elegancia **no** debe convertirse en sobreingeniería.
-
-Regla práctica:
-
-- si el problema requiere cirugía fina, hacer cirugía fina;
-- si el sistema pide refactor estructural, justificarlo con evidencia;
-- si un parche resuelve hoy pero empeora mañana, detenerse y rediseñar;
-- si el refactor agrega riesgo innecesario, elegir el menor diff posible.
-
-En YavlGold, elegancia real = claridad + mínimo impacto + respeto por el sistema vivo.
-
----
-
-### 8.7 — Corrección autónoma de errores
-
-Cuando el usuario reporte un bug, el agente no debe pedir guía paso a paso si ya existe suficiente contexto para investigar.
-
-Debe:
-
-1. identificar la zona afectada;
-2. localizar evidencia en código, flujo o logs;
-3. proponer la corrección más segura;
-4. ejecutarla con el menor alcance posible;
-5. verificar.
-
-Autonomía no significa adivinar.  
-Significa investigar sin trasladar al usuario trabajo técnico que el agente puede resolver por sí mismo.
-
----
-
-### 8.8 — Principios de ejecución
-
-#### Simplicidad primero
-Cada cambio debe ser lo más simple posible.
-
-#### Causa raíz primero
-No maquillar síntomas. Buscar la fuente real del problema.
-
-#### Impacto mínimo
-Tocar lo menos posible para corregir lo necesario.
-
-#### Verdad antes que apariencia
-No declarar "listo" algo que no fue probado.
-
-#### Respeto por el sistema existente
-No romper ADN Visual V10.  
-No introducir React, Tailwind ni SPA.  
-No crecer `agro.js` salvo integración mínima o bugfix quirúrgico justificado.
-
----
-
-### 8.9 — Regla final
-
-El mejor agente no es el que más escribe.  
-Es el que:
-
-- entiende bien;
-- toca poco;
-- corrige de verdad;
-- demuestra el resultado;
-- y deja el proyecto más claro que antes.
+### 11.6 Filosofía de Ejecución
+- ✅ NO pánico por tamaño. 79K líneas funcionando > 10K líneas rotas.
+- ✅ NO reescrituras masivas. Mejora quirúrgica y acumulativa.
+- ✅ CADA commit debe dejar el código ligeramente más limpio que como lo encontró (Regla del Boy Scout).
+- ✅ Build gate obligatorio: `pnpm build:gold` tras cualquier intervención.
 
 ---
 
