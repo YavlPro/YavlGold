@@ -13117,3 +13117,108 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
 
 - `agrorepo.js` y otros legacy con naming antiguo siguen vivos y no deben mezclarse con esta retirada mínima.
 - La mini-fase visual de `style=""` inline sigue pendiente y permanece fuera de este lote.
+
+## 2026-04-10 — Fase 3B Agro: mini-fase visual quirúrgica para inline styles y hovers sensibles
+
+### Diagnóstico inicial
+
+- Tras Fase 2 y 3A, el inline residual más visible sigue concentrado en `apps/gold/agro/index.html`, especialmente en header, centro de alertas y algunos cierres de modales.
+- La mayor parte del layout interno de modales aún usa `style=""` acoplado y no conviene moverlo completo en este lote.
+
+### Objetivo
+
+- Migrar solo la porción segura o razonablemente segura de `style=""` y `onmouseover` / `onmouseout` inline a CSS dedicado.
+- Reducir deuda visible del HTML sin tocar lógica JS ni convertir esta fase en rediseño.
+
+### Riesgo principal
+
+- Forzar la extracción de estilos acoplados a modales complejos podría alterar jerarquía visual, overlays o estados sin una ganancia proporcional.
+
+### Plan de mini-migración visual
+
+1. Auditar los inline residuales de `apps/gold/agro/index.html` y separarlos por riesgo.
+2. Migrar el bloque seguro del header y del dropdown de notificaciones, incluyendo hovers inline simples.
+3. Migrar solo los cierres repetidos de modales que ya tienen patrón estable.
+4. Dejar fuera el layout interno de modales y cualquier inline con alto acoplamiento.
+5. Cerrar con validación técnica mínima y actualizar este reporte.
+
+### DoD
+
+- Clasificación clara entre migrable seguro, migrable con cuidado y fuera de lote.
+- Extracción del bloque seguro a CSS dedicado.
+- `agro/index.html` más limpio.
+- Sin tocar lógica JS ni hacer QA manual/local.
+
+### Archivos previstos
+
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro-index-critical.css`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Criterio de no expansión de alcance
+
+- No tocar `agro.js`, market ticker, listeners, clima ni wiring funcional.
+- No rehacer modales completos ni forzar limpieza total de inline.
+- Nota operativa explícita: **sin QA manual/local por restricción operativa**.
+
+### Diagnóstico confirmado
+
+- `apps/gold/agro/index.html`
+  - El bloque seguro estaba concentrado en el header, centro de alertas y cierres repetidos de `modal-lunar` y `modal-market`.
+  - Los `onmouseover` / `onmouseout` inline eran simples y repetitivos; quedaron eliminados del documento.
+  - El inline que sigue vivo se concentra en layouts de modales, tabs, placeholders y formularios con mayor acoplamiento visual.
+- Clasificación final:
+  - Migrable seguro:
+    - header shell (`logo-container`, quicknav, CTA home);
+    - centro de alertas (`notif-btn`, `notif-dropdown`, `mark-read-btn`, estado vacío);
+    - botones de cierre repetidos de `modal-lunar` y `modal-market`.
+  - Migrable con cuidado:
+    - wrappers y headers internos de `modal-lunar` / `modal-market`.
+  - Alto riesgo, fuera de lote:
+    - overlays completos de `modal-lunar` / `modal-market`;
+    - tabs y contenedores internos del market hub;
+    - `modal-crop`, `modal-edit-facturero`, bloques de facturero y otros `style=""` estructurales.
+
+### Cambios aplicados
+
+- `apps/gold/agro/index.html`
+  - Se retiraron inline styles y hover handlers del header y del centro de alertas.
+  - Se retiraron los hover handlers inline de los botones de cierre de `modal-lunar` y `modal-market`.
+  - Se añadieron clases semánticas mínimas para conectar esa superficie con CSS dedicado.
+- `apps/gold/agro/agro-index-critical.css`
+  - Nueva sección de estilos para el bloque seguro migrado:
+    - header shell de alto z-index;
+    - CTA home del quicknav;
+    - centro de alertas y dropdown;
+    - badge roja;
+    - acción `Limpiar`;
+    - botones de cierre repetidos de modales.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - Se documentó Fase 3B en modo append-only antes y después de la mini-migración.
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por engine: `node v25.6.0` vs `20.x`
+
+### QA / validación
+
+- QA manual/local **no ejecutada** por restricción operativa explícita de la fase.
+- Browser QA / Playwright **no ejecutados**.
+- Validación realizada:
+  - auditoría de `style=""` residual y clasificación por riesgo;
+  - confirmación de que ya no quedan `onmouseover` / `onmouseout` inline en `apps/gold/agro/index.html`;
+  - verificación de que el inline remanente quedó concentrado en bloques más frágiles;
+  - `pnpm build:gold`.
+
+### Riesgo remanente / Fase 4
+
+- El inline remanente de `modal-lunar`, `modal-market`, `modal-crop`, `modal-edit-facturero` y algunos bloques del facturero sigue siendo deuda visual estructural.
+- Esa superficie ya no mezcla hovers inline simples, pero todavía requiere una fase posterior dedicada si se quiere seguir bajando deuda sin elevar riesgo.
