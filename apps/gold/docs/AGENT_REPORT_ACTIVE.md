@@ -13021,3 +13021,99 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
 
 - Los `style=""` inline y handlers hover de header, dropdown de notificaciones y modales siguen siendo deuda visual estructural.
 - Esa superficie quedó fuera a propósito y debería pasar limpia a una mini-fase posterior, sin mezclarla con esta extracción principal del bloque crítico.
+
+## 2026-04-10 — Fase 3A Agro: auditoría y retiro quirúrgico de legacy realmente muerto
+
+### Diagnóstico inicial
+
+- El inventario previo marcó `apps/gold/agro/app.js` y `apps/gold/agro/Style.css` como muertos aparentes, pero esta fase exige revalidación con evidencia antes de retirarlos.
+- `apps/gold/agro/agrorepo.js` queda explícitamente fuera del lote porque sigue tratado como adapter vivo y no debe tocarse en esta intervención.
+
+### Objetivo
+
+- Confirmar con evidencia real si `app.js` y `Style.css` no tienen imports, referencias HTML, entradas Vite ni wiring indirecto activo.
+- Retirar solo lo inequívocamente muerto, con diff mínimo y sin tocar runtime vivo.
+
+### Riesgo principal
+
+- Borrar un archivo legacy que todavía esté enlazado por una referencia residual de HTML, build o compatibilidad rompería una superficie estable sin beneficio real.
+
+### Plan de auditoría / retiro mínimo
+
+1. Releer `apps/gold/agro/index.html`, `package.json`, `vite.config.*` y búsquedas globales por nombre de archivo.
+2. Confirmar estado real de `app.js`, `Style.css` y revalidar que `agrorepo.js` sigue vivo.
+3. Retirar únicamente lo que quede muerto con evidencia limpia.
+4. Ejecutar validación técnica mínima y cerrar la sesión en este reporte.
+
+### DoD
+
+- Evidencia real de uso o no uso de `app.js` y `Style.css`.
+- Retiro seguro solo si ambos están completamente muertos.
+- `agrorepo.js` intacto.
+- Sin tocar lógica viva, CSS inline pendiente ni legacy aún conectado.
+
+### Archivos previstos
+
+- `apps/gold/agro/app.js`
+- `apps/gold/agro/Style.css`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Criterio de no expansión de alcance
+
+- No renombrar legacy vivo.
+- No tocar `agrorepo.js`.
+- No mezclar esta fase con mini-fase visual ni con otros refactors.
+- Nota operativa explícita: **sin QA manual/local por restricción operativa**.
+
+### Diagnóstico confirmado
+
+- `apps/gold/agro/app.js`
+  - No apareció en `apps/gold/agro/index.html`.
+  - No apareció en `apps/gold/vite.config.js`.
+  - No apareció en `package.json` raíz ni en `apps/gold/package.json`.
+  - Las búsquedas globales exactas por `./app.js` y `app.js"` devolvieron cero referencias activas fuera del propio archivo legacy.
+- `apps/gold/agro/Style.css`
+  - No apareció en `apps/gold/agro/index.html`.
+  - No apareció en `apps/gold/vite.config.js`.
+  - No apareció en `package.json` raíz ni en `apps/gold/package.json`.
+  - Las búsquedas globales exactas por `./Style.css` y `Style.css"` devolvieron cero referencias activas.
+- `apps/gold/agro/agrorepo.js`
+  - Sigue vivo y queda fuera del lote.
+  - `apps/gold/agro/agro.js` conserva el lazy-load `import('./agrorepo.js')`.
+  - `apps/gold/agro/agrorepo.js` sigue exponiendo `initAgroRepo` desde `agro-repo-app.js`.
+
+### Cambios aplicados
+
+- `apps/gold/agro/app.js`
+  - Archivo retirado por falta total de wiring activo.
+- `apps/gold/agro/Style.css`
+  - Archivo retirado por falta total de wiring activo.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - Se documentó Fase 3A en modo append-only antes y después de la auditoría/retiro.
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por engine: `node v25.6.0` vs `20.x`
+
+### QA / validación
+
+- QA manual/local **no ejecutada** por restricción operativa explícita de la fase.
+- Browser QA / Playwright **no ejecutados**.
+- Validación realizada:
+  - auditoría de referencias en HTML, Vite y package manifests;
+  - búsquedas globales exactas por nombre de archivo;
+  - confirmación de que `agrorepo.js` sigue vivo;
+  - `pnpm build:gold`.
+
+### Riesgo remanente / Fase 4
+
+- `agrorepo.js` y otros legacy con naming antiguo siguen vivos y no deben mezclarse con esta retirada mínima.
+- La mini-fase visual de `style=""` inline sigue pendiente y permanece fuera de este lote.
