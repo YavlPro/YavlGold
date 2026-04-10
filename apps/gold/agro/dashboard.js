@@ -861,6 +861,18 @@ function initParticles() {
 // INICIALIZACION
 // ============================================
 let dashboardWidgetsStarted = false;
+let dashboardWeatherIntervalId = null;
+
+function clearDashboardWeatherRefresh() {
+    if (!dashboardWeatherIntervalId) return;
+    clearInterval(dashboardWeatherIntervalId);
+    dashboardWeatherIntervalId = null;
+}
+
+export function stopDashboardWidgets() {
+    clearDashboardWeatherRefresh();
+    dashboardWidgetsStarted = false;
+}
 
 function startDashboardWidgets() {
     if (dashboardWidgetsStarted) return;
@@ -871,9 +883,14 @@ function startDashboardWidgets() {
     initParticles();
 
     // Refresh weather every 10 minutes
-    setInterval(function () {
+    clearDashboardWeatherRefresh();
+    dashboardWeatherIntervalId = setInterval(function () {
         if (currentLocation) fetchWeather();
     }, 600000);
+}
+
+if (typeof window !== 'undefined') {
+    window.stopDashboardWidgets = stopDashboardWidgets;
 }
 
 if (document.readyState === 'loading') {
@@ -881,4 +898,3 @@ if (document.readyState === 'loading') {
 } else {
     startDashboardWidgets();
 }
-

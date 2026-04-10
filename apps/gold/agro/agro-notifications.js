@@ -15,8 +15,12 @@ let readNotifications = [];
 let notificationsReady = false;
 let isDropdownOpen = false;
 let adviceObserver = null;
+let adviceObserverRetryId = null;
+let adviceObserverTitle = null;
+let adviceObserverText = null;
 let lastAdviceText = '';
 let authListenerAttached = false;
+let authSubscription = null;
 let refreshInFlight = false;
 let refreshQueued = false;
 let cropsStatus = 'idle';
@@ -31,6 +35,13 @@ let cropsReadyListenerAttached = false;
 let pendingRefreshReason = null;
 let alertsEvalSeq = 0;
 let sessionState = 'unknown';
+let cropsReadyListener = null;
+let notifBtnEl = null;
+let notifDropdownEl = null;
+let notifMarkReadBtnEl = null;
+let notifBtnClickHandler = null;
+let notifMarkReadClickHandler = null;
+let notifDocumentClickHandler = null;
 
 const STORAGE_KEY = 'yavlgold_agro_notifications';
 const READ_STORAGE_KEY = 'yavlgold_agro_notifications_read';
@@ -383,45 +394,55 @@ function purgeTransientNotifications() {
     if (removed) saveNotificationsToStorage();
 }
 
+function teardownCropsReadyListener() {
+    if (!cropsReadyListenerAttached || typeof window === 'undefined' || !cropsReadyListener) return;
+    window.removeEventListener(AGRO_CROPS_READY_EVENT, cropsReadyListener);
+    cropsReadyListenerAttached = false;
+}
+
 function setupCropsReadyListener() {
-    if (cropsReadyListenerAttached || typeof window === 'undefined') return;
-    cropsReadyListenerAttached = true;
+    if (typeof window === 'undefined') return;
+    if (!cropsReadyListener) {
+        cropsReadyListener = (event) => {
+            const snapshot = event?.detail && typeof event.detail === 'object' ? event.detail : null;
+            if (!snapshot) return;
 
-    window.addEventListener(AGRO_CROPS_READY_EVENT, (event) => {
-        const snapshot = event?.detail && typeof event.detail === 'object' ? event.detail : null;
-        if (!snapshot) return;
+            if (!isSnapshotNewer(snapshot)) {
+                logAgroNotifDebug('event ignored (stale)', {
+                    seq: snapshot.seq,
+                    ts: snapshot.ts
+                });
+                return;
+            }
 
-        if (!isSnapshotNewer(snapshot)) {
-            logAgroNotifDebug('event ignored (stale)', {
+            cropsSnapshot = snapshot;
+            cropsStatus = snapshot.status || 'ready';
+            if (Number.isFinite(snapshot.count)) cropsReadyCount = snapshot.count;
+            if (Number.isFinite(snapshot.ts)) {
+                cropsReadyAt = new Date(snapshot.ts);
+                lastSeenAt = Math.max(lastSeenAt, snapshot.ts);
+            }
+            if (Number.isFinite(snapshot.seq)) {
+                lastSeenSeq = Math.max(lastSeenSeq, snapshot.seq);
+            }
+
+            purgeTransientNotifications();
+
+            logAgroNotifDebug('event received', {
+                ts: snapshot.ts,
                 seq: snapshot.seq,
-                ts: snapshot.ts
+                count: Number.isFinite(snapshot.count) ? snapshot.count : null
             });
-            return;
-        }
 
-        cropsSnapshot = snapshot;
-        cropsStatus = snapshot.status || 'ready';
-        if (Number.isFinite(snapshot.count)) cropsReadyCount = snapshot.count;
-        if (Number.isFinite(snapshot.ts)) {
-            cropsReadyAt = new Date(snapshot.ts);
-            lastSeenAt = Math.max(lastSeenAt, snapshot.ts);
-        }
-        if (Number.isFinite(snapshot.seq)) {
-            lastSeenSeq = Math.max(lastSeenSeq, snapshot.seq);
-        }
+            const reason = pendingRefreshReason || 'crops-ready';
+            pendingRefreshReason = null;
+            refreshSystemNotifications(reason);
+        };
+    }
 
-        purgeTransientNotifications();
-
-        logAgroNotifDebug('event received', {
-            ts: snapshot.ts,
-            seq: snapshot.seq,
-            count: Number.isFinite(snapshot.count) ? snapshot.count : null
-        });
-
-        const reason = pendingRefreshReason || 'crops-ready';
-        pendingRefreshReason = null;
-        refreshSystemNotifications(reason);
-    });
+    if (cropsReadyListenerAttached) return;
+    window.addEventListener(AGRO_CROPS_READY_EVENT, cropsReadyListener);
+    cropsReadyListenerAttached = true;
 }
 
 // ============================================
@@ -471,6 +492,14 @@ export async function initNotifications() {
     if (AGRO_DEBUG) {
         console.log('[AGRO] V9.6.4: ✅ Sistema de notificaciones activo con historial');
     }
+}
+
+export function teardownNotifications() {
+    teardownEventListeners();
+    teardownAdviceObserver();
+    teardownCropsReadyListener();
+    teardownAuthRefresh();
+    closeDropdown();
 }
 
 function loadNotificationsFromStorage() {
@@ -538,6 +567,22 @@ function ensureNotificationsReady() {
     notificationsReady = true;
 }
 
+function teardownEventListeners() {
+    if (notifBtnEl && notifBtnClickHandler) {
+        notifBtnEl.removeEventListener('click', notifBtnClickHandler);
+    }
+    if (notifMarkReadBtnEl && notifMarkReadClickHandler) {
+        notifMarkReadBtnEl.removeEventListener('click', notifMarkReadClickHandler);
+    }
+    if (notifDocumentClickHandler) {
+        document.removeEventListener('click', notifDocumentClickHandler);
+    }
+
+    notifBtnEl = null;
+    notifDropdownEl = null;
+    notifMarkReadBtnEl = null;
+}
+
 function setupEventListeners() {
     const btn = document.getElementById('notif-btn');
     const dropdown = document.getElementById('notif-dropdown');
@@ -545,40 +590,98 @@ function setupEventListeners() {
 
     if (!btn || !dropdown) {
         console.warn('[AgroNotif] Elementos de notificación no encontrados');
+        teardownEventListeners();
         return;
     }
 
-    btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleDropdown();
-    });
+    const sameBindings = notifBtnEl === btn
+        && notifDropdownEl === dropdown
+        && notifMarkReadBtnEl === (markReadBtn || null)
+        && !!notifBtnClickHandler
+        && !!notifDocumentClickHandler
+        && (!markReadBtn || !!notifMarkReadClickHandler);
 
-    if (markReadBtn) {
-        markReadBtn.addEventListener('click', (e) => {
+    if (sameBindings) return;
+
+    teardownEventListeners();
+
+    notifBtnEl = btn;
+    notifDropdownEl = dropdown;
+    notifMarkReadBtnEl = markReadBtn || null;
+
+    if (!notifBtnClickHandler) {
+        notifBtnClickHandler = (e) => {
             e.stopPropagation();
-            markAllAsRead();
-        });
+            toggleDropdown();
+        };
     }
 
-    document.addEventListener('click', (e) => {
-        if (isDropdownOpen && !dropdown.contains(e.target) && e.target !== btn) {
-            closeDropdown();
-        }
-    });
+    if (!notifMarkReadClickHandler) {
+        notifMarkReadClickHandler = (e) => {
+            e.stopPropagation();
+            markAllAsRead();
+        };
+    }
+
+    if (!notifDocumentClickHandler) {
+        notifDocumentClickHandler = (e) => {
+            if (isDropdownOpen && notifDropdownEl && !notifDropdownEl.contains(e.target) && e.target !== notifBtnEl) {
+                closeDropdown();
+            }
+        };
+    }
+
+    btn.addEventListener('click', notifBtnClickHandler);
+    if (notifMarkReadBtnEl) {
+        notifMarkReadBtnEl.addEventListener('click', notifMarkReadClickHandler);
+    }
+    document.addEventListener('click', notifDocumentClickHandler);
 }
 
 // ============================================
 // MUTATION OBSERVER - Sincronización con IA
 // ============================================
 
+function clearAdviceObserverRetry() {
+    if (!adviceObserverRetryId) return;
+    clearTimeout(adviceObserverRetryId);
+    adviceObserverRetryId = null;
+}
+
+function teardownAdviceObserver() {
+    clearAdviceObserverRetry();
+    if (adviceObserver) {
+        adviceObserver.disconnect();
+        adviceObserver = null;
+    }
+    adviceObserverTitle = null;
+    adviceObserverText = null;
+}
+
+function scheduleAdviceObserverRetry() {
+    if (adviceObserverRetryId) return;
+    adviceObserverRetryId = setTimeout(() => {
+        adviceObserverRetryId = null;
+        setupAdviceObserver();
+    }, 1000);
+}
+
 function setupAdviceObserver() {
     const adviceTitle = document.getElementById('advice-title');
     const adviceText = document.getElementById('advice-text');
 
     if (!adviceTitle) {
-        setTimeout(setupAdviceObserver, 1000);
+        scheduleAdviceObserverRetry();
         return;
     }
+
+    clearAdviceObserverRetry();
+
+    if (adviceObserver && adviceObserverTitle === adviceTitle && adviceObserverText === (adviceText || null)) {
+        return;
+    }
+
+    teardownAdviceObserver();
 
     if (AGRO_DEBUG) {
         console.log('[AgroNotif] 👁️ Observer conectado a advice-title');
@@ -596,6 +699,8 @@ function setupAdviceObserver() {
     const observerConfig = { childList: true, characterData: true, subtree: true };
     adviceObserver.observe(adviceTitle, observerConfig);
     if (adviceText) adviceObserver.observe(adviceText, observerConfig);
+    adviceObserverTitle = adviceTitle;
+    adviceObserverText = adviceText || null;
 }
 
 function handleAdviceChange(titleEl, textEl) {
@@ -1051,10 +1156,10 @@ async function waitForSession(sb) {
 
 function setupAuthRefresh() {
     const sb = getSupabaseClient();
-    if (!sb?.auth?.onAuthStateChange || authListenerAttached) return;
+    if (!sb?.auth?.onAuthStateChange || authSubscription || authListenerAttached) return;
     authListenerAttached = true;
 
-    sb.auth.onAuthStateChange((event, session) => {
+    const { data } = sb.auth.onAuthStateChange((event, session) => {
         const nextState = session?.user ? 'yes' : 'no';
         if (nextState !== sessionState) {
             sessionState = nextState;
@@ -1066,6 +1171,13 @@ function setupAuthRefresh() {
             refreshSystemNotifications(`auth:${event.toLowerCase()}`);
         }
     });
+    authSubscription = data?.subscription || null;
+}
+
+function teardownAuthRefresh() {
+    authSubscription?.unsubscribe?.();
+    authSubscription = null;
+    authListenerAttached = false;
 }
 
 function refreshSystemNotifications(reason = 'manual') {

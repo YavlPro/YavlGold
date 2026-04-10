@@ -12794,3 +12794,125 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
 
 - El modal market sigue pudiendo hacer fetch puntual `24hr` para detalle visual; eso ya no es polling residente ni ownership paralelo, pero sigue siendo una llamada aparte cuando el usuario abre el modal.
 - Si en Fase 1B se quiere cerrar totalmente la dispersión de lecturas de mercado, el siguiente paso natural sería decidir si el detalle `24hr` también debe centralizarse en `agro-market.js` o mantenerse on-demand.
+
+---
+
+## 2026-04-10 — Fase 1B Agro: blindaje quirúrgico de módulos residentes
+
+### Diagnóstico resumido
+
+- `initNotifications()` se inicializa desde el bootstrap de `agro/index.html`, pero la evidencia previa muestra que hoy puede volver a registrar listeners globales y `MutationObserver` si esa superficie se reinicializa.
+- `dashboard.js` mantiene un refresh residente de clima con `setInterval(...)` sin guardar el id en un owner explícito ni exponer cleanup mínimo.
+
+### Objetivo exacto
+
+- Blindar notificaciones y clima/dashboard para que no acumulen listeners, observers ni intervals ante reinicialización.
+- Mantener el diff acotado a idempotencia y cleanup explícito, sin tocar market ticker, CSS ni lógica de negocio.
+
+### Riesgo principal
+
+- Duplicación silenciosa de handlers en `document` / botones de notificaciones.
+- Reconexión múltiple del `MutationObserver` del advisor.
+- Intervalos residentes de clima imposibles de limpiar si la superficie se vuelve a arrancar.
+
+### Plan de parche mínimo
+
+1. Confirmar el ownership actual de:
+   - `initNotifications()`;
+   - listeners globales asociados;
+   - `MutationObserver`;
+   - refresh residente del clima en `dashboard.js`.
+2. Añadir guardas idempotentes y referencias estables para listeners/observer donde hoy falten.
+3. Guardar el `intervalId` del clima en un owner explícito y añadir teardown mínimo reutilizable.
+4. Cerrar con validación técnica mínima, sin QA manual/local.
+
+### DoD
+
+- `initNotifications()` no duplica listeners al reinicializarse.
+- El `MutationObserver` de notificaciones queda con ownership y cleanup explícitos.
+- El intervalo residente del clima queda con referencia clara y cleanup mínimo.
+- No se toca market ticker, CSS ni flujos de negocio fuera de notificaciones/clima.
+- `AGENT_REPORT_ACTIVE.md` queda actualizado.
+- Sin QA manual/local por restricción operativa.
+
+### Archivos previstos
+
+- `apps/gold/agro/agro-notifications.js`
+- `apps/gold/agro/dashboard.js`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Criterio de no expansión de alcance
+
+- No tocar `agro-market.js`, `agro-interactions.js`, `agro.js` ni CSS.
+- No abrir browser QA ni Playwright.
+- No mezclar esta cirugía con deuda legacy, visual ni fases posteriores.
+- Nota operativa explícita: **sin QA manual/local por restricción operativa**.
+
+### Diagnóstico confirmado
+
+- `apps/gold/agro/index.html:3637`
+  - `initNotifications()` nace desde el bootstrap protegido de Agro.
+- `apps/gold/agro/agro-notifications.js`
+  - `setupEventListeners()` era el punto de riesgo real:
+    - registraba `click` en `notif-btn`;
+    - registraba `click` en `mark-read-btn`;
+    - registraba `document.addEventListener('click', ...)`;
+    - no había `removeEventListener(...)` ni ownership explícito de handlers.
+  - `setupAdviceObserver()` creaba `MutationObserver` nuevo y, si no encontraba `advice-title`, relanzaba `setTimeout(setupAdviceObserver, 1000)` sin centralizar retry ni cleanup.
+  - `setupAuthRefresh()` ya tenía guarda parcial, pero no guardaba ni exponía `unsubscribe()` de la suscripción auth.
+  - `setupCropsReadyListener()` ya tenía guarda parcial, pero el handler global estaba inline y no tenía teardown explícito.
+- `apps/gold/agro/dashboard.js`
+  - `startDashboardWidgets()` ya tenía guarda `dashboardWidgetsStarted`, pero el refresh del clima vivía en `setInterval(...)` sin guardar id ni cleanup.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-notifications.js`
+  - Se añadieron referencias estables para:
+    - handlers de `click`;
+    - listener global `AGRO_CROPS_READY_EVENT`;
+    - `MutationObserver`;
+    - retry pendiente del observer;
+    - suscripción auth.
+  - `setupEventListeners()` ahora es idempotente:
+    - detecta si ya está enlazado al mismo DOM;
+    - si cambia el DOM o se reinicializa, desmonta antes de volver a enlazar.
+  - `setupAdviceObserver()` ahora:
+    - evita retries duplicados;
+    - reutiliza el observer si sigue apuntando a los mismos nodos;
+    - llama `disconnect()` en teardown explícito cuando corresponde.
+  - `setupAuthRefresh()` ahora captura la suscripción y deja `teardownAuthRefresh()` explícito.
+  - `setupCropsReadyListener()` ahora usa handler estable y queda desmontable.
+  - Se exportó `teardownNotifications()` como cleanup mínimo del módulo residente.
+- `apps/gold/agro/dashboard.js`
+  - Se añadió `dashboardWeatherIntervalId` como owner explícito del refresh residente.
+  - Se añadió `clearDashboardWeatherRefresh()` para `clearInterval(...)`.
+  - `startDashboardWidgets()` ahora reutiliza/limpia el intervalo antes de arrancarlo.
+  - Se exportó `stopDashboardWidgets()` y se dejó expuesto en `window` como cleanup mínimo reutilizable.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - Se documentó Fase 1B en modo append-only antes y después del parche.
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por engine: `node v25.6.0` vs `20.x`
+
+### QA / validación
+
+- QA manual/local **no ejecutada** por restricción operativa explícita de la fase.
+- Browser QA / Playwright **no ejecutados**.
+- La validación realizada fue únicamente técnica:
+  - lectura contextual de ownership;
+  - verificación estática post-parche;
+  - `pnpm build:gold`.
+
+### Riesgo remanente / Fase 2
+
+- El blindaje actual evita duplicación silenciosa en notificaciones y da cleanup explícito al refresh del clima, pero no introduce todavía una política global unificada de destrucción para todos los módulos residentes de Agro.
+- Si Fase 2 avanza, el siguiente paso natural es revisar si otros módulos con listeners persistentes deben adoptar el mismo patrón de owner + teardown exportado.
