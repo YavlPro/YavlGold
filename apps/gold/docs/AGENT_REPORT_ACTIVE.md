@@ -12421,3 +12421,376 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
 - Revisar que §8 aparece una sola vez en `AGENTS.md`.
 - Confirmar que §11 está completo y posicionado antes del copyright.
 - Validar que la numeración de secciones es coherente (§1–§8, §11).
+
+---
+
+## 2026-04-10 — Fase 0 Agro: inventario técnico mínimo previo a cirugía
+
+### Diagnóstico inicial
+
+- Se solicita una Fase 0 de diagnóstico puro sobre `apps/gold/agro` antes de cualquier cirugía funcional.
+- El foco no es corregir todavía, sino medir con evidencia cuatro frentes de riesgo:
+  - timers / listeners / polling y posibles fugas;
+  - duplicidad del market ticker;
+  - deuda estructural de CSS inline;
+  - archivos legacy y dependencias reales.
+- Restricción operativa activa:
+  - sin refactor masivo;
+  - sin borrar archivos;
+  - sin mover arquitectura;
+  - sin cambios de comportamiento del producto;
+  - cualquier cambio permitido debe ser documental y trazable.
+
+### Objetivo de Fase 0
+
+- Levantar un mapa técnico mínimo y accionable para entrar luego a Fase 1–4 sin improvisación.
+- Identificar evidencia concreta `archivo:línea`, nivel de riesgo y orden de intervención recomendado.
+
+### Plan de inspección
+
+1. Revisar baseline de estructura:
+   - `package.json`
+   - `vite.config.*`
+   - entrypoints HTML/JS reales de `apps/gold`
+   - bootstrap y wiring de Agro
+2. Barrer timers, listeners, observers y polling con búsqueda + lectura contextual.
+3. Auditar `agro-market.js`, `agro-interactions.js` y cualquier consumidor asociado al ticker.
+4. Inventariar el CSS inline crítico de `apps/gold/index.html` y clasificar deuda por riesgo.
+5. Mapear archivos legacy (`app.js`, `Style.css`, `agrorepo.js`, wrappers/bridges`) contra imports y referencias reales.
+6. Ejecutar `pnpm build:gold` como baseline documental al cierre, si no aparece bloqueo externo.
+
+### Frentes A / B / C / D
+
+- **Frente A**: timers, listeners, observers, polling, cleanup, reinicialización interna y riesgo de duplicación.
+- **Frente B**: ticker/market polling, singleton real vs falso singleton, productores vs consumidores, fuente canónica futura.
+- **Frente C**: bloque inline de `index.html`, hardcodes, sombras, spacing, duplicaciones y posible partición segura hacia CSS externo.
+- **Frente D**: mapa de archivos legacy, entrypoints, bridges de compatibilidad y estado real de uso.
+
+### Criterio de no intervención
+
+- No tocar `agro.js` salvo lectura.
+- No mover features a módulos ni extraer CSS en esta fase.
+- No renombrar ni eliminar `app.js`, `Style.css`, `agrorepo.js` ni archivos legacy.
+- No alterar lógica de negocio, routing, auth, persistencia ni layout productivo.
+- Si surgiera una edición no documental, deberá justificarse con precisión extrema; la expectativa actual es **cero cambios funcionales**.
+
+### Riesgos detectados al arranque
+
+- `AGENTS.md` ya documenta deuda concreta en timers/listeners, CSS inline y market ticker; eso sugiere que el riesgo no es hipotético sino conocido y todavía abierto.
+- `agro.js` sigue siendo un monolito denso, por lo que la reinicialización interna y el wiring cruzado pueden esconder duplicaciones no visibles solo con grep.
+- El bloque inline de `index.html` ya está catalogado como deuda heredada, con potencial de acoplamiento visual alto.
+
+### Próximos pasos sugeridos
+
+- Completar inventario técnico con evidencia por frente.
+- Cerrar esta misma sesión con:
+  - diagnóstico consolidado;
+  - orden de intervención Fase 1–4;
+  - baseline de build;
+  - QA sugerido para las cirugías posteriores.
+
+### Hallazgos consolidados
+
+- **Frente A — timers / listeners / fugas**
+  - `apps/gold/agro/index.html:3629-3643`
+    - El bootstrap protegido inicializa módulos una sola vez por carga de página, pero no existe una capa central de teardown; cualquier reinicialización manual dependería de guardas internas de cada módulo.
+  - `apps/gold/agro/agro-market.js:458-576`
+    - El ticker principal sí tiene singleton (`window.__YG_MARKET_TICKER__`), listener de ubicación con guarda y `clearInterval` explícito.
+    - Riesgo: no hay hooks de `beforeunload` / `visibilitychange`; el cleanup depende de `stopTickerAutoRefresh()`.
+  - `apps/gold/agro/agro-interactions.js:45-64`, `294-345`
+    - El modal de mercado crea su propio polling (`setInterval(loadDetailedCrypto, 60000)`).
+    - Además, al cerrar `modal-market` corta también el ticker global llamando `window.stopTickerAutoRefresh()`.
+    - Riesgo alto por acoplamiento y control cruzado del productor principal.
+  - `apps/gold/agro/dashboard.js:863-874`
+    - El weather widget arranca `setInterval` cada 10 min sin guardar id ni limpiar.
+    - Tiene guarda `dashboardWidgetsStarted`, así que no duplica fácil en la misma carga, pero no ofrece teardown.
+  - `apps/gold/agro/agro-notifications.js:431-468`, `541-598`
+    - `initNotifications()` no tiene guarda idempotente propia.
+    - `setupEventListeners()` agrega listeners globales a `document`.
+    - `setupAdviceObserver()` crea `MutationObserver`, reintenta con `setTimeout(setupAdviceObserver, 1000)` y no aparece `disconnect()`.
+    - Riesgo medio por posible duplicación si el init vuelve a dispararse.
+  - `apps/gold/agro/agro-cart.js:706-709`, `1397-1400`
+    - Buen patrón: guarda de shell sync + `AbortController` para abortar listeners previos del carrito.
+  - `apps/gold/agro/agro-cartera-viva-view.js:61`, `2904-2908`, `2998-3019`
+    - Buen patrón parcial: guarda `initialized` + debounce con `clearTimeout`, pero los listeners globales quedan residentes sin teardown.
+  - `apps/gold/agro/agroOperationalCycles.js:3061-3104`, `3231-3238`
+    - Guarda por dataset + `state.initialized`; listeners globales sin teardown, riesgo bajo/medio.
+  - `apps/gold/agro/agroTaskCycles.js:1848-1888`, `1908-1915`
+    - Mismo patrón de guarda por dataset + init único; listeners persistentes, riesgo bajo/medio.
+  - `apps/gold/agro/agro-repo-app.js:1563-1571`, `1637-1647`
+    - `document` y `resize` quedan protegidos por flags (`documentBound`, `viewportBound`, `listenerBound`), por lo que hoy no parecen duplicarse.
+  - `apps/gold/agro/agro-privacy.js:11-14`, `240-259`, `313-325`
+    - Usa `WeakSet` para no rebinding de controles y guarda única para `MutationObserver` / `storage`; patrón sano.
+  - `apps/gold/agro/agro.js:14696-14734`
+    - El cooldown del asistente sí limpia sus intervalos (`clearInterval`) y es una de las pocas zonas legacy con cleanup explícito correcto.
+  - `apps/gold/agro`
+    - No aparecieron hooks de `beforeunload` ni `visibilitychange` en runtime Agro; la mayor parte del cleanup depende de guards internos, no de lifecycle global.
+
+- **Frente B — market ticker duplicado**
+  - `apps/gold/agro/agro-market.js:17-25`, `30-38`, `553-568`
+    - Ticker principal del dashboard.
+    - Endpoint: `ticker/price`.
+    - Cache: `YG_AGRO_MARKET_V1`.
+    - Singleton real: `window.__YG_MARKET_TICKER__`.
+  - `apps/gold/agro/agro-interactions.js:22-37`, `337-345`, `505-555`
+    - Market Hub modal.
+    - Endpoint: `ticker/24hr`.
+    - Cache: `YG_AGRO_MARKET_V1`.
+    - Singleton separado: `window.__YG_MARKET_HUB__`.
+  - `apps/gold/agro/index.html:3632-3633`
+    - El bootstrap llama `initMarketIntelligence()` y además `startTickerAutoRefresh()`; no duplica por guarda de `intervalId`, pero confirma que el ticker principal ya se considera servicio base.
+  - `apps/gold/agro/agro-interactions.js:308-309`, `63-64`
+    - El modal intenta arrancar y parar el mismo ticker global; esto confirma frontera difusa entre productor y consumidor.
+  - Conclusión:
+    - La duplicidad real está viva entre `agro-market.js` y `agro-interactions.js`.
+    - La fuente canónica que debería sobrevivir es `agro-market.js` porque:
+      - se inicializa en el bootstrap base;
+      - ya resuelve ubicación + cache + ticker visible del dashboard;
+      - ya expone API de inicio/parada;
+      - ya opera como singleton del módulo vivo.
+    - `agro-interactions.js` debería pasar a consumidor/suscriptor del estado de mercado y, si necesita detalle `24hr`, hacerlo como carga puntual o a través del mismo servicio central, no con un loop propio.
+
+- **Frente C — CSS inline y deuda visual**
+  - `apps/gold/index.html:247-257`
+    - El root público ya no contiene el bloque inline monstruoso: hoy solo queda un `noscript` de 11 líneas.
+    - La deuda documentada históricamente ya no vive ahí.
+  - `apps/gold/agro/index.html:37-1144`
+    - El bloque inline grande real hoy está en Agro.
+    - Medición de esta sesión:
+      - `1108` líneas dentro del primer `<style>`;
+      - `89` atributos `style="..."` adicionales en markup;
+      - `5` `onmouseover` + `5` `onmouseout`.
+  - Hardcodes repetidos detectados en `apps/gold/agro/index.html`
+    - Hex más repetidos:
+      - `#C8A752` x18
+      - `#0A0A0A` x10
+      - `#FFF` x6
+      - `#666` x5
+    - RGBA más repetidos:
+      - `rgba(200, 167, 82, 0.3)` x25
+      - `rgba(200, 167, 82, 0.1)` x19
+      - `rgba(200, 167, 82, 0.15)` x13
+      - `rgba(200, 167, 82, 0.2)` x8
+  - Clasificación de migración futura
+    - **Migrable seguro**
+      - `apps/gold/agro/index.html:39-257`
+      - reset, aliases de tokens, layout base, header, cards, tipografía, footer, utilidades, `prefers-reduced-motion`.
+      - Son reglas por clase estables y casi no dependen de JS mutando estilos inline.
+    - **Migrable con cuidado**
+      - `apps/gold/agro/index.html:258-1144`
+      - tabs financieras, KPI, cultivos, progress bars, inputs, botones, ROI y animaciones.
+      - Aquí hay más dependencia visual con renderers legacy del monolito y estados JS.
+    - **Alto riesgo visual**
+      - `apps/gold/agro/index.html:1274-1333`
+      - `apps/gold/agro/index.html:1950-2050`
+      - `apps/gold/agro/index.html:2060-2063`
+      - `apps/gold/agro/index.html:3709-3711`
+      - Header utility buttons, dropdown de notificaciones, modal lunar, modal market, modal de cultivo y botones con hover inline.
+      - Estos bloques mezclan markup + `style=""` + handlers inline (`onmouseover/onmouseout/onclick`) y son los candidatos más delicados para una extracción futura.
+
+- **Frente D — legacy / dependencias reales**
+  - `apps/gold/vite.config.js:16-27`
+    - Los entrypoints activos son HTML MPA; ni `app.js` ni `Style.css` aparecen como entradas.
+  - `apps/gold/agro/app.js`
+    - No aparecieron referencias runtime al archivo (`NO_RUNTIME_MATCH app.js` en la búsqueda sobre `agro`, `index.html`, `dashboard`, `assets`).
+    - Su contenido sigue siendo un catálogo/demo independiente (`apps/gold/agro/app.js:2`, `123`, `133`), sin relación con Agro V1 actual.
+    - Estado sugerido: **muerto aparente**; candidato a auditar y retirar en fase futura.
+  - `apps/gold/agro/Style.css`
+    - No aparecieron referencias runtime al archivo (`NO_RUNTIME_MATCH Style.css`).
+    - El contenido usa stack y paleta incompatibles con V10 (`apps/gold/agro/Style.css:3`, `11`, `40`), lo que refuerza que es un residuo de una maqueta previa.
+    - Estado sugerido: **muerto aparente**; candidato a archivar/retirar en fase futura.
+  - `apps/gold/agro/agrorepo.js:2`
+    - Sigue vivo como adapter.
+  - `apps/gold/agro/agro.js:16524-16527`
+    - El monolito todavía lazy-load `./agrorepo.js`.
+  - `apps/gold/agro/agro-repo-app.js:1659`
+    - La implementación real actual de AgroRepo vive aquí.
+  - `apps/gold/agro/index.html:1255`, `2667`, `2681-2692`
+    - El shell y la región visual `agrorepo` siguen activos.
+  - `apps/gold/agro/agro-shell.js:70`, `443-449`
+    - El router del shell todavía trata `agrorepo` como vista oficial.
+  - Conclusión sobre AgroRepo:
+    - **conservar** `agrorepo.js` como puente de compatibilidad;
+    - cualquier retiro/renombre hoy rompería el lazy import del shell.
+  - Archivos con naming legacy pero activos
+    - `apps/gold/agro/index.html:3552`
+      - `dashboard.js` sigue importado por el bootstrap de Agro.
+    - `apps/gold/agro/agro.js:11-18`, `15839-15846`
+      - `agroperfil.js`, `agrocompradores.js`, `agrosocial.js`, `agrocalculadora.js`, `agroclima-layout.js`, `agrociclos.js` siguen importados e inicializados desde el monolito.
+    - `apps/gold/agro/agro-agenda.js:10`, `apps/gold/agro/agro-cart.js:10`
+      - `agrocalculadora.js` también se consume desde módulos nuevos.
+    - `apps/gold/agro/agro-cartera-viva-view.js:20`
+      - `agrocompradores.js` sigue vivo como dependencia transversal.
+    - `apps/gold/agro/agroperfil.js:1`, `8`
+      - `agroestadistica.js` y `agropublico.js` siguen en la cadena activa.
+  - Conclusión sobre naming inconsistente:
+    - No equivale a “archivo muerto”.
+    - Hay un grupo grande de archivos legacy por nombre pero todavía vivos por import real; su acción futura correcta es **renombrar solo en una fase dedicada**, no retirar.
+
+### Orden sugerido Fase 1–4
+
+1. **Fase 1 — ticker / polling / ownership**
+   - Consolidar mercado en una sola fuente.
+   - Cortar la autoridad de `agro-interactions.js` sobre el ticker global.
+   - Definir contrato productor → consumidores.
+2. **Fase 2 — timers/listeners sin teardown claro**
+   - Blindar `initNotifications()`.
+   - Revisar weather interval de `dashboard.js`.
+   - Formalizar cleanup mínimo en módulos que quedan residentes.
+3. **Fase 3 — CSS inline estructural**
+   - Extraer primero el `<style>` grande de `apps/gold/agro/index.html` a una hoja crítica.
+   - Dejar para un lote posterior los `style=""` y hover handlers inline de modales/header.
+4. **Fase 4 — legacy muerto y naming**
+   - Auditar retiro de `app.js` y `Style.css`.
+   - Mantener `agrorepo.js` como adapter.
+   - Tratar renombres de legacy vivo en un lote aparte, con grep/import audit completo.
+
+### Cambios aplicados
+
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - Se agregó esta sesión de Fase 0 en modo append-only.
+  - No se tocaron archivos de producto ni comportamiento runtime.
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por engine: `node v25.6.0` vs `20.x`
+
+### QA sugerido
+
+- Para Fase 1:
+  - abrir Agro y validar ticker dashboard + modal market antes/después de consolidar ownership;
+  - confirmar que cerrar el modal market no “apaga” el ticker principal.
+- Para Fase 2:
+  - forzar reaperturas o reinits de notificaciones y clima para verificar ausencia de duplicación.
+- Para Fase 3:
+  - validar desktop y móvil pequeño (`<=480px`) antes y después de extraer CSS crítico.
+- Para Fase 4:
+  - correr grep/import audit final antes de retirar `app.js` / `Style.css` o renombrar adapters.
+
+---
+
+## 2026-04-10 — Fase 1A Agro: unificación quirúrgica del Market Ticker
+
+### Diagnóstico resumido
+
+- La Fase 0 confirmó duplicidad real de ownership entre `agro-market.js` y `agro-interactions.js`.
+- `agro-market.js` ya funciona como servicio base del ticker visible del dashboard Agro.
+- `agro-interactions.js` mantiene un segundo singleton y un segundo polling para el modal `market`, y además toca el ciclo de vida del ticker global al cerrar el modal.
+
+### Objetivo exacto
+
+- Dejar `agro-market.js` como única fuente de verdad para:
+  - polling residente;
+  - estado compartido;
+  - cache central del market ticker.
+- Reconvertir `agro-interactions.js` para que:
+  - controle solo la UI del modal;
+  - consuma el servicio central o haga, como máximo, fetch puntual no residente cuando haga falta.
+
+### Riesgo principal
+
+- Romper la UX del modal o apagar sin querer el ticker principal al cerrar/reabrir `modal-market`.
+- Riesgo secundario:
+  - introducir una “coordinación” frágil entre dos productores en vez de eliminar uno.
+
+### Plan de parche mínimo
+
+1. Confirmar en código dónde vive hoy:
+   - el polling principal;
+   - el polling paralelo;
+   - la parada incorrecta del ticker global;
+   - la interfaz mínima reutilizable ya disponible.
+2. Exponer o reutilizar desde `agro-market.js` la mínima API necesaria para que el modal consuma datos sin crear un productor residente paralelo.
+3. Recortar `agro-interactions.js` para que deje de:
+   - crear ownership paralelo;
+   - parar el ticker principal al cerrar el modal.
+4. Validar con:
+   - `pnpm build:gold`;
+   - QA básico de abrir / cerrar / reabrir el modal market.
+
+### DoD
+
+- `agro-market.js` queda como único productor.
+- `agro-interactions.js` deja de crear un polling residente paralelo.
+- Cerrar `modal-market` no apaga el ticker principal.
+- No queda duplicidad de singleton ni de polling.
+- El modal sigue mostrando la información necesaria.
+- `pnpm build:gold` pasa.
+- El QA básico de modal market queda documentado.
+
+### Archivos previstos
+
+- `apps/gold/agro/agro-market.js`
+- `apps/gold/agro/agro-interactions.js`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Criterio de no expansión de alcance
+
+- No tocar clima, notificaciones, CSS inline ni deuda de listeners fuera del frente market.
+- No renombrar archivos.
+- No reescribir arquitectura completa.
+- No tocar `agro.js` salvo wiring mínimo absolutamente imprescindible; la expectativa actual es no tocarlo.
+
+### Diagnóstico confirmado
+
+- `apps/gold/agro/agro-market.js`
+  - El productor residente válido sigue estando aquí:
+    - singleton global `window.__YG_MARKET_TICKER__`;
+    - cache `YG_AGRO_MARKET_V1`;
+    - polling principal vía `setInterval(fetchAndRenderMarket, 60000)`.
+- `apps/gold/agro/agro-interactions.js`
+  - El modal market actuaba como segundo productor porque:
+    - creaba su propio loop `setInterval(loadDetailedCrypto, 60000)`;
+    - escribía sobre el mismo ownership de cache;
+    - y al cerrar `modal-market` ejecutaba `window.stopTickerAutoRefresh()`, apagando el ticker global.
+- Conclusión:
+  - el parche correcto era mantener `agro-market.js` como fuente única y convertir el modal en consumidor del snapshot central, con fetch puntual `24hr` solo para enriquecer detalle visual cuando esté disponible.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-market.js`
+  - Se añadió `snapshot` al singleton `window.__YG_MARKET_TICKER__`.
+  - Se incorporó una API mínima `getMarketTickerSnapshot()` para exponer el estado actual o el fallback desde cache sin crear otro servicio.
+  - `fetchAndRenderMarket()` ahora actualiza ese snapshot central en estado `OK` o `DEGRADED`, y lo limpia cuando no hay datos utilizables.
+- `apps/gold/agro/agro-interactions.js`
+  - Se eliminó el singleton paralelo `window.__YG_MARKET_HUB__`.
+  - Se eliminó el polling residente del modal (`startMarketHubPolling` / `stopMarketHubPolling`).
+  - `closeModal('modal-market')` dejó de tocar el ciclo de vida del ticker global.
+  - `loadDetailedCrypto()` ahora:
+    - consume primero el snapshot central de `agro-market.js`;
+    - intenta luego un fetch puntual `24hr` para mostrar cambio porcentual;
+    - y si ese detalle falla, se queda en fallback visual sobre el ticker central sin crear loops.
+  - `loadFiatRates()` ahora consume primero el snapshot central y solo hace fetch puntual si no existe estado reutilizable.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - Se documentó Fase 1A en modo append-only antes y después del parche.
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por engine: `node v25.6.0` vs `20.x`
+
+### QA / validación
+
+- QA manual local **no ejecutada** por instrucción expresa del usuario para ahorrar tokens.
+- Solo quedó validación técnica por build.
+- Cualquier sesión temporal abierta para verificación local se cerró y se limpiaron artefactos temporales.
+
+### Riesgo remanente / Fase 1B
+
+- El modal market sigue pudiendo hacer fetch puntual `24hr` para detalle visual; eso ya no es polling residente ni ownership paralelo, pero sigue siendo una llamada aparte cuando el usuario abre el modal.
+- Si en Fase 1B se quiere cerrar totalmente la dispersión de lecturas de mercado, el siguiente paso natural sería decidir si el detalle `24hr` también debe centralizarse en `agro-market.js` o mantenerse on-demand.

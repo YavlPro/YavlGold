@@ -32,7 +32,8 @@ const AGRO_LOCATION_UPDATED_EVENT = 'agro:location:updated';
 window.__YG_MARKET_TICKER__ = window.__YG_MARKET_TICKER__ || {
     inited: false,
     intervalId: null,
-    lastState: null // 'OK' | 'DEGRADED' | 'ERROR'
+    lastState: null, // 'OK' | 'DEGRADED' | 'ERROR'
+    snapshot: null
 };
 
 const tickerState = window.__YG_MARKET_TICKER__;
@@ -75,6 +76,45 @@ function setMarketCache(crypto, fiat) {
     } catch (e) {
         console.debug('[AGRO_MARKET] Cache write failed:', e.message);
     }
+}
+
+function buildMarketSnapshot({ crypto = {}, fiat = {}, localCurrency = 'USD', cacheInfo = null, source = 'OK' } = {}) {
+    return {
+        crypto: { ...crypto },
+        fiat: { ...fiat },
+        localCurrency,
+        cacheInfo: cacheInfo ? { ...cacheInfo } : null,
+        ageMinutes: cacheInfo?.ageMinutes ?? 0,
+        stale: Boolean(cacheInfo?.stale),
+        source,
+        updatedAt: cacheInfo?.ts ?? Date.now()
+    };
+}
+
+function cloneMarketSnapshot(snapshot) {
+    return snapshot ? buildMarketSnapshot(snapshot) : null;
+}
+
+function updateMarketSnapshot({ crypto = {}, fiat = {}, localCurrency = 'USD', cacheInfo = null, source = 'OK' } = {}) {
+    tickerState.snapshot = buildMarketSnapshot({ crypto, fiat, localCurrency, cacheInfo, source });
+    return tickerState.snapshot;
+}
+
+export function getMarketTickerSnapshot() {
+    if (tickerState.snapshot) {
+        return cloneMarketSnapshot(tickerState.snapshot);
+    }
+
+    const cache = getMarketCache();
+    if (!cache) return null;
+
+    return buildMarketSnapshot({
+        crypto: cache.crypto || {},
+        fiat: cache.fiat || {},
+        localCurrency: detectUserCurrency(null),
+        cacheInfo: cache,
+        source: 'DEGRADED'
+    });
 }
 
 // ============================================================
@@ -489,6 +529,12 @@ async function fetchAndRenderMarket() {
 
         if (hasData) {
             setMarketCache(crypto, fiat);
+            updateMarketSnapshot({
+                crypto,
+                fiat,
+                localCurrency: userCurrency,
+                source: 'OK'
+            });
             renderTicker(tickerTrack, crypto, fiat, userCurrency, null);
 
             // Log solo en cambio de estado
@@ -500,12 +546,20 @@ async function fetchAndRenderMarket() {
             // Sin datos frescos, intentar cache
             const cache = getMarketCache();
             if (cache) {
+                updateMarketSnapshot({
+                    crypto: cache.crypto || {},
+                    fiat: cache.fiat || {},
+                    localCurrency: userCurrency,
+                    cacheInfo: cache,
+                    source: 'DEGRADED'
+                });
                 renderTicker(tickerTrack, cache.crypto, cache.fiat, userCurrency, cache);
                 if (tickerState.lastState !== 'DEGRADED') {
                     console.log('[AGRO_MARKET] \u26a0\ufe0f Usando cache (sin datos frescos)');
                     tickerState.lastState = 'DEGRADED';
                 }
             } else {
+                tickerState.snapshot = null;
                 renderDegradedState(tickerTrack, false);
                 if (tickerState.lastState !== 'ERROR') {
                     console.log('[AGRO_MARKET] \u274c Sin datos ni cache');
@@ -517,12 +571,20 @@ async function fetchAndRenderMarket() {
         // Fallback a cache (NO a api.binance.com)
         const cache = getMarketCache();
         if (cache) {
+            updateMarketSnapshot({
+                crypto: cache.crypto || {},
+                fiat: cache.fiat || {},
+                localCurrency: userCurrency,
+                cacheInfo: cache,
+                source: 'DEGRADED'
+            });
             renderTicker(tickerTrack, cache.crypto, cache.fiat, userCurrency, cache);
             if (tickerState.lastState !== 'DEGRADED') {
                 console.log('[AGRO_MARKET] \u{1f4e6} Fallback a cache');
                 tickerState.lastState = 'DEGRADED';
             }
         } else {
+            tickerState.snapshot = null;
             renderDegradedState(tickerTrack, false);
             if (tickerState.lastState !== 'ERROR') {
                 console.log('[AGRO_MARKET] \u274c Error y sin cache disponible');

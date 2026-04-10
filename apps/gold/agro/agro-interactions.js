@@ -11,6 +11,8 @@
  *   - localStorage para notas reales
  */
 
+import { getMarketTickerSnapshot } from './agro-market.js';
+
 // Base de conocimiento lunar (Luna Nueva: 19 Enero 2026)
 const BASE_NEW_MOON = new Date('2026-01-19T00:00:00');
 const LUNAR_CYCLE = 29.53058867; // Días del ciclo lunar
@@ -21,20 +23,29 @@ const TASKS_STORAGE_KEY = 'yavlgold_agro_tasks';
 // Market Hub config (Centro Financiero)
 const MARKET_HUB_CONFIG = {
     binanceAPI: 'https://data-api.binance.vision/api/v3/ticker/24hr',
-    refreshInterval: 60000,
-    cacheTTL: 10 * 60 * 1000,
-    cacheMaxAge: 60 * 60 * 1000,
-    cacheKey: 'YG_AGRO_MARKET_V1',
+    fiatAPI: 'https://open.er-api.com/v6/latest/USD',
     timeout: 8000
 };
 
-window.__YG_MARKET_HUB__ = window.__YG_MARKET_HUB__ || {
-    intervalId: null,
-    inFlight: false,
-    lastState: null
-};
+const MARKET_CRYPTO_META = [
+    { symbol: 'BTC', name: 'Bitcoin', icon: 'fa-brands fa-bitcoin', iconColor: '#f7931a' },
+    { symbol: 'ETH', name: 'Ethereum', icon: 'fa-brands fa-ethereum', iconColor: '#627eea' },
+    { symbol: 'SOL', name: 'Solana', icon: 'fa-solid fa-sun', iconColor: '#00ffa3' }
+];
 
-const marketHubState = window.__YG_MARKET_HUB__;
+const MARKET_FIAT_CURRENCIES = [
+    { code: 'VES', name: 'Bolívar Digital', flag: '🇻🇪' },
+    { code: 'COP', name: 'Peso Colombiano', flag: '🇨🇴' },
+    { code: 'MXN', name: 'Peso Mexicano', flag: '🇲🇽' },
+    { code: 'ARS', name: 'Peso Argentino', flag: '🇦🇷' },
+    { code: 'BRL', name: 'Real Brasileño', flag: '🇧🇷' },
+    { code: 'CLP', name: 'Peso Chileno', flag: '🇨🇱' },
+    { code: 'PEN', name: 'Sol Peruano', flag: '🇵🇪' },
+    { code: 'EUR', name: 'Euro', flag: '🇪🇺' }
+];
+
+let marketHubInFlight = false;
+let marketHubLastState = null;
 
 // Fecha actualmente seleccionada
 let selectedDateStr = null;
@@ -57,12 +68,6 @@ export function initInteractions() {
         if (el) {
             el.classList.add('hidden');
             el.style.display = 'none';
-        }
-        if (id === 'modal-market') {
-            stopMarketHubPolling();
-            if (typeof window.stopTickerAutoRefresh === 'function') {
-                window.stopTickerAutoRefresh();
-            }
         }
     };
 
@@ -304,10 +309,6 @@ function openMarketHub(defaultTab = 'crypto') {
     switchMarketTab(defaultTab);
     loadDetailedCrypto();
     loadFiatRates();
-    startMarketHubPolling();
-    if (typeof window.startTickerAutoRefresh === 'function') {
-        window.startTickerAutoRefresh();
-    }
 }
 
 function switchMarketTab(tab) {
@@ -334,18 +335,6 @@ function switchMarketTab(tab) {
     }
 }
 
-function startMarketHubPolling() {
-    if (marketHubState.intervalId) return;
-    marketHubState.intervalId = setInterval(loadDetailedCrypto, MARKET_HUB_CONFIG.refreshInterval);
-}
-
-function stopMarketHubPolling() {
-    if (marketHubState.intervalId) {
-        clearInterval(marketHubState.intervalId);
-        marketHubState.intervalId = null;
-    }
-}
-
 function fetchWithTimeout(url, timeoutMs = MARKET_HUB_CONFIG.timeout) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -361,53 +350,41 @@ function fetchWithTimeout(url, timeoutMs = MARKET_HUB_CONFIG.timeout) {
         });
 }
 
-function getMarketHubCache() {
-    try {
-        const raw = localStorage.getItem(MARKET_HUB_CONFIG.cacheKey);
-        if (!raw) return null;
-        const parsed = JSON.parse(raw);
-        const age = Date.now() - (parsed.ts || 0);
-        if (age > MARKET_HUB_CONFIG.cacheMaxAge) return null;
-        return {
-            crypto: parsed.crypto || null,
-            cryptoDetail: parsed.cryptoDetail || null,
-            ts: parsed.ts,
-            ageMinutes: Math.round(age / 60000),
-            stale: age > MARKET_HUB_CONFIG.cacheTTL
-        };
-    } catch (e) {
-        return null;
-    }
+function buildCryptoItemsFromSnapshot(snapshot) {
+    const crypto = snapshot?.crypto || {};
+    const metaLabel = snapshot?.stale ? 'Ticker central (cache)' : 'Ticker centralizado';
+
+    return MARKET_CRYPTO_META
+        .filter((item) => typeof crypto[item.symbol] === 'number')
+        .map((item) => ({
+            name: item.name,
+            symbol: `${item.symbol}/USDT`,
+            price: crypto[item.symbol].toLocaleString('en-US', { style: 'currency', currency: 'USD' }),
+            priceValue: crypto[item.symbol],
+            meta: metaLabel,
+            iconHtml: `<i class="${item.icon}" style="font-size: 1.8rem; color: ${item.iconColor};"></i>`
+        }));
 }
 
-function setMarketHubCache(cryptoDetail) {
-    try {
-        const raw = localStorage.getItem(MARKET_HUB_CONFIG.cacheKey);
-        const parsed = raw ? JSON.parse(raw) : {};
-        const crypto = {};
+function buildFiatItemsFromSnapshot(snapshot) {
+    const rates = snapshot?.fiat || {};
 
-        cryptoDetail.forEach((item) => {
-            const key = item?.cacheSymbol || item?.symbol;
-            if (key) {
-                crypto[key] = item.priceValue;
-            }
-        });
-
-        localStorage.setItem(MARKET_HUB_CONFIG.cacheKey, JSON.stringify({
-            ...parsed,
-            crypto,
-            cryptoDetail,
-            ts: Date.now(),
-            source: 'binance-vision'
-        }));
-    } catch (e) {
-        // Ignore cache errors
-    }
+    return MARKET_FIAT_CURRENCIES.reduce((items, { code, name, flag }) => {
+        if (rates[code]) {
+            items.push({
+                name: `USD/${code}`,
+                symbol: name,
+                price: rates[code].toLocaleString('es-ES', { maximumFractionDigits: 2 }),
+                iconHtml: `<span style="font-size: 1.6rem;">${flag}</span>`
+            });
+        }
+        return items;
+    }, []);
 }
 
 function setMarketHubState(state, message) {
-    if (marketHubState.lastState === state) return;
-    marketHubState.lastState = state;
+    if (marketHubLastState === state) return;
+    marketHubLastState = state;
     if (message) {
         console.log(`[AgroMarketHub] ${message}`);
     }
@@ -432,26 +409,6 @@ function renderCacheBadge(container, ageMinutes) {
         </div>
     `;
     container.insertAdjacentHTML('afterbegin', badge);
-}
-
-function buildCryptoItemsFromCache(cache) {
-    const meta = [
-        { symbol: 'BTC', name: 'Bitcoin', icon: 'fa-brands fa-bitcoin', iconColor: '#f7931a' },
-        { symbol: 'ETH', name: 'Ethereum', icon: 'fa-brands fa-ethereum', iconColor: '#627eea' },
-        { symbol: 'SOL', name: 'Solana', icon: 'fa-solid fa-sun', iconColor: '#00ffa3' }
-    ];
-    const crypto = cache?.crypto || {};
-
-    return meta
-        .filter((item) => typeof crypto[item.symbol] === 'number')
-        .map((item) => ({
-            name: item.name,
-            symbol: `${item.symbol}/USDT`,
-            price: crypto[item.symbol].toLocaleString('en-US', { style: 'currency', currency: 'USD' }),
-            priceValue: crypto[item.symbol],
-            meta: 'Dato guardado',
-            iconHtml: `<i class="${item.icon}" style="font-size: 1.8rem; color: ${item.iconColor};"></i>`
-        }));
 }
 
 /**
@@ -502,10 +459,20 @@ async function loadDetailedCrypto() {
     const container = document.getElementById('crypto-list-container');
     if (!container) return;
 
-    if (marketHubState.inFlight) return;
-    marketHubState.inFlight = true;
+    const snapshot = getMarketTickerSnapshot();
+    const snapshotItems = buildCryptoItemsFromSnapshot(snapshot);
 
-    renderMarketNotice(container, 'Cargando mercado...');
+    if (snapshotItems.length > 0) {
+        renderUnifiedList(snapshotItems, container);
+        if (snapshot?.stale && Number.isFinite(snapshot.ageMinutes)) {
+            renderCacheBadge(container, snapshot.ageMinutes);
+        }
+    } else {
+        renderMarketNotice(container, 'Cargando mercado...');
+    }
+
+    if (marketHubInFlight) return;
+    marketHubInFlight = true;
 
     try {
         const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'];
@@ -513,46 +480,30 @@ async function loadDetailedCrypto() {
             symbols.map(s => fetchWithTimeout(`${MARKET_HUB_CONFIG.binanceAPI}?symbol=${s}`))
         );
 
-        const cryptoMeta = [
-            { symbol: 'BTC', name: 'Bitcoin', icon: 'fa-brands fa-bitcoin', iconColor: '#f7931a' },
-            { symbol: 'ETH', name: 'Ethereum', icon: 'fa-brands fa-ethereum', iconColor: '#627eea' },
-            { symbol: 'SOL', name: 'Solana', icon: 'fa-solid fa-sun', iconColor: '#00ffa3' }
-        ];
-
         const items = results.map((data, i) => ({
-            name: cryptoMeta[i].name,
-            symbol: `${cryptoMeta[i].symbol}/USDT`,
-            cacheSymbol: cryptoMeta[i].symbol,
+            name: MARKET_CRYPTO_META[i].name,
+            symbol: `${MARKET_CRYPTO_META[i].symbol}/USDT`,
             price: parseFloat(data.lastPrice).toLocaleString('en-US', { style: 'currency', currency: 'USD' }),
             priceValue: parseFloat(data.lastPrice),
             change: parseFloat(data.priceChangePercent),
-            iconHtml: `<i class="${cryptoMeta[i].icon}" style="font-size: 1.8rem; color: ${cryptoMeta[i].iconColor};"></i>`
+            iconHtml: `<i class="${MARKET_CRYPTO_META[i].icon}" style="font-size: 1.8rem; color: ${MARKET_CRYPTO_META[i].iconColor};"></i>`
         }));
 
         renderUnifiedList(items, container);
-        setMarketHubCache(items);
-        setMarketHubState('OK', 'Ticker actualizado');
+        setMarketHubState('OK', 'Detalle 24h sincronizado');
     } catch (e) {
-        const cache = getMarketHubCache();
-        if (cache) {
-            const items = Array.isArray(cache.cryptoDetail) && cache.cryptoDetail.length > 0
-                ? cache.cryptoDetail
-                : buildCryptoItemsFromCache(cache);
-
-            if (items.length > 0) {
-                renderUnifiedList(items, container);
-                renderCacheBadge(container, cache.ageMinutes);
-                setMarketHubState('DEGRADED', 'Usando cache');
-            } else {
-                renderMarketNotice(container, 'Mercado no disponible (red/restriccion)');
-                setMarketHubState('ERROR', 'Sin datos ni cache');
+        if (snapshotItems.length > 0) {
+            renderUnifiedList(snapshotItems, container);
+            if (snapshot?.stale && Number.isFinite(snapshot.ageMinutes)) {
+                renderCacheBadge(container, snapshot.ageMinutes);
             }
+            setMarketHubState('DEGRADED', 'Detalle 24h no disponible; usando ticker central');
         } else {
             renderMarketNotice(container, 'Mercado no disponible (red/restriccion)');
-            setMarketHubState('ERROR', 'Sin datos ni cache');
+            setMarketHubState('ERROR', 'Sin detalle 24h ni snapshot central');
         }
     } finally {
-        marketHubState.inFlight = false;
+        marketHubInFlight = false;
     }
 }
 
@@ -560,26 +511,25 @@ async function loadFiatRates() {
     const container = document.getElementById('fiat-list-container');
     if (!container) return;
 
+    const snapshot = getMarketTickerSnapshot();
+    const snapshotItems = buildFiatItemsFromSnapshot(snapshot);
+    if (snapshotItems.length > 0) {
+        renderUnifiedList(snapshotItems, container);
+        if (snapshot?.stale && Number.isFinite(snapshot.ageMinutes)) {
+            renderCacheBadge(container, snapshot.ageMinutes);
+        }
+        return;
+    }
+
     container.innerHTML = '<div style="text-align: center; color: #666; padding: 60px 0;">📡 Cargando divisas...</div>';
 
     try {
-        const res = await fetch('https://open.er-api.com/v6/latest/USD');
+        const res = await fetch(MARKET_HUB_CONFIG.fiatAPI);
         const data = await res.json();
         const rates = data.rates;
 
-        const currencies = [
-            { code: 'VES', name: 'Bolívar Digital', flag: '🇻🇪' },
-            { code: 'COP', name: 'Peso Colombiano', flag: '🇨🇴' },
-            { code: 'MXN', name: 'Peso Mexicano', flag: '🇲🇽' },
-            { code: 'ARS', name: 'Peso Argentino', flag: '🇦🇷' },
-            { code: 'BRL', name: 'Real Brasileño', flag: '🇧🇷' },
-            { code: 'CLP', name: 'Peso Chileno', flag: '🇨🇱' },
-            { code: 'PEN', name: 'Sol Peruano', flag: '🇵🇪' },
-            { code: 'EUR', name: 'Euro', flag: '🇪🇺' },
-        ];
-
         const items = [];
-        currencies.forEach(({ code, name, flag }) => {
+        MARKET_FIAT_CURRENCIES.forEach(({ code, name, flag }) => {
             if (rates[code]) {
                 items.push({
                     name: `USD/${code}`,
