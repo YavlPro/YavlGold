@@ -12916,3 +12916,108 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
 
 - El blindaje actual evita duplicación silenciosa en notificaciones y da cleanup explícito al refresh del clima, pero no introduce todavía una política global unificada de destrucción para todos los módulos residentes de Agro.
 - Si Fase 2 avanza, el siguiente paso natural es revisar si otros módulos con listeners persistentes deben adoptar el mismo patrón de owner + teardown exportado.
+
+---
+
+## 2026-04-10 — Fase 2 Agro: extracción quirúrgica del CSS crítico
+
+### Diagnóstico resumido
+
+- La deuda visual crítica principal ya no vive en `apps/gold/index.html`, sino en `apps/gold/agro/index.html`.
+- El peso mayor sigue concentrado en un bloque `<style>` grande dentro del `<head>`, mientras que varios `style=""` y handlers hover inline más sensibles siguen incrustados en el markup.
+
+### Objetivo exacto
+
+- Extraer el bloque `<style>` grande de `apps/gold/agro/index.html` hacia un archivo CSS dedicado, manteniendo el orden de carga y la equivalencia visual.
+- Dejar fuera de este lote los `style=""` y hover inline delicados que elevarían el riesgo visual.
+
+### Riesgo principal
+
+- Alterar el orden de cascada y romper layout/base styles de Agro al mover el CSS crítico fuera del HTML.
+- Expandir la fase hacia limpieza cosmética o migración total de inline attrs, lo cual no forma parte de esta cirugía.
+
+### Plan de extracción mínima
+
+1. Confirmar línea de inicio y fin del bloque `<style>` grande en `apps/gold/agro/index.html`.
+2. Crear un archivo CSS dedicado con naming consistente `agro-*.css`.
+3. Sustituir el bloque inline por un `<link rel="stylesheet">` manteniendo el mismo orden relativo del head.
+4. Dejar intactos los `style=""` y hover inline de modales/header que sigan siendo delicados.
+5. Cerrar con validación técnica mínima, sin QA manual/local.
+
+### DoD
+
+- El bloque grande `<style>` queda fuera de `apps/gold/agro/index.html`.
+- `agro/index.html` queda más liviano y el CSS crítico vive en archivo dedicado.
+- No se tocan `style=""` delicados ni handlers hover inline de alto riesgo.
+- No se toca JS ni lógica funcional.
+- `AGENT_REPORT_ACTIVE.md` queda actualizado.
+- Sin QA manual/local por restricción operativa.
+
+### Archivos previstos
+
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro-index-critical.css`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Criterio de no expansión de alcance
+
+- No tocar `agro.js`, market ticker, notificaciones, clima ni lógica JS.
+- No rediseñar la superficie visual.
+- No migrar en este lote todos los `style=""` del HTML.
+- Nota operativa explícita: **sin QA manual/local por restricción operativa**.
+
+### Diagnóstico confirmado
+
+- `apps/gold/agro/index.html`
+  - El bloque crítico arrancaba en el `<style>` del head y terminaba en su `</style>`, ocupando el tramo grande original del documento.
+  - Ese bloque estaba cargando después de:
+    - `agro-tokens.css`
+    - `agrociclos.css`
+    - `agro-dashboard.css`
+    - `agro-operations.css`
+    - `agro-operational-cycles.css`
+    - `agro-task-cycles.css`
+    - `agro-cartera-viva.css`
+    - `tx-cards-v2.css`
+  - Por lo tanto, el riesgo principal no era de contenido sino de orden de cascada.
+- `apps/gold/agro/index.html`
+  - Los `style=""`, `onmouseover` y `onmouseout` sensibles siguen presentes en header, dropdown de notificaciones y modales.
+  - Esos bloques se dejaron fuera a propósito para no disparar riesgo visual en esta fase.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-index-critical.css`
+  - Nuevo archivo dedicado con extracción literal del bloque CSS crítico del head.
+  - El contenido se movió sin reinterpretar selectores ni rediseñar reglas.
+- `apps/gold/agro/index.html`
+  - Se eliminó el bloque `<style>` grande del head.
+  - Se añadió `<link rel="stylesheet" href="./agro-index-critical.css">` exactamente en el mismo punto de carga donde vivía el bloque inline, preservando el orden relativo de la cascada.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - Se documentó Fase 2 en modo append-only antes y después de la extracción.
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por engine: `node v25.6.0` vs `20.x`
+
+### QA / validación
+
+- QA manual/local **no ejecutada** por restricción operativa explícita de la fase.
+- Browser QA / Playwright **no ejecutados**.
+- La validación realizada fue únicamente técnica:
+  - verificación estructural del head y del orden de carga;
+  - confirmación de que el `<style>` grande desapareció de `agro/index.html`;
+  - confirmación de que el CSS extraído quedó en archivo dedicado;
+  - `pnpm build:gold`.
+
+### Riesgo remanente / Fase 3
+
+- Los `style=""` inline y handlers hover de header, dropdown de notificaciones y modales siguen siendo deuda visual estructural.
+- Esa superficie quedó fuera a propósito y debería pasar limpia a una mini-fase posterior, sin mezclarla con esta extracción principal del bloque crítico.
