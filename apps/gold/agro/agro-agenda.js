@@ -7,6 +7,8 @@
  * Uses: agro_agenda (Supabase), agro_events (completions), dashboard.js weather data.
  */
 
+import './agro-agenda.css';
+
 // ============================================================
 // CONSTANTS
 // ============================================================
@@ -26,10 +28,10 @@ const TYPE_CONFIG = {
 };
 
 const MOON_RECOMMENDATIONS = {
-    nueva: '🌑 Luna nueva: buen día para raíces y tubérculos',
-    creciente: '🌓 Luna creciente: buen momento para sembrar',
-    llena: '🌕 Luna llena: evitar siembra, bueno para cosecha',
-    menguante: '🌗 Luna menguante: buen momento para podar y abonar'
+    nueva: 'Luna nueva: buen día para raíces y tubérculos.',
+    creciente: 'Luna creciente: buen momento para sembrar.',
+    llena: 'Luna llena: evita siembra y prioriza cosecha.',
+    menguante: 'Luna menguante: buen momento para podar y abonar.'
 };
 
 const MONTHS_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -395,6 +397,16 @@ function createAgendaStateMessage(copy, variant = 'muted') {
     return state;
 }
 
+function setAgendaCompleteIcon(button, completed) {
+    if (!button) return;
+    button.innerHTML = '';
+    const icon = document.createElement('i');
+    icon.className = completed ? 'fa-solid fa-square-check' : 'fa-regular fa-square';
+    icon.setAttribute('aria-hidden', 'true');
+    button.appendChild(icon);
+    button.setAttribute('aria-label', completed ? 'Marcar como pendiente' : 'Marcar como completada');
+}
+
 function createAgendaActivityNode(item, options = {}) {
     const tc = TYPE_CONFIG[item?.type] || TYPE_CONFIG.otro;
     const cropName = getCropName(item?.crop_id);
@@ -411,17 +423,21 @@ function createAgendaActivityNode(item, options = {}) {
     checkBtn.className = 'aga-check';
     checkBtn.dataset.action = 'toggle-complete';
     checkBtn.dataset.itemId = String(item?.id || '');
-    checkBtn.textContent = item?.completed ? '☑' : '☐';
+    setAgendaCompleteIcon(checkBtn, item?.completed === true);
 
     const info = document.createElement('div');
     info.className = 'aga-activity-info';
 
     const activityTitle = document.createElement('div');
     activityTitle.className = 'aga-activity-title';
-    activityTitle.textContent = `${tc.icon} ${String(item?.title || '')}`;
+    activityTitle.textContent = String(item?.title || tc.label || 'Actividad');
 
     const activityMeta = document.createElement('div');
     activityMeta.className = 'aga-activity-meta';
+
+    const typeSpan = document.createElement('span');
+    typeSpan.textContent = tc.label;
+    activityMeta.appendChild(typeSpan);
 
     if (showDate) {
         const dateSpan = document.createElement('span');
@@ -454,7 +470,7 @@ function createAgendaActivityNode(item, options = {}) {
     deleteBtn.className = 'aga-delete-btn';
     deleteBtn.dataset.action = 'delete-item';
     deleteBtn.dataset.itemId = String(item?.id || '');
-    deleteBtn.title = 'Eliminar';
+    deleteBtn.title = 'Eliminar actividad';
     const deleteIcon = document.createElement('i');
     deleteIcon.className = 'fa fa-trash';
     deleteBtn.appendChild(deleteIcon);
@@ -572,15 +588,15 @@ function renderAgendaContent(container, isInline) {
 
     const eyebrow = document.createElement('p');
     eyebrow.className = 'aga-eyebrow';
-    eyebrow.textContent = 'Mi Carrito / Planificación';
+    eyebrow.textContent = 'Planificación';
 
     const title = document.createElement('h3');
     title.className = 'aga-title';
-    title.textContent = 'Planificación operativa';
+    title.textContent = 'Agenda operativa';
 
     const subtitle = document.createElement('p');
     subtitle.className = 'aga-subtitle';
-    subtitle.textContent = 'Qué toca hoy, próximas actividades y contexto lunar en una lectura de trabajo. El calendario mensual queda como referencia secundaria.';
+    subtitle.textContent = 'Agenda activa, pendientes próximos y contexto de trabajo en una sola superficie. El calendario mensual queda como apoyo secundario.';
 
     const headerRight = document.createElement('div');
     headerRight.className = 'aga-header-right';
@@ -614,7 +630,7 @@ function renderAgendaContent(container, isInline) {
     const weatherHumidity = document.createElement('span');
     weatherHumidity.textContent = String(weather.humidity || '');
     const moonToday = document.createElement('span');
-    moonToday.textContent = `${todayPhase.icon} ${todayPhase.name} (${todayPhase.pct}%)`;
+    moonToday.textContent = `${todayPhase.name} (${todayPhase.pct}%)`;
     weatherBar.append(weatherTemp, weatherDesc, weatherHumidity, moonToday);
     header.appendChild(weatherBar);
 
@@ -690,7 +706,7 @@ function renderAgendaContent(container, isInline) {
     cartLink.type = 'button';
     cartLink.className = 'aga-inline-link';
     cartLink.dataset.action = 'open-cart-view';
-    cartLink.textContent = 'Abrir Mi Carrito';
+    cartLink.textContent = 'Ir a Mi Carrito';
 
     const addBtn = document.createElement('button');
     addBtn.type = 'button';
@@ -779,7 +795,7 @@ function renderAgendaContent(container, isInline) {
     calendarSummaryEyebrow.textContent = 'Calendario mensual';
     const calendarSummaryTitle = document.createElement('strong');
     calendarSummaryTitle.className = 'aga-calendar-summary__title';
-    calendarSummaryTitle.textContent = 'Vista secundaria por fecha';
+    calendarSummaryTitle.textContent = 'Referencia por fecha';
     const calendarSummaryMeta = document.createElement('span');
     calendarSummaryMeta.className = 'aga-calendar-summary__meta';
     calendarSummaryMeta.textContent = `${MONTHS_ES[_currentMonth]} ${_currentYear} · Foco ${formatAgendaDateLabel(_selectedDate)}`;
@@ -805,7 +821,7 @@ function renderAgendaContent(container, isInline) {
     prevBtn.type = 'button';
     prevBtn.className = 'aga-nav-btn';
     prevBtn.dataset.action = 'prev-month';
-    prevBtn.textContent = '◀';
+    prevBtn.innerHTML = '<i class="fa-solid fa-chevron-left" aria-hidden="true"></i>';
 
     const navLabel = document.createElement('span');
     navLabel.className = 'aga-nav-label';
@@ -815,7 +831,7 @@ function renderAgendaContent(container, isInline) {
     nextBtn.type = 'button';
     nextBtn.className = 'aga-nav-btn';
     nextBtn.dataset.action = 'next-month';
-    nextBtn.textContent = '▶';
+    nextBtn.innerHTML = '<i class="fa-solid fa-chevron-right" aria-hidden="true"></i>';
 
     nav.append(prevBtn, navLabel, nextBtn);
     calendarSection.appendChild(nav);
@@ -892,7 +908,7 @@ function renderAgendaContent(container, isInline) {
     dayCopy.append(dayEyebrow, dayTitle);
     const dayMoon = document.createElement('span');
     dayMoon.className = 'aga-day-moon';
-    dayMoon.textContent = `${selMoon.icon} ${selMoon.name}`;
+    dayMoon.textContent = selMoon.name;
     dayDetailHeader.append(dayCopy, dayMoon);
     dayDetail.appendChild(dayDetailHeader);
 
@@ -931,7 +947,7 @@ function openCreateModal() {
 
     const title = document.createElement('h3');
     title.className = 'aga-create-title';
-    title.textContent = '+ Nueva Actividad';
+    title.textContent = 'Nueva actividad';
     modal.appendChild(title);
 
     const typeLabel = document.createElement('label');
@@ -947,7 +963,7 @@ function openCreateModal() {
         btn.type = 'button';
         btn.className = 'aga-type-pill';
         btn.dataset.type = key;
-        btn.textContent = `${cfg.icon} ${cfg.label}`;
+        btn.textContent = cfg.label;
         typeGrid.appendChild(btn);
     });
     modal.appendChild(typeGrid);
@@ -1064,7 +1080,7 @@ function openCreateModal() {
     confirmBtn.type = 'button';
     confirmBtn.className = 'aga-btn-primary';
     confirmBtn.dataset.action = 'confirm-create';
-    confirmBtn.textContent = '✅ Programar';
+    confirmBtn.textContent = 'Programar';
     actions.append(cancelBtn, confirmBtn);
     modal.appendChild(actions);
 

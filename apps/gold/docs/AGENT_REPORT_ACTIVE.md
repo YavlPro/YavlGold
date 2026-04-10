@@ -12144,3 +12144,94 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
   - `Calculadora` abre la calculadora real y no aterriza en `Mi Carrito`.
 - Confirmar en `/dashboard/` que la card `Recomendado / Agro listo` deja el botón `Entrar` activo y navegable hacia `/agro/`.
 - QA manual en navegador no ejecutada en esta sesión por solicitud explícita del usuario.
+
+---
+
+## 2026-04-09 - Diagnóstico inicial para alinear Planificación con ADN Visual V10
+
+### Diagnóstico inicial
+
+- La vista real que abre `Planificación` es `apps/gold/agro/agro-agenda.js`.
+- El desvío principal no está en routing sino en la superficie visual:
+  - el header aún mezcla el contexto `Mi Carrito / Planificación`, aunque la vista ya es una página propia de agenda;
+  - el módulo sigue inyectando un bloque grande de CSS desde JS, en vez de apoyarse en una hoja CSS del módulo;
+  - la UI mantiene varias señales heredadas y ruidosas para V10 estricto:
+    - iconografía emoji visible en títulos/acciones de actividad;
+    - copy híbrido entre agenda, carrito y lectura lunar;
+    - estilos inline del módulo base con demasiados fallbacks/hardcodes para una vista que ya debería sentirse canónica.
+- La opción más segura es mantener la lógica de agenda y corregir solo:
+  - naming visible;
+  - densidad visual;
+  - tokens/capas visuales de la vista inline;
+  - separación de estilos del módulo en CSS real.
+
+### Plan mínimo
+
+- Tocar `apps/gold/agro/agro-agenda.js` para:
+  - limpiar el copy heredado;
+  - bajar el ruido visual más evidente;
+  - importar una hoja CSS del módulo.
+- Crear `apps/gold/agro/agro-agenda.css` con overrides V10 estrictos para la vista inline de `Planificación`.
+- No tocar persistencia, lógica de agenda, Supabase, shell ni el resto del dashboard.
+- Validar con `pnpm build:gold`.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-agenda.js`
+  - La vista inline dejó de presentarse como `Mi Carrito / Planificación` y ahora se lee como `Planificación` + `Agenda operativa`.
+  - Se limpió el copy principal para que la superficie sea agenda real, no híbrido entre agenda y carrito.
+  - Se redujo el ruido visual del contenido principal:
+    - recomendaciones lunares sin emoji de arranque;
+    - lectura de luna en header sin emoji grande;
+    - checkboxes de actividad con Font Awesome en lugar de caracteres `☑/☐`;
+    - type pills del modal sin emojis embebidos;
+    - navegación mensual con iconografía Font Awesome;
+    - CTA `Programar` sin adornos ajenos al DNA.
+  - El módulo ahora importa una hoja CSS propia (`agro-agenda.css`) para la capa visual de `Planificación`.
+
+- `apps/gold/agro/agro-agenda.css`
+  - Nueva hoja CSS del módulo con overrides específicos para la vista inline de `Planificación`.
+  - Se alineó la superficie a tokens canónicos V10:
+    - `--bg-*`
+    - `--gold-*`
+    - `--text-*`
+    - `--border-*`
+    - radios y sombras del sistema.
+  - Se normalizó:
+    - header;
+    - chips/contexto;
+    - cards métricas;
+    - secciones operativas;
+    - disclosure del calendario;
+    - estados;
+    - modal de creación;
+    - responsive en 900 / 768 / 480;
+    - `prefers-reduced-motion`.
+
+- `apps/gold/agro/index.html`
+  - El hero de `Mi Carrito` dejó de llamarse `Mi Carrito y Planificación` y volvió a una lectura honesta como superficie comercial propia.
+
+- `apps/gold/agro/agro-cart.js`
+  - El `aria-label` del workspace interno se ajustó para describirlo como accesos rápidos, no como sustituto de la vista de planificación.
+
+### Build
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por `node v25.6.0` vs `20.x`
+
+### QA sugerido
+
+- Confirmar que `Planificación` abre una superficie visual coherente con V10:
+  - fondo oscuro canónico;
+  - dorado `--gold-4` como acento;
+  - tipografía Orbitron/Rajdhani;
+  - menor ruido visual;
+  - lectura honesta separada de `Mi Carrito`.
+- QA manual en navegador no ejecutada en esta sesión por solicitud explícita del usuario.

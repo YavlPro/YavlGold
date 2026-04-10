@@ -957,7 +957,7 @@ function renderAddItemForm() {
 
 function renderCartWorkspacePanels() {
     return `
-        <section class="agro-cart-workspace" aria-label="Planificación y cálculo dentro de Mi Carrito">
+        <section class="agro-cart-workspace" aria-label="Accesos rápidos de agenda y cálculo dentro de Mi Carrito">
             ${renderCartPlanningPanel()}
             ${renderCartCalculatorPanel()}
         </section>
