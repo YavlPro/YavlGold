@@ -7,6 +7,7 @@
  * Uses: agro_agenda (Supabase), agro_events (completions), dashboard.js weather data.
  */
 
+import { openAgroCalculadora } from './agrocalculadora.js';
 import './agro-agenda.css';
 
 // ============================================================
@@ -397,6 +398,264 @@ function createAgendaStateMessage(copy, variant = 'muted') {
     return state;
 }
 
+function parsePlanningRoiNumber(rawValue) {
+    const normalized = String(rawValue ?? '').replace(',', '.').trim();
+    if (!normalized) return 0;
+    const value = Number.parseFloat(normalized);
+    return Number.isFinite(value) ? value : 0;
+}
+
+function formatPlanningRoiAmount(value) {
+    const safeValue = Number.isFinite(value) ? value : 0;
+    return new Intl.NumberFormat('es-VE', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(safeValue);
+}
+
+function formatPlanningRoiNumber(value) {
+    const safeValue = Number.isFinite(value) ? value : 0;
+    return new Intl.NumberFormat('es-VE', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+    }).format(safeValue);
+}
+
+function computePlanningRoiResult(values = {}) {
+    const investment = parsePlanningRoiNumber(values.investment);
+    const revenue = parsePlanningRoiNumber(values.revenue);
+    const quantity = parsePlanningRoiNumber(values.quantity);
+    const profit = revenue - investment;
+    const roi = investment > 0 ? (profit / investment) * 100 : 0;
+    const pricePerKg = quantity > 0 ? revenue / quantity : 0;
+
+    return {
+        investment,
+        revenue,
+        quantity,
+        profit,
+        roi,
+        pricePerKg
+    };
+}
+
+function setPlanningRailActive(container, panel) {
+    container.querySelectorAll('[data-aga-rail]').forEach((node) => {
+        node.classList.toggle('is-active', node.dataset.agaRail === panel);
+    });
+}
+
+function focusPlanningPanel(container, panel) {
+    setPlanningRailActive(container, panel);
+
+    const target = container.querySelector(`[data-aga-panel="${panel}"]`);
+    if (!target) return;
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    target.scrollIntoView({
+        block: 'start',
+        behavior: prefersReducedMotion ? 'auto' : 'smooth'
+    });
+
+    const focusTarget = panel === 'calculator'
+        ? target.querySelector('[data-aga-roi-input="investment"], button')
+        : target.querySelector('button, [href], input, select, textarea');
+
+    if (focusTarget && typeof focusTarget.focus === 'function') {
+        focusTarget.focus({ preventScroll: true });
+    }
+}
+
+function createPlanningCalculatorField({ key, label, placeholder = '0.00', step = '0.01' }) {
+    const field = document.createElement('label');
+    field.className = 'aga-calculator-field';
+
+    const fieldLabel = document.createElement('span');
+    fieldLabel.className = 'aga-calculator-field__label';
+    fieldLabel.textContent = label;
+
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.className = 'aga-calculator-field__input';
+    input.min = '0';
+    input.step = step;
+    input.inputMode = 'decimal';
+    input.placeholder = placeholder;
+    input.dataset.agaRoiInput = key;
+
+    field.append(fieldLabel, input);
+    return field;
+}
+
+function createPlanningCalculatorResultItem(label, key) {
+    const item = document.createElement('div');
+    item.className = 'aga-calculator-result';
+
+    const labelEl = document.createElement('span');
+    labelEl.className = 'aga-calculator-result__label';
+    labelEl.textContent = label;
+
+    const valueEl = document.createElement('strong');
+    valueEl.className = 'aga-calculator-result__value';
+    valueEl.dataset.agaRoiResult = key;
+
+    item.append(labelEl, valueEl);
+    return item;
+}
+
+function syncPlanningCalculatorResults(container) {
+    const result = computePlanningRoiResult({
+        investment: container.querySelector('[data-aga-roi-input="investment"]')?.value,
+        revenue: container.querySelector('[data-aga-roi-input="revenue"]')?.value,
+        quantity: container.querySelector('[data-aga-roi-input="quantity"]')?.value
+    });
+
+    const valueMap = {
+        investment: formatPlanningRoiAmount(result.investment),
+        revenue: formatPlanningRoiAmount(result.revenue),
+        profit: formatPlanningRoiAmount(result.profit),
+        roi: `${result.roi.toFixed(1)}%`
+    };
+
+    Object.entries(valueMap).forEach(([key, value]) => {
+        const node = container.querySelector(`[data-aga-roi-result="${key}"]`);
+        if (node) {
+            node.textContent = value;
+        }
+    });
+
+    const profitNode = container.querySelector('[data-aga-roi-result="profit"]');
+    if (profitNode) {
+        profitNode.classList.toggle('is-positive', result.profit >= 0);
+        profitNode.classList.toggle('is-negative', result.profit < 0);
+    }
+
+    const roiNode = container.querySelector('[data-aga-roi-result="roi"]');
+    if (roiNode) {
+        roiNode.classList.toggle('is-positive', result.roi >= 0);
+        roiNode.classList.toggle('is-negative', result.roi < 0);
+    }
+
+    const note = container.querySelector('[data-aga-roi-note]');
+    if (note) {
+        note.textContent = result.quantity > 0
+            ? `${formatPlanningRoiNumber(result.quantity)} kg proyectados · ${formatPlanningRoiAmount(result.pricePerKg)} por kg estimado.`
+            : 'Completa inversión e ingreso proyectado para ver margen, retorno y lectura por kilo.';
+    }
+
+    return result;
+}
+
+function resetPlanningCalculator(container) {
+    container.querySelectorAll('[data-aga-roi-input]').forEach((input) => {
+        input.value = '';
+    });
+    syncPlanningCalculatorResults(container);
+}
+
+function createPlanningCalculatorSection() {
+    const section = document.createElement('section');
+    section.className = 'aga-planner-section aga-planner-section--calculator';
+    section.dataset.agaPanel = 'calculator';
+
+    const head = document.createElement('div');
+    head.className = 'aga-planner-section__head';
+
+    const copy = document.createElement('div');
+    copy.className = 'aga-planner-section__copy';
+
+    const eyebrow = document.createElement('span');
+    eyebrow.className = 'aga-planner-section__eyebrow';
+    eyebrow.textContent = 'Calculadora';
+
+    const title = document.createElement('h4');
+    title.className = 'aga-planner-section__title';
+    title.textContent = 'ROI operativo';
+
+    const meta = document.createElement('p');
+    meta.className = 'aga-planner-section__meta';
+    meta.textContent = 'Proyecta inversión, ingreso y margen sin salir de la planificación. Si necesitas la vista completa, ábrela desde aquí.';
+
+    copy.append(eyebrow, title, meta);
+
+    const actions = document.createElement('div');
+    actions.className = 'aga-planner-actions';
+
+    const modalBtn = document.createElement('button');
+    modalBtn.type = 'button';
+    modalBtn.className = 'aga-inline-link aga-calculator-secondary';
+    modalBtn.dataset.action = 'open-full-calculator';
+    modalBtn.textContent = 'Abrir calculadora completa';
+
+    actions.appendChild(modalBtn);
+    head.append(copy, actions);
+
+    const shell = document.createElement('div');
+    shell.className = 'aga-calculator-shell';
+
+    const lead = document.createElement('p');
+    lead.className = 'aga-calculator-lead';
+    lead.textContent = 'Úsala como soporte de decisión antes de comprar, sembrar o mover gasto hacia Operación Comercial.';
+
+    const fields = document.createElement('div');
+    fields.className = 'aga-calculator-fields';
+    fields.append(
+        createPlanningCalculatorField({
+            key: 'investment',
+            label: 'Inversión',
+            placeholder: '0.00'
+        }),
+        createPlanningCalculatorField({
+            key: 'revenue',
+            label: 'Ingreso proyectado',
+            placeholder: '0.00'
+        }),
+        createPlanningCalculatorField({
+            key: 'quantity',
+            label: 'Kilos proyectados',
+            placeholder: '0',
+            step: '0.01'
+        })
+    );
+
+    const actionsRow = document.createElement('div');
+    actionsRow.className = 'aga-calculator-actions';
+
+    const clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.className = 'aga-inline-link aga-calculator-secondary';
+    clearBtn.dataset.action = 'clear-planning-roi';
+    clearBtn.textContent = 'Limpiar';
+
+    const calculateBtn = document.createElement('button');
+    calculateBtn.type = 'button';
+    calculateBtn.className = 'aga-add-btn aga-calculator-primary';
+    calculateBtn.dataset.action = 'calculate-planning-roi';
+    calculateBtn.textContent = 'Calcular';
+
+    actionsRow.append(clearBtn, calculateBtn);
+
+    const results = document.createElement('div');
+    results.className = 'aga-calculator-results';
+    results.append(
+        createPlanningCalculatorResultItem('Inversión', 'investment'),
+        createPlanningCalculatorResultItem('Ingreso', 'revenue'),
+        createPlanningCalculatorResultItem('Margen', 'profit'),
+        createPlanningCalculatorResultItem('ROI', 'roi')
+    );
+
+    const note = document.createElement('p');
+    note.className = 'aga-calculator-note';
+    note.dataset.agaRoiNote = 'true';
+
+    shell.append(lead, fields, actionsRow, results, note);
+    section.append(head, shell);
+    syncPlanningCalculatorResults(section);
+    return section;
+}
+
 function setAgendaCompleteIcon(button, completed) {
     if (!button) return;
     button.innerHTML = '';
@@ -592,11 +851,11 @@ function renderAgendaContent(container, isInline) {
 
     const title = document.createElement('h3');
     title.className = 'aga-title';
-    title.textContent = 'Agenda operativa';
+    title.textContent = 'Planificación operativa';
 
     const subtitle = document.createElement('p');
     subtitle.className = 'aga-subtitle';
-    subtitle.textContent = 'Agenda activa, pendientes próximos y contexto de trabajo en una sola superficie. El calendario mensual queda como apoyo secundario.';
+    subtitle.textContent = 'Agenda operativa, cálculo rápido y lectura mensual dentro de una sola superficie de trabajo. Mi Carrito sigue como flujo aparte.';
 
     const headerRight = document.createElement('div');
     headerRight.className = 'aga-header-right';
@@ -664,7 +923,7 @@ function renderAgendaContent(container, isInline) {
             tone: planning.overdueItems.length > 0 ? 'warning' : 'default'
         }),
         createAgendaMetricCard({
-            label: 'Contexto',
+            label: 'Foco',
             value: todayPhase.name,
             copy: planningCropFocus,
             tone: 'context'
@@ -675,11 +934,32 @@ function renderAgendaContent(container, isInline) {
     const body = document.createElement('div');
     body.className = 'aga-body';
 
+    const sectionRail = document.createElement('div');
+    sectionRail.className = 'aga-section-rail';
+
+    const agendaRail = document.createElement('button');
+    agendaRail.type = 'button';
+    agendaRail.className = 'aga-section-chip is-active';
+    agendaRail.dataset.action = 'focus-agenda-section';
+    agendaRail.dataset.agaRail = 'agenda';
+    agendaRail.textContent = 'Agenda operativa';
+
+    const calculatorRail = document.createElement('button');
+    calculatorRail.type = 'button';
+    calculatorRail.className = 'aga-section-chip';
+    calculatorRail.dataset.action = 'focus-calculator-section';
+    calculatorRail.dataset.agaRail = 'calculator';
+    calculatorRail.textContent = 'Calculadora';
+
+    sectionRail.append(agendaRail, calculatorRail);
+    body.appendChild(sectionRail);
+
     const plannerMain = document.createElement('div');
     plannerMain.className = 'aga-planner-main';
 
     const todaySection = document.createElement('section');
     todaySection.className = 'aga-planner-section aga-planner-section--primary';
+    todaySection.dataset.agaPanel = 'agenda';
 
     const todayHead = document.createElement('div');
     todayHead.className = 'aga-planner-section__head';
@@ -712,7 +992,7 @@ function renderAgendaContent(container, isInline) {
     addBtn.type = 'button';
     addBtn.className = 'aga-add-btn';
     addBtn.dataset.action = 'open-create';
-    addBtn.textContent = 'Agregar actividad';
+    addBtn.textContent = 'Nueva actividad';
 
     plannerActions.append(cartLink, addBtn);
     todayHead.append(todayCopy, plannerActions);
@@ -721,6 +1001,9 @@ function renderAgendaContent(container, isInline) {
         emptyCopy: 'Día libre. Si algo debe moverse hoy, agrégalo aquí y úsalo como foco operativo.'
     }));
     plannerMain.appendChild(todaySection);
+
+    const calculatorSection = createPlanningCalculatorSection();
+    plannerMain.appendChild(calculatorSection);
 
     const upcomingSection = document.createElement('section');
     upcomingSection.className = 'aga-planner-section';
@@ -1194,6 +1477,34 @@ function attachAgendaListeners(container, isInline) {
             _selectedDate = `${_currentYear}-${String(_currentMonth + 1).padStart(2, '0')}-01`;
             renderAgendaContent(modal, inlineCtx);
             attachAgendaListeners(modal, inlineCtx);
+            return;
+        }
+
+        if (action === 'focus-agenda-section') {
+            focusPlanningPanel(modal, 'agenda');
+            return;
+        }
+
+        if (action === 'focus-calculator-section') {
+            focusPlanningPanel(modal, 'calculator');
+            return;
+        }
+
+        if (action === 'calculate-planning-roi') {
+            syncPlanningCalculatorResults(modal);
+            setPlanningRailActive(modal, 'calculator');
+            return;
+        }
+
+        if (action === 'clear-planning-roi') {
+            resetPlanningCalculator(modal);
+            setPlanningRailActive(modal, 'calculator');
+            return;
+        }
+
+        if (action === 'open-full-calculator') {
+            setPlanningRailActive(modal, 'calculator');
+            openAgroCalculadora(actionEl);
             return;
         }
 

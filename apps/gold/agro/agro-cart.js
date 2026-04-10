@@ -7,6 +7,7 @@
  */
 
 import { SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, formatCurrencyDisplay } from './agro-exchange.js';
+import { openAgroCalculadora } from './agrocalculadora.js';
 import { getAgroRuntimeUserId, readBestAgroCrops } from '../assets/js/utils/agroCropsCache.js';
 
 // ============================================================
@@ -1413,7 +1414,7 @@ function attachCartListeners(container) {
         }
 
         if (action === 'open-calculator-modal') {
-            document.getElementById('btn-open-agro-calculator')?.click();
+            openAgroCalculadora(actionEl);
             return;
         }
 

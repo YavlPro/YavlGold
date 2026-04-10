@@ -12235,3 +12235,85 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
   - menor ruido visual;
   - lectura honesta separada de `Mi Carrito`.
 - QA manual en navegador no ejecutada en esta sesión por solicitud explícita del usuario.
+
+---
+
+## 2026-04-09 - Integración de Calculadora dentro de Planificación
+
+### Diagnóstico inicial
+
+- La verdad actual de `Planificación` vive en `apps/gold/agro/agro-agenda.js`, pero `Calculadora` sigue visible como entrada paralela en el shell y como card separada en herramientas.
+- La colisión ya no es con `Mi Carrito`; ahora el problema es de arquitectura de experiencia:
+  - `Planificación` abre la agenda real;
+  - `Calculadora` sigue existiendo como destino aislado;
+  - el usuario recibe dos puntos de entrada para una misma capa operativa que debería vivir unificada.
+- La calculadora existente sigue siendo válida como herramienta y modal, pero su exposición visible quedó fuera del producto esperado.
+- Los archivos donde vive la verdad del fix son:
+  - `apps/gold/agro/index.html` para entradas visibles y CTAs;
+  - `apps/gold/agro/agro-agenda.js` para integrar la calculadora dentro de la experiencia real de planificación;
+  - `apps/gold/agro/agro-agenda.css` para alinear jerarquía, espaciado y densidad al ADN V10;
+  - `apps/gold/agro/agrocalculadora.js` y `apps/gold/agro/agro-cart.js` solo si hace falta desacoplar la apertura del modal de un trigger visible independiente.
+
+### Plan mínimo
+
+- Quitar `Calculadora` como entrada independiente visible del shell/sidebar.
+- Integrar una subsección real de `Calculadora` dentro de `Planificación`, sin crear una pantalla nueva.
+- Mantener `Mi Carrito` separado y sin volver a mezclar naming ni routing.
+- Ajustar la superficie inline de `Planificación` para que la lectura sea más V10:
+  - jerarquía más clara;
+  - densidad más respirable;
+  - labels más honestos;
+  - bloques y acciones más consistentes.
+- No tocar persistencia, Supabase, dashboard ni el resto del módulo fuera del wiring necesario.
+
+### Cambios aplicados
+
+- `apps/gold/agro/index.html`
+  - Se eliminó `Calculadora` como subitem independiente del shell de `Operación comercial`.
+  - El acceso rápido visible que antes abría calculadora pasó a abrir `Planificación`.
+  - La card de herramientas de `Planificación` ahora describe la experiencia integrada: agenda + calculadora + calendario.
+  - Se eliminó la card independiente de `Calculadora` en herramientas para no duplicar la entrada del producto.
+
+- `apps/gold/agro/agro-agenda.js`
+  - `Planificación` dejó de presentarse como agenda aislada y ahora abre `Planificación operativa`.
+  - Se añadió una subsección interna real de `Calculadora` dentro de la misma vista.
+  - La vista ahora expone dos subsecciones visibles:
+    - `Agenda operativa`
+    - `Calculadora`
+  - Se agregó cálculo rápido inline de ROI, margen e ingreso por kilo, con CTA al modal completo existente.
+  - Se mantuvo `Mi Carrito` como destino aparte y solo como acceso lateral desde la misma superficie.
+
+- `apps/gold/agro/agro-agenda.css`
+  - Se reforzó la jerarquía V10 del inline planner:
+    - rail de subsecciones;
+    - grid más limpio;
+    - mejores paddings;
+    - bloques con radios/sombras consistentes;
+    - formulario y resultados de calculadora alineados a tokens canónicos.
+
+- `apps/gold/agro/agro-cart.js`
+  - `Mi Carrito` conserva su acceso secundario a calculadora, pero ya no depende de un botón visible global independiente.
+
+- `apps/gold/agro/agro-shell.js`
+  - El action token `calculator` quedó reconducido a `agenda` como fallback honesto, en vez de buscar una entrada separada.
+
+### Build
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por `node v25.6.0` vs `20.x`
+
+### QA sugerido
+
+- Confirmar en `/agro` que el sidebar de `Operación comercial` ya no muestra `Calculadora` como destino separado.
+- Confirmar que `Planificación` abre una sola superficie con:
+  - `Agenda operativa`
+  - `Calculadora`
+- Confirmar que `Mi Carrito` sigue entrando a su propia vista sin renombrarse ni absorber planificación.
+- QA manual en navegador no ejecutada en esta sesión por solicitud explícita del usuario.

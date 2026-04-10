@@ -287,7 +287,10 @@ function runAction(action) {
         case 'social':
             return clickIfExists('#btn-open-agro-social');
         case 'calculator':
-            return clickIfExists('#btn-open-agro-calculator');
+            window.dispatchEvent(new CustomEvent('agro:shell:set-view', {
+                detail: { view: 'agenda', scroll: true }
+            }));
+            return true;
         default:
             return false;
     }
