@@ -782,8 +782,9 @@ function displayWeather(data) {
 function calculateMoonPhase() {
     const phaseEl = document.getElementById('moon-phase');
     const iconEl = document.getElementById('moon-icon');
+    const adviceEl = document.getElementById('moon-advice');
 
-    if (!phaseEl) return;
+    if (!phaseEl && !adviceEl && !iconEl) return;
 
     const date = new Date();
     let year = date.getFullYear();
@@ -835,11 +836,14 @@ function calculateMoonPhase() {
     }
 
     if (iconEl) iconEl.textContent = icon;
-    phaseEl.innerHTML = `
-        <div class="agro-lunar-icon">${icon}</div>
-        <div class="agro-lunar-phase">${phaseName}</div>
-        <div class="agro-lunar-tip" id="moon-advice">${advice}</div>
-    `;
+    if (adviceEl) adviceEl.textContent = advice;
+    if (phaseEl) {
+        phaseEl.innerHTML = `
+            <div class="agro-lunar-icon">${icon}</div>
+            <div class="agro-lunar-phase">${phaseName}</div>
+            <div class="agro-lunar-tip">${advice}</div>
+        `;
+    }
 
     console.log('[Agro] Moon Phase:', phaseName, '(Index:', b + ')');
 }
