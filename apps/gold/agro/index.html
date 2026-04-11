@@ -814,49 +814,34 @@
     </div>
 
     <!-- Modal: Agenda Lunar 2026 (Split View) - DNA Visual V9.8 -->
-    <div id="modal-lunar" class="modal-overlay hidden"
-        style="position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(12px); z-index: 1000; align-items: center; justify-content: center; padding: 16px;"
+    <div id="modal-lunar" class="modal-overlay hidden agro-legacy-modal-shell"
         onclick="if(event.target === this) window.closeModal('modal-lunar')">
-        <div
-            style="background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 50%, #000000 100%); border: 1px solid rgba(200, 167, 82, 0.3); border-radius: 16px; width: 100%; max-width: 1100px; height: 85vh; display: flex; box-shadow: 0 0 60px rgba(200, 167, 82, 0.15), 0 0 100px rgba(200, 167, 82, 0.05), inset 0 1px 0 rgba(200, 167, 82, 0.1); overflow: hidden;">
+        <div class="agro-inline-modal-surface agro-lunar-modal__dialog">
 
             <!-- Left: Calendar -->
-            <div
-                style="flex: 1; display: flex; flex-direction: column; border-right: 1px solid rgba(200, 167, 82, 0.15);">
-                <div
-                    style="padding: 20px 24px; border-bottom: 1px solid rgba(200, 167, 82, 0.15); background: linear-gradient(180deg, rgba(200, 167, 82, 0.05) 0%, transparent 100%);">
-                    <h3
-                        style="font-family: 'Orbitron', sans-serif; color: #fff; font-size: 1.3rem; margin: 0; letter-spacing: 1px; text-shadow: 0 0 20px rgba(200, 167, 82, 0.3);">
-                        Agenda Lunar 2026</h3>
-                    <p
-                        style="font-size: 10px; color: var(--gold-primary, #C8A752); margin: 6px 0 0 0; text-transform: uppercase; letter-spacing: 1.5px;">
+            <div class="agro-lunar-modal__calendar">
+                <div class="agro-lunar-modal__section-head">
+                    <h3 class="agro-lunar-modal__title">Agenda Lunar 2026</h3>
+                    <p class="agro-lunar-modal__eyebrow">
                         Selecciona un día para planificar</p>
                 </div>
-                <div id="lunar-calendar-grid"
-                    style="padding: 20px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; background: linear-gradient(180deg, #0d0d0d 0%, #0a0a0a 100%); flex: 1;">
+                <div id="lunar-calendar-grid" class="agro-lunar-modal__grid">
                     <!-- Contenido generado por JS -->
                 </div>
             </div>
 
             <!-- Right: Agenda Panel -->
-            <div
-                style="width: 320px; background: linear-gradient(180deg, #0f0f0f 0%, #0a0a0a 100%); display: flex; flex-direction: column;">
-                <div
-                    style="padding: 20px 24px; border-bottom: 1px solid rgba(200, 167, 82, 0.15); display: flex; justify-content: space-between; align-items: center; background: linear-gradient(180deg, rgba(200, 167, 82, 0.05) 0%, transparent 100%);">
-                    <h4
-                        style="font-family: 'Orbitron', sans-serif; color: var(--gold-primary, #C8A752); font-size: 1rem; margin: 0;">
-                        Detalles del Día</h4>
+            <div class="agro-lunar-modal__side">
+                <div class="agro-lunar-modal__side-head">
+                    <h4 class="agro-lunar-modal__side-title">Detalles del Día</h4>
                     <button onclick="window.closeModal('modal-lunar')" class="agro-modal-inline-close">
                         <i class="fa-solid fa-xmark agro-modal-inline-close__icon"></i>
                     </button>
                 </div>
-                <div id="agenda-panel"
-                    style="padding: 24px; flex: 1; display: flex; flex-direction: column; overflow-y: auto;">
-                    <div
-                        style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555;">
-                        <i class="fa-regular fa-calendar-check"
-                            style="font-size: 3rem; margin-bottom: 16px; opacity: 0.5;"></i>
-                        <p style="font-size: 12px; text-align: center; line-height: 1.6;">Selecciona una fecha<br>para
+                <div id="agenda-panel" class="agro-lunar-modal__panel">
+                    <div class="agro-lunar-modal__empty">
+                        <i class="fa-regular fa-calendar-check agro-lunar-modal__empty-icon"></i>
+                        <p class="agro-lunar-modal__empty-copy">Selecciona una fecha<br>para
                             ver detalles y notas</p>
                     </div>
                 </div>
@@ -865,51 +850,43 @@
     </div>
 
     <!-- Modal: Centro Financiero (Market Hub v2) - DNA Visual V9.8 -->
-    <div id="modal-market" class="modal-overlay hidden"
-        style="position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(12px); z-index: 1000; align-items: center; justify-content: center; padding: 16px;"
+    <div id="modal-market" class="modal-overlay hidden agro-legacy-modal-shell"
         onclick="if(event.target === this) window.closeModal('modal-market')">
-        <div
-            style="background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 50%, #000000 100%); border: 1px solid rgba(200, 167, 82, 0.3); border-radius: 16px; width: 100%; max-width: 560px; display: flex; flex-direction: column; box-shadow: 0 0 60px rgba(200, 167, 82, 0.15), 0 0 100px rgba(200, 167, 82, 0.05), inset 0 1px 0 rgba(200, 167, 82, 0.1); overflow: hidden;">
+        <div class="agro-inline-modal-surface agro-market-modal__dialog">
             <!-- Header -->
-            <div
-                style="padding: 20px 24px; border-bottom: 1px solid rgba(200, 167, 82, 0.15); display: flex; justify-content: space-between; align-items: center; background: linear-gradient(180deg, rgba(200, 167, 82, 0.05) 0%, transparent 100%);">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <i class="fa-solid fa-sack-dollar"
-                        style="color: var(--gold-primary, #C8A752); font-size: 1.4rem; filter: drop-shadow(0 0 8px rgba(200, 167, 82, 0.4));"></i>
-                    <h3
-                        style="font-family: 'Orbitron', sans-serif; color: #fff; font-size: 1.2rem; margin: 0; letter-spacing: 1px; text-shadow: 0 0 20px rgba(200, 167, 82, 0.3);">
-                        Centro Financiero</h3>
+            <div class="agro-market-modal__header">
+                <div class="agro-market-modal__brand">
+                    <i class="fa-solid fa-sack-dollar agro-market-modal__icon"></i>
+                    <h3 class="agro-market-modal__title">Centro Financiero</h3>
                 </div>
                 <button onclick="window.closeModal('modal-market')" class="agro-modal-inline-close">
                     <i class="fa-solid fa-xmark agro-modal-inline-close__icon"></i>
                 </button>
             </div>
             <!-- Tabs -->
-            <div
-                style="display: flex; border-bottom: 1px solid rgba(200, 167, 82, 0.15); background: linear-gradient(180deg, #0d0d0d 0%, #0a0a0a 100%);">
+            <div class="agro-market-modal__tabs">
                 <button id="tab-btn-crypto" onclick="window.switchMarketTab('crypto')"
-                    style="flex: 1; padding: 14px; font-size: 11px; font-weight: 700; letter-spacing: 1px; background: rgba(200, 167, 82, 0.05); border: none; border-bottom: 2px solid var(--gold-primary, #C8A752); color: #fff; cursor: pointer; transition: all 0.2s;">
-                    <i class="fa-brands fa-bitcoin" style="margin-right: 6px;"></i>CRIPTOMONEDAS
+                    class="agro-market-modal__tab agro-market-modal__tab--default">
+                    <i class="fa-brands fa-bitcoin agro-market-modal__tab-icon"></i>CRIPTOMONEDAS
                 </button>
                 <button id="tab-btn-fiat" onclick="window.switchMarketTab('fiat')"
-                    style="flex: 1; padding: 14px; font-size: 11px; font-weight: 700; letter-spacing: 1px; background: transparent; border: none; border-bottom: 2px solid transparent; color: #666; cursor: pointer; transition: all 0.2s;">
-                    <i class="fa-solid fa-money-bill-wave" style="margin-right: 6px;"></i>DIVISAS FIAT
+                    class="agro-market-modal__tab">
+                    <i class="fa-solid fa-money-bill-wave agro-market-modal__tab-icon"></i>DIVISAS FIAT
                 </button>
             </div>
             <!-- Content with Scroll -->
-            <div
-                style="padding: 20px; height: 400px; overflow-y: auto; background: linear-gradient(180deg, #0d0d0d 0%, #080808 100%);">
+            <div class="agro-market-modal__content">
                 <!-- Crypto View -->
-                <div id="view-crypto" style="display: flex; flex-direction: column; gap: 10px;">
-                    <div id="crypto-list-container" style="display: flex; flex-direction: column; gap: 10px;">
-                        <div style="text-align: center; color: #666; padding: 60px 0;">📡 Cargando mercado crypto...
+                <div id="view-crypto" class="agro-market-modal__view">
+                    <div id="crypto-list-container" class="agro-market-modal__list">
+                        <div class="agro-market-modal__loading">📡 Cargando mercado crypto...
                         </div>
                     </div>
                 </div>
                 <!-- Fiat View (Cards - same as Crypto) -->
-                <div id="view-fiat" style="display: none; flex-direction: column; gap: 10px;">
-                    <div id="fiat-list-container" style="display: flex; flex-direction: column; gap: 10px;">
-                        <div style="text-align: center; color: #666; padding: 60px 0;">📡 Cargando divisas...</div>
+                <div id="view-fiat" class="agro-market-modal__view agro-market-modal__view--hidden">
+                    <div id="fiat-list-container" class="agro-market-modal__list">
+                        <div class="agro-market-modal__loading">📡 Cargando divisas...</div>
                     </div>
                 </div>
             </div>
@@ -918,67 +895,66 @@
 
     <!-- Modal: Nuevo Cultivo - DNA Visual V9.8 -->
     <div id="modal-new-crop" class="modal-overlay">
-        <div class="modal-container"
-            style="background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 50%, #000 100%); border: 1px solid rgba(200, 167, 82, 0.3); box-shadow: 0 0 60px rgba(200, 167, 82, 0.1);">
+        <div class="modal-container agro-new-crop-modal__container">
             <div class="modal-header">
                 <h3 class="modal-title">🌱 Nuevo Cultivo</h3>
-                <button class="modal-close" onclick="window.closeCropModal()" style="color: #C8A752;">&times;</button>
+                <button class="modal-close agro-new-crop-modal__close" onclick="window.closeCropModal()">&times;</button>
             </div>
             <form id="form-new-crop" class="modal-body" onsubmit="event.preventDefault(); window.saveCrop();">
                 <input type="hidden" id="crop-edit-id" value="">
-                <div class="input-group" style="margin-bottom: 1rem;">
+                <div class="input-group agro-modal-field-block">
                     <label class="input-label" for="crop-name">Nombre del Cultivo *</label>
-                    <input type="text" id="crop-name" class="styled-input" placeholder="Ej: Tomate Cherry" required
-                        style="padding-left: 1rem;">
+                    <input type="text" id="crop-name" class="styled-input agro-modal-input--compact"
+                        placeholder="Ej: Tomate Cherry" required>
                 </div>
                 <div class="input-row">
                     <div class="input-group">
                         <label class="input-label" for="crop-variety">Variedad</label>
-                        <input type="text" id="crop-variety" class="styled-input" placeholder="Ej: Roma"
-                            style="padding-left: 1rem;">
+                        <input type="text" id="crop-variety" class="styled-input agro-modal-input--compact"
+                            placeholder="Ej: Roma">
                     </div>
                     <div class="input-group">
                         <label class="input-label" for="crop-icon">Icono</label>
-                        <input type="text" id="crop-icon" class="styled-input" placeholder="🍅" maxlength="4" value="🌱"
-                            style="padding-left: 1rem; text-align: center; font-size: 1.5rem;">
+                        <input type="text" id="crop-icon"
+                            class="styled-input agro-modal-input--compact agro-new-crop-modal__icon-input"
+                            placeholder="🍅" maxlength="4" value="🌱">
                     </div>
                 </div>
-                <div class="input-row" style="display:none;">
+                <div class="input-row agro-new-crop-modal__template-row">
                     <div class="input-group">
                         <label class="input-label" for="crop-template">Cultivo base (Tachira)</label>
-                        <select id="crop-template" class="styled-input" style="padding-left: 1rem; cursor: pointer;">
+                        <select id="crop-template" class="styled-input agro-modal-input--select">
                             <option value="">Manual (sin plantilla)</option>
                         </select>
                     </div>
                     <div class="input-group">
                         <label class="input-label" for="crop-template-cycle">Ciclo estimado</label>
-                        <input type="text" id="crop-template-cycle" class="styled-input" value="--" readonly
-                            style="padding-left: 1rem;">
+                        <input type="text" id="crop-template-cycle" class="styled-input agro-modal-input--compact"
+                            value="--" readonly>
                     </div>
                 </div>
                 <div class="input-row">
                     <div class="input-group">
                         <label class="input-label" for="crop-area">Área (hectáreas) *</label>
-                        <input type="number" id="crop-area" class="styled-input" placeholder="Ej: 2.5" step="0.1"
-                            min="0.01" required style="padding-left: 1rem;">
+                        <input type="number" id="crop-area" class="styled-input agro-modal-input--compact"
+                            placeholder="Ej: 2.5" step="0.1" min="0.01" required>
                     </div>
                     <div class="input-group">
                         <label class="input-label" for="crop-investment">Inversión Base</label>
-                        <div style="display: flex; gap: 0.5rem; align-items: stretch;">
-                            <select id="crop-investment-currency" class="styled-input"
-                                style="max-width: 120px; padding-left: 1rem; cursor: pointer;">
+                        <div class="agro-new-crop-modal__currency-row">
+                            <select id="crop-investment-currency"
+                                class="styled-input agro-modal-input--select agro-new-crop-modal__currency-select">
                                 <option value="USD">USD</option>
                                 <option value="COP">COP</option>
                                 <option value="VES">Bs</option>
                             </select>
-                            <div class="input-wrapper" style="flex: 1;">
+                            <div class="input-wrapper agro-new-crop-modal__grow">
                                 <span id="crop-investment-prefix" class="input-prefix">$</span>
                                 <input type="number" id="crop-investment" class="styled-input" placeholder="Ej: 5000"
                                     step="0.01" min="0">
                             </div>
                         </div>
-                        <p id="crop-investment-fx-meta"
-                            style="margin-top: 0.35rem; font-size: 0.72rem; color: rgba(255, 255, 255, 0.55); line-height: 1.25;">
+                        <p id="crop-investment-fx-meta" class="agro-new-crop-modal__meta">
                             Cotización al guardar: se tomará la tasa vigente del Facturero.
                         </p>
                     </div>
@@ -986,17 +962,16 @@
                 <div class="input-row">
                     <div class="input-group">
                         <label class="input-label" for="crop-start-date">Fecha de Siembra *</label>
-                        <input type="date" id="crop-start-date" class="styled-input" required
-                            style="padding-left: 1rem;">
+                        <input type="date" id="crop-start-date" class="styled-input agro-modal-input--compact" required>
                     </div>
                     <div class="input-group">
                         <label class="input-label" for="crop-harvest-date">Cosecha Esperada</label>
-                        <input type="date" id="crop-harvest-date" class="styled-input" style="padding-left: 1rem;">
+                        <input type="date" id="crop-harvest-date" class="styled-input agro-modal-input--compact">
                     </div>
                 </div>
-                <div class="input-group" style="margin-bottom: 1rem;">
+                <div class="input-group agro-modal-field-block">
                     <label class="input-label" for="crop-status">Estado</label>
-                    <select id="crop-status" class="styled-input" style="padding-left: 1rem; cursor: pointer;">
+                    <select id="crop-status" class="styled-input agro-modal-input--select">
                         <option value="auto">Auto (por fechas)</option>
                         <option value="sembrado">Sembrado</option>
                         <option value="creciendo">Creciendo</option>

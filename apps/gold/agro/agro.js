@@ -69,7 +69,6 @@ let cropsRefreshThrottleTimer = null;
 let cyclesRefreshInFlight = false;
 let cyclesRefreshQueued = false;
 const cyclesOpenBreakdownSnapshot = new Set();
-let cropsRefreshEventsBound = false;
 const pendingTransferInFlightLocks = new Set();
 let cyclesWorkspaceSnapshot = createEmptyCyclesWorkspaceSnapshot();
 const AGRO_OPERATIONAL_PORTFOLIO_UPDATED_EVENT = 'agro:operational-portfolio-updated';
@@ -246,6 +245,21 @@ let usdAuditRefreshTimer = null;
 let usdAuditRefreshInFlight = false;
 let usdAuditRefreshQueued = false;
 let usdAuditEscHandlerBound = false;
+const AGRO_HEADER_IDENTITY_EVENTS = ['auth:signed_in', 'auth:initial_session', 'auth:ui:updated'];
+const agroManagedGlobalListeners = new Map();
+
+function bindAgroManagedGlobalListener(key, target, type, handler, options) {
+    if (!key || !target?.addEventListener || !target?.removeEventListener || typeof handler !== 'function') return;
+    const capture = typeof options === 'boolean'
+        ? options
+        : options?.capture === true;
+    const previous = agroManagedGlobalListeners.get(key);
+    if (previous) {
+        previous.target.removeEventListener(previous.type, previous.handler, previous.capture);
+    }
+    target.addEventListener(type, handler, options);
+    agroManagedGlobalListeners.set(key, { target, type, handler, capture });
+}
 
 function isCropEmojiToken(token) {
     const value = String(token || '').trim();
@@ -8726,28 +8740,26 @@ function scheduleCropCardsRefresh(delayMs = 250) {
 }
 
 function bindCropRefreshEvents() {
-    if (cropsRefreshEventsBound || typeof document === 'undefined') return;
-    cropsRefreshEventsBound = true;
+    if (typeof document === 'undefined') return;
     const refreshHandler = () => scheduleCyclesRefresh(250);
-    document.addEventListener(AGRO_CROPS_REFRESH_EVENT, refreshHandler);
-    document.addEventListener('agro:income:changed', refreshHandler);
-    document.addEventListener('agro:losses:changed', refreshHandler);
+    bindAgroManagedGlobalListener('document:agro:crops:refresh', document, AGRO_CROPS_REFRESH_EVENT, refreshHandler);
+    bindAgroManagedGlobalListener('document:agro:income:changed', document, 'agro:income:changed', refreshHandler);
+    bindAgroManagedGlobalListener('document:agro:losses:changed', document, 'agro:losses:changed', refreshHandler);
     if (typeof window !== 'undefined') {
-        window.addEventListener(AGRO_OPERATIONAL_PORTFOLIO_UPDATED_EVENT, refreshHandler);
+        bindAgroManagedGlobalListener('window:agro:operational-portfolio-updated', window, AGRO_OPERATIONAL_PORTFOLIO_UPDATED_EVENT, refreshHandler);
     }
 }
 
+function handleAgroCropChangedRuntime() {
+    refreshFactureroForSelectedCrop();
+    scheduleOpsMovementSummaryRefresh();
+}
+
 if (typeof document !== 'undefined') {
-    document.addEventListener('agro:crop:changed', () => {
-        refreshFactureroForSelectedCrop();
-        scheduleOpsMovementSummaryRefresh();
-    });
+    bindAgroManagedGlobalListener('document:agro:crop:changed', document, 'agro:crop:changed', handleAgroCropChangedRuntime);
 }
 if (typeof window !== 'undefined') {
-    window.addEventListener('agro:crop:changed', () => {
-        refreshFactureroForSelectedCrop();
-        scheduleOpsMovementSummaryRefresh();
-    });
+    bindAgroManagedGlobalListener('window:agro:crop:changed', window, 'agro:crop:changed', handleAgroCropChangedRuntime);
 }
 
 // Expose globally
@@ -15766,9 +15778,10 @@ async function applyHeaderIdentity() {
 
 function setupHeaderIdentity() {
     applyHeaderIdentity();
-    window.addEventListener('auth:signed_in', applyHeaderIdentity);
-    window.addEventListener('auth:initial_session', applyHeaderIdentity);
-    window.addEventListener('auth:ui:updated', applyHeaderIdentity);
+    if (typeof window === 'undefined') return;
+    AGRO_HEADER_IDENTITY_EVENTS.forEach((eventName) => {
+        bindAgroManagedGlobalListener(`window:header-identity:${eventName}`, window, eventName, applyHeaderIdentity);
+    });
 }
 
 function injectAgroMobilePatches() {
@@ -15840,6 +15853,7 @@ export function initAgro() {
     const calcBtn = document.querySelector('.btn-primary[onclick*="calculateROI"]');
     if (calcBtn) {
         calcBtn.removeAttribute('onclick');
+        calcBtn.removeEventListener('click', calculateROI);
         calcBtn.addEventListener('click', calculateROI);
     }
     injectRoiClearButton(calcBtn);
@@ -15870,9 +15884,8 @@ export function initAgro() {
 
     // Habilitar Enter en inputs para calcular
     document.querySelectorAll('.styled-input').forEach(input => {
-        input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') calculateROI();
-        });
+        input.removeEventListener('keypress', handleAgroStyledInputEnter);
+        input.addEventListener('keypress', handleAgroStyledInputEnter);
     });
 
     console.log('[Agro] ✅ Módulo V9.5.1 inicializado');
@@ -16262,20 +16275,27 @@ window.closeCropModal = closeCropModal;
 // NOTE: saveCrop is now defined in index.html with DATE VALIDATION
 // window.saveCrop = saveCrop; // DISABLED - use index.html version with date validation
 
-// Cerrar modal con Escape
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        closeCropModal();
-    }
-});
+function handleAgroStyledInputEnter(event) {
+    if (event.key === 'Enter') calculateROI();
+}
 
-// Cerrar modal al hacer clic fuera
-document.addEventListener('click', (e) => {
-    const modal = document.getElementById('modal-new-crop');
-    if (e.target === modal) {
+function handleNewCropModalEscape(event) {
+    if (event.key === 'Escape') {
         closeCropModal();
     }
-});
+}
+
+function handleNewCropModalBackdropClick(event) {
+    const modal = document.getElementById('modal-new-crop');
+    if (event.target === modal) {
+        closeCropModal();
+    }
+}
+
+if (typeof document !== 'undefined') {
+    bindAgroManagedGlobalListener('document:new-crop-modal:escape', document, 'keydown', handleNewCropModalEscape);
+    bindAgroManagedGlobalListener('document:new-crop-modal:backdrop', document, 'click', handleNewCropModalBackdropClick);
+}
 
 // ============================================================
 // ELIMINAR CULTIVO

@@ -432,6 +432,269 @@
             color: var(--gold-primary);
         }
 
+        /* Legacy modal inline cleanup */
+        #modal-lunar.agro-legacy-modal-shell,
+        #modal-market.agro-legacy-modal-shell {
+            position: fixed;
+            inset: 0;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .agro-inline-modal-surface {
+            background: linear-gradient(135deg, var(--bg-4) 0%, var(--bg-1) 50%, var(--bg-0) 100%);
+            border: 1px solid var(--border-gold);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-metallic), inset 0 1px 0 rgba(200, 167, 82, 0.1);
+            overflow: hidden;
+        }
+
+        #modal-lunar .agro-lunar-modal__dialog {
+            width: 100%;
+            max-width: 1100px;
+            height: 85vh;
+            display: flex;
+        }
+
+        #modal-lunar .agro-lunar-modal__calendar {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-gold);
+        }
+
+        #modal-lunar .agro-lunar-modal__section-head,
+        #modal-market .agro-market-modal__header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-gold);
+            background: linear-gradient(180deg, rgba(200, 167, 82, 0.05) 0%, transparent 100%);
+        }
+
+        #modal-market .agro-market-modal__header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        #modal-lunar .agro-lunar-modal__title,
+        #modal-market .agro-market-modal__title {
+            margin: 0;
+            font-family: 'Orbitron', sans-serif;
+            color: var(--text-primary);
+            letter-spacing: 1px;
+            text-shadow: 0 0 20px rgba(200, 167, 82, 0.3);
+        }
+
+        #modal-lunar .agro-lunar-modal__title {
+            font-size: 1.3rem;
+        }
+
+        #modal-lunar .agro-lunar-modal__eyebrow {
+            margin: 6px 0 0;
+            font-size: 10px;
+            color: var(--gold-primary);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        #modal-lunar .agro-lunar-modal__grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 14px;
+            padding: 20px;
+            overflow-y: auto;
+            background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 100%);
+        }
+
+        #modal-lunar .agro-lunar-modal__side {
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(180deg, var(--bg-3) 0%, var(--bg-1) 100%);
+        }
+
+        #modal-lunar .agro-lunar-modal__side-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-gold);
+            background: linear-gradient(180deg, rgba(200, 167, 82, 0.05) 0%, transparent 100%);
+        }
+
+        #modal-lunar .agro-lunar-modal__side-title {
+            margin: 0;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            color: var(--gold-primary);
+        }
+
+        #modal-lunar .agro-lunar-modal__panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        #modal-lunar .agro-lunar-modal__empty {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+        }
+
+        #modal-lunar .agro-lunar-modal__empty-icon {
+            margin-bottom: 16px;
+            font-size: 3rem;
+            opacity: 0.5;
+        }
+
+        #modal-lunar .agro-lunar-modal__empty-copy {
+            margin: 0;
+            font-size: 12px;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        #modal-market .agro-market-modal__dialog {
+            width: 100%;
+            max-width: 560px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #modal-market .agro-market-modal__brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #modal-market .agro-market-modal__icon {
+            color: var(--gold-primary);
+            font-size: 1.4rem;
+            filter: drop-shadow(0 0 8px rgba(200, 167, 82, 0.4));
+        }
+
+        #modal-market .agro-market-modal__title {
+            font-size: 1.2rem;
+        }
+
+        #modal-market .agro-market-modal__tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-gold);
+            background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 100%);
+        }
+
+        #modal-market .agro-market-modal__tab {
+            flex: 1;
+            padding: 14px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        #modal-market .agro-market-modal__tab--default {
+            background: rgba(200, 167, 82, 0.05);
+            border-bottom-color: var(--gold-primary);
+            color: var(--text-primary);
+        }
+
+        #modal-market .agro-market-modal__tab-icon {
+            margin-right: 6px;
+        }
+
+        #modal-market .agro-market-modal__content {
+            height: 400px;
+            padding: 20px;
+            overflow-y: auto;
+            background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg-0) 100%);
+        }
+
+        #modal-market .agro-market-modal__view,
+        #modal-market .agro-market-modal__list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #modal-market .agro-market-modal__view--hidden {
+            display: none;
+        }
+
+        #modal-market .agro-market-modal__loading {
+            padding: 60px 0;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        #modal-new-crop .agro-new-crop-modal__container {
+            background: linear-gradient(135deg, var(--bg-4) 0%, var(--bg-1) 50%, var(--bg-0) 100%);
+            border: 1px solid var(--border-gold);
+            box-shadow: var(--shadow-gold-md);
+        }
+
+        #modal-new-crop .agro-new-crop-modal__close {
+            color: var(--gold-primary);
+        }
+
+        #modal-new-crop .agro-modal-field-block {
+            margin-bottom: 1rem;
+        }
+
+        #modal-new-crop .agro-modal-input--compact,
+        #modal-new-crop .agro-modal-input--select {
+            padding-left: var(--spacing-md);
+        }
+
+        #modal-new-crop .agro-modal-input--select {
+            cursor: pointer;
+        }
+
+        #modal-new-crop .agro-new-crop-modal__icon-input {
+            text-align: center;
+            font-size: 1.5rem;
+        }
+
+        #modal-new-crop .agro-new-crop-modal__template-row {
+            display: none;
+        }
+
+        #modal-new-crop .agro-new-crop-modal__currency-row {
+            display: flex;
+            gap: 0.5rem;
+            align-items: stretch;
+        }
+
+        #modal-new-crop .agro-new-crop-modal__currency-select {
+            max-width: 120px;
+        }
+
+        #modal-new-crop .agro-new-crop-modal__grow {
+            flex: 1;
+        }
+
+        #modal-new-crop .agro-new-crop-modal__meta {
+            margin-top: 0.35rem;
+            font-size: 0.72rem;
+            line-height: 1.25;
+            color: var(--text-secondary);
+        }
+
         /* ============================================ SECTION TITLES ============================================ */
         .section-header {
             display: flex;

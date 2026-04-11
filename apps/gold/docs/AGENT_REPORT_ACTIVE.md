@@ -13708,3 +13708,168 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
 - Verificar que el card `Agenda y Fase Lunar` ya no quede en `Calculando...`.
 - Confirmar que el icono lunar y el consejo visible cambien a una lectura real como `Evitar siembra`, `Siembra de hojas`, `Control de plagas` o `Siembra de raíces`.
 - Confirmar que el resto del dashboard siga cargando sin regresiones visibles.
+
+## 2026-04-11 — Agro: cierre final pragmático de deuda remanente (inicio)
+
+### Diagnóstico resumido
+
+- El frente vivo de deuda no está en negocio ni en ADN visual, sino en tres zonas concretas:
+  - listeners globales registrados desde `apps/gold/agro/agro.js` con idempotencia desigual;
+  - inline CSS estructural todavía presente en `modal-lunar`, `modal-market` y `modal-new-crop` dentro de `apps/gold/agro/index.html`;
+  - superficie amplia de `window.*` en `apps/gold/agro/agro.js`, donde conviven contratos públicos reales, bridges entre módulos y estado interno.
+- Evidencia inicial:
+  - `initAgro()` sigue cableando listeners y bindings de UI; varias rutas ya tienen guard (`document.__agroAssistantBound`, `buyerProfileClickHandlersBound`, `cropsRefreshEventsBound`, `carritoDedicatedEventsBound`, `rankingsDedicatedEventsBound`), pero otras dependen de handlers anónimos o de wiring global sin owner estable.
+  - `modal-lunar` y `modal-market` conservan bloques inline completos en overlay, header, paneles y tabs; `modal-new-crop` conserva inline estructural repartido entre contenedor, close button, rows, inputs, selects y meta copy.
+  - `agro.js` mantiene `window.*` para bridges activos como `_agroTrash`, `_agroFactureroBridge`, `YGAgroTemplates`, `YG_AGRO_NAV`, además de funciones legacy usadas por `onclick` y navegación shell.
+
+### Objetivo exacto
+
+- Cerrar el remanente útil de deuda técnica de Agro con cirugía mínima y verificable:
+  - blindar listeners sensibles de larga sesión o reinicialización;
+  - sacar inline estructural seguro de los tres modales legacy indicados hacia CSS dedicado;
+  - inventariar y clasificar globals `window.*`, tocando solo un alias adicional si es estrictamente backward-compatible;
+  - auditar naming legacy vivo sin abrir renombres masivos.
+
+### Frentes
+
+- **Frente A — `agro.js`: listeners / teardown**
+  - confirmar qué listeners globales nacen en `agro.js`;
+  - separar los ya protegidos de los que aún requieren owner estable o idempotencia explícita;
+  - aplicar solo cleanup/binding mínimo donde el riesgo sea real.
+- **Frente B — modales legacy con inline CSS**
+  - migrar inline estructural y seguro de `modal-lunar`, `modal-market` y `modal-new-crop`;
+  - usar clases mínimas y tokens existentes;
+  - no rediseñar ni alterar JS de comportamiento.
+- **Frente C — globals `window.*`**
+  - levantar inventario real;
+  - clasificar entre contrato público, bridge interno y estado runtime;
+  - solo agregar alias contenedor si el diff es mínimo y 100% compatible.
+- **Frente D — naming legacy vivo**
+  - auditar nombres legacy que siguen montados por imports/bootstraps reales;
+  - documentar por qué no se renombran en este lote salvo caso trivial y aislado.
+
+### Riesgo principal
+
+- El riesgo real del lote es tocar wiring global estable del monolito `agro.js` y generar regresiones silenciosas por duplicate listeners o por CSS con especificidad insuficiente frente al estilo inyectado del modal.
+
+### Plan de parche mínimo
+
+1. Validar con evidencia los listeners globales sensibles y reducir el fix a bindings con owner estable o guard faltante.
+2. Mover solo inline estructural de los tres modales a `apps/gold/agro/agro-index-critical.css` con selectores específicos y tokens existentes.
+3. Dejar inventario y clasificación de `window.*`; no forzar namespace nuevo si no aporta seguridad real.
+4. Dejar el naming legacy auditado y diferido documentalmente, sin rename masivo.
+5. Cerrar con `pnpm build:gold` y actualización final del reporte activo.
+
+### DoD
+
+- `agro.js` queda más seguro respecto a listeners sensibles de larga sesión.
+- Se agregan teardown / removeEventListener / owners estables solo donde hacen falta.
+- El inline restante de `modal-lunar`, `modal-market` y `modal-new-crop` se reduce de forma segura.
+- Esos estilos pasan a CSS dedicado con clases mínimas y tokens existentes.
+- No se hace rediseño visual.
+- No se toca business logic salvo wiring mínimo.
+- `window.*` queda inventariado y clasificado.
+- Solo se toca globals con cambio real si es mínimo y backward-compatible.
+- No se hace renombre masivo de legacy vivo.
+- El cierre del lote queda documentado en este reporte.
+- `pnpm build:gold` debe pasar.
+
+### Archivos previstos
+
+- `apps/gold/agro/agro.js`
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro-index-critical.css`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Criterio de no expansión de alcance
+
+- No tocar ticker/market, clima/dashboard, browser QA, Playwright ni polish visual.
+- No abrir refactor estructural de `agro.js`.
+- No renombrar archivos legacy vivos salvo caso absolutamente aislado y seguro.
+
+### Nota operativa
+
+- Este lote se ejecuta **sin browser QA, sin Playwright y sin polish visual**.
+
+## 2026-04-11 — Agro: cierre final pragmático de deuda remanente (cierre)
+
+### Diagnóstico confirmado
+
+- **Frente A — listeners en `agro.js`**
+  - El riesgo real no era un bosque entero de listeners, sino cuatro focos concretos:
+    - `setupHeaderIdentity()` reinyectaba los listeners `auth:signed_in`, `auth:initial_session` y `auth:ui:updated` sobre `window` sin owner estable (`apps/gold/agro/agro.js:15779`).
+    - `initAgro()` podía duplicar wiring de ROI si se reejecutaba: `calcBtn.addEventListener('click', calculateROI)` y el loop sobre `.styled-input` usaban bindings sin dedupe (`apps/gold/agro/agro.js:15853`, `apps/gold/agro/agro.js:15886`).
+    - El cierre de `modal-new-crop` usaba listeners anónimos sobre `document` para `keydown` y `click`, imposibles de desmontar o reemplazar limpiamente (`apps/gold/agro/agro.js:16282`-`16297`).
+    - El wiring global de refresh por cultivos y operaciones vivía en listeners `document/window` sin owner explícito reutilizable (`apps/gold/agro/agro.js:8742`-`8762`).
+  - Lo demás relevante ya estaba protegido con guardas existentes (`document.__agroAssistantBound`, `buyerProfileClickHandlersBound`, `agroSocialButtonBound`, `carritoDedicatedEventsBound`, `rankingsDedicatedEventsBound`) y no justificaba más cirugía.
+
+- **Frente B — inline CSS de modales legacy**
+  - `modal-lunar` y `modal-market` conservaban el layout casi completo en `style=""` dentro de `apps/gold/agro/index.html:817`-`894`.
+  - `modal-new-crop` seguía mezclando CSS inyectado por `injectModalStyles()` con inline estructural en contenedor, close button, rows, inputs, selects y meta copy (`apps/gold/agro/index.html:897`-`989`).
+
+- **Frente C — globals `window.*`**
+  - `apps/gold/agro/agro.js` mantiene **42 asignaciones directas** a `window.*`.
+  - Contratos públicos/bridges con consumidores vivos:
+    - `_agroTrash` y `_agroFactureroBridge` consumidos por `agro-trash.js` y `agro-cartera-viva-detail.js`.
+    - `YGAgroTemplates`, `openCropModal`, `closeCropModal`, `launchAgroWizard`, `getSelectedCropId`, `setSelectedCropId` usados por `index.html`, `agro-shell.js`, `agro-cartera-viva-view.js` y `agro-section-stats.js`.
+    - `YG_AGRO_NAV`, `switchTab`, `openAgroClima`, `openAgroAgenda`, `openAgroAssistantInline` consumidos por `agro-notifications.js` y `agro-shell.js`.
+  - Estado/runtime interno que no conviene promover más:
+    - `_agroCyclesWorkspace`, `_agroBuyerPortfolioState`, `YG_AGRO_CROPS_*`, `YG_AGRO_SELECTED_CROP_ID`, `__agroOpsCultivosPanelBound`.
+  - Decisión: **no** agregar `window.__agroAPI__` en este lote, porque ampliar otra superficie pública sin retirar consumidores legacy no reduce deuda real hoy.
+
+- **Frente D — naming legacy vivo**
+  - Los nombres legacy siguen vivos por wiring real, no por olvido aislado:
+    - imports estáticos en `apps/gold/agro/agro.js:11`-`18` (`agroperfil.js`, `agrocompradores.js`, `agrosocial.js`, `agrocalculadora.js`, `agroclima-layout.js`, `agrociclos.js`);
+    - bootstraps y rutas activas en `apps/gold/agro/index.html:139`, `1500`, `1513`, `2434`, `2446` (`agrorepo`, `agroOperationalCycles.js`, `agroTaskCycles.js`).
+  - Decisión: no hacer rename. El costo/riesgo supera el valor dentro de esta campaña.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro.js`
+  - `apps/gold/agro/agro.js:251` introduje `bindAgroManagedGlobalListener()` para rebind limpio con owner estable sobre `document/window`.
+  - `apps/gold/agro/agro.js:8742`-`8762` moví el refresh global de cultivos/operaciones a bindings gestionados reutilizables.
+  - `apps/gold/agro/agro.js:15779`-`15784` blindé `setupHeaderIdentity()` para que los eventos auth no se acumulen si `initAgro()` corre más de una vez.
+  - `apps/gold/agro/agro.js:15853`-`15857` y `15886`-`15888` hice idempotente el wiring de ROI (`click` del botón y `keypress` de `.styled-input`).
+  - `apps/gold/agro/agro.js:16278`-`16297` reemplacé los listeners anónimos de `modal-new-crop` por handlers con owner estable.
+
+- `apps/gold/agro/index.html`
+  - `apps/gold/agro/index.html:817`-`894` reemplacé el inline estructural de `modal-lunar` y `modal-market` por clases dedicadas, sin tocar `id`, `onclick` ni contenedores que usa JS.
+  - `apps/gold/agro/index.html:897`-`989` saqué el inline estructural restante de `modal-new-crop` a clases mínimas (`container`, `close`, rows, inputs, selects, bloque de moneda y meta copy).
+
+- `apps/gold/agro/agro-index-critical.css`
+  - `apps/gold/agro/agro-index-critical.css:435`-`691` añadí el bloque `Legacy modal inline cleanup` con clases específicas para `modal-lunar`, `modal-market` y `modal-new-crop`, usando tokens existentes y sin rediseño.
+
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - Se anexaron la entrada inicial de arranque y este cierre final append-only.
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK` (`158 modules transformed`)
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por engine: `node v25.6.0` frente a `node 20.x` declarado.
+
+### Validación realizada
+
+- Validación técnica mínima completada:
+  - auditoría estática de listeners/globales/inline;
+  - build final exitoso con `pnpm build:gold`.
+- **No** se hizo browser QA.
+- **No** se hizo Playwright.
+
+### Deuda remanente real
+
+- `window.*` sigue siendo una superficie amplia; ya quedó inventariada y clasificada, pero reducirla de verdad requiere una campaña propia para migrar consumidores y no solo agregar otro alias.
+- El naming legacy de módulos vivos sigue siendo deuda documental/técnica, pero hoy está pegado a imports y bootstraps activos; no conviene tocarlo en este cierre.
+- `injectModalStyles()` en `agro.js` todavía conserva CSS legacy genérico del modal; en este lote solo se extrajo el inline estructural restante pedido, sin abrir una refactorización mayor del sistema de modales.
+
+### QA sugerido
+
+1. Abrir `Agenda Lunar`, `Centro Financiero` y `Nuevo Cultivo` y confirmar que el layout sigue intacto sin depender de `style=""`.
+2. Reabrir `Nuevo Cultivo`, cerrarlo con `Escape` y con click en backdrop, y confirmar que el comportamiento no cambió.
+3. Repetir un flujo de auth/local refresh donde `initAgro()` pueda reinyectarse y confirmar que header identity / ROI no dupliquen listeners.
