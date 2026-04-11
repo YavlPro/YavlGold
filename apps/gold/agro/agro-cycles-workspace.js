@@ -8,6 +8,7 @@ const state = {
     primaryId: '',
     secondaryId: ''
 };
+const RELATIVE_DELTA_EPSILON = 0.000001;
 
 const METRICS = Object.freeze([
     {
@@ -196,6 +197,38 @@ function formatSignedNumber(value, unit = '') {
     return `${number > 0 ? '+' : '-'}${formatted}${unit}`;
 }
 
+function formatRelativePercentValue(value) {
+    const abs = Math.abs(toNumber(value, 0));
+    const hasDecimals = Math.abs(abs - Math.round(abs)) > RELATIVE_DELTA_EPSILON;
+    const minimumFractionDigits = hasDecimals && abs < 100 ? 1 : 0;
+    return abs.toLocaleString('es-VE', {
+        minimumFractionDigits,
+        maximumFractionDigits: 1
+    });
+}
+
+function resolveRelativeDeltaText(metric, leftRaw, rightRaw) {
+    if (metric.kind === 'text' || metric.kind === 'percent') return '';
+    if (!Number.isFinite(leftRaw) || !Number.isFinite(rightRaw)) {
+        return 'Sin % comparable';
+    }
+
+    const base = Math.abs(rightRaw);
+    if (base <= RELATIVE_DELTA_EPSILON) {
+        return Math.abs(leftRaw) <= RELATIVE_DELTA_EPSILON
+            ? 'Sin % útil: ambos en 0'
+            : 'Sin % comparable: ciclo B en 0';
+    }
+
+    const relative = ((leftRaw - rightRaw) / base) * 100;
+    if (!Number.isFinite(relative)) {
+        return 'Sin % comparable';
+    }
+
+    const sign = relative > 0 ? '+' : (relative < 0 ? '-' : '');
+    return `${sign}${formatRelativePercentValue(relative)}% vs ciclo B`;
+}
+
 function readBridgeSnapshot() {
     const snapshot = typeof window !== 'undefined'
         ? window._agroCyclesWorkspace?.getSnapshot?.()
@@ -381,7 +414,8 @@ function resolveDelta(metric, leftValue, rightValue) {
         return {
             label: 'A - B',
             value: 'Sin delta numérica',
-            tone: ''
+            tone: '',
+            detail: resolveRelativeDeltaText(metric, leftValue?.raw, rightValue?.raw)
         };
     }
 
@@ -400,6 +434,7 @@ function resolveDelta(metric, leftValue, rightValue) {
     return {
         label: 'A - B',
         value,
+        detail: resolveRelativeDeltaText(metric, leftValue.raw, rightValue.raw),
         tone: metric.highlight === true
             ? (delta < 0 ? 'danger' : (delta > 0 ? 'gold' : ''))
             : ''
@@ -466,6 +501,7 @@ function renderMetric(metric, leftItem, rightItem) {
             <div class="agro-cycle-compare__delta"${deltaToneAttr}>
                 <span class="agro-cycle-compare__delta-label">${escapeHtml(delta.label)}</span>
                 ${deltaValue}
+                ${delta.detail ? `<span class="agro-cycle-compare__metric-sub">${escapeHtml(delta.detail)}</span>` : ''}
             </div>
             <div class="agro-cycle-compare__metric-value"${rightToneAttr}>
                 ${rightMain}

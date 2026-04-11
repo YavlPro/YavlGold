@@ -13335,3 +13335,152 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
 - El naming legacy vivo sigue siendo deuda estructural, pero ya está acotado y documentado como sensible.
 - Cualquier renombre futuro debe hacerse como fase dedicada con actualización coordinada de imports, bootstrap y compatibilidad.
 - `agrorepo.js` permanece fuera de cualquier renombre hasta que exista una migración explícita del adapter.
+
+## 2026-04-11 — Agro dashboard: widget de clima queda cargando
+
+### Contexto
+
+- Ticket reportado sobre `apps/gold/agro`: el card `Clima Local` del dashboard se queda en estado inicial (`--` / `Cargando...`) y no muestra el estado actual.
+- Restricción operativa del lote: fix quirúrgico, sin QA browser intensivo, con cierre en `pnpm build:gold`.
+
+### Diagnóstico inicial
+
+- El render del widget vive en `apps/gold/agro/dashboard.js`.
+- El markup actual del dashboard vive en `apps/gold/agro/index.html`.
+- Evidencia inicial:
+  - `apps/gold/agro/index.html` mantiene `#weather-temp`, `#weather-desc`, `#weather-conditions` y `#weather-humidity`.
+  - `apps/gold/agro/dashboard.js` en `displayWeather()` exige además `#weather-content` y hace `return` inmediato si ese nodo no existe.
+  - El dashboard V1 actual ya no renderiza `#weather-content`, por lo que el fetch puede resolverse pero la UI no se actualiza.
+- Hipótesis principal validada por código:
+  - no es un problema primario de API ni de geolocalización;
+  - es un guard obsoleto de DOM heredado del layout anterior.
+
+### Plan elegido
+
+1. Eliminar la dependencia obligatoria de `#weather-content` en `displayWeather()`.
+2. Mantener intacto el resto del flujo (`initWeather()`, cache, geolocalización, fetch y fallback de error).
+3. Ejecutar `pnpm build:gold`.
+4. Completar esta misma sección con resultado final y validación técnica.
+
+### Riesgos
+
+- Bajo: el cambio toca solo el guard de render y no altera fetch, cache ni geolocalización.
+- Bajo: si existiera otra causa secundaria de clima no disponible, el widget al menos volverá a mostrar el fallback real en vez de quedar pegado en el estado inicial.
+
+### Resultado final
+
+- Se eliminó el guard obsoleto de `#weather-content` en `apps/gold/agro/dashboard.js`.
+- El widget vuelve a poder pintar temperatura, ubicación y humedad usando el markup real vigente del dashboard.
+- `pnpm build:gold` cerró en OK.
+
+### Cambios aplicados
+
+- `apps/gold/agro/dashboard.js`
+  - `displayWeather()` dejó de depender de `#weather-content`, nodo que ya no existe en `apps/gold/agro/index.html`.
+  - El render ahora solo exige `#weather-temp`, que sí forma parte del dashboard activo.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - Se documentó la sesión en modo append-only con contexto, diagnóstico, plan, riesgos y cierre.
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por engine: `node v25.6.0` frente a `node 20.x` declarado.
+
+### QA sugerido
+
+- Abrir `Agro > Dashboard Agro`.
+- Verificar que `Clima Local` ya no quede en `-- / Cargando...`.
+- Confirmar que el card muestre temperatura y ubicación real o, si falla la API, el fallback explícito `Clima no disponible`.
+- Confirmar que el resto del dashboard siga cargando sin regresiones visibles.
+
+## 2026-04-11 — Operación Comercial: filtros de Cartera Operativa + porcentaje en Comparar Ciclos
+
+### Contexto
+
+- Ticket activo del lote:
+  - corregir glitcheo funcional de selectores / filtros / dropdowns en `Operación Comercial > Cartera Operativa`;
+  - añadir desviación porcentual segura en `Comparar Ciclos`.
+- Restricciones explícitas:
+  - sin pulido visual ADN V10;
+  - sin rediseño de header;
+  - sin QA browser intensivo;
+  - `agro.js` no debe crecer salvo wiring indispensable.
+
+### Diagnóstico inicial
+
+- `Cartera Operativa` vive en `apps/gold/agro/agroOperationalCycles.js`.
+- `Comparar Ciclos` vive en `apps/gold/agro/agro-cycles-workspace.js`.
+- Evidencia del glitch en filtros:
+  - la barra de filtros se renderiza en `renderFilters()` y se inserta vía `state.refs.filtersHost.innerHTML = renderFilters(...)`;
+  - ese remount ocurre dentro de `renderCurrentSubview()`;
+  - `handleRootChange()` dispara `refreshData()` en cada cambio de filtro;
+  - `refreshData()` vuelve a ejecutar `renderCurrentSubview()` al inicio, al finalizar la carga y en el `finally`, desmontando y recreando los `<select>` activos varias veces por interacción.
+- Conclusión de causa raíz:
+  - el problema principal no es `z-index`, `overflow` ni click outside;
+  - el problema real es re-render destructivo del host de filtros, que invalida el nodo activo del selector y produce sensación de cierre brusco / UI peleada.
+- Evidencia del faltante en comparación:
+  - `resolveDelta()` en `apps/gold/agro/agro-cycles-workspace.js` solo devuelve diferencia absoluta (`A - B`);
+  - hoy no existe cálculo porcentual relativo ni manejo explícito de base cero para esa lectura.
+
+### Plan elegido
+
+1. Mantener el diff dentro de los módulos reales:
+   - `agroOperationalCycles.js`
+   - `agro-cycles-workspace.js`
+   - CSS mínimo solo si hace falta para mostrar la nueva línea de porcentaje.
+2. Reemplazar el remount destructivo de filtros por sincronización del host existente.
+3. Extender la matriz de `Comparar Ciclos` para mostrar delta absoluto + lectura porcentual cuando la base B sea válida.
+4. Dejar fallback explícito cuando la base sea `0`, inválida o no comparable.
+5. Cerrar con `pnpm build:gold`.
+
+### Riesgos
+
+- Bajo: el fix de filtros queda aislado al host de `Cartera Operativa` y no toca Supabase ni contratos de datos.
+- Bajo: la desviación porcentual se monta como capa adicional de lectura en `Comparar Ciclos`, sin alterar la fuente de datos de los ciclos.
+
+### Resultado final
+
+- `Cartera Operativa` dejó de desmontar y recrear los `<select>` del filtro en cada refresco, reduciendo el cierre brusco y la sensación de UI inestable al cambiar filtros seguidos.
+- `Comparar Ciclos` ahora muestra delta absoluto y una lectura porcentual adicional cuando la base del ciclo B es válida.
+- Cuando la base es `0` o inválida, la UI evita `NaN` / `Infinity` y muestra fallback explícito.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agroOperationalCycles.js`
+  - Se sustituyó el remount destructivo de `filtersHost.innerHTML = ...` por sincronización del host existente.
+  - Los filtros `Período`, `Categoría` y `Tipo` conservan su nodo DOM mientras `refreshData()` actualiza la vista.
+  - Para subviews sin filtros (`export`, `donaciones`, `pérdidas`, schema missing) se sigue limpiando el host de forma explícita.
+- `apps/gold/agro/agro-cycles-workspace.js`
+  - Se añadió cálculo de desviación porcentual relativa sobre la base del ciclo B.
+  - La matriz sigue mostrando el delta absoluto `A - B` y ahora agrega una segunda línea con `% vs ciclo B` cuando aplica.
+  - Si la base es `0`, ambos son `0` o los datos no son numéricos, se muestra copy seguro en lugar de porcentajes inválidos.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - Se documentó el ticket correcto con diagnóstico, plan, riesgos y cierre.
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por engine: `node v25.6.0` frente a `node 20.x` declarado.
+
+### QA sugerido
+
+- Abrir `Agro > Operación comercial > Cartera Operativa`.
+- Cambiar `Período`, `Categoría` y `Tipo` de forma consecutiva para confirmar que el selector ya no pelea con el refresco de la vista.
+- Verificar que la lista sí se actualice según el filtro elegido.
+- Abrir `Agro > Ciclos de cultivos > Comparar ciclos`.
+- Confirmar que cada métrica siga mostrando `A - B` y que, cuando haya base válida, aparezca una segunda línea como `+20% vs ciclo B`.
+- Verificar que con bases `0` o métricas no comparables no aparezcan `NaN` ni `Infinity`.

@@ -2258,6 +2258,39 @@ function renderFilters(subview) {
     `;
 }
 
+function clearFiltersHost() {
+    if (!state.refs?.filtersHost) return;
+    state.refs.filtersHost.innerHTML = '';
+}
+
+function syncFiltersHost(subview) {
+    if (!state.refs?.filtersHost) return;
+    if (subview !== SUBVIEW_ACTIVE && subview !== SUBVIEW_FINISHED) {
+        clearFiltersHost();
+        return;
+    }
+
+    const host = state.refs.filtersHost;
+    const filters = getDataset(subview).filters;
+    const expectedKeys = ['period', 'category', 'economicType'];
+    const existingSelects = expectedKeys.map((key) => host.querySelector(`[data-operational-filter-key="${key}"]`));
+    const canReuse = existingSelects.every((select) => select instanceof HTMLSelectElement);
+
+    if (!canReuse) {
+        host.innerHTML = renderFilters(subview);
+    }
+
+    expectedKeys.forEach((key) => {
+        const select = host.querySelector(`[data-operational-filter-key="${key}"]`);
+        if (!(select instanceof HTMLSelectElement)) return;
+        select.dataset.operationalFilterView = subview;
+        const nextValue = normalizeToken(filters[key]) || 'all';
+        if (select.value !== nextValue) {
+            select.value = nextValue;
+        }
+    });
+}
+
 function buildStatusClass(status) {
     return STATUS_CLASS_BY_VALUE[normalizeToken(status)] || 'is-open';
 }
@@ -2525,7 +2558,7 @@ function renderCurrentSubview() {
     state.refs.listStatus.classList.toggle('is-refreshing', isSoftRefreshing);
 
     if (shouldBlockInitialLoading) {
-        state.refs.filtersHost.innerHTML = state.currentSubview === SUBVIEW_EXPORT ? '' : renderFilters(state.currentSubview);
+        syncFiltersHost(state.currentSubview);
         state.refs.listStatus.textContent = 'Cargando cartera operativa...';
         state.refs.list.innerHTML = `
             <div class="agro-operational-panel">
@@ -2539,7 +2572,7 @@ function renderCurrentSubview() {
     }
 
     if (state.schemaMissing) {
-        state.refs.filtersHost.innerHTML = '';
+        clearFiltersHost();
         state.refs.listStatus.textContent = 'La vista quedó lista, pero Supabase aún no tiene la migración aplicada.';
         state.refs.list.innerHTML = `
             <div class="agro-operational-empty">
@@ -2565,7 +2598,7 @@ function renderCurrentSubview() {
     if (state.currentSubview === SUBVIEW_EXPORT) {
         const activeCount = state.datasets[SUBVIEW_ACTIVE].summary.count;
         const finishedCount = state.datasets[SUBVIEW_FINISHED].summary.count;
-        state.refs.filtersHost.innerHTML = '';
+        clearFiltersHost();
         state.refs.listStatus.textContent = isSoftRefreshing
             ? 'Actualizando vista de exportación...'
             : `Exportarás ${activeCount + finishedCount} ciclo${activeCount + finishedCount === 1 ? '' : 's'} respetando los filtros activos.`;
@@ -2575,7 +2608,7 @@ function renderCurrentSubview() {
 
     if (state.currentSubview === SUBVIEW_DONATIONS) {
         const donationCycles = filterCyclesByFamily(getCyclesForSubview(SUBVIEW_DONATIONS), state.familyFilter);
-        state.refs.filtersHost.innerHTML = '';
+        clearFiltersHost();
         state.refs.listStatus.textContent = isSoftRefreshing
             ? 'Actualizando donaciones...'
             : `${donationCycles.length} donación${donationCycles.length === 1 ? '' : 'es'} — ${getFamilyLabel(state.familyFilter)}`;
@@ -2597,7 +2630,7 @@ function renderCurrentSubview() {
 
     if (state.currentSubview === SUBVIEW_LOSSES) {
         const lossCycles = filterCyclesByFamily(getCyclesForSubview(SUBVIEW_LOSSES), state.familyFilter);
-        state.refs.filtersHost.innerHTML = '';
+        clearFiltersHost();
         state.refs.listStatus.textContent = isSoftRefreshing
             ? 'Actualizando pérdidas...'
             : `${lossCycles.length} pérdida${lossCycles.length === 1 ? '' : 's'} — ${getFamilyLabel(state.familyFilter)}`;
@@ -2619,7 +2652,7 @@ function renderCurrentSubview() {
 
     const dataset = getDataset(state.currentSubview);
     const familyCycles = filterCyclesByFamily(getCyclesForSubview(state.currentSubview), state.familyFilter);
-    state.refs.filtersHost.innerHTML = renderFilters(state.currentSubview);
+    syncFiltersHost(state.currentSubview);
     state.refs.listStatus.textContent = isSoftRefreshing
         ? 'Actualizando cartera operativa sin desmontar la vista...'
         : `${familyCycles.length} ciclo${familyCycles.length === 1 ? '' : 's'} visible${familyCycles.length === 1 ? '' : 's'} — ${getFamilyLabel(state.familyFilter)}`;
