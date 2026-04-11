@@ -76,31 +76,9 @@ function readBuyerPortfolioState() {
   }
 }
 
-function resolveOperationalPortfolioStatus(cropId) {
-  if (typeof window === 'undefined') return null;
-  const normalizedCropId = String(cropId || '').trim();
-  if (!normalizedCropId) return null;
-
-  try {
-    const api = window.YGAgroOperationalCycles;
-    if (typeof api?.getPortfolioStateByCrop !== 'function') return null;
-    const portfolioState = api.getPortfolioStateByCrop(normalizedCropId);
-    if (!portfolioState || typeof portfolioState !== 'object') return null;
-
-    return {
-      label: String(portfolioState.label || '').trim() || 'Cartera operativa cerrada',
-      tone: String(portfolioState.tone || '').trim() || (portfolioState.status === 'open' ? 'active' : 'closed')
-    };
-  } catch (error) {
-    console.warn('[agrociclos] No se pudo leer cartera operativa asociada:', error);
-    return null;
-  }
-}
-
 function resolveAllPortfolioBadges(ciclo) {
   const carteraViva = resolveCarteraVivaStatus(ciclo?.fiadosUsd);
-  const carteraOperativa = resolveOperationalPortfolioStatus(ciclo?.id);
-  return { carteraViva, carteraOperativa };
+  return { carteraViva };
 }
 
 function syncOperationalPortfolioBadges(root = document) {
@@ -111,10 +89,8 @@ function syncOperationalPortfolioBadges(root = document) {
     if (!statusGroup) return;
 
     const carteraViva = resolveCarteraVivaStatus(card.dataset.fiadosUsd);
-    const carteraOperativa = resolveOperationalPortfolioStatus(card.dataset.cropId);
 
     syncSingleBadge(statusGroup, 'portfolio-badge--cv', carteraViva);
-    syncSingleBadge(statusGroup, 'portfolio-badge--co', carteraOperativa);
   });
 }
 
@@ -327,23 +303,18 @@ function renderCard(ciclo, index = 0) {
   const desgloseBase = String(desglose.base || 'N/D');
   const desgloseGastos = String(desglose.gastos || 'N/D');
   const desgloseGastosDirectos = String(desglose.gastosDirectos || 'N/D');
-  const desgloseOperativosAsociados = String(desglose.operativosAsociados || 'N/D');
   const desglosePagados = String(desglose.pagados || 'N/D');
   const desgloseCostos = String(desglose.costos || 'N/D');
   const desgloseFiados = String(desglose.fiados || 'N/D');
-  const desgloseFiadosCarteraOperativa = String(desglose.fiadosCarteraOperativa || 'N/D');
   const desglosePerdidasCarteraViva = String(desglose.perdidasCarteraViva || 'N/D');
   const desgloseCotizacion = String(desglose.cotizacion || 'N/D');
   const globalBreakdownMarkup = renderGlobalBreakdown(ciclo);
   const baseInvestmentUsd = toNumber(ciclo?.baseInvestmentUsd, 0);
   const directGastosUsd = toNumber(ciclo?.directGastosUsd, 0);
-  const operativosAsociadosUsd = toNumber(ciclo?.operativosAsociadosUsd, 0);
   const pagadosUsd = toNumber(ciclo?.pagadosUsd, 0);
   const fiadosUsd = toNumber(ciclo?.fiadosUsd, 0);
-  const fiadosOperativosUsd = toNumber(ciclo?.fiadosCarteraOperativaUsd, 0);
   const perdidasUsd = toNumber(ciclo?.perdidasUsd, 0);
   const carteraVivaTotal = baseInvestmentUsd + directGastosUsd + perdidasUsd;
-  const carteraOperativaTotal = operativosAsociadosUsd + fiadosOperativosUsd;
   const carteraVivaRows = [
     renderBreakdownMoneyRow('Base inversión multimoneda', desgloseBase),
     renderBreakdownMoneyRow('Gastos directos del cultivo', desgloseGastosDirectos),
@@ -359,12 +330,7 @@ function renderCard(ciclo, index = 0) {
       <span>${escapeHtml(desgloseCotizacion)}</span>
     </div>
   `);
-  const carteraOperativaRows = [
-    renderBreakdownMoneyRow('Operativos asociados (gastos/donaciones/pérdidas)', desgloseOperativosAsociados),
-    renderBreakdownMoneyRow('Fiados de cartera operativa', desgloseFiadosCarteraOperativa)
-  ];
   const carteraVivaIsShort = carteraVivaRows.length <= 5;
-  const carteraOperativaIsShort = carteraOperativaRows.length <= 5;
   const breakdownSectionsMarkup = `
     <div class="desglose-summary">
       ${renderBreakdownMoneyRow('Gastos totales del cultivo', desgloseGastos)}
@@ -381,18 +347,6 @@ function renderCard(ciclo, index = 0) {
         { label: 'Fiado', value: formatUsdCompact(fiadosUsd) }
       ],
       bodyMarkup: carteraVivaRows.join('')
-    })}
-    ${renderBreakdownSection({
-      title: 'Cartera Operativa',
-      subtitle: 'Gastos y fiados vigentes del ciclo',
-      modifierClass: 'is-operational',
-      defaultOpen: carteraOperativaIsShort,
-      summaryItems: [
-        { label: 'Total', value: formatUsdCompact(carteraOperativaTotal) },
-        { label: 'Costo real', value: formatUsdCompact(operativosAsociadosUsd) },
-        { label: 'Fiado', value: formatUsdCompact(fiadosOperativosUsd) }
-      ],
-      bodyMarkup: carteraOperativaRows.join('')
     })}
   `;
 
@@ -411,7 +365,6 @@ function renderCard(ciclo, index = 0) {
           <div class="card-status-group">
             <span class="status-badge ${statusClass}">${escapeHtml(ciclo?.estadoTexto || 'En producción')}</span>
             ${badges.carteraViva ? `<span class="portfolio-badge portfolio-badge--${escapeAttr(badges.carteraViva.tone)} portfolio-badge--cv">${escapeHtml(badges.carteraViva.label)}</span>` : ''}
-            ${badges.carteraOperativa ? `<span class="portfolio-badge portfolio-badge--${escapeAttr(badges.carteraOperativa.tone)} portfolio-badge--co">${escapeHtml(badges.carteraOperativa.label)}</span>` : ''}
           </div>
           ${buildActions(ciclo)}
         </div>

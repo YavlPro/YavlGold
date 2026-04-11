@@ -10528,8 +10528,6 @@ function mapStatusToFinishedCycleMeta(rawStatus, fallbackMeta = null) {
 function buildActiveCycleCardsData(crops, options = {}) {
     const expenseTotalsByCrop = options.expenseTotalsByCrop instanceof Map ? options.expenseTotalsByCrop : null;
     const directExpenseTotalsByCrop = options.directExpenseTotalsByCrop instanceof Map ? options.directExpenseTotalsByCrop : null;
-    const operationalExpenseTotalsByCrop = options.operationalExpenseTotalsByCrop instanceof Map ? options.operationalExpenseTotalsByCrop : null;
-    const operationalPendingTotalsByCrop = options.operationalPendingTotalsByCrop instanceof Map ? options.operationalPendingTotalsByCrop : null;
     const incomeTotalsByCrop = options.incomeTotalsByCrop instanceof Map ? options.incomeTotalsByCrop : null;
     const lossTotalsByCrop = options.lossTotalsByCrop instanceof Map ? options.lossTotalsByCrop : null;
     const pendingTotalsByCrop = options.pendingTotalsByCrop instanceof Map ? options.pendingTotalsByCrop : null;
@@ -10553,12 +10551,6 @@ function buildActiveCycleCardsData(crops, options = {}) {
 
         const directExpenseInvestment = normalizedCropId && directExpenseTotalsByCrop
             ? (Number(directExpenseTotalsByCrop.get(normalizedCropId)) || 0)
-            : 0;
-        const operationalExpenseInvestment = normalizedCropId && operationalExpenseTotalsByCrop
-            ? (Number(operationalExpenseTotalsByCrop.get(normalizedCropId)) || 0)
-            : 0;
-        const operationalPendingTotal = normalizedCropId && operationalPendingTotalsByCrop
-            ? (Number(operationalPendingTotalsByCrop.get(normalizedCropId)) || 0)
             : 0;
         const expenseInvestment = normalizedCropId && expenseTotalsByCrop
             ? (Number(expenseTotalsByCrop.get(normalizedCropId)) || 0)
@@ -10606,12 +10598,10 @@ function buildActiveCycleCardsData(crops, options = {}) {
             potencialNeto: potential,
             baseInvestmentUsd: baseInvestment,
             directGastosUsd: directExpenseInvestment,
-            operativosAsociadosUsd: operationalExpenseInvestment,
             gastosUsd: expenseInvestment,
             pagadosUsd: incomeTotal,
             costosUsd: totalCosts,
             fiadosUsd: pendingTotal,
-            fiadosCarteraOperativaUsd: operationalPendingTotal,
             perdidasUsd: lossesTotal,
             globalBreakdown: buildCycleGlobalBreakdown(crop, {
                 globalTotalsByCropType,
@@ -10621,11 +10611,9 @@ function buildActiveCycleCardsData(crops, options = {}) {
                 base: baseTriplet,
                 gastos: formatCurrency(expenseInvestment),
                 gastosDirectos: formatCurrency(directExpenseInvestment),
-                operativosAsociados: formatCurrency(operationalExpenseInvestment),
                 pagados: formatCurrency(incomeTotal),
                 costos: formatCurrency(totalCosts),
                 fiados: formatCurrency(pendingTotal),
-                fiadosCarteraOperativa: formatCurrency(operationalPendingTotal),
                 perdidasCarteraViva: formatCurrency(lossesTotal),
                 cotizacion
             }
@@ -10636,8 +10624,6 @@ function buildActiveCycleCardsData(crops, options = {}) {
 function buildFinishedCycleCardsData(crops, options = {}) {
     const expenseTotalsByCrop = options.expenseTotalsByCrop instanceof Map ? options.expenseTotalsByCrop : null;
     const directExpenseTotalsByCrop = options.directExpenseTotalsByCrop instanceof Map ? options.directExpenseTotalsByCrop : null;
-    const operationalExpenseTotalsByCrop = options.operationalExpenseTotalsByCrop instanceof Map ? options.operationalExpenseTotalsByCrop : null;
-    const operationalPendingTotalsByCrop = options.operationalPendingTotalsByCrop instanceof Map ? options.operationalPendingTotalsByCrop : null;
     const incomeTotalsByCrop = options.incomeTotalsByCrop instanceof Map ? options.incomeTotalsByCrop : null;
     const lossTotalsByCrop = options.lossTotalsByCrop instanceof Map ? options.lossTotalsByCrop : null;
     const pendingTotalsByCrop = options.pendingTotalsByCrop instanceof Map ? options.pendingTotalsByCrop : null;
@@ -10661,12 +10647,6 @@ function buildFinishedCycleCardsData(crops, options = {}) {
 
         const directExpenseInvestment = normalizedCropId && directExpenseTotalsByCrop
             ? (Number(directExpenseTotalsByCrop.get(normalizedCropId)) || 0)
-            : 0;
-        const operationalExpenseInvestment = normalizedCropId && operationalExpenseTotalsByCrop
-            ? (Number(operationalExpenseTotalsByCrop.get(normalizedCropId)) || 0)
-            : 0;
-        const operationalPendingTotal = normalizedCropId && operationalPendingTotalsByCrop
-            ? (Number(operationalPendingTotalsByCrop.get(normalizedCropId)) || 0)
             : 0;
         const expenseInvestment = normalizedCropId && expenseTotalsByCrop
             ? (Number(expenseTotalsByCrop.get(normalizedCropId)) || 0)
@@ -10721,12 +10701,10 @@ function buildFinishedCycleCardsData(crops, options = {}) {
             potencialNeto: finalNet,
             baseInvestmentUsd: baseInvestment,
             directGastosUsd: directExpenseInvestment,
-            operativosAsociadosUsd: operationalExpenseInvestment,
             gastosUsd: expenseInvestment,
             pagadosUsd: incomeTotal,
             costosUsd: totalCosts,
             fiadosUsd: pendingTotal,
-            fiadosCarteraOperativaUsd: operationalPendingTotal,
             perdidasUsd: lossesTotal,
             mode: 'finished',
             globalBreakdown: buildCycleGlobalBreakdown(crop, {
@@ -10737,11 +10715,9 @@ function buildFinishedCycleCardsData(crops, options = {}) {
                 base: baseTriplet,
                 gastos: formatCurrency(expenseInvestment),
                 gastosDirectos: formatCurrency(directExpenseInvestment),
-                operativosAsociados: formatCurrency(operationalExpenseInvestment),
                 pagados: formatCurrency(incomeTotal),
                 costos: formatCurrency(totalCosts),
                 fiados: formatCurrency(pendingTotal),
-                fiadosCarteraOperativa: formatCurrency(operationalPendingTotal),
                 perdidasCarteraViva: formatCurrency(lossesTotal),
                 cotizacion
             }
@@ -11485,16 +11461,6 @@ export async function loadCrops() {
             ]);
             directExpenseTotalsByCrop = expenseTotals;
             expenseTotalsByCrop = new Map(directExpenseTotalsByCrop);
-            const opsApi = window.YGAgroOperationalCycles;
-            if (typeof opsApi?.getOperationalExpensesByCrop === 'function') {
-                operationalExpenseTotalsByCrop = opsApi.getOperationalExpensesByCrop();
-                operationalExpenseTotalsByCrop.forEach((usd, cropId) => {
-                    expenseTotalsByCrop.set(cropId, (expenseTotalsByCrop.get(cropId) || 0) + usd);
-                });
-            }
-            if (typeof opsApi?.getOperationalPendingByCrop === 'function') {
-                operationalPendingTotalsByCrop = opsApi.getOperationalPendingByCrop();
-            }
             incomeTotalsByCrop = incomeTotals;
             lossTotalsByCrop = lossTotals;
             pendingTotalsByCrop = pendingTotals;

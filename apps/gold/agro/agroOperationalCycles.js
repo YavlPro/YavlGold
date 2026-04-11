@@ -1,8 +1,10 @@
 import { convertToUSD, getRate, initExchangeRates } from './agro-exchange.js';
+import { assertOperationalPeriodOpen, getAgroPeriodCyclesSummary, mountAgroPeriodCycles, unmountAgroPeriodCycles } from './agro-period-cycles.js';
 
 const ROOT_ID = 'agro-operational-root';
 const VIEW_NAME = 'operational';
 const SUBVIEW_CART = 'cart';
+const SUBVIEW_PERIODS = 'periods';
 const SUBVIEW_ACTIVE = 'active';
 const SUBVIEW_FINISHED = 'finished';
 const SUBVIEW_DONATIONS = 'donations';
@@ -14,12 +16,13 @@ const FAMILY_OPTIONS = Object.freeze([FAMILY_LINKED, FAMILY_UNLINKED]);
 const CROPS_READY_EVENT = 'AGRO_CROPS_READY';
 const VIEW_CHANGED_EVENT = 'agro:shell:view-changed';
 const OPERATIONAL_PORTFOLIO_UPDATED_EVENT = 'agro:operational-portfolio-updated';
+const PERIOD_CYCLES_UPDATED_EVENT = 'agro:period-cycles:updated';
 const EMPTY_AMOUNT_LABEL = '📝 Monto no anotado';
 const EMPTY_BALANCE_LABEL = '📝 Sin balance monetario';
 
 const ACTIVE_STATUS_VALUES = Object.freeze(['open', 'in_progress', 'compensating']);
 const FINISHED_STATUS_VALUES = Object.freeze(['closed', 'lost']);
-const SUBVIEW_OPTIONS = Object.freeze([SUBVIEW_CART, SUBVIEW_ACTIVE, SUBVIEW_FINISHED, SUBVIEW_DONATIONS, SUBVIEW_LOSSES, SUBVIEW_EXPORT]);
+const SUBVIEW_OPTIONS = Object.freeze([SUBVIEW_CART, SUBVIEW_PERIODS, SUBVIEW_ACTIVE, SUBVIEW_FINISHED, SUBVIEW_DONATIONS, SUBVIEW_LOSSES, SUBVIEW_EXPORT]);
 const CURRENCY_OPTIONS = Object.freeze(['COP', 'USD', 'VES']);
 
 const ECONOMIC_TYPE_OPTIONS = Object.freeze([
@@ -1171,6 +1174,10 @@ async function verifyCascadeDelete(supabase, userId, cycleId) {
 async function createCycleRecord(payload) {
     const supabase = await getSupabaseClient();
     const userId = await ensureUserId();
+    await assertOperationalPeriodOpen({
+        movementDate: payload?.movementDate,
+        userId
+    });
     const cropId = await validateCropId(supabase, userId, payload.cropId);
     const closedAt = payload.status === 'closed' ? todayLocalIso() : null;
 
@@ -1218,6 +1225,10 @@ async function createCycleRecord(payload) {
 async function updateCycleRecord(cycleId, payload) {
     const supabase = await getSupabaseClient();
     const userId = await ensureUserId();
+    await assertOperationalPeriodOpen({
+        movementDate: payload?.movementDate,
+        userId
+    });
     const existingCycle = state.cycleIndex.get(cycleId);
     if (!existingCycle) {
         throw new Error('No se encontró la cartera operativa a editar.');
@@ -1799,6 +1810,14 @@ function getSubviewMeta(subview) {
         };
     }
 
+    if (subview === SUBVIEW_PERIODS) {
+        return {
+            eyebrow: '📆 Ciclos de Período',
+            title: '📆 Ciclos de Período — lectura mensual',
+            copy: 'Cada tarjeta representa un mes calendario completo y resume la operativa comercial sin mezclarla con Cartera Viva.'
+        };
+    }
+
     const familyLabel = getFamilyLabel(state.familyFilter);
 
     if (subview === SUBVIEW_FINISHED) {
@@ -1850,7 +1869,7 @@ function getSubviewMeta(subview) {
 
 function renderFamilyToggle() {
     if (!state.refs?.familyToggle) return;
-    const shouldShow = state.currentSubview !== SUBVIEW_CART;
+    const shouldShow = state.currentSubview !== SUBVIEW_CART && state.currentSubview !== SUBVIEW_PERIODS;
     state.refs.familyToggle.hidden = !shouldShow;
     state.refs.familyToggle.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
     if (!shouldShow) {
@@ -1930,6 +1949,7 @@ function renderSubviewSwitch() {
     const totalCount = activeCount + paidCount + donationCount + lossCount;
     const options = [
         { value: SUBVIEW_CART, label: '🛒 Mi Carrito', count: null },
+        { value: SUBVIEW_PERIODS, label: '📆 Ciclos de Período', count: null },
         { value: SUBVIEW_ACTIVE, label: '🟡 No pagados', count: activeCount },
         { value: SUBVIEW_FINISHED, label: '✅ Pagados', count: paidCount },
         { value: SUBVIEW_DONATIONS, label: '🤝 Donaciones', count: donationCount },
@@ -2102,7 +2122,7 @@ function renderGroupedCycleList(cycles = []) {
         renderCycleFamilySection({
             familyKey: 'linked',
             title: '🌱 Asociados al cultivo',
-            copy: 'Tienen crop_id y deben reflejarse también en la lectura de Ciclos de cultivo.',
+            copy: 'Conservan crop_id para trazabilidad, pero su lectura oficial vive en Ciclos de Período.',
             cycles: linked
         }),
         linked.length && unlinked.length
@@ -2136,6 +2156,30 @@ function renderOverview() {
 
     if (state.currentSubview === SUBVIEW_CART) {
         state.refs.overviewBody.innerHTML = renderCartOverview();
+        return;
+    }
+
+    if (state.currentSubview === SUBVIEW_PERIODS) {
+        const summary = getAgroPeriodCyclesSummary();
+        state.refs.overviewBody.innerHTML = `
+            <div class="agro-operational-summary-grid">
+                <article class="agro-operational-summary-card">
+                    <span class="agro-operational-summary-card__label">📆 Ciclos visibles</span>
+                    <strong class="agro-operational-summary-card__value">${summary.loading ? '...' : summary.total}</strong>
+                    <p class="agro-operational-summary-card__hint">${escapeHtml(summary.currentMonthLabel)} como referencia operativa actual.</p>
+                </article>
+                <article class="agro-operational-summary-card">
+                    <span class="agro-operational-summary-card__label">Estado principal</span>
+                    <strong class="agro-operational-summary-card__value">${summary.loading ? '...' : `${summary.active} / ${summary.finalized}`}</strong>
+                    <p class="agro-operational-summary-card__hint">Activo o finalizado según el calendario del mes.</p>
+                </article>
+                <article class="agro-operational-summary-card">
+                    <span class="agro-operational-summary-card__label">Badge operativo</span>
+                    <strong class="agro-operational-summary-card__value">${summary.loading ? '...' : `${summary.open} / ${summary.closed}`}</strong>
+                    <p class="agro-operational-summary-card__hint">Abierto o cerrado según pendientes reales del período.</p>
+                </article>
+            </div>
+        `;
         return;
     }
 
@@ -2617,6 +2661,7 @@ function renderCurrentSubview() {
     state.refs.listStatus.classList.toggle('is-refreshing', isSoftRefreshing);
 
     if (state.currentSubview === SUBVIEW_CART) {
+        unmountAgroPeriodCycles();
         clearFiltersHost();
         state.refs.listStatus.textContent = 'Mi Carrito prepara la operación antes de llevarla a No pagados o Pagados.';
         ensureOperationalCartSlot();
@@ -2624,6 +2669,22 @@ function renderCurrentSubview() {
         return;
     }
 
+    if (state.currentSubview === SUBVIEW_PERIODS) {
+        restoreCartNodeHome();
+        clearFiltersHost();
+        state.refs.listStatus.textContent = 'Cada ciclo resume un mes calendario completo de Cartera Operativa.';
+        let periodRoot = state.refs.list.querySelector('#agro-period-cycles-root');
+        if (!periodRoot) {
+            state.refs.list.innerHTML = '<div id="agro-period-cycles-root"></div>';
+            periodRoot = state.refs.list.querySelector('#agro-period-cycles-root');
+        }
+        void mountAgroPeriodCycles(periodRoot, {
+            initialUserId: state.userId
+        });
+        return;
+    }
+
+    unmountAgroPeriodCycles();
     restoreCartNodeHome();
     const shouldBlockInitialLoading = !state.loadedOnce && !state.schemaMissing;
 
@@ -2737,7 +2798,7 @@ function renderCurrentSubview() {
         familyKey,
         title: getFamilyLabel(familyKey),
         copy: familyKey === FAMILY_LINKED
-            ? 'Tienen crop_id y deben reflejarse también en la lectura de Ciclos de cultivo.'
+            ? 'Conservan crop_id para trazabilidad, pero su lectura oficial vive en Ciclos de Período.'
             : 'Son movimientos generales sin crop_id, separados de la lectura del cultivo.',
         cycles: familyCycles
     });
@@ -3181,6 +3242,7 @@ function bindEvents() {
         state.currentSubview = normalizeOperationalSubview(event?.detail?.subview || state.currentSubview);
 
         if (state.currentView !== VIEW_NAME) {
+            unmountAgroPeriodCycles();
             closeComposerModal();
             return;
         }
@@ -3195,6 +3257,12 @@ function bindEvents() {
     window.addEventListener(CROPS_READY_EVENT, () => {
         if (state.currentView === VIEW_NAME) {
             void refreshData();
+        }
+    });
+
+    window.addEventListener(PERIOD_CYCLES_UPDATED_EVENT, () => {
+        if (state.currentView === VIEW_NAME && state.currentSubview === SUBVIEW_PERIODS) {
+            renderOverview();
         }
     });
 

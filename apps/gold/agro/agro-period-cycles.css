@@ -1,0 +1,375 @@
+.agro-period-cycles {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.agro-period-cycles__toolbar,
+.agro-period-cycles__summary-card,
+.agro-period-cycle-card,
+.agro-period-cycle-card__group,
+.agro-period-cycles__form,
+.agro-period-cycles__empty,
+.agro-period-cycles__loading {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-gold);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 6%, transparent), transparent 22%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.018), transparent 62%),
+    var(--bg-3);
+  box-shadow:
+    0 16px 32px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}
+
+.agro-period-cycles__toolbar,
+.agro-period-cycles__form,
+.agro-period-cycles__empty,
+.agro-period-cycles__loading {
+  padding: 1rem;
+}
+
+.agro-period-cycles__toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.agro-period-cycles__toolbar-copy {
+  max-width: 64ch;
+}
+
+.agro-period-cycles__eyebrow,
+.agro-period-cycle-card__eyebrow {
+  margin: 0 0 0.22rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-5);
+  opacity: 0.82;
+}
+
+.agro-period-cycles__title,
+.agro-period-cycle-card__title {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  color: var(--text-primary);
+}
+
+.agro-period-cycles__title {
+  font-size: clamp(1.08rem, 2vw, 1.3rem);
+}
+
+.agro-period-cycles__copy,
+.agro-period-cycles__summary-copy,
+.agro-period-cycle-card__range,
+.agro-period-cycle-card__group-copy,
+.agro-period-cycles__empty-copy {
+  margin: 0.36rem 0 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.agro-period-cycles__form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.agro-period-cycles__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.38rem;
+}
+
+.agro-period-cycles__field-label,
+.agro-period-cycle-card__summary-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.86rem;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+}
+
+.agro-period-cycles__form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.agro-period-cycles__summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.agro-period-cycles__summary-card {
+  padding: 0.95rem;
+}
+
+.agro-period-cycles__summary-label {
+  display: block;
+  margin-bottom: 0.24rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold-5);
+}
+
+.agro-period-cycles__summary-value,
+.agro-period-cycle-card__summary-value {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1.05rem, 2vw, 1.3rem);
+  color: var(--text-primary);
+}
+
+.agro-period-cycles__grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.agro-period-cycle-card {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+}
+
+.agro-period-cycle-card__head,
+.agro-period-cycle-card__group-head,
+.agro-period-cycle-card__movement-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: flex-start;
+}
+
+.agro-period-cycle-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  justify-content: flex-end;
+}
+
+.agro-period-cycle-card__status,
+.agro-period-cycle-card__portfolio,
+.agro-period-cycle-card__movement-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.28rem 0.62rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid currentColor;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.agro-period-cycle-card__status.is-active,
+.agro-period-cycle-card__movement-badge.is-income {
+  color: color-mix(in srgb, var(--success) 82%, white 18%);
+  background: color-mix(in srgb, var(--success) 18%, transparent);
+}
+
+.agro-period-cycle-card__status.is-finalized,
+.agro-period-cycle-card__portfolio.is-closed {
+  color: color-mix(in srgb, var(--gold-5) 90%, white 10%);
+  background: color-mix(in srgb, var(--gold-4) 15%, transparent);
+}
+
+.agro-period-cycle-card__portfolio.is-open,
+.agro-period-cycle-card__movement-badge.is-expense {
+  color: color-mix(in srgb, var(--warning) 86%, white 14%);
+  background: color-mix(in srgb, var(--warning) 15%, transparent);
+}
+
+.agro-period-cycle-card__movement-badge.is-donation {
+  color: color-mix(in srgb, var(--gold-5) 90%, white 10%);
+  background: color-mix(in srgb, var(--gold-4) 15%, transparent);
+}
+
+.agro-period-cycle-card__movement-badge.is-loss {
+  color: color-mix(in srgb, var(--danger) 84%, white 16%);
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
+}
+
+.agro-period-cycle-card__progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.42rem;
+}
+
+.agro-period-cycle-card__progress-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: center;
+  color: var(--text-secondary);
+}
+
+.agro-period-cycle-card__progress-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.agro-period-cycle-card__progress-track {
+  position: relative;
+  width: 100%;
+  height: 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.agro-period-cycle-card__progress-fill {
+  position: relative;
+  height: 100%;
+  min-width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--gold-3), var(--gold-5));
+  transition: width 180ms ease;
+}
+
+.agro-period-cycle-card__progress-track.is-complete .agro-period-cycle-card__progress-fill {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--success) 78%, var(--gold-4) 22%), var(--success));
+}
+
+.agro-period-cycle-card__progress-dot {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  transform: translate(50%, -50%);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold-4) 16%, transparent);
+}
+
+.agro-period-cycle-card__summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.agro-period-cycle-card__summary-cell {
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.agro-period-cycle-card__groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.agro-period-cycle-card__group {
+  padding: 0.85rem;
+}
+
+.agro-period-cycle-card__group-title,
+.agro-period-cycles__empty-title {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  color: var(--text-primary);
+}
+
+.agro-period-cycle-card__group-count {
+  min-width: 2rem;
+  padding: 0.18rem 0.5rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+  font-family: 'Orbitron', sans-serif;
+  color: var(--gold-5);
+}
+
+.agro-period-cycle-card__movement-list {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agro-period-cycle-card__movement-item {
+  padding: 0.72rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.agro-period-cycle-card__movement-title {
+  margin: 0.38rem 0 0;
+  color: var(--text-primary);
+}
+
+.agro-period-cycle-card__movement-meta,
+.agro-period-cycle-card__movement-date,
+.agro-period-cycle-card__empty-copy,
+.agro-period-cycle-card__more {
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+}
+
+.agro-period-cycles__loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.agro-period-cycles__spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.16);
+  border-top-color: var(--gold-4);
+  animation: agroPeriodCyclesSpin 0.9s linear infinite;
+}
+
+@keyframes agroPeriodCyclesSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 900px) {
+  .agro-period-cycles__summary-grid,
+  .agro-period-cycle-card__summary,
+  .agro-period-cycle-card__groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .agro-period-cycles__toolbar,
+  .agro-period-cycle-card__head {
+    flex-direction: column;
+  }
+
+  .agro-period-cycles__form,
+  .agro-period-cycles__summary-grid,
+  .agro-period-cycle-card__summary,
+  .agro-period-cycle-card__groups {
+    grid-template-columns: 1fr;
+  }
+
+  .agro-period-cycle-card__badges {
+    justify-content: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agro-period-cycle-card__progress-fill,
+  .agro-period-cycles__spinner {
+    animation: none;
+    transition: none;
+  }
+}

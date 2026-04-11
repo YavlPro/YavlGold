@@ -13873,3 +13873,233 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
 1. Abrir `Agenda Lunar`, `Centro Financiero` y `Nuevo Cultivo` y confirmar que el layout sigue intacto sin depender de `style=""`.
 2. Reabrir `Nuevo Cultivo`, cerrarlo con `Escape` y con click en backdrop, y confirmar que el comportamiento no cambió.
 3. Repetir un flujo de auth/local refresh donde `initAgro()` pueda reinyectarse y confirmar que header identity / ROI no dupliquen listeners.
+
+## 2026-04-11 — MVP Ciclos de Período para Cartera Operativa (inicio)
+
+### Diagnóstico
+
+- `Cartera Operativa` ya vive aislada del monolito en `apps/gold/agro/agroOperationalCycles.js`, montada en `#agro-operational-root` desde `apps/gold/agro/index.html`, así que la nueva familia puede nacer modular sin abrir una vista shell nueva.
+- La navegación shell ya separa `Cartera Viva` y `Cartera Operativa` en `apps/gold/agro/agro-shell.js`; el wiring mínimo más seguro es agregar una subvista interna nueva dentro de `operational`, no tocar el sidebar principal.
+- Los ciclos de cultivo ya resuelven una gramática visual útil para este MVP en `apps/gold/agro/agrociclos.js` y `apps/gold/agro/agrociclos.css`: status badge sobrio, badge secundario de cartera y barra de progreso con lectura textual.
+- Los movimientos económicos reales de la operación comercial no nacen en `agroOperationalCycles.js`; hoy se insertan desde el facturero del monolito `apps/gold/agro/agro.js` sobre `agro_pending`, `agro_income` y `agro_losses`.
+- El punto de menor diff para bloquear altas en meses cerrados es `insertFactureroRow()` en `apps/gold/agro/agro.js`, porque centraliza inserts reutilizados por altas directas y transferencias.
+- Para cumplir “nombre definido por el usuario” y “crear ciclo aunque el mes esté en curso”, el MVP necesita persistencia mínima específica. Derivar todo localmente no alcanza porque no conservaría identidad ni naming del ciclo mensual.
+- La decisión técnica más segura es:
+  - persistir solo la envoltura mensual en `agro_period_cycles`;
+  - derivar en runtime el badge `open|closed` y el resumen de movimientos desde `agro_pending`, `agro_income` y `agro_losses`;
+  - calcular `active|finalized` por calendario del período, no por fecha de creación;
+  - no mezclar esta familia con `Cartera Viva`.
+
+### Plan
+
+1. Crear migración Supabase mínima para `agro_period_cycles`.
+2. Crear `apps/gold/agro/agro-period-cycles.js` para lectura, creación y render de cards mensuales.
+3. Crear `apps/gold/agro/agro-period-cycles.css` alineado al ADN V10 y visualmente hermano de ciclos de cultivo.
+4. Integrar la subvista dentro de `Cartera Operativa` con wiring mínimo en `agroOperationalCycles.js` y `agro-shell.js`.
+5. Blindar el alta de movimientos operativos desde `agro.js` usando un guard central por fecha/período finalizado.
+6. Cerrar con `pnpm build:gold` y QA estática/manual sugerida.
+
+### Alcance MVP
+
+- Modelo de datos mínimo para ciclos de período.
+- Listado/render de cards mensuales.
+- Progreso mensual automático por calendario.
+- Estado principal `active|finalized`.
+- Badge secundario `open|closed` derivado desde pendientes del período.
+- Lectura agrupada de movimientos operativos:
+  - asociados al cultivo
+  - no asociados al cultivo
+- Bloqueo de nuevos registros en períodos finalizados.
+- Integración mínima dentro de `Cartera Operativa`.
+
+### Riesgos
+
+- El guard de bloqueo no debe romper transferencias ni altas válidas del mes actual; por eso se aplicará en el punto central de insert y no como parches dispersos por formulario.
+- El badge `closed` depende de cómo se identifiquen “pendientes” del período; en este MVP se derivará de `agro_pending` y de reversiones/soft-delete visibles, sin persistir redundancia.
+- Si la migración no está aplicada en Supabase, la UI debe degradar con copy explícito sin romper `Cartera Operativa`.
+
+### Archivos previstos
+
+- `apps/gold/agro/agro-period-cycles.js`
+- `apps/gold/agro/agro-period-cycles.css`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+- `apps/gold/agro/agroOperationalCycles.js`
+- `apps/gold/agro/agro-shell.js`
+- `apps/gold/agro/agro.js`
+- `apps/gold/agro/index.html`
+- `apps/gold/supabase/migrations/*create_agro_period_cycles*.sql`
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-period-cycles.js`
+  - línea `324`: lectura mensual de movimientos operativos desde `agro_pending`, `agro_income` y `agro_losses`
+  - línea `454`: fetch de ciclos persistidos en `agro_period_cycles`
+  - línea `482`: resumen superior del módulo mensual
+  - línea `577`: render de card mensual con progreso, estado y grupos asociados/no asociados
+  - línea `759`: wiring del formulario inline y refresh por eventos operativos
+  - línea `837`: guard reutilizable `assertOperationalPeriodOpen(...)`
+  - línea `885`: mount del módulo dentro de `Cartera Operativa`
+- `apps/gold/agro/agro-period-cycles.css`
+  - nuevo CSS modular para cards mensuales, progreso, badges y grupos de movimientos con tokens ADN V10
+- `apps/gold/supabase/migrations/20260411130000_create_agro_period_cycles.sql`
+  - nueva tabla `agro_period_cycles` con RLS, soft-delete, índice único por usuario/mes y trigger `updated_at`
+- `apps/gold/agro/agroOperationalCycles.js`
+  - líneas `2`, `7`, `19`, `25`: nueva subvista `periods` y bridge con el módulo mensual
+  - líneas `1805`, `1864`, `1944`: copy/meta del subview y aparición en el switch interno
+  - líneas `2154` y `2664`: overview/list mount de `Ciclos de Período` dentro de `Cartera Operativa`
+  - línea `3255`: re-render del overview al actualizar el módulo mensual
+- `apps/gold/agro/agro-shell.js`
+  - líneas `28` y `55`: shell habilitado para `operational/periods`
+- `apps/gold/agro/agro.js`
+  - línea `35`: import del guard mensual
+  - líneas `1638`, `7915`, `7935`: bloqueo central de inserts en períodos finalizados para `agro_pending`, `agro_income` y `agro_losses`
+
+### Decisiones técnicas tomadas
+
+- Se creó persistencia real mínima para el ciclo mensual porque el MVP exige nombre definido por el usuario y creación explícita del período.
+- El estado principal `active|finalized` se deriva en runtime desde `start_date/end_date`; no se persiste para evitar drift y no depender de jobs automáticos.
+- El badge secundario `open|closed` también se deriva en runtime desde pendientes reales del período, sin guardar redundancia.
+- La nueva familia se montó como subvista interna de `Cartera Operativa` para evitar tocar sidebar, shell principal o `agro.js` fuera del guard central.
+- El bloqueo se aplicó en helpers de inserción del facturero y no en formularios sueltos, para cubrir altas directas y transferencias con el menor diff.
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por engine: `node v25.6.0` frente a `node 20.x` declarado
+
+### QA realizado
+
+- Validación técnica ejecutada:
+  - build completo con `pnpm build:gold`
+  - revisión estática del wiring de shell, subvista mensual y guard central de inserts
+- QA manual/browser:
+  - **no ejecutado** en esta sesión, alineado al criterio de cirugía técnica del repo
+
+### QA manual sugerido
+
+1. Entrar a `Agro > Operación comercial > Cartera Operativa > Ciclos de Período`.
+2. Crear un ciclo del mes actual y confirmar que el rango cubra el mes completo.
+3. Verificar que el progreso mensual coincida con la fecha del día y no con la fecha de creación.
+4. Confirmar que un mes pasado renderice `finalized`.
+5. Confirmar que el badge operativo marque `open` si existen fiados abiertos en ese período y `closed` si no quedan.
+6. Verificar separación visible entre movimientos asociados al cultivo y no asociados.
+7. Intentar registrar un movimiento nuevo con fecha de un período finalizado y confirmar bloqueo.
+8. Confirmar que `Cartera Viva` siga intacta y que las vistas existentes de `Cartera Operativa` no se rompan.
+
+### Riesgo pendiente real
+
+- El guard de inserción bloquea meses finalizados solo cuando existe el ciclo de período mensual correspondiente; no fuerza todavía la existencia canónica del ciclo para todos los meses históricos.
+
+## 2026-04-11 — Auditoría semántica y cierre MVP Ciclos de Período
+
+### Diagnóstico exacto
+
+- El MVP inicial dejó `Ciclos de Período` montado en la superficie correcta (`apps/gold/agro/agroOperationalCycles.js`), pero conectado al source equivocado en `apps/gold/agro/agro-period-cycles.js`: hoy la lectura mensual sale de `agro_pending`, `agro_income` y `agro_losses`, que son tablas compartidas del facturero y no la verdad canónica de `Cartera Operativa`.
+- El guard de cierre mensual quedó implementado dentro de helpers genéricos del monolito `apps/gold/agro/agro.js`, por lo que hoy intercepta inserts sobre tablas compartidas sin distinguir si el flujo pertenece realmente a `Cartera Operativa`.
+- `apps/gold/agro/agrociclos.js` y el armado de cards en `apps/gold/agro/agro.js` todavía mezclan la lectura histórica de `Cartera Operativa` dentro de `Ciclos de Cultivo` mediante badge operativo y breakdown de costos/fiados operativos por cultivo.
+- La fuente ya existente y semánticamente correcta para `Cartera Operativa` es `agro_operational_cycles` + `agro_operational_movements`; además ya expone agregados por cultivo vía `window.YGAgroOperationalCycles`.
+
+### Plan
+
+1. Sacar el bloqueo mensual de los helpers genéricos de `agro.js` y reubicarlo en el flujo de escritura real de `agroOperationalCycles.js`.
+2. Rehacer `agro-period-cycles.js` para leer períodos desde `agro_operational_cycles` + `agro_operational_movements`, no desde tablas compartidas del facturero.
+3. Derivar badge `open|closed` desde estado operativo real del período:
+   - `open` si existen ciclos operativos del mes con estado activo (`open`, `in_progress`, `compensating`)
+   - `closed` si no quedan ciclos activos del mes
+4. Limpiar `Ciclos de Cultivo` quitando badge y breakdown de `Cartera Operativa`, para dejar allí solo `Cartera Viva` + verdad agrícola.
+5. Mantener la persistencia mínima de `agro_period_cycles` solo para identidad/naming del período y resolver históricos por derivación controlada.
+
+### Hallazgos sobre scope del guard
+
+- El guard vive hoy en:
+  - `insertRowWithMissingColumnFallback()` de `apps/gold/agro/agro.js`
+  - `insertFactureroRow()` de `apps/gold/agro/agro.js`
+- Ese wiring bloquea `agro_pending`, `agro_income` y `agro_losses` en cualquier flujo que use esos helpers, aunque el dato no pertenezca a `Cartera Operativa`.
+- Conclusión: el scope actual es demasiado global y puede contaminar `Cartera Viva` o cualquier lectura compartida del facturero.
+
+### Hallazgos sobre badge `open|closed`
+
+- El badge del período se deriva hoy de `pendingCount` calculado sobre movimientos `kind === 'pending'` leídos desde `agro_pending`.
+- Esa semántica no es suficientemente limpia para `Cartera Operativa`, porque depende de tablas compartidas y no del estado real de ciclos operativos.
+- La verdad correcta para `open|closed` debe salir del status operativo real del mes en `agro_operational_cycles`.
+
+### Hallazgos sobre contaminación en ciclos de cultivo
+
+- `apps/gold/agro/agrociclos.js` todavía renderiza badge `portfolio-badge--co` y una sección completa `Cartera Operativa` dentro del breakdown del ciclo.
+- `apps/gold/agro/agro.js` sigue inyectando `operativosAsociadosUsd` y `fiadosCarteraOperativaUsd` al dataset de `Ciclos de Cultivo` usando `window.YGAgroOperationalCycles`.
+- Conclusión: `Ciclos de Cultivo` aún absorben lectura mensual/operativa que ya no les pertenece.
+
+### Estrategia elegida para migración/backfill
+
+- Se elige **derivación controlada**.
+- Motivo:
+  - evita backfill físico sobre DB en una zona todavía joven;
+  - aprovecha la verdad ya existente en `agro_operational_cycles` + `agro_operational_movements`;
+  - permite representar meses históricos de actividad operativa sin inventar data ni abrir una migración de datos riesgosa.
+- Regla:
+  - si el mes existe en `agro_period_cycles`, se respeta ese registro persistido y su `name`;
+  - si existe actividad operativa histórica pero no hay fila persistida, la vista sintetiza el período con nombre derivado seguro tipo `Abril 2026`.
+
+### Archivos a tocar
+
+- `apps/gold/agro/agro-period-cycles.js`
+- `apps/gold/agro/agroOperationalCycles.js`
+- `apps/gold/agro/agrociclos.js`
+- `apps/gold/agro/agro.js`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Riesgos
+
+- La derivación histórica depende de que `movement_date`/`opened_at` en `agro_operational_*` estén consistentes; si existen filas antiguas fuera de esa semántica, el mes podrá verse incompleto hasta corregir datos.
+- Al sacar el guard de `agro.js`, el bloqueo mensual dejará de cubrir tablas compartidas del facturero por diseño; eso es correcto semánticamente, pero debe quedar explícito.
+- No hay QA browser en esta sesión, así que el cierre visual/funcional real queda pendiente de validación manual.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-period-cycles.js`
+  - `249`: derivación controlada de períodos mensuales vía `buildDerivedCycle(...)`
+  - `369`: nueva lectura canónica desde `agro_operational_cycles` + `agro_operational_movements`
+  - `396`: merge entre períodos persistidos y meses históricos derivados
+  - `433`: badge `open|closed` derivado desde ciclos operativos activos del período
+  - `734`: refresh del módulo ya no usa `agro_pending/agro_income/agro_losses`
+  - `860`: `assertOperationalPeriodOpen(...)` ahora se apoya en calendario mensual + fallback derivado del período
+- `apps/gold/agro/agroOperationalCycles.js`
+  - `2`: import del guard mensual reutilizable
+  - `1177` y `1228`: bloqueo scoped a escrituras reales de `Cartera Operativa`
+  - `2125` y `2801`: copy ajustado para dejar claro que la lectura oficial vive en `Ciclos de Período`
+- `apps/gold/agro/agro.js`
+  - se removió el guard global de inserts sobre tablas compartidas del facturero
+  - `10528` y `10624`: cards de `Ciclos de Cultivo` ya no cargan campos operativos
+  - `11462`: se dejó de mezclar `window.YGAgroOperationalCycles` dentro de los costos del cultivo
+- `apps/gold/agro/agrociclos.js`
+  - `79`: badges del ciclo vuelven a resolver solo `Cartera Viva`
+  - `294`: se eliminó el bloque visual `Cartera Operativa` del breakdown del cultivo
+  - `367`: se eliminó el badge operativo del header del ciclo
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por engine: `node v25.6.0` frente a `node 20.x` declarado
+
+### QA pendiente
+
+- No hubo QA browser/manual en esta sesión.
+- Queda pendiente validar manualmente:
+  - creación/edición bloqueada de operativa en meses finalizados;
+  - badge `open|closed` con datos reales de `agro_operational_cycles`;
+  - aparición de meses históricos derivados en `Ciclos de Período`;
+  - ausencia de lectura operativa dentro de `Ciclos de Cultivo`.

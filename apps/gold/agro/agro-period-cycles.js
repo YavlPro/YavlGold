@@ -1,0 +1,942 @@
+import supabase from '../assets/js/config/supabase-config.js';
+import './agro-period-cycles.css';
+
+const PERIOD_CYCLE_TABLE = 'agro_period_cycles';
+const PERIOD_CYCLES_UPDATED_EVENT = 'agro:period-cycles:updated';
+const OPERATIONAL_PORTFOLIO_UPDATED_EVENT = 'agro:operational-portfolio-updated';
+const ACTIVE_OPERATIONAL_STATUS_VALUES = new Set(['open', 'in_progress', 'compensating']);
+
+const state = {
+    root: null,
+    userId: '',
+    boundRoot: null,
+    loading: false,
+    creating: false,
+    schemaMissing: false,
+    mounted: false,
+    formOpen: false,
+    cycles: [],
+    summary: createEmptySummary(),
+    values: createDraftValues()
+};
+
+function createDraftValues() {
+    return {
+        name: '',
+        periodMonth: currentMonthKey()
+    };
+}
+
+function createEmptySummary() {
+    return {
+        total: 0,
+        active: 0,
+        finalized: 0,
+        open: 0,
+        closed: 0,
+        currentMonthLabel: formatMonthLabel(currentMonthKey())
+    };
+}
+
+function normalizeId(value) {
+    return String(value || '').trim();
+}
+
+function normalizeToken(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+}
+
+function todayLocalIso() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function currentMonthKey() {
+    return todayLocalIso().slice(0, 7);
+}
+
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+}
+
+function escapeAttr(value) {
+    return escapeHtml(value).replaceAll('`', '&#96;');
+}
+
+function isMissingColumnError(error, columnName) {
+    const message = String(error?.message || '').toLowerCase();
+    return message.includes(String(columnName || '').toLowerCase());
+}
+
+function isSchemaMissingError(error) {
+    const message = String(error?.message || '').toLowerCase();
+    return message.includes(PERIOD_CYCLE_TABLE)
+        || message.includes('does not exist')
+        || message.includes('could not find')
+        || String(error?.code || '') === '42P01';
+}
+
+function notify(message, type = 'info') {
+    if (typeof window !== 'undefined' && typeof window.showToast === 'function') {
+        window.showToast(message, type);
+        return;
+    }
+    if (type === 'error') {
+        console.error('[agro-period-cycles]', message);
+        return;
+    }
+    console.info('[agro-period-cycles]', message);
+}
+
+function monthKeyFromParts(year, month) {
+    return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}`;
+}
+
+function capitalizeFirst(value) {
+    const safeValue = String(value || '').trim();
+    if (!safeValue) return '';
+    return safeValue.charAt(0).toUpperCase() + safeValue.slice(1);
+}
+
+function formatDerivedPeriodName(monthKey) {
+    return capitalizeFirst(formatMonthLabel(monthKey).replace(/\s+de\s+/i, ' '));
+}
+
+function formatDateIso(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function parseMonthInput(value) {
+    const raw = String(value || '').trim();
+    if (!/^\d{4}-\d{2}$/.test(raw)) {
+        throw new Error('Selecciona un mes válido.');
+    }
+
+    const [yearRaw, monthRaw] = raw.split('-');
+    const year = Number(yearRaw);
+    const month = Number(monthRaw);
+    if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+        throw new Error('Selecciona un mes válido.');
+    }
+
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);
+
+    return {
+        year,
+        month,
+        monthKey: monthKeyFromParts(year, month),
+        startDate: formatDateIso(startDate),
+        endDate: formatDateIso(endDate)
+    };
+}
+
+function formatMonthLabel(value) {
+    const parsed = /^\d{4}-\d{2}$/.test(String(value || '').trim())
+        ? parseMonthInput(value)
+        : null;
+    if (!parsed) return 'Mes no disponible';
+    return new Intl.DateTimeFormat('es-ES', {
+        month: 'long',
+        year: 'numeric'
+    }).format(new Date(parsed.year, parsed.month - 1, 1));
+}
+
+function formatDateLabel(value) {
+    const safeValue = String(value || '').trim();
+    if (!safeValue) return 'Sin fecha';
+    const date = new Date(`${safeValue}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return safeValue;
+    return new Intl.DateTimeFormat('es-ES', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+    }).format(date);
+}
+
+function formatAmountLabel(amount, currency) {
+    const parsedAmount = Number(amount);
+    if (!Number.isFinite(parsedAmount)) return 'Sin monto';
+    const safeCurrency = String(currency || 'COP').trim().toUpperCase() || 'COP';
+    const formatted = new Intl.NumberFormat('es-ES', {
+        minimumFractionDigits: parsedAmount % 1 === 0 ? 0 : 2,
+        maximumFractionDigits: 2
+    }).format(parsedAmount);
+    return `${safeCurrency} ${formatted}`;
+}
+
+function getDaysInMonth(year, month) {
+    return new Date(year, month, 0).getDate();
+}
+
+function diffDaysInclusive(startIso, endIso) {
+    const start = new Date(`${startIso}T00:00:00`);
+    const end = new Date(`${endIso}T00:00:00`);
+    const ms = end.getTime() - start.getTime();
+    return Math.max(0, Math.floor(ms / 86400000) + 1);
+}
+
+function deriveCalendarStatus(cycle) {
+    const today = todayLocalIso();
+    return String(cycle?.end_date || '').trim() && String(cycle.end_date).trim() < today
+        ? 'finalized'
+        : 'active';
+}
+
+function deriveProgress(cycle) {
+    const year = Number(cycle?.period_year || 0);
+    const month = Number(cycle?.period_month || 0);
+    const totalDays = getDaysInMonth(year, month);
+    const today = todayLocalIso();
+    const startDate = String(cycle?.start_date || '').trim();
+    const endDate = String(cycle?.end_date || '').trim();
+
+    let elapsedDays = 0;
+    if (today < startDate) {
+        elapsedDays = 0;
+    } else if (today > endDate) {
+        elapsedDays = totalDays;
+    } else {
+        elapsedDays = diffDaysInclusive(startDate, today);
+    }
+
+    const percent = totalDays > 0
+        ? Math.max(0, Math.min(100, Math.round((elapsedDays / totalDays) * 100)))
+        : 0;
+
+    return {
+        elapsedDays,
+        totalDays,
+        percent,
+        text: today > endDate
+            ? 'Mes completado'
+            : `${elapsedDays}/${totalDays} días (${percent}%)`
+    };
+}
+
+function createMovementTypeMeta(economicType) {
+    const type = normalizeToken(economicType);
+    if (type === 'income') {
+        return { label: 'Ingreso', tone: 'income' };
+    }
+    if (type === 'loss') {
+        return { label: 'Pérdida', tone: 'loss' };
+    }
+    if (type === 'donation') {
+        return { label: 'Donación', tone: 'donation' };
+    }
+    return { label: 'Gasto', tone: 'expense' };
+}
+
+function compareDatesDescending(left, right) {
+    const leftKey = `${String(left?.date || '').trim()} ${String(left?.created_at || '').trim()}`;
+    const rightKey = `${String(right?.date || '').trim()} ${String(right?.created_at || '').trim()}`;
+    return rightKey.localeCompare(leftKey);
+}
+
+function buildDerivedCycle(monthKey, userId = '', overrides = {}) {
+    const parsed = parseMonthInput(monthKey);
+    return {
+        id: `derived-${monthKey}`,
+        user_id: userId,
+        name: formatDerivedPeriodName(monthKey),
+        period_year: parsed.year,
+        period_month: parsed.month,
+        start_date: parsed.startDate,
+        end_date: parsed.endDate,
+        created_at: '',
+        updated_at: '',
+        derived: true,
+        ...overrides
+    };
+}
+
+function normalizePersistedCycle(row) {
+    const monthKey = monthKeyFromParts(row?.period_year, row?.period_month);
+    return buildDerivedCycle(monthKey, normalizeId(row?.user_id), {
+        ...row,
+        id: normalizeId(row?.id),
+        derived: false
+    });
+}
+
+function createFallbackOperationalMovement(cycle) {
+    return {
+        id: `fallback-${normalizeId(cycle?.id)}`,
+        cycle_id: normalizeId(cycle?.id),
+        amount: null,
+        currency: 'USD',
+        amount_usd: null,
+        concept: String(cycle?.name || '').trim(),
+        movement_date: String(cycle?.opened_at || '').trim(),
+        created_at: String(cycle?.created_at || '').trim()
+    };
+}
+
+function buildOperationalMovementRow(cycle, movement) {
+    const cropId = normalizeId(cycle?.crop_id);
+    const economicType = normalizeToken(cycle?.economic_type);
+    const typeMeta = createMovementTypeMeta(economicType);
+    const amount = movement?.amount_usd != null ? movement.amount_usd : movement?.amount;
+    const currency = movement?.amount_usd != null ? 'USD' : (movement?.currency || 'COP');
+    const concept = String(movement?.concept || cycle?.name || 'Movimiento operativo').trim() || 'Movimiento operativo';
+
+    return {
+        id: normalizeId(movement?.id),
+        cycleId: normalizeId(cycle?.id),
+        kind: economicType || 'expense',
+        concept,
+        date: String(movement?.movement_date || cycle?.opened_at || '').trim(),
+        created_at: String(movement?.created_at || cycle?.created_at || '').trim(),
+        cropId,
+        association: cropId ? 'linked' : 'unlinked',
+        amountLabel: formatAmountLabel(amount, currency),
+        typeLabel: typeMeta.label,
+        typeTone: typeMeta.tone,
+        operationalStatus: normalizeToken(cycle?.status || 'open')
+    };
+}
+
+function buildOperationalActivityIndex(cycles, movements) {
+    const movementsByCycle = new Map();
+    (Array.isArray(movements) ? movements : []).forEach((movement) => {
+        const cycleId = normalizeId(movement?.cycle_id);
+        if (!cycleId) return;
+        if (!movementsByCycle.has(cycleId)) {
+            movementsByCycle.set(cycleId, []);
+        }
+        movementsByCycle.get(cycleId).push(movement);
+    });
+
+    const months = new Map();
+    const ensureMonth = (monthKey) => {
+        if (!months.has(monthKey)) {
+            months.set(monthKey, {
+                movements: [],
+                cycleIndex: new Map()
+            });
+        }
+        return months.get(monthKey);
+    };
+
+    (Array.isArray(cycles) ? cycles : []).forEach((cycle) => {
+        const cycleId = normalizeId(cycle?.id);
+        if (!cycleId) return;
+        const cycleMovements = Array.isArray(movementsByCycle.get(cycleId)) && movementsByCycle.get(cycleId).length > 0
+            ? movementsByCycle.get(cycleId)
+            : [createFallbackOperationalMovement(cycle)];
+
+        cycleMovements.forEach((movement) => {
+            const monthKey = String(movement?.movement_date || cycle?.opened_at || '').trim().slice(0, 7);
+            if (!/^\d{4}-\d{2}$/.test(monthKey)) return;
+            const bucket = ensureMonth(monthKey);
+            const row = buildOperationalMovementRow(cycle, movement);
+            bucket.movements.push(row);
+            if (!bucket.cycleIndex.has(cycleId)) {
+                bucket.cycleIndex.set(cycleId, {
+                    id: cycleId,
+                    status: normalizeToken(cycle?.status || 'open'),
+                    association: row.association
+                });
+            }
+        });
+    });
+
+    months.forEach((bucket) => {
+        bucket.movements.sort(compareDatesDescending);
+        const cycleEntries = Array.from(bucket.cycleIndex.values());
+        bucket.cycleCount = cycleEntries.length;
+        bucket.activeCycleCount = cycleEntries.filter((entry) => ACTIVE_OPERATIONAL_STATUS_VALUES.has(entry.status)).length;
+        bucket.linkedCycleCount = cycleEntries.filter((entry) => entry.association === 'linked').length;
+        bucket.unlinkedCycleCount = cycleEntries.filter((entry) => entry.association !== 'linked').length;
+    });
+
+    return months;
+}
+
+async function fetchOperationalPeriodActivity(userId) {
+    const { data: cycles, error: cyclesError } = await supabase
+        .from('agro_operational_cycles')
+        .select('id,user_id,name,economic_type,category,crop_id,status,opened_at,closed_at,created_at')
+        .eq('user_id', userId)
+        .order('opened_at', { ascending: false })
+        .order('created_at', { ascending: false });
+
+    if (cyclesError) throw cyclesError;
+
+    const cycleIds = (cycles || []).map((cycle) => normalizeId(cycle?.id)).filter(Boolean);
+    if (cycleIds.length === 0) {
+        return new Map();
+    }
+
+    const { data: movements, error: movementsError } = await supabase
+        .from('agro_operational_movements')
+        .select('id,cycle_id,amount,currency,amount_usd,concept,movement_date,created_at')
+        .eq('user_id', userId)
+        .in('cycle_id', cycleIds)
+        .order('movement_date', { ascending: false })
+        .order('created_at', { ascending: false });
+
+    if (movementsError) throw movementsError;
+    return buildOperationalActivityIndex(cycles || [], movements || []);
+}
+
+function mergePeriodCycles(rows, activityMap, userId) {
+    const merged = new Map();
+
+    (Array.isArray(rows) ? rows : []).forEach((row) => {
+        const normalized = normalizePersistedCycle(row);
+        merged.set(monthKeyFromParts(normalized.period_year, normalized.period_month), normalized);
+    });
+
+    if (activityMap instanceof Map) {
+        activityMap.forEach((_, monthKey) => {
+            if (!merged.has(monthKey)) {
+                merged.set(monthKey, buildDerivedCycle(monthKey, userId));
+            }
+        });
+    }
+
+    return Array.from(merged.values()).sort((left, right) => {
+        const leftStart = String(left?.start_date || '').trim();
+        const rightStart = String(right?.start_date || '').trim();
+        const byDate = rightStart.localeCompare(leftStart);
+        if (byDate !== 0) return byDate;
+        const leftCreated = String(left?.created_at || '').trim();
+        const rightCreated = String(right?.created_at || '').trim();
+        return rightCreated.localeCompare(leftCreated);
+    });
+}
+
+function buildCycleViewModel(cycle, activityMap) {
+    const monthKey = monthKeyFromParts(cycle.period_year, cycle.period_month);
+    const activity = activityMap instanceof Map ? activityMap.get(monthKey) : null;
+    const movements = Array.isArray(activity?.movements)
+        ? [...activity.movements]
+        : [];
+    const linked = movements.filter((movement) => movement.association === 'linked');
+    const unlinked = movements.filter((movement) => movement.association !== 'linked');
+    const status = deriveCalendarStatus(cycle);
+    const progress = deriveProgress(cycle);
+    const activeCycleCount = Number(activity?.activeCycleCount || 0);
+    const portfolioStatus = activeCycleCount > 0 ? 'open' : 'closed';
+
+    return {
+        ...cycle,
+        monthKey,
+        monthLabel: formatMonthLabel(monthKey),
+        rangeLabel: `${formatDateLabel(cycle.start_date)} - ${formatDateLabel(cycle.end_date)}`,
+        status,
+        progress,
+        movements,
+        linked,
+        unlinked,
+        movementCount: movements.length,
+        cycleCount: Number(activity?.cycleCount || 0),
+        activeCycleCount,
+        linkedCycleCount: Number(activity?.linkedCycleCount || 0),
+        unlinkedCycleCount: Number(activity?.unlinkedCycleCount || 0),
+        portfolioStatus,
+        incomeCount: movements.filter((movement) => movement.kind === 'income').length,
+        lossCount: movements.filter((movement) => movement.kind === 'loss').length
+    };
+}
+
+function buildSummary(cycles) {
+    return (Array.isArray(cycles) ? cycles : []).reduce((summary, cycle) => {
+        summary.total += 1;
+        if (cycle.status === 'finalized') summary.finalized += 1;
+        else summary.active += 1;
+
+        if (cycle.portfolioStatus === 'open') summary.open += 1;
+        else summary.closed += 1;
+        return summary;
+    }, createEmptySummary());
+}
+
+async function ensureUserId(initialUserId = '') {
+    const preferredId = normalizeId(initialUserId || state.userId);
+    if (preferredId) {
+        state.userId = preferredId;
+        return preferredId;
+    }
+
+    const { data, error } = await supabase.auth.getUser();
+    if (error) throw error;
+    const userId = normalizeId(data?.user?.id);
+    if (!userId) {
+        throw new Error('No se pudo resolver la sesión activa de Agro.');
+    }
+    state.userId = userId;
+    return userId;
+}
+
+async function fetchPeriodCycles(userId) {
+    let query = supabase
+        .from(PERIOD_CYCLE_TABLE)
+        .select('id,user_id,name,period_year,period_month,start_date,end_date,created_at,updated_at,deleted_at')
+        .eq('user_id', userId)
+        .order('start_date', { ascending: false })
+        .order('created_at', { ascending: false });
+
+    query = query.is('deleted_at', null);
+
+    const { data, error } = await query;
+    if (error) {
+        if (isMissingColumnError(error, 'deleted_at')) {
+            const fallback = await supabase
+                .from(PERIOD_CYCLE_TABLE)
+                .select('id,user_id,name,period_year,period_month,start_date,end_date,created_at,updated_at')
+                .eq('user_id', userId)
+                .order('start_date', { ascending: false })
+                .order('created_at', { ascending: false });
+            if (fallback.error) throw fallback.error;
+            return fallback.data || [];
+        }
+        throw error;
+    }
+
+    return data || [];
+}
+
+function renderSummaryCards() {
+    const summary = state.summary || createEmptySummary();
+    return `
+        <div class="agro-period-cycles__summary-grid">
+            <article class="agro-period-cycles__summary-card">
+                <span class="agro-period-cycles__summary-label">Períodos visibles</span>
+                <strong class="agro-period-cycles__summary-value">${summary.total}</strong>
+                <p class="agro-period-cycles__summary-copy">Meses persistidos o derivados desde la operativa real.</p>
+            </article>
+            <article class="agro-period-cycles__summary-card">
+                <span class="agro-period-cycles__summary-label">Activos / Finalizados</span>
+                <strong class="agro-period-cycles__summary-value">${summary.active} / ${summary.finalized}</strong>
+                <p class="agro-period-cycles__summary-copy">El estado principal se deriva del calendario del mes.</p>
+            </article>
+            <article class="agro-period-cycles__summary-card">
+                <span class="agro-period-cycles__summary-label">Operativa abierta / cerrada</span>
+                <strong class="agro-period-cycles__summary-value">${summary.open} / ${summary.closed}</strong>
+                <p class="agro-period-cycles__summary-copy">El badge secundario depende de ciclos operativos activos del período.</p>
+            </article>
+        </div>
+    `;
+}
+
+function renderCreatePanel() {
+    const values = state.values || createDraftValues();
+    return `
+        <section class="agro-period-cycles__toolbar">
+            <div class="agro-period-cycles__toolbar-copy">
+                <p class="agro-period-cycles__eyebrow">Cartera Operativa</p>
+                <h3 class="agro-period-cycles__title">Ciclos de Período</h3>
+                <p class="agro-period-cycles__copy">Cada ciclo representa un mes calendario completo y resume la operación comercial de ese período sin mezclarse con Cartera Viva.</p>
+            </div>
+            <button type="button" class="btn btn-primary" data-period-action="toggle-form">${state.formOpen ? 'Cerrar formulario' : 'Crear ciclo del mes'}</button>
+        </section>
+        ${state.formOpen ? `
+            <form class="agro-period-cycles__form" id="agro-period-cycle-form">
+                <label class="agro-period-cycles__field">
+                    <span class="agro-period-cycles__field-label">Nombre del ciclo</span>
+                    <input type="text" class="styled-input" name="name" data-period-draft="name" value="${escapeAttr(values.name)}" placeholder="Ej. Abril Operativo 2026" maxlength="80" required>
+                </label>
+                <label class="agro-period-cycles__field">
+                    <span class="agro-period-cycles__field-label">Mes calendario</span>
+                    <input type="month" class="styled-input" name="periodMonth" data-period-draft="periodMonth" value="${escapeAttr(values.periodMonth)}" required>
+                </label>
+                <div class="agro-period-cycles__form-actions">
+                    <button type="button" class="btn" data-period-action="cancel-form">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"${state.creating ? ' disabled' : ''}>${state.creating ? 'Creando...' : 'Guardar ciclo'}</button>
+                </div>
+            </form>
+        ` : ''}
+    `;
+}
+
+function renderMovementList(rows, emptyCopy) {
+    if (!Array.isArray(rows) || rows.length === 0) {
+        return `<p class="agro-period-cycle-card__empty-copy">${escapeHtml(emptyCopy)}</p>`;
+    }
+
+    const visibleRows = rows.slice(0, 4);
+    const remainingCount = Math.max(0, rows.length - visibleRows.length);
+
+    return `
+        <ul class="agro-period-cycle-card__movement-list">
+            ${visibleRows.map((movement) => `
+                <li class="agro-period-cycle-card__movement-item">
+                    <div class="agro-period-cycle-card__movement-head">
+                        <span class="agro-period-cycle-card__movement-badge is-${escapeAttr(movement.typeTone)}">${escapeHtml(movement.typeLabel)}</span>
+                        <span class="agro-period-cycle-card__movement-date">${escapeHtml(formatDateLabel(movement.date))}</span>
+                    </div>
+                    <p class="agro-period-cycle-card__movement-title">${escapeHtml(movement.concept)}</p>
+                    <p class="agro-period-cycle-card__movement-meta">${escapeHtml(movement.amountLabel)}</p>
+                </li>
+            `).join('')}
+        </ul>
+        ${remainingCount > 0 ? `<p class="agro-period-cycle-card__more">+${remainingCount} movimiento${remainingCount === 1 ? '' : 's'} más en este grupo.</p>` : ''}
+    `;
+}
+
+function renderGroupCard(title, copy, rows, tone) {
+    return `
+        <section class="agro-period-cycle-card__group is-${escapeAttr(tone)}">
+            <div class="agro-period-cycle-card__group-head">
+                <div>
+                    <p class="agro-period-cycle-card__group-title">${escapeHtml(title)}</p>
+                    <p class="agro-period-cycle-card__group-copy">${escapeHtml(copy)}</p>
+                </div>
+                <span class="agro-period-cycle-card__group-count">${rows.length}</span>
+            </div>
+            ${renderMovementList(rows, tone === 'linked'
+                ? 'Sin movimientos asociados al cultivo en este período.'
+                : 'Sin movimientos generales en este período.')}
+        </section>
+    `;
+}
+
+function renderCycleCard(cycle) {
+    return `
+        <article class="agro-period-cycle-card" data-period-cycle-id="${escapeAttr(cycle.id)}">
+            <header class="agro-period-cycle-card__head">
+                <div class="agro-period-cycle-card__heading">
+                    <p class="agro-period-cycle-card__eyebrow">${escapeHtml(cycle.monthLabel)}</p>
+                    <h4 class="agro-period-cycle-card__title">${escapeHtml(cycle.name)}</h4>
+                    <p class="agro-period-cycle-card__range">${escapeHtml(cycle.rangeLabel)}</p>
+                </div>
+                <div class="agro-period-cycle-card__badges">
+                    <span class="agro-period-cycle-card__status is-${escapeAttr(cycle.status)}">${cycle.status === 'finalized' ? 'Finalizado' : 'Activo'}</span>
+                    <span class="agro-period-cycle-card__portfolio is-${escapeAttr(cycle.portfolioStatus)}">${cycle.portfolioStatus === 'open' ? 'Operativa abierta' : 'Operativa cerrada'}</span>
+                </div>
+            </header>
+
+            <section class="agro-period-cycle-card__progress">
+                <div class="agro-period-cycle-card__progress-meta">
+                    <span class="agro-period-cycle-card__progress-label">Progreso mensual</span>
+                    <span class="agro-period-cycle-card__progress-value">${escapeHtml(cycle.progress.text)}</span>
+                </div>
+                <div class="agro-period-cycle-card__progress-track${cycle.status === 'finalized' ? ' is-complete' : ''}">
+                    <div class="agro-period-cycle-card__progress-fill" style="width:${cycle.progress.percent}%">
+                        <span class="agro-period-cycle-card__progress-dot"></span>
+                    </div>
+                </div>
+            </section>
+
+            <div class="agro-period-cycle-card__summary">
+                <div class="agro-period-cycle-card__summary-cell">
+                    <span class="agro-period-cycle-card__summary-label">Movimientos</span>
+                    <strong class="agro-period-cycle-card__summary-value">${cycle.movementCount}</strong>
+                </div>
+                <div class="agro-period-cycle-card__summary-cell">
+                    <span class="agro-period-cycle-card__summary-label">Ciclos del período</span>
+                    <strong class="agro-period-cycle-card__summary-value">${cycle.cycleCount}</strong>
+                </div>
+                <div class="agro-period-cycle-card__summary-cell">
+                    <span class="agro-period-cycle-card__summary-label">Ciclos activos</span>
+                    <strong class="agro-period-cycle-card__summary-value">${cycle.activeCycleCount}</strong>
+                </div>
+                <div class="agro-period-cycle-card__summary-cell">
+                    <span class="agro-period-cycle-card__summary-label">Asociados / No asociados</span>
+                    <strong class="agro-period-cycle-card__summary-value">${cycle.linked.length} / ${cycle.unlinked.length}</strong>
+                </div>
+            </div>
+
+            <div class="agro-period-cycle-card__groups">
+                ${renderGroupCard(
+                    'Asociados al cultivo',
+                    'Conservan crop_id y siguen siendo lectura operativa del mismo mes.',
+                    cycle.linked,
+                    'linked'
+                )}
+                ${renderGroupCard(
+                    'No asociados al cultivo',
+                    'Movimiento general del período, separado de la lectura del cultivo.',
+                    cycle.unlinked,
+                    'unlinked'
+                )}
+            </div>
+        </article>
+    `;
+}
+
+function renderEmptyState() {
+    return `
+        <div class="agro-period-cycles__empty">
+            <p class="agro-period-cycles__empty-title">Todavía no hay períodos operativos visibles.</p>
+            <p class="agro-period-cycles__empty-copy">Crea un período explícito o registra operativa real para que el mes aparezca en esta familia.</p>
+        </div>
+    `;
+}
+
+function renderSchemaMissing() {
+    return `
+        <div class="agro-period-cycles__empty">
+            <p class="agro-period-cycles__empty-title">Falta la base de datos de Ciclos de Período.</p>
+            <p class="agro-period-cycles__empty-copy">Aplica la migración canónica para habilitar <code>${escapeHtml(PERIOD_CYCLE_TABLE)}</code>.</p>
+        </div>
+    `;
+}
+
+function renderLoading() {
+    return `
+        <div class="agro-period-cycles__loading">
+            <span class="agro-period-cycles__spinner" aria-hidden="true"></span>
+            <span>Consultando períodos y movimientos operativos...</span>
+        </div>
+    `;
+}
+
+function emitUpdated() {
+    const detail = { summary: getAgroPeriodCyclesSummary(), count: state.cycles.length };
+    window.dispatchEvent(new CustomEvent(PERIOD_CYCLES_UPDATED_EVENT, { detail }));
+}
+
+function renderRoot() {
+    if (!state.root) return;
+
+    const bodyMarkup = state.loading
+        ? renderLoading()
+        : state.schemaMissing
+            ? renderSchemaMissing()
+            : state.cycles.length === 0
+                ? renderEmptyState()
+                : `<div class="agro-period-cycles__grid">${state.cycles.map((cycle) => renderCycleCard(cycle)).join('')}</div>`;
+
+    state.root.innerHTML = `
+        <div class="agro-period-cycles">
+            ${renderCreatePanel()}
+            ${renderSummaryCards()}
+            ${bodyMarkup}
+        </div>
+    `;
+}
+
+async function refreshPeriodCycles(options = {}) {
+    if (state.loading) return;
+    state.loading = true;
+    state.schemaMissing = false;
+    renderRoot();
+
+    try {
+        const userId = await ensureUserId(options.initialUserId);
+        const rows = await fetchPeriodCycles(userId);
+        const activityMap = await fetchOperationalPeriodActivity(userId);
+        const mergedCycles = mergePeriodCycles(rows, activityMap, userId);
+        state.cycles = mergedCycles.map((row) => buildCycleViewModel(row, activityMap));
+        state.summary = buildSummary(state.cycles);
+    } catch (error) {
+        state.cycles = [];
+        state.summary = createEmptySummary();
+        state.schemaMissing = isSchemaMissingError(error);
+        if (!state.schemaMissing) {
+            notify(error?.message || 'No se pudieron cargar los ciclos de período.', 'error');
+        }
+    } finally {
+        state.loading = false;
+        renderRoot();
+        emitUpdated();
+    }
+}
+
+async function createPeriodCycleFromDraft() {
+    const userId = await ensureUserId();
+    const name = String(state.values?.name || '').trim();
+    if (!name) {
+        throw new Error('El nombre del ciclo es obligatorio.');
+    }
+
+    const parsed = parseMonthInput(state.values?.periodMonth);
+    const duplicate = state.cycles.find((cycle) => cycle.monthKey === parsed.monthKey && cycle.derived !== true);
+    if (duplicate) {
+        throw new Error(`Ya existe un ciclo para ${duplicate.monthLabel}.`);
+    }
+
+    const payload = {
+        user_id: userId,
+        name,
+        period_year: parsed.year,
+        period_month: parsed.month,
+        start_date: parsed.startDate,
+        end_date: parsed.endDate
+    };
+
+    const { error } = await supabase.from(PERIOD_CYCLE_TABLE).insert(payload);
+    if (error) throw error;
+}
+
+function setDraftValue(field, value) {
+    state.values[field] = value;
+}
+
+function resetForm(keepMonth = true) {
+    const monthValue = keepMonth ? (state.values?.periodMonth || currentMonthKey()) : currentMonthKey();
+    state.formOpen = false;
+    state.creating = false;
+    state.values = {
+        name: '',
+        periodMonth: monthValue
+    };
+}
+
+function bindRootEvents() {
+    if (!state.root || state.boundRoot === state.root) return;
+
+    state.root.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-period-action]');
+        if (!button) return;
+
+        const action = button.dataset.periodAction;
+        if (action === 'toggle-form') {
+            state.formOpen = !state.formOpen;
+            renderRoot();
+            return;
+        }
+
+        if (action === 'cancel-form') {
+            resetForm();
+            renderRoot();
+        }
+    });
+
+    state.root.addEventListener('input', (event) => {
+        const field = event.target?.dataset?.periodDraft;
+        if (!field) return;
+        setDraftValue(field, event.target.value);
+    });
+
+    state.root.addEventListener('submit', async (event) => {
+        if (event.target?.id !== 'agro-period-cycle-form') return;
+        event.preventDefault();
+        if (state.creating) return;
+
+        state.creating = true;
+        renderRoot();
+
+        try {
+            await createPeriodCycleFromDraft();
+            notify('Ciclo de período creado correctamente.', 'success');
+            resetForm(false);
+            await refreshPeriodCycles();
+        } catch (error) {
+            state.creating = false;
+            renderRoot();
+            notify(error?.message || 'No se pudo crear el ciclo de período.', 'error');
+        }
+    });
+
+    document.addEventListener('data-refresh', () => {
+        if (state.mounted) {
+            void refreshPeriodCycles();
+        }
+    });
+    window.addEventListener(OPERATIONAL_PORTFOLIO_UPDATED_EVENT, () => {
+        if (state.mounted) {
+            void refreshPeriodCycles();
+        }
+    });
+
+    state.boundRoot = state.root;
+}
+
+export function getAgroPeriodCyclesSummary() {
+    return {
+        ...(state.summary || createEmptySummary()),
+        schemaMissing: state.schemaMissing,
+        loading: state.loading
+    };
+}
+
+export async function assertOperationalPeriodOpen({ movementDate, userId = '' } = {}) {
+    const safeDate = String(movementDate || '').trim();
+    if (!safeDate || !/^\d{4}-\d{2}-\d{2}$/.test(safeDate)) return { allowed: true, cycle: null };
+
+    const monthKey = safeDate.slice(0, 7);
+    const resolvedUserId = await ensureUserId(userId);
+    const derivedCycle = buildDerivedCycle(monthKey, resolvedUserId);
+    const year = Number(derivedCycle.period_year || 0);
+    const month = Number(derivedCycle.period_month || 0);
+
+    let cycle = derivedCycle;
+
+    let result = await supabase
+        .from(PERIOD_CYCLE_TABLE)
+        .select('id,name,period_year,period_month,start_date,end_date,deleted_at,user_id')
+        .eq('user_id', resolvedUserId)
+        .eq('period_year', year)
+        .eq('period_month', month)
+        .is('deleted_at', null)
+        .maybeSingle();
+
+    if (result.error && isMissingColumnError(result.error, 'deleted_at')) {
+        result = await supabase
+            .from(PERIOD_CYCLE_TABLE)
+            .select('id,name,period_year,period_month,start_date,end_date,user_id')
+            .eq('user_id', resolvedUserId)
+            .eq('period_year', year)
+            .eq('period_month', month)
+            .maybeSingle();
+    }
+
+    if (result.error) {
+        if (isSchemaMissingError(result.error)) {
+            return { allowed: true, cycle: null };
+        }
+        throw result.error;
+    }
+
+    if (result.data) {
+        cycle = normalizePersistedCycle(result.data);
+    }
+
+    if (deriveCalendarStatus(cycle) === 'finalized') {
+        throw new Error(`El período ${formatMonthLabel(monthKey)} ya está finalizado. No se permiten nuevos movimientos en ese mes.`);
+    }
+
+    return { allowed: true, cycle };
+}
+
+export async function mountAgroPeriodCycles(root, options = {}) {
+    if (state.root === root && state.mounted && root) {
+        if (options.initialUserId) {
+            state.userId = normalizeId(options.initialUserId);
+        }
+        renderRoot();
+        return {
+            refresh: () => refreshPeriodCycles(options)
+        };
+    }
+
+    state.root = root || null;
+    state.mounted = !!root;
+    if (!state.root) return null;
+
+    if (options.initialUserId) {
+        state.userId = normalizeId(options.initialUserId);
+    }
+
+    bindRootEvents();
+    renderRoot();
+    await refreshPeriodCycles(options);
+    return {
+        refresh: () => refreshPeriodCycles(options)
+    };
+}
+
+export function unmountAgroPeriodCycles() {
+    state.mounted = false;
+    if (state.root) {
+        state.root.innerHTML = '';
+    }
+    state.root = null;
+}
