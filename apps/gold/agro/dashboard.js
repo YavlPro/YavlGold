@@ -726,12 +726,11 @@ async function fetchWeather() {
  * Display weather data in the UI
  */
 function displayWeather(data) {
-    const weatherContentEl = document.getElementById('weather-content');
     const tempEl = document.getElementById('weather-temp');
     const descEl = document.getElementById('weather-desc');
     const conditionsEl = document.getElementById('weather-conditions');
     const humEl = document.getElementById('weather-humidity');
-    if (!weatherContentEl || !tempEl) return;
+    if (!tempEl) return;
 
     tempEl.textContent = `${data.temp}\u00B0C`;
 
