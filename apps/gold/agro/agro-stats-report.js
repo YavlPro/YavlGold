@@ -180,7 +180,7 @@ function resolveBuyerName(row) {
     const direct = String(row?.cliente || row?.comprador || '').trim();
     if (direct) return direct;
     const fromConcept = parseWhoFromIncome(row?.concepto);
-    return fromConcept || 'Sin comprador';
+    return fromConcept || 'Sin cliente';
 }
 
 const CROP_STATUS_UI = {
@@ -665,7 +665,7 @@ function buildBuyerRanking(incomeRows, pendingRows) {
     const sorted = Array.from(buyers.entries())
         .sort((a, b) => b[1].totalCents - a[1].totalCents);
 
-    if (!sorted.length) return 'Sin compradores registrados\n';
+    if (!sorted.length) return 'Sin clientes registrados\n';
 
     let md = '| Cliente | Compras | Monedas | Total (USD) | Estado |\n';
     md += '|---------|--------:|---------|------------:|--------|\n';
@@ -778,7 +778,7 @@ export async function exportStatsReport() {
         md += '---\n\n';
 
         // Buyer ranking
-        md += `## 👥 Ranking de Compradores\n`;
+        md += `## 👥 Ranking de Clientes\n`;
         md += buildBuyerRanking(incomeRows, pendingRows);
         md += '\n---\n\n';
 

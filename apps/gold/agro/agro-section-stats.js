@@ -738,7 +738,7 @@ function generateInsights(sectionKey, stats) {
         if (sectionKey === 'fiados') {
             insights.push('El cliente con mayor deuda es ' + name + ' con ' + fmtUSD(val.usd) + ' (' + val.count + ' cuenta' + (val.count !== 1 ? 's' : '') + ').');
         } else if (sectionKey === 'pagados') {
-            insights.push('El comprador principal es ' + name + ' con ' + fmtUSD(val.usd) + ' (' + val.count + ' mov.).');
+            insights.push('El cliente principal es ' + name + ' con ' + fmtUSD(val.usd) + ' (' + val.count + ' mov.).');
         } else if (sectionKey === 'perdidas') {
             insights.push('La causa principal es ' + name + ' con ' + fmtUSD(val.usd) + '.');
         }

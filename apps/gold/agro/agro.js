@@ -1575,14 +1575,14 @@ function initBuyerProfileClickHandlers() {
         if (!rawName || rawName === BUYER_PRIVACY_MASK) return;
 
         if (readBuyerNamesHidden()) {
-            showEvidenceToast('Desactiva 👁 para abrir ficha del comprador.', 'warning');
+            showEvidenceToast('Desactiva 👁 para abrir ficha del cliente.', 'warning');
             return;
         }
 
         event.preventDefault();
         openBuyerProfileByName(rawName).catch((error) => {
             console.error('[AGRO_BUYERS] open from click error:', error);
-            showEvidenceToast('No se pudo abrir la ficha del comprador.', 'warning');
+            showEvidenceToast('No se pudo abrir la ficha del cliente.', 'warning');
         });
     });
 }
@@ -8100,7 +8100,7 @@ async function handleIncomeTransfer(itemId) {
 
         if (destination === 'losses') {
             const whoData = getWhoData('ingresos', income, income.concepto || '');
-            const buyerLabel = whoData.who ? `Comprador: ${whoData.who}` : '';
+            const buyerLabel = whoData.who ? `Cliente: ${whoData.who}` : '';
             const lossCause = buyerLabel ? `Transferido desde pagados • ${buyerLabel}` : 'Transferido desde pagados';
             const lossId = buildTransferId('loss');
             const lossPayload = {
@@ -13427,7 +13427,7 @@ function renderOpsRankings() {
 
     if (privacyHint) {
         privacyHint.textContent = opsRankingsState.hideNames
-            ? 'Privacidad activa: se ocultan nombres de compradores (••••).'
+            ? 'Privacidad activa: se ocultan nombres de clientes (••••).'
             : 'Privacidad desactivada: se muestran nombres completos.';
     }
 
@@ -13483,7 +13483,7 @@ function renderOpsRankings() {
             const noteEl = document.createElement('div');
             noteEl.className = 'ops-rankings-note';
             const notePrefix = document.createElement('span');
-            notePrefix.textContent = `⚠️ ${formatOpsRankingCount(unnamedOps, 'registro', 'registros')} sin comprador: `;
+            notePrefix.textContent = `⚠️ ${formatOpsRankingCount(unnamedOps, 'registro', 'registros')} sin cliente: `;
             const noteAmount = document.createElement('span');
             noteAmount.textContent = formatOpsRankingCurrency(unnamedTotal);
             markMoneyNode(noteAmount, noteAmount.textContent);
@@ -13681,7 +13681,7 @@ function exportOpsRankingsMarkdown() {
         return `${name} · ${formatOpsRankingCurrency(row?.total)} · ${operationsLabel} · última ${formatOpsRankingDate(row?.last_date)}`;
     });
     if (missingTopClientsMd.length > 0) {
-        md += `> ⚠️ ${formatOpsRankingCount(missingTopClientsMdSummary.operations, 'registro', 'registros')} sin comprador: ${formatOpsRankingCurrency(missingTopClientsMdSummary.total)}\n\n`;
+        md += `> ⚠️ ${formatOpsRankingCount(missingTopClientsMdSummary.operations, 'registro', 'registros')} sin cliente: ${formatOpsRankingCurrency(missingTopClientsMdSummary.total)}\n\n`;
     }
 
     appendSection('Fiados por Cliente', opsRankingsState.pendingClients, (row) => {

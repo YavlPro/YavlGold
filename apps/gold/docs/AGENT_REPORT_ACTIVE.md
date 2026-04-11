@@ -2,6 +2,41 @@
 
 Resumen operativo actual de `apps/gold`.
 
+## Sesión activa: unificación comprador → cliente en Agro (2026-04-11)
+
+### Contexto
+El término "comprador" aparecía en varias superficies visibles de Agro (toasts, labels, reportes, export markdown), mientras que el resto del producto usa "cliente" como denominación oficial. Se unificó el lenguaje visible sin tocar internos.
+
+### Cambios realizados (solo UI-visible)
+
+| Archivo | Antes | Después |
+|---|---|---|
+| `agro.js:1578` | `ficha del comprador` | `ficha del cliente` |
+| `agro.js:1585` | `ficha del comprador` | `ficha del cliente` |
+| `agro.js:8103` | `Comprador: ${who}` | `Cliente: ${who}` |
+| `agro.js:13430` | `nombres de compradores` | `nombres de clientes` |
+| `agro.js:13486` | `sin comprador` | `sin cliente` |
+| `agro.js:13684` | `sin comprador` | `sin cliente` |
+| `agro-stats-report.js:183` | `Sin comprador` | `Sin cliente` |
+| `agro-stats-report.js:668` | `Sin compradores registrados` | `Sin clientes registrados` |
+| `agro-stats-report.js:781` | `Ranking de Compradores` | `Ranking de Clientes` |
+| `agro-section-stats.js:741` | `El comprador principal es` | `El cliente principal es` |
+
+### Lo que NO se tocó (interno/técnico)
+- `row?.comprador` — campo de datos legacy en filas de ingreso
+- `buyerHint`, `buyerLink`, `buyerRow` — nombres de variables internas
+- `BUYER_*` constantes — enums internos del sistema
+- `buyer_id`, `buyer_group_key`, `buyer_match_status` — campos de DB/RPC
+- `BUYER_PRIVACY_LEGACY_KEY` — storage key
+- `btn-open-buyer-public-profile` — ID de botón (DOM selector)
+- Regex `(?:comprador|cliente|...)` en parsing de conceptos — parsea texto libre del usuario, debe seguir reconociendo ambas formas
+- `.buyer-name-masked` y selectores CSS — targeting de DOM, no visible
+
+### Validación
+`pnpm build:gold` pasó limpio.
+
+---
+
 ## Sesión activa: retiro de copy legacy en Agro (2026-04-11)
 
 ### Contexto
