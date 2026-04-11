@@ -2,6 +2,36 @@
 
 Resumen operativo actual de `apps/gold`.
 
+## Sesión activa: retiro de copy legacy en Agro (2026-04-11)
+
+### Contexto
+En YavlGold Agro ya no existe una vista "legacy". Cartera Viva es la vista oficial. Sin embargo, tres superficies visuales aún mostraban el texto:
+> Legacy disponible temporalmente. Usa la nueva Cartera Viva.
+
+Eso contradecía el estado real del producto.
+
+### Cambios
+Se eliminó la línea `<p class="agro-commercial-family__note">Legacy disponible temporalmente...</p>` de:
+
+| Archivo | Línea (antes) |
+|---|---|
+| `agro-cartera-viva-view.js` | 1922 |
+| `agro-cartera-viva-detail.js` | 1548 |
+| `agroOperationalCycles.js` | 1326 |
+
+No se reemplazó por otro texto. No se tocó lógica ni estilos.
+
+### Estado del legado en Agro (aclaración)
+- **Legacy como vista separada**: no existe. Fue absorbida por Cartera Viva.
+- **Cartera Viva**: vista oficial y única para cartera de clientes.
+- **Cartera Operativa**: vista complementaria para ciclos y tareas operativas.
+- El término "legacy" puede seguir apareciendo en código interno (keys de localStorage, nombres de constantes, etc.) pero **no debe aparecer en superficies visibles de la UI**.
+
+### Validación
+`pnpm build:gold` completó sin errores.
+
+---
+
 ## Sesión activa: política de reportes + limpieza Playwright (2026-03-12)
 
 ### Diagnóstico

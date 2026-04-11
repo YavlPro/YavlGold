@@ -1919,7 +1919,6 @@ function renderCommercialFamilyNav(activeView = CARTERA_VIVA_VIEW) {
                     Cartera Operativa
                 </button>
             </div>
-            <p class="agro-commercial-family__note">Legacy disponible temporalmente. Usa la nueva Cartera Viva.</p>
         </div>
     `;
 }

@@ -1323,7 +1323,6 @@ function renderShell() {
                                 Cartera Operativa
                             </button>
                         </div>
-                        <p class="agro-commercial-family__note">Legacy disponible temporalmente. Usa la nueva Cartera Viva.</p>
                     </div>
                     <div class="module-title-group">
                         <div class="module-icon">💼</div>
