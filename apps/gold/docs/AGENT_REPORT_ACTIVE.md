@@ -13222,3 +13222,116 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
 
 - El inline remanente de `modal-lunar`, `modal-market`, `modal-crop`, `modal-edit-facturero` y algunos bloques del facturero sigue siendo deuda visual estructural.
 - Esa superficie ya no mezcla hovers inline simples, pero todavía requiere una fase posterior dedicada si se quiere seguir bajando deuda sin elevar riesgo.
+
+## 2026-04-11 — Fase 4 Agro: estandarización final controlada
+
+### Diagnóstico inicial
+
+- Tras las fases 1A–3B, la deuda principal ya no está en polling, listeners o CSS crítico, sino en naming legacy vivo y en la declaración desigual de compatibilidad de engines entre manifests.
+- El riesgo de esta fase no es funcional sino de criterio: renombrar legacy vivo por estética o ampliar soporte de Node sin validación real sería más riesgoso que útil.
+
+### Objetivo
+
+- Auditar qué naming legacy sigue conectado a runtime y separar con claridad qué no debe tocarse todavía.
+- Revisar `package.json` raíz y `apps/gold/package.json` para decidir si `engines` se documenta o si admite un ajuste mínimo y seguro.
+- Cerrar de forma ordenada esta campaña de deuda técnica, sin abrir frentes nuevos.
+
+### Riesgo principal
+
+- Un renombre masivo o un cambio optimista de compatibilidad Node podría romper imports, rutas o expectativas operativas sin beneficio proporcional.
+
+### Plan de estandarización controlada
+
+1. Auditar archivos legacy vivos conectados a runtime y clasificarlos por sensibilidad.
+2. Revisar la situación real de `engines` en los manifests raíz y de `apps/gold`.
+3. Aplicar solo el ajuste pequeño y seguro, si existe; si no, dejar la decisión documentada.
+4. Cerrar el reporte con un estado honesto de lo que queda como deuda futura.
+
+### DoD
+
+- Mapa claro de naming legacy vivo.
+- Distinción explícita entre lo que no debe tocarse ahora y cualquier ajuste pequeño realmente seguro.
+- Diagnóstico cerrado de `engines` / Node.
+- `AGENT_REPORT_ACTIVE.md` actualizado.
+- Sin QA manual/local por restricción operativa.
+
+### Archivos previstos
+
+- `package.json`
+- `apps/gold/package.json`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Criterio de no expansión de alcance
+
+- No renombrar legacy vivo en lote.
+- No tocar `agrorepo.js`.
+- No mezclar esta fase con rediseño visual ni lógica de negocio.
+- Nota operativa explícita: **sin QA manual/local por restricción operativa**.
+
+### Diagnóstico confirmado
+
+- Naming legacy vivo conectado a runtime:
+  - `apps/gold/agro/agroperfil.js`
+  - `apps/gold/agro/agrocompradores.js`
+  - `apps/gold/agro/agrosocial.js`
+  - `apps/gold/agro/agrocalculadora.js`
+  - `apps/gold/agro/agroclima-layout.js`
+  - `apps/gold/agro/agrociclos.js`
+  - `apps/gold/agro/dashboard.js`
+  - `apps/gold/agro/agroOperationalCycles.js`
+  - `apps/gold/agro/agroTaskCycles.js`
+  - `apps/gold/agro/agropublico.js`
+  - `apps/gold/agro/agroestadistica.js`
+  - `apps/gold/agro/agrorepo.js`
+- Evidencia principal:
+  - `agro.js` sigue importando directamente `agroperfil.js`, `agrocompradores.js`, `agrosocial.js`, `agrocalculadora.js`, `agroclima-layout.js` y `agrociclos.js`.
+  - `agro/index.html` sigue haciendo bootstrap directo de `dashboard.js`, `agroOperationalCycles.js` y `agroTaskCycles.js`.
+  - `agrocompradores.js`, `agroperfil.js` y `agrosocial.js` siguen dependiendo de `agropublico.js` / `agroestadistica.js`.
+  - `agrorepo.js` sigue vivo por lazy-load desde `agro.js` y queda fuera del lote.
+- Conclusión de naming:
+  - No existe un renombre pequeño realmente seguro en esta fase.
+  - Todos los archivos legacy aún vivos están conectados a bootstrap, imports de `agro.js` o cadenas de dependencias activas.
+  - Renombrarlos ahora sería tocar wiring, no estandarización mínima.
+- Engines / Node:
+  - `package.json` raíz ya declaraba `node: 20.x` y `pnpm: >=8.0.0`.
+  - `apps/gold/package.json` no declaraba `engines`, aunque se ejecuta como paquete real vía `pnpm -C apps/gold build`.
+  - El ajuste seguro fue alinear `apps/gold/package.json` con el root, sin ampliar soporte real de Node.
+  - El warning con Node `v25.6.0` se mantiene y es correcto: hoy el repo sigue documentando soporte esperado en Node 20.
+
+### Cambios aplicados
+
+- `apps/gold/package.json`
+  - Se añadió bloque `engines` alineado con el manifest raíz:
+    - `node: 20.x`
+    - `pnpm: >=8.0.0`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - Se documentó Fase 4 en modo append-only antes y después de la auditoría final.
+- No se aplicaron renombres de archivos legacy vivos.
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - el warning por engine aparece ahora en root y en `apps/gold`, ambos declarando `node: 20.x` frente a `node v25.6.0`;
+  - se conserva a propósito para no falsear compatibilidad no validada.
+
+### QA / validación
+
+- QA manual/local **no ejecutada** por restricción operativa explícita de la fase.
+- Browser QA / Playwright **no ejecutados**.
+- Validación realizada:
+  - auditoría de naming vivo con referencias reales de imports y bootstrap;
+  - revisión comparada de `package.json` raíz y `apps/gold/package.json`;
+  - `pnpm build:gold`.
+
+### Riesgo remanente / Deuda futura
+
+- El naming legacy vivo sigue siendo deuda estructural, pero ya está acotado y documentado como sensible.
+- Cualquier renombre futuro debe hacerse como fase dedicada con actualización coordinada de imports, bootstrap y compatibilidad.
+- `agrorepo.js` permanece fuera de cualquier renombre hasta que exista una migración explícita del adapter.
