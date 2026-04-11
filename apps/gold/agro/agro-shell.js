@@ -8,7 +8,7 @@ const TAB_TO_VIEW = Object.freeze({
     perdidas: 'operaciones',
     transferencias: 'operaciones',
     otros: 'operaciones',
-    carrito: 'carrito',
+    carrito: 'operational',
     rankings: 'rankings'
 });
 
@@ -24,6 +24,8 @@ const CORE_OPERATIONS_TABS = new Set([
 const VIEW_ALIASES = Object.freeze({
     cultivos: Object.freeze({ view: 'ciclos', subview: 'activos' }),
     'historial-comercial': Object.freeze({ view: 'cartera-viva', subview: '' }),
+    carrito: Object.freeze({ view: 'operational', subview: 'cart' }),
+    'operational-cart': Object.freeze({ view: 'operational', subview: 'cart' }),
     'operational-active': Object.freeze({ view: 'operational', subview: 'active' }),
     'operational-finished': Object.freeze({ view: 'operational', subview: 'finished' }),
     'operational-donations': Object.freeze({ view: 'operational', subview: 'donations' }),
@@ -41,7 +43,7 @@ const LEGACY_VIEW_REDIRECTS = Object.freeze({
 
 const NAV_PARENT_GROUPS = Object.freeze({
     'historial-comercial': Object.freeze({
-        views: Object.freeze(['cartera-viva', 'carrito', 'agenda', 'operational']),
+        views: Object.freeze(['cartera-viva', 'operational']),
         defaultView: 'cartera-viva'
     })
 });
@@ -49,7 +51,7 @@ const NAV_PARENT_GROUPS = Object.freeze({
 const VIEW_SUBNAV_CONFIG = Object.freeze({
     ciclos: Object.freeze({ defaultSubview: 'finalizados', allowed: ['activos', 'finalizados', 'comparar', 'estadisticas'] }),
     carrito: Object.freeze({ defaultSubview: 'summary', allowed: ['summary', 'planning', 'calculator'] }),
-    operational: Object.freeze({ defaultSubview: 'active', allowed: ['active', 'finished', 'donations', 'losses', 'export'] })
+    operational: Object.freeze({ defaultSubview: 'cart', allowed: ['cart', 'active', 'finished', 'donations', 'losses', 'export'] })
 });
 
 const VIEWS_WITH_SUBNAV = new Set(Object.keys(VIEW_SUBNAV_CONFIG));
@@ -552,8 +554,12 @@ export function initAgroShell() {
     });
 
     window.addEventListener('agro:finance-tab:changed', (event) => {
-        const nextView = mapTabToView(event.detail?.tabName);
-        setActiveView(nextView, { scroll: false, syncTab: false, subview: activeSubview });
+        const tabName = normalizeViewToken(event.detail?.tabName);
+        const nextView = mapTabToView(tabName);
+        const nextSubview = nextView === 'operational' && tabName === 'carrito'
+            ? 'cart'
+            : activeSubview;
+        setActiveView(nextView, { scroll: false, syncTab: false, subview: nextSubview });
     });
 
     window.addEventListener('agro:shell:set-view', (event) => {

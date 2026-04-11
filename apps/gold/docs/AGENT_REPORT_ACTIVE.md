@@ -13484,3 +13484,162 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
 - Abrir `Agro > Ciclos de cultivos > Comparar ciclos`.
 - Confirmar que cada métrica siga mostrando `A - B` y que, cuando haya base válida, aparezca una segunda línea como `+20% vs ciclo B`.
 - Verificar que con bases `0` o métricas no comparables no aparezcan `NaN` ni `Infinity`.
+
+## 2026-04-11 — Operación Comercial: integrar Mi Carrito dentro de Cartera Operativa
+
+### Contexto
+
+- Ticket activo del lote:
+  - quitar `Mi Carrito` como entrada independiente del sidebar comercial;
+  - quitar `Planificación` como entrada independiente del sidebar comercial y del flujo visible inmediato;
+  - integrar `Mi Carrito` como primer tag interno de `Cartera Operativa`, seguido de `No pagados` y `Pagados`.
+- Restricciones explícitas:
+  - sin rediseño visual;
+  - sin crecer `agro.js` salvo wiring mínimo;
+  - sin QA browser intensivo;
+  - mantener separados borrador (`Mi Carrito`) y deuda real (`No pagados` / `Pagados`).
+
+### Diagnóstico inicial
+
+- El sidebar de `Operación comercial` vive en `apps/gold/agro/index.html`.
+- La navegación shell que trata `Mi Carrito` y `Planificación` como vistas hermanas de `Cartera Operativa` vive en `apps/gold/agro/agro-shell.js`.
+- La navegación interna de `Cartera Operativa` vive en `apps/gold/agro/agroOperationalCycles.js`.
+- El carrito reutilizable vive en `apps/gold/agro/agro-cart.js`, pero hoy solo se sincroniza cuando el shell entra a la vista `carrito`.
+- Evidencia:
+  - `index.html` renderiza sublinks separados para `Cartera Viva`, `Mi Carrito`, `Planificación` y `Cartera Operativa`;
+  - `agro-shell.js` incluye `carrito` y `agenda` dentro de `NAV_PARENT_GROUPS['historial-comercial']`;
+  - `agro-shell.js` define `operational` con subviews `active`, `finished`, `donations`, `losses`, `export`, sin `Mi Carrito`;
+  - `agroOperationalCycles.js` arma los tags internos desde `renderSubviewSwitch()` y hoy empieza por `No pagados`;
+  - `agro.js` reubica `#agro-cart-root` a una vista dedicada solo cuando `document.body.dataset.agroActiveView === 'carrito'`;
+  - `agro-cart.js` refresca snapshot / foco solo cuando recibe `agro:shell:view-changed` con `view === 'carrito'`.
+- Causa real:
+  - la fragmentación no está en estilos;
+  - está en la configuración de navegación y en el wiring del carrito, que lo siguen tratando como superficie aparte.
+
+### Plan elegido
+
+1. Aplicar opción `A`:
+   - parche mínimo por config/routing/orden;
+   - sin mover lógica de negocio fuera de sus módulos actuales.
+2. Limpiar el sidebar comercial para dejar solo `Cartera Viva` y `Cartera Operativa`.
+3. Añadir un subview `cart` dentro de `operational` y colocarlo primero.
+4. Reusar el carrito actual mediante reparenting mínimo cuando el shell esté en `operational/cart`.
+5. Redirigir accesos laterales de `Planificación` para no mantenerla como flujo visible principal.
+
+### Riesgos
+
+- Bajo a medio: cambiar el subview por defecto de `operational` puede mover la entrada inicial de usuarios acostumbrados a abrir directamente en `No pagados`.
+- Bajo: el carrito seguirá usando su módulo original; el riesgo principal es olvidar un punto de sincronización entre shell y reparenting.
+
+### Resultado final
+
+- `Mi Carrito` dejó de vivir como entrada independiente del sidebar comercial y pasó a ser el primer tag interno de `Cartera Operativa`.
+- `No pagados` quedó como segundo tag y `Pagados` como tercero, manteniendo después las subvistas operativas restantes.
+- `Planificación` salió del sidebar comercial y del acceso rápido visible dentro de la superficie operativa legacy; no se tocó dashboard ni herramientas para evitar abrir otros frentes fuera del ticket.
+
+### Cambios aplicados
+
+- `apps/gold/agro/index.html`
+  - Se removieron las entradas independientes de `Mi Carrito` y `Planificación` del sidebar de `Operación comercial`.
+  - Se eliminó el botón rápido `Planificación` del header legacy de operaciones para no mantener una segunda puerta visible dentro de la familia comercial.
+- `apps/gold/agro/agro-shell.js`
+  - `carrito` pasó a resolverse como alias de `operational/cart`.
+  - La familia comercial del shell quedó reducida a `Cartera Viva` + `Cartera Operativa`.
+  - El tab financiero legacy `carrito` ahora redirige al subview `cart` de `Cartera Operativa`, en vez de abrir una vista aparte.
+- `apps/gold/agro/agroOperationalCycles.js`
+  - Se añadió el subview interno `cart` como primer tag de la vista.
+  - Se ocultó el toggle de asociados / no cultivo cuando el usuario está en `Mi Carrito`, porque ese filtro aplica a cartera real y no al borrador.
+  - Se añadió wiring mínimo para reservar un slot interno de montaje del carrito y devolver su nodo al tab legacy cuando el usuario sale de esa subvista.
+  - Se añadió lectura explicativa para separar `Mi Carrito` (borrador) de `No pagados` / `Pagados` (cartera real).
+- `apps/gold/agro/agro-cart.js`
+  - El carrito ya reconoce `operational/cart` como vista shell válida para refrescarse.
+  - Se eliminó el botón que reabría `agenda` desde la tarjeta interna de planificación, evitando que `Planificación` siga viva dentro del flujo comercial reorganizado.
+- `apps/gold/agro/agro.js`
+  - Se ajustó el reparenting de `#agro-cart-root` para que también pueda montarse dentro de `Cartera Operativa` cuando el subview activo es `cart`.
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por engine: `node v25.6.0` frente a `node 20.x` declarado.
+
+### QA sugerido
+
+- Abrir `Agro > Operación comercial`.
+- Confirmar que en el sidebar ya no existan entradas aparte para `Mi Carrito` ni `Planificación`.
+- Entrar a `Cartera Operativa` y verificar que el primer tag sea `Mi Carrito`, el segundo `No pagados` y el tercero `Pagados`.
+- Cambiar entre `Mi Carrito`, `No pagados` y `Pagados` para confirmar que no se rompe la navegación ni el contenido.
+- Verificar que `Mi Carrito` siga registrando items hacia `Operación Comercial`, pero sin presentarse como deuda oficial.
+- Revisar que `No pagados` y `Pagados` sigan manteniendo la separación entre asociados al cultivo y no asociados.
+
+## 2026-04-11 — Agro dashboard: widget Agenda y Fase Lunar queda en "Calculando..."
+
+### Contexto
+
+- Ticket reportado sobre `apps/gold/agro`: el card `Agenda y Fase Lunar` del dashboard queda pegado en `Calculando...` y no muestra la recomendación lunar actual.
+- Restricción operativa del lote: fix quirúrgico, sin QA browser intensivo, con cierre en `pnpm build:gold`.
+
+### Diagnóstico inicial
+
+- El markup visible del widget vive en `apps/gold/agro/index.html` y usa:
+  - `#moon-icon` para el icono;
+  - `#moon-advice` para el resumen visible del card.
+- La lógica del widget vive en `apps/gold/agro/dashboard.js`, dentro de `calculateMoonPhase()`.
+- Evidencia:
+  - `calculateMoonPhase()` sí calcula fase, icono y consejo;
+  - actualiza `#moon-icon`, pero después escribe el consejo solo dentro de `#moon-phase`, un contenedor oculto de compatibilidad;
+  - además genera dentro de ese contenedor oculto otro `id="moon-advice"`, duplicando el id visible.
+- Causa raíz real:
+  - no era un problema del algoritmo lunar;
+  - era un desacople entre el DOM visible actual y el render heredado del contenedor oculto.
+
+### Plan elegido
+
+1. Aplicar opción `A`:
+   - parche mínimo en `dashboard.js`;
+   - sin tocar navegación, shell ni otros módulos.
+2. Actualizar explícitamente el `#moon-advice` visible.
+3. Evitar seguir duplicando el id `moon-advice` dentro del contenedor oculto.
+
+### Riesgos
+
+- Bajo: el cambio queda limitado al render lunar del dashboard.
+- Bajo: se preserva el contenedor oculto de compatibilidad, pero sin duplicar ids.
+
+### Resultado final
+
+- El widget `Agenda y Fase Lunar` ya actualiza el consejo visible del card en vez de escribirlo solo dentro del staging oculto.
+- Se eliminó la duplicación de `id="moon-advice"` dentro del contenedor oculto de compatibilidad.
+
+### Cambios aplicados
+
+- `apps/gold/agro/dashboard.js`
+  - `calculateMoonPhase()` ahora actualiza explícitamente el `#moon-advice` visible del dashboard.
+  - El render de `#moon-phase` se mantiene para compatibilidad, pero ya no genera un segundo `id="moon-advice"` oculto.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - Se documentó el ticket con diagnóstico, plan, riesgos y cierre.
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota:
+  - warning no bloqueante por engine: `node v25.6.0` frente a `node 20.x` declarado.
+
+### QA sugerido
+
+- Abrir `Agro > Dashboard Agro`.
+- Verificar que el card `Agenda y Fase Lunar` ya no quede en `Calculando...`.
+- Confirmar que el icono lunar y el consejo visible cambien a una lectura real como `Evitar siembra`, `Siembra de hojas`, `Control de plagas` o `Siembra de raíces`.
+- Confirmar que el resto del dashboard siga cargando sin regresiones visibles.

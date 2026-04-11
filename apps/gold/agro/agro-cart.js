@@ -488,6 +488,12 @@ function readRequestedCartSubview() {
     return normalizeCartSubview(document.body?.dataset?.agroSubview || 'summary');
 }
 
+function isCartShellView(detail = {}) {
+    const view = String(detail?.view || '').trim().toLowerCase();
+    const subview = String(detail?.subview || '').trim().toLowerCase();
+    return view === 'carrito' || (view === 'operational' && subview === 'cart');
+}
+
 function formatCartAgendaDateLabel(dateStr) {
     const safeDate = String(dateStr || '').trim();
     if (!safeDate) return 'Sin fecha';
@@ -707,7 +713,7 @@ function bindCartShellSync() {
     _cartShellSyncBound = true;
 
     window.addEventListener('agro:shell:view-changed', (event) => {
-        if (event.detail?.view !== 'carrito') return;
+        if (!isCartShellView(event.detail)) return;
         _pendingCartSubviewFocus = normalizeCartSubview(event.detail?.subview || readRequestedCartSubview());
         refreshCartPlanningSnapshot().then(() => {
             if (_initialized) renderCartTab();
@@ -1001,11 +1007,6 @@ function renderCartPlanningPanel() {
                     <p class="agro-cart-mini__eyebrow">Planificación</p>
                     <h4 class="agro-cart-mini__title">Agenda operativa</h4>
                     <p class="agro-cart-mini__copy">${helperCopy}</p>
-                </div>
-                <div class="agro-cart-mini__actions">
-                    <button type="button" class="agro-cart-mini-btn" data-action="open-agenda-view" id="agro-cart-planning-open-btn">
-                        <i class="fa-solid fa-calendar-days" aria-hidden="true"></i><span>Agenda completa</span>
-                    </button>
                 </div>
             </div>
             <div class="agro-cart-mini-stats">
@@ -1405,13 +1406,6 @@ function attachCartListeners(container) {
         const actionEl = target.closest('[data-action]');
         if (!actionEl) return;
         const action = actionEl.dataset.action;
-
-        if (action === 'open-agenda-view') {
-            window.dispatchEvent(new CustomEvent('agro:shell:set-view', {
-                detail: { view: 'agenda', scroll: true }
-            }));
-            return;
-        }
 
         if (action === 'open-calculator-modal') {
             openAgroCalculadora(actionEl);
