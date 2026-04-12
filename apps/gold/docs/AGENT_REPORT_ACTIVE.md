@@ -2,6 +2,73 @@
 
 Resumen operativo actual de `apps/gold`.
 
+## Sesion activa: fix creacion ciclo de periodo — tabla agro_period_cycles no encontrada (2026-04-12)
+
+### Diagnostico
+
+**Error:** `Could not find the table 'public.agro_period_cycles' in the schema cache`
+
+**Causa raiz:** La migracion `20260411130000_create_agro_period_cycles.sql` existe en `apps/gold/supabase/migrations/` pero NO en el directorio raiz `supabase/migrations/` (que es el proyecto Supabase vinculado al CLI). La migracion nunca fue aplicada a la base de datos remota.
+
+**Evidencia:**
+- `supabase/migrations/` (raiz, vinculado, proyecto "YavlGold"): NO contiene la migracion de period cycles
+- `apps/gold/supabase/migrations/`: SI contiene `20260411130000_create_agro_period_cycles.sql` con la tabla bien definida
+- El frontend (`agro-period-cycles.js`) ya tiene el contrato correcto: `PERIOD_CYCLE_TABLE = 'agro_period_cycles'`, insert con columnas `user_id, name, period_year, period_month, start_date, end_date`
+- La migracion ya tiene RLS, policies, trigger updated_at, unique index por (user_id, period_year, period_month)
+
+**Contrato de tabla derivado del frontend y migracion existente:**
+- id (UUID PK)
+- user_id (UUID FK -> auth.users)
+- name (TEXT NOT NULL)
+- period_year (INT 2000-2100)
+- period_month (INT 1-12)
+- start_date (DATE)
+- end_date (DATE)
+- created_at, updated_at (TIMESTAMPTZ)
+- deleted_at (TIMESTAMPTZ NULL, soft delete)
+
+### Plan minimo
+
+1. Copiar `20260411130000_create_agro_period_cycles.sql` de `apps/gold/supabase/migrations/` a `supabase/migrations/` (directorio vinculado)
+2. Aplicar la migracion con `supabase db push`
+3. No tocar codigo JS — el contrato ya es correcto
+
+### Archivos a tocar
+1. `supabase/migrations/20260411130000_create_agro_period_cycles.sql` (copiar desde apps/gold)
+2. `apps/gold/docs/AGENT_REPORT_ACTIVE.md` (documentar)
+
+### Riesgos
+- La funcion `update_updated_at()` ya puede existir si otras tablas la crearon antes. La migracion usa `CREATE OR REPLACE FUNCTION`, asi que es seguro.
+- El trigger usa `DROP TRIGGER IF EXISTS` antes de crear, asi que es idempotente.
+- Las policies usan `DROP POLICY IF EXISTS` antes de crear, tambien idempotente.
+
+### Criterio de cierre
+- Migracion copiada al directorio vinculado
+- `supabase db push` exitoso
+- `pnpm build:gold` pasa
+- Creacion de ciclo de periodo funciona sin error de schema cache
+
+### Cierre (2026-04-12)
+
+**Cambios realizados:**
+
+| Archivo | Cambio | Motivo |
+|---|---|---|
+| `supabase/migrations/20260411130000_create_agro_period_cycles.sql` | Copiado desde `apps/gold/supabase/migrations/` | Migracion estaba solo en directorio secundario, nunca llego al vinculado |
+| Base de datos remota | SQL ejecutado via Management API | Tabla creada con 10 columnas, RLS, 4 policies, trigger updated_at |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Documentacion | Sesion de fix |
+
+**Verificacion post-aplicacion:**
+- Tabla `public.agro_period_cycles` verificada con 10 columnas: id, user_id, name, period_year, period_month, start_date, end_date, created_at, updated_at, deleted_at
+- RLS habilitado
+- 4 policies activas: select, insert, update, delete — todas scoped por `auth.uid() = user_id`
+- Unique index `agro_period_cycles_user_period_unique` sobre (user_id, period_year, period_month) WHERE deleted_at IS NULL
+- Trigger `trg_agro_period_cycles_updated_at` para auto-update de updated_at
+
+**Validacion:** `pnpm build:gold` paso limpio. 159 modules, 2.45s, UTF-8 OK.
+
+**Nota:** El CLI `supabase db push` fallo por timeout de red. La migracion se aplico via `POST /v1/projects/{ref}/database/query` (Management API). No se necesito tocar codigo JS.
+
 ## Sesion activa: fix header movil Cartera Operativa + reconectar Ver periodos (2026-04-12)
 
 ### Diagnostico
@@ -14540,4 +14607,38 @@ El usuario solicitó subir un archivo que quedó pendiente en el repositorio rel
 pnpm build:gold ejecutado con éxito total.
 
 ### QA sugerido
-Validación manual de la UI en la sección de ciclos y tarjetas de estadísticas gro-period-cycle-card en dimensiones móviles y escritorio.
+Validación manual de la UI en la sección de ciclos y tarjetas de estadísticas gro-period-cycle-card en dimensiones móviles y escritorio.
+
+---
+
+## Sesion: Auditoria Visual Integral del Modulo Agro (2025-01-XX)
+
+### Diagnostico
+El usuario solicito una auditoria visual completa, brutal y accionable de todo el modulo Agro, evaluando cada superficie contra el ADN Visual V10.0 inmutable. Se auditaron 11 vistas, 16 archivos CSS (~14k lineas de estilo), y la estructura HTML del shell completo.
+
+### Cambios aplicados
+- **Nuevo archivo:** `apps/gold/docs/AGRO-VISUAL-AUDIT-V1.md` — documento de auditoria completo con:
+  - Diagnostico visual integral (8 fortalezas, 10 debilidades catalogadas)
+  - Taxonomia de 7 categorias de problemas con evidencia de lineas CSS concretas
+  - Auditoria de 12 superficies pantalla por pantalla con prioridad de intervencion
+  - Sistema maestro de jerarquia tipografica (9 niveles), spacing (8 tokens), y prominencia de cards (4 niveles)
+  - Familia canonica de 4 tipos de cards con contratos CSS concretos
+  - Parentesco visual entre 4 familias de modulos
+  - Plan de intervencion en 6 sprints priorizados con 20 acciones especificas
+  - 4 instrucciones detalladas listas para ejecutar
+
+### Hallazgos principales
+1. **Token island critico en agrociclos.css** — 43 lineas que redefinen toda la paleta, aislando Ciclos de Cultivos de cambios globales
+2. **Operacion Comercial es la superficie mas densa** — micro-fonts de 0.52-0.54rem, padding comprimido, 6x !important en tx-cards
+3. **Period Cycles es el modelo a seguir** — tokens globales, responsive correcto, cards coherentes
+4. **Tres sistemas de cards coexisten** — legacy `.card` (blur), `.agro-dash-card`, y familia moderna `.agro-*-panel`
+5. **Spacing sin tokens canonicos** — cada modulo hardcodea sus propios valores de gap y padding
+
+### Build status
+- No se modifico codigo funcional. Solo se creo documentacion. Build no requerido.
+
+### QA sugerido
+1. Revisar el documento `apps/gold/docs/AGRO-VISUAL-AUDIT-V1.md` completo
+2. Validar que los problemas listados coinciden con la experiencia visual real en browser
+3. Priorizar sprints de intervencion segun roadmap del producto
+4. Antes de ejecutar Sprint 1.1 (eliminar token island), verificar en browser que `.agro-cycles` hereda tokens de `:root` correctamente
