@@ -99,7 +99,6 @@
   width: 100%;
 }
 
-.agro-dashboard-v10 .agro-dash-toggle,
 .agro-dashboard-v10 .agro-dash-btn-assistant {
   width: 100%;
   min-height: 40px;
@@ -111,68 +110,6 @@
   text-transform: uppercase;
   cursor: pointer;
   transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease, border-color 180ms ease, color 180ms ease;
-}
-
-.agro-dashboard-v10 .agro-dash-toggle {
-  position: relative;
-  border: 1px solid var(--border-gold);
-  background: var(--bg-3);
-  color: var(--text-secondary);
-  padding: 0.55rem 2.6rem 0.55rem 0.8rem;
-  text-align: left;
-}
-
-.agro-dashboard-v10 .agro-dash-toggle .toggle-label {
-  font-size: var(--text-xs);
-}
-
-.agro-dashboard-v10 .agro-dash-toggle .toggle-switch {
-  display: none;
-}
-
-.agro-dashboard-v10 .agro-dash-toggle::after {
-  content: '';
-  position: absolute;
-  right: 0.7rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 1.65rem;
-  height: 0.9rem;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-gold);
-  background: var(--bg-2);
-}
-
-.agro-dashboard-v10 .agro-dash-toggle::before {
-  content: '';
-  position: absolute;
-  right: 1.45rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 0.55rem;
-  height: 0.55rem;
-  border-radius: var(--radius-lg);
-  background: var(--gold-3);
-  box-shadow: var(--shadow-gold-sm);
-  z-index: 1;
-  transition: transform 180ms ease, background-color 180ms ease;
-}
-
-.agro-dashboard-v10 .agro-dash-toggle[aria-pressed='true'] {
-  color: var(--text-gold-prestige);
-  border-color: var(--border-gold);
-}
-
-.agro-dashboard-v10 .agro-dash-toggle[aria-pressed='true']::after {
-  background: color-mix(in srgb, var(--gold-4) 16%, var(--bg-2));
-}
-
-.agro-dashboard-v10 .agro-dash-toggle[aria-pressed='true']::before {
-  transform: translate(-0.75rem, -50%);
-  background: var(--gold-5);
-}
-
-.agro-dashboard-v10 .agro-dash-btn-assistant {
   border: 1px solid transparent;
   background:
     linear-gradient(var(--bg-3), var(--bg-3)) padding-box,
@@ -181,7 +118,6 @@
   padding: 0.55rem 0.8rem;
 }
 
-.agro-dashboard-v10 .agro-dash-toggle:hover,
 .agro-dashboard-v10 .agro-dash-btn-assistant:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-gold-sm);

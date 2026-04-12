@@ -2,7 +2,105 @@
 
 Resumen operativo actual de `apps/gold`.
 
-## Sesión activa: unificación comprador → cliente en Agro (2026-04-11)
+## Sesion activa: cirugia de orden Agro — eliminar modo enfoque + retirar Planificacion (2026-04-12)
+
+### Diagnostico
+
+**Modo Enfoque:**
+- Toggle button en `index.html:501-505` (`#agro-focus-toggle`)
+- Constantes en `agro.js:176-177,181,198-199` (keys, IDs, arrays de secciones)
+- Estado en `agro.js:239-240` (Map + flag)
+- Funciones en `agro.js:329-507` (get/set/ensure, capture/restore, reorder, apply, init, updateUI, helpers)
+- Init call en `agro.js:15843`
+- CSS en `agro-dashboard.css:102-188` (toggle button + pseudo-elementos)
+- Persistencia en localStorage `YG_AGRO_FOCUS_MODE_V1`
+- Por que sobra: reordena secciones del dashboard y colapsa herramientas en acordeon. No aporta valor operativo real. El dashboard ya tiene orden natural. El toggle agrega ruido cognitivo sin guiar accion.
+
+**Planificacion:**
+- Modulo `agro-planning.js` (pronostico meteorologico renderizado en contenedor oculto)
+- Vista `agenda` en shell (`agro-shell.js:77,518-520`) con region dedicada en `index.html:625-629`
+- Card de navegacion en dashboard `index.html:586-595` ("Agenda y Fase Lunar" / "Planificacion y ritmo natural")
+- Card de herramienta `index.html:1480-1491` ("Planificacion" / "Planificacion operativa" / "Abrir planificacion")
+- Guide step 5 `index.html:543-546` ("Agenda")
+- Contenedor oculto `index.html:607-609` (`#forecast-container`)
+- Import/init `index.html:2422,2491`
+- Etiquetas en `agro-agenda.js:823,827` ("Planificacion" / "Planificacion operativa")
+- Por que sobra: la vista agenda/planificacion no justifica existir como superficie principal. El pronostico ya esta en la vista Clima. La agenda real se integra en el carrito como panel embebido.
+
+### Plan minimo
+
+**A. Eliminar modo enfoque:**
+1. Quitar toggle button de `index.html`
+2. Eliminar constantes, estado y funciones de `agro.js` (lineas 176-177, 181, 198-199, 239-240, 329-507, init en 15843)
+3. Eliminar CSS del toggle de `agro-dashboard.css`
+
+**B. Retirar Planificacion como superficie principal:**
+1. Quitar card de nav "Agenda y Fase Lunar" del dashboard
+2. Quitar guide step 5 "Agenda"
+3. Quitar tool card "Planificacion operativa" de Herramientas
+4. Quitar agenda VIEW_CONFIG y routing de `agro-shell.js`
+5. Quitar import/init de `agro-planning.js` en `index.html`
+6. Quitar shell region agenda y contenedor forecast de `index.html`
+
+**C. Ordenar navegacion:**
+- Renumerar guide steps restantes
+- Limpiar subtitulo de Mi Carrito que menciona "agenda operativa"
+
+### Archivos a tocar
+1. `apps/gold/agro/index.html`
+2. `apps/gold/agro/agro.js`
+3. `apps/gold/agro/agro-dashboard.css`
+4. `apps/gold/agro/agro-shell.js`
+5. `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Riesgos
+- Si algun codigo externo (bookmarklet, link directo) apunta a `?view=agenda`, el shell redirige al dashboard (fallback por defecto). Seguro.
+- `agro-planning.js` queda como archivo muerto sin importar. No se borra para minimizar diff.
+- `agro-agenda.js` queda cargado pero no se invoca como vista principal.
+- Panel de planificacion dentro del carrito (`agro-cart.js`) se conserva: es un mini-panel embebido con datos utiles (tareas de hoy, proximas, atrasos), no una superficie principal.
+- CSS `.planning-panel` en `agro.css` se conserva: estiliza el panel del carrito.
+
+### Criterio de cierre
+- `pnpm build:gold` pasa
+- No quedan botones/toggles/CTAs del modo enfoque
+- No quedan cards, accesos ni CTAs a Planificacion como superficie principal
+- Navegacion queda coherente y sin vistas muertas
+
+### Cambios realizados
+
+| Archivo | Cambio | Motivo |
+|---|---|---|
+| `agro/index.html` | Eliminado toggle button `#agro-focus-toggle` (lineas 501-505) | Modo enfoque ya no existe |
+| `agro/index.html` | Eliminada card nav "Agenda y Fase Lunar" (lineas 586-595) | Acceso a Planificacion como superficie principal |
+| `agro/index.html` | Eliminado guide step 5 "Agenda" y renumerado step 6 a 5 (lineas 543-550) | Guia apuntaba a vista agenda |
+| `agro/index.html` | Eliminada tool card "Planificacion operativa" (lineas 1480-1491) | CTA a superficie principal muerta |
+| `agro/index.html` | Eliminado contenedor `#forecast-container` (lineas 607-609) | Era staging del modulo planning |
+| `agro/index.html` | Eliminada shell region agenda (lineas 622-629) | Vista dedicada ya no existe |
+| `agro/index.html` | Eliminado import de `agro-planning.js` (linea 2422) | Modulo ya no se inicializa |
+| `agro/index.html` | Eliminado `planningModule.initPlanning()` (linea 2491) | Init del modulo retirado |
+| `agro/index.html` | Limpiado subtitulo Mi Carrito: quitada mencion "agenda operativa" (linea 1419) | Ya no hay vista agenda como superficie |
+| `agro/agro.js` | Eliminadas constantes focus (176-177, 181, 198-199) | Keys, IDs y arrays del modo enfoque |
+| `agro/agro.js` | Eliminado estado focus (239-240) | Map y flag del modo enfoque |
+| `agro/agro.js` | Eliminadas funciones focus (329-507) | get/set/ensure/capture/restore/reorder/apply/init/updateUI/helpers |
+| `agro/agro.js` | Eliminada init call `initAgroFocusMode()` (linea 15843) | Ya no se inicializa |
+| `agro/agro-dashboard.css` | Eliminados estilos del toggle button (102-188) | CSS de `.agro-dash-toggle` y pseudo-elementos |
+| `agro/agro-shell.js` | Eliminada entrada `agenda` de VIEW_CONFIG (linea 77) | Vista ya no existe |
+| `agro/agro-shell.js` | Eliminado routing `openAgroAgenda` (lineas 518-520) | Ya no se navega a agenda |
+| `agro/agro-shell.js` | Neutralizado action `calculator` que apuntaba a agenda (linea 330-332) | Redirigia a vista eliminada |
+
+### Resultado build
+`pnpm build:gold` paso limpio. Sin errores, sin warnings nuevos.
+
+### Riesgos residuales
+- `agro-planning.js` queda como archivo muerto en disco (no se importa ni ejecuta). Seguro.
+- `agro-agenda.js` sigue siendo parte del bundle (Vite lo incluye como chunk dinamico) pero no se invoca como vista principal. Seguro.
+- Si un usuario tiene `YG_AGRO_FOCUS_MODE_V1` en localStorage, queda como dato inerte. No se lee ni afecta nada.
+- Si un usuario tiene guardada la vista `agenda` en `YG_AGRO_ACTIVE_VIEW_V1`, el shell hace fallback a `dashboard` por defecto. Seguro.
+- Panel "Planificacion" dentro del carrito (`agro-cart.js`) se conserva: muestra tareas de hoy, proximas y atrasos. No es superficie principal.
+
+---
+
+## Sesion activa: unificacion comprador -> cliente en Agro (2026-04-11)
 
 ### Contexto
 El término "comprador" aparecía en varias superficies visibles de Agro (toasts, labels, reportes, export markdown), mientras que el resto del producto usa "cliente" como denominación oficial. Se unificó el lenguaje visible sin tocar internos.

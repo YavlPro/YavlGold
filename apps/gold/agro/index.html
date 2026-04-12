@@ -498,11 +498,6 @@
                         con mejor contexto.</p>
                 </div>
                 <div class="agro-dash-controls">
-                    <button type="button" class="assistant-trigger agro-dash-toggle" id="agro-focus-toggle"
-                        aria-pressed="false">
-                        <span class="toggle-label">Modo Enfoque</span>
-                        <span class="toggle-switch" aria-hidden="true"></span>
-                    </button>
                     <button type="button" class="assistant-trigger agro-dash-btn-assistant" id="btn-open-agro-assistant"
                         data-agro-view="asistente">
                         Asistente IA
@@ -540,12 +535,8 @@
                             <span class="agro-guide-step__index">4</span>
                             <span class="agro-guide-step__text">Ver clima</span>
                         </button>
-                        <button type="button" class="agro-guide-step" data-agro-view="agenda">
-                            <span class="agro-guide-step__index">5</span>
-                            <span class="agro-guide-step__text">Agenda</span>
-                        </button>
                         <button type="button" class="agro-guide-step" data-agro-view="herramientas">
-                            <span class="agro-guide-step__index">6</span>
+                            <span class="agro-guide-step__index">5</span>
                             <span class="agro-guide-step__text">Más herramientas</span>
                         </button>
                     </div>
@@ -583,16 +574,6 @@
                             aria-hidden="true"></i></span>
                 </button>
 
-                <button type="button" class="dash-nav-card" data-agro-view="agenda">
-                    <span class="dash-nav-card__icon" id="moon-icon">🌕</span>
-                    <div class="dash-nav-card__body">
-                        <strong class="dash-nav-card__title">Agenda y Fase Lunar</strong>
-                        <span class="dash-nav-card__summary" id="moon-advice">Calculando...</span>
-                        <span class="dash-nav-card__hint">Planificación y ritmo natural</span>
-                    </div>
-                    <span class="dash-nav-card__arrow"><i class="fa-solid fa-chevron-right"
-                            aria-hidden="true"></i></span>
-                </button>
             </div>
 
             <!-- Hidden containers for JS compatibility -->
@@ -604,9 +585,6 @@
                 </div>
                 <div id="market-ticker-track"></div>
                 <div id="clima-weekly-host"></div>
-                <div id="weekly-forecast-staging">
-                    <div id="forecast-container"></div>
-                </div>
             </div>
         </section>
 
@@ -616,15 +594,6 @@
         <section class="agro-clima-region" data-agro-shell-region="clima" hidden inert>
             <div id="agro-clima-root" class="agro-clima-root">
                 <!-- agro-clima.js renders here when clima view is active -->
-            </div>
-        </section>
-
-        <!-- ============================================
-             📅 SECCIÓN AGENDA — Vista dedicada completa
-             ============================================ -->
-        <section class="agro-agenda-region" data-agro-shell-region="agenda" hidden inert>
-            <div id="agro-agenda-inline-root" class="agro-agenda-inline-root">
-                <!-- agro-agenda.js renders here when agenda view is active -->
             </div>
         </section>
 
@@ -1416,7 +1385,7 @@
                 <div class="agro-pagados-dedicated__copy">
                     <p class="agro-pagados-dedicated__eyebrow">Vista dedicada</p>
                     <h3 class="agro-pagados-dedicated__title">Mi Carrito</h3>
-                    <p class="agro-pagados-dedicated__subtitle">Gestiona compras y usa accesos rápidos a agenda operativa
+                    <p class="agro-pagados-dedicated__subtitle">Gestiona compras y usa accesos rápidos
                         y cálculo sin salir de la superficie comercial.</p>
                 </div>
                 <div class="agro-privacy-strip">
@@ -1475,18 +1444,6 @@
                             decisiones en campo.</p>
                         <button type="button" class="agro-tool-card__action" data-agro-view="clima">
                             <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Ver clima
-                        </button>
-                    </article>
-                    <article class="agro-tool-card" id="agro-tool-card-agenda">
-                        <div class="agro-tool-card__icon-box">
-                            <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
-                        </div>
-                        <p class="agro-tool-card__eyebrow">Planificación</p>
-                        <h3 class="agro-tool-card__title">Planificación operativa</h3>
-                        <p class="agro-tool-card__copy">Agenda operativa, calculadora y calendario mensual dentro de una
-                            sola superficie de trabajo.</p>
-                        <button type="button" class="agro-tool-card__action" data-agro-view="agenda">
-                            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Abrir planificación
                         </button>
                     </article>
                     <article class="agro-tool-card">
@@ -2412,14 +2369,12 @@
                 const [
                     feedbackModule,
                     marketModule,
-                    planningModule,
                     interactionsModule,
                     statsModule,
                     notificationsModule
                 ] = await Promise.all([
                     import('./agro-feedback.js'),
                     import('./agro-market.js'),
-                    import('./agro-planning.js'),
                     import('./agro-interactions.js'),
                     import('./agro-stats.js'),
                     import('./agro-notifications.js')
@@ -2488,7 +2443,6 @@
                     feedbackModule.initAgroFeedback?.();
                     marketModule.initMarketIntelligence();
                     marketModule.startTickerAutoRefresh();
-                    planningModule.initPlanning();
                     interactionsModule.initInteractions();
                     statsModule.initStats();
                     notificationsModule.initNotifications();

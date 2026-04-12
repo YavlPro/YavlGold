@@ -74,7 +74,6 @@ const VIEW_CONFIG = Object.freeze({
     rankings: { region: 'ops', label: 'Rankings', tab: 'rankings', focusSelector: '#agro-rankings-dedicated', dense: true },
     'cartera-viva': { region: 'cartera-viva', label: 'Cartera Viva', focusSelector: '#agro-cartera-viva-root' },
     clima: { region: 'clima', label: 'Clima Agro', focusSelector: '[data-agro-shell-region="clima"]' },
-    agenda: { region: 'agenda', label: 'Agenda', focusSelector: '[data-agro-shell-region="agenda"]' },
     herramientas: { region: 'herramientas', label: 'Herramientas', focusSelector: '#agro-tools-section' },
     agrorepo: { region: 'agrorepo', label: 'Bitacora', focusSelector: '#agro-repo-section', dense: true },
     asistente: { region: 'asistente', label: 'Asistente IA', focusSelector: '[data-agro-shell-region="asistente"]' }
@@ -328,10 +327,7 @@ function runAction(action) {
         case 'social':
             return clickIfExists('#btn-open-agro-social');
         case 'calculator':
-            window.dispatchEvent(new CustomEvent('agro:shell:set-view', {
-                detail: { view: 'agenda', scroll: true }
-            }));
-            return true;
+            return false;
         default:
             return false;
     }
@@ -513,10 +509,6 @@ export function initAgroShell() {
 
         if (view === 'clima' && typeof window.openAgroClima === 'function') {
             window.openAgroClima({ inline: true });
-        }
-
-        if (view === 'agenda' && typeof window.openAgroAgenda === 'function') {
-            window.openAgroAgenda({ inline: true });
         }
     };
 
