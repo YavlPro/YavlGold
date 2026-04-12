@@ -88,6 +88,26 @@
   --layout-card-gap-compact: 0.25rem;
   --layout-card-gap-default: 0.5rem;
   --layout-card-gap-spacious: 0.75rem;
+
+  /* Canonical Spacing Tokens */
+  --gap-section: 1rem;
+  --gap-card: 0.75rem;
+  --gap-internal: 0.5rem;
+  --gap-tight: 0.25rem;
+  --pad-card: 1rem;
+  --pad-card-compact: 0.75rem;
+  --pad-section: 1.25rem;
+  --pad-modal: 1.5rem;
+
+  /* Canonical Typography Tokens */
+  --type-page-title: clamp(1.3rem, 2.4vw, 1.72rem);
+  --type-section-title: clamp(1.05rem, 2vw, 1.35rem);
+  --type-card-title: 1rem;
+  --type-eyebrow: 0.66rem;
+  --type-body: 0.92rem;
+  --type-body-sm: 0.82rem;
+  --type-label: 0.7rem;
+  --type-caption: 0.62rem;
 }
 
 /* ============================================

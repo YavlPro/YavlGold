@@ -614,29 +614,29 @@
 }
 
 .agro-ops-v10 .tx-client {
-  font-size: var(--text-sm, 0.80rem);
+  font-size: var(--text-base, 0.92rem);
   line-height: 1.2;
 }
 
 .agro-ops-v10 .tx-detail,
 .agro-ops-v10 .facturero-meta {
-  font-size: var(--text-xs, 0.70rem);
+  font-size: var(--text-sm, 0.80rem);
   margin-top: 0.1rem;
   line-height: 1.3;
 }
 
 .agro-ops-v10 .tx-date {
-  font-size: 0.65rem;
+  font-size: var(--text-xs, 0.70rem);
   margin-top: 0.1rem;
   opacity: 0.7;
 }
 
 .agro-ops-v10 .tx-amount {
-  font-size: var(--text-sm, 0.80rem);
+  font-size: var(--text-base, 0.92rem);
 }
 
 .agro-ops-v10 .tx-amount-sub {
-  font-size: 0.65rem;
+  font-size: var(--text-xs, 0.70rem);
 }
 
 .agro-ops-v10 .tx-footer {
@@ -646,8 +646,8 @@
 }
 
 .agro-ops-v10 .tx-status {
-  font-size: 0.6rem;
-  padding: 0.1rem 0.4rem;
+  font-size: var(--text-xs, 0.70rem);
+  padding: 0.15rem 0.5rem;
 }
 
 .agro-ops-v10 .tx-actions-trigger {
@@ -664,7 +664,7 @@
    ============================================== */
 .agro-ops-v10 .facturero-day-header,
 .agro-ops-v10 .date-divider {
-  font-size: 0.65rem;
+  font-size: var(--text-xs, 0.70rem);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -703,11 +703,11 @@
   }
 
   .agro-ops-v10 .tx-client {
-    font-size: 0.75rem;
+    font-size: var(--text-sm, 0.80rem);
   }
 
   .agro-ops-v10 .tx-amount {
-    font-size: 0.75rem;
+    font-size: var(--text-sm, 0.80rem);
   }
 }
 

@@ -14642,3 +14642,113 @@ El usuario solicito una auditoria visual completa, brutal y accionable de todo e
 2. Validar que los problemas listados coinciden con la experiencia visual real en browser
 3. Priorizar sprints de intervencion segun roadmap del producto
 4. Antes de ejecutar Sprint 1.1 (eliminar token island), verificar en browser que `.agro-cycles` hereda tokens de `:root` correctamente
+
+---
+
+## Sesion: Ejecucion Visual Premium — Bloques A-E del plan de auditoria (2026-04-12)
+
+### Diagnostico reutilizado
+Basado en AGRO-VISUAL-AUDIT-V1.md, se ejecutan los sprints 1-3 y fragmento rentable del sprint 4:
+- Token island en agrociclos.css (43 lineas duplicadas de :root)
+- Sin tokens canonicos de spacing ni tipografia semantica
+- Radius hardcodeados 18px/14px en lugar de tokens
+- Cultivos visualmente desalineado de Period Cycles (bg plano, padding comprimido)
+- Operacion Comercial: micro-fonts 0.52-0.54rem, padding insuficiente, densidad excesiva
+- tx-cards-v2.css: fonts reducidos a 0.6-0.65rem, multiples !important
+- Dashboard guide steps sin diferenciacion visual del paso principal
+
+### Alcance exacto
+
+**BLOQUE A — Consolidacion de tokens:**
+- Agregar spacing canonico y tipografia semantica a agro-tokens.css
+- Eliminar token island de agrociclos.css
+- Normalizar radius hardcodeados 18px→var(--radius-lg), 14px→var(--radius-md)
+
+**BLOQUE B/C — Cards y Cultivos alineado a Periodos:**
+- Upgrade cycle-card de bg plano a gradiente canonico de la familia Period Cycles
+- Mejorar padding/gap de card-header, progress-section, data-grid
+- Shimmer border mas sutil
+
+**BLOQUE D — Respiracion en Operacion Comercial:**
+- Subir padding/gap de financial-operations-card
+- Subir font-sizes de micro-labels (0.52→0.62rem, 0.54→0.64rem)
+- Subir font-sizes de tx-cards (client, amount, date, status)
+- Reducir !important donde sea seguro
+
+**BLOQUE E — Polish de Dashboard:**
+- Diferenciar guide step #1 con acento gold
+
+### Archivos candidatos
+1. `agro-tokens.css` — agregar tokens
+2. `agrociclos.css` — eliminar island, upgrade cards
+3. `agro-operations.css` — breathing, radius, font-sizes
+4. `tx-cards-v2.css` — font-size uplift, spacing
+5. `agro-task-cycles.css` — radius normalization
+6. `agro.css` — guide step differentiation
+7. `agro-dashboard.css` — radius normalization
+
+### Riesgos
+- Eliminar token island: BAJO — valores identicos a :root en agro-tokens.css
+- Radius normalization: BAJO — tokens ya definidos, solo reemplazo de literals
+- Card upgrade Cultivos: MEDIO-BAJO — cambio visual notorio pero alineado a familia
+- Breathing Operaciones: MEDIO — cambio de densidad puede afectar scroll
+- tx-cards !important: MEDIO — se reduce solo donde es claramente seguro
+
+### Criterio de cierre
+- `pnpm build:gold` pasa sin errores
+- Token island eliminado
+- Tokens canonicos de spacing y tipografia disponibles
+- Cultivos visualmente emparentado con Period Cycles
+- Operacion Comercial respira mas
+- tx-cards legibles sin microscopia
+
+### Cambios aplicados
+
+**agro-tokens.css** (lineas 92-110)
+- Agregados 8 spacing tokens canonicos (--gap-section, --gap-card, --gap-internal, --gap-tight, --pad-card, --pad-card-compact, --pad-section, --pad-modal)
+- Agregados 8 typography tokens canonicos (--type-page-title, --type-section-title, --type-card-title, --type-eyebrow, --type-body, --type-body-sm, --type-label, --type-caption)
+
+**agrociclos.css** (token island + card upgrade)
+- Eliminadas 43 lineas de token island redundante (.agro-cycles { --gold-1... })
+- cycle-card: bg plano → gradiente canonico alineado a period-cycles family
+- cycle-card: hover mejorado con border-color transition
+- card-header: padding 0.65rem → 0.85rem, bg con gold-1 hint
+- progress-section, data-grid, profit-row: padding/gap migrados a tokens canonicos
+- data-cell: padding uplift 0.42→0.5rem
+
+**agro-operations.css** (~25 ediciones)
+- financial-operations-card: padding 0.84rem → var(--pad-card), gap 0.66rem → var(--gap-card), radius 18px → var(--radius-lg)
+- ops-step-block: padding → var(--pad-card-compact), gap → var(--gap-internal), radius → var(--radius-md)
+- 14 micro-font-sizes normalizados: 0.52/0.54rem → var(--type-caption/--type-eyebrow), 0.74rem → var(--type-body-sm)
+- 8 border-radius hardcodeados migrados a tokens (18px→--radius-lg, 14px→--radius-md)
+- pagados steps: padding/gap migrados a tokens canonicos
+
+**agro-task-cycles.css** (5 ediciones)
+- 5 border-radius hardcodeados migrados: 18px→var(--radius-lg), 14px→var(--radius-md)
+
+**tx-cards-v2.css** (7 ediciones)
+- tx-client: 0.80rem → 0.92rem (--text-base)
+- tx-detail/facturero-meta: 0.70rem → 0.80rem (--text-sm)
+- tx-date: 0.65rem → 0.70rem (--text-xs)
+- tx-amount: 0.80rem → 0.92rem (--text-base)
+- tx-amount-sub: 0.65rem → 0.70rem (--text-xs)
+- tx-status: 0.6rem → 0.70rem + padding uplift
+- day-headers: 0.65rem → 0.70rem
+- Responsive mobile: 0.75rem → 0.80rem (--text-sm)
+
+**agro-dashboard.css** (2 ediciones)
+- dash-card: radius 14px → var(--radius-md)
+- lunar-tip: radius 14px → var(--radius-md)
+
+**agro.css** (1 edicion)
+- guide-step:first-child: border gold accent + subtle gradient bg para diferenciar paso principal
+
+### Build status
+- `pnpm build:gold` — OK (exit 0), agent-guard OK, UTF-8 OK, 159 modules
+
+### QA sugerido
+1. Verificar Cultivos (ciclos): tarjetas deben tener gradiente sutil dorado + sombra profunda (antes eran bg plano)
+2. Verificar Operacion Comercial: texto mas grande en cards de tx, labels legibles, padding aumentado
+3. Verificar Dashboard: guide step #1 debe tener borde dorado y fondo diferenciado
+4. Verificar que no hay regresion visual en Period Cycles ni Task Cycles
+5. Viewport mobile (<=480px): confirmar que tx-cards no se desbordan con el font-size uplift

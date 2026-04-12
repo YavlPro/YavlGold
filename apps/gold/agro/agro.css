@@ -7864,6 +7864,13 @@ body.agro-view-dense::after {
   transform: translateY(0);
 }
 
+.agro-guide-step:first-child {
+  border-color: var(--border-gold, rgba(200,167,82,0.25));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 6%, transparent), transparent 40%),
+    var(--bg-4, #1a1a1f);
+}
+
 .agro-guide-step__index {
   display: inline-flex;
   width: 1.65rem;

@@ -25,50 +25,7 @@
   }
 }
 
-.agro-cycles {
-  --gold-1: #2a2218;
-  --gold-2: #3a3228;
-  --gold-3: #6b5a3e;
-  --gold-4: #C8A752;
-  --gold-5: #E8D48B;
-
-  --bg-0: #050505;
-  --bg-1: #0a0a0a;
-  --bg-2: #0B0C0F;
-  --bg-3: #111113;
-  --bg-4: #1a1a1f;
-
-  --text-primary: #ffffff;
-  --text-secondary: #cccccc;
-  --text-muted: #94A3B8;
-  --text-gold-prestige: #E5D5A0;
-
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-error: #EF4444;
-
-  --border-neutral: rgba(255, 255, 255, 0.08);
-  --border-gold: rgba(200, 167, 82, 0.25);
-
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-pill: 9999px;
-
-  --shadow-gold-sm: 0 2px 10px rgba(200, 167, 82, 0.15);
-  --shadow-gold-md: 0 5px 20px rgba(200, 167, 82, 0.25);
-
-  --text-xs: 0.70rem;
-  --text-sm: 0.80rem;
-  --text-base: 0.92rem;
-  --text-md: 1.00rem;
-  --text-lg: 1.10rem;
-  --text-xl: 1.30rem;
-
-  --metallic-border: linear-gradient(90deg, transparent, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e, transparent);
-  --metallic-btn: linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e);
-  --metallic-text: linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e);
-}
+/* Token island removed — inherits from :root via agro-tokens.css */
 
 .agro-cycles .cycles-list {
   display: grid;
@@ -82,11 +39,17 @@
 
 .agro-cycles .cycle-card {
   position: relative;
-  background: var(--bg-4);
-  border: 1px solid color-mix(in srgb, var(--gold-4) 16%, rgba(255, 255, 255, 0.08));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 6%, transparent), transparent 22%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.018), transparent 62%),
+    var(--bg-3);
+  border: 1px solid var(--border-gold);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  transition: transform 180ms ease, box-shadow 180ms ease;
+  box-shadow:
+    0 16px 32px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
   animation: fadeInUp 180ms ease both;
 }
 
@@ -104,17 +67,18 @@
 }
 
 .agro-cycles .cycle-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(200, 167, 82, 0.12);
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--gold-5) 30%, var(--border-gold));
+  box-shadow: var(--shadow-gold-sm);
 }
 
 .agro-cycles .card-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 0.55rem;
-  padding: 0.65rem;
-  background: var(--bg-3);
+  gap: 0.65rem;
+  padding: 0.85rem var(--pad-card-compact);
+  background: color-mix(in srgb, var(--bg-4) 90%, var(--gold-1));
   border-bottom: 1px solid var(--border-neutral);
 }
 
@@ -290,7 +254,7 @@
 }
 
 .agro-cycles .progress-section {
-  padding: 0.65rem;
+  padding: var(--pad-card-compact);
   border-bottom: 1px solid var(--border-neutral);
 }
 
@@ -357,17 +321,17 @@
 }
 
 .agro-cycles .data-grid {
-  padding: 0.65rem;
+  padding: var(--pad-card-compact);
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.45rem;
+  gap: var(--gap-internal);
 }
 
 .agro-cycles .data-cell {
   background: var(--bg-3);
   border: 1px solid var(--border-neutral);
   border-radius: var(--radius-sm);
-  padding: 0.42rem 0.48rem;
+  padding: 0.5rem 0.6rem;
   min-height: 48px;
   display: flex;
   flex-direction: column;
@@ -404,11 +368,11 @@
 
 .agro-cycles .profit-row {
   border-top: 1px solid var(--border-neutral);
-  padding: 0.65rem;
+  padding: var(--pad-card-compact);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.45rem;
+  gap: var(--gap-internal);
 }
 
 .agro-cycles .profit-label {
