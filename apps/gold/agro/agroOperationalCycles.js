@@ -1,10 +1,11 @@
 import { convertToUSD, getRate, initExchangeRates } from './agro-exchange.js';
-import { assertOperationalPeriodOpen, getAgroPeriodCyclesSummary, mountAgroPeriodCycles, unmountAgroPeriodCycles } from './agro-period-cycles.js';
+import { assertOperationalPeriodOpen, mountAgroPeriodCycles, unmountAgroPeriodCycles } from './agro-period-cycles.js';
 
 const ROOT_ID = 'agro-operational-root';
+const PERIOD_ROOT_ID = 'agro-period-cycles-root';
 const VIEW_NAME = 'operational';
+const PERIOD_VIEW_NAME = 'period-cycles';
 const SUBVIEW_CART = 'cart';
-const SUBVIEW_PERIODS = 'periods';
 const SUBVIEW_ACTIVE = 'active';
 const SUBVIEW_FINISHED = 'finished';
 const SUBVIEW_DONATIONS = 'donations';
@@ -16,13 +17,12 @@ const FAMILY_OPTIONS = Object.freeze([FAMILY_LINKED, FAMILY_UNLINKED]);
 const CROPS_READY_EVENT = 'AGRO_CROPS_READY';
 const VIEW_CHANGED_EVENT = 'agro:shell:view-changed';
 const OPERATIONAL_PORTFOLIO_UPDATED_EVENT = 'agro:operational-portfolio-updated';
-const PERIOD_CYCLES_UPDATED_EVENT = 'agro:period-cycles:updated';
 const EMPTY_AMOUNT_LABEL = '📝 Monto no anotado';
 const EMPTY_BALANCE_LABEL = '📝 Sin balance monetario';
 
 const ACTIVE_STATUS_VALUES = Object.freeze(['open', 'in_progress', 'compensating']);
 const FINISHED_STATUS_VALUES = Object.freeze(['closed', 'lost']);
-const SUBVIEW_OPTIONS = Object.freeze([SUBVIEW_CART, SUBVIEW_PERIODS, SUBVIEW_ACTIVE, SUBVIEW_FINISHED, SUBVIEW_DONATIONS, SUBVIEW_LOSSES, SUBVIEW_EXPORT]);
+const SUBVIEW_OPTIONS = Object.freeze([SUBVIEW_CART, SUBVIEW_ACTIVE, SUBVIEW_FINISHED, SUBVIEW_DONATIONS, SUBVIEW_LOSSES, SUBVIEW_EXPORT]);
 const CURRENCY_OPTIONS = Object.freeze(['COP', 'USD', 'VES']);
 
 const ECONOMIC_TYPE_OPTIONS = Object.freeze([
@@ -1346,6 +1346,7 @@ function renderShell() {
                 </div>
                 <div class="header-actions">
                     <button type="button" class="btn btn-primary" data-operational-action="new-cycle">➕ Nueva cartera operativa</button>
+                    <button type="button" class="btn" data-agro-view="period-cycles">📆 Ver períodos</button>
                     <button type="button" class="agro-operational-refresh-btn" data-operational-action="refresh" aria-label="Actualizar Cartera Operativa" title="Actualizar">
                         <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
                     </button>
@@ -1810,14 +1811,6 @@ function getSubviewMeta(subview) {
         };
     }
 
-    if (subview === SUBVIEW_PERIODS) {
-        return {
-            eyebrow: '📆 Ciclos de Período',
-            title: '📆 Ciclos de Período — lectura mensual',
-            copy: 'Cada tarjeta representa un mes calendario completo y resume la operativa comercial sin mezclarla con Cartera Viva.'
-        };
-    }
-
     const familyLabel = getFamilyLabel(state.familyFilter);
 
     if (subview === SUBVIEW_FINISHED) {
@@ -1869,7 +1862,7 @@ function getSubviewMeta(subview) {
 
 function renderFamilyToggle() {
     if (!state.refs?.familyToggle) return;
-    const shouldShow = state.currentSubview !== SUBVIEW_CART && state.currentSubview !== SUBVIEW_PERIODS;
+    const shouldShow = state.currentSubview !== SUBVIEW_CART;
     state.refs.familyToggle.hidden = !shouldShow;
     state.refs.familyToggle.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
     if (!shouldShow) {
@@ -1949,7 +1942,6 @@ function renderSubviewSwitch() {
     const totalCount = activeCount + paidCount + donationCount + lossCount;
     const options = [
         { value: SUBVIEW_CART, label: '🛒 Mi Carrito', count: null },
-        { value: SUBVIEW_PERIODS, label: '📆 Ciclos de Período', count: null },
         { value: SUBVIEW_ACTIVE, label: '🟡 No pagados', count: activeCount },
         { value: SUBVIEW_FINISHED, label: '✅ Pagados', count: paidCount },
         { value: SUBVIEW_DONATIONS, label: '🤝 Donaciones', count: donationCount },
@@ -1984,6 +1976,20 @@ function ensureOperationalCartSlot() {
     if (state.refs.list.querySelector('#agro-cart-root')) return state.refs.list;
     state.refs.list.innerHTML = '<div id="agro-operational-cart-slot" class="agro-operational-cart-slot"></div>';
     return state.refs.list.querySelector('#agro-operational-cart-slot');
+}
+
+function syncStandalonePeriodCyclesView() {
+    const root = document.getElementById(PERIOD_ROOT_ID);
+    if (!root) return;
+
+    if (state.currentView === PERIOD_VIEW_NAME) {
+        void mountAgroPeriodCycles(root, {
+            initialUserId: state.userId
+        });
+        return;
+    }
+
+    unmountAgroPeriodCycles();
 }
 
 function renderCartOverview() {
@@ -2156,30 +2162,6 @@ function renderOverview() {
 
     if (state.currentSubview === SUBVIEW_CART) {
         state.refs.overviewBody.innerHTML = renderCartOverview();
-        return;
-    }
-
-    if (state.currentSubview === SUBVIEW_PERIODS) {
-        const summary = getAgroPeriodCyclesSummary();
-        state.refs.overviewBody.innerHTML = `
-            <div class="agro-operational-summary-grid">
-                <article class="agro-operational-summary-card">
-                    <span class="agro-operational-summary-card__label">📆 Ciclos visibles</span>
-                    <strong class="agro-operational-summary-card__value">${summary.loading ? '...' : summary.total}</strong>
-                    <p class="agro-operational-summary-card__hint">${escapeHtml(summary.currentMonthLabel)} como referencia operativa actual.</p>
-                </article>
-                <article class="agro-operational-summary-card">
-                    <span class="agro-operational-summary-card__label">Estado principal</span>
-                    <strong class="agro-operational-summary-card__value">${summary.loading ? '...' : `${summary.active} / ${summary.finalized}`}</strong>
-                    <p class="agro-operational-summary-card__hint">Activo o finalizado según el calendario del mes.</p>
-                </article>
-                <article class="agro-operational-summary-card">
-                    <span class="agro-operational-summary-card__label">Badge operativo</span>
-                    <strong class="agro-operational-summary-card__value">${summary.loading ? '...' : `${summary.open} / ${summary.closed}`}</strong>
-                    <p class="agro-operational-summary-card__hint">Abierto o cerrado según pendientes reales del período.</p>
-                </article>
-            </div>
-        `;
         return;
     }
 
@@ -2666,21 +2648,6 @@ function renderCurrentSubview() {
         state.refs.listStatus.textContent = 'Mi Carrito prepara la operación antes de llevarla a No pagados o Pagados.';
         ensureOperationalCartSlot();
         document.dispatchEvent(new Event('data-refresh'));
-        return;
-    }
-
-    if (state.currentSubview === SUBVIEW_PERIODS) {
-        restoreCartNodeHome();
-        clearFiltersHost();
-        state.refs.listStatus.textContent = 'Cada ciclo resume un mes calendario completo de Cartera Operativa.';
-        let periodRoot = state.refs.list.querySelector('#agro-period-cycles-root');
-        if (!periodRoot) {
-            state.refs.list.innerHTML = '<div id="agro-period-cycles-root"></div>';
-            periodRoot = state.refs.list.querySelector('#agro-period-cycles-root');
-        }
-        void mountAgroPeriodCycles(periodRoot, {
-            initialUserId: state.userId
-        });
         return;
     }
 
@@ -3241,8 +3208,15 @@ function bindEvents() {
         state.currentView = normalizeToken(event?.detail?.view);
         state.currentSubview = normalizeOperationalSubview(event?.detail?.subview || state.currentSubview);
 
+        if (state.currentView === PERIOD_VIEW_NAME) {
+            closeComposerModal();
+            syncStandalonePeriodCyclesView();
+            return;
+        }
+
+        syncStandalonePeriodCyclesView();
+
         if (state.currentView !== VIEW_NAME) {
-            unmountAgroPeriodCycles();
             closeComposerModal();
             return;
         }
@@ -3257,12 +3231,6 @@ function bindEvents() {
     window.addEventListener(CROPS_READY_EVENT, () => {
         if (state.currentView === VIEW_NAME) {
             void refreshData();
-        }
-    });
-
-    window.addEventListener(PERIOD_CYCLES_UPDATED_EVENT, () => {
-        if (state.currentView === VIEW_NAME && state.currentSubview === SUBVIEW_PERIODS) {
-            renderOverview();
         }
     });
 
@@ -3416,8 +3384,12 @@ export async function initAgroOperationalCycles(options = {}) {
     exposeGlobalApi();
     state.currentView = normalizeToken(document.body?.dataset?.agroActiveView || state.currentView);
     state.currentSubview = normalizeOperationalSubview(document.body?.dataset?.agroSubview || state.currentSubview);
-    renderAll();
-    await refreshData({ initialUserId: options.initialUserId });
+    syncStandalonePeriodCyclesView();
+
+    if (state.currentView === VIEW_NAME) {
+        renderAll();
+        await refreshData({ initialUserId: options.initialUserId });
+    }
 
     return {
         refresh: () => refreshData(),

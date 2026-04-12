@@ -10,6 +10,7 @@ const state = {
     root: null,
     userId: '',
     boundRoot: null,
+    globalEventsBound: false,
     loading: false,
     creating: false,
     schemaMissing: false,
@@ -221,8 +222,8 @@ function deriveProgress(cycle) {
         totalDays,
         percent,
         text: today > endDate
-            ? 'Mes completado'
-            : `${elapsedDays}/${totalDays} días (${percent}%)`
+            ? `Mes completo (${totalDays}/${totalDays})`
+            : `Día ${elapsedDays}/${totalDays} (${percent}%)`
     };
 }
 
@@ -511,56 +512,88 @@ async function fetchPeriodCycles(userId) {
     return data || [];
 }
 
-function renderSummaryCards() {
-    const summary = state.summary || createEmptySummary();
+function pluralize(count, singular, plural = `${singular}s`) {
+    return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function renderModuleHeader() {
     return `
-        <div class="agro-period-cycles__summary-grid">
-            <article class="agro-period-cycles__summary-card">
-                <span class="agro-period-cycles__summary-label">Períodos visibles</span>
-                <strong class="agro-period-cycles__summary-value">${summary.total}</strong>
-                <p class="agro-period-cycles__summary-copy">Meses persistidos o derivados desde la operativa real.</p>
-            </article>
-            <article class="agro-period-cycles__summary-card">
-                <span class="agro-period-cycles__summary-label">Activos / Finalizados</span>
-                <strong class="agro-period-cycles__summary-value">${summary.active} / ${summary.finalized}</strong>
-                <p class="agro-period-cycles__summary-copy">El estado principal se deriva del calendario del mes.</p>
-            </article>
-            <article class="agro-period-cycles__summary-card">
-                <span class="agro-period-cycles__summary-label">Operativa abierta / cerrada</span>
-                <strong class="agro-period-cycles__summary-value">${summary.open} / ${summary.closed}</strong>
-                <p class="agro-period-cycles__summary-copy">El badge secundario depende de ciclos operativos activos del período.</p>
-            </article>
-        </div>
+        <header class="module-header animate-in delay-3">
+            <div class="module-title-group">
+                <div class="module-icon">🗓️</div>
+                <div class="module-heading">
+                    <p class="ops-module-eyebrow">Familia mensual</p>
+                    <h2 class="module-title">Ciclos de período</h2>
+                    <p class="module-subtitle">Lectura mensual exclusiva de Cartera Operativa, separada de Ciclos de cultivos y de Cartera Viva.</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button type="button" class="btn btn-primary" data-period-action="toggle-form">${state.formOpen ? 'Cerrar creación' : 'Crear ciclo del mes'}</button>
+            </div>
+        </header>
     `;
 }
 
-function renderCreatePanel() {
+function renderOverviewSection() {
+    const summary = state.summary || createEmptySummary();
+    return `
+        <section class="agro-period-family__overview" aria-label="Resumen de ciclos de período">
+            <div class="agro-period-family__overview-copy">
+                <p class="agro-period-family__overview-eyebrow">Lectura operativa</p>
+                <h3 class="agro-period-family__overview-title">Meses calendario con lectura real</h3>
+                <p class="agro-period-family__overview-subtitle">Cada card consolida el período, muestra su progreso mensual y separa lo asociado al cultivo de la operativa general.</p>
+            </div>
+            <div class="agro-period-family__overview-grid">
+                <article class="agro-period-family__overview-card">
+                    <span class="agro-period-family__overview-label">Períodos visibles</span>
+                    <strong class="agro-period-family__overview-value">${summary.total}</strong>
+                    <p class="agro-period-family__overview-hint">${escapeHtml(summary.currentMonthLabel)} como referencia actual.</p>
+                </article>
+                <article class="agro-period-family__overview-card">
+                    <span class="agro-period-family__overview-label">Active / Finalized</span>
+                    <strong class="agro-period-family__overview-value">${summary.active} / ${summary.finalized}</strong>
+                    <p class="agro-period-family__overview-hint">Estado principal por calendario mensual.</p>
+                </article>
+                <article class="agro-period-family__overview-card">
+                    <span class="agro-period-family__overview-label">Open / Closed</span>
+                    <strong class="agro-period-family__overview-value">${summary.open} / ${summary.closed}</strong>
+                    <p class="agro-period-family__overview-hint">Badge secundario por operativa real del mes.</p>
+                </article>
+            </div>
+        </section>
+    `;
+}
+
+function renderCreateModal() {
+    if (!state.formOpen) return '';
     const values = state.values || createDraftValues();
     return `
-        <section class="agro-period-cycles__toolbar">
-            <div class="agro-period-cycles__toolbar-copy">
-                <p class="agro-period-cycles__eyebrow">Cartera Operativa</p>
-                <h3 class="agro-period-cycles__title">Ciclos de Período</h3>
-                <p class="agro-period-cycles__copy">Cada ciclo representa un mes calendario completo y resume la operación comercial de ese período sin mezclarse con Cartera Viva.</p>
-            </div>
-            <button type="button" class="btn btn-primary" data-period-action="toggle-form">${state.formOpen ? 'Cerrar formulario' : 'Crear ciclo del mes'}</button>
-        </section>
-        ${state.formOpen ? `
-            <form class="agro-period-cycles__form" id="agro-period-cycle-form">
-                <label class="agro-period-cycles__field">
-                    <span class="agro-period-cycles__field-label">Nombre del ciclo</span>
-                    <input type="text" class="styled-input" name="name" data-period-draft="name" value="${escapeAttr(values.name)}" placeholder="Ej. Abril Operativo 2026" maxlength="80" required>
-                </label>
-                <label class="agro-period-cycles__field">
-                    <span class="agro-period-cycles__field-label">Mes calendario</span>
-                    <input type="month" class="styled-input" name="periodMonth" data-period-draft="periodMonth" value="${escapeAttr(values.periodMonth)}" required>
-                </label>
-                <div class="agro-period-cycles__form-actions">
-                    <button type="button" class="btn" data-period-action="cancel-form">Cancelar</button>
-                    <button type="submit" class="btn btn-primary"${state.creating ? ' disabled' : ''}>${state.creating ? 'Creando...' : 'Guardar ciclo'}</button>
+        <div class="agro-period-cycles__modal" data-period-overlay>
+            <div class="agro-period-cycles__dialog" role="dialog" aria-modal="true" aria-labelledby="agro-period-cycle-form-title">
+                <div class="agro-period-cycles__dialog-head">
+                    <div>
+                        <p class="agro-period-cycles__dialog-eyebrow">Nuevo período</p>
+                        <h3 class="agro-period-cycles__dialog-title" id="agro-period-cycle-form-title">Crear ciclo de período</h3>
+                        <p class="agro-period-cycles__dialog-copy">Define el nombre visible y el mes calendario. La lectura operativa seguirá viniendo de la actividad real del período.</p>
+                    </div>
+                    <button type="button" class="agro-period-cycles__dialog-close" data-period-action="cancel-form" aria-label="Cerrar modal">&times;</button>
                 </div>
-            </form>
-        ` : ''}
+                <form class="agro-period-cycles__form" id="agro-period-cycle-form">
+                    <label class="agro-period-cycles__field">
+                        <span class="agro-period-cycles__field-label">Nombre del ciclo</span>
+                        <input type="text" class="styled-input" name="name" data-period-draft="name" value="${escapeAttr(values.name)}" placeholder="Ej. Abril Operativo 2026" maxlength="80" required>
+                    </label>
+                    <label class="agro-period-cycles__field">
+                        <span class="agro-period-cycles__field-label">Mes calendario</span>
+                        <input type="month" class="styled-input" name="periodMonth" data-period-draft="periodMonth" value="${escapeAttr(values.periodMonth)}" required>
+                    </label>
+                    <div class="agro-period-cycles__form-actions">
+                        <button type="button" class="btn" data-period-action="cancel-form">Cancelar</button>
+                        <button type="submit" class="btn btn-primary"${state.creating ? ' disabled' : ''}>${state.creating ? 'Guardando...' : 'Guardar ciclo'}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     `;
 }
 
@@ -569,7 +602,7 @@ function renderMovementList(rows, emptyCopy) {
         return `<p class="agro-period-cycle-card__empty-copy">${escapeHtml(emptyCopy)}</p>`;
     }
 
-    const visibleRows = rows.slice(0, 4);
+    const visibleRows = rows.slice(0, 3);
     const remainingCount = Math.max(0, rows.length - visibleRows.length);
 
     return `
@@ -587,6 +620,22 @@ function renderMovementList(rows, emptyCopy) {
         </ul>
         ${remainingCount > 0 ? `<p class="agro-period-cycle-card__more">+${remainingCount} movimiento${remainingCount === 1 ? '' : 's'} más en este grupo.</p>` : ''}
     `;
+}
+
+function buildOperationalSnapshot(cycle) {
+    const openText = cycle.activeCycleCount > 0
+        ? `${pluralize(cycle.activeCycleCount, 'cartera abierta', 'carteras abiertas')}`
+        : 'operativa cerrada en el mes';
+    return `${capitalizeFirst(pluralize(cycle.movementCount, 'movimiento'))}, ${pluralize(cycle.cycleCount, 'ciclo operativo', 'ciclos operativos')} y ${openText}.`;
+}
+
+function buildSnapshotMeta(cycle) {
+    return [
+        { label: 'Movimientos', value: String(cycle.movementCount || 0) },
+        { label: 'Ciclos del mes', value: String(cycle.cycleCount || 0) },
+        { label: 'Open', value: String(cycle.activeCycleCount || 0) },
+        { label: 'Asoc. / generales', value: `${cycle.linked.length} / ${cycle.unlinked.length}` }
+    ];
 }
 
 function renderGroupCard(title, copy, rows, tone) {
@@ -616,8 +665,8 @@ function renderCycleCard(cycle) {
                     <p class="agro-period-cycle-card__range">${escapeHtml(cycle.rangeLabel)}</p>
                 </div>
                 <div class="agro-period-cycle-card__badges">
-                    <span class="agro-period-cycle-card__status is-${escapeAttr(cycle.status)}">${cycle.status === 'finalized' ? 'Finalizado' : 'Activo'}</span>
-                    <span class="agro-period-cycle-card__portfolio is-${escapeAttr(cycle.portfolioStatus)}">${cycle.portfolioStatus === 'open' ? 'Operativa abierta' : 'Operativa cerrada'}</span>
+                    <span class="agro-period-cycle-card__status is-${escapeAttr(cycle.status)}">${cycle.status === 'finalized' ? 'FINALIZED' : 'ACTIVE'}</span>
+                    <span class="agro-period-cycle-card__portfolio is-${escapeAttr(cycle.portfolioStatus)}">${cycle.portfolioStatus === 'open' ? 'OPEN' : 'CLOSED'}</span>
                 </div>
             </header>
 
@@ -633,35 +682,31 @@ function renderCycleCard(cycle) {
                 </div>
             </section>
 
-            <div class="agro-period-cycle-card__summary">
-                <div class="agro-period-cycle-card__summary-cell">
-                    <span class="agro-period-cycle-card__summary-label">Movimientos</span>
-                    <strong class="agro-period-cycle-card__summary-value">${cycle.movementCount}</strong>
+            <section class="agro-period-cycle-card__snapshot">
+                <div>
+                    <p class="agro-period-cycle-card__snapshot-eyebrow">Resumen operativo del período</p>
+                    <p class="agro-period-cycle-card__snapshot-copy">${escapeHtml(buildOperationalSnapshot(cycle))}</p>
                 </div>
-                <div class="agro-period-cycle-card__summary-cell">
-                    <span class="agro-period-cycle-card__summary-label">Ciclos del período</span>
-                    <strong class="agro-period-cycle-card__summary-value">${cycle.cycleCount}</strong>
+                <div class="agro-period-cycle-card__summary">
+                    ${buildSnapshotMeta(cycle).map((item) => `
+                        <div class="agro-period-cycle-card__summary-cell">
+                            <span class="agro-period-cycle-card__summary-label">${escapeHtml(item.label)}</span>
+                            <strong class="agro-period-cycle-card__summary-value">${escapeHtml(item.value)}</strong>
+                        </div>
+                    `).join('')}
                 </div>
-                <div class="agro-period-cycle-card__summary-cell">
-                    <span class="agro-period-cycle-card__summary-label">Ciclos activos</span>
-                    <strong class="agro-period-cycle-card__summary-value">${cycle.activeCycleCount}</strong>
-                </div>
-                <div class="agro-period-cycle-card__summary-cell">
-                    <span class="agro-period-cycle-card__summary-label">Asociados / No asociados</span>
-                    <strong class="agro-period-cycle-card__summary-value">${cycle.linked.length} / ${cycle.unlinked.length}</strong>
-                </div>
-            </div>
+            </section>
 
             <div class="agro-period-cycle-card__groups">
                 ${renderGroupCard(
                     'Asociados al cultivo',
-                    'Conservan crop_id y siguen siendo lectura operativa del mismo mes.',
+                    'Conservan crop_id y siguen siendo lectura oficial de la operativa del mes.',
                     cycle.linked,
                     'linked'
                 )}
                 ${renderGroupCard(
                     'No asociados al cultivo',
-                    'Movimiento general del período, separado de la lectura del cultivo.',
+                    'Operativa general del período, separada de la lectura del cultivo.',
                     cycle.unlinked,
                     'unlinked'
                 )}
@@ -674,7 +719,8 @@ function renderEmptyState() {
     return `
         <div class="agro-period-cycles__empty">
             <p class="agro-period-cycles__empty-title">Todavía no hay períodos operativos visibles.</p>
-            <p class="agro-period-cycles__empty-copy">Crea un período explícito o registra operativa real para que el mes aparezca en esta familia.</p>
+            <p class="agro-period-cycles__empty-copy">Crea un ciclo del mes o registra operativa real para que esta familia empiece a poblarse.</p>
+            <button type="button" class="btn btn-primary" data-period-action="toggle-form">Crear ciclo del mes</button>
         </div>
     `;
 }
@@ -714,10 +760,11 @@ function renderRoot() {
                 : `<div class="agro-period-cycles__grid">${state.cycles.map((cycle) => renderCycleCard(cycle)).join('')}</div>`;
 
     state.root.innerHTML = `
-        <div class="agro-period-cycles">
-            ${renderCreatePanel()}
-            ${renderSummaryCards()}
+        <div class="agro-period-cycles agro-ops-v10">
+            ${renderModuleHeader()}
+            ${renderOverviewSection()}
             ${bodyMarkup}
+            ${renderCreateModal()}
         </div>
     `;
 }
@@ -790,50 +837,60 @@ function resetForm(keepMonth = true) {
 }
 
 function bindRootEvents() {
-    if (!state.root || state.boundRoot === state.root) return;
+    if (state.root && state.boundRoot !== state.root) {
+        state.root.addEventListener('click', (event) => {
+            if (event.target?.matches?.('[data-period-overlay]')) {
+                resetForm();
+                renderRoot();
+                return;
+            }
 
-    state.root.addEventListener('click', (event) => {
-        const button = event.target.closest('[data-period-action]');
-        if (!button) return;
+            const button = event.target.closest('[data-period-action]');
+            if (!button) return;
 
-        const action = button.dataset.periodAction;
-        if (action === 'toggle-form') {
-            state.formOpen = !state.formOpen;
+            const action = button.dataset.periodAction;
+            if (action === 'toggle-form') {
+                state.formOpen = !state.formOpen;
+                renderRoot();
+                return;
+            }
+
+            if (action === 'cancel-form') {
+                resetForm();
+                renderRoot();
+            }
+        });
+
+        state.root.addEventListener('input', (event) => {
+            const field = event.target?.dataset?.periodDraft;
+            if (!field) return;
+            setDraftValue(field, event.target.value);
+        });
+
+        state.root.addEventListener('submit', async (event) => {
+            if (event.target?.id !== 'agro-period-cycle-form') return;
+            event.preventDefault();
+            if (state.creating) return;
+
+            state.creating = true;
             renderRoot();
-            return;
-        }
 
-        if (action === 'cancel-form') {
-            resetForm();
-            renderRoot();
-        }
-    });
+            try {
+                await createPeriodCycleFromDraft();
+                notify('Ciclo de período creado correctamente.', 'success');
+                resetForm(false);
+                await refreshPeriodCycles();
+            } catch (error) {
+                state.creating = false;
+                renderRoot();
+                notify(error?.message || 'No se pudo crear el ciclo de período.', 'error');
+            }
+        });
 
-    state.root.addEventListener('input', (event) => {
-        const field = event.target?.dataset?.periodDraft;
-        if (!field) return;
-        setDraftValue(field, event.target.value);
-    });
+        state.boundRoot = state.root;
+    }
 
-    state.root.addEventListener('submit', async (event) => {
-        if (event.target?.id !== 'agro-period-cycle-form') return;
-        event.preventDefault();
-        if (state.creating) return;
-
-        state.creating = true;
-        renderRoot();
-
-        try {
-            await createPeriodCycleFromDraft();
-            notify('Ciclo de período creado correctamente.', 'success');
-            resetForm(false);
-            await refreshPeriodCycles();
-        } catch (error) {
-            state.creating = false;
-            renderRoot();
-            notify(error?.message || 'No se pudo crear el ciclo de período.', 'error');
-        }
-    });
+    if (state.globalEventsBound) return;
 
     document.addEventListener('data-refresh', () => {
         if (state.mounted) {
@@ -846,7 +903,7 @@ function bindRootEvents() {
         }
     });
 
-    state.boundRoot = state.root;
+    state.globalEventsBound = true;
 }
 
 export function getAgroPeriodCyclesSummary() {
@@ -912,6 +969,7 @@ export async function mountAgroPeriodCycles(root, options = {}) {
             state.userId = normalizeId(options.initialUserId);
         }
         renderRoot();
+        await refreshPeriodCycles(options);
         return {
             refresh: () => refreshPeriodCycles(options)
         };
@@ -935,6 +993,7 @@ export async function mountAgroPeriodCycles(root, options = {}) {
 
 export function unmountAgroPeriodCycles() {
     state.mounted = false;
+    resetForm();
     if (state.root) {
         state.root.innerHTML = '';
     }

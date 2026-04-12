@@ -14103,3 +14103,134 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
   - badge `open|closed` con datos reales de `agro_operational_cycles`;
   - aparición de meses históricos derivados en `Ciclos de Período`;
   - ausencia de lectura operativa dentro de `Ciclos de Cultivo`.
+
+---
+
+## 2026-04-12 — Reubicación visual de Ciclos de Período (inicio)
+
+### Diagnóstico exacto
+
+- La semántica del MVP quedó bien encaminada, pero la arquitectura visible quedó mal resuelta:
+  - `apps/gold/agro/agro-shell.js` sigue tratando `Ciclos de Período` como `subview: 'periods'` de `operational`;
+  - `apps/gold/agro/agroOperationalCycles.js` todavía lo presenta dentro del switch interno de `Cartera Operativa`;
+  - `apps/gold/agro/index.html` no le da una entrada propia hermana de `Ciclos de cultivos` en el sidebar.
+- Consecuencia visible:
+  - el usuario no lee `Ciclos de Período` como familia real de producto;
+  - lo percibe como subpantalla interna de `Operación comercial > Cartera Operativa`;
+  - la jerarquía visible contradice la definición canónica ya decidida.
+- A nivel de superficie, `apps/gold/agro/agro-period-cycles.js` y `apps/gold/agro/agro-period-cycles.css` todavía usan una composición tipo panel/formulario técnico:
+  - toolbar explicativa larga;
+  - grid de summary cards introductorias;
+  - formulario expandible protagonista;
+  - cards con grupos correctos en datos, pero sin suficiente parentesco visual con `Ciclos de cultivos`.
+- La causa raíz no está en la data ni en los guards:
+  - el módulo ya deriva de `agro_operational_cycles` y `agro_operational_movements`;
+  - el problema real está en shell, navegación, encabezado de superficie y jerarquía visual.
+
+### Por qué hoy quedó mal ubicado
+
+- El MVP se montó donde era más barato a nivel de wiring: dentro del shell existente de `Cartera Operativa`.
+- Esa decisión resolvió rápido el fetch y el guard mensual, pero dejó un costo de producto:
+  - `Ciclos de Período` heredó la casa visual de `Operación comercial`;
+  - la familia no ganó identidad propia en sidebar ni en layout;
+  - la UI quedó con tono de feature embebida, no de familia consolidada.
+
+### Plan de reubicación
+
+1. Crear view propia de shell para `Ciclos de Período`, separada de `operational`.
+2. Agregar entrada propia en el sidebar justo debajo de `Ciclos de cultivos`.
+3. Sacar `Ciclos de Período` del switch/subview principal de `Cartera Operativa`.
+4. Mantener un puente mínimo desde `Cartera Operativa` solo si hace falta, pero no como casa principal.
+5. Conservar intacta la lógica semántica y el source operativo real del módulo.
+
+### Plan de rediseño
+
+1. Reemplazar la toolbar/panel actual por una cabecera y superficie más cercanas a la familia de `Ciclos de cultivos`.
+2. Reducir o eliminar bloques explicativos redundantes (`summary cards`, copy técnica, tono demo).
+3. Rehacer las cards para que prioricen:
+   - nombre;
+   - rango mensual;
+   - badges sobrios;
+   - barra de progreso protagonista;
+   - resumen operativo;
+   - separación clara entre asociados y no asociados.
+4. Simplificar la creación de período hacia un patrón más sobrio y cercano al flujo hermano.
+
+### Archivos a tocar
+
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro-shell.js`
+- `apps/gold/agro/agro-period-cycles.js`
+- `apps/gold/agro/agro-period-cycles.css`
+- `apps/gold/agro/agroOperationalCycles.js`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Riesgos
+
+- Riesgo de navegación:
+  - mover el view sin ajustar aliases/focus puede dejar enlaces viejos o storage apuntando a `operational`.
+- Riesgo visual:
+  - si el rediseño se pasa de minimalista, puede perder señales operativas útiles hoy presentes en las cards.
+- Riesgo semántico:
+  - al sacar el subview de `Cartera Operativa`, no se debe tocar el guard de meses finalizados ni la lectura real de `open|closed`.
+- Riesgo de QA:
+  - en esta sesión no hay browser QA garantizado; la verificación visual final quedará limitada a revisión estática + build.
+
+### Cambios aplicados
+
+- `apps/gold/agro/index.html`
+  - `88-90`: nueva entrada propia `Ciclos de período` en sidebar, justo debajo de `Ciclos de cultivos`.
+  - `628-629`: nueva región independiente `data-agro-shell-region="period-cycles"` con root dedicado.
+- `apps/gold/agro/agro-shell.js`
+  - `28`: alias legacy `operational-periods` redirigido a la nueva vista `period-cycles`.
+  - `55`: `operational` deja de aceptar `periods` como subview.
+  - `64`: nueva view config de shell para `Ciclos de período`.
+- `apps/gold/agro/agroOperationalCycles.js`
+  - `1349`: puente mínimo `📆 Ver períodos` desde `Cartera Operativa`.
+  - `1949-1955`: switch interno de `Cartera Operativa` ya no incluye `Ciclos de Período`.
+  - `1981`: nuevo `syncStandalonePeriodCyclesView()` para montar/desmontar la familia mensual en su región propia.
+  - `3213-3218` y `3387`: el módulo operativo deja de ser la casa visual del período y solo coordina el mount independiente.
+- `apps/gold/agro/agro-period-cycles.js`
+  - `526-531`: nueva cabecera de familia hermana, ya no copy de panel interno.
+  - `543-560`: overview sobrio estilo familia real, en lugar del grid explicativo previo.
+  - `571-593`: creación movida a modal compacto.
+  - `654-707`: cards reestructuradas con progreso protagonista, resumen operativo y separación clara asociados/no asociados.
+  - `842-898`: listeners reordenados para soportar overlay/modal y evitar duplicar listeners globales al cambiar de root.
+- `apps/gold/agro/agro-period-cycles.css`
+  - `1-503`: rediseño completo de superficie y cards para alinearlas visualmente con `Ciclos de cultivos`, incluyendo overview, modal y progreso metálico.
+
+### Qué quedó eliminado o simplificado
+
+- `Ciclos de Período` salió del switch principal de `Cartera Operativa`.
+- Se eliminó la toolbar larga tipo panel administrativo dentro de la vista mensual.
+- Se reemplazó el grid de summary cards explicativas por un overview más corto y más cercano a la familia de cultivos.
+- La creación dejó de vivir como bloque expandible protagonista y pasó a modal compacto.
+
+### Semántica preservada
+
+- La lectura sigue viniendo de `agro_operational_cycles` + `agro_operational_movements`.
+- El badge `open|closed` sigue derivando de operativa real del mes.
+- El guard de meses finalizados sigue quedando scoped al flujo correcto de `Cartera Operativa`.
+- No se remezcló `Ciclos de Período` con `Ciclos de Cultivo`; solo se corrigió arquitectura visible y UX.
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota no bloqueante:
+  - warning de engine por `node v25.6.0` frente a `node 20.x` declarado.
+
+### QA sugerido
+
+1. Abrir `Agro > Ciclos de período` desde el sidebar y confirmar que entra directo sin pasar por `Operación comercial`.
+2. Validar visualmente en desktop y mobile (`<=480px`) que:
+   - el overview no se siente como panel demo;
+   - las cards leen como familia hermana de `Ciclos de cultivos`;
+   - el modal de creación abre/cierra sin desbordes.
+3. Desde `Operación comercial`, usar el puente `📆 Ver períodos` y confirmar que navega a la nueva familia independiente.
+4. Verificar con datos reales que `ACTIVE / FINALIZED` y `OPEN / CLOSED` siguen respondiendo al calendario y a la operativa del mes.

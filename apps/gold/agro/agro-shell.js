@@ -25,7 +25,7 @@ const VIEW_ALIASES = Object.freeze({
     cultivos: Object.freeze({ view: 'ciclos', subview: 'activos' }),
     'historial-comercial': Object.freeze({ view: 'cartera-viva', subview: '' }),
     carrito: Object.freeze({ view: 'operational', subview: 'cart' }),
-    'operational-periods': Object.freeze({ view: 'operational', subview: 'periods' }),
+    'operational-periods': Object.freeze({ view: 'period-cycles', subview: '' }),
     'operational-cart': Object.freeze({ view: 'operational', subview: 'cart' }),
     'operational-active': Object.freeze({ view: 'operational', subview: 'active' }),
     'operational-finished': Object.freeze({ view: 'operational', subview: 'finished' }),
@@ -52,7 +52,7 @@ const NAV_PARENT_GROUPS = Object.freeze({
 const VIEW_SUBNAV_CONFIG = Object.freeze({
     ciclos: Object.freeze({ defaultSubview: 'finalizados', allowed: ['activos', 'finalizados', 'comparar', 'estadisticas'] }),
     carrito: Object.freeze({ defaultSubview: 'summary', allowed: ['summary', 'planning', 'calculator'] }),
-    operational: Object.freeze({ defaultSubview: 'cart', allowed: ['cart', 'periods', 'active', 'finished', 'donations', 'losses', 'export'] })
+    operational: Object.freeze({ defaultSubview: 'cart', allowed: ['cart', 'active', 'finished', 'donations', 'losses', 'export'] })
 });
 
 const VIEWS_WITH_SUBNAV = new Set(Object.keys(VIEW_SUBNAV_CONFIG));
@@ -61,6 +61,7 @@ const VIEW_CONFIG = Object.freeze({
     perfil: { region: 'perfil', label: 'Mi Perfil', focusSelector: '[data-agro-shell-region="perfil"]' },
     dashboard: { region: 'dashboard', label: 'Dashboard Agro', focusSelector: '[data-agro-shell-region="dashboard"]' },
     ciclos: { region: 'cultivos', label: 'Ciclos de cultivos', focusSelector: '#agro-cycles-finished-view' },
+    'period-cycles': { region: 'period-cycles', label: 'Ciclos de período', focusSelector: '#agro-period-cycles-root' },
     operational: { region: 'operational', label: 'Cartera Operativa', focusSelector: '#agro-operational-root' },
     'task-cycles': { region: 'task-cycles', label: 'Ciclos de Tareas', focusSelector: '#agro-task-cycles-root' },
     operaciones: { region: 'ops', label: 'Operaciones', resolveTab: resolveOperationsTab, dense: true },
