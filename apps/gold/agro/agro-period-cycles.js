@@ -17,6 +17,9 @@ const state = {
     schemaMissing: false,
     mounted: false,
     formOpen: false,
+    editingCycleId: null,
+    editingName: '',
+    deletingCycleId: null,
     currentSubview: 'activos',
     cycles: [],
     summary: createEmptySummary(),
@@ -715,9 +718,19 @@ function renderCycleCard(cycle) {
                         <p class="agro-period-cycle-card__range">${escapeHtml(cycle.rangeLabel)}</p>
                     </div>
                 </div>
-                <div class="agro-period-cycle-card__badges">
-                    <span class="agro-period-cycle-card__status is-${escapeAttr(cycle.status)}">${cycle.status === 'finalized' ? 'Finalizado' : 'Activo'}</span>
-                    <span class="agro-period-cycle-card__portfolio is-${escapeAttr(cycle.portfolioStatus)}">${cycle.portfolioStatus === 'open' ? 'Abierto' : 'Cerrado'}</span>
+                <div class="agro-period-cycle-card__head-right">
+                    <div class="agro-period-cycle-card__badges">
+                        <span class="agro-period-cycle-card__status is-${escapeAttr(cycle.status)}">${cycle.status === 'finalized' ? 'Finalizado' : 'Activo'}</span>
+                        <span class="agro-period-cycle-card__portfolio is-${escapeAttr(cycle.portfolioStatus)}">${cycle.portfolioStatus === 'open' ? 'Abierto' : 'Cerrado'}</span>
+                    </div>
+                    <div class="agro-period-cycle-card__actions">
+                        <button type="button" class="agro-period-cycle-card__action-btn" data-period-action="edit-cycle" data-cycle-id="${escapeAttr(cycle.id)}" title="Editar nombre" aria-label="Editar ciclo">
+                            <i class="fa-solid fa-pen" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="agro-period-cycle-card__action-btn agro-period-cycle-card__action-btn--danger" data-period-action="delete-cycle" data-cycle-id="${escapeAttr(cycle.id)}" title="Eliminar ciclo" aria-label="Eliminar ciclo">
+                            <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                        </button>
+                    </div>
                 </div>
             </header>
 
@@ -951,6 +964,28 @@ async function refreshPeriodCycles(options = {}) {
     }
 }
 
+async function softDeletePeriodCycle(cycleId) {
+    const userId = await ensureUserId();
+    const { error } = await supabase
+        .from(PERIOD_CYCLE_TABLE)
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', cycleId)
+        .eq('user_id', userId);
+    if (error) throw error;
+}
+
+async function renamePeriodCycle(cycleId, newName) {
+    const userId = await ensureUserId();
+    const trimmed = String(newName || '').trim();
+    if (!trimmed) throw new Error('El nombre no puede estar vac\u00edo.');
+    const { error } = await supabase
+        .from(PERIOD_CYCLE_TABLE)
+        .update({ name: trimmed })
+        .eq('id', cycleId)
+        .eq('user_id', userId);
+    if (error) throw error;
+}
+
 async function createPeriodCycleFromDraft() {
     const userId = await ensureUserId();
     const name = String(state.values?.name || '').trim();
@@ -993,7 +1028,7 @@ function resetForm(keepMonth = true) {
 
 function bindRootEvents() {
     if (state.root && state.boundRoot !== state.root) {
-        state.root.addEventListener('click', (event) => {
+        state.root.addEventListener('click', async (event) => {
             if (event.target?.matches?.('[data-period-overlay]')) {
                 resetForm();
                 renderRoot();
@@ -1013,6 +1048,39 @@ function bindRootEvents() {
             if (action === 'cancel-form') {
                 resetForm();
                 renderRoot();
+                return;
+            }
+
+            if (action === 'edit-cycle') {
+                const cycleId = button.dataset.cycleId;
+                const cycle = state.cycles.find((c) => c.id === cycleId);
+                if (!cycle) return;
+                const newName = prompt('Nuevo nombre del ciclo:', cycle.name);
+                if (newName === null || newName.trim() === '' || newName.trim() === cycle.name) return;
+                try {
+                    await renamePeriodCycle(cycleId, newName);
+                    notify('Nombre actualizado.', 'success');
+                    await refreshPeriodCycles();
+                } catch (err) {
+                    notify(err?.message || 'No se pudo renombrar.', 'error');
+                }
+                return;
+            }
+
+            if (action === 'delete-cycle') {
+                const cycleId = button.dataset.cycleId;
+                const cycle = state.cycles.find((c) => c.id === cycleId);
+                if (!cycle) return;
+                const confirmed = confirm(`\u00bfEliminar el ciclo "${cycle.name}"? Esta acci\u00f3n es reversible desde la base de datos.`);
+                if (!confirmed) return;
+                try {
+                    await softDeletePeriodCycle(cycleId);
+                    notify('Ciclo eliminado.', 'success');
+                    await refreshPeriodCycles();
+                } catch (err) {
+                    notify(err?.message || 'No se pudo eliminar.', 'error');
+                }
+                return;
             }
         });
 

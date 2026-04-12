@@ -1,7 +1,7 @@
 .agro-task-shell {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .agro-task-shell__header {
@@ -102,7 +102,7 @@
 }
 
 .agro-task-panel {
-  padding: 0.95rem;
+  padding: 0.75rem;
   transition: border-color 180ms ease, box-shadow 180ms ease;
 }
 
@@ -116,9 +116,9 @@
 .agro-task-panel__head {
   display: flex;
   justify-content: space-between;
-  gap: 0.85rem;
+  gap: 0.65rem;
   align-items: flex-start;
-  margin-bottom: 0.95rem;
+  margin-bottom: 0.65rem;
 }
 
 .agro-task-panel__head--compact {
@@ -138,7 +138,7 @@
 .agro-task-panel__title {
   margin: 0;
   font-family: 'Orbitron', sans-serif;
-  font-size: clamp(1rem, 2.2vw, 1.25rem);
+  font-size: clamp(0.92rem, 2vw, 1.08rem);
   color: var(--text-primary);
 }
 
@@ -157,9 +157,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.42rem;
-  min-height: 36px;
-  padding: 0 0.85rem;
+  gap: 0.35rem;
+  min-height: 32px;
+  padding: 0 0.7rem;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.03);
@@ -203,17 +203,17 @@
 .agro-task-stats-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.75rem;
-  margin-bottom: 0.85rem;
+  gap: 0.55rem;
+  margin-bottom: 0.65rem;
 }
 
 .agro-task-stat-card,
 .agro-task-breakdown-card,
 .agro-task-impact-card {
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.02);
-  padding: 0.85rem;
+  padding: 0.6rem 0.7rem;
 }
 
 .agro-task-stat-card__eyebrow,
@@ -230,15 +230,15 @@
 .agro-task-impact-card__value {
   margin: 0;
   font-family: 'Orbitron', sans-serif;
-  font-size: clamp(1.1rem, 2vw, 1.45rem);
+  font-size: clamp(0.95rem, 1.8vw, 1.15rem);
   color: var(--text-primary);
 }
 
 .agro-task-stat-card__copy,
 .agro-task-impact-card__copy {
-  margin: 0.28rem 0 0;
+  margin: 0.18rem 0 0;
   color: var(--text-secondary);
-  font-size: 0.95rem;
+  font-size: 0.85rem;
 }
 
 .agro-task-stats-grid--loading .agro-task-stat-card--loading,
@@ -275,7 +275,7 @@
 .agro-task-breakdown-list {
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
+  gap: 0.4rem;
   padding: 0;
   margin: 0;
   list-style: none;
@@ -284,10 +284,10 @@
 .agro-task-breakdown-list__item {
   display: flex;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.5rem;
   align-items: center;
-  padding: 0.65rem 0.75rem;
-  border-radius: var(--radius-md);
+  padding: 0.45rem 0.55rem;
+  border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.025);
 }
 
@@ -368,11 +368,11 @@
 .agro-task-day-group__list {
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
+  gap: 0.5rem;
 }
 
 .agro-task-day-group + .agro-task-day-group {
-  margin-top: 0.95rem;
+  margin-top: 0.65rem;
 }
 
 .agro-task-day-group__head {
@@ -403,7 +403,7 @@
 }
 
 .agro-task-card {
-  padding: 0.9rem;
+  padding: 0.7rem;
 }
 
 .agro-task-card__head,
@@ -411,7 +411,7 @@
 .agro-task-card__actions,
 .agro-task-card__pills {
   display: flex;
-  gap: 0.65rem;
+  gap: 0.5rem;
 }
 
 .agro-task-card__head {
@@ -422,7 +422,7 @@
 .agro-task-card__title {
   margin: 0;
   font-family: 'Orbitron', sans-serif;
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 
 .agro-task-card__eyebrow {
@@ -446,12 +446,12 @@
 .agro-task-pill {
   display: inline-flex;
   align-items: center;
-  min-height: 28px;
-  padding: 0 0.7rem;
+  min-height: 24px;
+  padding: 0 0.55rem;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.045);
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: 0.78rem;
 }
 
 .agro-task-pill.is-expense {
@@ -495,15 +495,15 @@
 }
 
 .agro-task-card__body {
-  margin-top: 0.75rem;
+  margin-top: 0.5rem;
   align-items: stretch;
 }
 
 .agro-task-card__fact {
   flex: 1 1 0;
   min-width: 0;
-  padding: 0.7rem;
-  border-radius: var(--radius-md);
+  padding: 0.45rem 0.55rem;
+  border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.02);
 }
 
@@ -518,14 +518,15 @@
 }
 
 .agro-task-card__notes {
-  margin: 0.75rem 0 0;
+  margin: 0.5rem 0 0;
   color: var(--text-secondary);
-  line-height: 1.55;
+  font-size: 0.85rem;
+  line-height: 1.45;
 }
 
 .agro-task-empty {
-  padding: 1.2rem;
-  border-radius: var(--radius-lg);
+  padding: 0.85rem;
+  border-radius: var(--radius-md);
   border: 1px dashed rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.015);
   text-align: center;
@@ -652,10 +653,10 @@ body.agro-task-cycles-modal-open {
 
 .agro-task-form__summary-card,
 .agro-task-delete-card {
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.02);
-  padding: 0.9rem;
+  padding: 0.65rem 0.75rem;
 }
 
 .agro-task-form__summary-card small {
@@ -703,7 +704,7 @@ body.agro-task-cycles-modal-open {
 
   .agro-task-modal__dialog {
     max-height: calc(100vh - 1.5rem);
-    border-radius: 20px;
+    border-radius: var(--radius-lg);
   }
 
   .agro-task-panel__head,

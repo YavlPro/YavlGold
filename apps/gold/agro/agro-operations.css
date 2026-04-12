@@ -81,8 +81,8 @@
 }
 
 .agro-ops-v10 .module-icon {
-  width: 42px;
-  height: 42px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-md);
   background: var(--gold-1);
   border: 1px solid var(--border-gold);
@@ -100,7 +100,7 @@
 .agro-ops-v10 .module-title {
   margin: 0;
   font-family: 'Orbitron', sans-serif;
-  font-size: clamp(1.2rem, 3vw, 1.6rem);
+  font-size: clamp(1.05rem, 2.5vw, 1.35rem);
   font-weight: 900;
   line-height: 1.1;
   background: var(--metallic-text);
@@ -200,8 +200,8 @@ body[data-agro-active-view='rankings'] .ops-header-rankings {
 
 /* §1.5 OPERATIONS CENTER COMPACT LAYOUT */
 .agro-ops-v10 .financial-operations-card {
-  margin-top: 0.58rem;
-  padding: var(--pad-card) 1.1rem 1.1rem;
+  margin-top: 0.5rem;
+  padding: var(--pad-card) 0.85rem 0.85rem;
   display: flex;
   flex-direction: column;
   gap: var(--gap-card);

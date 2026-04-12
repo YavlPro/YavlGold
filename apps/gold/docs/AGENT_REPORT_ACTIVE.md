@@ -14849,3 +14849,123 @@ Transformar Period Cycles de "resumen mensual administrativo grande" a "ciclo me
 6. Verificar overview cards: deben ser compactas, sin cajas huecas gigantes
 7. Viewport mobile (<=480px): card debe ocupar 100% sin desbordamiento
 8. Verificar que crear ciclo del mes sigue funcionando normalmente
+
+---
+
+## Sesion: Pasada Visual Premium Agro — Period Cycles + Task Cycles + Barrido + Sidebar (2026-04-12)
+
+### Diagnostico
+Period Cycles: falta editar/eliminar ciclos, card aun puede mejorar fuerza visual.
+Task Cycles: cards con padding 0.9rem, stats con clamp(1.1-1.45rem), panels 0.95rem — todo demasiado grande.
+Barrido general: financial-operations-card con padding 0.95/1rem, section-title ::before 24px, card hover translateY(-4px) excesivo.
+Sidebar: ya premium, micro-ajustes en densidad de grupos y milestone.
+
+### Alcance
+- BLOQUE A: Period Cycles — acciones editar/eliminar + soft-delete + CSS acciones
+- BLOQUE B: Task Cycles — compactacion de cards, stats, panels, modals
+- BLOQUE C: Barrido Agro — compactar card base, financial-ops, section-title
+- BLOQUE D: Sidebar — micro-refinamiento de densidad
+
+### Archivos candidatos
+1. agro-period-cycles.js — acciones editar/eliminar, soft-delete, edit form
+2. agro-period-cycles.css — estilos acciones
+3. agro-task-cycles.css — compactacion
+4. agro-index-critical.css — card base, section-title
+5. agro.css — sidebar refinement
+
+### Riesgos
+- Editar/eliminar Period Cycles: MEDIO — nuevo wiring Supabase pero patron conocido (soft-delete)
+- Task Cycles CSS: BAJO — solo reduccion de spacing
+- Card base / section-title: BAJO — cosmetic only
+- Sidebar: MUY BAJO — micro-ajustes
+
+### Criterio de cierre
+- Period Cycles tiene botones editar/eliminar funcionales
+- Task Cycles cards mas compactas
+- Gigantismo reducido transversalmente
+- Sidebar coherente
+- pnpm build:gold pasa
+
+### Cambios aplicados
+
+**agro-period-cycles.js**
+- Agregados estados `editingCycleId`, `editingName`, `deletingCycleId` al state
+- Agregada funcion `softDeletePeriodCycle()` — soft-delete con `deleted_at`
+- Agregada funcion `renamePeriodCycle()` — update `name` via Supabase
+- `renderCycleCard` — nuevo wrapper `__head-right` con badges + actions (editar/eliminar)
+- Click handler convertido a `async` para soportar await en acciones
+- Acciones `edit-cycle` (prompt rename) y `delete-cycle` (confirm + soft-delete) en bindRootEvents
+
+**agro-period-cycles.css**
+- Nuevos estilos: `__head-right`, `__actions`, `__action-btn`, `__action-btn--danger`
+- Patron visual identico a Cultivos (26px circle, pill border, gold hover, danger hover)
+- Mobile 480px: action buttons crecen a 32px para a11y
+- `prefers-reduced-motion`: action buttons incluidos
+
+**agro-task-cycles.css** — 22 compactaciones:
+- Shell gap: 1rem -> 0.75rem
+- Panel padding: 0.95rem -> 0.75rem
+- Panel head margin-bottom: 0.95rem -> 0.65rem
+- Panel title clamp: (1-1.25) -> (0.92-1.08)
+- Range pill: min-height 36->32, padding 0.85->0.7
+- Stats grid gap: 0.75->0.55, margin-bottom 0.85->0.65
+- Stat/breakdown/impact cards: radius-lg->md, padding 0.85->0.6/0.7
+- Stat value clamp: (1.1-1.45) -> (0.95-1.15)
+- Stat copy: margin 0.28->0.18, font 0.95->0.85
+- Card padding: 0.9->0.7, gap 0.65->0.5
+- Card title: 1rem->0.9rem
+- Pills: min-height 28->24, padding 0.7->0.55, font 0.85->0.78
+- Card body margin: 0.75->0.5
+- Fact padding: 0.7->0.45/0.55, radius md->sm
+- Notes: margin 0.75->0.5, font +0.85rem, line-height 1.55->1.45
+- Empty: padding 1.2->0.85, radius lg->md
+- Day group margin: 0.95->0.65, list gap 0.7->0.5
+- Breakdown list gap: 0.55->0.4, item padding 0.65/0.75->0.45/0.55
+- Summary/delete cards: radius lg->md, padding 0.9->0.65/0.75
+- Mobile dialog radius: 20px -> var(--radius-lg)
+
+**agro-index-critical.css** — 3 compactaciones:
+- section-title::before: width 4->3px, height 24->18px, shadow reducido
+- .card:hover: translateY(-4px) -> translateY(-2px)
+- .financial-operations-card: padding 0.95/1rem -> 0.75/0.85rem, gap 0.8->0.65
+
+**agro-operations.css** — 3 compactaciones:
+- module-icon: 42x42 -> 36x36
+- module-title clamp: (1.2-1.6) -> (1.05-1.35)
+- financial-operations-card ops override: padding 1.1rem -> 0.85rem
+
+**agro-dashboard.css** — 4 compactaciones:
+- dash-header gap: 0.95->0.75
+- card header: min-height 48->42, padding 0.5/0.72->0.42/0.68
+- card body padding: 0.76/0.78/0.72 -> 0.6/0.72/0.55, gap 0.42->0.38
+- card footer padding: 0.2/0.78/0.72 -> 0.15/0.72/0.55
+
+**agro.css (sidebar)** — 6 micro-ajustes:
+- sidebar__inner: gap space-4->space-3, padding space-5->space-4
+- sidebar__head: padding-bottom space-4->space-3
+- sidebar__milestone: padding 0.65/0.75->0.5/0.65, radius 16px->var(--radius-md)
+- sidebar__group: gap space-2->space-1, padding-top space-3->space-2
+- shell-link: min-height 48->44, padding space-3/space-4->space-2/space-3
+- shell-sublink: min-height 44->38px, padding 0.5->0.35rem
+
+### Build status
+**pnpm build:gold: OK** (exit 0, agent-guard OK, agent-report-check OK, vite OK, UTF-8 OK)
+
+### Riesgos residuales
+- Edit/delete usa `prompt()` y `confirm()` nativos; funcional pero podria reemplazarse con modal custom en iteracion futura
+- Sidebar mas compacto podria afectar accesibilidad en pantallas tactiles grandes; 38-44px min-height sigue siendo razonable
+
+### Deuda visual consciente
+- Comparar Ciclos y Estadisticas de Ciclos: no tocados (superficies de datos, bajo impacto visual)
+- Mi Perfil: no tocado (surface independiente, ya tiene su propio sistema)
+- Cartera Viva / Carrito: no tocados (ya compactados en sesiones previas)
+
+### QA sugerido
+1. Period Cycles: verificar botones editar (icono lapiz) y eliminar (icono papelera) en cards activas y finalizadas
+2. Period Cycles: probar rename via prompt y soft-delete via confirm
+3. Task Cycles: verificar que cards, stats, panels se ven mas compactos sin perder legibilidad
+4. Dashboard: verificar cards mas apretadas, header menos alto
+5. Operations: verificar module icon mas pequeno, titulo mas compacto
+6. Sidebar: verificar que links y sublinks siguen siendo tocables y legibles
+7. Mobile 480px: action buttons deben crecer a 32px
+8. Verificar que crear ciclo del mes sigue funcionando

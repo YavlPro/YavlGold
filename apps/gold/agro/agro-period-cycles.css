@@ -253,12 +253,54 @@
   align-items: center;
 }
 
+.agro-period-cycle-card__head-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
 .agro-period-cycle-card__badges {
   display: flex;
   flex-wrap: wrap;
   gap: 0.3rem;
   justify-content: flex-end;
-  flex-shrink: 0;
+}
+
+.agro-period-cycle-card__actions {
+  display: flex;
+  gap: 0.2rem;
+}
+
+.agro-period-cycle-card__action-btn {
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-neutral);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  cursor: pointer;
+  transition: color 180ms ease, border-color 180ms ease, background 180ms ease, transform 180ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.agro-period-cycle-card__action-btn:hover {
+  color: var(--gold-4);
+  border-color: var(--border-gold);
+  background: color-mix(in srgb, var(--gold-4) 10%, var(--bg-4));
+  transform: translateY(-1px);
+}
+
+.agro-period-cycle-card__action-btn--danger:hover {
+  color: var(--danger, #ef4444);
+  border-color: color-mix(in srgb, var(--danger, #ef4444) 40%, rgba(255, 255, 255, 0.08));
+  background: color-mix(in srgb, var(--danger, #ef4444) 10%, transparent);
 }
 
 .agro-period-cycle-card__status,
@@ -624,6 +666,13 @@ details[open] > .agro-period-cycle-card__groups-toggle::before {
     max-width: 100%;
   }
 
+  .agro-period-cycle-card__action-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    font-size: 0.72rem;
+  }
+
   .agro-period-cycles__form-actions,
   .agro-period-cycles .header-actions {
     width: 100%;
@@ -640,7 +689,8 @@ details[open] > .agro-period-cycle-card__groups-toggle::before {
   .agro-period-cycle-card::before,
   .agro-period-cycle-card__progress-fill,
   .agro-period-cycles__spinner,
-  .agro-period-cycles__dialog-close {
+  .agro-period-cycles__dialog-close,
+  .agro-period-cycle-card__action-btn {
     animation: none;
     transition: none;
   }

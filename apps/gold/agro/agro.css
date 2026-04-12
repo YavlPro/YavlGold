@@ -7365,9 +7365,9 @@ body.agro-view-dense::after {
 .agro-shell-sidebar__inner {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4, 1rem);
+  gap: var(--space-3, 0.75rem);
   height: 100%;
-  padding: var(--space-5, 1.25rem);
+  padding: var(--space-4, 1rem);
   border-radius: var(--radius-xl, 24px);
   border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
   border-right-color: var(--border-gold, rgba(200, 167, 82, 0.3));
@@ -7380,7 +7380,7 @@ body.agro-view-dense::after {
   display: flex;
   flex-direction: column;
   gap: var(--space-2, 0.5rem);
-  padding-bottom: var(--space-4, 1rem);
+  padding-bottom: var(--space-3, 0.75rem);
   border-bottom: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
 }
 
@@ -7442,9 +7442,9 @@ body.agro-view-dense::after {
 
 .agro-shell-sidebar__milestone {
   margin: 0.1rem 0 0;
-  padding: 0.65rem 0.75rem;
+  padding: 0.5rem 0.65rem;
   border: 1px solid rgba(200, 167, 82, 0.18);
-  border-radius: 16px;
+  border-radius: var(--radius-md, 12px);
   background:
     linear-gradient(180deg, rgba(200, 167, 82, 0.08), rgba(200, 167, 82, 0.02)),
     rgba(255, 255, 255, 0.02);
@@ -7461,8 +7461,8 @@ body.agro-view-dense::after {
 .agro-shell-sidebar__group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2, 0.5rem);
-  padding-top: var(--space-3, 0.75rem);
+  gap: var(--space-1, 0.25rem);
+  padding-top: var(--space-2, 0.5rem);
 }
 
 .agro-shell-sidebar__group:first-of-type {
@@ -7505,10 +7505,10 @@ body.agro-view-dense::after {
   align-items: center;
   gap: var(--space-3, 0.75rem);
   width: 100%;
-  min-height: var(--a11y-touch-recommended, 48px);
+  min-height: var(--a11y-touch-min, 44px);
   border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
   border-radius: var(--radius-md, 12px);
-  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(10, 10, 10, 0.16) 100%);
   color: var(--text-secondary, #cccccc);
   font-family: var(--font-body, 'Rajdhani', sans-serif);
@@ -7640,9 +7640,9 @@ body.agro-view-dense::after {
   position: relative;
   display: inline-flex;
   align-items: center;
-  min-height: var(--a11y-touch-min, 44px);
+  min-height: 38px;
   gap: var(--comp-icon-gap, 0.5rem);
-  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  padding: 0.35rem var(--space-3, 0.75rem);
   border: 1px solid transparent;
   border-radius: var(--radius-sm, 8px);
   background: transparent;
