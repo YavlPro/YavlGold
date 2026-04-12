@@ -1984,7 +1984,8 @@ function syncStandalonePeriodCyclesView() {
 
     if (state.currentView === PERIOD_VIEW_NAME) {
         void mountAgroPeriodCycles(root, {
-            initialUserId: state.userId
+            initialUserId: state.userId,
+            initialSubview: document.body?.dataset?.agroSubview || 'activos'
         });
         return;
     }

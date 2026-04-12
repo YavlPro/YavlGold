@@ -5,6 +5,7 @@ const PERIOD_CYCLE_TABLE = 'agro_period_cycles';
 const PERIOD_CYCLES_UPDATED_EVENT = 'agro:period-cycles:updated';
 const OPERATIONAL_PORTFOLIO_UPDATED_EVENT = 'agro:operational-portfolio-updated';
 const ACTIVE_OPERATIONAL_STATUS_VALUES = new Set(['open', 'in_progress', 'compensating']);
+const PERIOD_SUBVIEW_OPTIONS = Object.freeze(['activos', 'finalizados', 'comparar', 'estadisticas']);
 
 const state = {
     root: null,
@@ -16,6 +17,7 @@ const state = {
     schemaMissing: false,
     mounted: false,
     formOpen: false,
+    currentSubview: 'activos',
     cycles: [],
     summary: createEmptySummary(),
     values: createDraftValues()
@@ -49,6 +51,11 @@ function normalizeToken(value) {
         .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase()
         .trim();
+}
+
+function normalizePeriodSubview(value) {
+    const token = normalizeToken(value);
+    return PERIOD_SUBVIEW_OPTIONS.includes(token) ? token : 'activos';
 }
 
 function todayLocalIso() {
@@ -467,6 +474,49 @@ function buildSummary(cycles) {
     }, createEmptySummary());
 }
 
+const PERIOD_SUBVIEW_META = Object.freeze({
+    activos: Object.freeze({
+        title: 'Períodos activos',
+        subtitle: 'Meses calendario todavía en curso',
+        overviewEyebrow: 'Lectura mensual activa',
+        overviewTitle: 'Períodos en curso',
+        overviewCopy: 'Meses que siguen corriendo en calendario y conservan lectura viva de la operativa mensual.',
+        emptyTitle: 'No hay períodos activos visibles.',
+        emptyCopy: 'Cuando un mes esté en curso o tenga operativa mensual abierta, aparecerá aquí.',
+        regionId: 'agro-period-cycles-active-view'
+    }),
+    finalizados: Object.freeze({
+        title: 'Períodos finalizados',
+        subtitle: 'Meses calendario ya cerrados',
+        overviewEyebrow: 'Historial mensual',
+        overviewTitle: 'Períodos finalizados',
+        overviewCopy: 'Meses ya cerrados por calendario, conservados como lectura histórica de la operativa.',
+        emptyTitle: 'Todavía no hay períodos finalizados visibles.',
+        emptyCopy: 'Los meses cerrados aparecerán aquí como historial mensual consolidado.',
+        regionId: 'agro-period-cycles-finalized-view'
+    }),
+    comparar: Object.freeze({
+        title: 'Comparar períodos',
+        subtitle: 'Base preparada para contraste entre meses',
+        overviewEyebrow: 'Comparación mensual',
+        overviewTitle: 'Comparar períodos',
+        overviewCopy: 'Esta subvista queda preparada para contrastar meses sin mezclar la familia mensual con cultivos ni con operación comercial.',
+        regionId: 'agro-period-cycles-compare-view'
+    }),
+    estadisticas: Object.freeze({
+        title: 'Estadísticas de períodos',
+        subtitle: 'Resumen estructural de la familia mensual',
+        overviewEyebrow: 'Lectura resumida',
+        overviewTitle: 'Estadísticas de períodos',
+        overviewCopy: 'Vista base de indicadores mensuales, lista para crecer en una pasada posterior sin cambiar la arquitectura del shell.',
+        regionId: 'agro-period-cycles-stats-view'
+    })
+});
+
+function getCurrentSubviewMeta() {
+    return PERIOD_SUBVIEW_META[state.currentSubview] || PERIOD_SUBVIEW_META.activos;
+}
+
 async function ensureUserId(initialUserId = '') {
     const preferredId = normalizeId(initialUserId || state.userId);
     if (preferredId) {
@@ -517,14 +567,15 @@ function pluralize(count, singular, plural = `${singular}s`) {
 }
 
 function renderModuleHeader() {
+    const meta = getCurrentSubviewMeta();
     return `
         <header class="module-header animate-in delay-3">
             <div class="module-title-group">
                 <div class="module-icon">🗓️</div>
                 <div class="module-heading">
                     <p class="ops-module-eyebrow">Familia mensual</p>
-                    <h2 class="module-title">Ciclos de período</h2>
-                    <p class="module-subtitle">Lectura mensual exclusiva de Cartera Operativa, separada de Ciclos de cultivos y de Cartera Viva.</p>
+                    <h2 class="module-title">${escapeHtml(meta.title)}</h2>
+                    <p class="module-subtitle">${escapeHtml(meta.subtitle)} dentro de la familia Ciclos de período.</p>
                 </div>
             </div>
             <div class="header-actions">
@@ -536,12 +587,13 @@ function renderModuleHeader() {
 
 function renderOverviewSection() {
     const summary = state.summary || createEmptySummary();
+    const meta = getCurrentSubviewMeta();
     return `
         <section class="agro-period-family__overview" aria-label="Resumen de ciclos de período">
             <div class="agro-period-family__overview-copy">
-                <p class="agro-period-family__overview-eyebrow">Lectura operativa</p>
-                <h3 class="agro-period-family__overview-title">Meses calendario con lectura real</h3>
-                <p class="agro-period-family__overview-subtitle">Cada card consolida el período, muestra su progreso mensual y separa lo asociado al cultivo de la operativa general.</p>
+                <p class="agro-period-family__overview-eyebrow">${escapeHtml(meta.overviewEyebrow)}</p>
+                <h3 class="agro-period-family__overview-title">${escapeHtml(meta.overviewTitle)}</h3>
+                <p class="agro-period-family__overview-subtitle">${escapeHtml(meta.overviewCopy)}</p>
             </div>
             <div class="agro-period-family__overview-grid">
                 <article class="agro-period-family__overview-card">
@@ -715,9 +767,111 @@ function renderCycleCard(cycle) {
     `;
 }
 
-function renderEmptyState() {
+function getCyclesForCurrentSubview() {
+    if (state.currentSubview === 'finalizados') {
+        return state.cycles.filter((cycle) => cycle.status === 'finalized');
+    }
+    if (state.currentSubview === 'activos') {
+        return state.cycles.filter((cycle) => cycle.status !== 'finalized');
+    }
+    return state.cycles;
+}
+
+function renderSubviewPlaceholder(title, copy, id) {
     return `
-        <div class="agro-period-cycles__empty">
+        <section class="agro-period-cycles__empty" id="${escapeAttr(id)}">
+            <p class="agro-period-cycles__empty-title">${escapeHtml(title)}</p>
+            <p class="agro-period-cycles__empty-copy">${escapeHtml(copy)}</p>
+        </section>
+    `;
+}
+
+function renderStatsSubview(meta) {
+    const summary = state.summary || createEmptySummary();
+    const latestCycles = state.cycles.slice(0, 3);
+    return `
+        <section class="agro-period-cycles__stats" id="${escapeAttr(meta.regionId)}">
+            <div class="agro-period-cycle-card__summary agro-period-cycles__stats-grid">
+                <div class="agro-period-cycle-card__summary-cell">
+                    <span class="agro-period-cycle-card__summary-label">Períodos visibles</span>
+                    <strong class="agro-period-cycle-card__summary-value">${summary.total}</strong>
+                </div>
+                <div class="agro-period-cycle-card__summary-cell">
+                    <span class="agro-period-cycle-card__summary-label">Activos</span>
+                    <strong class="agro-period-cycle-card__summary-value">${summary.active}</strong>
+                </div>
+                <div class="agro-period-cycle-card__summary-cell">
+                    <span class="agro-period-cycle-card__summary-label">Finalizados</span>
+                    <strong class="agro-period-cycle-card__summary-value">${summary.finalized}</strong>
+                </div>
+                <div class="agro-period-cycle-card__summary-cell">
+                    <span class="agro-period-cycle-card__summary-label">Open / Closed</span>
+                    <strong class="agro-period-cycle-card__summary-value">${summary.open} / ${summary.closed}</strong>
+                </div>
+            </div>
+            ${latestCycles.length
+                ? `
+                    <div class="agro-period-cycles__stub-list">
+                        ${latestCycles.map((cycle) => `
+                            <article class="agro-period-cycles__stub-item">
+                                <strong>${escapeHtml(cycle.name)}</strong>
+                                <span>${escapeHtml(cycle.monthLabel)}</span>
+                            </article>
+                        `).join('')}
+                    </div>
+                `
+                : renderSubviewPlaceholder('Todavía no hay datos mensuales para resumir.', 'Cuando existan períodos visibles, esta subvista podrá crecer sin reordenar la navegación.', `${meta.regionId}-empty`)}
+        </section>
+    `;
+}
+
+function renderCompareSubview(meta) {
+    const latestCycles = state.cycles.slice(0, 2);
+    if (!latestCycles.length) {
+        return renderSubviewPlaceholder(
+            'Comparar períodos quedará disponible aquí.',
+            'La estructura de navegación ya quedó lista. En una pasada posterior se puede montar la comparación real sin mover el sidebar.',
+            meta.regionId
+        );
+    }
+
+    return `
+        <section class="agro-period-cycles__stub-list" id="${escapeAttr(meta.regionId)}">
+            <article class="agro-period-cycles__stub-item">
+                <strong>Base de comparación preparada</strong>
+                <span>${escapeHtml(latestCycles.map((cycle) => cycle.monthLabel).join(' vs '))}</span>
+            </article>
+            <article class="agro-period-cycles__stub-item">
+                <strong>Próxima pasada</strong>
+                <span>Seleccionar períodos, contrastar progreso y leer cierres mensuales lado a lado.</span>
+            </article>
+        </section>
+    `;
+}
+
+function renderSubviewContent() {
+    const meta = getCurrentSubviewMeta();
+
+    if (state.currentSubview === 'comparar') {
+        return renderCompareSubview(meta);
+    }
+
+    if (state.currentSubview === 'estadisticas') {
+        return renderStatsSubview(meta);
+    }
+
+    const cycles = getCyclesForCurrentSubview();
+    if (!cycles.length) {
+        return renderSubviewPlaceholder(meta.emptyTitle, meta.emptyCopy, meta.regionId);
+    }
+
+    return `<div class="agro-period-cycles__grid" id="${escapeAttr(meta.regionId)}">${cycles.map((cycle) => renderCycleCard(cycle)).join('')}</div>`;
+}
+
+function renderEmptyState() {
+    const meta = getCurrentSubviewMeta();
+    return `
+        <div class="agro-period-cycles__empty" id="${escapeAttr(meta.regionId)}">
             <p class="agro-period-cycles__empty-title">Todavía no hay períodos operativos visibles.</p>
             <p class="agro-period-cycles__empty-copy">Crea un ciclo del mes o registra operativa real para que esta familia empiece a poblarse.</p>
             <button type="button" class="btn btn-primary" data-period-action="toggle-form">Crear ciclo del mes</button>
@@ -757,7 +911,7 @@ function renderRoot() {
             ? renderSchemaMissing()
             : state.cycles.length === 0
                 ? renderEmptyState()
-                : `<div class="agro-period-cycles__grid">${state.cycles.map((cycle) => renderCycleCard(cycle)).join('')}</div>`;
+                : renderSubviewContent();
 
     state.root.innerHTML = `
         <div class="agro-period-cycles agro-ops-v10">
@@ -909,6 +1063,7 @@ function bindRootEvents() {
 export function getAgroPeriodCyclesSummary() {
     return {
         ...(state.summary || createEmptySummary()),
+        currentSubview: state.currentSubview,
         schemaMissing: state.schemaMissing,
         loading: state.loading
     };
@@ -968,6 +1123,7 @@ export async function mountAgroPeriodCycles(root, options = {}) {
         if (options.initialUserId) {
             state.userId = normalizeId(options.initialUserId);
         }
+        state.currentSubview = normalizePeriodSubview(options.initialSubview || state.currentSubview);
         renderRoot();
         await refreshPeriodCycles(options);
         return {
@@ -982,6 +1138,7 @@ export async function mountAgroPeriodCycles(root, options = {}) {
     if (options.initialUserId) {
         state.userId = normalizeId(options.initialUserId);
     }
+    state.currentSubview = normalizePeriodSubview(options.initialSubview || state.currentSubview);
 
     bindRootEvents();
     renderRoot();

@@ -14234,3 +14234,133 @@ Las ocurrencias restantes documentan lo que se construyó con el nombre vigente 
    - el modal de creación abre/cierra sin desbordes.
 3. Desde `Operación comercial`, usar el puente `📆 Ver períodos` y confirmar que navega a la nueva familia independiente.
 4. Verificar con datos reales que `ACTIVE / FINALIZED` y `OPEN / CLOSED` siguen respondiendo al calendario y a la operativa del mes.
+
+---
+
+## 2026-04-12 — Sidebar expandible para Ciclos de Período (inicio)
+
+### Diagnóstico exacto
+
+- La reubicación previa dejó `Ciclos de período` bien ubicado como familia top-level en sidebar, pero todavía lo dejó como item plano:
+  - `apps/gold/agro/index.html` hoy lo monta como botón simple;
+  - `apps/gold/agro/agro-shell.js` aún no le define `VIEW_SUBNAV_CONFIG`;
+  - `apps/gold/agro/agro-period-cycles.js` no consume subviews de shell ni separa activas/finalizadas/comparar/estadísticas.
+- En contraste, `Ciclos de cultivos` sí funciona como familia expandible completa:
+  - padre toggle en sidebar;
+  - sublinks dedicados;
+  - `VIEW_SUBNAV_CONFIG` propio;
+  - metadata y focus por subview.
+- El problema actual ya no es visual premium, sino de estructura:
+  - `Ciclos de período` se sigue leyendo como acceso genérico;
+  - no tiene arquitectura interna equivalente a la familia de cultivos;
+  - el shell no refleja aún la taxonomía mensual del producto.
+
+### Plan
+
+1. Convertir `Ciclos de período` en nav item expandible, copiando el patrón estructural de `Ciclos de cultivos`.
+2. Crear sublinks mínimos:
+   - `Períodos activos`
+   - `Períodos finalizados`
+   - `Comparar períodos`
+   - `Estadísticas de períodos`
+3. Agregar `VIEW_SUBNAV_CONFIG` para `period-cycles` y resolver subview/focus en shell.
+4. Hacer que `agro-period-cycles.js` lea la subview activa y renderice:
+   - activas;
+   - finalizadas;
+   - compare/stats como base funcional o stub honesto.
+5. Mantener `Operación comercial` totalmente separada de esta familia.
+
+### Estructura propuesta para sidebar
+
+- `Ciclos de período`
+  - `Períodos activos`
+  - `Períodos finalizados`
+  - `Comparar períodos`
+  - `Estadísticas de períodos`
+
+### Subviews propuestas
+
+- `period-cycles / activos`
+- `period-cycles / finalizados`
+- `period-cycles / comparar`
+- `period-cycles / estadisticas`
+
+Se eligen los mismos tokens estructurales de `Ciclos de cultivos` para maximizar parentesco arquitectónico y minimizar lógica nueva en shell.
+
+### Archivos a tocar
+
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro-shell.js`
+- `apps/gold/agro/agro-period-cycles.js`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Riesgos
+
+- Riesgo de navegación:
+  - si `period-cycles` entra al set de vistas con subnav sin metadata/focus suficientes, puede quedar expandido pero sin destino claro al navegar.
+- Riesgo de semántica:
+  - `Períodos activos/finalizados` debe seguir leyendo estado por calendario mensual, no por semántica de `Cartera Operativa`.
+- Riesgo de alcance:
+  - `Comparar` y `Estadísticas` no deben convertirse en dashboards nuevos en esta pasada; si no hay contenido sólido, deben quedar como base/stub honesto.
+- Riesgo de QA:
+  - la validación visual en browser real sigue pendiente; en esta sesión solo se podrá garantizar wiring + build.
+
+### Cambios aplicados
+
+- `apps/gold/agro/index.html`
+  - `88-105`: `Ciclos de período` dejó de ser botón plano y pasó a `nav-item` expandible con cuatro sublinks.
+- `apps/gold/agro/agro-shell.js`
+  - `29-32`: aliases para subviews de `period-cycles`.
+  - `58`: nueva `VIEW_SUBNAV_CONFIG` de `period-cycles`.
+  - `227-263`: metadata y focus selectors para `activos / finalizados / comparar / estadisticas`.
+  - `497`: el focus del shell ya resuelve subviews mensuales igual que lo hace para cultivos.
+- `apps/gold/agro/agro-period-cycles.js`
+  - `7-20`: estado propio de subview mensual.
+  - `56`: `normalizePeriodSubview(...)`.
+  - `479-517`: metadata base por subview.
+  - `771-868`: separación real de contenido para:
+    - períodos activos;
+    - períodos finalizados;
+    - comparar períodos (stub base);
+    - estadísticas de períodos (base/stub funcional).
+  - `1126` y `1141`: mount consume `initialSubview` desde shell.
+- `apps/gold/agro/agroOperationalCycles.js`
+  - `1988`: el mount standalone de `Ciclos de período` ya recibe la subview actual del shell.
+
+### Qué quedó como base / stub
+
+- `Comparar períodos`
+  - quedó montado como subview navegable con stub honesto y estructura preparada.
+- `Estadísticas de períodos`
+  - quedó como subview navegable con base resumida del módulo, sin dashboard complejo nuevo.
+
+### Semántica preservada
+
+- `Ciclos de período` sigue fuera de `Operación comercial` como superficie principal.
+- Los estados `activo/finalizado` siguen derivados por calendario mensual.
+- `open/closed` sigue viniendo de operativa real del mes.
+- No se mezcló la familia mensual con `Ciclos de cultivos`; solo se igualó la estructura de navegación.
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+- Resultado:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Nota no bloqueante:
+  - warning de engine por `node v25.6.0` frente a `node 20.x` declarado.
+
+### QA sugerido
+
+1. Abrir sidebar y validar que `Ciclos de período` expande/colapsa igual que `Ciclos de cultivos`.
+2. Entrar a:
+   - `Períodos activos`
+   - `Períodos finalizados`
+   - `Comparar períodos`
+   - `Estadísticas de períodos`
+   y confirmar que cada sublink cambia la subview sin romper el shell.
+3. Confirmar que `Operación comercial` sigue sin volver a ser casa principal de la familia mensual.
+4. Validar visualmente en browser real el estado expandido simultáneo y el foco/navegación móvil.

@@ -26,6 +26,10 @@ const VIEW_ALIASES = Object.freeze({
     'historial-comercial': Object.freeze({ view: 'cartera-viva', subview: '' }),
     carrito: Object.freeze({ view: 'operational', subview: 'cart' }),
     'operational-periods': Object.freeze({ view: 'period-cycles', subview: '' }),
+    'period-cycles-active': Object.freeze({ view: 'period-cycles', subview: 'activos' }),
+    'period-cycles-finalized': Object.freeze({ view: 'period-cycles', subview: 'finalizados' }),
+    'period-cycles-compare': Object.freeze({ view: 'period-cycles', subview: 'comparar' }),
+    'period-cycles-stats': Object.freeze({ view: 'period-cycles', subview: 'estadisticas' }),
     'operational-cart': Object.freeze({ view: 'operational', subview: 'cart' }),
     'operational-active': Object.freeze({ view: 'operational', subview: 'active' }),
     'operational-finished': Object.freeze({ view: 'operational', subview: 'finished' }),
@@ -51,6 +55,7 @@ const NAV_PARENT_GROUPS = Object.freeze({
 
 const VIEW_SUBNAV_CONFIG = Object.freeze({
     ciclos: Object.freeze({ defaultSubview: 'finalizados', allowed: ['activos', 'finalizados', 'comparar', 'estadisticas'] }),
+    'period-cycles': Object.freeze({ defaultSubview: 'activos', allowed: ['activos', 'finalizados', 'comparar', 'estadisticas'] }),
     carrito: Object.freeze({ defaultSubview: 'summary', allowed: ['summary', 'planning', 'calculator'] }),
     operational: Object.freeze({ defaultSubview: 'cart', allowed: ['cart', 'active', 'finished', 'donations', 'losses', 'export'] })
 });
@@ -218,9 +223,37 @@ const CYCLE_SUBVIEW_META = Object.freeze({
     })
 });
 
+const PERIOD_CYCLE_SUBVIEW_META = Object.freeze({
+    activos: Object.freeze({
+        title: 'Períodos activos',
+        copy: 'Lectura mensual de períodos todavía en curso',
+        focusSelector: '#agro-period-cycles-active-view'
+    }),
+    finalizados: Object.freeze({
+        title: 'Períodos finalizados',
+        copy: 'Historial de meses cerrados y lectura ya consolidada',
+        focusSelector: '#agro-period-cycles-finalized-view'
+    }),
+    comparar: Object.freeze({
+        title: 'Comparar períodos',
+        copy: 'Base preparada para contrastar meses y cierres operativos',
+        focusSelector: '#agro-period-cycles-compare-view'
+    }),
+    estadisticas: Object.freeze({
+        title: 'Estadísticas de períodos',
+        copy: 'Lectura resumida del portafolio mensual visible',
+        focusSelector: '#agro-period-cycles-stats-view'
+    })
+});
+
 function resolveCycleSubviewMeta(subview) {
     const token = normalizeSubview('ciclos', subview);
     return CYCLE_SUBVIEW_META[token] || CYCLE_SUBVIEW_META.finalizados;
+}
+
+function resolvePeriodCycleSubviewMeta(subview) {
+    const token = normalizeSubview('period-cycles', subview);
+    return PERIOD_CYCLE_SUBVIEW_META[token] || PERIOD_CYCLE_SUBVIEW_META.activos;
 }
 
 function syncCycleStatsPanel(subview) {
@@ -257,6 +290,10 @@ function syncCultivosSubview(view, subview) {
 
 function resolveCycleFocusSelector(subview) {
     return resolveCycleSubviewMeta(subview).focusSelector || '[data-agro-shell-region="cultivos"]';
+}
+
+function resolvePeriodCycleFocusSelector(subview) {
+    return resolvePeriodCycleSubviewMeta(subview).focusSelector || '#agro-period-cycles-root';
 }
 
 function clickIfExists(selector) {
@@ -457,7 +494,9 @@ export function initAgroShell() {
 
         const focusSelector = view === 'ciclos'
             ? resolveCycleFocusSelector(activeSubview)
-            : (config.focusSelector || `[data-agro-shell-region="${config.region}"]`);
+            : view === 'period-cycles'
+                ? resolvePeriodCycleFocusSelector(activeSubview)
+                : (config.focusSelector || `[data-agro-shell-region="${config.region}"]`);
         focusTarget(focusSelector, options);
 
         if (view === 'perfil' && typeof window.syncPerfilViewFromProfile === 'function') {
