@@ -3047,6 +3047,14 @@ async function handleRootClick(event) {
         return;
     }
 
+    const viewButton = event.target.closest('[data-agro-view]');
+    if (viewButton) {
+        window.dispatchEvent(new CustomEvent('agro:shell:set-view', {
+            detail: { view: viewButton.dataset.agroView, scroll: true }
+        }));
+        return;
+    }
+
     const button = event.target.closest('[data-operational-action]');
     if (!button) return;
 

@@ -1630,6 +1630,18 @@ body.agro-operational-modal-open {
 }
 
 @media (max-width: 768px) {
+  .agro-operational-shell .module-header {
+    flex-wrap: wrap;
+  }
+
+  .agro-operational-shell .module-header > .agro-operational-shell__heading {
+    flex: 1 1 100%;
+  }
+
+  .agro-operational-shell .module-header > .header-actions {
+    flex: 0 0 100%;
+  }
+
   .agro-operational-confirm-grid,
   .agro-operational-filter-grid {
     grid-template-columns: 1fr;
@@ -1673,6 +1685,14 @@ body.agro-operational-modal-open {
 }
 
 @media (max-width: 480px) {
+  .agro-operational-shell .header-actions {
+    flex-direction: column;
+  }
+
+  .agro-operational-shell .header-actions .btn {
+    width: 100%;
+  }
+
   .agro-operational-modal__dialog {
     max-width: calc(100vw - 0.5rem);
     max-height: calc(100vh - 0.5rem);

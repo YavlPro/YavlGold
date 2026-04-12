@@ -2,6 +2,68 @@
 
 Resumen operativo actual de `apps/gold`.
 
+## Sesion activa: fix header movil Cartera Operativa + reconectar Ver periodos (2026-04-12)
+
+### Diagnostico
+
+**Header movil roto:**
+- Header de Cartera Operativa se renderiza en `agroOperationalCycles.js:1321-1407` (`renderShell()`)
+- Estructura: `module-header` (flex row, `justify-content: space-between`) con titulo+tabs a la izquierda y botones a la derecha
+- CSS base en `agro-operations.css:48-56`: `display: flex; align-items: center; justify-content: space-between;` SIN `flex-wrap`
+- CSS override en `agro-operational-cycles.css:25-33`: solo agrega fondo/border/sombra
+- En movil (≤768px), el titulo y los botones se comprimen en una sola fila sin wrap, causando que el texto se apile verticalmente y los CTAs no respiren
+- No hay ningun breakpoint responsive especifico para `.agro-operational-shell .module-header` en movil
+
+**Boton Ver periodos muerto:**
+- Boton en `agroOperationalCycles.js:1349`: `<button data-agro-view="period-cycles">`
+- El shell (`agro-shell.js:557`) escucha clicks en `document` y busca `[data-agro-view]` via delegacion
+- El modulo operativo tiene su propio click handler en `state.root` (linea 3200) que busca `[data-operational-action]`
+- El boton tiene `data-agro-view` pero NO `data-operational-action`, asi que el handler del modulo lo ignora
+- Teoricamente el evento burbujea al document handler, pero el handler del modulo tiene un listener adicional en `state.root` que podria interferir bajo ciertas condiciones de render
+- Solucion mas segura: manejar explicitamente `data-agro-view` dentro de `handleRootClick` usando el evento canonico `agro:shell:set-view`, igual que ya hace el modulo para subvistas (linea 3077)
+
+### Plan minimo
+
+**A. Corregir layout movil del header:**
+1. Agregar `flex-wrap: wrap` a `.agro-operational-shell .module-header` en breakpoint ≤768px
+2. Hacer que el titulo ocupe ancho completo
+3. Hacer que header-actions fluya debajo con ancho completo en ≤480px
+
+**B. Reconectar Ver periodos:**
+1. Agregar manejo explicito de `data-agro-view` en `handleRootClick` del modulo operativo
+2. Despachar `agro:shell:set-view` para cambiar vista de forma confiable
+
+### Archivos a tocar
+1. `apps/gold/agro/agro-operational-cycles.css`
+2. `apps/gold/agro/agroOperationalCycles.js`
+3. `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Riesgos
+- El fix CSS esta scoped a `.agro-operational-shell .module-header` — no afecta otros modulos
+- El fix JS usa el evento canonico que ya usa el shell para navegacion
+- No se toca agro.js, index.html ni agro-shell.js
+
+### Criterio de cierre
+- `pnpm build:gold` pasa
+- Header de Cartera Operativa respira correctamente en movil
+- Boton Ver periodos navega a Ciclos de periodo usando el camino canonico del shell
+
+### Cierre (2026-04-12)
+
+**Cambios realizados:**
+
+| Archivo | Cambio | Motivo |
+|---|---|---|
+| `agro-operational-cycles.css` (≤768px) | `flex-wrap: wrap` en `.module-header`, titulo 100% ancho, acciones 100% ancho | Header ya no comprime titulo+botones en una sola fila en movil |
+| `agro-operational-cycles.css` (≤480px) | `flex-direction: column` en `.header-actions`, botones `width: 100%` | Botones apilan verticalmente en pantallas estrechas |
+| `agroOperationalCycles.js` (~3043) | Manejo explicito de `[data-agro-view]` en `handleRootClick` via `agro:shell:set-view` | Boton Ver periodos navega de forma confiable sin depender de bubbling a document |
+
+**Validacion:** `pnpm build:gold` paso limpio. 159 modules, 2.64s, UTF-8 OK.
+
+**Riesgos residuales:** ninguno identificado. El fix CSS esta scoped al operational shell. El fix JS usa el evento canonico del shell.
+
+---
+
 ## Sesion activa: cirugia de orden Agro — eliminar modo enfoque + retirar Planificacion (2026-04-12)
 
 ### Diagnostico
