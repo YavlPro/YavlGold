@@ -14364,3 +14364,20 @@ Se eligen los mismos tokens estructurales de `Ciclos de cultivos` para maximizar
    y confirmar que cada sublink cambia la subview sin romper el shell.
 3. Confirmar que `Operación comercial` sigue sin volver a ser casa principal de la familia mensual.
 4. Validar visualmente en browser real el estado expandido simultáneo y el foco/navegación móvil.
+
+---
+
+## Sesión activa: subida de pendientes en UI de ciclos de períodos (2026-04-12)
+
+### Diagnóstico
+El usuario solicitó subir un archivo que quedó pendiente en el repositorio relativo a Agro (pps/gold/agro/agro-period-cycles.css). El archivo contiene pequeñas actualizaciones visuales y estructurales (grids, stubs, etc) que aplican al módulo de ciclos.
+
+### Cambios aplicados
+- Ninguna alteración a código adicional. Únicamente se incorporó el archivo a control de versiones.
+- Documentado en AGENT_REPORT_ACTIVE.md según política.
+
+### Build status
+pnpm build:gold ejecutado con éxito total.
+
+### QA sugerido
+Validación manual de la UI en la sección de ciclos y tarjetas de estadísticas gro-period-cycle-card en dimensiones móviles y escritorio.

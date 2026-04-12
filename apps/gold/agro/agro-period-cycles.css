@@ -130,6 +130,37 @@
   gap: 1rem;
 }
 
+.agro-period-cycles__stats,
+.agro-period-cycles__stub-list {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.agro-period-cycles__stats-grid {
+  margin: 0;
+}
+
+.agro-period-cycles__stub-item {
+  padding: 0.95rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-gold);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 4%, transparent), transparent 18%),
+    rgba(255, 255, 255, 0.02);
+  display: grid;
+  gap: 0.2rem;
+}
+
+.agro-period-cycles__stub-item strong {
+  font-family: 'Orbitron', sans-serif;
+  color: var(--text-primary);
+}
+
+.agro-period-cycles__stub-item span {
+  font-family: 'Rajdhani', sans-serif;
+  color: var(--text-secondary);
+}
+
 .agro-period-cycle-card {
   position: relative;
   overflow: hidden;
