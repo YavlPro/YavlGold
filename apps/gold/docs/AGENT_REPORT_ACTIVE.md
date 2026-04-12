@@ -14752,3 +14752,100 @@ Basado en AGRO-VISUAL-AUDIT-V1.md, se ejecutan los sprints 1-3 y fragmento renta
 3. Verificar Dashboard: guide step #1 debe tener borde dorado y fondo diferenciado
 4. Verificar que no hay regresion visual en Period Cycles ni Task Cycles
 5. Viewport mobile (<=480px): confirmar que tx-cards no se desbordan con el font-size uplift
+
+---
+
+## Sesion: Rediseno Visual Period Cycles — Herencia de Cultivos (2026-04-12)
+
+### Diagnostico breve
+Period Cycles se ve grande, frio, cuadrado y administrativo comparado con Cultivos. Problemas:
+- Card principal con gap 0.95rem y padding 1rem = demasiado aire muerto
+- Progress section envuelta en caja separada con borde = sensacion de bloque aislado
+- Snapshot section en grid horizontal 2 columnas = ancho desperdiciado
+- Summary cells: 4 columnas con min-height 86px = cajas enormes y vacias
+- Groups: 2 columnas con padding 0.9rem = bloques gigantes que dominan la vista
+- Overview cards: min-height 132px = cajas huecas innecesarias
+- No hay header con bg diferenciado como Cultivos
+- No hay profit-row ni cierre compacto
+
+### Alcance exacto
+Transformar Period Cycles de "resumen mensual administrativo grande" a "ciclo mensual compacto, vivo, premium y coherente con Cultivos" mediante:
+
+**BLOQUE A — Card principal:** Header con bg+border-bottom como Cultivos, progress integrado sin caja, badges compactos
+**BLOQUE B — Compactacion:** Reducir padding/gap/min-height en card, summary, groups, overview
+**BLOQUE C — Herencia Cultivos:** Anatomia Cultivos (header separado, progress section, 2x2 data grid, profit row)
+**BLOQUE D — Botones:** Mejor integracion en header
+**BLOQUE E — Subsecciones:** Groups y overview mas compactos, menos protagonismo
+
+### Archivos a tocar
+1. `agro-period-cycles.css` — rediseno CSS completo
+2. `agro-period-cycles.js` — reestructurar renderCycleCard, renderOverviewSection, buildSnapshotMeta
+
+### Riesgos
+- Reestructurar renderCycleCard HTML: MEDIO — cambios extensos pero mismas clases CSS, mismos datos
+- CSS compactacion: BAJO — solo reduccion de spacing y layout changes
+- No se toca logica de datos, creacion de ciclos, estados ni BD
+
+### Criterio de cierre
+- Period Cycles visualmente emparentado con Cultivos
+- Card principal compacta con header diferenciado
+- Summary 2x2 compacto
+- Progress sin caja aislada
+- Groups mas discretos
+- pnpm build:gold pasa
+
+### Cambios aplicados
+
+**agro-period-cycles.css** (~25 ediciones)
+- Card: gap 0.95rem->0, padding 1rem->0, max-width 560px (compactacion)
+- Header: bg color-mix(bg-4 90%, gold-1) + border-bottom (herencia Cultivos card-header)
+- Crop-info row: icon + title + range inline como Cultivos
+- Badges: padding 0.3/0.62rem->0.2/0.5rem, font-size 0.68->0.6rem, mas compactos
+- Progress: caja con borde+radius eliminada, ahora seccion con border-bottom como Cultivos
+- Track height: 8px->6px, dot: 8px->6px (proporcional a Cultivos)
+- Summary: grid 4-col min-height 86px ELIMINADO -> data-grid 2x2 compacto sin min-height
+- Data cells: padding 0.42/0.52rem, bg var(--bg-3), border var(--border-neutral), radius-sm (herencia directa Cultivos data-cell)
+- Summary value: Orbitron clamp(1.1-1.45rem) -> Rajdhani 1rem bold (menos gigante)
+- Summary label: separado con type-eyebrow 0.66rem
+- Profit-row: NUEVO - display flex, Orbitron label + Rajdhani value (herencia Cultivos profit-row)
+- Groups-details: NUEVO - <details> toggle con flecha rotatoria, ocultos por defecto
+- Groups: 2-col -> 1-col, padding 0.9rem -> 0.55/0.65rem
+- Movement items: padding 0.72 -> 0.45/0.55rem, gap 0.55 -> 0.35rem
+- Movement title: font-size 0.98 -> 0.88rem
+- Overview: padding a pad-card-compact, overview-copy padding 0
+- Overview cards: min-height 132px -> 0, padding 0.95 -> 0.6/0.7rem
+- Overview values: font-size clamp reducido
+- Card title: font-size 0.95rem
+- Range: estilo dedicado con type-body-sm y text-muted
+- Group title: font-size 0.82rem
+- Shared text: margin 0.34 -> 0.2, line-height 1.5 -> 1.4, type-body-sm
+- Hover: translateY(-2px) + gold border + shadow-gold-sm
+- Responsive: limpiados selectores obsoletos (.agro-period-cycle-card__snapshot, __summary)
+- 480px: padding mas compacto, max-width 100% para card
+
+**agro-period-cycles.js** (3 ediciones)
+- renderCycleCard: Reestructurado completamente:
+  - Header: icon emoji + title + range | badges (herencia Cultivos crop-info)
+  - Badge labels: ACTIVE/FINALIZED -> Activo/Finalizado, OPEN/CLOSED -> Abierto/Cerrado
+  - Progress: label "Progreso mensual" -> "Progreso" (como Cultivos)
+  - Snapshot grid+text ELIMINADO -> data-grid con data-cells 2x2 (herencia Cultivos)
+  - Profit-row NUEVO: "Resumen operativo" + snapshot text
+  - Groups: envueltos en <details> con toggle "Ver desglose por asociacion"
+- renderOverviewSection: Compactado — eliminados hints/paragraphs de cada overview card, labels acortados
+- buildSnapshotMeta: Sin cambios (mismos 4 campos)
+
+### Build status
+- `pnpm build:gold` — OK (exit 0), agent-guard OK, UTF-8 OK, 159 modules
+
+### Riesgos residuales
+- Ninguno critico. Los datos/logica/estados no fueron tocados.
+
+### QA sugerido
+1. Verificar Period Cycles activos: card debe ser compacta (~560px), con header bg diferenciado, progress sin caja
+2. Verificar 2x2 data grid: Movimientos, Ciclos del mes, Open, Asoc./Generales
+3. Verificar profit-row: "Resumen operativo" debe leerse al pie de la data-grid
+4. Verificar toggle "Ver desglose por asociacion": grupos deben ocultarse/mostrarse
+5. Verificar badges: Activo/Finalizado y Abierto/Cerrado con colores correctos
+6. Verificar overview cards: deben ser compactas, sin cajas huecas gigantes
+7. Viewport mobile (<=480px): card debe ocupar 100% sin desbordamiento
+8. Verificar que crear ciclo del mes sigue funcionando normalmente

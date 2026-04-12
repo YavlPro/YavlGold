@@ -597,19 +597,16 @@ function renderOverviewSection() {
             </div>
             <div class="agro-period-family__overview-grid">
                 <article class="agro-period-family__overview-card">
-                    <span class="agro-period-family__overview-label">Períodos visibles</span>
+                    <span class="agro-period-family__overview-label">Períodos</span>
                     <strong class="agro-period-family__overview-value">${summary.total}</strong>
-                    <p class="agro-period-family__overview-hint">${escapeHtml(summary.currentMonthLabel)} como referencia actual.</p>
                 </article>
                 <article class="agro-period-family__overview-card">
-                    <span class="agro-period-family__overview-label">Active / Finalized</span>
+                    <span class="agro-period-family__overview-label">Active / Final.</span>
                     <strong class="agro-period-family__overview-value">${summary.active} / ${summary.finalized}</strong>
-                    <p class="agro-period-family__overview-hint">Estado principal por calendario mensual.</p>
                 </article>
                 <article class="agro-period-family__overview-card">
                     <span class="agro-period-family__overview-label">Open / Closed</span>
                     <strong class="agro-period-family__overview-value">${summary.open} / ${summary.closed}</strong>
-                    <p class="agro-period-family__overview-hint">Badge secundario por operativa real del mes.</p>
                 </article>
             </div>
         </section>
@@ -701,8 +698,8 @@ function renderGroupCard(title, copy, rows, tone) {
                 <span class="agro-period-cycle-card__group-count">${rows.length}</span>
             </div>
             ${renderMovementList(rows, tone === 'linked'
-                ? 'Sin movimientos asociados al cultivo en este período.'
-                : 'Sin movimientos generales en este período.')}
+        ? 'Sin movimientos asociados al cultivo en este período.'
+        : 'Sin movimientos generales en este período.')}
         </section>
     `;
 }
@@ -711,20 +708,22 @@ function renderCycleCard(cycle) {
     return `
         <article class="agro-period-cycle-card" data-period-cycle-id="${escapeAttr(cycle.id)}">
             <header class="agro-period-cycle-card__head">
-                <div class="agro-period-cycle-card__heading">
-                    <p class="agro-period-cycle-card__eyebrow">${escapeHtml(cycle.monthLabel)}</p>
-                    <h4 class="agro-period-cycle-card__title">${escapeHtml(cycle.name)}</h4>
-                    <p class="agro-period-cycle-card__range">${escapeHtml(cycle.rangeLabel)}</p>
+                <div class="agro-period-cycle-card__crop-info">
+                    <span class="agro-period-cycle-card__icon">🗓️</span>
+                    <div class="agro-period-cycle-card__heading">
+                        <h4 class="agro-period-cycle-card__title">${escapeHtml(cycle.name)}</h4>
+                        <p class="agro-period-cycle-card__range">${escapeHtml(cycle.rangeLabel)}</p>
+                    </div>
                 </div>
                 <div class="agro-period-cycle-card__badges">
-                    <span class="agro-period-cycle-card__status is-${escapeAttr(cycle.status)}">${cycle.status === 'finalized' ? 'FINALIZED' : 'ACTIVE'}</span>
-                    <span class="agro-period-cycle-card__portfolio is-${escapeAttr(cycle.portfolioStatus)}">${cycle.portfolioStatus === 'open' ? 'OPEN' : 'CLOSED'}</span>
+                    <span class="agro-period-cycle-card__status is-${escapeAttr(cycle.status)}">${cycle.status === 'finalized' ? 'Finalizado' : 'Activo'}</span>
+                    <span class="agro-period-cycle-card__portfolio is-${escapeAttr(cycle.portfolioStatus)}">${cycle.portfolioStatus === 'open' ? 'Abierto' : 'Cerrado'}</span>
                 </div>
             </header>
 
             <section class="agro-period-cycle-card__progress">
                 <div class="agro-period-cycle-card__progress-meta">
-                    <span class="agro-period-cycle-card__progress-label">Progreso mensual</span>
+                    <span class="agro-period-cycle-card__progress-label">Progreso</span>
                     <span class="agro-period-cycle-card__progress-value">${escapeHtml(cycle.progress.text)}</span>
                 </div>
                 <div class="agro-period-cycle-card__progress-track${cycle.status === 'finalized' ? ' is-complete' : ''}">
@@ -734,35 +733,37 @@ function renderCycleCard(cycle) {
                 </div>
             </section>
 
-            <section class="agro-period-cycle-card__snapshot">
-                <div>
-                    <p class="agro-period-cycle-card__snapshot-eyebrow">Resumen operativo del período</p>
-                    <p class="agro-period-cycle-card__snapshot-copy">${escapeHtml(buildOperationalSnapshot(cycle))}</p>
-                </div>
-                <div class="agro-period-cycle-card__summary">
-                    ${buildSnapshotMeta(cycle).map((item) => `
-                        <div class="agro-period-cycle-card__summary-cell">
-                            <span class="agro-period-cycle-card__summary-label">${escapeHtml(item.label)}</span>
-                            <strong class="agro-period-cycle-card__summary-value">${escapeHtml(item.value)}</strong>
-                        </div>
-                    `).join('')}
-                </div>
+            <section class="agro-period-cycle-card__data-grid">
+                ${buildSnapshotMeta(cycle).map((item) => `
+                    <div class="agro-period-cycle-card__data-cell">
+                        <span class="agro-period-cycle-card__summary-label">${escapeHtml(item.label)}</span>
+                        <strong class="agro-period-cycle-card__summary-value">${escapeHtml(item.value)}</strong>
+                    </div>
+                `).join('')}
             </section>
 
-            <div class="agro-period-cycle-card__groups">
-                ${renderGroupCard(
-                    'Asociados al cultivo',
-                    'Conservan crop_id y siguen siendo lectura oficial de la operativa del mes.',
-                    cycle.linked,
-                    'linked'
-                )}
-                ${renderGroupCard(
-                    'No asociados al cultivo',
-                    'Operativa general del período, separada de la lectura del cultivo.',
-                    cycle.unlinked,
-                    'unlinked'
-                )}
-            </div>
+            <section class="agro-period-cycle-card__profit-row">
+                <span class="agro-period-cycle-card__profit-label">Resumen operativo</span>
+                <span class="agro-period-cycle-card__profit-value">${escapeHtml(buildOperationalSnapshot(cycle))}</span>
+            </section>
+
+            <details class="agro-period-cycle-card__groups-details">
+                <summary class="agro-period-cycle-card__groups-toggle">Ver desglose por asociación</summary>
+                <div class="agro-period-cycle-card__groups">
+                    ${renderGroupCard(
+        'Asociados al cultivo',
+        'Conservan crop_id y siguen siendo lectura oficial de la operativa del mes.',
+        cycle.linked,
+        'linked'
+    )}
+                    ${renderGroupCard(
+        'No asociados al cultivo',
+        'Operativa general del período, separada de la lectura del cultivo.',
+        cycle.unlinked,
+        'unlinked'
+    )}
+                </div>
+            </details>
         </article>
     `;
 }
@@ -810,7 +811,7 @@ function renderStatsSubview(meta) {
                 </div>
             </div>
             ${latestCycles.length
-                ? `
+            ? `
                     <div class="agro-period-cycles__stub-list">
                         ${latestCycles.map((cycle) => `
                             <article class="agro-period-cycles__stub-item">
@@ -820,7 +821,7 @@ function renderStatsSubview(meta) {
                         `).join('')}
                     </div>
                 `
-                : renderSubviewPlaceholder('Todavía no hay datos mensuales para resumir.', 'Cuando existan períodos visibles, esta subvista podrá crecer sin reordenar la navegación.', `${meta.regionId}-empty`)}
+            : renderSubviewPlaceholder('Todavía no hay datos mensuales para resumir.', 'Cuando existan períodos visibles, esta subvista podrá crecer sin reordenar la navegación.', `${meta.regionId}-empty`)}
         </section>
     `;
 }
