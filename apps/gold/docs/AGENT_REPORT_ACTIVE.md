@@ -15550,3 +15550,56 @@ Parche minimo en CSS inyectado de `agro-ia-wizard.js`:
 5. Cerrar wizard con X / Escape / click fuera -> chat intacto
 6. Validar desktop y movil
 7. Confirmar que no hay regresion en scroll, input o sidebar
+
+## Sesion: Wizard + Cartera Viva — P1-P5 continuity (2026-04-13)
+
+### Diagnostico
+
+Agente anterior se quedo sin cuota a mitad del trabajo. Se revisaron los 3 diffs pendientes para determinar estado real:
+
+**Ya aplicado por agente anterior:**
+- Wizard P1: `closeOnSave` eliminado de `normalizePayload`, status selector en Step 2, refs actualizados
+- Wizard P2: CTA corregido ("Guardar cartera operativa")
+- CV P3: `formatShortDate` + `created_at` en card subtitle (cableado, query ya selecciona `created_at`)
+- CSS Wizard: `.agro-operational-derived-status` reemplaza `.agro-operational-close-toggle`
+
+**Completado en esta sesion:**
+- CV P4: Emojis de categoria alineados con patron Ciclos (🟡/✅/🔴/⚪)
+- CV P5: Compactacion de cards, grid y summary strip (gaps y paddings reducidos)
+
+### Cambios aplicados
+
+| Archivo | Cambio | Lineas |
+|---|---|---|
+| `agroOperationalCycles.js` | Wizard P1+P2 (agente anterior) — `CREATE_STATUS_OPTIONS`, remove closeOnSave, status en Step 2, CTA fix | Multiple |
+| `agro-cartera-viva-view.js` | CV P3 (agente anterior) — `formatShortDate`, `created_at` en subtitle | L936-941, L2217 |
+| `agro-cartera-viva-view.js` | CV P4 — emojis categoria labels: "🟡 Por cobrar", "✅ Cobrado", "🔴 Perdidas", "⚪ Sin registro" | L1628, L1717, L1731, L1744 |
+| `agro-operational-cycles.css` | CSS Wizard (agente anterior) — `.agro-operational-derived-status` | L528-537 |
+| `agro-cartera-viva.css` | CV P5 — summary strip gap 0.55→0.38, padding 0.7→0.55; card gap 0.45→0.35, padding 0.7→0.55; grid gap 0.45→0.32; metric/stat padding 0.5→0.38; ADN V10 card override gap 0.58→0.38, padding 0.78→0.6; mobile card padding 0.66→0.52 | Multiple |
+
+### Build status
+
+`pnpm build:gold` paso limpio. 159 modules, 2.40s, UTF-8 OK, sin errores.
+
+### QA sugerido
+
+**Wizard:**
+1. Abrir wizard de creacion → Paso 2 debe mostrar selector de estado inicial (No pagado / Pagado)
+2. Seleccionar tipo economico "Perdida" → debe mostrar "Se registrara como perdido" (sin selector)
+3. Seleccionar tipo economico "Donacion" → debe mostrar "Se registrara como cerrado (donacion)"
+4. Paso 4 ya NO debe mostrar checkbox "Cerrar al guardar"
+5. CTA final debe decir "Guardar cartera operativa" (no "Nueva cartera operativa")
+6. Wizard de edicion → Step 2 NO debe mostrar selector de estado inicial (usa el de Step 4 normal)
+
+**Cartera Viva:**
+7. Cards deben mostrar fecha de creacion en subtitle (formato "12 abr 2026") si created_at existe
+8. Summary strip labels deben mostrar emoji: 🟡 Por cobrar, ✅ Cobrado, 🔴 Perdidas, ⚪ Sin registro
+9. Verificar que cards se ven mas compactas sin perder legibilidad
+10. Verificar mobile ≤480px: cards compactadas siguen siendo legibles
+11. Verificar que no hay regresion en hover/focus states de cards
+
+### Riesgos / Deuda tecnica
+
+- `resolveRecordActionLabel` declarada sin usar (L1371, hint TS) — preexistente, no tocada
+- Variable `pending` declarada sin usar (L1000, hint TS) — preexistente, no tocada
+- La compactacion reduce ~25% de padding/gap visual. Si el usuario siente que es demasiado agresiva, se puede ajustar con un solo cambio en CSS.

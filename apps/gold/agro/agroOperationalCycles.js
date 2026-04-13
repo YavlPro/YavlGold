@@ -49,6 +49,11 @@ const STATUS_OPTIONS = Object.freeze([
     { value: 'lost', label: '🔴 Perdido' }
 ]);
 
+const CREATE_STATUS_OPTIONS = Object.freeze([
+    { value: 'open', label: '🟡 No pagado' },
+    { value: 'closed', label: '✅ Pagado' }
+]);
+
 const UNIT_TYPE_OPTIONS = Object.freeze([
     { value: 'unidad', label: 'Unidad' },
     { value: 'saco', label: 'Saco' },
@@ -1085,10 +1090,6 @@ function normalizePayload(source = {}, options = {}) {
         status = requestedStatus;
     }
 
-    if (source.closeOnSave === true) {
-        status = 'closed';
-    }
-
     return {
         name,
         description,
@@ -1548,9 +1549,7 @@ function renderWizard() {
     const direction = deriveMovementDirection(values.economicType);
     const parsedAmount = toNullableNumber(values.amount, 'El monto');
     const parsedQuantity = toNullableNumber(values.quantity, 'La cantidad');
-    const effectiveStatus = isEdit
-        ? readLabel(STATUS_OPTIONS, values.status, '🟡 No pagado')
-        : (values.closeOnSave ? '✅ Pagado' : '🟡 No pagado');
+    const effectiveStatus = readLabel(STATUS_OPTIONS, values.status, '🟡 No pagado');
 
     state.refs.formEyebrow.textContent = `${isEdit ? '✏️ Edición guiada' : '➕ Creación guiada'} · ${currentStepMeta.eyebrow}`;
     state.refs.formTitle.textContent = isEdit ? '✏️ Editar cartera operativa' : '➕ Nueva cartera operativa';
@@ -1621,6 +1620,19 @@ function renderWizard() {
                                     ${buildCropOptionsMarkup(values.cropId)}
                                 </select>
                             </div>
+                            ${!isEdit ? `
+                            <div class="input-group input-group--full">
+                                <label class="input-label">Estado inicial</label>
+                                ${values.economicType === 'loss'
+                ? '<p class="agro-operational-derived-status">🔴 Se registrará como perdido</p>'
+                : values.economicType === 'donation'
+                    ? '<p class="agro-operational-derived-status">🤝 Se registrará como cerrado (donación)</p>'
+                    : `<select id="agro-operational-create-status" class="styled-input" data-operational-draft="status">
+                                        ${buildSelectOptionsMarkup(CREATE_STATUS_OPTIONS, values.status)}
+                                    </select>`
+            }
+                            </div>
+                            ` : ''}
                         </div>
                     </section>
 
@@ -1727,12 +1739,7 @@ function renderWizard() {
                                     <textarea id="agro-operational-notes" class="styled-input" placeholder="Notas que aparecieron después de crear el ciclo." data-operational-draft="notes">${escapeHtml(values.notes)}</textarea>
                                 </div>
                             </div>
-                        ` : `
-                            <label class="agro-operational-close-toggle">
-                                <input type="checkbox" id="agro-operational-close-on-save" data-operational-draft="closeOnSave"${values.closeOnSave ? ' checked' : ''}>
-                                <span>✅ Cerrar al guardar</span>
-                            </label>
-                        `}
+                        ` : ''}
                     </section>
                 </div>
             </div>
@@ -1743,7 +1750,7 @@ function renderWizard() {
                     ${currentStep > 1 ? '<button type="button" class="btn" data-operational-action="wizard-prev">⬅️ Atrás</button>' : ''}
                     ${currentStep < 4
             ? '<button type="button" class="btn btn-primary" data-operational-action="wizard-next">➡️ Siguiente</button>'
-            : `<button type="submit" class="btn btn-primary">${isEdit ? '💾 Guardar cambios' : '➕ Nueva cartera operativa'}</button>`}
+            : `<button type="submit" class="btn btn-primary">${isEdit ? '💾 Guardar cambios' : '💾 Guardar cartera operativa'}</button>`}
                 </div>
             </div>
         </form>
@@ -1768,7 +1775,7 @@ function cacheDynamicRefs() {
         date: document.getElementById('agro-operational-date'),
         quantity: document.getElementById('agro-operational-quantity'),
         unitType: document.getElementById('agro-operational-unit-type'),
-        closeOnSave: document.getElementById('agro-operational-close-on-save'),
+        createStatus: document.getElementById('agro-operational-create-status'),
         status: document.getElementById('agro-operational-status'),
         notes: document.getElementById('agro-operational-notes')
     });
@@ -2507,16 +2514,16 @@ function renderEmptyState(subview) {
         ? '🤝 Sin donaciones en esta familia'
         : subview === SUBVIEW_LOSSES
             ? '💔 Sin pérdidas en esta familia'
-        : subview === SUBVIEW_FINISHED
-            ? '✅ Sin pagados con esos filtros'
-            : '🟡 Sin ciclos no pagados con esos filtros';
+            : subview === SUBVIEW_FINISHED
+                ? '✅ Sin pagados con esos filtros'
+                : '🟡 Sin ciclos no pagados con esos filtros';
     const copy = subview === SUBVIEW_DONATIONS
         ? 'No hay carteras operativas de tipo donación registradas para esta familia.'
         : subview === SUBVIEW_LOSSES
             ? 'No hay carteras operativas clasificadas como pérdida para esta familia.'
-        : subview === SUBVIEW_FINISHED
-            ? 'Ajusta período, categoría o tipo económico para ver ciclos ya pagados o cerrados.'
-            : 'Ajusta período, categoría o tipo económico para ver ciclos no pagados, en seguimiento o compensándose.';
+            : subview === SUBVIEW_FINISHED
+                ? 'Ajusta período, categoría o tipo económico para ver ciclos ya pagados o cerrados.'
+                : 'Ajusta período, categoría o tipo económico para ver ciclos no pagados, en seguimiento o compensándose.';
 
     return `
         <div class="agro-operational-empty">
@@ -2846,7 +2853,7 @@ function focusWizardStep(step) {
             state.refs?.amount?.focus?.();
             return;
         }
-        const focusNode = state.refs?.closeOnSave || state.refs?.status || state.refs?.form?.querySelector('button[type="submit"]');
+        const focusNode = state.refs?.status || state.refs?.form?.querySelector('button[type="submit"]');
         focusNode?.focus?.();
     });
 }
@@ -3031,7 +3038,14 @@ async function handleFormSubmit(event) {
 function updateDraftFromField(field, value) {
     setDraftFieldValue(field, value);
 
-    if (field === 'economicType' || field === 'status' || field === 'closeOnSave' || field === 'cropId' || field === 'unitType') {
+    if (field === 'economicType' && !state.editId) {
+        const type = String(value || '').trim();
+        if (type === 'loss') setDraftFieldValue('status', 'lost');
+        else if (type === 'donation') setDraftFieldValue('status', 'closed');
+        else if (state.form.values.status === 'lost') setDraftFieldValue('status', 'open');
+    }
+
+    if (field === 'economicType' || field === 'status' || field === 'cropId' || field === 'unitType') {
         renderWizard();
     }
 

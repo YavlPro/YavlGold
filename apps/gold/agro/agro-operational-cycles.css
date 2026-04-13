@@ -528,21 +528,15 @@ body.agro-operational-modal-open {
   background: color-mix(in srgb, var(--color-success) 12%, transparent);
 }
 
-.agro-operational-close-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.65rem 0.8rem;
+.agro-operational-derived-status {
+  margin: 0;
+  padding: 0.55rem 0.7rem;
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-gold);
-  background: color-mix(in srgb, var(--gold-4) 10%, transparent);
-  color: var(--text-primary);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
   font-size: var(--text-sm);
-  font-weight: 700;
-}
-
-.agro-operational-close-toggle input {
-  accent-color: var(--gold-4);
+  font-weight: 600;
 }
 
 .agro-operational-edit-row {
@@ -1309,7 +1303,7 @@ body.agro-operational-modal-open {
     width: 100%;
   }
 
-  .agro-operational-close-toggle,
+  .agro-operational-derived-status,
   .agro-operational-impact {
     width: 100%;
     justify-content: center;

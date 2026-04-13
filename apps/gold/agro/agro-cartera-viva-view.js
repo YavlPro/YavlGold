@@ -929,6 +929,13 @@ function formatCount(value) {
     return new Intl.NumberFormat('es-VE').format(Math.trunc(count));
 }
 
+function formatShortDate(value) {
+    if (!value) return '';
+    const date = new Date(value);
+    if (!Number.isFinite(date.getTime())) return '';
+    return date.toLocaleDateString('es-VE', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 function clampPercent(value) {
     const nextValue = Number(value);
     if (!Number.isFinite(nextValue)) return 0;
@@ -1620,7 +1627,7 @@ function resolveCategorySummary(rows, category) {
         const count = Array.isArray(rows) ? rows.length : 0;
         return {
             mode: 'empty-cycle',
-            label: 'Sin registro',
+            label: '⚪ Sin registro',
             amount: `${formatCount(count)} cliente${count === 1 ? '' : 's'}`,
             copy: `${formatCount(count)} cliente${count === 1 ? '' : 's'} canónico${count === 1 ? '' : 's'} sin historial operativo todavía.`,
             stats: [
@@ -1708,7 +1715,7 @@ function resolveCategorySummary(rows, category) {
 
     if (category === 'pagados') {
         return {
-            label: 'Cobrado',
+            label: '✅ Cobrado',
             amount: formatMoney(paid),
             amountIsMoney: true,
             copy: `${formatCount(count)} cliente${count === 1 ? '' : 's'} con saldo cerrado`,
@@ -1722,7 +1729,7 @@ function resolveCategorySummary(rows, category) {
 
     if (category === 'perdidos') {
         return {
-            label: 'Pérdidas',
+            label: '🔴 Pérdidas',
             amount: formatMoney(loss),
             amountIsMoney: true,
             copy: `${formatCount(count)} caso${count === 1 ? '' : 's'} cerrados fuera de cartera`,
@@ -1735,7 +1742,7 @@ function resolveCategorySummary(rows, category) {
     }
 
     return {
-        label: 'Por cobrar',
+        label: '🟡 Por cobrar',
         amount: formatMoney(pending),
         amountIsMoney: true,
         copy: pendingClients > 0
@@ -1794,11 +1801,11 @@ function renderHeaderSummary(filteredRows, options = {}) {
                         <div class="cartera-viva-summary-strip__stat">
                             <span class="cartera-viva-summary-strip__stat-label">${stat.label}</span>
                             ${stat.isMoney
-                ? renderMoneyNode(stat.value, {
-                    tag: 'strong',
-                    className: 'cartera-viva-summary-strip__stat-value'
-                })
-                : `<strong class="cartera-viva-summary-strip__stat-value">${escapeHtml(stat.value)}</strong>`}
+                    ? renderMoneyNode(stat.value, {
+                        tag: 'strong',
+                        className: 'cartera-viva-summary-strip__stat-value'
+                    })
+                    : `<strong class="cartera-viva-summary-strip__stat-value">${escapeHtml(stat.value)}</strong>`}
                             ${stat.copy ? `<span class="cartera-viva-summary-strip__stat-copy">${stat.copy}</span>` : ''}
                         </div>
                     `).join('')}
@@ -2203,11 +2210,11 @@ function renderPortfolioCard(row) {
             <header class="cartera-viva-card__head">
                 <div class="cartera-viva-card__identity">
                     ${renderBuyerNameNode(row?.display_name, {
-            tag: 'h3',
-            className: 'cartera-viva-card__title',
-            fallback: 'Cliente sin nombre'
-        })}
-                    <p class="cartera-viva-card__subtitle">${escapeHtml(status.detail)}</p>
+        tag: 'h3',
+        className: 'cartera-viva-card__title',
+        fallback: 'Cliente sin nombre'
+    })}
+                    <p class="cartera-viva-card__subtitle">${escapeHtml(status.detail)}${row?.created_at ? ` · ${escapeHtml(formatShortDate(row.created_at))}` : ''}</p>
                 </div>
                 <div class="cartera-viva-card__head-side">
                     ${renderCardSignal(row)}
