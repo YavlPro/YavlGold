@@ -490,12 +490,12 @@ const PERIOD_SUBVIEW_META = Object.freeze({
     }),
     finalizados: Object.freeze({
         title: 'Períodos finalizados',
-        subtitle: 'Meses calendario ya cerrados',
+        subtitle: 'Meses calendario ya finalizados',
         overviewEyebrow: 'Historial mensual',
         overviewTitle: 'Períodos finalizados',
-        overviewCopy: 'Meses ya cerrados por calendario, conservados como lectura histórica de la operativa.',
+        overviewCopy: 'Meses ya finalizados por calendario, conservados como lectura histórica de la operativa.',
         emptyTitle: 'Todavía no hay períodos finalizados visibles.',
-        emptyCopy: 'Los meses cerrados aparecerán aquí como historial mensual consolidado.',
+        emptyCopy: 'Los meses finalizados aparecerán aquí como historial mensual consolidado.',
         regionId: 'agro-period-cycles-finalized-view'
     }),
     comparar: Object.freeze({
@@ -604,11 +604,11 @@ function renderOverviewSection() {
                     <strong class="agro-period-family__overview-value">${summary.total}</strong>
                 </article>
                 <article class="agro-period-family__overview-card">
-                    <span class="agro-period-family__overview-label">Active / Final.</span>
+                    <span class="agro-period-family__overview-label">Activos / Final.</span>
                     <strong class="agro-period-family__overview-value">${summary.active} / ${summary.finalized}</strong>
                 </article>
                 <article class="agro-period-family__overview-card">
-                    <span class="agro-period-family__overview-label">Open / Closed</span>
+                    <span class="agro-period-family__overview-label">Operativa abierta / cerrada</span>
                     <strong class="agro-period-family__overview-value">${summary.open} / ${summary.closed}</strong>
                 </article>
             </div>
@@ -676,17 +676,17 @@ function renderMovementList(rows, emptyCopy) {
 
 function buildOperationalSnapshot(cycle) {
     const openText = cycle.activeCycleCount > 0
-        ? `${pluralize(cycle.activeCycleCount, 'cartera abierta', 'carteras abiertas')}`
-        : 'operativa cerrada en el mes';
-    return `${capitalizeFirst(pluralize(cycle.movementCount, 'movimiento'))}, ${pluralize(cycle.cycleCount, 'ciclo operativo', 'ciclos operativos')} y ${openText}.`;
+        ? `${pluralize(cycle.activeCycleCount, 'ciclo operativo abierto', 'ciclos operativos abiertos')}`
+        : 'sin ciclos operativos abiertos';
+    return `${capitalizeFirst(pluralize(cycle.movementCount, 'movimiento'))}, ${pluralize(cycle.cycleCount, 'ciclo operativo', 'ciclos operativos')}, ${openText}.`;
 }
 
 function buildSnapshotMeta(cycle) {
     return [
         { label: 'Movimientos', value: String(cycle.movementCount || 0) },
-        { label: 'Ciclos del mes', value: String(cycle.cycleCount || 0) },
-        { label: 'Open', value: String(cycle.activeCycleCount || 0) },
-        { label: 'Asoc. / generales', value: `${cycle.linked.length} / ${cycle.unlinked.length}` }
+        { label: 'Ciclos operativos', value: String(cycle.cycleCount || 0) },
+        { label: 'Abiertos', value: String(cycle.activeCycleCount || 0) },
+        { label: 'Asociados / Generales', value: `${cycle.linked.length} / ${cycle.unlinked.length}` }
     ];
 }
 
@@ -701,7 +701,7 @@ function renderGroupCard(title, copy, rows, tone) {
                 <span class="agro-period-cycle-card__group-count">${rows.length}</span>
             </div>
             ${renderMovementList(rows, tone === 'linked'
-        ? 'Sin movimientos asociados al cultivo en este período.'
+        ? 'Sin movimientos vinculados a cultivo en este período.'
         : 'Sin movimientos generales en este período.')}
         </section>
     `;
@@ -720,8 +720,8 @@ function renderCycleCard(cycle) {
                 </div>
                 <div class="agro-period-cycle-card__head-right">
                     <div class="agro-period-cycle-card__badges">
-                        <span class="agro-period-cycle-card__status is-${escapeAttr(cycle.status)}">${cycle.status === 'finalized' ? 'Finalizado' : 'Activo'}</span>
-                        <span class="agro-period-cycle-card__portfolio is-${escapeAttr(cycle.portfolioStatus)}">${cycle.portfolioStatus === 'open' ? 'Abierto' : 'Cerrado'}</span>
+                        <span class="agro-period-cycle-card__status is-${escapeAttr(cycle.status)}">${cycle.status === 'finalized' ? 'Período finalizado' : 'Período activo'}</span>
+                        <span class="agro-period-cycle-card__portfolio is-${escapeAttr(cycle.portfolioStatus)}">${cycle.portfolioStatus === 'open' ? 'Operativa abierta' : 'Operativa cerrada'}</span>
                     </div>
                     <div class="agro-period-cycle-card__actions">
                         <button type="button" class="agro-period-cycle-card__action-btn" data-period-action="edit-cycle" data-cycle-id="${escapeAttr(cycle.id)}" title="Editar nombre" aria-label="Editar ciclo">
@@ -761,17 +761,17 @@ function renderCycleCard(cycle) {
             </section>
 
             <details class="agro-period-cycle-card__groups-details">
-                <summary class="agro-period-cycle-card__groups-toggle">Ver desglose por asociación</summary>
+                <summary class="agro-period-cycle-card__groups-toggle">Ver desglose por vinculación a cultivo</summary>
                 <div class="agro-period-cycle-card__groups">
                     ${renderGroupCard(
-        'Asociados al cultivo',
-        'Conservan crop_id y siguen siendo lectura oficial de la operativa del mes.',
+        'Vinculados a cultivo',
+        'Movimientos operativos que impactan un cultivo. El período es dueño del registro; el cultivo refleja el costo.',
         cycle.linked,
         'linked'
     )}
                     ${renderGroupCard(
-        'No asociados al cultivo',
-        'Operativa general del período, separada de la lectura del cultivo.',
+        'Generales del período',
+        'Movimientos operativos sin vínculo a un cultivo específico. Pertenecen exclusivamente al período.',
         cycle.unlinked,
         'unlinked'
     )}

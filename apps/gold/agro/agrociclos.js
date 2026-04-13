@@ -303,6 +303,8 @@ function renderCard(ciclo, index = 0) {
   const desgloseBase = String(desglose.base || 'N/D');
   const desgloseGastos = String(desglose.gastos || 'N/D');
   const desgloseGastosDirectos = String(desglose.gastosDirectos || 'N/D');
+  const desgloseGastosOperativos = String(desglose.gastosOperativos || 'N/D');
+  const desglosePendientesOperativos = String(desglose.pendientesOperativos || 'N/D');
   const desglosePagados = String(desglose.pagados || 'N/D');
   const desgloseCostos = String(desglose.costos || 'N/D');
   const desgloseFiados = String(desglose.fiados || 'N/D');
@@ -311,6 +313,8 @@ function renderCard(ciclo, index = 0) {
   const globalBreakdownMarkup = renderGlobalBreakdown(ciclo);
   const baseInvestmentUsd = toNumber(ciclo?.baseInvestmentUsd, 0);
   const directGastosUsd = toNumber(ciclo?.directGastosUsd, 0);
+  const operationalGastosUsd = toNumber(ciclo?.operationalGastosUsd, 0);
+  const operationalPendingUsd = toNumber(ciclo?.operationalPendingUsd, 0);
   const pagadosUsd = toNumber(ciclo?.pagadosUsd, 0);
   const fiadosUsd = toNumber(ciclo?.fiadosUsd, 0);
   const perdidasUsd = toNumber(ciclo?.perdidasUsd, 0);
@@ -336,18 +340,32 @@ function renderCard(ciclo, index = 0) {
       ${renderBreakdownMoneyRow('Gastos totales del cultivo', desgloseGastos)}
       ${renderBreakdownMoneyRow('Costos combinados del ciclo', desgloseCostos)}
     </div>
+    ${operationalGastosUsd > 0 || operationalPendingUsd > 0 ? renderBreakdownSection({
+    title: 'Operativa vinculada',
+    subtitle: 'Gastos operativos asociados a este cultivo',
+    modifierClass: 'is-operativa',
+    defaultOpen: true,
+    summaryItems: [
+      { label: 'Pagado', value: formatUsdCompact(operationalGastosUsd) },
+      { label: 'Pendiente', value: formatUsdCompact(operationalPendingUsd) }
+    ],
+    bodyMarkup: [
+      operationalGastosUsd > 0 ? renderBreakdownMoneyRow('Gastos operativos pagados', desgloseGastosOperativos) : '',
+      operationalPendingUsd > 0 ? renderBreakdownMoneyRow('Gastos operativos pendientes', desglosePendientesOperativos) : ''
+    ].filter(Boolean).join('')
+  }) : ''}
     ${renderBreakdownSection({
-      title: 'Cartera Viva',
-      subtitle: 'Facturación histórica del ciclo',
-      modifierClass: 'is-viva',
-      defaultOpen: carteraVivaIsShort,
-      summaryItems: [
-        { label: 'Total', value: formatUsdCompact(carteraVivaTotal) },
-        { label: 'Pagado', value: formatUsdCompact(pagadosUsd) },
-        { label: 'Fiado', value: formatUsdCompact(fiadosUsd) }
-      ],
-      bodyMarkup: carteraVivaRows.join('')
-    })}
+    title: 'Cartera Viva',
+    subtitle: 'Facturación histórica del ciclo',
+    modifierClass: 'is-viva',
+    defaultOpen: carteraVivaIsShort,
+    summaryItems: [
+      { label: 'Total', value: formatUsdCompact(carteraVivaTotal) },
+      { label: 'Pagado', value: formatUsdCompact(pagadosUsd) },
+      { label: 'Fiado', value: formatUsdCompact(fiadosUsd) }
+    ],
+    bodyMarkup: carteraVivaRows.join('')
+  })}
   `;
 
   return `

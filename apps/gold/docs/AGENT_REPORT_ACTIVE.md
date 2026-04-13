@@ -15166,3 +15166,387 @@ Nota: `AGENTS.md` y `FICHA_TECNICA.md` YA NO aparecen como modificados — resta
 
 ### Riesgos residuales
 - Ninguno. Operacion puramente documental/git, sin tocar codigo funcional.
+
+---
+
+## Sesion: Blindaje Semantico Cartera Operativa vs Cartera Viva vs Ciclos (2026-04-13)
+
+### Diagnostico
+
+**Modelo de ownership actual (CORRECTO):**
+1. `agro_operational_cycles` tiene `crop_id` nullable = asociacion opcional a cultivo ✅
+2. `agro_operational_movements` linkea a `cycle_id` (ciclo operativo) ✅
+3. Period cycle agrega por coincidencia de mes (implicit month matching) ✅
+4. Cartera Viva (`agro-cartera-viva.js`) lee de `agro_pending/agro_income/agro_losses` via RPC — 100% aislada de operativa ✅
+5. Cultivos (`agrociclos.js`) muestra badge "Cartera viva abierta/cerrada" sin tocar operativa ✅
+6. `deriveCalendarStatus` = estado temporal basado en `end_date < today` ✅
+7. `portfolioStatus` = conteo de ciclos operativos activos (status in open/in_progress/compensating) ✅
+
+**No hay FK explicito `period_cycle_id`** en `agro_operational_cycles`. La relacion es implicita por mes calendario. Funciona correctamente pero se nota como deuda tecnica futura.
+
+**Problemas semanticos encontrados (todos en agro-period-cycles.js):**
+
+| # | Ubicacion | Problema | Impacto |
+|---|-----------|----------|---------|
+| 1 | Badge status (L723) | "Activo" / "Finalizado" sin contexto | Ambiguo: que es activo? |
+| 2 | Badge portfolio (L724) | "Abierto" / "Cerrado" sin contexto | Ambiguo: que esta abierto? |
+| 3 | buildSnapshotMeta (L687) | "Ciclos del mes" | Podria ser cualquier ciclo |
+| 4 | buildSnapshotMeta (L688) | "Open" | Ingles mezclado con espanol |
+| 5 | buildSnapshotMeta (L689) | "Asoc. / generales" | Abreviacion poco clara |
+| 6 | buildOperationalSnapshot (L679) | "carteras abiertas" | Mezcla cartera (concepto global) con ciclos operativos individuales |
+| 7 | Overview (L607) | "Active / Final." | Ingles mezclado |
+| 8 | Overview (L611) | "Open / Closed" | Ingles mezclado |
+| 9 | PERIOD_SUBVIEW_META (L493) | "Meses calendario ya cerrados" | Confunde "cerrado" calendario con "cerrada" cartera |
+| 10 | renderGroupCard copy (L768) | "Conservan crop_id" | Expone nombre de campo interno de BD |
+| 11 | renderGroupCard copy (L774) | Copy generico | No refuerza ownership vs impacto |
+| 12 | Details toggle (L764) | "Ver desglose por asociacion" | "asociacion" es ambiguo en contexto agro |
+
+**Cartera Viva: SIN problemas.** Totalmente aislada. No toca operativa.
+**Ciclos de Cultivo: SIN problemas.** Solo muestra badge de cartera viva propia.
+
+### Opciones
+
+**Opcion A — Solo copy/labels (RECOMENDADA)**
+- Corregir badges: "Periodo activo" / "Operativa abierta"
+- Corregir labels: espanol correcto, sin abreviaciones ambiguas
+- Corregir copy: ownership vs impacto explicito
+- Corregir subview meta: "finalizados" en vez de "cerrados"
+- 0 cambios de logica, 0 cambios de DB, 0 cambios de CSS
+- Riesgo: MUY BAJO — solo strings
+- Archivo: agro-period-cycles.js solamente
+
+**Opcion B — Copy + FK explicito**
+- Todo de Opcion A + migracion para agregar `period_cycle_id` a `agro_operational_cycles`
+- Requiere: DDL migration, backfill, query changes, mas archivos
+- Riesgo: ALTO — toca schema, queries, multiples modulos
+- NO recomendada para parche quirurgico
+
+**Opcion C — Copy + refactor de aggregadores**
+- Todo de Opcion A + refactorizar buildOperationalActivityIndex para ser mas explicito
+- Riesgo: MEDIO — toca logica de datos sin cambiar resultado
+- Overengineering para el problema actual
+
+### Recomendacion: Opcion A
+Maxima claridad semantica con minimo diff. La logica ya esta correcta; el problema es que el copy no dice la verdad con precision suficiente. El FK faltante se documenta como deuda tecnica pero no se implementa ahora.
+
+### Archivos a tocar
+1. `agro-period-cycles.js` — badges, labels, copy, subview meta (solo strings)
+
+### Riesgos
+- UNICO archivo tocado: agro-period-cycles.js
+- SOLO cambios de strings/copy, nunca logica
+- Riesgo: MUY BAJO
+
+### Criterio de cierre
+- Badges dicen "Periodo: activo/finalizado" y "Operativa: abierta/cerrada"
+- Labels en espanol correcto sin mezcla de ingles
+- Copy del desglose explica ownership vs impacto
+- Subview meta no confunde "cerrado" con "finalizado"
+- 4 combinaciones de estado se verifican en copy
+- pnpm build:gold pasa
+
+### Cambios aplicados
+
+**agro-period-cycles.js** (14 ediciones quirurgicas, solo strings):
+
+1. Badge status: `"Finalizado"/"Activo"` → `"Período finalizado"/"Período activo"` (L723)
+2. Badge portfolio: `"Abierto"/"Cerrado"` → `"Operativa abierta"/"Operativa cerrada"` (L724)
+3. Snapshot label: `"Ciclos del mes"` → `"Ciclos operativos"` (L687)
+4. Snapshot label: `"Open"` → `"Abiertos"` (L688)
+5. Snapshot label: `"Asoc. / generales"` → `"Asociados / Generales"` (L689)
+6. Operational snapshot: `"carteras abiertas"` → `"ciclos operativos abiertos"` (L679)
+7. Operational snapshot: `"operativa cerrada en el mes"` → `"sin ciclos operativos abiertos"` (L680)
+8. Operational snapshot: `" y "` → `", "` entre ciclos y estado (L681)
+9. Overview label: `"Active / Final."` → `"Activos / Final."` (L607)
+10. Overview label: `"Open / Closed"` → `"Operativa abierta / cerrada"` (L611)
+11. Subview subtitle: `"Meses calendario ya cerrados"` → `"Meses calendario ya finalizados"` (L493)
+12. Subview overviewCopy: `"cerrados por calendario"` → `"finalizados por calendario"` (L496)
+13. Subview emptyCopy: `"meses cerrados"` → `"meses finalizados"` (L498)
+14. Group titles: `"Asociados al cultivo"/"No asociados al cultivo"` → `"Vinculados a cultivo"/"Generales del período"` (L767/L773)
+15. Group copy linked: `"Conservan crop_id y siguen siendo lectura oficial..."` → `"Movimientos operativos que impactan un cultivo. El período es dueño del registro; el cultivo refleja el costo."` (L768)
+16. Group copy unlinked: `"Operativa general del período..."` → `"Movimientos operativos sin vínculo a un cultivo específico. Pertenecen exclusivamente al período."` (L774)
+17. Toggle: `"Ver desglose por asociación"` → `"Ver desglose por vinculación a cultivo"` (L764)
+18. Empty linked: `"Sin movimientos asociados al cultivo..."` → `"Sin movimientos vinculados a cultivo..."` (L704)
+
+### Build status
+**pnpm build:gold: OK** (exit 0, agent-guard OK, agent-report-check OK, vite OK, UTF-8 OK)
+
+### Deuda tecnica documentada
+- No existe FK explicito `period_cycle_id` en `agro_operational_cycles`. La relacion es implicita por matching de mes calendario (movement_date.slice(0,7) == period month). Funciona correctamente hoy. Agregar FK requeriria DDL migration + backfill + query changes — fuera de alcance para parche quirurgico. Recomendado para iteracion futura si se necesita integridad referencial estricta.
+
+### Validacion de los 8 casos
+
+| Caso | Escenario | Resultado esperado en copy |
+|------|-----------|---------------------------|
+| 1 | Mes en curso + pendientes | Badge: "Periodo activo" + "Operativa abierta" |
+| 2 | Mes en curso sin pendientes | Badge: "Periodo activo" + "Operativa cerrada" |
+| 3 | Mes finalizado + pendientes | Badge: "Periodo finalizado" + "Operativa abierta" |
+| 4 | Mes finalizado sin pendientes | Badge: "Periodo finalizado" + "Operativa cerrada" |
+| 5 | Mov. asociado a cultivo (ej: semilla maiz) | Aparece en "Vinculados a cultivo" con copy: "El periodo es dueno del registro; el cultivo refleja el costo" |
+| 6 | Mov. general sin cultivo (ej: pala) | Aparece en "Generales del periodo" con copy: "Pertenecen exclusivamente al periodo" |
+| 7 | Cultivo refleja costo asociado | Cartera Viva (agro-cartera-viva.js) aislada. No toca operativa. Cultivo ve badge propio de Cartera Viva, no de operativa |
+| 8 | Badges/contadores no contradicen | Overview: "Activos/Final." y "Operativa abierta/cerrada". Snapshot: "Ciclos operativos", "Abiertos", "Asociados/Generales" |
+
+### QA sugerido (Fase A — copy)
+1. Period Cycles activos: verificar badges "Periodo activo" + "Operativa abierta/cerrada"
+2. Period Cycles finalizados: verificar badges "Periodo finalizado" + "Operativa abierta/cerrada"
+3. Subvista finalizados: subtitle debe decir "Meses calendario ya finalizados" (no "cerrados")
+4. Data grid: labels deben ser "Movimientos", "Ciclos operativos", "Abiertos", "Asociados / Generales"
+5. Resumen operativo: debe decir "X movimientos, Y ciclos operativos, Z ciclos operativos abiertos."
+6. Toggle desglose: debe decir "Ver desglose por vinculacion a cultivo"
+7. Grupo linked: titulo "Vinculados a cultivo", copy menciona ownership
+8. Grupo unlinked: titulo "Generales del periodo", copy explica exclusividad
+9. Overview cards: "Activos / Final." y "Operativa abierta / cerrada" (sin ingles)
+10. Cartera Viva: verificar que no fue afectada (aislada, sin cambios)
+11. Ciclos de Cultivo: verificar que badge propio ("Cartera viva abierta/cerrada") no cambio
+12. Mobile <=480px: verificar que badges mas largos no desbordan
+
+---
+
+### Validacion Logica Fase B — Auditoria de derivaciones reales (2026-04-13)
+
+#### Punto 1: Como se calcula `operativa abierta/cerrada`
+
+**Cadena de derivacion completa:**
+
+1. `agro-period-cycles.js:445` — `portfolioStatus = activeCycleCount > 0 ? 'open' : 'closed'`
+2. `activeCycleCount` viene de `buildOperationalActivityIndex:372` — cuenta ciclos donde `ACTIVE_OPERATIONAL_STATUS_VALUES.has(entry.status)`
+3. `ACTIVE_OPERATIONAL_STATUS_VALUES = new Set(['open', 'in_progress', 'compensating'])` (linea 7)
+4. `entry.status` = `normalizeToken(cycle?.status || 'open')` leido de la tabla `agro_operational_cycles` (linea 361)
+
+**Significado real de cada status** (de `agroOperationalCycles.js:44-50`):
+
+| status | label UI | Semantica real |
+|--------|----------|---------------|
+| `open` | No pagado | Pendiente de pago |
+| `in_progress` | En seguimiento | Pendiente, bajo tracking |
+| `compensating` | Compensandose | Pendiente, siendo compensado |
+| `closed` | Pagado | Resuelto |
+| `lost` | Perdido | Resuelto como perdida |
+
+**VEREDICTO**: ✅ ALINEADO. `activeCycleCount > 0` equivale a "existen registros operativos no resueltos (no pagados, no perdidos)". Esto ES la definicion canonica de "operativa abierta = existen registros pendientes por pagar/cerrar".
+
+**Matiz**: Un ciclo `open` (No pagado) con `amount = null` (monto no anotado) aun cuenta como operativa abierta. Esto es correcto: el usuario lo marco como pendiente independientemente del monto.
+
+#### Punto 2: Materializacion de pertenencia obligatoria al periodo
+
+**Mecanismo actual**: Inferencia por mes calendario.
+
+`agro-period-cycles.js:fetchOperationalPeriodActivity` (L380-405):
+- Fetch ALL `agro_operational_cycles` para el usuario (sin filtro de period_cycle_id)
+- Fetch ALL sus `agro_operational_movements`
+- `buildOperationalActivityIndex` (L323-378) agrupa movimientos por mes: `movement_date.slice(0,7)`, fallback a `cycle.opened_at.slice(0,7)` (L353)
+- El ciclo operativo se indexa en el bucket del mes al que cae su primer movimiento (L358-364)
+
+**NO existe FK `period_cycle_id`** en `agro_operational_cycles`. La pertenencia es 100% inferida.
+
+**Riesgos funcionales concretos:**
+
+| # | Riesgo | Severidad | Escenario |
+|---|--------|-----------|-----------|
+| R1 | Multi-month split | MEDIO | Si un ciclo operativo tiene movimientos en enero Y febrero, aparece en AMBOS periodos. No hay exclusividad de ownership. |
+| R2 | Date-edit drift | MEDIO | Si el usuario edita `opened_at` o `movement_date`, el ciclo migra silenciosamente entre periodos sin control explicito. |
+| R3 | Sin cascade en soft-delete | BAJO | Si se soft-deleta un period cycle, los ciclos operativos siguen existiendo y siguen apareciendo en un periodo derivado virtual para ese mes. |
+| R4 | Periodos fantasma | BAJO | `mergePeriodCycles` (L407-432) crea periodos derivados (virtuales) para meses con actividad operacional pero sin period cycle explicito. El usuario no los creo pero aparecen. |
+| R5 | Consistency race | MUY BAJO | Operational module y period module hacen queries independientes. En teoria podrian mostrar snapshots inconsistentes, pero en practica el event `agro:operational-portfolio-updated` dispara refresh. |
+
+#### Punto 3: Asociacion a cultivo — impacto vs ownership
+
+**Materializacion de la asociacion:**
+- `agroOperationalCycles.js:createCycleRecord` (L1190): `crop_id: cropId` — set at creation
+- `agroOperationalCycles.js:updateCycleRecord` (L1247): `crop_id: cropId` — editable
+- `crop_id` es nullable. Ciclos sin cultivo tienen `null`.
+- En `agro-period-cycles.js:buildOperationalMovementRow` (L300,315): `association: cropId ? 'linked' : 'unlinked'`
+
+**Confirmacion de no-ownership por cultivo:**
+- El cultivo NO posee el registro operativo. El registro vive en `agro_operational_cycles` (propiedad del usuario via `user_id`, asociado al periodo via mes calendario).
+- El `crop_id` es una etiqueta de impacto, no una FK de ownership.
+- El campo `crop_id` no tiene restriccion NOT NULL ni FK constraint en la query de creacion.
+
+**Sin embargo — GAP CRITICO en el impacto reflejado:**
+
+`agroOperationalCycles.js:rebuildPortfolioByCrop` (L258-304) calcula:
+- `operationalExpensesByCrop`: Map<cropId, totalUsdPagado> (ciclos closed + losses)
+- `operationalPendingByCrop`: Map<cropId, totalUsdPendiente> (ciclos active)
+
+Estos datos se exponen via API global:
+- `window.YGAgroOperationalCycles.getOperationalExpensesByCrop()` (L3361)
+- `window.YGAgroOperationalCycles.getOperationalPendingByCrop()` (L3362)
+
+**PERO en `agro.js`** (el monolito que renderiza las crop cards):
+- L11243: `let operationalExpenseTotalsByCrop = new Map()` — inicializado vacio
+- L11244: `let operationalPendingTotalsByCrop = new Map()` — inicializado vacio
+- **NUNCA se llama a `getOperationalExpensesByCrop()` ni `getOperationalPendingByCrop()`**
+- Estos Maps vacios se pasan al render pero no contienen datos
+
+**RESULTADO**: Las tarjetas de cultivo NO reflejan los gastos operativos vinculados via `crop_id`. El puente esta preparado (variables existen, se pasan) pero **nunca se conecta**. Los gastos operativos asociados a un cultivo son invisibles en la tarjeta del cultivo.
+
+#### Punto 4: Resumen de desalineaciones
+
+| # | Area | Estado | Detalle |
+|---|------|--------|---------|
+| D1 | portfolioStatus derivation | ✅ ALINEADO | Basado en status de pago, no solo conteo |
+| D2 | Period ownership | ⚠️ FUNCIONAL, IMPLICITO | No hay FK. Riesgos R1-R5 documentados. |
+| D3 | Crop impact bridge | ❌ ROTO | Datos existen en agroOperationalCycles pero nunca llegan a agro.js para crop cards |
+| D4 | Copy semantico | ✅ CORREGIDO | Fase A ya ejecutada |
+
+#### Punto 5: Propuesta Fase B — Parche minimo sin refactor
+
+**Fase B.1 — Wire operationalExpenses bridge** (~8 lineas en agro.js)
+
+Despues del bloque de `Promise.all` (L11274), agregar lectura del API global:
+
+```js
+// Wire operational expenses bridge (Fase B.1)
+const opsApi = window.YGAgroOperationalCycles;
+if (opsApi?.getOperationalExpensesByCrop) {
+    operationalExpenseTotalsByCrop = opsApi.getOperationalExpensesByCrop();
+}
+if (opsApi?.getOperationalPendingByCrop) {
+    operationalPendingTotalsByCrop = opsApi.getOperationalPendingByCrop();
+}
+```
+
+**Riesgo de Fase B.1**: BAJO-MEDIO. Los datos se pasan al render pipeline que ya los espera. El riesgo es doble-conteo si el mismo gasto vive en `agro_expenses` Y `agro_operational_cycles`. Mitigacion: las tablas son distintas (`agro_expenses` vs `agro_operational_cycles`), el usuario usa una u otra, no ambas para el mismo concepto.
+
+**Fase B.2 — Consumir operationalExpenses en crop card** (requiere analisis adicional)
+
+`buildActiveCycleCardsData` y `buildFinishedCycleCardsData` reciben `operationalExpenseTotalsByCrop` en options pero NO lo consumen. Habria que:
+1. Leer el valor para cada cropId
+2. Sumarlo a `expenseInvestment` o mostrarlo como linea separada en el desglose
+3. Decidir si se suma a `totalCosts` (afecta rentabilidad) o es solo informativo
+
+**Riesgo de Fase B.2**: MEDIO. Toca calculo de rentabilidad del cultivo. Requiere decision de producto sobre si los gastos operativos vinculados impactan la rentabilidad del cultivo o solo son informativos.
+
+**Fase B.3 — FK explicito period_cycle_id** (NO recomendado para parche)
+
+Requiere: DDL migration, backfill, query changes, multi-module refactor. Fuera de alcance.
+
+**Recomendacion**: Ejecutar Fase B.1 ahora (wire el bridge). Fase B.2 requiere decision de producto. Fase B.3 es deuda tecnica a largo plazo.
+
+#### Fase B.1 — EJECUTADA
+
+**Cambio aplicado en `agro.js`** (L11294-11300, 7 lineas nuevas):
+
+Despues del stale-request guard y antes del `else` branch, se lee del API global de `agroOperationalCycles`:
+
+```js
+const opsApi = typeof window !== 'undefined' ? window.YGAgroOperationalCycles : null;
+if (opsApi?.getOperationalExpensesByCrop) {
+    operationalExpenseTotalsByCrop = opsApi.getOperationalExpensesByCrop();
+}
+if (opsApi?.getOperationalPendingByCrop) {
+    operationalPendingTotalsByCrop = opsApi.getOperationalPendingByCrop();
+}
+```
+
+**Efecto**: Los Maps `operationalExpenseTotalsByCrop` y `operationalPendingTotalsByCrop` ahora contienen datos reales de `rebuildPortfolioByCrop()` del modulo operativo. Estos Maps ya se pasan al pipeline de render de crop cards — el pipeline receptor ya existia, solo faltaba la fuente.
+
+**Guard de seguridad**: Si `YGAgroOperationalCycles` no esta disponible (modulo no cargado), los Maps quedan como `new Map()` vacios — comportamiento identico al anterior. Zero regression risk.
+
+**Build**: pnpm build:gold OK (exit 0, agent-guard OK, vite OK, UTF-8 OK)
+
+#### Estado final del issue
+
+| Fase | Estado | Archivo |
+|------|--------|---------|
+| A — Copy semantico | ✅ Ejecutada | `agro-period-cycles.js` |
+| B.1 — Wire bridge | ✅ Ejecutada | `agro.js` |
+| B.2 — Consumir en crop card | ✅ Ejecutada | `agro.js` + `agrociclos.js` |
+| B.3 — FK period_cycle_id | 📋 Deuda tecnica documentada | Schema |
+
+#### QA sugerido Fase B.1
+1. Abrir Cultivos con ciclos operativos vinculados (crop_id no null)
+2. Verificar en consola: `window.YGAgroOperationalCycles.getOperationalExpensesByCrop()` debe retornar Map con cropIds y montos
+3. Verificar que cultivos sin ciclos operativos siguen mostrando datos normales (zero regression)
+
+#### Fase B.2 — EJECUTADA
+
+**Cambios aplicados:**
+
+**agro.js** — 3 zonas tocadas:
+
+1. **Merge en fuente** (L11325-11329): Despues de leer operational Maps, se mergean gastos operativos pagados en `expenseTotalsByCrop`. Esto hace que `totalCosts`, `totalInvestment`, `net`/`finalNet` (rentabilidad) incluyan automaticamente los gastos operativos vinculados al cultivo.
+
+2. **buildActiveCycleCardsData** (L10349-10350, L10385-10390, L10427-10428, L10437-10438): Destructura Maps operativos, lee por cropId, agrega `operationalGastosUsd`, `operationalPendingUsd` al card data y `gastosOperativos`, `pendientesOperativos` al desglose.
+
+3. **buildFinishedCycleCardsData** (L10457-10458, L10493-10498, L10542-10543, L10553-10554): Mismos cambios que buildActive, incluyendo `mode: 'finished'` path.
+
+**agrociclos.js** — renderCard:
+
+1. **L306-307**: Lee `desglose.gastosOperativos` y `desglose.pendientesOperativos`.
+2. **L316-317**: Lee `ciclo.operationalGastosUsd` y `ciclo.operationalPendingUsd`.
+3. **L343-356**: Agrega seccion condicional "Operativa vinculada" con `renderBreakdownSection()` entre el desglose-summary y Cartera Viva. Solo aparece si `operationalGastosUsd > 0 || operationalPendingUsd > 0`. Muestra chips Pagado/Pendiente y rows de desglose.
+
+**Flujo de datos completo:**
+```
+agroOperationalCycles.rebuildPortfolioByCrop()
+  -> state.operationalExpensesByCrop (Map<cropId, usdPagado>)
+  -> state.operationalPendingByCrop (Map<cropId, usdPendiente>)
+  -> exposeGlobalApi() -> window.YGAgroOperationalCycles.getOperationalExpensesByCrop()
+agro.js renderCrops flow:
+  -> B.1: lee API global -> popula Maps
+  -> B.2 merge: operationalExpenses += expenseTotalsByCrop -> totalCosts auto-include
+  -> B.2 card data: operationalGastosUsd, operationalPendingUsd -> desglose fields
+agrociclos.js renderCard:
+  -> Lee desglose fields
+  -> Conditional "Operativa vinculada" section con chips + rows
+```
+
+**Calculo de rentabilidad**: Ahora incluye gastos operativos pagados via merge en `expenseTotalsByCrop`. Gastos operativos pendientes son solo informativos (no afectan rentabilidad actual, reflejan deuda pendiente).
+
+**Seguridad**: Si no hay datos operativos (Map vacio), comportamiento identico al anterior. La seccion "Operativa vinculada" no aparece si ambos montos son 0.
+
+**Build**: pnpm build:gold OK (exit 0)
+
+#### QA sugerido Fase B.2
+1. Crear ciclo operativo vinculado a un cultivo con status "Pagado" (closed) y monto > 0
+2. Verificar en tarjeta del cultivo: "Gastos totales" debe incluir el monto operativo
+3. Verificar desglose: seccion "Operativa vinculada" debe aparecer con chip "Pagado" y row "Gastos operativos pagados"
+4. Crear ciclo operativo vinculado con status "No pagado" (open) y monto > 0
+5. Verificar desglose: chip "Pendiente" y row "Gastos operativos pendientes"
+6. Verificar que rentabilidad del cultivo refleja el gasto operativo pagado
+7. Cultivos SIN ciclos operativos vinculados: seccion "Operativa vinculada" NO debe aparecer
+8. Cultivos con ambos (pagados + pendientes): ambos rows visibles
+9. Mobile <=480px: verificar que la seccion "Operativa vinculada" no desborda
+
+## Sesion: Fix overlay superposicion Asistente IA + Configura tu asistente (2026-04-13)
+
+### Diagnostico
+
+Superposicion visual entre el chat del Asistente Agro y el modal "Configura tu asistente" (wizard IA).
+
+**Sintoma:** Ambos paneles compiten visualmente en el mismo plano. El backdrop del wizard es invisible contra el fondo oscuro del asistente.
+
+### Causa raiz
+
+1. **Backdrop invisible**: El overlay del wizard usa `background: rgba(0,0,0,0.7)` contra un fondo de asistente `rgba(5,5,5,0.98)`. Negro al 70% sobre fondo casi negro es visualmente indistinguible. Sin `backdrop-filter: blur()`, no hay separacion perceptible entre capas.
+
+2. **z-index fragil**: Wizard overlay `z-index: 9999` vs asistente base `z-index: 10050/10060`. En modo dedicado actual funciona (asistente es `position: static`), pero 9999 < 10050 es fragil y se romperia si el asistente se abriera como modal.
+
+### Solucion aplicada
+
+Parche minimo en CSS inyectado de `agro-ia-wizard.js`:
+- `z-index: 9999` -> `z-index: 10100` (por encima de todas las capas del asistente 10050/10060)
+- `background: rgba(0,0,0,0.7)` -> `rgba(0,0,0,0.85)` (mayor opacidad)
+- Agregado `backdrop-filter: blur(8px)` + `-webkit-backdrop-filter: blur(8px)` (separacion visual clara)
+
+### Archivos tocados
+
+| Archivo | Cambio | Lineas |
+|---|---|---|
+| `apps/gold/agro/agro-ia-wizard.js` | z-index 9999 -> 10100, opacity 0.7 -> 0.85, added backdrop-filter blur(8px) | 323-332 |
+
+### Build status
+
+`pnpm build:gold` paso limpio. 159 modules, 4.71s, UTF-8 OK.
+
+### QA sugerido
+
+1. Abrir chat del asistente agro
+2. Abrir "Configura tu asistente"
+3. Confirmar que el wizard queda en capa superior con backdrop visible que difumina el asistente
+4. Confirmar que el asistente NO compite visualmente con el wizard
+5. Cerrar wizard con X / Escape / click fuera -> chat intacto
+6. Validar desktop y movil
+7. Confirmar que no hay regresion en scroll, input o sidebar

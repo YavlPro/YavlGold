@@ -10346,6 +10346,8 @@ function buildActiveCycleCardsData(crops, options = {}) {
     const pendingTotalsByCrop = options.pendingTotalsByCrop instanceof Map ? options.pendingTotalsByCrop : null;
     const missingRateCountsByCrop = options.missingRateCountsByCrop instanceof Map ? options.missingRateCountsByCrop : null;
     const globalTotalsByCropType = options.globalTotalsByCropType instanceof Map ? options.globalTotalsByCropType : null;
+    const operationalExpenseTotalsByCrop = options.operationalExpenseTotalsByCrop instanceof Map ? options.operationalExpenseTotalsByCrop : null;
+    const operationalPendingTotalsByCrop = options.operationalPendingTotalsByCrop instanceof Map ? options.operationalPendingTotalsByCrop : null;
     const rows = Array.isArray(crops) ? crops : [];
 
     return rows.map((crop) => {
@@ -10379,6 +10381,12 @@ function buildActiveCycleCardsData(crops, options = {}) {
             : 0;
         const missingRateCount = normalizedCropId && missingRateCountsByCrop
             ? (Number(missingRateCountsByCrop.get(normalizedCropId)) || 0)
+            : 0;
+        const operationalGastosUsd = normalizedCropId && operationalExpenseTotalsByCrop
+            ? (Number(operationalExpenseTotalsByCrop.get(normalizedCropId)) || 0)
+            : 0;
+        const operationalPendingUsd = normalizedCropId && operationalPendingTotalsByCrop
+            ? (Number(operationalPendingTotalsByCrop.get(normalizedCropId)) || 0)
             : 0;
 
         const totalCosts = baseInvestment + expenseInvestment + lossesTotal;
@@ -10416,6 +10424,8 @@ function buildActiveCycleCardsData(crops, options = {}) {
             costosUsd: totalCosts,
             fiadosUsd: pendingTotal,
             perdidasUsd: lossesTotal,
+            operationalGastosUsd,
+            operationalPendingUsd,
             globalBreakdown: buildCycleGlobalBreakdown(crop, {
                 globalTotalsByCropType,
                 displayName: displayCrop.name
@@ -10424,6 +10434,8 @@ function buildActiveCycleCardsData(crops, options = {}) {
                 base: baseTriplet,
                 gastos: formatCurrency(expenseInvestment),
                 gastosDirectos: formatCurrency(directExpenseInvestment),
+                gastosOperativos: formatCurrency(operationalGastosUsd),
+                pendientesOperativos: formatCurrency(operationalPendingUsd),
                 pagados: formatCurrency(incomeTotal),
                 costos: formatCurrency(totalCosts),
                 fiados: formatCurrency(pendingTotal),
@@ -10442,6 +10454,8 @@ function buildFinishedCycleCardsData(crops, options = {}) {
     const pendingTotalsByCrop = options.pendingTotalsByCrop instanceof Map ? options.pendingTotalsByCrop : null;
     const missingRateCountsByCrop = options.missingRateCountsByCrop instanceof Map ? options.missingRateCountsByCrop : null;
     const globalTotalsByCropType = options.globalTotalsByCropType instanceof Map ? options.globalTotalsByCropType : null;
+    const operationalExpenseTotalsByCrop = options.operationalExpenseTotalsByCrop instanceof Map ? options.operationalExpenseTotalsByCrop : null;
+    const operationalPendingTotalsByCrop = options.operationalPendingTotalsByCrop instanceof Map ? options.operationalPendingTotalsByCrop : null;
     const groupType = String(options.groupType || '').toLowerCase().trim();
     const rows = Array.isArray(crops) ? crops : [];
 
@@ -10475,6 +10489,12 @@ function buildFinishedCycleCardsData(crops, options = {}) {
             : 0;
         const missingRateCount = normalizedCropId && missingRateCountsByCrop
             ? (Number(missingRateCountsByCrop.get(normalizedCropId)) || 0)
+            : 0;
+        const operationalGastosUsd = normalizedCropId && operationalExpenseTotalsByCrop
+            ? (Number(operationalExpenseTotalsByCrop.get(normalizedCropId)) || 0)
+            : 0;
+        const operationalPendingUsd = normalizedCropId && operationalPendingTotalsByCrop
+            ? (Number(operationalPendingTotalsByCrop.get(normalizedCropId)) || 0)
             : 0;
 
         const totalCosts = baseInvestment + expenseInvestment + lossesTotal;
@@ -10519,6 +10539,8 @@ function buildFinishedCycleCardsData(crops, options = {}) {
             costosUsd: totalCosts,
             fiadosUsd: pendingTotal,
             perdidasUsd: lossesTotal,
+            operationalGastosUsd,
+            operationalPendingUsd,
             mode: 'finished',
             globalBreakdown: buildCycleGlobalBreakdown(crop, {
                 globalTotalsByCropType,
@@ -10528,6 +10550,8 @@ function buildFinishedCycleCardsData(crops, options = {}) {
                 base: baseTriplet,
                 gastos: formatCurrency(expenseInvestment),
                 gastosDirectos: formatCurrency(directExpenseInvestment),
+                gastosOperativos: formatCurrency(operationalGastosUsd),
+                pendientesOperativos: formatCurrency(operationalPendingUsd),
                 pagados: formatCurrency(incomeTotal),
                 costos: formatCurrency(totalCosts),
                 fiados: formatCurrency(pendingTotal),
@@ -11290,6 +11314,19 @@ export async function loadCrops() {
                 pendingTransferredUnitTotals
             );
             if (requestId !== cropsLoadSeq) return;
+
+            const opsApi = typeof window !== 'undefined' ? window.YGAgroOperationalCycles : null;
+            if (opsApi?.getOperationalExpensesByCrop) {
+                operationalExpenseTotalsByCrop = opsApi.getOperationalExpensesByCrop();
+            }
+            if (opsApi?.getOperationalPendingByCrop) {
+                operationalPendingTotalsByCrop = opsApi.getOperationalPendingByCrop();
+            }
+            operationalExpenseTotalsByCrop.forEach((amount, cropId) => {
+                if (amount > 0) {
+                    expenseTotalsByCrop.set(cropId, (expenseTotalsByCrop.get(cropId) || 0) + amount);
+                }
+            });
         } else {
             publishBuyerPortfolioState();
         }
