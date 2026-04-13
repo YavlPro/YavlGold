@@ -32,6 +32,8 @@ netlify.toml
 Thumbs.db
 .vscode/
 .idea/
+.obsidian/
+*.base
 *.swp
 *.swo
 *~

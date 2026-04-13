@@ -61,6 +61,8 @@ Doc roadmapv9.2.html
 Thumbs.db
 .vscode/
 .idea/
+.obsidian/
+*.base
 *.swp
 *.swo
 *~
