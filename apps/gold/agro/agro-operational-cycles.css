@@ -547,6 +547,21 @@ body.agro-operational-modal-open {
   display: grid;
 }
 
+.agro-operational-edit-form {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.agro-operational-edit-form .agro-operational-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.agro-operational-edit-form .input-group--full {
+  grid-column: 1 / -1;
+}
+
 .agro-operational-feedback {
   display: none;
   padding: 0.8rem 0.9rem;

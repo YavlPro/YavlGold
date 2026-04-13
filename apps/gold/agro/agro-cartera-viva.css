@@ -73,13 +73,12 @@
   gap: 0.7rem;
   padding: 0.9rem;
   border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-neutral);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 6%, transparent), transparent 22%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.018), transparent 58%),
+    linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 4%, transparent), transparent 20%),
     var(--bg-1);
   box-shadow:
-    0 14px 28px rgba(0, 0, 0, 0.24),
+    0 4px 12px rgba(0, 0, 0, 0.14),
     inset 0 1px 0 rgba(255, 255, 255, 0.025);
 }
 
@@ -1637,12 +1636,11 @@
 .cartera-viva-detail__summary {
   border-color: var(--border-neutral);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--gold-5) 8%, transparent), transparent 18%),
-    linear-gradient(135deg, color-mix(in srgb, var(--gold-4) 8%, transparent), transparent 54%),
+    linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 5%, transparent), transparent 20%),
     var(--bg-0);
   box-shadow:
     var(--shadow-gold-xs),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .cartera-viva-view__header::before,
@@ -1725,12 +1723,11 @@
   gap: 0.38rem;
   padding: 0.6rem 0.68rem;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 6%, transparent), transparent 20%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.02), transparent 62%),
+    linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 4%, transparent), transparent 22%),
     var(--bg-0);
   box-shadow:
-    0 10px 24px rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.025);
+    0 4px 12px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
   transition:
     transform 180ms ease,
     border-color 180ms ease,
@@ -1860,10 +1857,10 @@
   display: grid;
   gap: 0.65rem;
   place-items: center;
-  padding: 2rem 1.2rem;
+  padding: 1.6rem 1rem;
   border-radius: var(--radius-lg);
-  border: 1px dashed rgba(255, 255, 255, 0.12);
-  background: rgba(17, 17, 19, 0.92);
+  border: 1px dashed var(--border-gold);
+  background: var(--bg-1);
   text-align: center;
 }
 

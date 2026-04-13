@@ -1538,11 +1538,105 @@ function restoreWizardFocusState(snapshot) {
     }
 }
 
+function renderEditForm(focusSnapshot) {
+    const values = state.form.values;
+
+    state.refs.formEyebrow.textContent = '✏️ Edición directa';
+    state.refs.formTitle.textContent = '✏️ Editar cartera operativa';
+    state.refs.formCopy.textContent = 'Modifica los campos necesarios y guarda. Todos los cambios se aplican de una vez.';
+
+    state.refs.wizardHost.innerHTML = `
+        <form id="agro-operational-form" class="agro-operational-form agro-operational-form--modal" novalidate>
+            <div class="agro-operational-form__body">
+                <div class="agro-operational-edit-form">
+                    <div class="agro-operational-form-grid">
+                        <div class="input-group input-group--full">
+                            <label class="input-label" for="agro-operational-name">Nombre del ciclo</label>
+                            <input type="text" id="agro-operational-name" class="styled-input" maxlength="140" placeholder="Ej: Botas de cuero Titan" required data-operational-draft="name" value="${escapeAttr(values.name)}">
+                        </div>
+                        <div class="input-group input-group--full">
+                            <label class="input-label" for="agro-operational-description">Descripción</label>
+                            <textarea id="agro-operational-description" class="styled-input" placeholder="Contexto opcional sobre el ciclo." data-operational-draft="description">${escapeHtml(values.description)}</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label" for="agro-operational-economic-type">Tipo económico</label>
+                            <select id="agro-operational-economic-type" class="styled-input" data-operational-draft="economicType">
+                                ${buildSelectOptionsMarkup(ECONOMIC_TYPE_OPTIONS, values.economicType)}
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label" for="agro-operational-category">Categoría</label>
+                            <select id="agro-operational-category" class="styled-input" data-operational-draft="category">
+                                ${buildSelectOptionsMarkup(CATEGORY_OPTIONS, values.category)}
+                            </select>
+                        </div>
+                        <div class="input-group input-group--full">
+                            <label class="input-label" for="agro-operational-crop">Cultivo asociado</label>
+                            <select id="agro-operational-crop" class="styled-input" data-operational-draft="cropId">
+                                ${buildCropOptionsMarkup(values.cropId)}
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label" for="agro-operational-amount">Monto</label>
+                            <input type="number" id="agro-operational-amount" class="styled-input" step="any" min="0" placeholder="0.00" data-operational-draft="amount" value="${escapeAttr(values.amount)}">
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label" for="agro-operational-currency">Moneda</label>
+                            <select id="agro-operational-currency" class="styled-input" data-operational-draft="currency">
+                                ${buildSelectOptionsMarkup(CURRENCY_OPTIONS.map((c) => ({ value: c, label: c })), values.currency)}
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label" for="agro-operational-date">Fecha</label>
+                            <input type="date" id="agro-operational-date" class="styled-input" data-operational-draft="movementDate" value="${escapeAttr(values.movementDate)}">
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label" for="agro-operational-quantity">Cantidad</label>
+                            <input type="number" id="agro-operational-quantity" class="styled-input" step="any" min="0" placeholder="0" data-operational-draft="quantity" value="${escapeAttr(values.quantity)}">
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label" for="agro-operational-unit-type">Unidad</label>
+                            <select id="agro-operational-unit-type" class="styled-input" data-operational-draft="unitType">
+                                ${buildSelectOptionsMarkup(UNIT_TYPE_OPTIONS, values.unitType)}
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label" for="agro-operational-status">Estado</label>
+                            <select id="agro-operational-status" class="styled-input" data-operational-draft="status">
+                                ${buildSelectOptionsMarkup(STATUS_OPTIONS, values.status)}
+                            </select>
+                        </div>
+                        <div class="input-group input-group--full">
+                            <label class="input-label" for="agro-operational-notes">Observaciones</label>
+                            <textarea id="agro-operational-notes" class="styled-input" placeholder="Notas adicionales." data-operational-draft="notes">${escapeHtml(values.notes)}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="agro-operational-form-actions">
+                <button type="button" class="btn agro-operational-form-actions__cancel" data-operational-action="cancel-form">❌ Cancelar</button>
+                <button type="submit" class="btn btn-primary">💾 Guardar cambios</button>
+            </div>
+        </form>
+    `;
+
+    cacheDynamicRefs();
+    setControlsDisabled(state.schemaMissing || state.saving);
+    restoreWizardFocusState(focusSnapshot);
+}
+
 function renderWizard() {
     if (!state.refs?.wizardHost) return;
 
     const focusSnapshot = captureWizardFocusState();
     const isEdit = state.form.mode === 'edit';
+
+    if (isEdit) {
+        renderEditForm(focusSnapshot);
+        return;
+    }
+
     const values = state.form.values;
     const currentStep = Number(state.form.step || 1);
     const currentStepMeta = WIZARD_STEPS.find((step) => step.id === currentStep) || WIZARD_STEPS[0];
@@ -1551,11 +1645,9 @@ function renderWizard() {
     const parsedQuantity = toNullableNumber(values.quantity, 'La cantidad');
     const effectiveStatus = readLabel(STATUS_OPTIONS, values.status, '🟡 No pagado');
 
-    state.refs.formEyebrow.textContent = `${isEdit ? '✏️ Edición guiada' : '➕ Creación guiada'} · ${currentStepMeta.eyebrow}`;
-    state.refs.formTitle.textContent = isEdit ? '✏️ Editar cartera operativa' : '➕ Nueva cartera operativa';
-    state.refs.formCopy.textContent = isEdit
-        ? 'Ajusta el mismo ciclo con un paso a la vez, igual al ritmo visual de Nuevo Cultivo.'
-        : 'Guíate paso a paso para crear el ciclo, registrar el movimiento inicial y decidir si se cierra hoy mismo.';
+    state.refs.formEyebrow.textContent = `➕ Creación guiada · ${currentStepMeta.eyebrow}`;
+    state.refs.formTitle.textContent = '➕ Nueva cartera operativa';
+    state.refs.formCopy.textContent = 'Guíate paso a paso para crear el ciclo, registrar el movimiento inicial y decidir si se cierra hoy mismo.';
 
     state.refs.wizardHost.innerHTML = `
         <form id="agro-operational-form" class="agro-operational-form agro-operational-form--modal" novalidate>
@@ -2868,7 +2960,9 @@ function validateStep(step) {
         if (step === 2) {
             ensureAllowedValue(values.economicType, ECONOMIC_TYPE_OPTIONS.map((option) => option.value), 'Tipo económico no valido.');
             ensureAllowedValue(values.category, CATEGORY_OPTIONS.map((option) => option.value), 'Categoría no valida.');
-            ensureLocalCropSelection(values.cropId);
+            if (!state.editId) {
+                ensureLocalCropSelection(values.cropId);
+            }
         }
 
         if (step === 3) {
@@ -3046,11 +3140,11 @@ function updateDraftFromField(field, value) {
     }
 
     if (field === 'economicType' || field === 'status' || field === 'cropId' || field === 'unitType') {
-        renderWizard();
+        if (!state.editId) renderWizard();
     }
 
     if (state.form.step === 4 && ['amount', 'currency', 'movementDate', 'quantity', 'description', 'name', 'category'].includes(field)) {
-        renderWizard();
+        if (!state.editId) renderWizard();
     }
 }
 

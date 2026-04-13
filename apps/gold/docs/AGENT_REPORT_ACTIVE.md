@@ -15603,3 +15603,73 @@ Agente anterior se quedo sin cuota a mitad del trabajo. Se revisaron los 3 diffs
 - `resolveRecordActionLabel` declarada sin usar (L1371, hint TS) — preexistente, no tocada
 - Variable `pending` declarada sin usar (L1000, hint TS) — preexistente, no tocada
 - La compactacion reduce ~25% de padding/gap visual. Si el usuario siente que es demasiado agresiva, se puede ajustar con un solo cambio en CSS.
+
+## Sesion: Edicion directa + Alineacion visual CV (2026-04-13)
+
+### Diagnostico
+
+**Problema A (Bug edicion):** El wizard de 4 pasos se usa tanto para crear como para editar. Al editar, el usuario tiene que recorrer los 4 pasos para un cambio simple. Ademas, `ensureLocalCropSelection` en Step 2 validation puede fallar si el cultivo asociado fue eliminado, bloqueando el avance.
+
+**Problema B (UX edicion):** La edicion reutiliza el mismo wizard largo de creacion. Regla canonica: Crear = experiencia guiada paso a paso; Editar = experiencia compacta y directa.
+
+**Problema C (CV visual):** Cartera Viva usa gradientes pesados (multiple layers), sombras profundas (`0 14px 28px`), y fondos oscuros que la separan visualmente del patron de Ciclos (mas limpio, sombras suaves, bordes gold).
+
+### Causa raiz
+
+- **A+B:** `renderWizard()` no distinguia entre crear y editar — ambos usaban el mismo template de 4 pasos con stepper, paneles hidden y validacion step-by-step.
+- **C:** Tratamiento visual heredado (previo a ADN V10) que no se alineo con el patron mas limpio de Ciclos Activos/Finalizados.
+
+### Opciones evaluadas
+
+| Opcion | Descripcion | Riesgo |
+|--------|-------------|--------|
+| A | Fix wizard para editar (skip steps, etc.) | Alto — parche sobre parche, wizard ya es complejo |
+| B | Modal nuevo separado para editar | Medio — nuevo modal, mas CSS, mas HTML |
+| C | Branch en renderWizard: edit usa form compacto | Bajo — reusa modal existente, mismo CSS, minimo diff |
+
+### Opcion recomendada y aplicada: C
+
+`renderWizard()` ahora bifurca: si `isEdit` → `renderEditForm()` (compacto, un solo paso); si no → wizard de 4 pasos (solo creacion).
+
+### Cambios aplicados
+
+| Archivo | Cambio | Lineas |
+|---|---|---|
+| `agroOperationalCycles.js` | Nuevo `renderEditForm()` — formulario compacto con todos los campos en un grid 2-columnas (nombre, descripcion, tipo economico, categoria, cultivo, monto, moneda, fecha, cantidad, unidad, estado, notas) | L1541-1625 (nueva funcion) |
+| `agroOperationalCycles.js` | `renderWizard()` bifurca: `isEdit` → `renderEditForm()`, no → wizard de 4 pasos | L1627+ |
+| `agroOperationalCycles.js` | `validateStep(2)`: skip `ensureLocalCropSelection` en edit mode (el crop ya fue validado al crear) | L2963 |
+| `agroOperationalCycles.js` | `updateDraftFromField`: re-render solo en modo creacion (evita flickering en edit) | L3142-3149 |
+| `agro-operational-cycles.css` | Nuevo `.agro-operational-edit-form` con grid 2-col + gap | L542-556 |
+| `agro-cartera-viva.css` | Header: sombra `0 14px 28px` → `0 4px 12px`, gradiente simplificado (1 layer vs 2) | L69-84 |
+| `agro-cartera-viva.css` | Empty state: border `rgba(255,255,255,0.12)` → `var(--border-gold)`, bg `rgba(17,17,19,0.92)` → `var(--bg-1)` | L1859-1867 |
+| `agro-cartera-viva.css` | Card ADN V10: sombra `0 10px 24px` → `0 4px 12px`, gradiente simplificado | L1723-1730 |
+| `agro-cartera-viva.css` | Summary strip/detail ADN V10: gradiente simplificado (1 layer vs 2) | L1635-1644 |
+
+### Build status
+
+`pnpm build:gold` paso limpio. 159 modules, 2.13s, UTF-8 OK.
+
+### QA sugerido
+
+**Edicion (Problema A+B):**
+1. Abrir Cartera Operativa
+2. Hacer clic en "✏️ Editar" en cualquier ciclo → debe abrir formulario compacto (NO wizard de 4 pasos)
+3. Verificar que todos los campos estan pre-llenados con los datos del ciclo
+4. Cambiar nombre y guardar → debe funcionar sin error
+5. Cambiar estado y guardar → debe reflejarse correctamente
+6. Cambiar cultivo y guardar → debe funcionar
+7. Cancelar → debe cerrar sin guardar
+8. Crear ciclo nuevo → wizard de 4 pasos sigue funcionando igual
+
+**Cartera Viva (Problema C):**
+9. Verificar que header se siente visualmente alineado con Ciclos (misma familia, sin ser identico)
+10. Verificar que empty state usa borde gold (consistente con Ciclos)
+11. Verificar que cards se sienten mas ligeras (menos sombra)
+12. Mobile ≤480px: verificar que edit form es responsive
+13. Desktop: verificar grid 2-columnas en edit form
+
+### Riesgos / Deuda tecnica
+
+- `createDraftValues` aun tiene `closeOnSave: false` — campo muerto tras los cambios del agente anterior. Se puede limpiar en proxima sesion sin urgencia.
+- El edit form reusa los mismos IDs que el wizard (`agro-operational-name`, etc.). No hay conflicto porque solo uno u otro se renderiza.
+- El formulario compacto no muestra el stepper visual ni el resumen de confirmacion. Esto es intencional (edicion directa). Si se desea un resumen previo al guardado, se puede agregar como vista previa en el futuro.
