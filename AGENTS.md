@@ -391,4 +391,88 @@ Es el que:
 
 ---
 
+## §12 — Obsidian + Agent Skills (Policy canónica)
+
+### Propósito
+Obsidian se usa como **capa de memoria documental y navegación visual** de YavlGold.
+No es la fuente de verdad del código ni debe contaminar el repo del producto.
+
+### Regla de oro
+**El repo de YavlGold es canónico. El vault de Obsidian refleja, navega y relaciona.**
+Si existe conflicto entre lo que está en el repo y lo que está en el vault, **manda el repo**.
+
+### Arquitectura activa
+YavlGold usa un modelo **híbrido**:
+
+- **Repo canónico**: código, documentación oficial, reportes, crónicas, índices y contexto técnico.
+- **Vault Obsidian**: lectura, grafo, wikilinks, canvas, memoria viva y navegación documental.
+- **Agent Skills**: viven en las rutas del agente, no dentro del código del producto.
+
+### Rutas activas conocidas
+- **Repo YavlGold**: `C:\Users\yerik\gold`
+- **Vault Obsidian**: `C:\Users\yerik\OneDrive\Documentos\Obsidian Vault\`
+- **Codex CLI skills**: `C:\Users\yerik\.codex\skills\`
+- **OpenCode skills**: `C:\Users\yerik\.opencode\skills\obsidian-skills\`
+
+### Skills prioritarias
+Las skills prioritarias de Obsidian para agentes son:
+- `obsidian-markdown`
+- `json-canvas`
+- `obsidian-cli`
+
+Skills secundarias/opcionales:
+- `obsidian-bases`
+- `defuddle`
+
+### Prohibiciones
+Los agentes NO deben:
+- instalar tooling de Obsidian dentro de `apps/gold`
+- meter skills dentro del repo del producto sin instrucción explícita
+- duplicar docs masivamente entre repo y vault sin justificación
+- tratar el vault como fuente canónica del proyecto
+- modificar `.obsidian` del repo sin razón fuerte y documentada
+- reorganizar el vault o el repo de forma invasiva
+
+### Flujo correcto de trabajo
+Cuando un agente trabaje con documentación de YavlGold:
+
+1. **Leer primero desde el repo canónico**
+2. Editar docs canónicos en el repo cuando corresponda
+3. Reflejar/sincronizar al vault solo si aporta valor de navegación, memoria o grafo
+4. Mantener `AGENT_CONTEXT_INDEX` como mapa central del vault
+5. Mantener la jerarquía documental clara:
+
+- **Ley operativa** → `AGENTS.md`
+- **Ley visual** → ADN Visual V10
+- **Mapa central** → `AGENT_CONTEXT_INDEX.md`
+- **Estado vivo** → `AGENT_REPORT_ACTIVE.md`
+- **Memoria histórica** → `CRONICA-YAVLGOLD.md` y crónicas mensuales
+
+### Regla de sincronización
+Si un documento existe tanto en repo como en vault:
+- el **repo** es la fuente de verdad
+- el **vault** es una copia de lectura / organización / visualización
+- si hay desincronización, debe corregirse tomando como referencia el repo
+
+### Claude Code / Codex / OpenCode
+- **Codex CLI** debe usar las skills en su ruta estándar local
+- **OpenCode** debe usar el repo completo de `obsidian-skills` en su ruta de skills
+- **Claude Code** solo debe configurarse si realmente se va a usar con el vault; no instalar por instalar
+
+### Mantenimiento
+Si en el futuro se automatiza la sincronización repo → vault, esa automatización debe:
+- vivir fuera del código del producto
+- ser simple y reversible
+- quedar documentada en este archivo y/o en la documentación operativa correspondiente
+
+### Criterio de éxito
+La integración Obsidian ↔ YavlGold es correcta cuando:
+- el repo sigue limpio
+- el vault sigue útil
+- el grafo/documentación ganan claridad
+- los agentes entienden rápido el sistema
+- no aparece un carnaval de duplicados, rutas raras o tooling fuera de lugar
+
+---
+
 © 2026 YavlGold · AGENTS.md — Instrucciones Canónicas
