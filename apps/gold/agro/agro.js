@@ -14273,11 +14273,13 @@ function renderAssistantHistory() {
     const messages = preloadThreadMessages(assistantState.activeThreadId);
     clearElement(container);
 
+    // Toggle welcome visibility
+    const welcome = document.getElementById('ast-welcome');
+    if (welcome) {
+        welcome.style.display = messages.length === 0 ? '' : 'none';
+    }
+
     if (!messages.length) {
-        const empty = document.createElement('div');
-        empty.className = 'assistant-empty';
-        empty.textContent = 'Inicia una conversacion para ver respuestas reales.';
-        container.appendChild(empty);
         syncAssistantGuideLayout({ messagesCount: 0 });
         return;
     }
@@ -14332,9 +14334,11 @@ function setAssistantLoading(isLoading) {
 
 function setAssistantDrawerOpen(open) {
     const shell = document.getElementById('assistant-shell');
+    const sidebar = document.getElementById('assistant-sidebar');
     const overlay = document.getElementById('assistant-drawer-overlay');
     if (!shell || !overlay) return;
     shell.classList.toggle('drawer-open', open);
+    sidebar?.classList.toggle('open', open);
     overlay.classList.toggle('is-visible', open);
 }
 
@@ -14390,6 +14394,7 @@ function addAssistantMessage({ role, text }) {
     renderThreadList();
     renderAssistantHistory();
     scrollAssistantToBottom();
+    updateAssistantStats();
 }
 
 function appendAssistantMessage(role, text) {
@@ -14464,46 +14469,45 @@ function updateAssistantCooldownUI() {
     const cooldownEl = document.getElementById('assistant-cooldown');
     if (!sendBtn || !cooldownEl) return 0;
 
-    // V9.7: Enhanced UI states
     const now = Date.now();
     const queueLen = assistantRuntime.queue.length;
 
     // Priority 1: In-flight
     if (assistantRuntime.inFlight) {
-        sendBtn.textContent = 'Enviando...';
+        sendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>';
         sendBtn.disabled = true;
         cooldownEl.textContent = queueLen > 0 ? `En cola (${queueLen})` : '';
         return 1;
     }
 
-    // Priority 2: 429 Backoff (lockUntil from cooldown state)
+    // Priority 2: 429 Backoff
     const { remaining, mode } = getCooldownRemainingMs();
     if (remaining > 0) {
         const seconds = Math.ceil(remaining / 1000);
         if (mode === 'lock') {
-            sendBtn.textContent = `Espera ${seconds}s`;
+            sendBtn.innerHTML = '<i class="fa-solid fa-lock" aria-hidden="true"></i>';
             cooldownEl.textContent = `Limite IA: espera ${seconds}s`;
         } else {
-            sendBtn.textContent = `Espera ${seconds}s`;
-            cooldownEl.textContent = `Espera ${seconds}s (modo eficiente)`;
+            sendBtn.innerHTML = '<i class="fa-solid fa-clock" aria-hidden="true"></i>';
+            cooldownEl.textContent = `Espera ${seconds}s`;
         }
         sendBtn.disabled = true;
         if (queueLen > 0) {
-            cooldownEl.textContent += ` • En cola (${queueLen})`;
+            cooldownEl.textContent += ` · En cola (${queueLen})`;
         }
         return remaining;
     }
 
-    // Priority 3: Queue pending but no cooldown
+    // Priority 3: Queue pending
     if (queueLen > 0) {
-        sendBtn.textContent = 'Enviar';
+        sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane" aria-hidden="true"></i>';
         sendBtn.disabled = false;
         cooldownEl.textContent = `En cola (${queueLen})`;
         return 0;
     }
 
     // Default: Ready
-    sendBtn.textContent = 'Enviar';
+    sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane" aria-hidden="true"></i>';
     sendBtn.disabled = false;
     cooldownEl.textContent = '';
     return 0;
@@ -14977,13 +14981,13 @@ function isLikelyNonAgroQuestion(text) {
 
 function syncAssistantGuideLayout({ messagesCount = 0, forceCollapse = false } = {}) {
     const guide = document.getElementById('assistant-guide');
-    const toggle = document.getElementById('assistant-guide-toggle');
-    if (!guide || !toggle) return;
-
+    if (!guide) return;
+    // Guide is now a <details> element — close it when messages exist
     const isMobile = window.matchMedia('(max-width: 640px)').matches;
     const shouldCollapse = (messagesCount > 0) || (forceCollapse && isMobile);
-    guide.classList.toggle('is-collapsed', shouldCollapse);
-    toggle.setAttribute('aria-expanded', shouldCollapse ? 'false' : 'true');
+    if (shouldCollapse) {
+        guide.removeAttribute('open');
+    }
 }
 
 function openAgroAssistant() {
@@ -15003,6 +15007,8 @@ function openAgroAssistant() {
         syncAssistantGuideLayout({ messagesCount: initialMessages.length, forceCollapse: true });
         updateAssistantCooldownUI();
         startAssistantCooldownTimer();
+        updateAssistantStats();
+        refreshContextPanel();
         const input = document.getElementById('agro-assistant-input');
         requestAnimationFrame(() => input?.focus({ preventScroll: true }));
     } catch (err) {
@@ -15125,7 +15131,6 @@ function initAgroAssistantModal() {
     document.__agroAssistantBound = true;
 
     const modal = document.getElementById('modal-agro-assistant');
-    const openBtn = document.getElementById('btn-open-agro-assistant');
     const closeBtn = document.getElementById('btn-close-agro-assistant');
     const sendBtn = document.getElementById('btn-assistant-send');
     const templateBtn = document.getElementById('btn-assistant-template');
@@ -15133,7 +15138,7 @@ function initAgroAssistantModal() {
     const newThreadBtn = document.getElementById('assistant-new-thread');
     const drawerToggle = document.getElementById('assistant-drawer-toggle');
     const drawerOverlay = document.getElementById('assistant-drawer-overlay');
-    const guideToggle = document.getElementById('assistant-guide-toggle');
+    const mobileSidebarClose = document.getElementById('ast-mobile-sidebar-close');
 
     if (!modal) return;
 
@@ -15141,12 +15146,15 @@ function initAgroAssistantModal() {
     newThreadBtn?.addEventListener('click', createNewThreadAndActivate);
     drawerToggle?.addEventListener('click', () => setAssistantDrawerOpen(true));
     drawerOverlay?.addEventListener('click', () => setAssistantDrawerOpen(false));
+    mobileSidebarClose?.addEventListener('click', () => setAssistantDrawerOpen(false));
 
-    guideToggle?.addEventListener('click', () => {
-        const guide = document.getElementById('assistant-guide');
-        if (!guide) return;
-        const collapsed = guide.classList.toggle('is-collapsed');
-        guideToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    // Template button (hidden but wired for compat)
+    templateBtn?.addEventListener('click', () => {
+        const template = 'Cultivo: ... | Etapa: ... | Sintoma: ... | Ubicacion/clima: ... | Que intente: ... | Que necesito: ...';
+        if (input) {
+            input.value = template;
+            input.focus();
+        }
     });
 
     modal.addEventListener('click', (event) => {
@@ -15158,23 +15166,109 @@ function initAgroAssistantModal() {
         }
     });
 
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && modal.classList.contains('is-open')) {
-            closeAgroAssistant();
+    // Context panel toggle
+    const toggleContextBtn = document.getElementById('ast-toggle-context');
+    const closeContextBtn = document.getElementById('ast-close-context');
+    const contextPanel = document.getElementById('ast-context-panel');
+
+    function toggleContextPanel() {
+        if (!contextPanel) return;
+        contextPanel.classList.toggle('collapsed');
+        toggleContextBtn?.classList.toggle('active', !contextPanel.classList.contains('collapsed'));
+        if (!contextPanel.classList.contains('collapsed')) {
+            refreshContextPanel();
+        }
+    }
+
+    toggleContextBtn?.addEventListener('click', toggleContextPanel);
+    closeContextBtn?.addEventListener('click', toggleContextPanel);
+
+    // Export modal
+    const exportBtn = document.getElementById('ast-export-chat');
+    const exportModal = document.getElementById('ast-export-modal');
+    const closeExportBtn = document.getElementById('ast-close-export');
+    const cancelExportBtn = document.getElementById('ast-cancel-export');
+    const confirmExportBtn = document.getElementById('ast-confirm-export');
+
+    function showExportModal() {
+        const thread = getActiveThread();
+        if (!thread) return;
+        const messages = preloadThreadMessages(thread.id);
+        const exportData = {
+            proyecto: 'YavlGold Agro',
+            exportado: new Date().toISOString(),
+            conversacion: {
+                titulo: thread.title,
+                mensajes: messages.map(m => ({
+                    rol: m.role,
+                    contenido: m.text,
+                    fecha: new Date(m.ts).toISOString()
+                }))
+            }
+        };
+        const preview = document.getElementById('ast-export-preview');
+        if (preview) preview.textContent = JSON.stringify(exportData, null, 2);
+        exportModal?.classList.remove('hidden');
+    }
+
+    function closeExportModal() {
+        exportModal?.classList.add('hidden');
+    }
+
+    function downloadExport() {
+        const preview = document.getElementById('ast-export-preview');
+        if (!preview?.textContent) return;
+        const blob = new Blob([preview.textContent], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `yavlgold-agro-export-${Date.now()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        closeExportModal();
+        showAssistantToast('Exportacion descargada');
+    }
+
+    exportBtn?.addEventListener('click', showExportModal);
+    closeExportBtn?.addEventListener('click', closeExportModal);
+    cancelExportBtn?.addEventListener('click', closeExportModal);
+    confirmExportBtn?.addEventListener('click', downloadExport);
+    exportModal?.addEventListener('click', (e) => {
+        if (e.target === exportModal) closeExportModal();
+    });
+
+    // Delete thread button (in sidebar footer)
+    const deleteThreadBtn = document.getElementById('btn-assistant-delete-thread');
+    deleteThreadBtn?.addEventListener('click', () => {
+        if (confirm('Eliminar esta conversacion?')) {
+            deleteActiveThread();
         }
     });
 
+    // Suggestions
+    const messagesContainer = document.getElementById('assistant-scroll');
+    messagesContainer?.addEventListener('click', (e) => {
+        const suggestion = e.target.closest('[data-suggestion]');
+        if (suggestion && input) {
+            input.value = suggestion.dataset.suggestion;
+            sendBtn && (sendBtn.disabled = false);
+            autoResizeInput();
+            sendAgroAssistantMessage();
+        }
+    });
+
+    // Send + input
     sendBtn?.addEventListener('click', sendAgroAssistantMessage);
 
-    templateBtn?.addEventListener('click', () => {
-        const template = 'Cultivo: ... | Etapa: ... | Sintoma: ... | Ubicacion/clima: ... | Que intente: ... | Que necesito: ...';
-        if (input) {
-            input.value = template;
-            input.focus();
-        }
-    });
-
     input?.addEventListener('input', () => {
+        autoResizeInput();
+        if (input.value.trim().length > 0) {
+            sendBtn && (sendBtn.disabled = false);
+        } else {
+            sendBtn && (sendBtn.disabled = true);
+        }
         if (!assistantCooldownTimer) updateAssistantCooldownUI();
     });
 
@@ -15185,17 +15279,126 @@ function initAgroAssistantModal() {
         }
     });
 
-    // V9.7: Delete thread button
-    const deleteThreadBtn = document.getElementById('btn-assistant-delete-thread');
-    deleteThreadBtn?.addEventListener('click', () => {
-        if (confirm('¿Eliminar esta conversacion?')) {
-            deleteActiveThread();
+    // Escape key
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            setAssistantDrawerOpen(false);
+            if (contextPanel && !contextPanel.classList.contains('collapsed')) {
+                contextPanel.classList.add('collapsed');
+                toggleContextBtn?.classList.remove('active');
+            }
+            if (exportModal && !exportModal.classList.contains('hidden')) {
+                closeExportModal();
+            }
         }
     });
 
     window.openAgroAssistantInline = openAgroAssistant;
 
-    console.info('[AGRO] assistant with queue/anti-429 wired');
+    console.info('[AGRO] assistant V2 redesign wired');
+}
+
+// V2: Auto-resize textarea
+function autoResizeInput() {
+    const input = document.getElementById('agro-assistant-input');
+    if (!input) return;
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 110) + 'px';
+}
+
+// V2: Update stats counter in sidebar
+function updateAssistantStats() {
+    const statEl = document.getElementById('ast-stat-messages');
+    if (!statEl) return;
+    let total = 0;
+    Object.values(assistantState.messagesByThreadId).forEach(msgs => {
+        if (Array.isArray(msgs)) total += msgs.length;
+    });
+    statEl.textContent = total;
+}
+
+// V2: Refresh context panel with real data
+function refreshContextPanel() {
+    const ctx = getAssistantContext();
+    if (!ctx) return;
+
+    // Profile section
+    const profileItems = document.getElementById('ast-ctx-profile-items');
+    const profileEmpty = document.getElementById('ast-ctx-profile-empty');
+    if (profileItems) {
+        clearElement(profileItems);
+        const profile = ctx.user_profile;
+        if (profile && (profile.name || profile.farm || profile.experience)) {
+            profileEmpty && (profileEmpty.style.display = 'none');
+            if (profile.name) appendContextItem(profileItems, 'Nombre', profile.name);
+            if (profile.farm) appendContextItem(profileItems, 'Finca', profile.farm);
+            if (profile.experience) appendContextItem(profileItems, 'Experiencia', profile.experience);
+            if (profile.farm_type) appendContextItem(profileItems, 'Tipo', profile.farm_type);
+            if (profile.location) appendContextItem(profileItems, 'Ubicacion', profile.location);
+        } else {
+            profileEmpty && (profileEmpty.style.display = '');
+        }
+    }
+
+    // Crops section
+    const cropsItems = document.getElementById('ast-ctx-crops-items');
+    const cropsEmpty = document.getElementById('ast-ctx-crops-empty');
+    if (cropsItems) {
+        clearElement(cropsItems);
+        const cropCtx = ctx.crop_focus;
+        if (cropCtx && cropCtx.name) {
+            cropsEmpty && (cropsEmpty.style.display = 'none');
+            appendContextItem(cropsItems, 'Cultivo activo', `${cropCtx.name}${cropCtx.variety ? ' (' + cropCtx.variety + ')' : ''}`);
+            if (cropCtx.status) appendContextItem(cropsItems, 'Estado', cropCtx.status);
+            if (cropCtx.day_x && cropCtx.day_total) appendContextItem(cropsItems, 'Progreso', `Dia ${cropCtx.day_x}/${cropCtx.day_total}`);
+        }
+        const cropsCount = ctx.stats?.crops_count;
+        if (cropsCount) {
+            appendContextItem(cropsItems, 'Total cultivos', String(cropsCount));
+            cropsEmpty && (cropsEmpty.style.display = 'none');
+        }
+        if (!cropCtx?.name && !cropsCount) {
+            cropsEmpty && (cropsEmpty.style.display = '');
+        }
+    }
+
+    // Weather section
+    const weatherItems = document.getElementById('ast-ctx-weather-items');
+    const weatherEmpty = document.getElementById('ast-ctx-weather-empty');
+    if (weatherItems) {
+        clearElement(weatherItems);
+        const weather = ctx.weather_now;
+        if (weather && (weather.summary || weather.temp_c)) {
+            weatherEmpty && (weatherEmpty.style.display = 'none');
+            if (weather.summary) appendContextItem(weatherItems, 'Condicion', weather.summary);
+            if (weather.temp_c) appendContextItem(weatherItems, 'Temperatura', `${weather.temp_c}°C`);
+            if (weather.humidity) appendContextItem(weatherItems, 'Humedad', `${weather.humidity}%`);
+        } else {
+            weatherEmpty && (weatherEmpty.style.display = '');
+        }
+    }
+
+    // Location section
+    const locationItems = document.getElementById('ast-ctx-location-items');
+    const locationEmpty = document.getElementById('ast-ctx-location-empty');
+    if (locationItems) {
+        clearElement(locationItems);
+        const loc = ctx.location_real;
+        if (loc && (loc.label || (loc.lat && loc.lon))) {
+            locationEmpty && (locationEmpty.style.display = 'none');
+            if (loc.label) appendContextItem(locationItems, 'Lugar', loc.label);
+            if (loc.lat && loc.lon) appendContextItem(locationItems, 'Coords', `${loc.lat.toFixed(4)}, ${loc.lon.toFixed(4)}`);
+        } else {
+            locationEmpty && (locationEmpty.style.display = '');
+        }
+    }
+}
+
+function appendContextItem(container, key, value) {
+    const item = document.createElement('div');
+    item.className = 'ast-ctx-item';
+    item.innerHTML = `<strong>${key}:</strong> ${value}`;
+    container.appendChild(item);
 }
 
 function getTopIncomeCategoryFromCache(days = 365) {

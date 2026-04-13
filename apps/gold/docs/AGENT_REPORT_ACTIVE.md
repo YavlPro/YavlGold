@@ -2,6 +2,100 @@
 
 Resumen operativo actual de `apps/gold`.
 
+## Sesion activa: Rediseño visual Asistente IA Agro — inspirado en chat ia new.html (2026-04-12)
+
+### Diagnostico
+
+**Estado actual:** El Asistente IA de Agro funciona pero se ve inferior al ejemplo de referencia (`chat ia new.html`). Layout basico con sidebar de historial simple, header plano, burbujas sin jerarquia visual clara, input basico, sin panel de memoria/contexto, sin welcome state premium, responsive limitado.
+
+**Qué tomar del HTML de referencia:**
+- Arquitectura 3-columnas (sidebar historial + chat principal + panel memoria colapsable)
+- Header premium con identidad del asistente + acciones integradas
+- Welcome state con sugerencias iniciales
+- Input premium con autosize + hint de teclado
+- Mensajes con avatares, meta info, separadores de fecha
+- Toasts y modal de export
+- Responsive real con overlay/colapso
+
+**Qué NO copiar:**
+- Sistema de multiples agentes (el proyecto tiene UN solo asistente Agro real)
+- Memoria por categorias de agentes (no existe ese modelo)
+- Nombres/copias literales del HTML
+
+**Qué adaptar con honestidad:**
+- Sidebar de historial: el sistema YA maneja multiples threads reales via localStorage
+- Panel de contexto: el asistente YA tiene contexto de cultivos, perfil, clima, ubicacion — darle superficie visible
+- Welcome state: adaptar sugerencias agro reales
+- Export: el sistema YA tiene invoke a edge function — conectar export del thread activo
+
+### Alcance exacto
+
+**Archivos candidatos:**
+1. `apps/gold/agro/index.html` — Seccion `asistente-dedicado` (lineas 2528-2632): reestructurar HTML
+2. `apps/gold/agro/agro.css` — Estilos inline `.asistente-dedicado` (lineas 8454-8818): rediseño completo
+3. `apps/gold/agro/agro.js` — Logica del assistant (lineas 13886-15150): wiring minimo (solo agregar render de welcome, memory panel, export)
+4. `apps/gold/docs/AGENT_REPORT_ACTIVE.md` — Este reporte
+
+**NO se tocan:**
+- `agro-ia-wizard.js` — Ya funciona correctamente
+- Edge functions / Supabase — Sin cambios de backend
+- Monolito mas alla de wiring quirurgico
+
+### Riesgos
+
+- **Medio:** El HTML del assistant es una seccion dentro de `index.html` (inline view del shell). El rediseño no debe romper el sistema de vistas del shell (`data-agro-shell-region`).
+- **Bajo:** Los IDs existentes (`assistant-scroll`, `assistant-history`, etc.) son usados por JS — mantener compatibilidad.
+- **Bajo:** El CSS usa selectores `.asistente-dedicado` como scope — mantener patron.
+
+### Criterio de cierre
+
+- [x] Chat visualmente muy superior al actual
+- [x] Header premium con identidad + acciones
+- [x] Welcome state con sugerencias agro
+- [x] Panel de contexto colapsable
+- [x] Input premium con autosize
+- [x] Mensajes con mejor jerarquia visual
+- [x] Responsive funcional
+- [x] ADN Visual V10 respetado
+- [x] Logica del assistant NO rota (threads, invoke, cooldown)
+- [x] `pnpm build:gold` pasa
+- [x] AGENT_REPORT_ACTIVE.md actualizado
+
+### Cierre (2026-04-12)
+
+**Cambios realizados:**
+
+| Archivo | Cambio | Motivo |
+|---|---|---|
+| `apps/gold/agro/index.html` (L2528-2700) | Reestructuracion completa del HTML del Asistente IA | Layout 3-columnas (sidebar + chat + contexto), welcome state, input premium, panel contexto, export modal |
+| `apps/gold/agro/agro.css` (L8454-9400) | Rediseño CSS completo `.asistente-dedicado` | ADN V10 dark/gold premium, sidebar mejorado, header con shimmer border, mensajes con mejor jerarquia, input con autosize, contexto panel, responsive completo |
+| `apps/gold/agro/agro.js` (L13886-15300) | Wiring quirurgico: `initAgroAssistantModal`, `renderAssistantHistory`, `syncAssistantGuideLayout`, `openAgroAssistant`, `setAssistantDrawerOpen`, `updateAssistantCooldownUI` + nuevas funciones `refreshContextPanel`, `updateAssistantStats`, `autoResizeInput`, `appendContextItem` | Conectar nuevos elementos HTML con la logica existente de threads/invoke/cooldown sin romper funcionalidad |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Documentacion de sesion | Reporte activo |
+
+**Que se adapto del HTML de referencia (`chat ia new.html`):**
+- Layout 3-columnas (sidebar historial + chat principal + panel contexto colapsable)
+- Header premium con avatar + shimmer border + status badge + acciones
+- Welcome state con icono animado + titulo metallic + sugerencias en grid
+- Input premium con autosize + send button con icono + hint de teclado
+- Mensajes con mejor jerarquia visual (border-radius diferenciado, fade-in animation)
+- Panel de contexto lateral (perfil, cultivos, clima, ubicacion - datos REALES del sistema)
+- Export modal con preview JSON
+- Responsive real con sidebar overlay y context panel full-width en movil
+- Animaciones: metallicShift, breathe, fadeInUp, borderShimmer, typingPulse
+
+**Que NO se copio:**
+- Sistema de multiples agentes (no existe en YavlGold - hay UN solo asistente)
+- Memoria por categorias de agentes inventadas
+- Nombres/etiquetas literales del HTML de referencia
+
+**Validacion:** `pnpm build:gold` paso limpio. 159 modules, 2.23s, UTF-8 OK.
+
+**Deuda residual consciente:**
+- El context panel usa datos en tiempo real de `getAssistantContext()` pero no se auto-refresca periodicamente (solo al abrir el panel)
+- Las sugerencias del welcome state son estaticas - podrian dinamizarse segun cultivos activos
+- El export solo exporta la conversacion activa, no incluye contexto del sistema
+- El boton "Copiar plantilla" queda oculto (display:none) pero funcional para compatibilidad futura
+
 ## Sesion activa: fix creacion ciclo de periodo — tabla agro_period_cycles no encontrada (2026-04-12)
 
 ### Diagnostico

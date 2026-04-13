@@ -2525,75 +2525,125 @@
         </div>
     </div>
 
-    <!-- Asistente IA — Vista dedicada inline -->
+    <!-- Asistente IA — Vista dedicada inline (rediseño V2) -->
     <section class="asistente-dedicado" data-agro-shell-region="asistente" hidden inert>
         <div id="modal-agro-assistant" class="agro-assistant-inline">
             <div class="modal-content agro-assistant assistant-sheet">
-                <div class="assistant-shell" id="assistant-shell">
-                    <aside class="assistant-sidebar" id="assistant-sidebar" aria-label="Historial de conversaciones">
-                        <div class="assistant-sidebar-header">
-                            <div class="assistant-sidebar-title">Historial</div>
-                            <button type="button" class="assistant-new-thread" id="assistant-new-thread">Nuevo
-                                chat</button>
-                        </div>
-                        <div class="assistant-thread-list" id="assistant-thread-list"></div>
-                    </aside>
+                    <!-- Mobile sidebar overlay -->
+                    <div class="ast-sidebar-overlay" id="assistant-drawer-overlay" data-drawer-close="true"></div>
 
-                    <div class="assistant-drawer-overlay" id="assistant-drawer-overlay" data-drawer-close="true"></div>
-
-                    <div class="assistant-main">
-                        <div class="assistant-topbar">
-                            <button type="button" class="assistant-topbar-icon" id="assistant-drawer-toggle"
-                                aria-label="Historial" title="Historial">
-                                <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
-                            </button>
-                            <div class="assistant-title-group">
-                                <div class="assistant-title-row">
-                                    <span class="assistant-title-icon" aria-hidden="true"><i
-                                            class="fa-solid fa-seedling"></i></span>
-                                    <h3 id="agro-assistant-title">Asistente Agro</h3>
-                                    <span class="assistant-status" id="assistant-status">En linea</span>
+                    <div class="ast-layout" id="assistant-shell">
+                        <!-- ═══════ SIDEBAR ═══════ -->
+                        <aside class="ast-sidebar" id="assistant-sidebar" aria-label="Historial de conversaciones">
+                            <div class="ast-sidebar-head">
+                                <div class="ast-sidebar-brand">
+                                    <span class="ast-sidebar-brand-icon" aria-hidden="true"><i class="fa-solid fa-seedling"></i></span>
+                                    <div>
+                                        <div class="ast-sidebar-brand-name">Asistente IA</div>
+                                        <div class="ast-sidebar-brand-sub">Agro</div>
+                                    </div>
                                 </div>
-                                <p class="assistant-subtitle">IA de campo para cultivos, plagas, riego y clima</p>
-                            </div>
-                            <div class="assistant-topbar-actions">
-                                <button type="button" class="assistant-topbar-icon" id="btn-assistant-delete-thread"
-                                    aria-label="Eliminar conversacion" title="Eliminar conversacion">
-                                    <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
-                                </button>
-                                <button type="button" class="assistant-topbar-icon" id="btn-close-agro-assistant"
-                                    aria-label="Volver al dashboard" title="Volver al dashboard"
-                                    data-agro-view="dashboard">
+                                <button type="button" class="ast-sidebar-close" id="ast-mobile-sidebar-close" aria-label="Cerrar sidebar">
                                     <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                                 </button>
                             </div>
-                        </div>
+                            <div class="ast-sidebar-actions">
+                                <button type="button" class="ast-btn-new" id="assistant-new-thread">
+                                    <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                                    Nueva conversacion
+                                </button>
+                            </div>
+                            <div class="ast-sidebar-section-label">
+                                <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
+                                Historial
+                            </div>
+                            <div class="ast-thread-scroll" id="assistant-thread-list"></div>
+                            <div class="ast-sidebar-footer">
+                                <div class="ast-sidebar-stat">
+                                    <i class="fa-solid fa-message" aria-hidden="true"></i>
+                                    <span>Mensajes:</span>
+                                    <span class="ast-stat-val" id="ast-stat-messages">0</span>
+                                </div>
+                                <button type="button" class="ast-sidebar-clear" id="btn-assistant-delete-thread" aria-label="Eliminar conversacion" title="Eliminar conversacion">
+                                    <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </aside>
 
-                        <div class="assistant-content">
-                            <div class="assistant-scroll" id="assistant-scroll">
-                                <div class="assistant-guide" id="assistant-guide">
-                                    <div class="assistant-guide-header">
-                                        <div class="assistant-guide-title"><i class="fa-solid fa-circle-info"
-                                                aria-hidden="true"></i> Guia de uso</div>
-                                        <button type="button" class="assistant-guide-toggle" id="assistant-guide-toggle"
-                                            aria-expanded="true" aria-controls="assistant-guide-list">
-                                            &#8505; Ver guia
-                                        </button>
+                        <!-- ═══════ MAIN CHAT ═══════ -->
+                        <main class="ast-main" id="ast-main-content">
+                            <!-- Header -->
+                            <header class="ast-header">
+                                <div class="ast-header-left">
+                                    <button type="button" class="ast-header-icon" id="assistant-drawer-toggle" aria-label="Historial" title="Historial">
+                                        <i class="fa-solid fa-bars" aria-hidden="true"></i>
+                                    </button>
+                                    <div class="ast-header-agent">
+                                        <div class="ast-header-avatar">
+                                            <i class="fa-solid fa-seedling" aria-hidden="true"></i>
+                                        </div>
+                                        <div class="ast-header-info">
+                                            <h3 id="agro-assistant-title">Asistente Agro</h3>
+                                            <span class="ast-header-status" id="assistant-status">En linea</span>
+                                        </div>
                                     </div>
-                                    <ul id="assistant-guide-list">
-                                        <li>Agrupa tus dudas en 1 solo mensaje (max 5-8 lineas).</li>
-                                        <li>Espera unos segundos entre mensajes (evita spamear).</li>
-                                        <li>Si te sale "Limite alcanzado", espera y vuelve a intentar.</li>
-                                        <li>No recargues 10 veces: no aumenta cupo.</li>
-                                    </ul>
-                                    <button type="button" class="assistant-configure-btn" id="btn-configure-ia"
-                                        onclick="window.openAgroIAWizard?.()">
-                                        <i class="fa-solid fa-sliders" aria-hidden="true"></i> Configurar asistente
+                                </div>
+                                <div class="ast-header-right">
+                                    <button type="button" class="ast-header-icon" id="ast-toggle-context" aria-label="Panel de contexto" title="Contexto">
+                                        <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
+                                    </button>
+                                    <button type="button" class="ast-header-icon" id="ast-export-chat" aria-label="Exportar" title="Exportar">
+                                        <i class="fa-solid fa-download" aria-hidden="true"></i>
+                                    </button>
+                                    <button type="button" class="ast-header-icon" id="btn-close-agro-assistant" aria-label="Volver al dashboard" title="Volver al dashboard" data-agro-view="dashboard">
+                                        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                                     </button>
                                 </div>
+                            </header>
 
+                            <!-- Messages area -->
+                            <div class="ast-messages" id="assistant-scroll" role="log" aria-label="Mensajes" aria-live="polite">
+                                <!-- Welcome / guide rendered by JS -->
+                                <div class="ast-welcome" id="ast-welcome">
+                                    <div class="ast-welcome-icon" aria-hidden="true"><i class="fa-solid fa-seedling"></i></div>
+                                    <div class="ast-welcome-title">Asistente Agro</div>
+                                    <div class="ast-welcome-desc">Tu centro de consulta sobre cultivos, plagas, riego, clima y mas. Escribe tu pregunta o selecciona una sugerencia.</div>
+                                    <div class="ast-welcome-suggestions">
+                                        <button class="ast-suggestion" data-suggestion="Que plagas son comunes en esta epoca del año?">
+                                            <span class="ast-suggestion-icon"><i class="fa-solid fa-bug" aria-hidden="true"></i></span>
+                                            <span class="ast-suggestion-text">Plagas comunes en esta epoca</span>
+                                        </button>
+                                        <button class="ast-suggestion" data-suggestion="Como optimizo el riego de mis cultivos?">
+                                            <span class="ast-suggestion-icon"><i class="fa-solid fa-droplet" aria-hidden="true"></i></span>
+                                            <span class="ast-suggestion-text">Optimizar riego de cultivos</span>
+                                        </button>
+                                        <button class="ast-suggestion" data-suggestion="Necesito un plan de fertilizacion para mi cultivo principal">
+                                            <span class="ast-suggestion-icon"><i class="fa-solid fa-leaf" aria-hidden="true"></i></span>
+                                            <span class="ast-suggestion-text">Plan de fertilizacion</span>
+                                        </button>
+                                        <button class="ast-suggestion" data-suggestion="Que debo considerar para la proxima siembra?">
+                                            <span class="ast-suggestion-icon"><i class="fa-solid fa-calendar-check" aria-hidden="true"></i></span>
+                                            <span class="ast-suggestion-text">Planificar proxima siembra</span>
+                                        </button>
+                                    </div>
+                                    <button type="button" class="ast-configure-btn" id="btn-configure-ia" onclick="window.openAgroIAWizard?.()">
+                                        <i class="fa-solid fa-sliders" aria-hidden="true"></i> Configurar asistente
+                                    </button>
+                                    <!-- Collapsible guide -->
+                                    <details class="ast-guide" id="assistant-guide">
+                                        <summary class="ast-guide-summary">
+                                            <span><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Guia de uso</span>
+                                        </summary>
+                                        <ul id="assistant-guide-list">
+                                            <li>Agrupa tus dudas en 1 solo mensaje (max 5-8 lineas).</li>
+                                            <li>Espera unos segundos entre mensajes (evita spamear).</li>
+                                            <li>Si te sale "Limite alcanzado", espera y vuelve a intentar.</li>
+                                            <li>No recargues 10 veces: no aumenta cupo.</li>
+                                        </ul>
+                                    </details>
+                                </div>
                                 <div class="assistant-history" id="assistant-history" aria-live="polite"></div>
-                                <div class="assistant-typing" id="assistant-typing" aria-hidden="true">
+                                <div class="ast-typing" id="assistant-typing" aria-hidden="true">
                                     <span class="typing-dot"></span>
                                     <span class="typing-dot"></span>
                                     <span class="typing-dot"></span>
@@ -2601,32 +2651,84 @@
                                 </div>
                             </div>
 
-                            <div class="assistant-controls">
-                                <div class="assistant-mode-hint" id="assistant-mode-hint">
-                                    1 mensaje (5-8 lineas). Espera 8-12s entre envios.
+                            <!-- Input area -->
+                            <div class="ast-input-area">
+                                <div class="ast-input-wrap">
+                                    <textarea id="agro-assistant-input" class="ast-input" rows="1"
+                                        placeholder="Escribe tu consulta sobre cultivos, plagas, riego, clima..."
+                                        aria-label="Campo de mensaje"></textarea>
+                                    <button type="button" class="ast-send-btn" id="btn-assistant-send" aria-label="Enviar mensaje" disabled>
+                                        <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+                                    </button>
                                 </div>
-                                <button type="button" class="assistant-new-messages" id="assistant-new-messages">
-                                    Nuevos mensajes
+                                <div class="ast-input-hint">
+                                    <span><kbd>Enter</kbd> enviar &middot; <kbd>Shift+Enter</kbd> nueva linea</span>
+                                    <span class="ast-input-mode" id="assistant-mode-hint">1 mensaje (5-8 lineas). Espera 8-12s</span>
+                                </div>
+                                <button type="button" class="assistant-new-messages" id="assistant-new-messages" style="display:none;">Nuevos mensajes</button>
+                                <div class="ast-cooldown" id="assistant-cooldown"></div>
+                            </div>
+                        </main>
+
+                        <!-- ═══════ CONTEXT PANEL ═══════ -->
+                        <aside class="ast-context-panel collapsed" id="ast-context-panel" aria-label="Panel de contexto">
+                            <div class="ast-context-head">
+                                <h3><i class="fa-solid fa-layer-group" aria-hidden="true"></i> Contexto</h3>
+                                <button type="button" class="ast-context-close" id="ast-close-context" aria-label="Cerrar panel de contexto">
+                                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                                 </button>
-                                <textarea id="agro-assistant-input" class="styled-input" rows="3"
-                                    placeholder="Escribe tu consulta sobre cultivos, plagas, riego, clima..."></textarea>
-                                <div class="assistant-actions">
-                                    <button type="button" class="btn" id="btn-assistant-template">Copiar
-                                        plantilla</button>
-                                    <button type="button" class="btn btn-primary"
-                                        id="btn-assistant-send">Enviar</button>
+                            </div>
+                            <div class="ast-context-body" id="ast-context-body">
+                                <div class="ast-context-section" id="ast-ctx-profile">
+                                    <div class="ast-context-section-title"><i class="fa-solid fa-user" aria-hidden="true"></i> Perfil</div>
+                                    <div class="ast-context-empty" id="ast-ctx-profile-empty">Sin perfil configurado</div>
+                                    <div class="ast-context-items" id="ast-ctx-profile-items"></div>
                                 </div>
-                                <div class="assistant-cooldown" id="assistant-cooldown"></div>
-                                <div class="assistant-footer-brand">
-                                    <span class="assistant-footer-logo"><i class="fa-solid fa-seedling"
-                                            aria-hidden="true"></i></span>
-                                    <span class="assistant-footer-text">YavlGold &bull; Agro V1</span>
+                                <div class="ast-context-section" id="ast-ctx-crops">
+                                    <div class="ast-context-section-title"><i class="fa-solid fa-seedling" aria-hidden="true"></i> Cultivos</div>
+                                    <div class="ast-context-empty" id="ast-ctx-crops-empty">Sin cultivos registrados</div>
+                                    <div class="ast-context-items" id="ast-ctx-crops-items"></div>
                                 </div>
+                                <div class="ast-context-section" id="ast-ctx-weather">
+                                    <div class="ast-context-section-title"><i class="fa-solid fa-cloud-sun" aria-hidden="true"></i> Clima</div>
+                                    <div class="ast-context-empty" id="ast-ctx-weather-empty">Sin datos climaticos</div>
+                                    <div class="ast-context-items" id="ast-ctx-weather-items"></div>
+                                </div>
+                                <div class="ast-context-section" id="ast-ctx-location">
+                                    <div class="ast-context-section-title"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Ubicacion</div>
+                                    <div class="ast-context-empty" id="ast-ctx-location-empty">Sin ubicacion</div>
+                                    <div class="ast-context-items" id="ast-ctx-location-items"></div>
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+
+                    <!-- Export modal -->
+                    <div class="ast-modal-overlay hidden" id="ast-export-modal" role="dialog" aria-modal="true">
+                        <div class="ast-modal">
+                            <div class="ast-modal-header">
+                                <h3><i class="fa-solid fa-download" aria-hidden="true"></i> Exportar conversacion</h3>
+                                <button type="button" class="ast-context-close" id="ast-close-export" aria-label="Cerrar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                            </div>
+                            <div class="ast-modal-body">
+                                <p>Vista previa de los datos exportados:</p>
+                                <pre class="ast-export-preview" id="ast-export-preview"></pre>
+                            </div>
+                            <div class="ast-modal-footer">
+                                <button type="button" class="ast-btn-outline" id="ast-cancel-export">Cancelar</button>
+                                <button type="button" class="ast-btn-gold" id="ast-confirm-export"><i class="fa-solid fa-download" aria-hidden="true"></i> Descargar JSON</button>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="assistant-toast" id="assistant-toast" role="status" aria-live="polite"></div>
+
+                    <!-- Toast -->
+                    <div class="ast-toast" id="assistant-toast" role="status" aria-live="polite"></div>
+
+                    <!-- Hidden elements kept for JS compat -->
+                    <div class="assistant-controls" style="display:none;">
+                        <button type="button" class="btn" id="btn-assistant-template" style="display:none;">Copiar plantilla</button>
+                        <div class="assistant-guide" id="assistant-guide-legacy" style="display:none;"></div>
+                    </div>
             </div>
         </div>
     </section>
