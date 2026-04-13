@@ -187,7 +187,7 @@ Incluye: `agent-guard.mjs` (deps prohibidas) + `agent-report-check.mjs` (reporte
 
 Este bloque define cómo debe trabajar un agente dentro de YavlGold cuando la tarea tenga riesgo real, varios pasos, o impacto en partes sensibles del sistema.
 
-Su propósito no es volver lento el trabajo.  
+Su propósito no es volver lento el trabajo.
 Su propósito es reducir improvisación, proteger el producto y aumentar la calidad de ejecución.
 
 ### 8.1 — Planificación por defecto en tareas no triviales
@@ -207,7 +207,7 @@ En esos casos, el agente debe:
 3. definir DoD claro;
 4. recién después editar.
 
-**Excepción:**  
+**Excepción:**
 Si el cambio es pequeño, obvio y de bajo riesgo, se permite ejecución directa sin burocracia innecesaria.
 
 ---
@@ -222,7 +222,7 @@ Antes de modificar archivos, el agente debe dejar claro:
 - qué archivo(s) son realmente responsables;
 - cuál es la opción de arreglo más segura.
 
-No basta con decir "parece ser".  
+No basta con decir "parece ser".
 Hay que señalar funciones, flujos, condiciones, estilos, wiring o contratos concretos.
 
 En YavlGold, el diagnóstico vale más que la prisa.
@@ -248,7 +248,7 @@ Reglas:
 - no repartir en paralelo la misma zona crítica;
 - la decisión final siempre pertenece al agente principal.
 
-Los subagentes ayudan a limpiar contexto.  
+Los subagentes ayudan a limpiar contexto.
 No sustituyen criterio técnico.
 
 ---
@@ -263,7 +263,7 @@ Después de una corrección importante, el agente debe preguntarse:
 
 Solo si la lección es reutilizable y de valor real, debe registrarse en la documentación operativa correspondiente.
 
-**No convertir esto en ritual vacío.**  
+**No convertir esto en ritual vacío.**
 No documentar obviedades ni ruido.
 
 ---
@@ -319,7 +319,7 @@ Debe:
 4. ejecutarla con el menor alcance posible;
 5. verificar.
 
-Autonomía no significa adivinar.  
+Autonomía no significa adivinar.
 Significa investigar sin trasladar al usuario trabajo técnico que el agente puede resolver por sí mismo.
 
 ---
@@ -339,15 +339,15 @@ Tocar lo menos posible para corregir lo necesario.
 No declarar "listo" algo que no fue probado.
 
 #### Respeto por el sistema existente
-No romper ADN Visual V10.  
-No introducir React, Tailwind ni SPA.  
+No romper ADN Visual V10.
+No introducir React, Tailwind ni SPA.
 No crecer `agro.js` salvo integración mínima o bugfix quirúrgico justificado.
 
 ---
 
 ### 8.9 — Regla final
 
-El mejor agente no es el que más escribe.  
+El mejor agente no es el que más escribe.
 Es el que:
 
 - entiende bien;
@@ -472,6 +472,35 @@ La integración Obsidian ↔ YavlGold es correcta cuando:
 - el grafo/documentación ganan claridad
 - los agentes entienden rápido el sistema
 - no aparece un carnaval de duplicados, rutas raras o tooling fuera de lugar
+
+---
+
+## §13 — Pruebas documentales con Obsidian
+
+### Estado operativo validado
+En sesiones de prueba con Obsidian, el agente **no debe asumir automáticamente** que el vault activo es OneDrive u otra ruta histórica. Antes de crear notas de prueba, debe verificar cuál vault está realmente abierto por el usuario.
+
+#### Carpeta canónica de pruebas
+Cuando el usuario esté trabajando sobre el vault documental del repo, las pruebas de escritura deben hacerse en:
+
+`C:\Users\yerik\gold\apps\gold\docs\test\`
+
+Reglas:
+- **no escribir pruebas en la raíz del vault**
+- **no escribir pruebas fuera de `docs/test/`**
+- **no tocar código del producto**
+- **no modificar documentos canónicos para una prueba simple**
+
+#### Regla de visibilidad en grafo
+Una nota de prueba puede no aparecer en el grafo si queda huérfana.
+Por eso, toda nota de prueba **debe incluir wikilinks reales a nodos existentes** del sistema documental.
+
+#### Validación comprobada
+Quedó validado que:
+- los agentes pueden escribir `.md` en el vault correcto
+- las notas aparecen en `docs/test/`
+- el grafo reconoce la nota cuando tiene wikilinks reales
+- no debe concluirse fallo de integración sin verificar antes ruta, carpeta, enlaces y filtros del grafo
 
 ---
 
