@@ -322,8 +322,10 @@ function injectStyles() {
 /* agro-ia-wizard — ADN Visual V10 */
 .aiw-overlay {
     position: fixed; inset: 0;
-    z-index: 9999;
-    background: rgba(0,0,0,0.7);
+    z-index: 10100;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     display: flex; align-items: center; justify-content: center;
     opacity: 1;
     transition: opacity 180ms ease;
