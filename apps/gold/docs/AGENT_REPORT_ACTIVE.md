@@ -2,6 +2,69 @@
 
 Resumen operativo actual de `apps/gold`.
 
+## Sesion activa: Expandir Asistente IA a full workspace (2026-04-12)
+
+### Diagnostico
+
+El rediseño V2 del asistente mejoro pero el chat aun se siente contenido en una "caja". Causas:
+
+1. `.assistant-sheet` tiene `border-radius: 18px` + `border` + fondo gradiente = crea efecto de panel flotante encerrado
+2. `.asistente-dedicado` tiene `height: calc(100vh - 80px)` y `min-height: 480px` -- deja 80px de margen superior muerto
+3. Sidebar `280px` fijo consume espacio innecesario en desktop
+4. Mensajes `max-width: 88%` burbuja no respira lo suficiente
+5. Panel contexto `300px` consume espacio
+6. Padding del header/messages/input son conservadores
+
+### Alcance exacto
+
+**Solo CSS** en `apps/gold/agro/agro.css` — ajustar proporciones, bordes, padding, max-widths. Sin tocar JS ni HTML.
+
+**Cambios clave:**
+- Eliminar border-radius y border del `.assistant-sheet` para layout edge-to-edge
+- Expandir altura a `100vh` sin margen
+- Sidebar mas estrecha en desktop (260px)
+- Panel contexto mas estrecho (280px) y colapsado por defecto
+- Mensajes max-width subido a 92%
+- Padding/messages/input mas amplios
+- Mejor uso de espacio vertical
+
+### Archivos candidatos
+1. `apps/gold/agro/agro.css` (bloque `.asistente-dedicado`, lineas ~8435-9660)
+
+### Riesgos
+- **Bajo:** Solo cambios CSS visuales, no se toca JS ni HTML
+- **Bajo:** Movil ya tiene sus media queries separadas, no deberia afectar
+
+### Criterio de cierre
+- [x] Chat se siente mas amplio en desktop
+- [x] Layout mas edge-to-edge, menos caja
+- [x] Sidebar y contexto mas equilibrados
+- [x] Movil no roto
+- [x] `pnpm build:gold` pasa
+
+### Cierre (2026-04-12)
+
+**Cambios realizados:**
+
+| Archivo | Cambio | Motivo |
+|---|---|---|
+| `apps/gold/agro/agro.css` `.asistente-dedicado` | `height: 100vh; min-height: 100vh` (antes `calc(100vh - 80px)`) | Eliminar 80px de margen superior muerto, pantalla completa real |
+| `apps/gold/agro/agro.css` `.assistant-sheet` | `border: none; border-radius: 0; background: rgba(5,5,5,0.98)` (antes border dorado + radius 18px + gradiente) | Eliminar efecto de caja flotante, layout edge-to-edge |
+| `apps/gold/agro/agro.css` `.ast-sidebar` | `width: 260px; min-width: 260px` (antes 280px) | Sidebar mas estrecha para ceder espacio al chat |
+| `apps/gold/agro/agro.css` `.ast-context-panel` | `width: 280px; min-width: 280px` (antes 300px) | Panel contexto mas estrecho, mejor proporcion |
+| `apps/gold/agro/agro.css` `.ast-header` | `padding: 0.6rem 1.25rem; min-height: 50px` (antes 0.75rem 1rem / 56px) | Header mas compacto verticalmente, mas padding horizontal |
+| `apps/gold/agro/agro.css` `.ast-messages` | `padding: 1.25rem 2rem` (antes 1rem) | Mas respiro horizontal para mensajes |
+| `apps/gold/agro/agro.css` `.assistant-message` | `max-width: 92%` (antes 88%) | Burbujas usan mas ancho disponible |
+| `apps/gold/agro/agro.css` `.ast-input-area` | `padding: 0.75rem 2rem` (antes 0.75rem 1rem) | Input alineado con el area de mensajes |
+| `apps/gold/agro/agro.css` `.ast-sidebar-overlay` | `position: fixed` (antes absolute) | Overlay correcto en fullscreen |
+| `apps/gold/agro/agro.css` `@media 768px` | Sidebar `width: min(280px, 85vw)` responsive | Sidebar movil no excede viewport |
+| `apps/gold/agro/agro.css` `@media 480px` | Agregado `height: 100vh` + padding reducido | Movil consistente con fullscreen |
+
+**Validacion:** `pnpm build:gold` paso limpio. 159 modules, 2.24s, UTF-8 OK.
+
+**Deuda residual consciente:**
+- Ninguna — solo cambios CSS, sin JS ni HTML afectado
+
 ## Sesion activa: Rediseño visual Asistente IA Agro — inspirado en chat ia new.html (2026-04-12)
 
 ### Diagnostico
@@ -15063,3 +15126,43 @@ Sidebar: ya premium, micro-ajustes en densidad de grupos y milestone.
 6. Sidebar: verificar que links y sublinks siguen siendo tocables y legibles
 7. Mobile 480px: action buttons deben crecer a 32px
 8. Verificar que crear ciclo del mes sigue funcionando
+
+---
+
+## SESION 2026-04-12 · Solicitud 3: Reparacion de contaminacion documental
+
+**Alcance:** Limpieza quirurgica de contaminacion causada por agente previo que invirtio la jerarquia canonical moviendo `AGENTS.md` y `FICHA_TECNICA.md` de la raiz a `apps/gold/docs/` y dejando stubs de redireccion en la raiz.
+
+**Protocolo:** AGENTS.md §4 — la raiz es la unica fuente de verdad.
+
+### Cambios ejecutados
+
+**Bloque A — Restauracion canonica:**
+- `git checkout HEAD -- AGENTS.md` → restaurado desde git (contenido completo ~395 lineas, no stub de redireccion)
+- `git checkout HEAD -- FICHA_TECNICA.md` → restaurado desde git (contenido completo, no stub de redireccion)
+
+**Bloque B — Eliminacion de duplicados:**
+- Eliminado `apps/gold/docs/AGENTS.md` (duplicado no rastreado)
+- Eliminado `apps/gold/docs/FICHA_TECNICA.md` (duplicado no rastreado)
+
+**Bloque C — Correccion de punteros:**
+- `AGENT_CONTEXT_INDEX.md`: `./AGENTS.md` → `../../AGENTS.md` (apunta a raiz canonica)
+- `AGENT_CONTEXT_INDEX.md`: `./FICHA_TECNICA.md` → `../../FICHA_TECNICA.md` (apunta a raiz canonica)
+- `AGENT_CONTEXT_INDEX.md` preservado como indice util (no eliminado)
+
+**Artefactos preservados:**
+- `.gitignore` (raiz): sin cambios necesarios (ya tiene `.obsidian/` y `*.base`)
+- `apps/gold/.gitignore`: sin cambios necesarios
+
+### Estado git post-operacion
+```
+modified:   .gitignore
+modified:   apps/gold/.gitignore
+modified:   apps/gold/agro/agro.css
+modified:   apps/gold/docs/AGENT_REPORT_ACTIVE.md
+Untracked:  apps/gold/docs/AGENT_CONTEXT_INDEX.md
+```
+Nota: `AGENTS.md` y `FICHA_TECNICA.md` YA NO aparecen como modificados — restaurados exactamente a su version git.
+
+### Riesgos residuales
+- Ninguno. Operacion puramente documental/git, sin tocar codigo funcional.

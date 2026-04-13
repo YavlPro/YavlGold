@@ -8439,8 +8439,8 @@ body.agro-view-dense::after {
 
 .asistente-dedicado {
   width: 100%;
-  height: calc(100vh - 80px);
-  min-height: 480px;
+  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
@@ -8470,10 +8470,10 @@ body.agro-view-dense::after {
   min-height: 0;
   position: relative;
   z-index: 1;
-  border: 1px solid rgba(200, 167, 82, 0.25);
-  border-radius: 18px;
+  border: none;
+  border-radius: 0;
   overflow: hidden;
-  background: linear-gradient(135deg, rgba(12, 12, 12, 0.98), rgba(6, 6, 6, 0.98));
+  background: rgba(5, 5, 5, 0.98);
 }
 
 /* ── Layout 3 columnas ── */
@@ -8489,11 +8489,11 @@ body.agro-view-dense::after {
 
 /* ── Sidebar ── */
 .asistente-dedicado .ast-sidebar {
-  width: 280px;
-  min-width: 280px;
+  width: 260px;
+  min-width: 260px;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid rgba(200, 167, 82, 0.15);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(8, 8, 8, 0.98);
   z-index: 4;
   transition: transform 250ms ease;
@@ -8745,13 +8745,13 @@ body.agro-view-dense::after {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1rem;
+  padding: 0.6rem 1.25rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(10, 10, 10, 0.92);
   backdrop-filter: blur(12px);
   position: relative;
   z-index: 10;
-  min-height: 56px;
+  min-height: 50px;
 }
 
 .asistente-dedicado .ast-header::after {
@@ -8858,7 +8858,7 @@ body.agro-view-dense::after {
 .asistente-dedicado .ast-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 1rem;
+  padding: 1.25rem 2rem;
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
@@ -9058,7 +9058,7 @@ body.agro-view-dense::after {
   background: rgba(255, 255, 255, 0.04);
   color: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  max-width: 88%;
+  max-width: 92%;
   white-space: pre-wrap;
   word-break: break-word;
   display: grid;
@@ -9196,7 +9196,7 @@ body.agro-view-dense::after {
 
 /* ── Input area ── */
 .asistente-dedicado .ast-input-area {
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 2rem;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(8, 8, 8, 0.95);
   z-index: 10;
@@ -9312,8 +9312,8 @@ body.agro-view-dense::after {
 
 /* ── Context panel ── */
 .asistente-dedicado .ast-context-panel {
-  width: 300px;
-  min-width: 300px;
+  width: 280px;
+  min-width: 280px;
   background: rgba(8, 8, 8, 0.98);
   border-left: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
@@ -9562,7 +9562,7 @@ body.agro-view-dense::after {
 
 /* ── Sidebar overlay (mobile) ── */
 .asistente-dedicado .ast-sidebar-overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
   z-index: 3;
@@ -9597,8 +9597,8 @@ body.agro-view-dense::after {
     left: 0;
     top: 0;
     bottom: 0;
-    width: 280px;
-    min-width: 280px;
+    width: min(280px, 85vw);
+    min-width: 0;
     z-index: 20;
     transform: translateX(-100%);
     transition: transform 250ms ease;
@@ -9648,12 +9648,25 @@ body.agro-view-dense::after {
 }
 
 @media (max-width: 480px) {
+  .asistente-dedicado {
+    height: 100vh;
+    min-height: 100vh;
+  }
+
   .asistente-dedicado .ast-header-info h3 {
     font-size: 0.78rem;
   }
 
   .asistente-dedicado .ast-suggestion {
     font-size: 0.75rem;
+  }
+
+  .asistente-dedicado .ast-messages {
+    padding: 0.6rem 0.5rem;
+  }
+
+  .asistente-dedicado .ast-input-area {
+    padding: 0.5rem;
   }
 }
 
