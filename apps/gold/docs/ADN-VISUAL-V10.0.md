@@ -1286,14 +1286,186 @@ input[type="radio"], select,
 
 ---
 
+## §19 — Canon de Modales YavlGold V10.1
+
+Estado: `ACTIVO`
+Version: `V10.1`
+Pieza madre de referencia: `agro-ia-wizard.js` — modal "Configura tu asistente"
+
+Este capitulo formaliza el lenguaje visual obligatorio para TODOS los modales, dialogs, wizards, paneles flotantes y superficies emergentes de YavlGold.
+
+### §19.1 — Principio de Sobriedad Funcional
+
+En modales funcionales, la prioridad es **claridad, jerarquia, operacion y consistencia**. Se adopta el lenguaje **flat-gold sobrio** como canon visual para todas las superficies emergentes.
+
+Los gradientes metallic (§3), gold shadows y shimmer animations tienen lugar legitimo en landing pages, hero sections, module cards y elementos prestige. En modales funcionales producen ruido visual y se omiten intencionalmente.
+
+La pieza madre de referencia es el modal **"Configura tu asistente"** (`agro-ia-wizard.js`). No se copia a ciegas cada detalle, pero si se adopta su tono, densidad, estructura y disciplina visual como base obligatoria.
+
+### §19.2 — Shell Estandar de Modal
+
+| Propiedad | Valor canonico |
+|---|---|
+| Background | `var(--bg-2)` |
+| Border | `1px solid var(--gold-4)` — flat, sin metallic shimmer |
+| Border radius | `var(--radius-md)` (12px desktop, 8px mobile <=480px) |
+| Shadow | `0 8px 32px rgba(0,0,0,0.5)` — sombra oscura, sin gold tint |
+| Max width — compacto | `min(460px, calc(100vw - 32px))` |
+| Max width — ancho | `min(620px, calc(100vw - 32px))` |
+| Overlay | `rgba(0,0,0,0.85)` + `backdrop-filter: blur(8px)` |
+| Z-index | `>= 10000` |
+| Closing transition | `opacity 180ms ease` |
+
+### §19.3 — Header Estandar
+
+- **Estructura**: icon + title (izquierda) | close button (derecha)
+- **Padding**: `16px 20px 12px`
+- **Border-bottom**: `1px solid var(--border-neutral)`
+- **Icon**: Font Awesome, `color: var(--gold-4)`, `font-size: 1.1rem`
+- **Title**: Orbitron, `0.95rem`, `font-weight: 600`, `color: var(--text-primary)`
+- **Close**: `&times;` o `fa-xmark`, `color: var(--text-muted)`, hover `var(--text-primary)`
+- **Gap icono-titulo**: `10px`
+
+### §19.4 — Body
+
+- **Padding**: `20px` (desktop), `16px` (mobile <=480px)
+- **Step title**: Orbitron `1rem` / `600`, `color: var(--text-primary)`
+- **Descripcion**: Rajdhani `0.85rem`, `color: var(--text-muted)`
+- **Spacing entre bloques**: `16-18px`
+
+### §19.5 — Botones de Modal
+
+| Tipo | Estilo | Hover |
+|---|---|---|
+| **Primary** | `background: var(--gold-4)`, `color: var(--bg-1)`, flat | `opacity: 0.9` |
+| **Secondary** | `background: var(--bg-3)`, `border: 1px solid var(--border-neutral)` | `border-color: var(--gold-5)` |
+| **Ghost** | sin background, `color: var(--text-muted)` | `color: var(--text-primary)` |
+
+- **Font**: Rajdhani, `0.85rem`, `font-weight: 600`
+- **Padding**: `8px 18px`
+- **Border radius**: `var(--radius-sm)` (6px)
+- **Transition**: `150ms ease`
+- **Disabled**: `opacity: 0.5`, `cursor: not-allowed`, `pointer-events: none`
+- **Sin transform en hover**: no `translateY`, no `scale` — estilo flat intencional
+
+### §19.6 — Cards y Chips Seleccionables
+
+| Propiedad | Card | Chip |
+|---|---|---|
+| Background | `var(--bg-3)` | `var(--bg-3)` |
+| Border | `1px solid var(--border-neutral)` | `1px solid var(--border-neutral)` |
+| Radius | `var(--radius-sm)` (8px) | `20px` (pill) |
+| Hover | `border-color: var(--gold-5)` | `border-color: var(--gold-5)` |
+| Selected | border `var(--gold-4)`, bg `rgba(200,167,82,0.08)` | border gold + text gold + bg tint |
+| Transition | `150ms ease` | `150ms ease` |
+
+**Goal chips** (con icono): radius `8px`, `gap: 8px` entre icono y texto.
+
+### §19.7 — Progress Bar (wizards)
+
+- **Height**: `3px`
+- **Track**: `var(--bg-3)`
+- **Bar**: `var(--gold-4)`
+- **Transition**: `width 220ms ease`
+
+### §19.8 — Token Aliases para Modales
+
+Los siguientes aliases son compatibles con el ADN y pueden usarse en modales sin violar el sistema de tokens:
+
+| Alias | Mapeo canonico | Fallback |
+|---|---|---|
+| `--text-1` | `var(--text-primary)` | `#ffffff` |
+| `--text-2` | `var(--text-secondary)` | `#cccccc` |
+| `--text-3` | `var(--text-muted)` | `#94A3B8` |
+| `--border-1` | `var(--border-neutral)` | `rgba(255,255,255,0.08)` |
+
+El fallback de `--bg-2` como `#141414` (ligeramente mas claro que el canon `#0B0C0F`) es aceptable en modales para distinguirse del fondo de la pagina.
+
+### §19.9 — Animaciones
+
+| Elemento | Animacion | Duracion |
+|---|---|---|
+| Overlay open | `opacity: 0 → 1` | `180ms ease` |
+| Overlay close | `opacity: 1 → 0` | `180ms ease` |
+| Progress bar | `width` transition | `220ms ease` |
+| Cards/chips/botones | `border-color`, `background` | `150ms ease` |
+
+**Prohibidos en modales funcionales:**
+- `transform` en hover (no `translateY`, no `scale`)
+- Metallic shimmer, gold glow, gradient animation
+- Cualquier animacion que cause reflow
+
+**`prefers-reduced-motion: reduce`**: desactiva TODAS las transitions del modal.
+
+### §19.10 — Accesibilidad Obligatoria (sin excepciones)
+
+TODO modal debe incluir:
+
+- `role="dialog"` en el overlay
+- `aria-modal="true"`
+- `aria-labelledby` apuntando al titulo
+- `aria-label` en el boton de cerrar
+- `:focus-visible` con `box-shadow: var(--state-focus-ring)` en todo elemento interactivo
+- Focus inicial al primer campo interactivo al abrir
+- Escape key cierra el modal
+- Overlay click cierra el modal (cuando el caso lo permita)
+- Touch targets minimo `44px` en botones de accion
+- Focus retorna al trigger al cerrar
+
+### §19.11 — Superficies Cubiertas (scope obligatorio)
+
+Esta regla aplica sin excepcion a:
+
+- Login y registro
+- Nuevo cultivo / editar cultivo
+- Editar fiado
+- Nuevo cliente wizard
+- Nuevo carrito
+- Nueva cartera operativa / editar cartera
+- Nueva tarea
+- Ajustes
+- Panel de control global
+- Feedback / encuestas
+- Notificaciones
+- Centro de alertas
+- Configuracion de asistente IA
+- **Reemplazo de prompt() nativo del navegador**
+- CUALQUIER superficie emergente nueva o legacy
+- CUALQUIER overlay funcional relacionado
+
+### §19.12 — Migracion Legacy
+
+Los modales existentes se migraran progresivamente cuando se toquen por mantenimiento, bugfix o nuevas features. **No se requiere migracion masiva.**
+
+Prioridad de migracion:
+1. Modales que usan `prompt()` nativo (reemplazo urgente) — **CRITICA**
+2. Modales con estilos inconsistentes o hardcodeados — **ALTA**
+3. Modales parcialmente compatibles — **MEDIA**
+4. Resto de superficies legacy — **BAJA**
+
+Toda pieza nueva **debe nacer ya bajo §19**.
+
+### §19.13 — Anti-Patrones Prohibidos en Modales
+
+- Usar `window.prompt()`, `window.alert()`, `window.confirm()` nativos del navegador
+- Metallic gradients o shimmer en botones de modal funcional
+- Gold shadow en shell de modal (sombra oscura standard)
+- Transform en hover (translateY, scale) — usar opacity flat
+- Sin focus-visible en elementos interactivos
+- Sin atributos ARIA de dialog/modal
+- Hardcodear colores fuera de tokens sin justificacion
+- Duplicar estilos de shell modal en cada modulo sin reutilizar patron
+
+---
+
 # 💎 ADN VISUAL INMUTABLE V10.0 💎
 
-Estado: ACTIVO · Fecha: 2026-02-18  
-Fuente de inspiración: `review-submitted-code.zip`
+Estado: ACTIVO · Fecha: 2026-02-18
+Fuente de inspiracion: `review-submitted-code.zip`
 
-Cobertura actual: `§0-§18`
+Cobertura actual: `§0-§19`
 
-**Tu finca merece tecnología de primera. YavlGold nace del campo, para el campo.**  
-— Filosofía YavlGold
+**Tu finca merece tecnologia de primera. YavlGold nace del campo, para el campo.**
+— Filosofia YavlGold
 
-© 2026 YavlGold · Release activo V1 · ADN Visual Inmutable V10.0 · §0-§18 · Open Source (MIT License)
+© 2026 YavlGold · Release activo V1 · ADN Visual Inmutable V10.0 · §0-§19 · Open Source (MIT License)

@@ -1396,7 +1396,7 @@ function openRecordFromCarteraContext() {
     return true;
 }
 
-function resolveCyclePayloadFromContext(context = {}) {
+async function resolveCyclePayloadFromContext(context = {}) {
     const buyerRow = context?.buyerRow || null;
     const historyRow = context?.historyRow || null;
     const cropId = normalizeCropId(historyRow?.crop_id || getSelectedCropId());
@@ -1411,9 +1411,11 @@ function resolveCyclePayloadFromContext(context = {}) {
     const suggestedName = historyRow
         ? `${buyerName} · ${baseConcept || 'Seguimiento'}`
         : `${buyerName} · Seguimiento comercial`;
-    const name = typeof window !== 'undefined' && typeof window.prompt === 'function'
-        ? window.prompt('Nombre de la cartera operativa', suggestedName)
-        : suggestedName;
+    const name = typeof window !== 'undefined' && typeof window.showPromptModal === 'function'
+        ? await window.showPromptModal({ title: 'Nueva cartera operativa', label: 'Nombre de la cartera operativa', defaultValue: suggestedName })
+        : (typeof window !== 'undefined' && typeof window.prompt === 'function'
+            ? window.prompt('Nombre de la cartera operativa', suggestedName)
+            : suggestedName);
     const unitType = normalizeOperationalUnitType(historyRow?.unit_type || '');
     const quantityRaw = Number(historyRow?.unit_qty);
 
@@ -1458,7 +1460,7 @@ async function createOperationalCycleFromCartera(context = {}) {
         return;
     }
 
-    const payload = resolveCyclePayloadFromContext(context);
+    const payload = await resolveCyclePayloadFromContext(context);
     if (!payload) return;
 
     if (!payload.cropId) {

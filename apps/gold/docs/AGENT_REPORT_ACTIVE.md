@@ -2,6 +2,580 @@
 
 Resumen operativo actual de `apps/gold`.
 
+## Sesion activa: Fases 0-1-2 — Canon modal §19 + eliminacion de prompt() nativos (2026-04-14)
+
+### Objetivo
+Ejecutar en una sola tarea las Fases 0, 1 y 2 del plan de reforma visual de modales:
+- **FASE 0**: Congelar criterio y oficializar decision arquitectonica (Opcion B aprobada)
+- **FASE 1**: Reformar formalmente el ADN Visual con nueva §19 — Canon de Modales YavlGold V10.1
+- **FASE 2**: Eliminar los 5 usos de prompt() nativo del navegador detectados
+
+### FASE 0 — Decision arquitectonica congelada
+
+**Veredicto**: Opcion B aprobada y oficializada.
+- El modal "Configura tu asistente" (agro-ia-wizard.js) es la referencia visual positiva canonica
+- Los modales funcionales de YavlGold usaran sobriedad flat-gold como estilo base
+- Los efectos metallic ornamentales quedan reservados para landing/hero/superficies exhibibles
+- El modal del asistente NO debe ser reinterpretado ni embellecido; es la base
+
+### FASE 1 — Reforma del ADN Visual
+
+**Archivo tocado**: `apps/gold/docs/ADN-VISUAL-V10.0.md`
+**Cambio**: Nueva seccion §19 — Canon de Modales YavlGold V10.1 (13 subsecciones, ~170 lineas)
+
+Contenido de §19:
+- §19.1 Principio de Sobriedad Funcional
+- §19.2 Shell Estandar de Modal
+- §19.3 Header Estandar
+- §19.4 Body
+- §19.5 Botones de Modal (primary flat, secondary outline, ghost)
+- §19.6 Cards y Chips Seleccionables
+- §19.7 Progress Bar (wizards)
+- §19.8 Token Aliases para Modales (--text-1/2/3, --border-1)
+- §19.9 Animaciones (prohibidos transform/metallic en modales funcionales)
+- §19.10 Accesibilidad Obligatoria (focus-visible, ARIA, Escape, overlay, touch targets)
+- §19.11 Superficies Cubiertas (scope obligatorio, sin excepcion)
+- §19.12 Migracion Legacy (progresiva, prioridad critica primero)
+- §19.13 Anti-Patrones Prohibidos en Modales
+
+Cobertura del ADN actualizada: `§0-§18` → `§0-§19`
+
+### FASE 2 — Eliminacion de prompt() nativos
+
+**Modulo nuevo creado**: `apps/gold/agro/agro-prompt-modal.js` (~200 lineas)
+- Exporta `showPromptModal({ title, label, defaultValue, placeholder })` → `Promise<string|null>`
+- Canon §19 compliant: flat gold shell, focus-visible, ARIA, Escape, overlay close, reduced-motion
+- CSS inyectado dinamicamente con tokens ADN + fallbacks
+- Expuesto como `window.showPromptModal` para compatibilidad con modulos legacy
+
+**Wiring**: `apps/gold/agro/index.html` — dynamic import agregado junto a otros modulos agro
+
+**Prompt() reemplazados (5 usos en 3 archivos):**
+
+| Archivo | Linea | Contexto | Reemplazo |
+|---|---|---|---|
+| `agro-cartera-viva-view.js` | ~1415 | Nombre de nueva cartera operativa | `await showPromptModal({ title, label, defaultValue })` |
+| `agro-period-cycles.js` | ~1058 | Renombrar ciclo | `await showPromptModal({ title, label, defaultValue })` |
+| `agro.js` | ~6503 | ID cultivo destino (duplicar) | `await showPromptModal({ title, label, placeholder })` |
+| `agro.js` | ~6532 | Monto para copia (duplicar) | `await showPromptModal({ title, label, defaultValue })` |
+| `agro.js` | ~6585 | ID cultivo destino (mover) | `await showPromptModal({ title, label, placeholder })` |
+
+**Cambios de wiring async:**
+- `resolveCyclePayloadFromContext()` en `agro-cartera-viva-view.js` → ahora `async`
+- `createOperationalCycleFromCartera()` → ahora usa `await`
+- `promptDestinationCropForGeneralMove()` en `agro.js` → ahora `async`
+- `handleMoveGeneralRecord()` → ahora usa `await`
+
+**Fallback seguro**: Cada llamada conserva `window.prompt` como fallback si `showPromptModal` no esta disponible (resiliencia ante fallo de carga del modulo).
+
+### Cambios por archivo
+
+| Archivo | Tipo | Cambios |
+|---|---|---|
+| `apps/gold/docs/ADN-VISUAL-V10.0.md` | Documental | +~170 lineas: §19 completa (13 subsecciones). Cobertura §0-§19 |
+| `apps/gold/agro/agro-prompt-modal.js` | Nuevo | ~200 lineas: modulo reutilizable con CSS inyectado + showPromptModal() |
+| `apps/gold/agro/index.html` | Wiring | +3 lineas: dynamic import del prompt modal module |
+| `apps/gold/agro/agro-cartera-viva-view.js` | Quirurgico | ~6 lineas: 1 prompt→showPromptModal, funcion async, caller await |
+| `apps/gold/agro/agro-period-cycles.js` | Quirurgico | ~3 lineas: 1 prompt→showPromptModal (ya dentro de handler async) |
+| `apps/gold/agro/agro.js` | Quirurgico | ~12 lineas: 3 prompt→showPromptModal, funcion async, caller await |
+
+### Resultado build
+
+`pnpm build:gold` — OK. 160 modules (+1 nuevo prompt-modal), 2.74s, UTF-8 verificado.
+- `agent-guard`: OK
+- `agent-report-check`: OK
+- `vite build`: OK (160 modules transformed)
+- `check-llms`: OK
+- `check-dist-utf8`: OK
+
+Nuevo bundle: `dist/assets/agro-prompt-modal-BVyFHl1h.js` (6.17 kB, gzip 2.03 kB)
+
+### Riesgos
+
+- **Bajo en agro-cartera-viva-view.js**: Funcion `resolveCyclePayloadFromContext` ahora async. Caller ya era async (`createOperationalCycleFromCartera`), solo se agrego `await`.
+- **Bajo en agro-period-cycles.js**: Handler ya era async. Cambio minimal.
+- **Bajo en agro.js**: `promptDestinationCropForGeneralMove` ahora async. Caller ya era async (`handleMoveGeneralRecord`), solo se agrego `await`.
+- **Fallback seguro**: Si `showPromptModal` no carga, el codigo cae a `window.prompt` nativo — no rompe funcionalidad.
+- **Nulo en logica de negocio**: Solo se reemplazo la superficie de input, no se altero ningun calculo, validacion o flujo de datos.
+
+### QA manual sugerido
+
+1. **Cartera Viva** → crear nueva cartera operativa desde contexto → verificar que aparece modal flat-gold en lugar de prompt nativo, con nombre prellenado, cancelar funciona, aceptar procesa correctamente
+2. **Periodos/Ciclos** → renombrar ciclo → verificar modal con nombre actual prellenado, editar y guardar
+3. **Facturero** → duplicar registro → verificar modal pide ID cultivo (placeholder con opciones), luego modal pide monto
+4. **Facturero** → mover registro general → verificar modal pide ID cultivo destino
+5. **Accesibilidad**: Tab navigation muestra focus-visible gold ring, Escape cierra, click en overlay cierra
+6. **Mobile** (<=480px): verificar modal con border-radius 8px, padding reducido
+7. **Reduced motion**: verificar que no hay animaciones con setting del SO
+
+### Proximo paso recomendado
+
+**FASE 3**: Migracion progresiva de modales legacy al canon §19, priorizando:
+1. Modal editar cliente (#modal-agro-buyer) — ya parcialmente rediseñado, añadir focus-visible + ARIA
+2. Modal editar facturero — `.modal-content` generico, necesita alineacion §19
+3. Resto de modales con estilos inconsistentes
+
+## Sesion activa: Auditoria CANON modal "Configura tu asistente" — ADN V10 vs implementacion real (2026-04-14, sesion 2 — consolidacion final)
+
+### Objetivo
+Auditoria de diagnostico del modal "Configura tu asistente" del Asistente IA Agro. Extraer su ADN visual real desde implementacion (CSS, estructura, tokens, spacing, jerarquias, componentes, interacciones, estados, animaciones) y compararlo rigurosamente contra el ADN Visual Inmutable V10.0 actual del proyecto. Determinar si este modal debe elevarse a canon visual de referencia para todos los modales del sistema.
+
+### Criterio de comparacion contra ADN V10
+- Paleta de color y tokens de color (§2)
+- Gradientes metallic (§3)
+- Tipografia (§4)
+- Bordes, radios, sombras (§5)
+- Animaciones y motion (§6)
+- Componentes (§7)
+- Spacing (§15)
+- Iconografia (§16)
+- Estados de componentes (§17)
+- Accesibilidad (§18)
+
+---
+
+## 1. DIAGNOSTICO FINAL — Donde vive el modal
+
+### Archivos fuente
+
+| Archivo | Ruta | Rol |
+|---|---|---|
+| [agro-ia-wizard.js](agro/agro-ia-wizard.js) | `apps/gold/agro/agro-ia-wizard.js` | Implementacion completa: HTML template (L183-208), CSS inyectado dinamicamente (L316-533), render helpers (L132-181), interacciones (L213-310), public API (L543-640) |
+| [index.html](agro/index.html) | `apps/gold/agro/index.html` | Trigger button L2654-2656, module import |
+| [agro.css](agro/agro.css) | `apps/gold/agro/agro.css` | Trigger button `.ast-configure-btn` styling |
+| [ADN-VISUAL-V10.0.md](docs/ADN-VISUAL-V10.0.md) | `apps/gold/docs/ADN-VISUAL-V10.0.md` | Documento de referencia V10.0 completo (§0-§18) |
+
+### Construccion tecnica
+- **Metodo**: Template literal inline → `createElement('div')` → `appendChild` al body
+- **CSS**: Inyectado via `createElement('style')` con ID `agro-ia-wizard-styles` (una sola vez)
+- **Datos**: Supabase tables `agro_farmer_profile` + `user_onboarding_context`
+- **Bridge**: `window._agroIAContext` para consumo del asistente IA
+- **Flujo**: 2 pasos (Experiencia + Tipo finca → Objetivos del asistente)
+- **Prefijo CSS**: `.aiw-*` (agro-ia-wizard)
+
+---
+
+## 2. ADN EXTRAIDO DEL MODAL — Rasgos canonicos documentados con evidencia
+
+### 2.1 Shell del modal
+
+| Propiedad | Valor implementado | Token ADN equivalente |
+|---|---|---|
+| Width | `min(460px, calc(100vw - 32px))` | No definido en ADN para modales |
+| Max-height | `calc(100vh - 48px)` | No definido en ADN |
+| Border radius | `12px` (desktop), `8px` (mobile <=480px) | `--radius-md: 12px`, `--radius-sm: 8px` |
+| Border | `1px solid var(--gold-4, #C8A752)` | `--border-gold: rgba(200,167,82,0.25)` — DIVERGE: gold solido vs semi-transparente |
+| Shadow | `0 8px 32px rgba(0,0,0,0.5)` | ADN define `--shadow-gold-*`; NO usa gold shadow |
+| Background | `var(--bg-2, #141414)` | `--bg-2: #0B0C0F` — fallback DIVERGE |
+| Overlay | `rgba(0,0,0,0.85)` | Similar a `--glass-bg: rgba(17,17,17,0.9)` |
+| Backdrop blur | `blur(8px)` | `--backdrop-blur: blur(12px)` — menor |
+| Z-index | `10100` | No definido en ADN |
+| Closing animation | `opacity: 0` en 180ms + `setTimeout(200ms)` para remove | Dentro del rango ADN (120-220ms) |
+
+### 2.2 Header
+
+| Elemento | Implementacion | Evidencia (linea en agro-ia-wizard.js) |
+|---|---|---|
+| Estructura | `display: flex; align-items: center; justify-content: space-between` | L187-192 |
+| Padding | `16px 20px 12px` | L347 |
+| Border-bottom | `1px solid var(--border-1, #2a2a2a)` | L348 |
+| Icono | `fa-wand-magic-sparkles`, `color: var(--gold-4)`, `1.1rem` | L189, L350 |
+| Titulo | Orbitron, `0.95rem`, `font-weight: 600`, `color: var(--text-1)` | L190, L352-355 |
+| Cerrar | `&times;` text, `color: var(--text-3)`, `font-size: 1.4rem`, hover `var(--text-1)` | L192, L357-361 |
+| Gap icono-titulo | `10px` | L349 |
+
+### 2.3 Body
+
+| Propiedad | Valor | Token ADN |
+|---|---|---|
+| Padding | `20px` (desktop), `16px` (mobile) | `--space-5: 1.25rem` / `--space-4: 1rem` |
+| Step title | Orbitron, `1rem`, `600`, `var(--text-1)` | `--font-heading`, Orbitron |
+| Subtitle | Rajdhani, `0.85rem`, `var(--text-3)` | `--font-body`, `--text-muted: #94A3B8` |
+| Margin step title | `0 0 4px` | Hardcodeado, no `--space-1` |
+| Margin subtitle | `0 0 16px` | Hardcodeado, no `--space-4` |
+
+### 2.4 Componentes internos
+
+**Cards de experiencia (`.aiw-option-card`):**
+- Layout: `display: flex; align-items: flex-start; gap: 12px`
+- Background: `var(--bg-3, #1e1e1e)`, Border: `1px solid var(--border-1, #2a2a2a)`
+- Radius: `8px`, Padding: `12px 14px`
+- Font: Rajdhani, `color: var(--text-2)`
+- Grid: `display: flex; flex-direction: column; gap: 10px`
+
+**Chips de tipo finca (`.aiw-chip`):**
+- Radius: `20px` (pill shape), Padding: `6px 14px`
+- Layout: `display: flex; flex-wrap: wrap; gap: 8px`
+- Font: Rajdhani `0.82rem`, `color: var(--text-2)`
+
+**Goal chips (`.aiw-goal-chip`):**
+- Layout: `display: flex; align-items: center; gap: 8px`
+- Radius: `8px`, Padding: `10px 14px`
+- Grid: `display: flex; flex-wrap: wrap; gap: 10px`
+- Font: Rajdhani `0.85rem`
+
+**Progress bar (`.aiw-progress`):**
+- Height: `3px`, Background: `var(--bg-3)`
+- Bar: `background: var(--gold-4)`, transition `width 220ms ease`
+
+**Footer:**
+- Padding: `12px 20px 16px`, Border-top: `1px solid var(--border-1)`
+- 3 botones: Back (secondary), Skip (ghost), Next/Save (primary)
+- Layout: `display: flex; align-items: center; gap: 8px`
+
+### 2.5 Estados visuales
+
+| Estado | Implementacion | Token ADN equivalente |
+|---|---|---|
+| Card hover | `border-color: var(--gold-5, #A68A3E)`, `bg: var(--bg-2)`, `150ms ease` | `--state-hover-overlay: rgba(200,167,82,0.08)` |
+| Card selected | `border-color: var(--gold-4)`, `bg: rgba(200,167,82,0.08)` | Coincide con `--state-hover-overlay` |
+| Chip hover | `border-color: var(--gold-5, #A68A3E)` | Similar |
+| Chip selected | gold border + gold text + `bg: rgba(200,167,82,0.12)` | Tinte gold |
+| Goal chip selected | gold border + gold text + `bg: rgba(200,167,82,0.10)` | Tinte gold |
+| Btn primary hover | `opacity: 0.9` | DIVERGE: ADN usa `brightness(1.1) + translateY(-1px) + shadow-gold-sm` |
+| Btn secondary hover | `border-color: var(--gold-5)` | Similar a outline-gold |
+| Btn disabled | `opacity: 0.5`, `cursor: not-allowed` | ADN: `opacity: 0.4`, falta `pointer-events: none` |
+| Close hover | `color: var(--text-1)` | Correcto |
+| **:focus-visible** | **NO IMPLEMENTADO** | **Violacion §17 y §18** |
+
+### 2.6 Animaciones / Motion
+
+| Elemento | Animacion | Timing | Cumple ADN §6? |
+|---|---|---|---|
+| Overlay open | `opacity: 1` (sin animation de entrada explícita) | N/A | Parcial — falta fadeIn |
+| Overlay close | `opacity: 0` via class `.aiw-overlay--closing` | `180ms ease` | Si (dentro de 120-220ms) |
+| Progress bar | `width` transition | `220ms ease` | Si |
+| Cards/chips/botones | `border-color, background` transition | `150ms ease` | Si |
+| Hover transforms | **NINGUNO** — sin `translateY`, sin `scale` | N/A | DIVERGE: ADN §17.4 usa `translateY(-1px)` + `scale(0.98)` |
+| Metallic effects | **NINGUNO** — sin shimmer, sin glow, sin gradient | N/A | DIVERGE: ADN §3 tiene 7 gradientes metallic |
+| prefers-reduced-motion | **IMPLEMENTADO** — desactiva todas las transitions | Si | Si, cumple §6 |
+
+### 2.7 Tokens y colores reales
+
+| Token usado en CSS | Fallback hardcodeado | Valor ADN oficial | Coincide? |
+|---|---|---|---|
+| `var(--gold-4)` | `#C8A752` | `#C8A752` | SI |
+| `var(--gold-5)` | `#A68A3E` | `#E8D48B` | NO — fallback es gold DARK, ADN es gold LIGHT |
+| `var(--bg-1)` | `#0a0a0a` | `#0a0a0a` | SI |
+| `var(--bg-2)` | `#141414` | `#0B0C0F` | NO — fallback es mas claro que ADN |
+| `var(--bg-3)` | `#1e1e1e` | `#111113` | NO — fallback es mas claro que ADN |
+| `var(--text-1)` | `#f5f5f5` | `#ffffff` (--text-primary) | NO — naming y valor divergen |
+| `var(--text-2)` | `#ccc` | `#cccccc` (--text-secondary) | SI en valor, NO en nombre |
+| `var(--text-3)` | `#888` | `#94A3B8` (--text-muted) | NO — `#888` es mas oscuro que `#94A3B8` |
+| `var(--border-1)` | `#2a2a2a` | `rgba(255,255,255,0.08)` (--border-neutral) | NO — solido opaco vs semi-transparente |
+| `var(--font-heading)` | `'Orbitron'` | `'Orbitron'` | SI |
+| `var(--font-body)` | `'Rajdhani'` | `'Rajdhani'` | SI |
+
+### 2.8 Densidad y spacing
+
+| Elemento | Padding/gap implementado | Token ADN §15 |
+|---|---|---|
+| Header | `16px 20px 12px` | `--space-4 / --space-5 / --space-3` |
+| Body | `20px` | `--space-5` |
+| Options grid gap | `10px` | No token para 10px (escala salta de 8 a 12) |
+| Option card padding | `12px 14px` | `--space-3 / sin token para 14px` |
+| Chips row gap | `8px` | `--space-2` |
+| Footer | `12px 20px 16px` | `--space-3 / --space-5 / --space-4` |
+| Footer button gap | `8px` | `--space-2` |
+| Mobile body | `16px` | `--space-4` |
+
+**Hallazgo**: El modal no usa tokens `--space-*` del ADN §15. Usa px directos. La escala de 4px del ADN no contempla `10px` ni `14px`, lo que sugiere que el modal fue construido con valores pragmaticos antes de la existencia formal del spacing system.
+
+---
+
+## 3. COMPARACION CONTRA ADN V10.0 — Punto por punto
+
+### 3.1 Coincidencias
+
+| Aspecto | Detalle |
+|---|---|
+| Paleta gold como acento | `--gold-4: #C8A752` como color primario de interaccion |
+| Fondo oscuro | Toda la superficie es dark mode nativo |
+| Tipografias con roles correctos | Orbitron para headings, Rajdhani para body/UI |
+| Border radius coherente | `8px` y `12px` dentro de la escala `--radius-sm/md` |
+| Overlay con backdrop blur | Cumple principio de glass del ADN |
+| Transiciones en rango | 150-220ms, dentro del rango ADN (120-220ms) |
+| prefers-reduced-motion | Respetado con media query explicita |
+| Estructura semantica | header > progress > body > footer — jerarquia correcta |
+| Fallbacks con resiliencia | `var(--token, fallback)` — buen patron defensivo |
+| Font Awesome iconos | `fa-wand-magic-sparkles`, `fa-seedling`, etc. — proveedor correcto |
+| Gold como color de seleccion | Cards y chips usan gold al seleccionarse |
+| Progress bar con gold | `--gold-4` en barra de progreso |
+
+### 3.2 Divergencias
+
+| # | Aspecto | Modal | ADN V10.0 | Severidad |
+|---|---|---|---|---|
+| 1 | **Token naming** | `--text-1/2/3`, `--border-1` | `--text-primary/secondary/muted`, `--border-neutral` | ALTA — namespace diferente |
+| 2 | **Fallback --gold-5** | `#A68A3E` (gold oscuro) | `#E8D48B` (gold claro/highlight) | ALTA — color semantico incorrecto |
+| 3 | **Fallback --bg-2** | `#141414` | `#0B0C0F` | MEDIA — tono mas claro |
+| 4 | **Fallback --bg-3** | `#1e1e1e` | `#111113` | MEDIA — tono mas claro |
+| 5 | **Fallback --text-3** | `#888` | `#94A3B8` (--text-muted) | MEDIA — contraste reducido |
+| 6 | **Border del modal** | `1px solid var(--gold-4)` (opaco) | `--border-gold: rgba(200,167,82,0.25)` (semi-transparente) | BAJA — intencional, mas visible |
+| 7 | **Shadow** | `rgba(0,0,0,0.5)` generica | `--shadow-gold-*` | MEDIA — sin tinte gold |
+| 8 | **Backdrop blur** | `blur(8px)` | `blur(12px)` | BAJA |
+| 9 | **Boton primary hover** | `opacity: 0.9` (flat) | `brightness(1.1) + translateY(-1px) + shadow-gold-sm` | ALTA — motion distinto |
+| 10 | **Sin metallic effects** | Flat gold solido | `--metallic-btn`, `--metallic-border`, shimmer | ALTA — divergencia ornamental |
+| 11 | **Sin focus-visible** | No implementado | Obligatorio per §17, §18 | CRITICA — violacion de accesibilidad |
+| 12 | **Sin ARIA** | Falta `role="dialog"`, `aria-modal`, `aria-labelledby` | Obligatorio per §18.7 | CRITICA — violacion de accesibilidad |
+| 13 | **Disabled sin pointer-events** | Falta `pointer-events: none` | ADN §17.4 lo requiere | MEDIA |
+| 14 | **Spacing sin tokens** | px directos | `--space-*` obligatorio per §15 | MEDIA |
+| 15 | **Sin hover transform** | Sin `translateY` ni `scale` | ADN §17.4: `translateY(-1px)` + `scale(0.98)` | BAJA — intencional en contexto modal |
+
+### 3.3 Tensiones
+
+1. **Sobriedad vs Ornamento**: El ADN prescribe gradientes metallic y gold shadows para botones y cards. El modal los omite intencionalmente. Esto es visualmente SUPERIOR para superficies de configuracion pero contradice la literalidad del ADN.
+
+2. **Token aliases vs Tokens canonicos**: Los tokens `--text-1/2/3`, `--border-1` son pragmaticos y funcionales. No existen en el ADN oficial. Pueden coexistir como aliases si se formalizan, o reemplazarse por los canonicos.
+
+3. **Flat gold vs Metallic gold**: El boton primary del modal es `background: var(--gold-4)` solido. El ADN prescribe `background: var(--metallic-btn)` con gradiente animado. Para un wizard de configuracion, el boton flat es mas apropiado.
+
+4. **Fallbacks divergentes**: Los fallbacks hardcodeados del modal son consistentes entre si pero difieren del ADN. Si los tokens canonicos estuvieran disponibles globalmente en el scope del modulo Agro, el modal los adoptaria via `var()`.
+
+### 3.4 Oportunidades
+
+1. **Patron "compact card + chip selection"**: Superior a los modales legacy con inputs de texto o dropdowns para flujos de configuracion. Reutilizable.
+2. **Estructura de pasos con progress bar**: Patron replicable para wizards futuros.
+3. **3 niveles de accion en footer**: Primary / Secondary / Ghost — cubre todos los casos de uso sin sobrecarga.
+4. **Densidad compacta**: Menos aire visual que el landing page, mas denso que un formulario tradicional. Equilibrio ideal para modales.
+5. **Resiliencia de tokens**: El patron `var(--token, fallback)` es el correcto para un modulo que puede ejecutarse en contextos donde no todos los tokens estan disponibles.
+
+---
+
+## 4. VEREDICTO — OPCION B
+
+**El modal "Configura tu asistente" no coincide totalmente con ADN V10.0 actual, pero representa una evolucion legitimamente superior que conviene formalizar como canon.**
+
+### Justificacion con firmeza
+
+1. **Visualmente es superior en sobriedad funcional**: El diseno flat gold (sin metallic shimmer, sin gold shadows, sin transforms en hover) es mas apropiado para superficies de configuracion, formularios y wizards. Los gradientes metallic y gold shadows del ADN actual tienen lugar legitimo en landing pages, module cards y elementos prestige, pero en modales funcionales producen ruido visual. El modal "Configura tu asistente" respira profesionalismo sin distracciones.
+
+2. **Estructuralmente es canonico**: La estructura header-icon + progress bar + step content + footer con 3 niveles de accion (primary/secondary/ghost) es un patron replicable y escalable para TODOS los modales del sistema, desde login hasta feedback.
+
+3. **Token naming necesita reconciliacion formal**: Los tokens `--text-1/2/3`, `--border-1` son aliases utiles que YA funcionan en produccion. Deben añadirse al ADN como aliases compatibles, no eliminarse del modal. Esto no es un defecto, es una extension legitima.
+
+4. **Requiere parches de accesibilidad especificos**: `focus-visible`, `role="dialog"`, `aria-modal="true"`, `aria-labelledby`, y `pointer-events: none` en disabled. Estos parches NO cambian el estilo visual y deben aplicarse sin modificar la estetica.
+
+5. **El ADN actual es incompleto para modales**: El ADN V10.0 define botones, cards, badges, inputs y links, pero NO define una superficie de modal canónica. §19 llenaria ese vacio.
+
+6. **Los fallbacks divergentes son un sintoma, no un defecto**: Revelan que los tokens canonicos del ADN no estan disponibles en el scope CSS del modulo Agro. Formalizar aliases resolveria esto.
+
+---
+
+## 5. PROPUESTA FORMAL — Canon de Modales YavlGold
+
+### 5.1 Reforma del ADN V10.0 — Nueva seccion §19
+
+```
+## §19 — Canon de Modales YavlGold V10.1
+
+Estado: PROPUESTA (pendiente aprobacion para adicion al ADN Visual V10.0)
+Referencia canonica: agro-ia-wizard.js — modal "Configura tu asistente"
+
+### §19.1 — Principio de Sobriedad Funcional
+Todos los modales, dialogs, wizards, paneles flotantes y superficies emergentes de
+YavlGold deben priorizar SOBRIEDAD VISUAL sobre ornamento. Los gradientes metallic,
+gold shadows y shimmer animations estan reservados para landing pages, hero sections,
+module cards y elementos prestige. En superficies funcionales (modales, forms, wizards)
+el estilo es flat, limpio y profesional.
+
+El modal "Configura tu asistente" (agro-ia-wizard.js) es la REFERENCIA CANONICA de
+este principio y la base visual obligatoria de todos los modales del sistema.
+
+### §19.2 — Shell Estandar de Modal
+- Background: var(--bg-2)
+- Border: 1px solid var(--gold-4) — flat, sin metallic shimmer
+- Border radius: var(--radius-md) (12px desktop, 8px mobile)
+- Shadow: 0 8px 32px rgba(0,0,0,0.5) — sombra oscura, sin gold tint
+- Max width:
+  - Compacto: min(460px, calc(100vw - 32px))
+  - Ancho: min(620px, calc(100vw - 32px))
+- Overlay: rgba(0,0,0,0.85) + backdrop-filter: blur(8px)
+- Z-index: >= 10000
+- Closing: opacity transition 180ms ease
+
+### §19.3 — Header Estandar
+- Estructura: icon + title (izquierda) | close button (derecha)
+- Padding: 16px 20px 12px
+- Border-bottom: 1px solid var(--border-neutral)
+- Icon: Font Awesome, color var(--gold-4), font-size 1.1rem
+- Title: Orbitron, 0.95rem, font-weight 600, color var(--text-primary)
+- Close: &times; o fa-xmark, color var(--text-muted), hover var(--text-primary)
+- Gap icono-titulo: 10px
+
+### §19.4 — Body
+- Padding: 20px (desktop), 16px (mobile <=480px)
+- Tipografia step: Orbitron 1rem/600 para subtitulos, Rajdhani 0.85rem para descripcion
+- Color step title: var(--text-primary)
+- Color descripcion: var(--text-muted)
+- Spacing entre bloques: 16-18px
+
+### §19.5 — Botones de Modal
+- Primary: background var(--gold-4), color var(--bg-1), flat
+  - Hover: opacity 0.9 (sin transform, sin shadow)
+  - Disabled: opacity 0.5, cursor not-allowed, pointer-events none
+- Secondary: background var(--bg-3), border 1px solid var(--border-neutral)
+  - Hover: border-color var(--gold-5)
+- Ghost: sin background, color var(--text-muted), hover var(--text-primary)
+- Font: Rajdhani, 0.85rem, font-weight 600
+- Padding: 8px 18px
+- Border radius: var(--radius-sm) (6px)
+- Transitions: 150ms ease
+
+### §19.6 — Cards y Chips Seleccionables
+- Card: bg var(--bg-3), border 1px solid var(--border-neutral), radius var(--radius-sm)
+- Card hover: border-color var(--gold-5), sin shadow, sin transform
+- Card selected: border var(--gold-4), bg rgba(200,167,82,0.08)
+- Chip: radius 20px (pill), padding 6px 14px
+- Chip selected: border gold + text gold + bg rgba(200,167,82,0.12)
+- Goal chip: radius 8px, con icono, gap 8px
+- Transitions: 150ms ease para border-color y background
+
+### §19.7 — Progress Bar (para wizards)
+- Height: 3px
+- Track: var(--bg-3)
+- Bar: var(--gold-4)
+- Transition: width 220ms ease
+
+### §19.8 — Accesibilidad Obligatoria (sin excepciones)
+- TODO elemento interactivo (.aiw-btn, .aiw-option-card, .aiw-chip, .aiw-goal-chip,
+  .aiw-close) DEBE tener :focus-visible con box-shadow: var(--state-focus-ring)
+- TODO modal DEBE tener role="dialog", aria-modal="true", aria-labelledby
+- Close button DEBE tener aria-label="Cerrar"
+- Overlay click y Escape key DEBEN cerrar el modal
+- Touch targets: minimo 44px en botones de accion
+- Focus trap: al abrir modal, focus va al primer interactivo; al cerrar, focus
+  retorna al trigger
+
+### §19.9 — Animaciones
+- Overlay open: opacity 0 → 1, 180ms ease
+- Overlay close: opacity 1 → 0, 180ms ease
+- Progress bar: width transition 220ms ease
+- Cards/chips/botones: border-color y background transitions 150ms ease
+- SIN transform en hover (no translateY, no scale)
+- SIN metallic shimmer, SIN gold glow, SIN gradient animation
+- prefers-reduced-motion: reduce — desactiva TODAS las transitions
+
+### §19.10 — Token Aliases para Modales
+Los siguientes aliases son compatibles con el ADN y pueden usarse en modales:
+- --text-1 → var(--text-primary, #ffffff)
+- --text-2 → var(--text-secondary, #cccccc)
+- --text-3 → var(--text-muted, #94A3B8)
+- --border-1 → var(--border-neutral, rgba(255,255,255,0.08))
+- --bg-2 con fallback #141414 aceptable en modales (ligeramente mas claro para
+  distinguirse del fondo de la pagina)
+
+### §19.11 — Superficies Cubiertas (scope)
+Esta regla aplica OBLIGATORIAMENTE a:
+- Login y registro
+- Nuevo cultivo, editar cultivo
+- Editar fiado
+- Nuevo cliente wizard
+- Nuevo carrito
+- Nueva cartera operativa, editar cartera operativa
+- Nueva tarea
+- Ajustes
+- Panel de control global
+- Feedback / encuestas
+- Notificaciones
+- Centro de alertas
+- Configuracion de asistente IA
+- CUALQUIER superficie emergente nueva o legacy
+- CUALQUIER reemplazo de prompt() nativo del navegador
+
+### §19.12 — Migracion Legacy
+Los modales existentes deberan migrarse progresivamente a este canon cuando se
+toquen por mantenimiento, bugfix o nuevas features. No se requiere migracion masiva.
+La prioridad de migracion es:
+1. Modales que usan prompt() nativo (reemplazo urgente)
+2. Modales con estilos inconsistentes o hardcodeados
+3. Modales que ya son parcialmente compatibles
+4. Resto de superficies legacy
+```
+
+---
+
+## 6. IMPACTO ARQUITECTONICO
+
+### 6.1 Superficies futuras cubiertas
+Todo modal nuevo del sistema nacera bajo el canon §19. Esto incluye cualquier:
+- Wizard de configuracion
+- Formulario emergente
+- Dialog de confirmacion
+- Panel de ajustes flotante
+- Superficie de feedback
+- Reemplazo de prompt() nativo
+
+### 6.2 Legacy en deuda de migracion
+
+| Superficie | Archivo principal | Estado actual | Prioridad migracion |
+|---|---|---|---|
+| prompt() nativo en cartera operativa | `agro-cartera-viva-view.js:1415` | `window.prompt()` — violacion UX | **CRITICA** |
+| prompt() nativo en ciclos | `agro-period-cycles.js:1058` | `prompt()` — violacion UX | **CRITICA** |
+| prompt() nativo en agro.js (3 usos) | `agro.js:6503,6532,6583` | `prompt()` — violacion UX | **CRITICA** |
+| Modal editar cliente (#modal-agro-buyer) | `agro.css:1040-1707` | Parcialmente rediseñado, usa `--border-gold` | ALTA |
+| Modal editar facturero | `agro.css:156-199` | Legacy, `.modal-content` generico | MEDIA |
+| Modal de nuevo cultivo | Buscar en agro.js | Sin auditar en detalle | MEDIA |
+| Modal de nuevo carrito | Buscar en agro.js | Sin auditar en detalle | MEDIA |
+| Modal de nueva tarea | Buscar en agro.js | Sin auditar en detalle | MEDIA |
+| Asistente IA overlay | `agro.css:9785` | `.ast-modal-overlay` | BAJA — ya cercano |
+| Transfer modal | `agro.css:5269` | `.transfer-modal-overlay` | BAJA |
+| Widget modals | `agro.css:6061,7160` | `.arw-modal-overlay` | BAJA |
+
+### 6.3 Riesgos de la propuesta
+- **Nulo en esta fase**: Solo documentacion y propuesta formal.
+- **Bajo al implementar §19**: Los parches de accesibilidad (focus-visible, ARIA) no cambian estetica.
+- **Medio en migracion legacy**: Cada modal migrado requiere testing de regresion visual.
+- **Nulo en resiliencia**: Los fallbacks existentes garantizan que el modal funciona sin tokens globales.
+
+---
+
+## 7. ARCHIVOS INSPECCIONADOS
+
+| # | Archivo | Ruta | Rol |
+|---|---|---|---|
+| 1 | agro-ia-wizard.js | `apps/gold/agro/agro-ia-wizard.js` | Implementacion completa del modal |
+| 2 | index.html | `apps/gold/agro/index.html` | Trigger button y module import |
+| 3 | agro.css | `apps/gold/agro/agro.css` | Trigger button + otros modales |
+| 4 | ADN-VISUAL-V10.0.md | `apps/gold/docs/ADN-VISUAL-V10.0.md` | Referencia ADN V10.0 (§0-§18) |
+| 5 | AGENT_REPORT_ACTIVE.md | `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Reporte de sesiones previas |
+| 6 | agro-cartera-viva-view.js | `apps/gold/agro/agro-cartera-viva-view.js` | prompt() nativo L1415 |
+| 7 | agro-period-cycles.js | `apps/gold/agro/agro-period-cycles.js` | prompt() nativo L1058 |
+| 8 | agro.js | `apps/gold/agro/agro.js` | prompt() nativo L6503,6532,6583 |
+| 9 | agro-cartera-viva.css | `apps/gold/agro/agro-cartera-viva.css` | Estilos de cartera viva |
+| 10 | agro-operations.css | `apps/gold/agro/agro-operations.css` | Wizard section styles |
+
+---
+
+## 8. RESULTADO BUILD
+
+`pnpm build:gold` — OK. 159 modules, 3.08s, UTF-8 verificado.
+- `agent-guard`: OK
+- `agent-report-check`: OK (AGENT_REPORT_ACTIVE.md)
+- `vite build`: OK (159 modules transformed)
+- `check-llms`: OK
+- `check-dist-utf8`: OK — UTF-8 verificado con "agricola" acentuado
+
+Nota: warning CSS syntax en linea 7913 (`border: 1px solid var(--border-neutral)`) — es un CSS preexistente del proyecto, no relacionado con esta auditoria.
+
+---
+
+## 9. QA MANUAL SUGERIDO
+
+1. Confirmar que el modal "Configura tu asistente" abre, navega pasos, guarda y cierra correctamente
+2. Verificar Tab navigation — actualmente NO hay focus-visible, los elementos no muestran anillo de foco
+3. Confirmar que Escape cierra el modal
+4. Confirmar que click en overlay cierra el modal
+5. Verificar responsive mobile (<=480px)
+6. Validar `prefers-reduced-motion` con setting del SO
+7. Inspeccionar tokens CSS en DevTools — verificar cuales tokens se resuelven y cuales usan fallback
+
+---
+
+## 10. RESUMEN EJECUTIVO
+
+**Veredicto: OPCION B** — El modal "Configura tu asistente" es una evolucion legitimamente superior del ADN V10.0 para superficies funcionales. No coincide totalmente (token naming, accesibilidad, metallic effects) pero sus divergencias son intencionales y mejoran la experiencia en modales. Propone añadir §19 al ADN como "Canon de Modales YavlGold" con obligatoriedad total para nuevas superficies y migracion progresiva para legacy. La prioridad inmediata es reemplazar los 5 usos de `prompt()` nativo del navegador.
+
 ## Sesion activa: Compactacion cabecera detalle Cartera Viva (2026-04-14)
 
 ### Diagnostico
@@ -16188,3 +16762,29 @@ Agente anterior se quedo sin cuota a mitad del trabajo. Se revisaron los 3 diffs
 - `createDraftValues` aun tiene `closeOnSave: false` — campo muerto tras los cambios del agente anterior. Se puede limpiar en proxima sesion sin urgencia.
 - El edit form reusa los mismos IDs que el wizard (`agro-operational-name`, etc.). No hay conflicto porque solo uno u otro se renderiza.
 - El formulario compacto no muestra el stepper visual ni el resumen de confirmacion. Esto es intencional (edicion directa). Si se desea un resumen previo al guardado, se puede agregar como vista previa en el futuro.
+
+---
+
+## Sesion activa: Evaluacion skills Obsidian wiki-query y wikiforge + parche AGENTS.md (2026-04-14)
+
+### Objetivo
+Evaluar dos skills externas (`wiki-query` y `wikiforge`) para determinar si conviene integrarlas al flujo documental de YavlGold + Obsidian, y corregir una ambigüedad en `AGENTS.md` sobre la ruta del vault activo.
+
+### Diagnostico
+- `AGENTS.md` §12 listaba `C:\Users\yerik\OneDrive\Documentos\Obsidian Vault\` como ruta fija del vault, contradiciendo §13 que dice no asumir OneDrive
+- Esto puede inducir a error a futuros agentes que lean §12 sin leer §13
+- `wiki-query` = skill de solo lectura (buscar en wiki existente), bajo riesgo
+- `wikiforge` = skill de escritura (crear/ingestar wiki), riesgo medio-alto si apunta al repo del producto
+
+### Cambios aplicados
+| Archivo | Cambio |
+|---|---|
+| `AGENTS.md` (L412-428) | Reemplazada ruta hardcodeada de OneDrive por instruccion de verificar vault activo con el usuario. Agregada nota operativa sobre no asumir OneDrive y ruta de pruebas `apps/gold/docs/test/`. Agregada `wiki-query` como skill prioritaria. Agregado `wikiforge` como skill opcional con restriccion (solo vaults externos al repo) |
+
+### Build status
+`pnpm build:gold` — **OK** (agent-guard + agent-report-check + vite build + check-llms + check-dist-utf8 pasaron)
+
+### QA sugerido
+- Verificar que `AGENTS.md` se lee correctamente y el parche no introdujo errores de formato
+- Confirmar que la jerarquia de skills (prioritarias vs opcionales) refleja la intencion del usuario
+- Si se instala `wiki-query`, probar consulta contra el vault activo para verificar funcionamiento

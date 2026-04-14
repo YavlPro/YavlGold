@@ -6500,7 +6500,9 @@ async function duplicateFactureroItem(tabName, itemId) {
             return `${crop.id}: ${displayCrop.label}`;
         }).join('\n')}`
         : '';
-    const newCropId = prompt(`ID del cultivo destino (dejar vacio para general):${cropHint}`);
+    const newCropId = typeof window !== 'undefined' && typeof window.showPromptModal === 'function'
+        ? await window.showPromptModal({ title: 'Duplicar registro', label: `ID del cultivo destino (dejar vacio para general):`, defaultValue: '', placeholder: Array.isArray(cropsCache) && cropsCache.length ? cropsCache.map((crop) => { const displayCrop = getCropDisplayParts(crop); return `${crop.id}: ${displayCrop.label}`; }).join(', ') : '' })
+        : prompt(`ID del cultivo destino (dejar vacio para general):${cropHint}`);
     if (newCropId === null) return;
 
     try {
@@ -6529,7 +6531,9 @@ async function duplicateFactureroItem(tabName, itemId) {
         copy.crop_id = newCropId?.trim() || null;
 
         const originalAmount = original[config.amountField];
-        const amountInput = prompt('Monto para la copia (opcional). Deja vacio para mantener.', originalAmount ?? '');
+        const amountInput = typeof window !== 'undefined' && typeof window.showPromptModal === 'function'
+            ? await window.showPromptModal({ title: 'Duplicar registro', label: 'Monto para la copia (opcional). Deja vacio para mantener.', defaultValue: originalAmount ?? '' })
+            : prompt('Monto para la copia (opcional). Deja vacio para mantener.', originalAmount ?? '');
         if (amountInput !== null && String(amountInput).trim() !== '') {
             const parsedAmount = Number(String(amountInput).replace(',', '.'));
             if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
@@ -6567,7 +6571,7 @@ async function duplicateFactureroItem(tabName, itemId) {
     }
 }
 
-function promptDestinationCropForGeneralMove(sourceTab) {
+async function promptDestinationCropForGeneralMove(sourceTab) {
     const crops = Array.isArray(cropsCache) ? cropsCache : [];
     if (!crops.length) {
         notifyFacturero('No hay cultivos disponibles para mover este registro.', 'warning');
@@ -6579,8 +6583,10 @@ function promptDestinationCropForGeneralMove(sourceTab) {
             const displayCrop = getCropDisplayParts(crop);
             return `${crop.id}: ${displayCrop.label}`;
         })
-        .join('\n');
-    const raw = prompt(`ID del cultivo destino para mover este ${AGROLOG_TAB_LABELS[sourceTab] || sourceTab}:\n${cropHint}`);
+        .join(', ');
+    const raw = typeof window !== 'undefined' && typeof window.showPromptModal === 'function'
+        ? await window.showPromptModal({ title: 'Mover registro', label: `ID del cultivo destino para mover este ${AGROLOG_TAB_LABELS[sourceTab] || sourceTab}:`, placeholder: cropHint })
+        : prompt(`ID del cultivo destino para mover este ${AGROLOG_TAB_LABELS[sourceTab] || sourceTab}:\n${cropHint}`);
     if (raw === null) return null;
 
     const targetId = normalizeCropId(raw);
@@ -6608,7 +6614,7 @@ async function handleMoveGeneralRecord(sourceTab, itemId) {
         return;
     }
 
-    const targetCrop = promptDestinationCropForGeneralMove(sourceTab);
+    const targetCrop = await promptDestinationCropForGeneralMove(sourceTab);
     if (!targetCrop) return;
 
     try {

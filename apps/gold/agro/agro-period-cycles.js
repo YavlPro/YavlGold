@@ -1055,7 +1055,9 @@ function bindRootEvents() {
                 const cycleId = button.dataset.cycleId;
                 const cycle = state.cycles.find((c) => c.id === cycleId);
                 if (!cycle) return;
-                const newName = prompt('Nuevo nombre del ciclo:', cycle.name);
+                const newName = typeof window !== 'undefined' && typeof window.showPromptModal === 'function'
+                    ? await window.showPromptModal({ title: 'Renombrar ciclo', label: 'Nuevo nombre del ciclo:', defaultValue: cycle.name })
+                    : prompt('Nuevo nombre del ciclo:', cycle.name);
                 if (newName === null || newName.trim() === '' || newName.trim() === cycle.name) return;
                 try {
                     await renamePeriodCycle(cycleId, newName);
