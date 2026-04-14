@@ -359,7 +359,7 @@ async function resolveSessionUser() {
 }
 
 function readBuyerForm() {
-    if (state.wizardDraft && state.mode === 'create') {
+    if (state.wizardDraft) {
         return { ...state.wizardDraft };
     }
     const payload = {};

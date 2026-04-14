@@ -2,6 +2,51 @@
 
 Resumen operativo actual de `apps/gold`.
 
+## Sesion activa: Fix save wizard cliente — "Ingresa un nombre valido" en Paso 4 (2026-04-13)
+
+### Causa raiz exacta
+
+`readBuyerForm()` tenia una guarda `state.wizardDraft && state.mode === 'create'`. Pero `handleWizardFormSubmit` setea `state.mode = 'edit'` cuando el usuario elige "cliente existente". Esto hacia que la guarda fallara, cayendo al path de lectura del DOM (inputs `agro-buyer-*`) que no existen en modo wizard.
+
+Flujo roto:
+1. Paso 4 → "Guardar cliente" → `handleWizardFormSubmit`
+2. Modo existing → `state.mode = 'edit'`, `state.currentBuyerId = wizardSelectedBuyerId`
+3. `handleBuyerSave()` → `readBuyerForm()`
+4. Guarda: `state.wizardDraft && state.mode === 'create'` → FALSE (mode es 'edit')
+5. Cae a leer DOM → `agro-buyer-*` no existen → formData vacio
+6. `displayName` vacio → throw "Ingresa un nombre valido"
+
+### Cambios
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/agrocompradores.js` | `readBuyerForm()`: eliminar `&& state.mode === 'create'` de la guarda. Ahora es `if (state.wizardDraft)` |
+
+**Diff exacto:**
+```diff
+ function readBuyerForm() {
+-    if (state.wizardDraft && state.mode === 'create') {
++    if (state.wizardDraft) {
+         return { ...state.wizardDraft };
+     }
+```
+
+### Resultado build
+
+`pnpm build:gold` — OK. 159 modules, 2.44s, UTF-8 verificado.
+
+### Riesgos
+
+- Ninguno. `state.wizardDraft` solo existe durante wizard activo y se limpia en `teardownBuyerWizard()` y `closeBuyerModal()`.
+- El modo edicion estandar no tiene wizardDraft, asi que el path DOM sigue sirviendo correctamente.
+
+### QA manual sugerido
+
+1. Crear cliente nuevo con nombre manual → guardar → debe funcionar
+2. Seleccionar cliente existente → guardar → debe actualizar sin error
+3. Confirmar que ya no aparece "Ingresa un nombre valido..."
+4. Modo edicion (click en card existente) sigue funcionando
+
 ## Sesion activa: Cierre wizard cliente — fix "Sin nombre" + selector cliente existente (2026-04-13)
 
 ### Diagnostico
