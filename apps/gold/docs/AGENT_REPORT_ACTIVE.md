@@ -2,6 +2,91 @@
 
 Resumen operativo actual de `apps/gold`.
 
+## Sesion activa: Rediseño modal edición cliente canónico — Cartera Viva (2026-04-14)
+
+### Diagnóstico exacto del comportamiento actual
+
+**Qué guarda el flujo**: Solo ficha canónica en `agro_buyers` (display_name, group_key, canonical_name, status, phone, whatsapp, instagram, facebook, notes, linked_user_id). NO crea movimiento comercial. `updateMovementLinks()` solo reasigna group_key si el nombre cambia.
+
+**Qué ocurre tras guardar (wizard/crear)**:
+1. INSERT/UPDATE en `agro_buyers`
+2. `emitClientChanged({ created, openDetail: true })`
+3. `handleClientChanged` → `activeCategory = 'sin-registro'` + `loadSummary()` + `loadBuyerDetail()`
+4. `closeBuyerModal()`
+
+**Qué ocurre tras guardar (edición)**:
+1. UPDATE en `agro_buyers`
+2. `emitClientChanged({ openDetail: false })`
+3. `handleClientChanged` → `loadSummary()` + refresh de detail si estaba abierto
+4. Modal permanece abierto con status "Cliente guardado correctamente."
+
+**Veredicto PROBLEMA A**: El flujo es correcto por diseño. Un cliente guardado sin historial aparece en "Sin registro". No es un bug de refresh. La separación ficha canónica vs. movimiento comercial está respetada.
+
+### Problema B: Modal de edición legacy
+
+**Problemas identificados**:
+1. Footer con 5 botones sin jerarquía visual (Ver perfil público, Archivar, Eliminar, Cancelar, Guardar)
+2. Campos planos sin agrupación semántica
+3. Textarea de notas con min-height excesivo (5.4rem)
+4. Sin secciones visuales que conecten con el lenguaje del wizard
+
+### Opción recomendada: B
+
+Reordenar el modal en 3 secciones compactas (Identidad, Contacto, Contexto) con footer jerárquico de 2 niveles. Mismo HTML base reorganizado, mismo patrón visual del wizard (eyebrow + title por sección).
+
+| Opción | Riesgo | Coherencia |
+|--------|--------|------------|
+| A (pulido) | Bajo | Media — sigue plano |
+| **B (secciones)** | **Medio-bajo** | **Alta — hermano del wizard** |
+| C (mini-wizard) | Alto | Alta pero over-engineered |
+
+### Cambios aplicados
+
+| Archivo | Cambio | Líneas |
+|---|---|---|
+| `apps/gold/agro/index.html` | Reorganizar form en 3 fieldsets con headers de sección + footer jerárquico 2 niveles | ~2094-2155 |
+| `apps/gold/agro/agro.css` | Nuevos estilos: `.agro-buyer-section`, `.agro-buyer-section__head`, `.agro-buyer-footer__row`, `.btn-ghost`, `.btn-ghost--danger`. Removidos `.agro-buyer-actions` y footer plano viejo. Ajustado textarea min-height y responsive. | ~1123-1220, ~1675-1700 |
+
+**Detalles del cambio de HTML**:
+- 3 `<fieldset class="agro-buyer-section">` con `__head` (eyebrow + title) siguiendo el patrón del wizard panel
+- Sección Identidad: solo nombre visible
+- Sección Contacto: teléfono, whatsapp, instagram, facebook en grid 2x2
+- Sección Contexto: notas + linked_user_id
+- Footer fila primaria: Cancelar + Guardar cambios
+- Footer fila secundaria: Ver perfil público (ghost) + Archivar (ghost) + Eliminar (ghost--danger)
+
+**Detalles del cambio de CSS**:
+- `.agro-buyer-section`: padding, gap, border-top entre secciones
+- `.agro-buyer-section__eyebrow`: Orbitron 0.64rem, gold-prestige (mismo token del wizard)
+- `.agro-buyer-section__title`: Rajdhani 0.82rem, text-secondary
+- `.agro-buyer-footer__row--primary`: alineada a la derecha, botones principales
+- `.agro-buyer-footer__row--secondary`: alineada a la derecha, ghost buttons compactos
+- `.btn-ghost`: transparente, borde sutil, texto secondary, min-height 36px
+- `.btn-ghost--danger`: color rojo suave, hover con tinte rojo
+- Responsive 640px: sections y footer con padding reducido
+
+### Resultado build
+
+`pnpm build:gold` — OK. 159 modules, 2.22s, UTF-8 verificado.
+
+### Riesgos
+
+- **Nulo para el wizard**: El wizard hace `form.innerHTML = ...` que reemplaza todo, las secciones nuevas nunca se renderizan en modo wizard.
+- **Nulo para lógica de save/validate**: No se tocó JS. `readBuyerForm()`, `handleBuyerSave()`, `handleBuyerArchive()`, `handleBuyerDelete()` funcionan igual.
+- **Mínimo para buttons**: Los IDs de botones no cambiaron. Event binding funciona igual.
+
+### QA manual sugerido
+
+1. Abrir Cartera Viva → clic en card de cliente existente → modal de edición muestra secciones
+2. Verificar 3 secciones: Identidad, Contacto, Contexto con headers visibles
+3. Verificar footer: fila superior (Cancelar + Guardar cambios), fila inferior (Ver perfil + Archivar + Eliminar)
+4. Editar nombre → Guardar cambios → confirmar persiste
+5. Archivar cliente → confirmar funciona
+6. Eliminar cliente → confirmar modal de confirmación funciona
+7. Abrir modal de creación (wizard) → verificar que las secciones no aparecen, wizard funciona normal
+8. Validar en mobile (≤640px): sections y footer responsive
+9. `pnpm build:gold` → ya validado OK
+
 ## Sesion activa: Fix wizard cliente — modal no cierra tras guardar (2026-04-13)
 
 ### Diagnostico exacto

@@ -1121,11 +1121,103 @@ body.agro-buyer-open {
 }
 
 #modal-agro-buyer .agro-buyer-form {
-  padding: 0.95rem 1.05rem 0.9rem;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0;
   overflow: auto;
+}
+
+/* ── Edit Modal Sections ────────────────────────────────────── */
+
+#modal-agro-buyer .agro-buyer-section {
+  border: none;
+  margin: 0;
+  padding: 0.65rem 1.05rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+#modal-agro-buyer .agro-buyer-section + .agro-buyer-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+#modal-agro-buyer .agro-buyer-section__head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+}
+
+#modal-agro-buyer .agro-buyer-section__eyebrow {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.64rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold-5, #E5D5A0);
+}
+
+#modal-agro-buyer .agro-buyer-section__title {
+  margin: 0;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary, #94A3B8);
+}
+
+/* ── Edit Modal Footer ──────────────────────────────────────── */
+
+#modal-agro-buyer .agro-buyer-footer {
+  margin-top: 0;
+  border-top: 1px solid rgba(200, 167, 82, 0.14);
+  padding: 0.65rem 1.05rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+#modal-agro-buyer .agro-buyer-footer__row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+#modal-agro-buyer .agro-buyer-footer__row--primary {
+  justify-content: flex-end;
+}
+
+#modal-agro-buyer .agro-buyer-footer__row--secondary {
+  justify-content: flex-end;
+  padding-top: 0.25rem;
+}
+
+#modal-agro-buyer .btn-ghost {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary, #94A3B8);
+  font-size: 0.74rem;
+  min-height: 36px;
+  padding: 0.25rem 0.7rem;
+  transition: background 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+
+#modal-agro-buyer .btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary, #fff);
+}
+
+#modal-agro-buyer .btn-ghost--danger {
+  color: rgba(248, 113, 113, 0.75);
+  border-color: rgba(248, 113, 113, 0.15);
+}
+
+#modal-agro-buyer .btn-ghost--danger:hover {
+  background: rgba(248, 113, 113, 0.08);
+  border-color: rgba(248, 113, 113, 0.3);
+  color: rgba(248, 113, 113, 0.95);
 }
 
 #modal-agro-buyer .agro-buyer-inline {
@@ -1148,19 +1240,8 @@ body.agro-buyer-open {
 }
 
 #modal-agro-buyer .agro-buyer-field textarea.styled-input {
-  min-height: 5.4rem;
+  min-height: 3.6rem;
   resize: vertical;
-}
-
-#modal-agro-buyer .agro-buyer-footer {
-  margin-top: 0.2rem;
-  border-top: 1px solid rgba(200, 167, 82, 0.14);
-  padding-top: 0.72rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
-  flex-wrap: wrap;
 }
 
 #modal-agro-buyer .agro-buyer-status {
@@ -1179,17 +1260,6 @@ body.agro-buyer-open {
 
 #modal-agro-buyer .agro-buyer-status[data-level="error"] {
   color: rgba(248, 113, 113, 0.95);
-}
-
-#modal-agro-buyer .agro-buyer-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-#modal-agro-buyer .agro-buyer-actions .btn {
-  min-height: var(--a11y-touch-min, 44px);
 }
 
 /* ── Buyer Creation Wizard ─────────────────────────────────── */
@@ -1615,11 +1685,23 @@ body.agro-buyer-open {
   }
 
   #modal-agro-buyer .agro-buyer-form {
-    padding: 0.85rem;
+    padding: 0;
+  }
+
+  #modal-agro-buyer .agro-buyer-section {
+    padding: 0.55rem 0.85rem;
+  }
+
+  #modal-agro-buyer .agro-buyer-footer {
+    padding: 0.55rem 0.85rem 0.65rem;
   }
 
   #modal-agro-buyer .agro-buyer-inline {
     grid-template-columns: 1fr;
+  }
+
+  #modal-agro-buyer .agro-buyer-footer__row--secondary {
+    flex-wrap: wrap;
   }
 
   #modal-agro-buyer-delete-confirm {
