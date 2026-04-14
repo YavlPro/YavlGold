@@ -2,6 +2,58 @@
 
 Resumen operativo actual de `apps/gold`.
 
+## Sesion activa: Compactacion cabecera detalle Cartera Viva (2026-04-14)
+
+### Diagnostico
+
+La cabecera del detalle de cliente en Cartera Viva (`cartera-viva-detail__summary`) ocupaba demasiada altura por: padding excesivo (0.9rem), gaps generosos (0.7rem), titulo grande (`clamp(1.1rem, 2.6vw, 1.6rem)`), monto heroico (`clamp(1.45rem, 3.2vw, 2rem)`), progress bar con track grueso (0.7rem), sparkline alto (2rem), KPIs con padding alto, y acciones con min-height de 2rem. Consecuencia: el historial real del cliente comenzaba demasiado abajo.
+
+### Plan aplicado — solo CSS
+
+| Bloque | Antes | Despues |
+|--------|-------|---------|
+| Summary container | `padding: 0.9rem`, `gap: 0.7rem` | `padding: 0.65rem 0.75rem`, `gap: 0.45rem` |
+| Titulo cliente | `clamp(1.1rem, 2.6vw, 1.6rem)` | `clamp(0.95rem, 2vw, 1.3rem)` |
+| Hero (amount + pair) | `gap: 0.55rem` | `gap: 0.35rem` |
+| Amount panel + pair | `padding: 0.72rem 0.78rem`, `gap: 0.45rem` | `padding: 0.5rem 0.6rem`, `gap: 0.3rem` |
+| Monto principal | `clamp(1.45rem, 3.2vw, 2rem)` | `clamp(1.2rem, 2.6vw, 1.65rem)` |
+| Equivalents (COP/Bs) | `padding: 0.42rem 0.48rem`, `gap: 0.14rem` | `padding: 0.3rem 0.38rem`, `gap: 0.1rem` |
+| Equivalent value font | `0.8rem` | `0.76rem` |
+| Sparkline pair | `height: 2rem` | `height: 1.4rem` |
+| Progress--large | `padding: 0.85rem 0.9rem` | `padding: 0.5rem 0.6rem` |
+| Progress track large | `min-height: 0.7rem` | `min-height: 0.45rem` |
+| Insight strip detail | `gap: 0.4rem` | `gap: 0.25rem`, insight `padding: 0.3rem 0.38rem`, value `0.78rem` |
+| Acciones detail | `min-height: 2rem`, gap heredado | `min-height: 1.85rem`, `gap: 0.4rem`, `padding-top: 0.15rem` |
+| Mobile 480px summary | `padding: 0.8rem` | `padding: 0.6rem 0.65rem` |
+| Mobile 480px panels | `padding: 0.66rem 0.7rem` | `padding: 0.45rem 0.5rem` |
+| Mobile 480px actions | 44px touch min heredado | Override `min-height: 2.1rem` para detail |
+
+### Archivos tocados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/agro-cartera-viva.css` | Solo CSS: reducciones de padding, gap, font-size, min-height en selectores del detail |
+
+### Resultado build
+
+`pnpm build:gold` — OK. 159 modules, 2.38s, UTF-8 verificado.
+
+### Riesgos
+
+- **Nulo en logica**: No se toco JS ni HTML, solo CSS values
+- **Nulo en datos**: No se alteraron calculos ni consultas
+- **Minimo en responsive**: Los ajustes mobile son proporcionales y mantienen touch targets adecuados
+- **ADN V10 preservado**: Mismos tokens, misma paleta, mismos efectos. Solo se redujo espacio vertical
+
+### QA manual sugerido
+
+1. Abrir Cartera Viva → clic en card de cliente → verificar cabecera mas compacta
+2. Confirmar que nombre, estado, KPIs y acciones se leen bien
+3. Confirmar que el historial comienza visiblemente mas arriba
+4. Probar acciones: Nuevo fiado, Nuevo cobro, Nueva perdida, Editar cliente
+5. Validar responsive desktop y mobile
+6. Confirmar que no hay solapes, overflows ni cortes de texto
+
 ## Sesion activa: Fix bugs Cartera Viva — cliente existente + modal edición roto (2026-04-14)
 
 ### Diagnóstico

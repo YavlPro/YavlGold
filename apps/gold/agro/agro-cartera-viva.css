@@ -73,6 +73,14 @@
   gap: 0.7rem;
   padding: 0.9rem;
   border-radius: var(--radius-lg);
+}
+
+/* ── Detail summary compact override ── */
+
+.cartera-viva-detail__summary {
+  gap: 0.45rem;
+  padding: 0.65rem 0.75rem;
+}
   border: 1px solid var(--border-neutral);
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 4%, transparent), transparent 20%),
@@ -319,6 +327,14 @@
 
 .cartera-viva-detail__summary .cartera-viva-card__footer {
   justify-content: flex-start;
+  gap: 0.4rem;
+  padding-top: 0.15rem;
+}
+
+.cartera-viva-detail__summary .cartera-viva-quick-action {
+  min-height: 1.85rem;
+  padding: 0.22rem 0.55rem;
+  font-size: 0.72rem;
 }
 
 .cartera-viva-refresh,
@@ -827,7 +843,7 @@
 }
 
 .cartera-viva-progress--large {
-  padding: 0.85rem 0.9rem;
+  padding: 0.5rem 0.6rem;
 }
 
 .cartera-viva-progress--family {
@@ -836,7 +852,7 @@
 }
 
 .cartera-viva-progress--large .cartera-viva-progress__track {
-  min-height: 0.7rem;
+  min-height: 0.45rem;
 }
 
 .cartera-viva-progress__head {
@@ -1086,8 +1102,8 @@
 }
 
 .cartera-viva-detail__title {
-  font-size: clamp(1.1rem, 2.6vw, 1.6rem);
-  line-height: 1.05;
+  font-size: clamp(0.95rem, 2vw, 1.3rem);
+  line-height: 1.1;
 }
 
 .cartera-viva-detail__subtitle {
@@ -1096,14 +1112,14 @@
 
 .cartera-viva-detail__hero {
   display: grid;
-  gap: 0.55rem;
+  gap: 0.35rem;
 }
 
 .cartera-viva-detail__amount-panel,
 .cartera-viva-pair {
   display: grid;
-  gap: 0.45rem;
-  padding: 0.72rem 0.78rem;
+  gap: 0.3rem;
+  padding: 0.5rem 0.6rem;
   border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.06);
   background:
@@ -1125,20 +1141,20 @@
 .cartera-viva-detail__amount {
   font-family: 'Orbitron', sans-serif;
   color: var(--text-primary);
-  font-size: clamp(1.45rem, 3.2vw, 2rem);
+  font-size: clamp(1.2rem, 2.6vw, 1.65rem);
   line-height: 1;
 }
 
 .cartera-viva-detail__equivalents {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.35rem;
+  gap: 0.25rem;
 }
 
 .cartera-viva-detail__equivalent {
   display: grid;
-  gap: 0.14rem;
-  padding: 0.42rem 0.48rem;
+  gap: 0.1rem;
+  padding: 0.3rem 0.38rem;
   border-radius: var(--radius-sm);
   border: 1px solid rgba(255, 255, 255, 0.04);
   background: rgba(255, 255, 255, 0.02);
@@ -1146,7 +1162,7 @@
 
 .cartera-viva-detail__equivalent strong {
   color: var(--text-primary);
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   font-weight: 700;
 }
 
@@ -1211,7 +1227,7 @@
 .cartera-viva-pair__sparkline {
   display: block;
   width: 100%;
-  height: 2rem;
+  height: 1.4rem;
 }
 
 .cartera-viva-pair__sparkline polyline {
@@ -1235,7 +1251,7 @@
 }
 
 .cartera-viva-pair__sparkline--empty {
-  min-height: 2rem;
+  min-height: 1.4rem;
   place-items: center;
   border-radius: var(--radius-sm);
   border: 1px dashed rgba(255, 255, 255, 0.08);
@@ -1253,6 +1269,16 @@
 
 .cartera-viva-insight-strip--detail {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.25rem;
+}
+
+.cartera-viva-insight-strip--detail .cartera-viva-insight {
+  padding: 0.3rem 0.38rem;
+  gap: 0.1rem;
+}
+
+.cartera-viva-insight-strip--detail .cartera-viva-insight__value {
+  font-size: 0.78rem;
 }
 
 .cartera-viva-detail__timeline {
@@ -1988,9 +2014,12 @@
 
 @media (max-width: 480px) {
   .cartera-viva-view__header,
-  .cartera-viva-detail__summary,
   .cartera-viva-detail__body {
     padding: 0.8rem;
+  }
+
+  .cartera-viva-detail__summary {
+    padding: 0.6rem 0.65rem;
   }
 
   .cartera-viva-card {
@@ -2015,7 +2044,7 @@
 
   .cartera-viva-detail__amount-panel,
   .cartera-viva-pair {
-    padding: 0.66rem 0.7rem;
+    padding: 0.45rem 0.5rem;
   }
 
   .agro-commercial-family__tab,
@@ -2036,6 +2065,10 @@
   .cartera-viva-history-item__actions-trigger {
     width: var(--a11y-touch-min, 44px);
     height: var(--a11y-touch-min, 44px);
+  }
+
+  .cartera-viva-detail__summary .cartera-viva-quick-action {
+    min-height: 2.1rem;
   }
 }
 
