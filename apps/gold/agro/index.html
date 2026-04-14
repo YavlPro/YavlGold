@@ -2105,49 +2105,74 @@
             </header>
 
             <form id="agro-buyer-form" class="agro-buyer-form">
-                <label class="agro-buyer-field">
-                    <span>Nombre visible</span>
-                    <input type="text" id="agro-buyer-display_name" class="styled-input" maxlength="120" required>
-                </label>
-                <div class="agro-buyer-inline">
+                <!-- Section: Identidad -->
+                <fieldset class="agro-buyer-section">
+                    <div class="agro-buyer-section__head">
+                        <p class="agro-buyer-section__eyebrow">Identidad</p>
+                        <h4 class="agro-buyer-section__title">Datos principales</h4>
+                    </div>
                     <label class="agro-buyer-field">
-                        <span>Teléfono</span>
-                        <input type="text" id="agro-buyer-phone" class="styled-input" maxlength="40">
+                        <span>Nombre visible</span>
+                        <input type="text" id="agro-buyer-display_name" class="styled-input" maxlength="120" required>
+                    </label>
+                </fieldset>
+
+                <!-- Section: Contacto -->
+                <fieldset class="agro-buyer-section">
+                    <div class="agro-buyer-section__head">
+                        <p class="agro-buyer-section__eyebrow">Contacto</p>
+                        <h4 class="agro-buyer-section__title">Formas de comunicacion</h4>
+                    </div>
+                    <div class="agro-buyer-inline">
+                        <label class="agro-buyer-field">
+                            <span>Telefono</span>
+                            <input type="text" id="agro-buyer-phone" class="styled-input" maxlength="40">
+                        </label>
+                        <label class="agro-buyer-field">
+                            <span>WhatsApp</span>
+                            <input type="text" id="agro-buyer-whatsapp" class="styled-input" maxlength="40">
+                        </label>
+                    </div>
+                    <div class="agro-buyer-inline">
+                        <label class="agro-buyer-field">
+                            <span>Instagram</span>
+                            <input type="text" id="agro-buyer-instagram" class="styled-input" maxlength="80">
+                        </label>
+                        <label class="agro-buyer-field">
+                            <span>Facebook</span>
+                            <input type="text" id="agro-buyer-facebook" class="styled-input" maxlength="80">
+                        </label>
+                    </div>
+                </fieldset>
+
+                <!-- Section: Contexto -->
+                <fieldset class="agro-buyer-section">
+                    <div class="agro-buyer-section__head">
+                        <p class="agro-buyer-section__eyebrow">Contexto</p>
+                        <h4 class="agro-buyer-section__title">Notas y vinculacion</h4>
+                    </div>
+                    <label class="agro-buyer-field">
+                        <span>Notas</span>
+                        <textarea id="agro-buyer-notes" class="styled-input" rows="3" maxlength="800"
+                            placeholder="Preferencias, acuerdos o recordatorios del cliente"></textarea>
                     </label>
                     <label class="agro-buyer-field">
-                        <span>WhatsApp</span>
-                        <input type="text" id="agro-buyer-whatsapp" class="styled-input" maxlength="40">
+                        <span>Vincular user_id publico (opcional)</span>
+                        <input type="text" id="agro-buyer-linked_user_id" class="styled-input" maxlength="80"
+                            placeholder="UUID del usuario para abrir su perfil publico">
                     </label>
-                </div>
-                <div class="agro-buyer-inline">
-                    <label class="agro-buyer-field">
-                        <span>Instagram</span>
-                        <input type="text" id="agro-buyer-instagram" class="styled-input" maxlength="80">
-                    </label>
-                    <label class="agro-buyer-field">
-                        <span>Facebook</span>
-                        <input type="text" id="agro-buyer-facebook" class="styled-input" maxlength="80">
-                    </label>
-                </div>
-                <label class="agro-buyer-field">
-                    <span>Notas</span>
-                    <textarea id="agro-buyer-notes" class="styled-input" rows="4" maxlength="800"
-                        placeholder="Preferencias, acuerdos o recordatorios del cliente"></textarea>
-                </label>
-                <label class="agro-buyer-field">
-                    <span>Vincular user_id público (opcional)</span>
-                    <input type="text" id="agro-buyer-linked_user_id" class="styled-input" maxlength="80"
-                        placeholder="UUID del usuario para abrir su perfil público">
-                </label>
+                </fieldset>
 
                 <footer class="agro-buyer-footer">
                     <p id="agro-buyer-status" class="agro-buyer-status" data-level="muted"></p>
-                    <div class="agro-buyer-actions">
-                        <button type="button" class="btn" id="btn-open-buyer-public-profile">Ver perfil público</button>
-                        <button type="button" class="btn" id="btn-archive-agro-buyer">Archivar cliente</button>
-                        <button type="button" class="btn" id="btn-delete-agro-buyer">Eliminar cliente</button>
+                    <div class="agro-buyer-footer__row agro-buyer-footer__row--primary">
                         <button type="button" class="btn" data-agro-buyer-close>Cancelar</button>
-                        <button type="submit" id="btn-save-agro-buyer" class="btn btn-primary">Guardar cliente</button>
+                        <button type="submit" id="btn-save-agro-buyer" class="btn btn-primary">Guardar cambios</button>
+                    </div>
+                    <div class="agro-buyer-footer__row agro-buyer-footer__row--secondary">
+                        <button type="button" class="btn btn-ghost" id="btn-open-buyer-public-profile">Ver perfil publico</button>
+                        <button type="button" class="btn btn-ghost" id="btn-archive-agro-buyer">Archivar</button>
+                        <button type="button" class="btn btn-ghost btn-ghost--danger" id="btn-delete-agro-buyer">Eliminar</button>
                     </div>
                 </footer>
             </form>
