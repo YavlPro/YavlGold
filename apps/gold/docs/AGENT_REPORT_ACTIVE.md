@@ -2,6 +2,60 @@
 
 Resumen operativo actual de `apps/gold`.
 
+## Sesion activa: Fix wizard cliente — modal no cierra tras guardar (2026-04-13)
+
+### Diagnostico exacto
+
+**Que guarda este wizard**: Solo la ficha canonica del cliente (tabla `agro_buyers`). NO crea movimiento comercial. Por eso el cliente no aparece en "Pepino > Fiados" tras guardar — es esperable, no es un bug de refresco. El cliente aparece en la categoria "sin-registro" de Cartera Viva.
+
+**Causa raiz del modal que no cierra**: En `handleWizardFormSubmit`, cuando el usuario elige "cliente existente", se seteaba `state.mode = 'edit'`. Pero `handleBuyerSave` usa `state.mode === 'create'` (`shouldOpenDetail`) para decidir si cierra el modal. Con mode='edit', `shouldOpenDetail` es false → no cierra → muestra "Cliente guardado correctamente" pero modal queda abierto.
+
+**Separacion de responsabilidades**: La operacion real (INSERT vs UPDATE) esta controlada por `state.currentBuyerId`, no por `state.mode`. El modo 'edit' solo servia para controlar el cierre del modal — lo cual es incorrecto para el wizard.
+
+### Cambios
+
+| Archivo | Cambio |
+|---|---|
+| `agrocompradores.js` | `handleWizardFormSubmit`: mantener `state.mode = 'create'` siempre, independientemente de new/existing. INSERT vs UPDATE ya se controla via `state.currentBuyerId`. |
+
+**Diff exacto:**
+```diff
+     if (state.wizardIdentityMode === 'existing' && state.wizardSelectedBuyerId) {
+         state.currentBuyerId = state.wizardSelectedBuyerId;
+-        state.mode = 'edit';
+     } else {
+         state.currentBuyerId = '';
+-        state.mode = 'create';
+     }
++    // Keep mode as 'create' so handleBuyerSave closes the modal on success
++    // and emits openDetail to refresh the cartera viva view.
++    // INSERT vs UPDATE is controlled by state.currentBuyerId, not state.mode.
++    state.mode = 'create';
+```
+
+### Resultado build
+
+`pnpm build:gold` — OK. 159 modules, 2.47s, UTF-8 verificado.
+
+### Riesgos
+
+- Ninguno significativo. `state.mode = 'create'` en el wizard siempre fue el comportamiento correcto para cerrar el modal.
+- `isCreateMode = !state.currentBuyerId` sigue controlando INSERT vs UPDATE correctamente.
+- Para cliente existente: `state.currentBuyerId` tiene el ID → UPDATE. `emitClientChanged` con `created: false` (porque `isCreateMode` es false).
+- Para cliente nuevo: `state.currentBuyerId` vacio → INSERT. `emitClientChanged` con `created: true`.
+
+### Comportamiento esperado tras fix
+- Guardar cliente nuevo → modal cierra → cartera viva refresca → cliente aparece en "sin-registro"
+- Guardar cliente existente → modal cierra → cartera viva refresca → datos actualizados
+- El cliente NO aparecera en "Fiados" hasta que se registre un movimiento comercial — es correcto por diseno
+
+### QA manual sugerido
+1. Guardar cliente nuevo → confirmar cierre automatico del modal
+2. Guardar cliente existente → confirmar cierre automatico del modal
+3. Verificar que cartera viva refresca y muestra el cliente
+4. Confirmar que "Fiados" no muestra el cliente sin movimiento (esperado)
+5. Modo edicion (click en card existente) sigue funcionando
+
 ## Sesion activa: Fix save wizard cliente — "Ingresa un nombre valido" en Paso 4 (2026-04-13)
 
 ### Causa raiz exacta

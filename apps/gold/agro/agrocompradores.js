@@ -753,11 +753,14 @@ function handleWizardFormSubmit(event) {
     if (state.wizardIdentityMode === 'existing' && state.wizardSelectedBuyerId) {
         // Update existing buyer with wizard data
         state.currentBuyerId = state.wizardSelectedBuyerId;
-        state.mode = 'edit';
     } else {
         state.currentBuyerId = '';
-        state.mode = 'create';
     }
+
+    // Keep mode as 'create' so handleBuyerSave closes the modal on success
+    // and emits openDetail to refresh the cartera viva view.
+    // INSERT vs UPDATE is controlled by state.currentBuyerId, not state.mode.
+    state.mode = 'create';
 
     handleBuyerSave(event);
 }
