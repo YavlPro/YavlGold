@@ -3061,7 +3061,9 @@ async function refreshData(options = {}) {
         if (state.editId) {
             const current = readExistingCycle(state.editId);
             if (current) {
-                setEditMode(current);
+                // Preserve in-flight edit draft — do NOT rehydrate from server data.
+                // refreshData() still updates datasets (cycles, crops, etc.) above;
+                // only the form values are protected to avoid overwriting user edits.
             } else {
                 resetForm();
             }

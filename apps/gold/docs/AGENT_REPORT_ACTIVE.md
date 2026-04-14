@@ -2,6 +2,93 @@
 
 Resumen operativo actual de `apps/gold`.
 
+## Sesion activa: Bugfix modal editar cartera operativa — rehydration + select inestable (2026-04-13)
+
+### Diagnostico confirmado
+
+**Bug 1 — Input rehydration (CAUSA RAIZ CONFIRMADA):**
+- `refreshData()` (linea 3061-3064 de `agroOperationalCycles.js`) detecta `state.editId` activo y llama `setEditMode(current)` con datos frescos del servidor
+- `setEditMode()` (linea 2900) reconstruye completamente `state.form` desde datos del servidor, sobreescribiendo el draft del usuario
+- `refreshData()` se dispara via eventos `CROPS_READY_EVENT` y otros, no solo por accion directa del usuario
+- Flujo destructivo: `refreshData()` → `setEditMode(serverData)` → `state.form = createFormState(serverData)` → `renderWizard()` → `renderEditForm()` → innerHTML reemplaza todo el form
+
+**Bug 2 — Selects que se cierran (CAUSA RAIZ CONFIRMADA):**
+- La misma cadena `refreshData()` → `setEditMode()` → `renderWizard()` → `renderEditForm()` reemplaza todo el innerHTML del formulario
+- Esto destruye el `<select>` abierto y lo recrea cerrado
+- `restoreWizardFocusState()` no ayuda porque el DOM ya fue destruido y recreado — el snapshot es obsoleto
+- CSS `overflow: hidden` en `.agro-operational-modal__dialog` (linea 69 de CSS) es secundario — no es la causa raiz
+
+### Plan recomendado
+
+**Fase 1 (Opcion A — parche minimo):**
+- En `refreshData()`, cuando `state.editId` este activo, NO llamar `setEditMode()` que destruye el draft
+- En lugar de eso, actualizar los datasets (cycles, crops, etc.) pero preservar `state.form.values` intactos
+- Solo actualizar `state.editId`-related data si el ciclo fue eliminado por otro medio (caso edge: resetForm)
+
+**Fase 2 (solo si Fase 1 no resuelve select):**
+- Investigar si queda algun re-render residual
+- Evaluar `overflow: hidden` del dialog
+- Evaluar `restoreWizardFocusState()`
+
+### Archivos a tocar
+
+1. `apps/gold/agro/agroOperationalCycles.js` — parche en `refreshData()` (lineas ~3061-3064)
+
+### Riesgo estimado
+
+- **Muy bajo**: Cambio de 3-5 lineas en una sola funcion
+- `refreshData()` sigue actualizando datasets normalmente — solo se protege el form en edicion
+- El wizard de creacion sigue protegido por la guarda existente `preserveOpenCreateWizard`
+
+### Cierre (2026-04-13)
+
+**Implementacion:**
+
+Fase 1 (Opcion A) fue suficiente. Ambos bugs compartian la misma causa raiz: `refreshData()` llamaba `setEditMode(current)` durante edicion activa, lo que destrucia el draft del usuario y re-renderizaba todo el formulario via innerHTML.
+
+El parche elimina la llamada a `setEditMode()` dentro de `refreshData()` cuando `state.editId` esta activo y el ciclo sigue existiendo. Los datasets (cycles, crops, etc.) se actualizan normalmente; solo el formulario se protege.
+
+Fase 2 no fue necesaria: al eliminar el re-render del formulario durante edicion, los selects nativos ya no son destruidos y recreados mientras estan abiertos.
+
+**Cambios por archivo:**
+
+| Archivo | Cambio | Lineas |
+|---|---|---|
+| `apps/gold/agro/agroOperationalCycles.js` | En `refreshData()`, reemplazar `setEditMode(current)` por no-op cuando `state.editId` activo y ciclo existe | ~3063-3066 |
+
+**Diff exacto:**
+```diff
+ if (state.editId) {
+     const current = readExistingCycle(state.editId);
+     if (current) {
+-        setEditMode(current);
++        // Preserve in-flight edit draft — do NOT rehydrate from server data.
++        // refreshData() still updates datasets (cycles, crops, etc.) above;
++        // only the form values are protected to avoid overwriting user edits.
+     } else {
+         resetForm();
+     }
+```
+
+**Resultado build:** `pnpm build:gold` — OK. 159 modules, 2.61s, UTF-8 verificado.
+
+**Fue necesaria Fase 2?** No. Ambos bugs compartian la misma causa raiz (re-render destructivo via `setEditMode()`). Al eliminar la rehidratacion, los selects ya no son destruidos.
+
+**Riesgos / Deuda tecnica restante:**
+- `refreshData()` sigue actualizando los datasets de fondo durante edicion. Esto es correcto y deseable (las cards de la lista se actualizan). Solo el formulario se protege.
+- Si el ciclo es eliminado por otro usuario/dispositivo mientras se edita, `readExistingCycle()` devuelve null y se ejecuta `resetForm()` — comportamiento defensivo correcto.
+- `restoreWizardFocusState()` sigue funcional para el wizard de creacion y para edicion manual (click en editar), pero ya no se invoca durante refreshData en modo edicion.
+
+**QA manual sugerido:**
+1. Abrir edicion de un registro existente
+2. Borrar manualmente contenido de un input → confirmar que el valor NO resucita
+3. Abrir y usar selects dentro del modal → confirmar que permanecen abiertos
+4. Editar un registro con cultivo asociado
+5. Abrir/cerrar varias veces el modal
+6. Crear uno nuevo y luego editar otro → descartar contaminacion de estado
+7. Validar movil si el cambio CSS afecta layout (no deberia — no se toco CSS)
+8. `pnpm build:gold` (ya validado)
+
 ## Sesion activa: Expandir Asistente IA a full workspace (2026-04-12)
 
 ### Diagnostico
