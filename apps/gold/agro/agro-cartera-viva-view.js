@@ -2978,6 +2978,10 @@ function handleClientChanged(event) {
             writeStoredCategory(activeCategory);
             activeOperationalFamily = 'all';
             writeStoredOperationalFamily(activeOperationalFamily);
+        }
+        // Pin buyer to crop scope both for new clients and existing clients
+        // saved through the wizard (openDetail signals wizard-originated save).
+        if ((created || openDetail) && clientId) {
             pinBuyerToCurrentCropScope(clientId, groupKey);
         }
         if (deleted && clientId) {
@@ -2985,6 +2989,17 @@ function handleClientChanged(event) {
         }
         await loadSummary();
         if (clientId && openDetail) {
+            // For existing clients, navigate to the buyer's actual category
+            if (!created) {
+                const buyerRow = getSelectedBuyerRow();
+                if (buyerRow) {
+                    const buyerCategory = resolveVisibleCategory(buyerRow);
+                    if (buyerCategory !== activeCategory) {
+                        activeCategory = buyerCategory;
+                        writeStoredCategory(activeCategory);
+                    }
+                }
+            }
             await loadBuyerDetail(clientId, { ledgerScope: 'todos' });
             return;
         }

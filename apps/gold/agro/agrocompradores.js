@@ -79,6 +79,8 @@ const state = {
     wizardBuyerOptions: []
 };
 
+let savedEditFormHTML = null;
+
 function escapeHtml(value) {
     return String(value ?? '')
         .replace(/&/g, '&amp;')
@@ -1267,16 +1269,44 @@ async function handleOpenBuyerPublicProfile(event) {
     }
 }
 
+function restoreEditForm() {
+    if (!savedEditFormHTML) return;
+    const form = document.getElementById(BUYER_FORM_ID);
+    if (!form) return;
+    form.innerHTML = savedEditFormHTML;
+    bindEditFormButtonEvents();
+}
+
+function bindEditFormButtonEvents() {
+    const modal = getBuyerModal();
+    if (modal) {
+        modal.querySelectorAll('[data-agro-buyer-close]').forEach((node) => {
+            node.addEventListener('click', (event) => {
+                event.preventDefault();
+                closeBuyerModal();
+            });
+        });
+    }
+
+    document.getElementById(BUYER_OPEN_PUBLIC_BUTTON_ID)?.addEventListener('click', handleOpenBuyerPublicProfile);
+    document.getElementById(BUYER_ARCHIVE_BUTTON_ID)?.addEventListener('click', handleBuyerArchive);
+    document.getElementById(BUYER_DELETE_BUTTON_ID)?.addEventListener('click', handleBuyerDelete);
+
+    const linkedInput = document.getElementById('agro-buyer-linked_user_id');
+    if (linkedInput) {
+        linkedInput.addEventListener('input', () => {
+            const raw = String(linkedInput.value || '').trim();
+            state.currentLinkedUserId = raw ? normalizeUuid(raw) : '';
+            syncOpenPublicButton();
+        });
+    }
+}
+
 function bindBuyerModalEvents() {
     const modal = getBuyerModal();
     if (!modal) return;
 
-    modal.querySelectorAll('[data-agro-buyer-close]').forEach((node) => {
-        node.addEventListener('click', (event) => {
-            event.preventDefault();
-            closeBuyerModal();
-        });
-    });
+    bindEditFormButtonEvents();
 
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape' && isBuyerDeleteConfirmOpen()) {
@@ -1313,19 +1343,6 @@ function bindBuyerModalEvents() {
             state.wizardSelectedBuyerId = String(select.value || '').trim();
         }
     });
-
-    document.getElementById(BUYER_OPEN_PUBLIC_BUTTON_ID)?.addEventListener('click', handleOpenBuyerPublicProfile);
-    document.getElementById(BUYER_ARCHIVE_BUTTON_ID)?.addEventListener('click', handleBuyerArchive);
-    document.getElementById(BUYER_DELETE_BUTTON_ID)?.addEventListener('click', handleBuyerDelete);
-
-    const linkedInput = document.getElementById('agro-buyer-linked_user_id');
-    if (linkedInput) {
-        linkedInput.addEventListener('input', () => {
-            const raw = String(linkedInput.value || '').trim();
-            state.currentLinkedUserId = raw ? normalizeUuid(raw) : '';
-            syncOpenPublicButton();
-        });
-    }
 }
 
 function bindBuyerDeleteConfirmEvents() {
@@ -1372,6 +1389,7 @@ async function openBuyerProfileInternal({ buyerId = '', displayName = '', groupK
             // Duplicate found — switch to edit mode and use standard form
             state.mode = 'edit';
             state.currentBuyerId = String(buyer.id);
+            restoreEditForm();
             fillBuyerForm(buyer);
             await refreshHistoryCount();
             setBuyerStatus('Este cliente ya existe. Puedes editar su ficha.', 'warn');
@@ -1396,7 +1414,8 @@ async function openBuyerProfileInternal({ buyerId = '', displayName = '', groupK
         return;
     }
 
-    // ── Edit mode path (unchanged) ──
+    // ── Edit mode path ──
+    restoreEditForm();
     fillBuyerForm({ display_name: state.currentDisplayName });
     setBuyerStatus('Cargando cliente...', 'muted');
     openBuyerModal();
@@ -1487,6 +1506,11 @@ export function initAgroCompradores({ supabase } = {}) {
 
     state.supabase = supabase;
     state.initialized = true;
+
+    const form = document.getElementById(BUYER_FORM_ID);
+    if (form && !savedEditFormHTML) {
+        savedEditFormHTML = form.innerHTML;
+    }
 
     bindBuyerModalEvents();
     bindBuyerDeleteConfirmEvents();

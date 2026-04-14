@@ -2,6 +2,40 @@
 
 Resumen operativo actual de `apps/gold`.
 
+## Sesion activa: Fix bugs Cartera Viva — cliente existente + modal edición roto (2026-04-14)
+
+### Diagnóstico
+
+**Bug 1 — Cliente existente guardado via wizard no aparece en Cartera Viva**
+
+Causa raíz: `handleClientChanged` en `agro-cartera-viva-view.js` solo hace `pinBuyerToCurrentCropScope` y cambia `activeCategory` cuando `created: true`. Cuando el wizard guarda un cliente existente, `handleBuyerSave` emite `created: false` (porque es UPDATE, no INSERT). Esto causa:
+- El cliente no se pina al crop scope → `getCropScopedRows` lo filtra → `getSelectedBuyerRow()` retorna null → el detalle no carga
+- La categoría activa no cambia → si el usuario está en "Fiados" y el cliente es "Sin registro", no lo ve
+
+**Bug 2 — Modal de edición muestra contenido roto tras usar wizard**
+
+Causa raíz: `renderBuyerWizard()` hace `form.innerHTML = wizardHTML` que destruye los inputs del form de edición (`agro-buyer-*`). `teardownBuyerWizard()` solo remueve la clase CSS y limpia state, pero NO restaura el HTML del form. La próxima vez que se abre el modal en modo edición, los inputs `agro-buyer-*` no existen, `fillBuyerForm()` falla silenciosamente, y el modal muestra basura residual del wizard.
+
+### Cambios
+
+| Archivo | Cambio |
+|---|---|
+| `agro-cartera-viva-view.js` | `handleClientChanged`: pin buyer también cuando `openDetail: true` (no solo `created`). Para clientes existentes, navega a su categoría real (`resolveVisibleCategory`). |
+| `agrocompradores.js` | Agregar `savedEditFormHTML` (guarda HTML original en init), `restoreEditForm()` (restaura HTML + re-bind botones), `bindEditFormButtonEvents()` (extraído de `bindBuyerModalEvents`). Llamar `restoreEditForm()` en path de edición y en path de duplicado del wizard. |
+
+### Resultado build
+
+`pnpm build:gold` — OK. 159 modules, 2.33s, UTF-8 verificado.
+
+### QA manual sugerido
+
+1. Abrir Cartera Viva → clic "+ Nuevo cliente" → wizard → seleccionar "Cliente existente" → completar pasos → guardar → cliente debe aparecer en la categoría correcta con su detalle
+2. Tras guardar via wizard, clic en otro cliente existente → modal de edición debe mostrar el form correcto (NO contenido del wizard)
+3. Crear cliente nuevo via wizard → guardar → clic en cliente existente → editar → debe funcionar
+4. Editar ficha → guardar → confirmar persistencia
+5. Validar con filtro de cultivo activo
+6. Validar en mobile
+
 ## Sesion activa: Rediseño modal edición cliente canónico — Cartera Viva (2026-04-14)
 
 ### Diagnóstico exacto del comportamiento actual
