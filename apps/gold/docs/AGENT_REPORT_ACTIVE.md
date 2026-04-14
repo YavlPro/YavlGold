@@ -2,6 +2,114 @@
 
 Resumen operativo actual de `apps/gold`.
 
+## Sesion activa: Wizard creacion de cliente canonico en Cartera Viva (2026-04-13)
+
+### Diagnostico
+
+**Modal actual** (`#modal-agro-buyer` en `index.html:2094-2155`):
+- Muestra 7 campos de golpe: nombre, telefono, whatsapp, instagram, facebook, notas, linked_user_id
+- Footer muestra 5 botones: Ver perfil publico, Archivar, Eliminar, Cancelar, Guardar
+- En modo creacion, Archivar/Eliminar/Ver perfil estan deshabilitados pero visibles = confuso
+- No hay stepper, progreso ni guia
+- Se ve pesado para crear un cliente simple (solo nombre es obligatorio)
+
+**CSS actual** (`agro.css:1040-1194`):
+- Panel de 620px, max-height 760px, con overflow hidden
+- Layout flat sin estructura de pasos
+- Responsive movil ya funciona (bottom sheet en mobile)
+
+**Logica de guardado** (`agrocompradores.js`):
+- `openNewBuyerProfile()` → `openBuyerProfileInternal({mode:'create'})` → llena form y abre modal
+- `handleBuyerSave()` valida, check duplicados, inserta en `agro_buyers`
+- Ya maneja correctamente create vs edit via `state.mode`
+- `syncLifecycleButtons()` ya deshabilita botones de edicion en modo create
+
+### Causa de la mala UX
+- Forma monolitica sin progresion
+- Acciones de cliente existente visibles en flujo de creacion
+- No hay stepper visual ni guia
+- Inconsistente con el wizard de Ciclos Operacionales que YA funciona bien
+
+### Plan recomendado — Opcion A: Wizard dinamico dentro del modal existente
+
+**Estrategia**: Cuando `mode === 'create'`, renderizar dinamicamente un wizard de 4 pasos dentro del panel existente en lugar del form flat. El modo edicion queda intacto.
+
+**Ventajas**:
+- Reutiliza el shell del modal (backdrop, panel, header)
+- Coherencia visual con el stepper de Ciclos Operacionales
+- El modo edicion no se toca
+- Misma logica de guardado, solo cambia el render
+
+**Estructura del wizard**:
+- Paso 1 — Identidad: nombre visible (obligatorio) + validacion de duplicado
+- Paso 2 — Contacto: telefono, whatsapp, instagram, facebook
+- Paso 3 — Contexto: notas, preferencias, linked_user_id
+- Paso 4 — Revision: resumen + CTA "Guardar cliente"
+
+### Archivos a tocar
+
+1. `apps/gold/agro/agrocompradores.js` — Agregar renderizado de wizard + navegacion por pasos
+2. `apps/gold/agro/agro.css` — Agregar CSS del stepper y paneles del wizard (dentro de `#modal-agro-buyer`)
+
+### Riesgo estimado
+
+- **Bajo**: Solo se afecta el flujo de creacion. El modo edicion no se toca.
+- La logica de guardado (`handleBuyerSave`) se reutiliza sin cambios
+- El modal HTML estatico en `index.html` permanece para modo edicion; el wizard se renderiza dinamicamente
+- CSS nuevo es aditivo (nuevas clases dentro del scope `#modal-agro-buyer`)
+
+### Cierre (2026-04-13)
+
+**Opcion elegida:** Opcion A — Wizard dinamico dentro del modal existente.
+
+**Cambios por archivo:**
+
+| Archivo | Cambio | Lineas |
+|---|---|---|
+| `apps/gold/agro/agrocompradores.js` | Constantes `BUYER_WIZARD_STEPS`, estado `wizardStep`/`wizardDraft` en state, funciones: `createWizardDraft`, `readWizardField`, `writeWizardField`, `syncWizardDraftFromDOM`, `renderBuyerWizard`, `renderWizardStepPanel`, `advanceWizardStep`, `handleWizardClick`, `handleWizardFormSubmit`, `teardownBuyerWizard`. Modificaciones a: `readBuyerForm` (fallback a wizard draft), `openBuyerProfileInternal` (bifurcacion create/edit), `closeBuyerModal` (teardown wizard), `bindBuyerModalEvents` (delegated wizard click + form submit routing). | ~280 lineas nuevas |
+| `apps/gold/agro/agro.css` | CSS del wizard stepper, paneles, review grid, footer, responsive. Todo dentro del scope `#modal-agro-buyer.buyer-wizard` o clases `.buyer-wizard-*`. | ~230 lineas nuevas |
+
+**Resultado build:** `pnpm build:gold` — OK. 159 modules, 2.30s, UTF-8 verificado.
+
+**Arquitectura del wizard:**
+- Paso 1 (Identidad): Nombre visible obligatorio, validacion al avanzar
+- Paso 2 (Contacto): Telefono, WhatsApp, Instagram, Facebook en grid 2 columnas
+- Paso 3 (Contexto): Notas + linked_user_id opcional
+- Paso 4 (Revision): Grid de resumen con todos los datos, CTA "Guardar cliente"
+- Stepper visual coherente con Ciclos Operacionales (Orbitron, gold borders, is-active/is-complete)
+- Navegacion: Anterior/Siguiente, click en pasos completados para retroceder
+- En modo creacion NO se muestran: Ver perfil publico, Archivar, Eliminar
+
+**Flujo de guardado:**
+1. `handleWizardFormSubmit` → sincroniza draft desde DOM → llama `handleBuyerSave`
+2. `readBuyerForm()` detecta `state.wizardDraft` activo → retorna datos del draft
+3. `handleBuyerSave` funciona normalmente: valida, check duplicados, insert en `agro_buyers`
+4. En create exitoso: `closeBuyerModal()` → `teardownBuyerWizard()` + emite `clientChanged` con `openDetail: true`
+5. Si se encuentra duplicado al abrir: cae al modo edit con form estandar
+
+**Casos edge cubiertos:**
+- Nombre duplicado al abrir wizard → redirige a modo edit del cliente existente
+- Nombre vacio al avanzar del paso 1 → feedback + foco en input
+- linked_user_id invalido → validacion en save con mensaje claro
+- Cancelar en cualquier paso → cierra modal y limpia wizard state
+
+**Riesgos / Deuda tecnica:**
+- `fillBuyerForm(saved)` se llama tras save exitoso pero los campos estandar no existen en wizard mode — no causa error porque la funcion ignora inputs inexistentes, pero el state se actualiza correctamente
+- El HTML estatico del modal en `index.html` permanece intacto — solo se usa en modo edit; el wizard se renderiza dinamicamente
+- Los botones de lifecycle (archivar, eliminar) en el HTML estatico permanecen ocultos por el wizard rendering
+
+**QA manual sugerido:**
+1. Abrir Cartera Viva → click "Nuevo cliente" → verificar wizard de 4 pasos
+2. Recorrer paso 1 sin nombre → verificar que bloquea avance
+3. Llenar nombre y avanzar por pasos 2, 3, 4
+4. Verificar resumen en paso 4 con datos correctos
+5. Guardar cliente → verificar que se crea y se cierra el modal
+6. Crear cliente con nombre duplicado → verificar que cae a modo edit
+7. Abrir cliente existente (click en card) → verificar form estandar sin wizard
+8. Cancelar wizard en paso 2 → verificar que limpia estado
+9. Mobile (<=480px): verificar stepper compacto y bottom sheet
+10. `pnpm build:gold` (ya validado)
+
 ## Sesion activa: Bugfix modal editar cartera operativa — rehydration + select inestable (2026-04-13)
 
 ### Diagnostico confirmado

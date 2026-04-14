@@ -46,6 +46,13 @@ const BUYER_FIELD_IDS = [
     'linked_user_id'
 ];
 
+const BUYER_WIZARD_STEPS = Object.freeze([
+    { id: 1, title: 'Identidad', eyebrow: 'Paso 1' },
+    { id: 2, title: 'Contacto', eyebrow: 'Paso 2' },
+    { id: 3, title: 'Contexto', eyebrow: 'Paso 3' },
+    { id: 4, title: 'Revisión', eyebrow: 'Paso 4' }
+]);
+
 const BUYER_MOVEMENT_TABLES = Object.freeze([
     'agro_pending',
     'agro_income',
@@ -64,7 +71,9 @@ const state = {
     currentStatus: 'active',
     currentHistoryCount: 0,
     mode: 'edit',
-    pendingDeleteResolver: null
+    pendingDeleteResolver: null,
+    wizardStep: 1,
+    wizardDraft: null
 };
 
 function escapeHtml(value) {
@@ -150,6 +159,7 @@ function closeBuyerModal() {
     modal.classList.remove('is-open');
     modal.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('agro-buyer-open');
+    teardownBuyerWizard();
 }
 
 function openBuyerDeleteConfirmModal() {
@@ -346,6 +356,9 @@ async function resolveSessionUser() {
 }
 
 function readBuyerForm() {
+    if (state.wizardDraft && state.mode === 'create') {
+        return { ...state.wizardDraft };
+    }
     const payload = {};
     BUYER_FIELD_IDS.forEach((fieldName) => {
         const input = document.getElementById(`agro-buyer-${fieldName}`);
@@ -377,6 +390,289 @@ function fillBuyerForm(buyer = {}) {
     syncBuyerHeading();
     syncOpenPublicButton();
     syncLifecycleButtons();
+}
+
+// ── Buyer Creation Wizard ─────────────────────────────────────
+
+function createWizardDraft(seed = {}) {
+    return {
+        display_name: String(seed.display_name || '').trim(),
+        phone: String(seed.phone || '').trim(),
+        whatsapp: String(seed.whatsapp || '').trim(),
+        instagram: String(seed.instagram || '').trim(),
+        facebook: String(seed.facebook || '').trim(),
+        notes: String(seed.notes || '').trim(),
+        linked_user_id: String(seed.linked_user_id || '').trim()
+    };
+}
+
+function readWizardField(name) {
+    const input = document.getElementById(`buyer-wizard-${name}`);
+    if (!input) return '';
+    return String(input.value || '').trim();
+}
+
+function writeWizardField(name, value) {
+    const input = document.getElementById(`buyer-wizard-${name}`);
+    if (input) input.value = String(value || '');
+}
+
+function syncWizardDraftFromDOM() {
+    if (!state.wizardDraft) return;
+    const fieldNames = Object.keys(state.wizardDraft);
+    fieldNames.forEach((name) => {
+        state.wizardDraft[name] = readWizardField(name);
+    });
+}
+
+function renderBuyerWizard(step) {
+    const modal = getBuyerModal();
+    if (!modal) return;
+
+    state.wizardStep = step || 1;
+    const currentStep = state.wizardStep;
+    const d = state.wizardDraft || createWizardDraft();
+
+    modal.classList.add('buyer-wizard');
+
+    const eyebrow = document.getElementById(BUYER_EYEBROW_ID);
+    const title = document.getElementById(BUYER_TITLE_ID);
+    if (eyebrow) eyebrow.textContent = `Creación guiada · Paso ${currentStep}`;
+    if (title) title.textContent = 'Nuevo cliente';
+
+    const form = document.getElementById(BUYER_FORM_ID);
+    if (!form) return;
+
+    form.innerHTML = `
+        <div class="buyer-wizard-stepper" role="list">
+            ${BUYER_WIZARD_STEPS.map((s) => {
+                const isActive = currentStep === s.id;
+                const isComplete = currentStep > s.id;
+                return `<button type="button" class="buyer-wizard-step${isActive ? ' is-active' : ''}${isComplete ? ' is-complete' : ''}"
+                    data-buyer-wizard-goto="${s.id}" role="listitem"
+                    ${isActive ? 'aria-current="step"' : ''}>
+                    <span class="buyer-wizard-step__dot">${isComplete ? '✓' : s.id}</span>
+                    <span class="buyer-wizard-step__label">
+                        <strong>${escapeHtml(s.title)}</strong>
+                        <small>${escapeHtml(s.eyebrow)}</small>
+                    </span>
+                </button>`;
+            }).join('')}
+        </div>
+
+        <div class="buyer-wizard-body">
+            ${renderWizardStepPanel(currentStep, d)}
+        </div>
+
+        <div class="buyer-wizard-footer">
+            <p id="${BUYER_STATUS_ID}" class="agro-buyer-status" data-level="muted"></p>
+            <div class="buyer-wizard-nav">
+                ${currentStep > 1 ? '<button type="button" class="btn" data-buyer-wizard-action="prev">← Anterior</button>' : ''}
+                ${currentStep < 4 ? '<button type="button" class="btn btn-primary" data-buyer-wizard-action="next">Siguiente →</button>' : ''}
+                ${currentStep === 4 ? '<button type="submit" class="btn btn-primary" id="btn-save-agro-buyer">Guardar cliente</button>' : ''}
+                <button type="button" class="btn" data-buyer-wizard-action="cancel">Cancelar</button>
+            </div>
+        </div>
+    `;
+
+    const saveBtn = document.getElementById(BUYER_SAVE_BUTTON_ID);
+    if (saveBtn) saveBtn.disabled = false;
+}
+
+function renderWizardStepPanel(step, d) {
+    if (step === 1) {
+        return `
+            <div class="buyer-wizard-panel">
+                <div class="buyer-wizard-panel__head">
+                    <p class="buyer-wizard-panel__eyebrow">Paso 1</p>
+                    <h4 class="buyer-wizard-panel__title">¿Cómo se llama el cliente?</h4>
+                    <p class="buyer-wizard-panel__copy">Este nombre será visible en toda la plataforma. Evita duplicados.</p>
+                </div>
+                <label class="agro-buyer-field">
+                    <span>Nombre visible</span>
+                    <input type="text" id="buyer-wizard-display_name" class="styled-input" maxlength="120"
+                        placeholder="Ej: Finca El Porvenir" required value="${escapeHtml(d.display_name)}">
+                </label>
+            </div>`;
+    }
+
+    if (step === 2) {
+        return `
+            <div class="buyer-wizard-panel">
+                <div class="buyer-wizard-panel__head">
+                    <p class="buyer-wizard-panel__eyebrow">Paso 2</p>
+                    <h4 class="buyer-wizard-panel__title">¿Cómo lo contactas?</h4>
+                    <p class="buyer-wizard-panel__copy">Opcional pero útil para seguimiento y WhatsApp directo.</p>
+                </div>
+                <div class="agro-buyer-inline">
+                    <label class="agro-buyer-field">
+                        <span>Teléfono</span>
+                        <input type="text" id="buyer-wizard-phone" class="styled-input" maxlength="40"
+                            value="${escapeHtml(d.phone)}">
+                    </label>
+                    <label class="agro-buyer-field">
+                        <span>WhatsApp</span>
+                        <input type="text" id="buyer-wizard-whatsapp" class="styled-input" maxlength="40"
+                            value="${escapeHtml(d.whatsapp)}">
+                    </label>
+                </div>
+                <div class="agro-buyer-inline">
+                    <label class="agro-buyer-field">
+                        <span>Instagram</span>
+                        <input type="text" id="buyer-wizard-instagram" class="styled-input" maxlength="80"
+                            value="${escapeHtml(d.instagram)}">
+                    </label>
+                    <label class="agro-buyer-field">
+                        <span>Facebook</span>
+                        <input type="text" id="buyer-wizard-facebook" class="styled-input" maxlength="80"
+                            value="${escapeHtml(d.facebook)}">
+                    </label>
+                </div>
+            </div>`;
+    }
+
+    if (step === 3) {
+        return `
+            <div class="buyer-wizard-panel">
+                <div class="buyer-wizard-panel__head">
+                    <p class="buyer-wizard-panel__eyebrow">Paso 3</p>
+                    <h4 class="buyer-wizard-panel__title">Contexto adicional</h4>
+                    <p class="buyer-wizard-panel__copy">Notas, preferencias o vínculos opcionales.</p>
+                </div>
+                <label class="agro-buyer-field">
+                    <span>Notas</span>
+                    <textarea id="buyer-wizard-notes" class="styled-input" rows="3" maxlength="800"
+                        placeholder="Preferencias, acuerdos o recordatorios del cliente">${escapeHtml(d.notes)}</textarea>
+                </label>
+                <label class="agro-buyer-field">
+                    <span>Vincular user_id público (opcional)</span>
+                    <input type="text" id="buyer-wizard-linked_user_id" class="styled-input" maxlength="80"
+                        placeholder="UUID del usuario para abrir su perfil público"
+                        value="${escapeHtml(d.linked_user_id)}">
+                </label>
+            </div>`;
+    }
+
+    if (step === 4) {
+        const hasPhone = d.phone || d.whatsapp;
+        const hasSocial = d.instagram || d.facebook;
+        const hasNotes = d.notes;
+        const hasLinked = d.linked_user_id;
+
+        return `
+            <div class="buyer-wizard-panel">
+                <div class="buyer-wizard-panel__head">
+                    <p class="buyer-wizard-panel__eyebrow">Paso 4</p>
+                    <h4 class="buyer-wizard-panel__title">Revisión final</h4>
+                    <p class="buyer-wizard-panel__copy">Confirma que todo está correcto antes de guardar.</p>
+                </div>
+                <div class="buyer-wizard-review-grid">
+                    <div class="buyer-wizard-review-item">
+                        <div class="buyer-wizard-review-item__label">Nombre</div>
+                        <div class="buyer-wizard-review-item__value">${escapeHtml(d.display_name) || '<span class="buyer-wizard-review-item__value--empty">Sin nombre</span>'}</div>
+                    </div>
+                    <div class="buyer-wizard-review-item">
+                        <div class="buyer-wizard-review-item__label">Teléfono</div>
+                        <div class="buyer-wizard-review-item__value">${escapeHtml(d.phone) || '<span class="buyer-wizard-review-item__value--empty">Sin teléfono</span>'}</div>
+                    </div>
+                    <div class="buyer-wizard-review-item">
+                        <div class="buyer-wizard-review-item__label">WhatsApp</div>
+                        <div class="buyer-wizard-review-item__value">${escapeHtml(d.whatsapp) || '<span class="buyer-wizard-review-item__value--empty">Sin WhatsApp</span>'}</div>
+                    </div>
+                    <div class="buyer-wizard-review-item">
+                        <div class="buyer-wizard-review-item__label">Instagram</div>
+                        <div class="buyer-wizard-review-item__value">${escapeHtml(d.instagram) || '<span class="buyer-wizard-review-item__value--empty">Sin Instagram</span>'}</div>
+                    </div>
+                    <div class="buyer-wizard-review-item">
+                        <div class="buyer-wizard-review-item__label">Facebook</div>
+                        <div class="buyer-wizard-review-item__value">${escapeHtml(d.facebook) || '<span class="buyer-wizard-review-item__value--empty">Sin Facebook</span>'}</div>
+                    </div>
+                    <div class="buyer-wizard-review-item${hasNotes ? '' : ' buyer-wizard-review-item--full'}">
+                        <div class="buyer-wizard-review-item__label">Notas</div>
+                        <div class="buyer-wizard-review-item__value">${escapeHtml(d.notes) || '<span class="buyer-wizard-review-item__value--empty">Sin notas</span>'}</div>
+                    </div>
+                </div>
+            </div>`;
+    }
+
+    return '';
+}
+
+function advanceWizardStep(direction) {
+    syncWizardDraftFromDOM();
+
+    const next = direction === 'next'
+        ? Math.min(state.wizardStep + 1, 4)
+        : Math.max(state.wizardStep - 1, 1);
+
+    if (next === state.wizardStep) return;
+
+    if (next > state.wizardStep && state.wizardStep === 1) {
+        const name = (state.wizardDraft.display_name || '').trim();
+        if (!name) {
+            setBuyerStatus('El nombre es obligatorio para continuar.', 'warn');
+            writeWizardField('display_name', state.wizardDraft.display_name);
+            const input = document.getElementById('buyer-wizard-display_name');
+            if (input) input.focus();
+            return;
+        }
+    }
+
+    renderBuyerWizard(next);
+
+    if (next === 1) {
+        requestAnimationFrame(() => {
+            const input = document.getElementById('buyer-wizard-display_name');
+            if (input) input.focus();
+        });
+    }
+}
+
+function handleWizardClick(target) {
+    const gotoBtn = target.closest('[data-buyer-wizard-goto]');
+    if (gotoBtn) {
+        syncWizardDraftFromDOM();
+        const step = Number(gotoBtn.dataset.buyerWizardGoto);
+        if (step > 0 && step <= 4 && step < state.wizardStep) {
+            renderBuyerWizard(step);
+        }
+        return;
+    }
+
+    const actionBtn = target.closest('[data-buyer-wizard-action]');
+    if (!actionBtn) return;
+
+    const action = actionBtn.dataset.buyerWizardAction;
+    if (action === 'prev') {
+        advanceWizardStep('prev');
+    } else if (action === 'next') {
+        advanceWizardStep('next');
+    } else if (action === 'cancel') {
+        closeBuyerModal();
+    }
+}
+
+function handleWizardFormSubmit(event) {
+    event.preventDefault();
+    syncWizardDraftFromDOM();
+
+    const name = (state.wizardDraft?.display_name || '').trim();
+    if (!name) {
+        setBuyerStatus('El nombre es obligatorio.', 'warn');
+        return;
+    }
+
+    state.currentBuyerId = '';
+    state.mode = 'create';
+
+    handleBuyerSave(event);
+}
+
+function teardownBuyerWizard() {
+    const modal = getBuyerModal();
+    if (modal) modal.classList.remove('buyer-wizard');
+    state.wizardStep = 1;
+    state.wizardDraft = null;
 }
 
 async function loadBuyerByGroupKey(userId, groupKey) {
@@ -897,8 +1193,19 @@ function bindBuyerModalEvents() {
 
     const form = document.getElementById(BUYER_FORM_ID);
     if (form) {
-        form.addEventListener('submit', handleBuyerSave);
+        form.addEventListener('submit', (event) => {
+            if (state.mode === 'create' && state.wizardDraft) {
+                handleWizardFormSubmit(event);
+            } else {
+                handleBuyerSave(event);
+            }
+        });
     }
+
+    modal.addEventListener('click', (event) => {
+        if (state.mode !== 'create' || !state.wizardDraft) return;
+        handleWizardClick(event.target);
+    });
 
     document.getElementById(BUYER_OPEN_PUBLIC_BUTTON_ID)?.addEventListener('click', handleOpenBuyerPublicProfile);
     document.getElementById(BUYER_ARCHIVE_BUTTON_ID)?.addEventListener('click', handleBuyerArchive);
@@ -947,13 +1254,41 @@ async function openBuyerProfileInternal({ buyerId = '', displayName = '', groupK
     state.currentStatus = 'active';
     state.currentHistoryCount = 0;
 
+    // ── Creation wizard path ──
+    if (state.mode === 'create') {
+        let buyer = null;
+        if (state.currentGroupKey) {
+            buyer = await loadBuyerByGroupKey(user.id, state.currentGroupKey);
+        }
+
+        if (buyer) {
+            // Duplicate found — switch to edit mode and use standard form
+            state.mode = 'edit';
+            state.currentBuyerId = String(buyer.id);
+            fillBuyerForm(buyer);
+            await refreshHistoryCount();
+            setBuyerStatus('Este cliente ya existe. Puedes editar su ficha.', 'warn');
+            openBuyerModal();
+            syncBuyerHeading();
+            syncLifecycleButtons();
+            syncOpenPublicButton();
+            return;
+        }
+
+        // New client — launch wizard
+        state.wizardDraft = createWizardDraft({ display_name: state.currentDisplayName });
+        openBuyerModal();
+        renderBuyerWizard(1);
+        requestAnimationFrame(() => {
+            const input = document.getElementById('buyer-wizard-display_name');
+            if (input) input.focus();
+        });
+        return;
+    }
+
+    // ── Edit mode path (unchanged) ──
     fillBuyerForm({ display_name: state.currentDisplayName });
-    setBuyerStatus(
-        state.mode === 'create'
-            ? 'Define el cliente y guárdalo para abrir su detalle.'
-            : 'Cargando cliente...',
-        'muted'
-    );
+    setBuyerStatus('Cargando cliente...', 'muted');
     openBuyerModal();
 
     let buyer = null;
