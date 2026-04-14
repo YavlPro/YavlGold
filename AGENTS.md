@@ -410,19 +410,23 @@ YavlGold usa un modelo **híbrido**:
 
 ### Rutas activas conocidas
 - **Repo YavlGold**: `C:\Users\yerik\gold`
-- **Vault Obsidian**: `C:\Users\yerik\OneDrive\Documentos\Obsidian Vault\`
+- **Vault Obsidian**: **no asumir una ruta fija por defecto. Verificar siempre con el usuario cuál es el vault activo.** Cuando el vault activo sea el documental del repo, usar: `C:\Users\yerik\gold\apps\gold\docs\`
 - **Codex CLI skills**: `C:\Users\yerik\.codex\skills\`
 - **OpenCode skills**: `C:\Users\yerik\.opencode\skills\obsidian-skills\`
+
+> **Nota operativa:** No asumir OneDrive como vault activo por defecto. La ruta histórica puede variar según la sesión. Para pruebas documentales en el vault del repo, usar exclusivamente: `C:\Users\yerik\gold\apps\gold\docs\test\`
 
 ### Skills prioritarias
 Las skills prioritarias de Obsidian para agentes son:
 - `obsidian-markdown`
 - `json-canvas`
 - `obsidian-cli`
+- `wiki-query` (lectura de wiki, bajo riesgo)
 
 Skills secundarias/opcionales:
 - `obsidian-bases`
 - `defuddle`
+- `wikiforge` (escritura en vault, requiere restricciones — solo con vaults externos al repo)
 
 ### Prohibiciones
 Los agentes NO deben:
