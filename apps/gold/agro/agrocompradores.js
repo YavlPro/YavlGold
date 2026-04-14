@@ -73,7 +73,10 @@ const state = {
     mode: 'edit',
     pendingDeleteResolver: null,
     wizardStep: 1,
-    wizardDraft: null
+    wizardDraft: null,
+    wizardIdentityMode: 'new',
+    wizardSelectedBuyerId: '',
+    wizardBuyerOptions: []
 };
 
 function escapeHtml(value) {
@@ -406,6 +409,33 @@ function createWizardDraft(seed = {}) {
     };
 }
 
+function resolveWizardDisplayName() {
+    if (state.wizardIdentityMode === 'existing' && state.wizardSelectedBuyerId) {
+        const buyer = state.wizardBuyerOptions.find((b) => b.id === state.wizardSelectedBuyerId);
+        return buyer?.display_name || '';
+    }
+    return state.wizardDraft?.display_name || '';
+}
+
+async function loadActiveBuyerOptions() {
+    if (!state.supabase) return [];
+    const user = await resolveSessionUser();
+    if (!user?.id) return [];
+
+    const { data, error } = await state.supabase
+        .from('agro_buyers')
+        .select('id,display_name,group_key,canonical_name,status,phone,whatsapp,instagram,facebook,notes,linked_user_id')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .order('display_name', { ascending: true });
+
+    if (error) {
+        console.warn('[AGRO_CLIENTS] loadActiveBuyerOptions error:', error);
+        return [];
+    }
+    return Array.isArray(data) ? data : [];
+}
+
 function readWizardField(name) {
     const input = document.getElementById(`buyer-wizard-${name}`);
     if (!input) return '';
@@ -421,7 +451,9 @@ function syncWizardDraftFromDOM() {
     if (!state.wizardDraft) return;
     const fieldNames = Object.keys(state.wizardDraft);
     fieldNames.forEach((name) => {
-        state.wizardDraft[name] = readWizardField(name);
+        const input = document.getElementById(`buyer-wizard-${name}`);
+        if (!input) return; // preserve draft value for fields not rendered in current step
+        state.wizardDraft[name] = String(input.value || '').trim();
     });
 }
 
@@ -481,18 +513,38 @@ function renderBuyerWizard(step) {
 
 function renderWizardStepPanel(step, d) {
     if (step === 1) {
+        const isNew = state.wizardIdentityMode !== 'existing';
+        const buyers = state.wizardBuyerOptions || [];
+        const selectedId = state.wizardSelectedBuyerId || '';
+
         return `
             <div class="buyer-wizard-panel">
                 <div class="buyer-wizard-panel__head">
                     <p class="buyer-wizard-panel__eyebrow">Paso 1</p>
-                    <h4 class="buyer-wizard-panel__title">¿Cómo se llama el cliente?</h4>
-                    <p class="buyer-wizard-panel__copy">Este nombre será visible en toda la plataforma. Evita duplicados.</p>
+                    <h4 class="buyer-wizard-panel__title">¿Quién es el cliente?</h4>
+                    <p class="buyer-wizard-panel__copy">Crea uno nuevo o elige un cliente canónico ya registrado.</p>
                 </div>
-                <label class="agro-buyer-field">
-                    <span>Nombre visible</span>
-                    <input type="text" id="buyer-wizard-display_name" class="styled-input" maxlength="120"
-                        placeholder="Ej: Finca El Porvenir" required value="${escapeHtml(d.display_name)}">
-                </label>
+                <div class="buyer-wizard-identity-toggle">
+                    <button type="button" class="buyer-wizard-identity-btn${isNew ? ' is-active' : ''}"
+                        data-buyer-identity-mode="new">Cliente nuevo</button>
+                    <button type="button" class="buyer-wizard-identity-btn${!isNew ? ' is-active' : ''}"
+                        data-buyer-identity-mode="existing">Cliente existente</button>
+                </div>
+                ${isNew ? `
+                    <label class="agro-buyer-field">
+                        <span>Nombre visible</span>
+                        <input type="text" id="buyer-wizard-display_name" class="styled-input" maxlength="120"
+                            placeholder="Ej: Finca El Porvenir" required value="${escapeHtml(d.display_name)}">
+                    </label>
+                ` : `
+                    <label class="agro-buyer-field">
+                        <span>Seleccionar cliente</span>
+                        <select id="buyer-wizard-existing-buyer" class="styled-input">
+                            <option value="">-- Elige un cliente --</option>
+                            ${buyers.map((b) => `<option value="${escapeHtml(b.id)}"${b.id === selectedId ? ' selected' : ''}>${escapeHtml(b.display_name)}</option>`).join('')}
+                        </select>
+                    </label>
+                `}
             </div>`;
     }
 
@@ -554,6 +606,7 @@ function renderWizardStepPanel(step, d) {
     }
 
     if (step === 4) {
+        const displayName = resolveWizardDisplayName();
         const hasPhone = d.phone || d.whatsapp;
         const hasSocial = d.instagram || d.facebook;
         const hasNotes = d.notes;
@@ -569,7 +622,7 @@ function renderWizardStepPanel(step, d) {
                 <div class="buyer-wizard-review-grid">
                     <div class="buyer-wizard-review-item">
                         <div class="buyer-wizard-review-item__label">Nombre</div>
-                        <div class="buyer-wizard-review-item__value">${escapeHtml(d.display_name) || '<span class="buyer-wizard-review-item__value--empty">Sin nombre</span>'}</div>
+                        <div class="buyer-wizard-review-item__value">${escapeHtml(displayName) || '<span class="buyer-wizard-review-item__value--empty">Sin nombre</span>'}</div>
                     </div>
                     <div class="buyer-wizard-review-item">
                         <div class="buyer-wizard-review-item__label">Teléfono</div>
@@ -608,13 +661,32 @@ function advanceWizardStep(direction) {
     if (next === state.wizardStep) return;
 
     if (next > state.wizardStep && state.wizardStep === 1) {
-        const name = (state.wizardDraft.display_name || '').trim();
-        if (!name) {
-            setBuyerStatus('El nombre es obligatorio para continuar.', 'warn');
-            writeWizardField('display_name', state.wizardDraft.display_name);
-            const input = document.getElementById('buyer-wizard-display_name');
-            if (input) input.focus();
-            return;
+        if (state.wizardIdentityMode === 'existing') {
+            if (!state.wizardSelectedBuyerId) {
+                setBuyerStatus('Selecciona un cliente existente para continuar.', 'warn');
+                const sel = document.getElementById('buyer-wizard-existing-buyer');
+                if (sel) sel.focus();
+                return;
+            }
+            // Hydrate draft from selected buyer's existing data
+            const buyer = state.wizardBuyerOptions.find((b) => b.id === state.wizardSelectedBuyerId);
+            if (buyer && state.wizardDraft) {
+                state.wizardDraft.display_name = buyer.display_name || '';
+                state.wizardDraft.phone = buyer.phone || '';
+                state.wizardDraft.whatsapp = buyer.whatsapp || '';
+                state.wizardDraft.instagram = buyer.instagram || '';
+                state.wizardDraft.facebook = buyer.facebook || '';
+                state.wizardDraft.notes = buyer.notes || '';
+                state.wizardDraft.linked_user_id = buyer.linked_user_id || '';
+            }
+        } else {
+            const name = (state.wizardDraft?.display_name || '').trim();
+            if (!name) {
+                setBuyerStatus('El nombre es obligatorio para continuar.', 'warn');
+                const input = document.getElementById('buyer-wizard-display_name');
+                if (input) input.focus();
+                return;
+            }
         }
     }
 
@@ -622,13 +694,24 @@ function advanceWizardStep(direction) {
 
     if (next === 1) {
         requestAnimationFrame(() => {
-            const input = document.getElementById('buyer-wizard-display_name');
-            if (input) input.focus();
+            if (state.wizardIdentityMode === 'new') {
+                const input = document.getElementById('buyer-wizard-display_name');
+                if (input) input.focus();
+            }
         });
     }
 }
 
 function handleWizardClick(target) {
+    // Identity mode toggle
+    const identityBtn = target.closest('[data-buyer-identity-mode]');
+    if (identityBtn) {
+        const mode = identityBtn.dataset.buyerIdentityMode;
+        state.wizardIdentityMode = mode;
+        renderBuyerWizard(1);
+        return;
+    }
+
     const gotoBtn = target.closest('[data-buyer-wizard-goto]');
     if (gotoBtn) {
         syncWizardDraftFromDOM();
@@ -656,14 +739,25 @@ function handleWizardFormSubmit(event) {
     event.preventDefault();
     syncWizardDraftFromDOM();
 
-    const name = (state.wizardDraft?.display_name || '').trim();
-    if (!name) {
-        setBuyerStatus('El nombre es obligatorio.', 'warn');
+    const displayName = resolveWizardDisplayName();
+    if (!displayName) {
+        setBuyerStatus('Se requiere una identidad válida para guardar.', 'warn');
         return;
     }
 
-    state.currentBuyerId = '';
-    state.mode = 'create';
+    // Ensure draft has the resolved display name
+    if (state.wizardDraft) {
+        state.wizardDraft.display_name = displayName;
+    }
+
+    if (state.wizardIdentityMode === 'existing' && state.wizardSelectedBuyerId) {
+        // Update existing buyer with wizard data
+        state.currentBuyerId = state.wizardSelectedBuyerId;
+        state.mode = 'edit';
+    } else {
+        state.currentBuyerId = '';
+        state.mode = 'create';
+    }
 
     handleBuyerSave(event);
 }
@@ -673,6 +767,8 @@ function teardownBuyerWizard() {
     if (modal) modal.classList.remove('buyer-wizard');
     state.wizardStep = 1;
     state.wizardDraft = null;
+    state.wizardIdentityMode = 'new';
+    state.wizardSelectedBuyerId = '';
 }
 
 async function loadBuyerByGroupKey(userId, groupKey) {
@@ -1207,6 +1303,14 @@ function bindBuyerModalEvents() {
         handleWizardClick(event.target);
     });
 
+    modal.addEventListener('change', (event) => {
+        if (state.mode !== 'create' || !state.wizardDraft) return;
+        const select = event.target.closest('#buyer-wizard-existing-buyer');
+        if (select) {
+            state.wizardSelectedBuyerId = String(select.value || '').trim();
+        }
+    });
+
     document.getElementById(BUYER_OPEN_PUBLIC_BUTTON_ID)?.addEventListener('click', handleOpenBuyerPublicProfile);
     document.getElementById(BUYER_ARCHIVE_BUTTON_ID)?.addEventListener('click', handleBuyerArchive);
     document.getElementById(BUYER_DELETE_BUTTON_ID)?.addEventListener('click', handleBuyerDelete);
@@ -1277,6 +1381,9 @@ async function openBuyerProfileInternal({ buyerId = '', displayName = '', groupK
 
         // New client — launch wizard
         state.wizardDraft = createWizardDraft({ display_name: state.currentDisplayName });
+        state.wizardIdentityMode = 'new';
+        state.wizardSelectedBuyerId = '';
+        state.wizardBuyerOptions = await loadActiveBuyerOptions();
         openBuyerModal();
         renderBuyerWizard(1);
         requestAnimationFrame(() => {

@@ -2,6 +2,56 @@
 
 Resumen operativo actual de `apps/gold`.
 
+## Sesion activa: Cierre wizard cliente — fix "Sin nombre" + selector cliente existente (2026-04-13)
+
+### Diagnostico
+
+**Problema 1 — Paso 4 "Sin nombre":**
+- Causa raiz confirmada en `syncWizardDraftFromDOM()` (linea ~420 de `agrocompradores.js`)
+- La funcion iteraba TODOS los campos del draft y llamaba `readWizardField(name)` para cada uno
+- `readWizardField` retorna `''` cuando el input no existe en el DOM
+- Cada paso solo renderiza sus propios campos, asi que al avanzar del Paso 3 al 4:
+  - `buyer-wizard-display_name` NO existe en Paso 3 DOM
+  - `readWizardField('display_name')` retorna `''`
+  - `state.wizardDraft.display_name` se sobreescribe con `''`
+- Fix: skip campos que no existen en el DOM actual (preservar valor del draft)
+
+**Problema 2 — Paso 1 sin selector de cliente existente:**
+- Paso 1 solo ofrecia input de nombre nuevo
+- Falta toggle para elegir entre "Cliente nuevo" y "Cliente existente"
+- Necesita: cargar buyers activos, renderizar select, hidratar draft desde buyer seleccionado
+
+### Causa raiz exacta del "Sin nombre"
+
+`syncWizardDraftFromDOM()` sobre-escribe valores del draft con `''` para campos no renderizados en el paso actual. El draft pierde `display_name` al avanzar del paso 1 porque los pasos 2-3 no renderizan ese input.
+
+### Cambios por archivo
+
+| Archivo | Cambio | Lineas estimadas |
+|---|---|---|
+| `agrocompradores.js` | Fix `syncWizardDraftFromDOM`: skip campos no renderizados. State: `wizardIdentityMode`, `wizardSelectedBuyerId`, `wizardBuyerOptions`. Funciones: `resolveWizardDisplayName`, `loadActiveBuyerOptions`. Paso 1: toggle new/existing + select de buyers. Paso 4: usa `resolveWizardDisplayName()`. `advanceWizardStep`: validacion por modo + hidratacion de draft desde buyer seleccionado. `handleWizardFormSubmit`: soporta update de buyer existente. `handleWizardClick`: handler de toggle identidad. `openBuyerProfileInternal`: carga buyer options. `bindBuyerModalEvents`: change listener para select. `teardownBuyerWizard`: limpia identity state. | ~100 lineas modificadas/nuevas |
+| `agro.css` | CSS toggle identidad: `.buyer-wizard-identity-toggle`, `.buyer-wizard-identity-btn`, `.buyer-wizard-identity-btn.is-active` | ~30 lineas nuevas |
+
+### Riesgos / deuda tecnica
+
+- **Bajo**: Solo afecta modo creacion. Modo edicion intacto.
+- `loadActiveBuyerOptions()` hace query a Supabase cada vez que se abre el wizard. Aceptable para el volumen esperado de buyers. Si crece, se puede cachear.
+- Cuando se elige "Cliente existente", el save hace un UPDATE (no INSERT). Esto es correcto — actualiza los campos de contacto/contexto del buyer seleccionado.
+
+### Resultado build
+
+`pnpm build:gold` — OK. 159 modules, 2.54s, UTF-8 verificado.
+
+### QA manual sugerido
+
+1. Abrir Cartera Viva → "Nuevo cliente" → Paso 1 toggle a "Cliente nuevo" → escribir nombre → avanzar
+2. Confirmar que Paso 4 muestra el nombre correctamente (no "Sin nombre")
+3. Paso 1 toggle a "Cliente existente" → seleccionar del dropdown → avanzar
+4. Confirmar que Paso 4 muestra nombre del cliente seleccionado
+5. Confirmar que no permite avanzar sin identidad valida en Paso 1
+6. Modo edicion (click en card existente) funciona sin wizard
+7. `pnpm build:gold` (ya validado)
+
 ## Sesion activa: Wizard creacion de cliente canonico en Cartera Viva (2026-04-13)
 
 ### Diagnostico

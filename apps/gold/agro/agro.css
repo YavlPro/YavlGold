@@ -1361,6 +1361,35 @@ body.agro-buyer-open {
   font-style: italic;
 }
 
+.buyer-wizard-identity-toggle {
+  display: inline-flex;
+  gap: 0;
+  border-radius: var(--radius-md, 12px);
+  border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
+  overflow: hidden;
+}
+
+.buyer-wizard-identity-btn {
+  padding: 0.45rem 0.85rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary, #94A3B8);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.buyer-wizard-identity-btn:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.buyer-wizard-identity-btn.is-active {
+  background: color-mix(in srgb, var(--gold-4, #C8A752) 16%, transparent);
+  color: var(--gold-4, #C8A752);
+}
+
 .buyer-wizard-footer {
   display: flex;
   align-items: center;
