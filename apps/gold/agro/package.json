@@ -4,11 +4,7 @@
   "description": "YavlAgro - Productos Agrícolas de Táchira, Venezuela",
   "private": true,
   "type": "module",
-  "dependencies": {
-    "@yavl/themes": "workspace:*",
-    "@yavl/ui": "workspace:*",
-    "@yavl/utils": "workspace:*"
-  },
+  "dependencies": {},
   "scripts": {
     "dev": "python3 -m http.server 8083",
     "preview": "python3 -m http.server 8083"
