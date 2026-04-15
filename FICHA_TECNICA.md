@@ -1,6 +1,6 @@
 # FICHA TECNICA - YavlGold V1
 
-**Fecha de Referencia:** 07/04/2026
+**Fecha de Referencia:** 15/04/2026
 **Tipo de Proyecto:** Herramienta agricola digital (Agro V1 liberado)
 **Arquitectura:** Monorepo Turborepo
 **Release activo visible:** `V1`
@@ -67,14 +67,23 @@ apps/gold/
 │   │   ├── modules/        # Gestión de módulos
 │   │   └── geolocation.js  # Lógica de geolocalización
 │   └── css/                # Estilos globales
+├── public/                 # Assets públicos (canónico vivo)
+│   ├── brand/              # Logos y favicons
+│   ├── site.webmanifest   # PWA manifest
+│   └── pwa/               # Icons PWA
 ├── vite.config.js          # Configuración de entradas MPA
 └── vercel.json             # Routing y clean URLs
 ```
 
-### Paquetes Compartidos
+### Infraestrutura del Repo
 ```
-packages/
-└── themes/                 # Tokens de diseño compartidos
+raiz/
+├── supabase/               # Infraestrutura Supabase (no tocar)
+├── node_modules/          # Dependencias
+├── apps/gold/             # Producto YavlGold (único código activo)
+├── .git/                  # Control de versiones
+├── vercel.json            # Deploy config
+└── turbo.json             # Turborepo config
 ```
 
 ---
@@ -373,5 +382,5 @@ git status
 
 ---
 
-**Versión de Ficha:** 1.2
-**Última Actualización:** 12/03/2026
+**Versión de Ficha:** 1.3
+**Última Actualización:** 15/04/2026

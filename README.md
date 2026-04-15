@@ -46,13 +46,14 @@ pnpm build:gold
 ```
 gold/
   apps/
-    gold/              # App principal
+    gold/              # App principal (producto YavlGold)
       index.html       # Landing publica enfocada en Agro
       dashboard/       # Entrada del usuario hacia Agro
       agro/            # Modulo Agro (V1 activo)
+      public/          # Assets públicos (canónico vivo)
       assets/          # Recursos compartidos
       archive/         # Legado archivado (no activo)
-  packages/            # Paquetes compartidos
+  supabase/            # Infraestrutura Supabase
   turbo.json
   package.json
 ```

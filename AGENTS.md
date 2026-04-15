@@ -389,6 +389,22 @@ Es el que:
 - ✅ CADA commit debe dejar el código ligeramente más limpio que como lo encontró (Regla del Boy Scout).
 - ✅ Build gate obligatorio: `pnpm build:gold` tras cualquier intervención.
 
+### 11.7 Principios de Localidad e Higiene del Repo
+
+#### Principio de Localidad del Producto
+- Todo archivo, asset, módulo o recurso del producto visible u operativo debe vivir dentro de `apps/gold/`
+- Fuera de `apps/gold/` solo debe quedar infraestructura real del repo o excepción técnica justificada
+- `apps/gold/` es el único directorio que contiene código, assets y documentación del producto YavlGold
+
+#### Higiene del Contexto para Agentes
+- Archivos legacy visibles, zombies y duplicados dentro del árbol activo contaminan la lectura de los agentes aunque no participen en runtime
+- Limpiar contexto no es estética: es defensa operativa del canon
+- Los agentes deben identificar y eliminar archivos zombies/muertos/duplicados como parte del trabajo cotidiano
+
+#### Archivos en raíz del repo
+- NO crear más archivos en raíz salvo necesidad real y justificada
+- El directorio `supabase/` en raíz es infraestructura del repo y NO debe moverse sin diagnóstico serio previo
+
 ---
 
 ## §12 — Obsidian + Agent Skills (Policy canónica)

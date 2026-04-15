@@ -16787,4 +16787,84 @@ Evaluar dos skills externas (`wiki-query` y `wikiforge`) para determinar si conv
 ### QA sugerido
 - Verificar que `AGENTS.md` se lee correctamente y el parche no introdujo errores de formato
 - Confirmar que la jerarquia de skills (prioritarias vs opcionales) refleja la intencion del usuario
+
+---
+
+## Sesion: Limpieza estructural del repo — Eliminacion de zombies (2026-04-15)
+
+### Objetivo
+Ejecutar cirugia minima y segura sobre el repo para eliminar archivos legacy zombies que contaminan el contexto de los agentes y no aportan al producto activo.
+
+### Diagnostico confirmado
+
+**Zombies identificados:**
+- `packages/themes/**` (8 archivos) — paquetes compartidos nunca usados en el producto activo
+- `packages/ui/**` (10 archivos) — componentes UI nunca integrados
+- `packages/utils/**` (6 archivos) — utilidades nunca importadas
+- `apps/gold/assets/packages/**` (4 archivos) — copias fantasma de los paquetes acima
+
+**Residuos en raiz:**
+- `public/brand/breathing.webp` — 0 referencias, muerto
+- `public/brand/logo-modal.webp` — 0 referencias, muerto
+- `public/site.webmanifest` — competia con `apps/gold/public/site.webmanifest`, obsoleto
+- `public/brand/logo.webp` — duplicado de `apps/gold/public/brand/logo.webp`
+
+### Principio rector validado
+
+> **Todo lo que pertenezca al producto YavlGold debe vivir dentro de `apps/gold/`.**
+> Fuera de `apps/gold/` solo debe quedar infraestructura real del repo (`.git`, `node_modules`, `supabase/`, `vercel.json`, etc.) o excepciones tecnicas justificadas.
+
+### Cambios aplicados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `packages/themes/**` (8 archivos) | Eliminado | Paquete zombie |
+| `packages/ui/**` (10 archivos) | Eliminado | Paquete zombie |
+| `packages/utils/**` (6 archivos) | Eliminado | Paquete zombie |
+| `apps/gold/assets/packages/**` (4 archivos) | Eliminado | Copias fantasma |
+| `apps/gold/academia/package.json` | Editado | Eliminado dependencias zombie |
+| `apps/gold/agro/package.json` | Editado | Eliminado dependencias zombie |
+| `apps/gold/herramientas/package.json` | Editado | Eliminado dependencias zombie |
+| `apps/gold/social/package.json` | Editado | Eliminado dependencias zombie |
+| `public/brand/breathing.webp` | Eliminado | 0 referencias |
+| `public/brand/logo-modal.webp` | Eliminado | 0 referencias |
+| `public/site.webmanifest` | Eliminado | Obsoleto |
+| `public/brand/logo.webp` | Eliminado | Duplicado de `apps/gold/public/brand/logo.webp` |
+
+### Build status
+
+`pnpm build:gold` — OK. 160 modules, 5.23s, UTF-8 verificado.
+
+### Verificacion post-limpieza
+
+- Las referencias a `/brand/logo.webp` (26 en HTMLs) resuelven correctamente contra `apps/gold/public/brand/logo.webp` (canonico vivo)
+- No hubo rotura de build ni de funcionalidad
+- `apps/gold/public/` confirmado como el **public canonico vivo** del producto
+
+### Estado actual del repo
+
+```
+public/               # ELIMINADO — ya no existe
+apps/gold/public/    # CANONICO — assets vivos del producto
+supabase/            # PAUSADO — pendiente diagnostico antes de cualquier movimiento
+```
+
+### Supabase — Nota tactica
+
+`supabase/` en raiz NO se toca hoy. Queda en pausa tactica hasta que un diagnostico serio con Codex determine si es seguro moverlo dentro de `apps/gold/` o si debe permanecer como infraestructura del repo.
+
+### Novedad documental aplicada
+
+1. **Principio de Localidad del Producto** agregado a `AGENTS.md`:
+   - Todo archivo, asset, modulo o recurso del producto visible u operativo debe vivir dentro de `apps/gold/`
+   - Fuera de `apps/gold/` solo infraestructura real del repo o excepcion justificada
+
+2. **Higiene del Contexto para Agentes** agregado a `AGENTS.md`:
+   - Archivos legacy visibles, zombies y duplicados dentro del arbol activo contaminan la lectura de los agentes aunque no participen en runtime
+   - Limpiar contexto no es estetica: es defensa operativa del canon
+
+3. `FICHA_TECNICA.md`, `README.md` y `llms.txt` actualizados para reflejar la realidad actual:
+   - Sin mencion a packages/zombies
+   - `apps/gold/public/` como public canonico
+   - Foco claro en Agro como unico modulo activo
 - Si se instala `wiki-query`, probar consulta contra el vault activo para verificar funcionamiento

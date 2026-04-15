@@ -67,7 +67,12 @@ This file contains the current product, architecture and routing policy for `app
 - Supabase tables use soft-delete (`deleted_at`) as standard pattern
 - Supported currencies: COP, USD, VES
 
-## 9. Legacy note
+## 9. Repo hygiene
+- `apps/gold/public/` is the **canonical live public** directory for the product
+- `public/` at root was removed — all product assets live in `apps/gold/public/`
+- `supabase/` at root is infrastructure and should not be moved without serious diagnosis
+
+## 10. Legacy note
 - YavlGold today is Agro. Everything else is compatibility or archive.
 - Placeholder routes for unavailable modules exist to avoid 404s, not to suggest active products.
 - Archived legacy HTML lives under `apps/gold/archive/legacy-html/`
