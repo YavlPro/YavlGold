@@ -16976,3 +16976,47 @@ No se ejecuto `pnpm build:gold` porque no hubo cambios de codigo, scripts, migra
 ### Cambios fuera de documentacion
 
 No hubo cambios fuera de documentacion. No se movio `supabase/`, no se borro `apps/gold/supabase/`, no se tocaron migraciones, no se tocaron Edge Functions, no se cambiaron scripts y no se edito `agro.js`.
+
+---
+
+## Sesion: Alineacion operativa Supabase root canon (2026-04-16)
+
+### Fecha
+
+2026-04-16
+
+### Diagnostico
+
+La regla canonica Supabase ya estaba definida en documentacion base, pero la operacion diaria seguia reforzando el arbol secundario: `package.json` ejecutaba `supabase` desde `apps/gold`, y `LOCAL_FIRST.md` instruia revisar `apps/gold/supabase/config.toml`.
+
+Se corrigio esa ambiguedad sin borrar ni mover carpetas: los scripts `sb:*` ahora referencian explicitamente el workdir del repo raiz, donde vive `supabase/`, y `LOCAL_FIRST.md` declara que `apps/gold/supabase/` es contexto legacy pendiente de reconciliacion.
+
+### Cambios aplicados
+
+| Archivo | Cambio |
+|---|---|
+| `package.json` | `sb:init`, `sb:up`, `sb:up:ui`, `sb:down` y `sb:status` dejan de hacer `cd apps/gold` y usan `--workdir .` contra el canon raiz |
+| `apps/gold/docs/LOCAL_FIRST.md` | Agregado bloque "Canon Supabase"; primera vez y comandos apuntan a `supabase/config.toml` raiz |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Agregado cierre de sesion |
+
+### Build status
+
+`pnpm build:gold` — OK.
+
+Notas:
+- `agent-guard`: OK
+- `agent-report-check`: OK
+- `vite build`: OK, 160 modules transformed
+- `check-llms`: OK
+- `check-dist-utf8`: OK
+- Advertencias no bloqueantes: Node actual `v25.6.0` no coincide con engine esperado `20.x`; esbuild reporto un warning CSS de sintaxis/minificacion ya no bloqueante.
+
+### QA sugerido
+
+- Probar `pnpm sb:status` con Docker Desktop activo para confirmar que inspecciona el proyecto raiz `YavlGold`.
+- En fase posterior, reconciliar o retirar `apps/gold/supabase/`.
+- No crear migraciones ni funciones en `apps/gold/supabase/`.
+
+### Cambios fuera de documentacion
+
+Se edito `package.json` para corregir scripts operativos. No se movio `supabase/`, no se borro `apps/gold/supabase/`, no se fusionaron carpetas, no se editaron migraciones, no se tocaron Edge Functions y no se edito `agro.js`.
