@@ -607,6 +607,11 @@ export function initAgroShell() {
     closeSidebar();
     setActiveView(activeView, { scroll: false, syncTab: true, subview: activeSubview });
     document.body.classList.add('agro-shell-ready');
+    const splash = document.getElementById('agro-splash');
+    if (splash) {
+        splash.addEventListener('transitionend', () => splash.remove(), { once: true });
+        setTimeout(() => splash.remove(), 800);
+    }
 
     return {
         getActiveView: () => activeView,

@@ -1,6 +1,107 @@
+        /* ============================================ AGRO SPLASH LOADER ============================================ */
+        .agro-splash {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-1, #0a0a0a);
+            transition: opacity 0.35s ease, visibility 0.35s ease;
+        }
+
+        body.agro-shell-ready .agro-splash {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .agro-splash__inner {
+            display: grid;
+            gap: 0.6rem;
+            place-items: center;
+            padding: 2rem;
+        }
+
+        .agro-splash__logo {
+            width: 72px;
+            height: 72px;
+            object-fit: contain;
+            opacity: 0;
+            animation: agroSplashFadeIn 0.5s ease 0.1s forwards;
+        }
+
+        .agro-splash__title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--gold-4, #C8A752);
+            letter-spacing: 0.06em;
+            opacity: 0;
+            animation: agroSplashFadeIn 0.4s ease 0.25s forwards;
+        }
+
+        .agro-splash__subtitle {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.88rem;
+            color: var(--text-secondary, #a0a0a0);
+            opacity: 0;
+            animation: agroSplashFadeIn 0.4s ease 0.35s forwards;
+        }
+
+        .agro-splash__bar {
+            width: 140px;
+            height: 3px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.06);
+            overflow: hidden;
+            margin-top: 0.3rem;
+            opacity: 0;
+            animation: agroSplashFadeIn 0.3s ease 0.45s forwards;
+        }
+
+        .agro-splash__progress {
+            height: 100%;
+            width: 40%;
+            border-radius: 2px;
+            background: var(--gold-4, #C8A752);
+            animation: agroSplashSlide 1s ease-in-out infinite;
+        }
+
+        @keyframes agroSplashFadeIn {
+            to { opacity: 1; }
+        }
+
+        @keyframes agroSplashSlide {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(350%); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .agro-splash__logo,
+            .agro-splash__title,
+            .agro-splash__subtitle,
+            .agro-splash__bar {
+                opacity: 1;
+                animation: none;
+            }
+            .agro-splash__progress {
+                animation: none;
+                width: 60%;
+            }
+            .agro-splash {
+                transition: none;
+            }
+        }
+
         /* ============================================ SHELL BOOTSTRAP: prevent flash of inactive regions ============================================ */
-        body:not(.agro-shell-ready) [data-agro-shell-region]:not([data-agro-shell-region="dashboard"]) {
-            display: none !important;
+        body:not(.agro-shell-ready) [data-agro-shell-region] {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        body.agro-shell-ready [data-agro-shell-region] {
+            opacity: 1;
         }
 
         /* ============================================ CSS RESET & CUSTOM PROPERTIES ============================================ */

@@ -2,7 +2,61 @@
 
 Resumen operativo actual de `apps/gold`.
 
-## Sesion activa: Rediseño quirúrgico — Vista detalle cliente canónico Cartera Viva (2026-04-16)
+## Sesion activa: Splash loader de marca para entrada a Agro (2026-04-16)
+
+### Objetivo
+Reemplazar la experiencia de carga de entrada a Agro (que mostraba KPIs de clima/mercado en estado "Cargando..." como si fuera contenido) por un splash loader de marca limpio y breve.
+
+### Diagnostico previo
+No existia un loader dedicado para la transicion Dashboard → Agro. El HTML de `agro/index.html` se renderizaba inmediatamente mostrando el dashboard con tarjetas de clima ("Cargando...") y mercados ("Detectando...") mientras los modulos JS se descargaban. Eso se percibia como un "modal raro" o "KPI grande de clima/mercados" porque el contenido parcial aparecia sin contexto.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambios |
+|---|---|---|
+| `apps/gold/agro/index.html` | Markup | Agregado `div.agro-splash` con logo, titulo "Cargando Agro", subtitulo y barra de progreso animada. |
+| `apps/gold/agro/agro-index-critical.css` | Estilos | Nuevas clases `.agro-splash*` con fondo oscuro, fade-in escalonado, barra deslizante. Ocultacion de regiones shell antes de `agro-shell-ready`. Transicion de salida 0.35s. Reduced-motion: sin animaciones. |
+| `apps/gold/agro/agro-shell.js` | Quirurgico | 3 lineas: limpia el splash del DOM despues de que `agro-shell-ready` se agrega (transitionend + timeout backup). |
+
+### Como quedo el splash loader
+- Fondo oscuro (`var(--bg-1)`) cubriendo toda la pantalla
+- Logo YavlGold (72px) centrado con fade-in
+- Texto "Cargando Agro" en Orbitron gold
+- Subtitulo "Preparando tu espacio agricola" en Rajdhani gris
+- Barra de progreso delgada (3px, 140px) con slide animado
+- Desaparece con fade-out (0.35s) cuando `agro-shell-ready` se agrega al body
+- Se elimina del DOM despues de la transicion
+
+### Duracion y comportamiento
+- Sin delays artificiales
+- Aparece inmediatamente al cargar `/agro/`
+- Desaparece tan pronto como `agro-shell.js` agrega `agro-shell-ready` al body
+- Timeout de seguridad: 800ms para remover del DOM si transitionend no dispara
+- Las regiones del shell (`data-agro-shell-region`) permanecen `opacity: 0` hasta que el splash se desvanece
+
+### Resultado build
+`pnpm build:gold` — OK. 160 modules, 2.28s.
+- `agent-guard`: OK
+- `agent-report-check`: OK
+- `vite build`: OK (160 modules transformed)
+- `check-llms`: OK
+- `check-dist-utf8`: OK
+
+### QA manual sugerido
+1. **Entrada a Agro**: navegar desde Dashboard → Agro → verificar que aparece splash con logo, texto y barra
+2. **Desaparicion**: verificar que el splash se desvanece limpiamente cuando Agro carga
+3. **Sin KPIs visibles durante carga**: verificar que NO se ven tarjetas de clima/mercado detras del splash
+4. **Reduced motion**: activar prefers-reduced-motion en el SO → verificar que el splash muestra todo sin animaciones
+5. **Velocidad**: en conexion rapida, verificar que el splash aparece y desaparece rapidamente (no se siente lento)
+
+### Riesgos
+- **Bajo**: El splash usa CSS puro en archivo critico ya cargado en head. No depende de JS para mostrarse.
+- **Bajo**: La limpieza del DOM usa transitionend + timeout de seguridad.
+- **Nulo en logica de negocio**: Solo es una capa visual de transicion.
+
+---
+
+## Sesion activa: Rediseño quirurgico — Vista detalle cliente canonico Cartera Viva (2026-04-16)
 
 ### Objetivo
 Rediseñar la vista "Ver detalle" del cliente canónico en Cartera Viva para que esté enfocada en historial operativo, eliminando la tarjeta estadística grande que dominaba la vista.
