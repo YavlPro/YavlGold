@@ -46,6 +46,15 @@ El sistema de diseño completo vive en `apps/gold/docs/ADN-VISUAL-V10.0.md`. Es 
 - Introducir dependencias visuales pesadas.
 - Hardcodear colores fuera de tokens.
 
+### Separación semántica de superficies (§20 del ADN)
+
+- Cada vista debe tener una función primaria clara.
+- No mezclar historial + dashboard + KPIs + formulario en una misma superficie.
+- La capa protagonista es la tarea principal; todo lo demás es secundario.
+- Las estadísticas grandes no deben vivir en vistas de historial/detalle como protagonista.
+- El botón Volver debe ser siempre visible y accesible.
+- Antes de agregar un bloque nuevo, el agente debe verificar que pertenece semánticamente a esa vista.
+
 ---
 
 ## §3 — Arquitectura y organización de código

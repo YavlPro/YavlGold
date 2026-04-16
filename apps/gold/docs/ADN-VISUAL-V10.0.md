@@ -26,6 +26,8 @@ Documento completo del sistema de diseño. Referencia visual inmutable e inmutab
 - §0-§1 — Misión e Identidad
 - §15-§16 — Layout e Iconografía
 - §17-§18 — Estados y Accesibilidad
+- §19 — Canon de Modales
+- §20 — Separación Semántica de Superficies
 
 ---
 
@@ -1458,14 +1460,185 @@ Toda pieza nueva **debe nacer ya bajo §19**.
 
 ---
 
+## §20 — Ley de Separación Semántica de Superficies
+
+### Principio
+
+Cada vista debe tener una función primaria clara.
+No mezclar en una misma superficie categorías semánticas distintas si eso degrada claridad, lectura o operación.
+
+En YavlGold, una pantalla no debe intentar ser al mismo tiempo:
+- historial,
+- dashboard,
+- panel de KPIs,
+- formulario,
+- centro de acciones,
+- y navegación secundaria.
+
+Cuando una vista mezcle demasiadas capas, el agente debe separar, no apilar.
+
+---
+
+### §20.1 — Regla base
+
+Toda superficie debe responder primero:
+
+> ¿Cuál es la tarea principal de esta vista?
+
+Y el diseño debe obedecer esa respuesta.
+
+Ejemplos:
+- **Vista de historial** → historial, filtros, ledger, acciones relacionadas
+- **Vista estadística** → KPIs, comparativas, resúmenes, progreso, lectura financiera
+- **Vista operativa** → acciones, formularios, flujos de registro
+- **Vista de detalle** → contexto breve + contenido principal de esa categoría
+- **Vista de navegación** → volver, cambiar de contexto, salir, moverse
+
+Si una capa no pertenece a la función principal de la vista, debe:
+- moverse a otra superficie,
+- comprimirse,
+- o vivir como bloque secundario claramente separado.
+
+---
+
+### §20.2 — Prohibición de mezclas semánticas pesadas
+
+Queda prohibido mezclar como bloque dominante dentro de una misma vista:
+
+- historial + dashboard estadístico grande
+- ledger + mini panel de métricas protagonista
+- timeline + resumen financiero profundo
+- detalle operativo + comparador analítico pesado
+- navegación crítica escondida entre bloques no relacionados
+
+Ejemplo canónico:
+En **Ver detalle** de un cliente canónico de Cartera Viva,
+la vista debe priorizar **historial + acciones + contexto breve**.
+Las estadísticas grandes no deben vivir allí como protagonista visual.
+
+---
+
+### §20.3 — Regla de protagonismo visual
+
+Debe existir una sola capa protagonista por vista.
+
+La jerarquía correcta es:
+
+1. tarea principal
+2. contexto breve
+3. acciones relacionadas
+4. contenido secundario
+5. navegación complementaria
+
+No se debe permitir que una capa secundaria robe protagonismo visual a la principal.
+
+Ejemplos de violación:
+- una tarjeta financiera gigante antes del historial;
+- KPIs dominando una vista cuyo propósito era revisar registros;
+- bloques de progreso ocupando el lugar del ledger real.
+
+---
+
+### §20.4 — Regla de separación por categoría
+
+Si un contenido pertenece a otra categoría funcional, debe salir de esa vista.
+
+Ejemplos:
+- estadísticas profundas → sección estadística o despliegue financiero
+- historial de movimientos → vista de historial
+- acciones de registro → barra operativa o panel de acciones
+- navegación de retorno → header o toolbar visible
+- contexto breve → cabecera compacta
+
+No convertir una vista en "cajón de sastre" por conveniencia.
+
+---
+
+### §20.5 — Regla de navegación visible
+
+Toda vista de detalle o subnivel debe tener una salida clara, visible y fácil de encontrar.
+
+El botón Volver:
+- no debe perderse visualmente,
+- no debe quedar enterrado entre bloques ajenos,
+- no debe competir con tarjetas pesadas,
+- debe vivir en header, toolbar o zona naturalmente visible.
+
+Perder el botón de retorno es una falla UX, no un detalle menor.
+
+---
+
+### §20.6 — Regla de acciones operativas
+
+Las acciones relevantes deben existir, pero no dominar la semántica de la vista.
+
+Ejemplo:
+en una vista de historial se permiten botones como:
+- nuevo fiado
+- nuevo cobro
+- nueva pérdida
+- editar cliente
+
+pero deben vivir como barra operativa compacta,
+no como excusa para convertir la vista en dashboard híbrido.
+
+---
+
+### §20.7 — Regla de futura expansión
+
+Cuando un bloque importante no cabe semánticamente en la vista actual, no se fuerza.
+Se crea o se planifica una superficie futura adecuada.
+
+Ejemplo válido:
+- "Despliegue financiero" para métricas y resumen económico profundo del cliente
+- dejar "Ver detalle" centrado solo en historial operativo
+
+Primero claridad.
+Después expansión.
+
+---
+
+### §20.8 — Anti-patrones prohibidos
+
+- convertir una vista de historial en mini dashboard
+- mezclar KPIs grandes con ledger sin separación clara
+- poner navegación crítica en zonas de baja visibilidad
+- usar una tarjeta estadística dominante dentro de una vista cuyo propósito es revisar registros
+- agregar bloques "porque caben"
+- mezclar capa analítica y capa operativa sin necesidad real
+- esconder la tarea principal detrás de contexto secundario
+
+---
+
+### §20.9 — Regla práctica para agentes
+
+Antes de agregar un bloque nuevo, el agente debe preguntarse:
+
+1. ¿Esto pertenece semánticamente a esta vista?
+2. ¿Es contenido principal o secundario?
+3. ¿Compite visualmente con la tarea principal?
+4. ¿Debería vivir en otra categoría o despliegue?
+
+Si la respuesta indica mezcla o fatiga, el bloque debe separarse.
+
+---
+
+### §20.10 — Criterio final
+
+En YavlGold, claridad semántica > densidad visual.
+
+Una vista limpia, enfocada y categóricamente correcta vale más que una pantalla cargada con "de todo un poco".
+
+---
+
 # 💎 ADN VISUAL INMUTABLE V10.0 💎
 
 Estado: ACTIVO · Fecha: 2026-02-18
 Fuente de inspiracion: `review-submitted-code.zip`
 
-Cobertura actual: `§0-§19`
+Cobertura actual: `§0-§20`
 
 **Tu finca merece tecnologia de primera. YavlGold nace del campo, para el campo.**
 — Filosofia YavlGold
 
-© 2026 YavlGold · Release activo V1 · ADN Visual Inmutable V10.0 · §0-§19 · Open Source (MIT License)
+© 2026 YavlGold · Release activo V1 · ADN Visual Inmutable V10.0 · §0-§20 · Open Source (MIT License)
