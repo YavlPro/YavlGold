@@ -2,6 +2,49 @@
 
 Resumen operativo actual de `apps/gold`.
 
+## Sesion activa: Diagnostico y plan de baseline Agro Supabase (2026-04-16)
+
+### Objetivo
+Diagnosticar el estado de los objetos Agro (`agro_crops`, `agro_roi_calculations`) definidos en `apps/gold/supabase/agro_schema.sql` contra remoto y migraciones raíz, y emitir un plan de baseline canónico.
+
+### Tipo de sesion
+Diagnostico, comparacion, documentacion y recomendacion. Solo lectura.
+
+### Cambios realizados
+- **Documento creado**: `apps/gold/docs/PLAN_BASELINE_AGRO_SUPABASE_16_ABRIL.md`
+- **Documento editado**: `apps/gold/docs/AGENT_REPORT_ACTIVE.md` (esta seccion)
+
+### No se hizo
+- NO se retiro `apps/gold/supabase/`
+- NO se borraron archivos
+- NO se crearon migraciones
+- NO se reescribio historia
+- NO se toco logica del producto
+- NO se tocaron Edge Functions
+- NO se hicieron cambios destructivos
+
+### Hallazgo principal
+`agro_schema.sql` es un snapshot historico obsoleto. El remoto supero su contrato. La raiz tiene parches posteriores (ALTER TABLE) que presuponen `agro_crops` existe, pero ninguna migracion raiz crea la tabla base. Un `db reset` desde raiz fallaria. Se requiere una migracion baseline forward-only.
+
+### Archivos leidos
+- `apps/gold/supabase/agro_schema.sql`
+- `supabase/migrations/20260224200000_agro_crops_status_allow_lost.sql`
+- `supabase/migrations/20260226190000_agro_crops_investment_multicurrency.sql`
+- `supabase/migrations/20260227000500_agro_profiles.sql`
+- `supabase/migrations/20260223183000_agro_feedback.sql`
+- `supabase/migrations/20260404120000_agro_task_cycles_v1.sql`
+- `supabase/migrations/20260404221000_agro_task_cycles_status_v1.sql`
+- `supabase/migrations/20260416190000_consolidate_legacy_app_supabase_objects.sql`
+- `supabase/sql/agro_crops_status_override_v1.sql`
+- `supabase/sql/agro_rankings_rpc_v1.sql`
+- `apps/gold/docs/MATRIZ_RECONCILIACION_SUPABASE_16_ABRIL.md`
+- `apps/gold/docs/PLAN_CONSOLIDACION_SUPABASE_16_ABRIL.md`
+
+### Proximo paso recomendado
+Consultar DDL exacto del remoto para `agro_crops` y `agro_roi_calculations`, luego crear la migracion baseline propuesta en el plan.
+
+---
+
 ## Sesion activa: Fases 0-1-2 — Canon modal §19 + eliminacion de prompt() nativos (2026-04-14)
 
 ### Objetivo
