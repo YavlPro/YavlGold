@@ -86,6 +86,28 @@ raiz/
 └── turbo.json             # Turborepo config
 ```
 
+### Regla canónica de infraestructura Supabase
+
+La única carpeta Supabase canónica del proyecto es:
+
+`supabase/` en la raíz del repo.
+
+Su rol es contener la infraestructura real de Supabase:
+
+- configuración principal;
+- migraciones canónicas;
+- Edge Functions;
+- vínculo remoto;
+- soporte operativo del backend.
+
+Cualquier carpeta Supabase adicional dentro de `apps/gold/` debe considerarse no canónica, histórica, parcial o temporal hasta que sea reconciliada o retirada.
+
+Regla estricta:
+
+- no mantener dos árboles Supabase compitiendo como si ambos fueran válidos;
+- no crear nuevas migraciones ni funciones en árboles secundarios;
+- cualquier saneamiento de duplicaciones debe hacerse con diagnóstico y reconciliación previa.
+
 ---
 
 ## 4. MÓDULOS FUNCIONALES

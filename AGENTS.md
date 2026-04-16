@@ -405,6 +405,30 @@ Es el que:
 - NO crear más archivos en raíz salvo necesidad real y justificada
 - El directorio `supabase/` en raíz es infraestructura del repo y NO debe moverse sin diagnóstico serio previo
 
+#### Regla canónica de Supabase (obligatoria)
+
+- La única carpeta **Supabase canónica** del repo es:
+
+  `supabase/` (en la raíz del repositorio)
+
+- Esa carpeta es la única fuente de verdad para:
+  - migraciones canónicas;
+  - vínculo remoto;
+  - Edge Functions;
+  - configuración principal de Supabase;
+  - operaciones de infraestructura reales del proyecto.
+- `apps/gold/supabase/` **NO es canónica**.
+- `apps/gold/supabase/` debe tratarse como duplicación histórica, árbol secundario o contexto legacy hasta que exista una fase formal de reconciliación y saneamiento.
+- Ningún agente debe crear nuevas migraciones, funciones ni configuración Supabase en `apps/gold/supabase/`.
+- Ningún agente debe asumir que existen dos árboles Supabase válidos.
+- Evitar duplicaciones Supabase es una regla estricta del repo.
+
+##### Política operativa derivada
+
+- Toda operación Supabase real debe partir del canon de raíz o referenciarlo explícitamente.
+- Si un script, documento o flujo local apunta a `apps/gold/supabase/`, eso debe tratarse como deuda operativa a corregir, no como segundo canon.
+- Antes de borrar, mover o fusionar cualquier árbol Supabase secundario, debe existir diagnóstico, reconciliación y validación explícita.
+
 ---
 
 ## §12 — Obsidian + Agent Skills (Policy canónica)

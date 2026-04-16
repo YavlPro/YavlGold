@@ -16868,3 +16868,111 @@ supabase/            # PAUSADO — pendiente diagnostico antes de cualquier movi
    - `apps/gold/public/` como public canonico
    - Foco claro en Agro como unico modulo activo
 - Si se instala `wiki-query`, probar consulta contra el vault activo para verificar funcionamiento
+
+---
+
+## Sesion: Diagnostico estructural de `supabase/` raiz (2026-04-16)
+
+### Fecha
+
+2026-04-16
+
+### Diagnostico
+
+Se realizo una tarea de analisis estructural, no de ejecucion, para determinar si conviene mover `supabase/` desde la raiz del repo hacia `apps/gold/supabase/`.
+
+Resultado tecnico: **no conviene mover `supabase/` ahora**. La carpeta raiz contiene el proyecto Supabase mas completo y operativo: `config.toml` con `project_id = "YavlGold"`, vinculo remoto en `.temp/project-ref`, 25 migraciones, SQL auxiliar y la Edge Function `agro-assistant`. La carpeta `apps/gold/supabase/` existe, pero es parcial: tiene `project_id = "gold"`, no tiene `.temp/project-ref`, no contiene `functions/` y solo conserva 8 migraciones.
+
+### Cambios aplicados
+
+| Archivo | Lineas | Cambio |
+|---|---:|---|
+| `apps/gold/docs/INFORME_CODEX_16_ABRIL.md` | 1-297 | Nuevo informe tecnico con diagnostico, dependencias, riesgos, coste operativo, recomendacion y plan hipotetico no ejecutado |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | final | Agregado cierre de sesion y constancia de analisis estructural |
+
+### Build status
+
+No se ejecuto `pnpm build:gold` porque no hubo cambios de codigo, migraciones, Edge Functions ni configuracion operativa. Solo se editaron documentos.
+
+### QA sugerido
+
+- Revisar el informe antes de cualquier accion sobre `supabase/`.
+- Si se planifica una fase posterior, tratarla como migracion de infraestructura, no como limpieza visual.
+- Auditar en una tarea separada la duplicacion `apps/gold/supabase/` vs `supabase/` y decidir si se archiva, elimina o convierte en sandbox local explicito.
+
+### Cambios fuera de documentacion
+
+No hubo cambios fuera de documentacion. No se movio `supabase/`, no se tocaron migraciones, no se modificaron Edge Functions, no se tocaron scripts y no se edito `agro.js`.
+
+---
+
+## Sesion: Diagnostico de riesgo sobre `apps/gold/supabase/` (2026-04-16)
+
+### Fecha
+
+2026-04-16
+
+### Diagnostico
+
+Se realizo un diagnostico estructural y operativo sobre `apps/gold/supabase/`, partiendo de que `supabase/` en la raiz ya queda como infraestructura Supabase canonica.
+
+Resultado tecnico: **`apps/gold/supabase/` es una duplicacion historica parcialmente viva y operativamente ambigua**. No es el canon Supabase, pero tampoco es una carpeta muerta simple: contiene 8 migraciones, un `config.toml` local con `project_id = "gold"`, metadata local, un `agro_schema.sql` legacy y una carpeta `snippets/` vacia. Participa en scripts `sb:*` porque el `package.json` raiz ejecuta Supabase desde `apps/gold`, y `LOCAL_FIRST.md` todavia documenta ese flujo.
+
+### Cambios aplicados
+
+| Archivo | Lineas | Cambio |
+|---|---:|---|
+| `apps/gold/docs/INFORME_SUPABASE_APPS_GOLD_16_ABRIL.md` | 1-386 | Nuevo informe tecnico con inventario, comparacion contra raiz, referencias vivas, severidad, riesgos y recomendacion de saneamiento futuro |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | final | Agregado cierre de sesion y constancia de que fue diagnostico sin saneamiento |
+
+### Build status
+
+No se ejecuto `pnpm build:gold` porque no hubo cambios de codigo, migraciones, Edge Functions, scripts ni configuracion operativa. Solo se editaron documentos.
+
+### QA sugerido
+
+- No borrar ni mover `apps/gold/supabase/` hasta crear una matriz de reconciliacion por archivo/tabla/remoto/raiz.
+- En fase posterior, decidir entre archivar temporalmente o eliminar tras validacion.
+- Corregir scripts `sb:*` y `LOCAL_FIRST.md` solo cuando se apruebe el plan de saneamiento.
+- Mantener `supabase/` raiz como unico canon operativo para migraciones, Edge Functions y remoto.
+
+### Cambios fuera de documentacion
+
+No hubo cambios fuera de documentacion. No se ejecuto saneamiento. No se movio `supabase/`, no se borro `apps/gold/supabase/`, no se fusionaron carpetas, no se editaron migraciones, no se tocaron Edge Functions, no se cambiaron scripts y no se edito `agro.js`.
+
+---
+
+## Sesion: Refuerzo canonico Supabase en docs base (2026-04-16)
+
+### Fecha
+
+2026-04-16
+
+### Diagnostico
+
+Los dos informes tecnicos previos dejaron una conclusion consistente: `supabase/` en la raiz es la unica infraestructura Supabase canonica del repo, mientras `apps/gold/supabase/` es una duplicacion historica/parcial que genera riesgo para agentes, scripts, migraciones y QA offline.
+
+La regla anterior en `AGENTS.md` decia que `supabase/` raiz no debia moverse sin diagnostico serio. En esta sesion se subio esa regla a canon explicito: raiz es la unica fuente de verdad Supabase y `apps/gold/supabase/` no debe recibir nuevas migraciones, funciones ni configuracion.
+
+### Cambios aplicados
+
+| Archivo | Lineas | Cambio |
+|---|---:|---|
+| `AGENTS.md` | seccion 11.7 | Agregada regla canonica Supabase obligatoria y politica operativa derivada |
+| `FICHA_TECNICA.md` | seccion Infraestructura del Repo | Agregada regla de infraestructura Supabase canonica |
+| `apps/gold/public/llms.txt` | Repo hygiene | Agregada version breve para contexto de agentes |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | final | Agregado cierre de sesion |
+
+### Build status
+
+No se ejecuto `pnpm build:gold` porque no hubo cambios de codigo, scripts, migraciones, Edge Functions ni configuracion operativa. Solo se editaron documentos de canon/contexto.
+
+### QA sugerido
+
+- En una fase posterior, corregir `LOCAL_FIRST.md` y scripts `sb:*` para eliminar la ambiguedad operativa detectada.
+- No crear nuevas migraciones ni funciones en `apps/gold/supabase/`.
+- Mantener cualquier saneamiento de `apps/gold/supabase/` bloqueado hasta reconciliacion formal.
+
+### Cambios fuera de documentacion
+
+No hubo cambios fuera de documentacion. No se movio `supabase/`, no se borro `apps/gold/supabase/`, no se tocaron migraciones, no se tocaron Edge Functions, no se cambiaron scripts y no se edito `agro.js`.
