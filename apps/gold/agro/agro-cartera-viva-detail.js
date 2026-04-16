@@ -1551,100 +1551,33 @@ function renderCommercialFamilyNav(activeView = 'cartera-viva') {
 
 function renderBuyerSummary(buyerRow, options = {}) {
     const buyerStatus = resolveBuyerStatus(buyerRow);
-    const progress = buildProgressBreakdown(buyerRow);
     const primaryMetric = resolvePrimarySummaryMetric(buyerRow);
-    const pairOption = resolvePairOption(options.selectedPair);
-    const exchangeRates = options.exchangeRates && typeof options.exchangeRates === 'object'
-        ? options.exchangeRates
-        : { USD: 1, COP: null, VES: null };
-    const exchangeStatus = options.exchangeStatus && typeof options.exchangeStatus === 'object'
-        ? options.exchangeStatus
-        : {};
-    const copEquivalent = buildConvertedAmount(primaryMetric.amountUsd, 'COP', exchangeRates);
-    const vesEquivalent = buildConvertedAmount(primaryMetric.amountUsd, 'VES', exchangeRates);
-    const pairRate = resolveDetailRateForCurrency(pairOption.currency, exchangeRates);
-    const pairSeries = buildPairSeries(options.historyRows, pairOption);
-    const loss = Number(buyerRow?.loss_total || 0);
-    const outstanding = getOutstandingBalance(buyerRow);
-    const secondaryLabel = loss > 0 && outstanding <= 0 ? 'Pérdida' : 'Falta';
-    const secondaryValue = secondaryLabel === 'Pérdida'
-        ? formatMoney(loss)
-        : formatMoney(outstanding);
 
     return `
-        <section class="cartera-viva-detail__summary">
-            <header class="cartera-viva-detail__summary-head">
-                <div class="cartera-viva-detail__identity">
-                    ${renderBuyerNameNode(buyerRow?.display_name, {
+        <header class="cartera-viva-detail__compact-header">
+            <div class="cartera-viva-detail__compact-identity">
+                ${renderBuyerNameNode(buyerRow?.display_name, {
             tag: 'h2',
             className: 'cartera-viva-detail__title',
             fallback: 'Cliente no encontrado'
         })}
-                    <p class="cartera-viva-detail__subtitle">${escapeHtml(primaryMetric.copy)}</p>
-                </div>
-                <div class="cartera-viva-card__badges">
+                <div class="cartera-viva-detail__compact-meta">
                     <span class="cartera-viva-badge cartera-viva-badge--${buyerStatus.tone}">${escapeHtml(buyerStatus.label)}</span>
                     ${String(buyerRow?.client_status || '').trim().toLowerCase() === 'archived' ? '<span class="cartera-viva-badge cartera-viva-badge--review">Archivado</span>' : ''}
                     ${buyerRow?.requires_review ? '<span class="cartera-viva-badge cartera-viva-badge--review">Por revisar</span>' : ''}
-                </div>
-            </header>
-
-            <div class="cartera-viva-detail__hero">
-                <section class="cartera-viva-detail__amount-panel">
-                    <p class="cartera-viva-detail__amount-label">${escapeHtml(primaryMetric.label)}</p>
                     ${renderMoneyNode(formatMoney(primaryMetric.amountUsd), {
-            tag: 'strong',
-            className: 'cartera-viva-detail__amount'
+            tag: 'span',
+            className: 'cartera-viva-detail__compact-amount'
         })}
-                    <div class="cartera-viva-detail__equivalents">
-                        ${renderEquivalentItem('COP', copEquivalent.display)}
-                        ${renderEquivalentItem('Bs', vesEquivalent.display)}
-                    </div>
-                </section>
-
-                <aside class="cartera-viva-pair" aria-label="Par de referencia">
-                    <div class="cartera-viva-pair__head">
-                        <p class="cartera-viva-pair__eyebrow">Par</p>
-                        <span class="cartera-viva-pair__status">${escapeHtml(resolvePairStatusLabel(pairOption, exchangeStatus))}</span>
-                    </div>
-                    ${renderPairSelector(pairOption.id)}
-                    <div class="cartera-viva-pair__value-row">
-                        <strong class="cartera-viva-pair__value">1 USD = ${escapeHtml(formatPairRate(pairRate, pairOption.currency))}</strong>
-                        <span class="cartera-viva-pair__value-copy">${escapeHtml(pairOption.label)}</span>
-                    </div>
-                    ${renderPairSparkline(pairSeries)}
-                </aside>
+                </div>
             </div>
-
-            <section class="cartera-viva-progress cartera-viva-progress--large">
-                <div class="cartera-viva-progress__head">
-                    <span class="cartera-viva-progress__label">Avance</span>
-                    <span class="cartera-viva-progress__value">${formatPercent(progress.paidPercent)}</span>
-                </div>
-                <div class="cartera-viva-progress__track">
-                    ${progress.paidShare > 0 ? `<span class="cartera-viva-progress__segment is-paid" style="width:${progress.paidShare}%"></span>` : ''}
-                    ${progress.pendingShare > 0 ? `<span class="cartera-viva-progress__segment is-pending" style="width:${progress.pendingShare}%"></span>` : ''}
-                    ${progress.lossShare > 0 ? `<span class="cartera-viva-progress__segment is-loss" style="width:${progress.lossShare}%"></span>` : ''}
-                </div>
-                <div class="cartera-viva-progress__legend">
-                    <span>Base ${renderMoneyNode(formatMoney(progress.base))}</span>
-                    <span>${escapeHtml(secondaryLabel)} ${renderMoneyNode(secondaryValue)}</span>
-                </div>
-            </section>
-
-            <div class="cartera-viva-insight-strip cartera-viva-insight-strip--detail">
-                ${renderDetailInsight('Fiado', formatMoney(buyerRow?.credited_total), { isMoney: true })}
-                ${renderDetailInsight('Cobrado', formatMoney(buyerRow?.paid_total), { isMoney: true })}
-                ${renderDetailInsight(secondaryLabel, secondaryValue, { isMoney: true })}
-            </div>
-
-            <div class="cartera-viva-card__footer">
+            <div class="cartera-viva-detail__compact-actions">
                 <button type="button" class="cartera-viva-quick-action" data-cartera-detail-record-tab="pendientes">Nuevo fiado</button>
                 <button type="button" class="cartera-viva-quick-action" data-cartera-detail-record-tab="ingresos">Nuevo cobro</button>
                 <button type="button" class="cartera-viva-quick-action" data-cartera-detail-record-tab="perdidas">Nueva pérdida</button>
                 <button type="button" class="cartera-viva-quick-action" data-cartera-detail-edit-client>Editar cliente</button>
             </div>
-        </section>
+        </header>
     `;
 }
 
@@ -1782,8 +1715,10 @@ export function renderBuyerHistoryDetail(root, options = {}) {
     root.innerHTML = `
         <section class="cartera-viva-view cartera-viva-view--detail${isSoftRefreshing ? ' is-refreshing' : ''}" aria-label="Historial contextual por cliente" aria-busy="${loading ? 'true' : 'false'}">
             ${renderCommercialFamilyNav('cartera-viva')}
-            <div class="cartera-viva-detail__toolbar">
-                <button type="button" class="cartera-viva-back" data-cartera-detail-back>Volver</button>
+            <div class="cartera-viva-detail__toolbar cartera-viva-detail__toolbar--sticky">
+                <button type="button" class="cartera-viva-back" data-cartera-detail-back>
+                    <i class="fa fa-arrow-left" aria-hidden="true"></i> Volver
+                </button>
                 <div class="cartera-viva-detail__toolbar-actions">
                 <button type="button" class="cartera-viva-refresh" data-cartera-detail-refresh ${loading ? 'disabled' : ''}>${loading ? 'Actualizando…' : 'Actualizar'}</button>
                 <button type="button" class="cartera-viva-refresh" data-cartera-detail-create-cycle>Crear ciclo</button>

@@ -2,6 +2,81 @@
 
 Resumen operativo actual de `apps/gold`.
 
+## Sesion activa: Rediseño quirúrgico — Vista detalle cliente canónico Cartera Viva (2026-04-16)
+
+### Objetivo
+Rediseñar la vista "Ver detalle" del cliente canónico en Cartera Viva para que esté enfocada en historial operativo, eliminando la tarjeta estadística grande que dominaba la vista.
+
+### Diagnóstico previo
+- `agro-cartera-viva-detail.js`: `renderBuyerSummary()` generaba una sección pesada con: monto principal grande, equivalentes COP/Bs, panel de par de referencia con sparkline, barra de avance grande, insight strip (Fiado/Cobrado/Falta), y botones de acción.
+- Todo eso competía visualmente con el historial que debería ser el protagonista.
+- El botón Volver estaba en la toolbar pero sin contraste, sin icono, sin sticky, fácil de perder.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambios |
+|---|---|---|
+| `apps/gold/agro/agro-cartera-viva-detail.js` | Quirúrgico | `renderBuyerSummary()` reescrita: genera cabecera compacta con nombre, badge, monto breve y acciones operativas. Se eliminaron: panel de monto grande, equivalentes, par de referencia, barra de avance, insight strip. Toolbar obtiene clase `--sticky` y botón Volver con icono `<i class="fa fa-arrow-left">`. |
+| `apps/gold/agro/agro-cartera-viva.css` | Estilos | Nuevas clases: `.cartera-viva-detail__compact-header`, `__compact-identity`, `__compact-meta`, `__compact-amount`, `__compact-actions`. Toolbar sticky con `backdrop-filter: blur`. Botón Volver mejorado con fondo gold más visible y hover con `translateX(-2px)`. Responsive: 768px apila cabecera, 480px ajusta tamaños. `.cartera-viva-detail__summary` oculta con `display: none`. |
+
+### Qué se removió de la vista detalle
+- Panel de monto principal grande (pendiente total con label + valor Orbitron grande)
+- Equivalentes COP / Bs debajo del monto
+- Panel de par de referencia (selector, tasa, sparkline)
+- Barra de avance grande (progress track con segmentos pagado/pendiente/pérdida)
+- Insight strip (Fiado / Cobrado / Falta como cajas grandes)
+- La clase `cartera-viva-detail__summary` completa
+
+### Qué se mantuvo
+- Botones de acción: Nuevo fiado, Nuevo cobro, Nueva pérdida, Editar cliente (reubicados en cabecera compacta)
+- Nombre del cliente con badge de estado
+- Filtros de historial (scope, familia de unidad, tipo)
+- Timeline de movimientos
+- Botones de toolbar: Actualizar, Crear ciclo, Exportar
+
+### Cómo quedó el botón Volver
+- En toolbar sticky (`position: sticky; top: 0; z-index: 10`)
+- Con `backdrop-filter: blur(10px)` sobre fondo semi-transparente
+- Icono `fa-arrow-left` agregado
+- Fondo gold más visible (`rgba(200,167,82,0.18)`, borde `0.45` opacity)
+- Hover: fondo más intenso + `translateX(-2px)` (efecto de retroceso)
+
+### Jerarquía nueva de la pantalla
+1. **Toolbar sticky**: Volver (izquierda) | Actualizar, Crear ciclo, Exportar (derecha)
+2. **Cabecera compacta**: Nombre + badge + monto breve (izquierda) | Acciones operativas (derecha)
+3. **Cuerpo principal = HISTORIAL**: eyebrow "Historial" + título + descripción + filtros + timeline
+
+### Resultado build
+`pnpm build:gold` — OK. 160 modules, 2.36s.
+- `agent-guard`: OK
+- `agent-report-check`: OK
+- `vite build`: OK (160 modules transformed)
+- `check-llms`: OK
+- `check-dist-utf8`: OK
+
+### QA manual sugerido
+1. **Ver detalle**: entrar a detalle de un cliente con saldo pendiente → verificar que ya NO aparece la tarjeta grande de estadísticas
+2. **Cabecera compacta**: verificar que nombre, badge y monto breve son visibles sin dominar
+3. **Botón Volver**: verificar que está sticky al hacer scroll, que tiene icono flecha, y que hover lo desplaza sutilmente
+4. **Acciones**: verificar que Nuevo fiado / Nuevo cobro / Nueva pérdida / Editar cliente funcionan
+5. **Historial**: verificar que el timeline es el contenido protagonista y que los filtros funcionan
+6. **Responsive (≤768px)**: verificar que la cabecera se apila y las acciones se envuelven
+7. **Responsive (≤480px)**: verificar que los botones de acción mantienen touch target mínimo
+
+### Riesgos
+- **Bajo**: La cabecera compacta usa las mismas funciones auxiliares (`resolveBuyerStatus`, `resolvePrimarySummaryMetric`) que ya estaban testadas en producción.
+- **Bajo**: Los botones de acción mantienen los mismos `data-attributes` → wiring no cambia.
+- **Nulo en lógica de negocio**: Solo se cambió la superficie visual, no cálculos, validaciones ni flujos de datos.
+
+### No se hizo
+- NO se tocó `agro.js`
+- NO se rompió lógica de historial
+- NO se rompieron acciones existentes
+- NO se cambió semántica de Cartera Viva
+- NO se violó ADN Visual V10
+
+---
+
 ## Sesion activa: Diagnostico y plan de baseline Agro Supabase (2026-04-16)
 
 ### Objetivo
