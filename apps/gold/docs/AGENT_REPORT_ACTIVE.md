@@ -17055,3 +17055,48 @@ No se ejecuto `pnpm build:gold` porque no hubo cambios de codigo, scripts, migra
 ### Cambios fuera de documentacion
 
 No hubo cambios fuera de documentacion. No se movio `supabase/`, no se borro `apps/gold/supabase/`, no se fusionaron carpetas, no se editaron migraciones, no se tocaron Edge Functions y no se edito `agro.js`. No se ejecuto saneamiento final.
+
+---
+
+## Sesion: Consolidacion canonica Supabase raiz sin retiro de arbol secundario (2026-04-16)
+
+### Fecha
+
+2026-04-16
+
+### Diagnostico
+
+Se paso de matriz diagnostica a consolidacion canonica controlada. Se revisaron las 7 migraciones vivas exclusivas de `apps/gold/supabase/`, `agro_schema.sql`, la migracion de ciclos de periodo ya copiada a raiz, el estado remoto real y la representacion actual en `supabase/` raiz.
+
+La evidencia mostro que varias piezas ya existen en remoto pero no estaban representadas en raiz como migracion local. Tambien mostro diferencias concretas: `announcements` no tenia los indices legacy observados, `app_admins` no tenia el check de `role`, `notifications` tenia politicas duplicadas de lectura y `feedback` no debe confundirse con `agro_feedback`.
+
+### Cambios aplicados
+
+| Archivo | Cambio |
+|---|---|
+| `supabase/migrations/20260416190000_consolidate_legacy_app_supabase_objects.sql` | Nueva migracion raiz forward-only e idempotente para representar objetos vivos heredados del arbol secundario |
+| `apps/gold/docs/PLAN_CONSOLIDACION_SUPABASE_16_ABRIL.md` | Nuevo plan con decision por pieza, migracion creada, piezas en revision manual y bloqueos restantes |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Agregado cierre de sesion |
+
+### Build status
+
+`pnpm build:gold` — OK.
+
+Notas:
+- `agent-guard`: OK
+- `agent-report-check`: OK
+- `vite build`: OK, 160 modules transformed
+- `check-llms`: OK
+- `check-dist-utf8`: OK
+- Advertencias no bloqueantes: Node actual `v25.6.0` no coincide con engine esperado `20.x`; esbuild reporto un warning CSS de sintaxis/minificacion ya conocido.
+
+### QA sugerido
+
+- Revisar manualmente la nueva migracion antes de aplicarla a remoto.
+- Probarla primero en entorno controlado o rama Supabase si se decide ejecutar.
+- Resolver `agro_schema.sql` como baseline/manual review antes de retirar `apps/gold/supabase/`.
+- No crear nuevas migraciones en `apps/gold/supabase/`.
+
+### Cambios fuera de documentacion
+
+Si hubo cambios fuera de documentacion: se creo una nueva migracion en `supabase/migrations/`. No se movio `supabase/`, no se borro `apps/gold/supabase/`, no se fusionaron carpetas, no se tocaron Edge Functions y no se edito `agro.js`. No se ejecuto retiro ni saneamiento final del arbol secundario.
