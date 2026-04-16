@@ -7795,7 +7795,7 @@ body.agro-view-dense::after {
 .agro-tool-card__copy,
 .ops-step-helper {
   margin: 0;
-  color: rgba(255, 255, 255, 0.68);
+  color: var(--text-secondary, #cccccc);
   font-size: 0.92rem;
   line-height: 1.42;
 }
@@ -7803,18 +7803,18 @@ body.agro-view-dense::after {
 .agro-shell-sidebar__milestone {
   margin: 0.1rem 0 0;
   padding: 0.5rem 0.65rem;
-  border: 1px solid rgba(200, 167, 82, 0.18);
+  border: 1px solid var(--border-prestige, rgba(200, 167, 82, 0.18));
   border-radius: var(--radius-md, 12px);
   background:
     linear-gradient(180deg, rgba(200, 167, 82, 0.08), rgba(200, 167, 82, 0.02)),
     rgba(255, 255, 255, 0.02);
-  color: rgba(255, 255, 255, 0.64);
+  color: var(--text-secondary, #cccccc);
   font-size: 0.82rem;
   line-height: 1.34;
 }
 
 .agro-shell-sidebar__milestone strong {
-  color: #f3deb0;
+  color: var(--gold-prestige, #E5D5A0);
   font-weight: 700;
 }
 
@@ -7896,7 +7896,7 @@ body.agro-view-dense::after {
   width: var(--icon-base, 1rem);
   text-align: center;
   font-size: var(--icon-base, 1rem);
-  color: var(--text-muted, #94A3B8);
+  color: var(--gold-3, #6b5a3e);
 }
 
 .agro-shell-link__label {
@@ -7928,8 +7928,8 @@ body.agro-view-dense::after {
 .agro-tool-card__action:hover,
 .agro-tool-card__action:focus-visible {
   transform: translateY(-1px);
-  border-color: rgba(200, 167, 82, 0.42);
-  color: #f3deb0;
+  border-color: var(--border-gold, rgba(200, 167, 82, 0.42));
+  color: var(--gold-prestige, #E5D5A0);
 }
 
 .agro-shell-link:hover {
@@ -8006,7 +8006,7 @@ body.agro-view-dense::after {
   border: 1px solid transparent;
   border-radius: var(--radius-sm, 8px);
   background: transparent;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary, #cccccc);
   font-family: var(--font-body, 'Rajdhani', sans-serif);
   font-size: 0.84rem;
   font-weight: 600;
@@ -8031,7 +8031,7 @@ body.agro-view-dense::after {
 .agro-shell-sublink .agro-shell-link__icon {
   width: var(--icon-sm, 0.875rem);
   font-size: var(--icon-sm, 0.875rem);
-  color: rgba(229, 213, 160, 0.72);
+  color: var(--gold-3, #6b5a3e);
 }
 
 .agro-shell-sublink:hover,
@@ -8099,7 +8099,7 @@ body.agro-view-dense::after {
   height: 2px;
   margin-inline: auto;
   border-radius: 999px;
-  background: #c8a752;
+  background: var(--gold-4, #C8A752);
 }
 
 .agro-header-link {
@@ -8110,7 +8110,7 @@ body.agro-view-dense::after {
   border-radius: 999px;
   border: 1px solid rgba(200, 167, 82, 0.3);
   background: rgba(200, 167, 82, 0.08);
-  color: #c8a752;
+  color: var(--gold-4, #C8A752);
   font-family: 'Rajdhani', sans-serif;
   font-weight: 700;
   font-size: 0.85rem;

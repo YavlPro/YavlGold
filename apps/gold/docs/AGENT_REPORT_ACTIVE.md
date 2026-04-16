@@ -2,6 +2,69 @@
 
 Resumen operativo actual de `apps/gold`.
 
+## Sesion activa: Alineacion ADN V10 — Sidebar shell de Agro (2026-04-16)
+
+### Objetivo
+Alinear los colores y estados del sidebar shell de Agro al ADN Visual V10.0, eliminando valores hardcodeados que producian sensacion de paleta ajena.
+
+### Diagnostico previo
+El sidebar ya usaba tokens en la mayoria de sus estilos, pero contenia 8 valores hardcodeados que rompian la coherencia visual:
+- `--text-muted` (`#94A3B8`, gris azulado slate) en iconos de nav → se percibia como azul
+- `rgba(255,255,255,0.6)` en sublinks → sin token
+- `rgba(255,255,255,0.68)` en copy → sin token
+- `#f3deb0` en hover y milestone strong → sin token
+- `#c8a752` en header link y toggle bars → sin token
+- `rgba(229,213,160,0.72)` en sublink icon → sin token
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambios |
+|---|---|---|
+| `apps/gold/agro/agro.css` | Quirurgico | 8 correcciones de color hardcodeado → tokens ADN V10 |
+
+### Correcciones por propiedad
+
+| Elemento | Antes (hardcode) | Despues (token ADN) |
+|---|---|---|
+| `.agro-shell-link__icon` color | `var(--text-muted, #94A3B8)` | `var(--gold-3, #6b5a3e)` |
+| `.agro-shell-sublink` color | `rgba(255,255,255,0.6)` | `var(--text-secondary, #cccccc)` |
+| `.agro-shell-sublink .agro-shell-link__icon` color | `rgba(229,213,160,0.72)` | `var(--gold-3, #6b5a3e)` |
+| `.agro-shell-sidebar__copy` color | `rgba(255,255,255,0.68)` | `var(--text-secondary, #cccccc)` |
+| `.agro-shell-sidebar__milestone` border | `rgba(200,167,82,0.18)` | `var(--border-prestige)` |
+| `.agro-shell-sidebar__milestone` color | `rgba(255,255,255,0.64)` | `var(--text-secondary)` |
+| `.agro-shell-sidebar__milestone strong` | `#f3deb0` | `var(--gold-prestige, #E5D5A0)` |
+| hover general (shell-link, guide-step, etc.) | `#f3deb0` | `var(--gold-prestige, #E5D5A0)` |
+| `.agro-header-link` color | `#c8a752` | `var(--gold-4, #C8A752)` |
+| `.agro-shell-toggle span` background | `#c8a752` | `var(--gold-4, #C8A752)` |
+
+### Resultado visual
+- Iconos en reposo: gold oscuro (`--gold-3`), coherente con ADN en vez de gris azulado
+- Texto secundario: `--text-secondary` consistente
+- Hover: `--gold-prestige` caliente, no un hex suelto
+- Milestone: borders y texto con tokens de prestigio
+- Item activo: sin cambios (ya usaba `--gold-4`, `--gold-5`, `--border-gold`)
+- Focus-visible: sin cambios (ya usaba `--state-focus-ring`)
+
+### Resultado build
+`pnpm build:gold` — OK. 160 modules, 2.25s.
+
+### QA manual sugerido
+1. Abrir sidebar de Agro → verificar que iconos se ven gold oscuro (no gris azulado)
+2. Hover sobre item de nav → verificar transicion suave a gold prestige
+3. Item activo → verificar que se ve canonicamente importante sin chillar
+4. Sublinks expandidos → verificar coherencia de color con links principales
+5. Milestone → verificar que strong usa gold prestige
+6. Header link (ej: "Volver al Dashboard") → verificar gold correcto
+7. Responsive (≤640px) → verificar que sidebar se ve bien en movil
+
+### No se hizo
+- NO se toco logica de navegacion
+- NO se rediseño el sidebar
+- NO se metieron nuevas features
+- NO se rompio responsive
+
+---
+
 ## Sesion activa: Splash loader de marca para entrada a Agro (2026-04-16)
 
 ### Objetivo
