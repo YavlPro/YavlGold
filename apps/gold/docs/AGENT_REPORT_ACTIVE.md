@@ -17020,3 +17020,38 @@ Notas:
 ### Cambios fuera de documentacion
 
 Se edito `package.json` para corregir scripts operativos. No se movio `supabase/`, no se borro `apps/gold/supabase/`, no se fusionaron carpetas, no se editaron migraciones, no se tocaron Edge Functions y no se edito `agro.js`.
+
+---
+
+## Sesion: Matriz de reconciliacion Supabase raiz vs apps/gold vs remoto (2026-04-16)
+
+### Fecha
+
+2026-04-16
+
+### Diagnostico
+
+Se realizo una reconciliacion diagnostica entre `supabase/` raiz, `apps/gold/supabase/` y el remoto real Supabase `gerzlzprkarikblqxpjt`.
+
+El resultado confirma que `supabase/` raiz sigue siendo el unico canon operativo, pero `apps/gold/supabase/` todavia contiene evidencia util que no debe perderse antes del saneamiento final. De 8 migraciones secundarias, solo `20260411130000_create_agro_period_cycles.sql` coincide en raiz por nombre y hash. Las otras 7 existen solo en el arbol secundario por archivo local, aunque varias de sus tablas ya existen en remoto con otro timestamp, otra via de aplicacion o historial no equivalente.
+
+### Cambios aplicados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/docs/MATRIZ_RECONCILIACION_SUPABASE_16_ABRIL.md` | Nuevo informe con matriz de piezas, estado en arbol secundario, estado en raiz, estado remoto, impacto, accion recomendada y riesgo |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Agregado cierre de sesion |
+
+### Build status
+
+No se ejecuto `pnpm build:gold` porque no hubo cambios de codigo, scripts, migraciones, Edge Functions ni configuracion operativa. Fue una tarea documental/diagnostica.
+
+### QA sugerido
+
+- Antes de archivar o eliminar `apps/gold/supabase/`, comparar DDL exacto remoto vs las 7 migraciones secundarias que no existen en raiz.
+- Crear o registrar en `supabase/` raiz las equivalencias necesarias para reconstruccion local sin usar el arbol secundario.
+- No crear nuevas migraciones, funciones ni configuracion en `apps/gold/supabase/`.
+
+### Cambios fuera de documentacion
+
+No hubo cambios fuera de documentacion. No se movio `supabase/`, no se borro `apps/gold/supabase/`, no se fusionaron carpetas, no se editaron migraciones, no se tocaron Edge Functions y no se edito `agro.js`. No se ejecuto saneamiento final.
