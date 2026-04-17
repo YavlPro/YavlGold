@@ -697,6 +697,7 @@ function formatPhysicalUnitLabel(unitType, quantity) {
     const singular = Math.abs(Number(quantity) - 1) < 1e-9;
     if (token === 'kg') return 'kg';
     if (token === 'saco') return singular ? 'saco' : 'sacos';
+    if (token === 'cesta') return singular ? 'cesta' : 'cestas';
     return singular ? 'unidad' : 'unidades';
 }
 
@@ -783,7 +784,7 @@ function summarizePhysicalMovements(movements = []) {
         total,
         incoming,
         outgoing,
-        summaryText: formatUniversalQuantityLabel(total),
+        summaryText: formatQuantityLabel(total, unitType),
         hintText: `Unidad real: ${unitDescriptor} · Entradas: ${formatQuantityLabel(incoming, unitType)} · Salidas: ${formatQuantityLabel(outgoing, unitType)}`,
         families: familyList
     };

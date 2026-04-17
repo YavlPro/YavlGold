@@ -17568,3 +17568,43 @@ Resolver 3 bugs reales en Agro con el menor diff posible.
 - Editar registro de Cartera Operativa cambiando unidad entre unidad/saco/cesta/kg: verificar persistencia y render
 - Abrir Asistente IA: verificar que es superficie dedicada completa, no modal
 - pnpm build:gold sin errores
+
+---
+
+## Sesion: Bug quirurgico — Base Operativa muestra "1 unidad" en vez de unidad real (2026-04-17)
+
+### Objetivo
+Corregir el headline principal de "Base Operativa" que siempre mostraba `1 unidad` aunque el registro tuviera `unit_type: saco`.
+
+### Causa raiz
+Dos problemas en `agroOperationalCycles.js`:
+
+1. **Linea 786 (original)**: `summaryText: formatUniversalQuantityLabel(total)` — esta funcion siempre imprimia `unidad/unidades` sin importar el `unit_type` real del registro.
+2. **Linea 695 (original)**: `formatPhysicalUnitLabel` no manejaba explicitamente `cesta`, asi que `cesta` caia al fallback generico `unidad/unidades`.
+
+### Cambios aplicados
+
+| Archivo | Linea | Cambio |
+|---|---|---|
+| `apps/gold/agro/agroOperationalCycles.js` | 786 | `summaryText` ahora usa `formatQuantityLabel(total, unitType)` en vez de `formatUniversalQuantityLabel(total)` |
+| `apps/gold/agro/agroOperationalCycles.js` | 699 | `formatPhysicalUnitLabel` ahora maneja `cesta`/`cestas` explicitamente |
+
+### Fuente unica de verdad
+`formatPhysicalUnitLabel(unitType, quantity)` es ahora el helper central para todas las superficies de unidad en Cartera Operativa. Cubre: `kg`, `saco`/`sacos`, `cesta`/`cestas`, `unidad`/`unidades`.
+
+### Render esperado (verificado)
+- `unidad` + 1 = `1 unidad`
+- `saco` + 1 = `1 saco`
+- `saco` + 2 = `2 sacos`
+- `cesta` + 1 = `1 cesta`
+- `cesta` + 3 = `3 cestas`
+- `kg` + 1 = `1 kg`
+- `kg` + 25 = `25 kg`
+
+### Build status
+`pnpm build:gold` — OK. 160 modules, 2.56s. Sin errores.
+
+### QA sugerido
+- Editar registro y seleccionar saco/cesta/kg/unidad: verificar que headline de Base Operativa refleja la unidad correcta
+- Verificar que metadata inferior ("Unidad real: ...") coincide con headline
+- Verificar card y detail si comparten el mismo helper
