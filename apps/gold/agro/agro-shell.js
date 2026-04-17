@@ -50,6 +50,10 @@ const NAV_PARENT_GROUPS = Object.freeze({
     'historial-comercial': Object.freeze({
         views: Object.freeze(['cartera-viva', 'operational']),
         defaultView: 'cartera-viva'
+    }),
+    'granja-general': Object.freeze({
+        views: Object.freeze(['ciclos', 'period-cycles']),
+        defaultView: 'ciclos'
     })
 });
 

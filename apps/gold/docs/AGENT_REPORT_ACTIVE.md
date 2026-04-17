@@ -17475,3 +17475,48 @@ Notas:
 ### Cambios fuera de documentacion
 
 Si hubo cambios fuera de documentacion: se creo una nueva migracion en `supabase/migrations/` y se ajustaron modulos JS de Agro. No se movio `supabase/`, no se retiro `apps/gold/supabase/`, no se tocaron Edge Functions y no se hizo saneamiento estructural.
+
+---
+
+## Sesion: Canonización del Manifiesto Agro + Sidebar Granja General (2026-04-17)
+
+### Objetivo
+Canonizar el manifiesto de Agro como documento oficial, formalizar su gobernanza en `AGENTS.md`, y actualizar el sidebar real para reflejar la semántica de «Granja General» como agrupador padre de navegación.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `MANIFIESTO_AGRO_BASE.md` (raíz) | Eliminado | Removido del repo. Ya no compite como archivo vivo |
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | Creado (canonizado) | Promovido desde raíz. Estado → `DOCUMENTO CANÓNICO ACTIVO`. Nota de gobernanza agregada al inicio |
+| `AGENTS.md` | Documental | §4: nueva fila en tabla documental + regla de gobernanza en jerarquía canónica |
+| `apps/gold/agro/index.html` | UI/HTML | Sidebar: reemplazados los dos nav-parents separados (ciclos, period-cycles) por un solo `granja-general` con sublinks agrupados |
+| `apps/gold/agro/agro-shell.js` | UI/JS | `NAV_PARENT_GROUPS`: agregado `granja-general` con views `['ciclos', 'period-cycles']` |
+| `apps/gold/agro/agro.css` | UI/CSS | Nuevo `.agro-shell-subgroup-label` para separadores visuales dentro de la subnav de Granja General |
+
+### Gobernanza del manifiesto
+
+- `apps/gold/docs/MANIFIESTO_AGRO.md` es ahora la verdad semántica canónica del módulo Agro.
+- Ningún agente puede modificarlo sin autorización expresa.
+- No reemplaza `AGENT_REPORT_ACTIVE.md` (bitácora operativa).
+- No es bitácora de sesión ni reporte de diagnóstico.
+
+### Sidebar Granja General
+
+- Nuevo padre de navegación «Granja General» con icono `fa-wheat-awn`.
+- Agrupa «Ciclos de cultivos» (4 sublinks) y «Ciclos de período» (4 sublinks) bajo una sola subnav expandible.
+- Separadores visuales (`.agro-shell-subgroup-label`) distinguen los dos grupos.
+- Operación Comercial permanece separada, sin cambios.
+- `Granja General` NO es módulo financiero; los movimientos generales siguen en Cartera Operativa.
+
+### Build status
+
+_Pendiente de ejecución._
+
+### QA sugerido
+
+- Abrir sidebar Agro: verificar que «Granja General» aparece como padre expandible.
+- Expandir: verificar que muestra 4 sublinks de Ciclos de cultivos + separador + 4 sublinks de Ciclos de período.
+- Navegar a «Ciclos activos» y «Períodos activos»: verificar que la vista cambia correctamente y el sidebar refleja el item activo.
+- Verificar que Operación Comercial sigue intacta con sus sublinks.
+- Verificar comportamiento mobile (sidebar no roto).

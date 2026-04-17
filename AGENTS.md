@@ -97,6 +97,7 @@ agro-cart.js         — carrito
 | Archivo | Rol | Crece? |
 | --- | --- | --- |
 | `AGENTS.md` (este archivo) | Instrucciones canónicas para agentes | Solo con aprobación |
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | Verdad semántica canónica del módulo Agro | Solo con autorización expresa |
 | `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Reporte operativo activo | Sí — cada sesión agrega sección |
 | `apps/gold/docs/AGENT_REPORT.md` | Histórico legacy | No — solo consulta |
 | `apps/gold/docs/ADN-VISUAL-V10.0.md` | Sistema de diseño inmutable | Solo con versionamiento formal |
@@ -105,6 +106,9 @@ agro-cart.js         — carrito
 
 - `AGENTS.md` es el único archivo canónico de instrucciones del repo.
 - `AGENT.md` no debe existir ni recrearse.
+- `apps/gold/docs/MANIFIESTO_AGRO.md` es la verdad semántica canónica del módulo Agro. Ningún agente puede modificarlo sin autorización expresa del usuario o autorización explícita en sesión activa. Toda mejora funcional real de Agro que cambie la comprensión del sistema debe reflejarse ahí.
+- No debe confundirse con `AGENT_REPORT_ACTIVE.md` (bitácora operativa), fichas técnicas, reportes de sesión ni notas de diagnóstico.
+- Debe mantenerse humano, semántico, claro y libre de contaminación técnica innecesaria.
 - `apps/gold/docs/AGENT_REPORT_ACTIVE.md` es la única fuente activa de reportes de sesión.
 - `apps/gold/docs/AGENT_REPORT.md` es solo histórico legacy.
 - `AGENT_REPORT_ACTIVE.md` en la raíz, si existe, es solo un puntero de compatibilidad y no compite con la ruta activa.
