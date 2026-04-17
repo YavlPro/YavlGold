@@ -129,3 +129,527 @@ El archivo `apps/gold/docs/AGENT_REPORT_ACTIVE.md` tiene **17,610 líneas** — 
 - NO se alteró ninguna tabla Supabase ni migración
 - NO se ejecutó el plan de baseline Supabase
 - NO se migraron modales legacy
+
+---
+
+## Sesion activa: Cierre final de duplicacion Supabase (2026-04-17)
+
+### Objetivo
+
+Validar si `supabase/` raiz ya puede sostener por si solo el flujo canonico de Supabase y decidir con evidencia si se puede retirar `apps/gold/supabase/`.
+
+### Diagnostico inicial de cierre
+
+El canon documental ya dice que `supabase/` en raiz es la unica carpeta Supabase canonica. Los informes previos indican que `apps/gold/supabase/` era una duplicacion historica que no debia retirarse hasta cubrir piezas vivas y resolver baseline Agro. En sesiones posteriores se creo una consolidacion raiz para objetos legacy y se avanzo el baseline de `agro_crops`/`agro_roi_calculations`, pero la decision de cierre depende de validar que las migraciones raiz actuales son suficientes para un bootstrap local controlado y que no queda dependencia viva del arbol secundario.
+
+### Archivos a inspeccionar
+
+- `AGENTS.md`
+- `FICHA_TECNICA.md`
+- `apps/gold/docs/MATRIZ_RECONCILIACION_SUPABASE_16_ABRIL.md`
+- `apps/gold/docs/PLAN_CONSOLIDACION_SUPABASE_16_ABRIL.md`
+- `apps/gold/docs/PLAN_BASELINE_AGRO_SUPABASE_16_ABRIL.md`
+- `package.json`
+- `apps/gold/docs/LOCAL_FIRST.md`
+- `apps/gold/public/llms.txt`
+- `supabase/config.toml`
+- `supabase/migrations/*`
+- `apps/gold/supabase/*`
+- referencias residuales a `apps/gold/supabase/`
+
+### Criterio de decision
+
+Se puede retirar `apps/gold/supabase/` solo si:
+
+1. `supabase/` raiz contiene migraciones canonicas suficientes para representar las piezas vivas reconciliadas.
+2. La validacion local/controlada de Supabase desde raiz no depende de `apps/gold/supabase/`.
+3. No existen scripts o docs operativos vivos que indiquen usar `apps/gold/supabase/` como flujo activo.
+4. La eliminacion del arbol secundario no borra la unica evidencia local de una pieza viva no representada.
+
+No se puede retirar si:
+
+1. `supabase db reset` o validacion equivalente falla por orden historico, baseline incompleto o DDL incompatible.
+2. Queda una dependencia viva en scripts/docs/flujo local.
+3. Aun hay piezas exclusivas del arbol secundario no cubiertas por raiz ni documentadas.
+4. La evidencia no es concluyente.
+
+### Cambios aplicados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Se documento Paso 0, validacion controlada, resultado fallido y decision de NO retirar `apps/gold/supabase/` |
+
+No se eliminaron carpetas, no se movieron migraciones y no se modifico `supabase/` remoto.
+
+### Validacion ejecutada
+
+Comandos y evidencia:
+
+1. `supabase --version`: CLI local `2.72.7`.
+2. `supabase status --workdir .`: fallo inicialmente porque Docker Desktop no estaba corriendo.
+3. Se inicio Docker Desktop localmente para permitir validacion controlada.
+4. `supabase db reset --workdir . --local --no-seed --debug`: no pudo correr porque el proyecto local raiz aun no estaba iniciado.
+5. `supabase start --workdir . -x studio,imgproxy,vector,logflare,edge-runtime,supavisor,postgres-meta,mailpit --debug`: primer intento bloqueado por puerto `54322` ocupado.
+6. `docker ps` y `supabase status --workdir .\apps\gold --debug`: confirmaron que estaba corriendo el proyecto local secundario `gold` (`apps/gold/supabase`) ocupando `54321/54322`.
+7. `supabase stop --project-id gold --debug`: se detuvo el proyecto local secundario; la CLI dejo backup local en volumen Docker.
+8. `supabase stop --project-id YavlGold --no-backup --debug`: se limpio estado local parcial de raiz.
+9. Nuevo `supabase start --workdir . ... --debug`: llego a aplicar migraciones raiz, pero fallo en `20260221231722_agro_profit_date_filters_inclusive.sql`.
+
+Error bloqueante exacto:
+
+```text
+ERROR: function "public.agro_rank_top_crops_profit(date,date,integer,uuid)" does not exist (SQLSTATE 42883)
+At statement: 0
+v_profit := pg_get_functiondef('public.agro_rank_top_crops_profit(date,date,integer,uuid)'::regprocedure);
+```
+
+Lectura tecnica:
+
+- La migracion `20260221231722_agro_profit_date_filters_inclusive.sql` asume que la funcion `public.agro_rank_top_crops_profit(date,date,integer,uuid)` ya existe.
+- En el set canonico raiz actual, esa funcion existe como SQL auxiliar en `supabase/sql/agro_rankings_rpc_v1.sql`, pero no queda creada por una migracion anterior antes de `20260221231722`.
+- Por tanto, un bootstrap limpio desde `supabase/` raiz todavia no es confiable.
+- La falla ocurre antes de llegar a validar completamente las migraciones de consolidacion/baseline nuevas.
+
+### Decision de cierre
+
+La validacion NO permite retirar `apps/gold/supabase/` en esta sesion.
+
+Bloqueo exacto:
+
+- Tipo: orden historico / representacion incompleta de migraciones raiz.
+- Archivo bloqueante: `supabase/migrations/20260221231722_agro_profit_date_filters_inclusive.sql`.
+- Dependencia faltante: una migracion previa que cree o represente `public.agro_rank_top_crops_profit(date,date,integer,uuid)` antes de intentar modificarla.
+- Riesgo si se retirara ahora: se perderia el arbol secundario sin haber demostrado que raiz reconstruye localmente el stack Supabase; eso violaria el criterio de cierre.
+
+### Referencias residuales
+
+Se buscaron referencias a `apps/gold/supabase/` en scripts y docs operativos. Hallazgos:
+
+- `package.json`: los scripts `sb:*` ya usan `--workdir .` y apuntan a raiz.
+- `LOCAL_FIRST.md`: mantiene una nota correcta de no canonicidad y deuda pendiente.
+- `AGENTS.md` y `llms.txt`: mantienen la regla de no usar `apps/gold/supabase` como canon.
+- Los documentos de diagnostico/reconciliacion contienen referencias historicas necesarias y no se tocaron.
+
+### Build status
+
+`pnpm build:gold` - OK.
+
+Notas:
+- `agent-guard`: OK
+- `agent-report-check`: OK
+- `vite build`: OK, 160 modules transformed
+- `check-llms`: OK
+- `check-dist-utf8`: OK
+- Advertencia no bloqueante: Node actual `v25.6.0` no coincide con engine esperado `20.x`.
+
+---
+
+## Sesion activa: Repair de orden para `agro_crops` antes de status patch (2026-04-17)
+
+### Objetivo
+
+Resolver el segundo bloqueo exacto de orden migratorio en `supabase/` raiz:
+
+`supabase/migrations/20260224200000_agro_crops_status_allow_lost.sql`
+
+Ese archivo intentaba ejecutar `ALTER TABLE public.agro_crops` antes de que `public.agro_crops` existiera en la secuencia canonica raiz.
+
+### Archivos inspeccionados
+
+- `AGENTS.md`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+- `apps/gold/docs/PLAN_BASELINE_AGRO_SUPABASE_16_ABRIL.md`
+- `supabase/migrations/20260224200000_agro_crops_status_allow_lost.sql`
+- `supabase/migrations/20260226190000_agro_crops_investment_multicurrency.sql`
+- `supabase/migrations/20260404120000_agro_task_cycles_v1.sql`
+- `supabase/migrations/20260416190000_consolidate_legacy_app_supabase_objects.sql`
+- `supabase/migrations/20260417104335_agro_crops_roi_baseline.sql`
+- `supabase/sql/agro_crops_status_override_v1.sql`
+
+### Diagnostico tecnico
+
+`20260224200000_agro_crops_status_allow_lost.sql` solo necesita que exista:
+
+- `public.agro_crops`
+- columna `status`
+- constraint `agro_crops_status_check` opcional, porque el patch la elimina si existe y la crea de nuevo.
+
+Pero crear una tabla demasiado minima seria riesgoso porque `20260417104335_agro_crops_roi_baseline.sql` usa `CREATE TABLE IF NOT EXISTS`. Si una repair temprana creara una tabla parcial, el baseline posterior no recrearia las columnas base faltantes.
+
+Por eso el baseline minimo seguro para esta repair no es solo `id/status`; debe incluir la estructura base de `agro_crops` que el baseline posterior asume creada:
+
+- `id`, `user_id`, `name`, `variety`, `icon`
+- `status`, `progress`
+- `area_size`, `investment`
+- fechas de ciclo
+- notas
+- `created_at`, `updated_at`
+- `revenue_projected`, `deleted_at`
+- `status_mode`, `status_override`
+- columnas de inversion multi-moneda usadas por el patch posterior `20260226190000`
+
+`agro_roi_calculations` no se creo en esta repair porque no es requerido antes de `20260224200000` y sigue cubierto por el baseline de abril.
+
+### Migracion creada
+
+Se creo:
+
+`supabase/migrations/20260224195900_agro_crops_order_repair.sql`
+
+Caracteristicas:
+
+- versionada antes de `20260224200000` por necesidad de orden;
+- documentada dentro del archivo como `REPAIR MIGRATION`;
+- fecha real de creacion declarada: `2026-04-17`;
+- no edita migraciones antiguas;
+- no usa `apps/gold/supabase/` como canon;
+- crea solo `public.agro_crops`;
+- no crea `public.agro_roi_calculations`;
+- mantiene `status` con default `sembrado`, compatible con el check posterior de estados actuales;
+- incluye columnas base y multi-moneda para no dejar una tabla parcial antes del baseline de abril.
+
+### Validacion ejecutada
+
+1. `docker info`
+
+Resultado: Docker disponible.
+
+2. `supabase status --workdir .`
+
+Resultado: no habia contenedor sano de raiz (`supabase_db_YavlGold`) tras el fallo anterior.
+
+3. `supabase start --workdir .`
+
+Resultado:
+
+- `20260224195900_agro_crops_order_repair.sql` se aplico.
+- `20260224200000_agro_crops_status_allow_lost.sql` se aplico.
+- `20260226190000_agro_crops_investment_multicurrency.sql` se aplico; las columnas multi-moneda ya existian y el patch continuo.
+- La secuencia avanzo hasta `20260327001037_agro_buyer_foundation_v4.sql`.
+
+Nuevo bloqueo posterior detectado:
+
+```text
+ERROR: relation "public.agro_pending" does not exist (SQLSTATE 42P01)
+At statement: 6
+create index if not exists agro_pending_user_buyer_id_idx
+    on public.agro_pending (user_id, buyer_id)
+```
+
+Archivo bloqueante nuevo:
+
+`supabase/migrations/20260327001037_agro_buyer_foundation_v4.sql`
+
+Lectura tecnica:
+
+- Esa migracion usa `ALTER TABLE IF EXISTS` para `agro_pending`, `agro_income` y `agro_losses`.
+- Pero luego crea indices sin guardar si esas tablas existen.
+- En un reset limpio desde raiz, `public.agro_pending` todavia no existe cuando intenta crear el indice.
+- Es un nuevo bloqueo de baseline/orden, ahora sobre tablas base de Cartera Viva/facturero legacy.
+
+4. `supabase db reset --workdir . --local --no-seed`
+
+Resultado:
+
+```text
+supabase start is not running.
+```
+
+Motivo:
+
+- `supabase start` fallo durante migraciones y detuvo los contenedores.
+- No quedo proyecto local corriendo para ejecutar reset.
+
+### Decision
+
+No se hicieron reparaciones adicionales en cadena.
+
+Motivo: la tarea autorizaba resolver el bloqueo exacto de `agro_crops`. Ese bloqueo quedo superado, pero aparecio un bloqueo posterior distinto sobre `agro_pending`. Requiere una revision especifica de las tablas base de Cartera Viva/facturero antes de crear otra repair.
+
+`apps/gold/supabase/` NO se retiro.
+
+### Estado actual del frente Supabase
+
+Avance logrado:
+
+- `20260224200000_agro_crops_status_allow_lost.sql` ya puede correr.
+- El patch multi-moneda de `agro_crops` tambien avanzo.
+
+Bloqueo vigente:
+
+- `supabase/migrations/20260327001037_agro_buyer_foundation_v4.sql`
+- Causa: intenta crear indices sobre `public.agro_pending` antes de que exista.
+- Tipo: baseline ausente / orden historico de tablas base de Cartera Viva y facturero.
+
+Proxima fase sugerida:
+
+- auditar en raiz y remoto el baseline real de `agro_pending`, `agro_income` y `agro_losses`;
+- decidir si corresponde una repair de orden para esas tablas antes de `20260327001037`;
+- no retirar `apps/gold/supabase/` hasta que el reset raiz pase completo.
+
+### Build status
+
+`pnpm build:gold` - OK.
+
+Notas:
+- `agent-guard`: OK
+- `agent-report-check`: OK
+- `vite build`: OK, 160 modules transformed
+- `check-llms`: OK
+- `check-dist-utf8`: OK
+- Advertencia no bloqueante: Node actual `v25.6.0` no coincide con engine esperado `20.x`.
+
+---
+
+## Sesion activa: Repair de orden para `agro_rank_top_crops_profit` (2026-04-17)
+
+### Objetivo
+
+Crear una migracion de reparacion de orden, autorizada explicitamente por el usuario, para que el canon `supabase/` raiz cree `public.agro_rank_top_crops_profit(date,date,integer,uuid)` antes de que `20260221231722_agro_profit_date_filters_inclusive.sql` intente leerla y parchearla.
+
+### Archivos inspeccionados
+
+- `AGENTS.md`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+- `supabase/migrations/20260221231722_agro_profit_date_filters_inclusive.sql`
+- `supabase/migrations/20260221231536_agro_rpc_date_filters_inclusive.sql`
+- `supabase/sql/agro_rankings_rpc_v1.sql`
+- `supabase/migrations/20260224200000_agro_crops_status_allow_lost.sql`
+- `supabase/migrations/20260417104335_agro_crops_roi_baseline.sql`
+
+### Migracion creada
+
+Se creo:
+
+`supabase/migrations/20260221231650_agro_rank_top_crops_profit_order_repair.sql`
+
+Caracteristicas:
+
+- versionada antes de `20260221231722` por necesidad de orden;
+- documentada dentro del archivo como `REPAIR MIGRATION`;
+- fecha real de creacion declarada: `2026-04-17`;
+- no edita migraciones antiguas;
+- no usa `apps/gold/supabase/` como canon;
+- crea `public.agro_rank_top_crops_profit(date,date,integer,uuid)`;
+- replica la definicion funcional existente en `supabase/sql/agro_rankings_rpc_v1.sql`;
+- aplica `REVOKE`/`GRANT` solo sobre esa funcion.
+
+Firma representada:
+
+```sql
+public.agro_rank_top_crops_profit(
+  p_from date DEFAULT NULL,
+  p_to date DEFAULT NULL,
+  p_limit integer DEFAULT 5,
+  p_crop_id uuid DEFAULT NULL
+)
+```
+
+Retorno:
+
+```sql
+TABLE (
+  crop_id uuid,
+  crop_name text,
+  ingresos numeric,
+  gastos numeric,
+  profit numeric
+)
+```
+
+### Validacion ejecutada
+
+1. `supabase start --workdir .`
+
+Resultado:
+
+- Docker Desktop no estaba disponible inicialmente.
+- Se inicio Docker Desktop localmente.
+- El daemon Docker quedo disponible.
+- Se repitio `supabase start --workdir .`.
+- La migracion repair `20260221231650_agro_rank_top_crops_profit_order_repair.sql` se aplico.
+- La migracion previamente bloqueante `20260221231722_agro_profit_date_filters_inclusive.sql` tambien se aplico.
+
+Esto confirma que el bloqueo de `agro_rank_top_crops_profit` quedo destrabado.
+
+Nuevo bloqueo posterior detectado:
+
+```text
+ERROR: relation "public.agro_crops" does not exist (SQLSTATE 42P01)
+At statement: 1
+alter table public.agro_crops
+drop constraint if exists agro_crops_status_check
+```
+
+Archivo bloqueante nuevo:
+
+`supabase/migrations/20260224200000_agro_crops_status_allow_lost.sql`
+
+Lectura tecnica:
+
+- `20260224200000_agro_crops_status_allow_lost.sql` intenta ejecutar `ALTER TABLE public.agro_crops`.
+- En la secuencia actual de raiz, `public.agro_crops` se crea recien en `20260417104335_agro_crops_roi_baseline.sql`.
+- Por tanto, el siguiente bloqueo tambien es de orden historico: un ALTER antiguo corre antes del baseline canonico que crea la tabla.
+
+2. `supabase db reset --workdir . --local --no-seed`
+
+Resultado:
+
+```text
+supabase start is not running.
+```
+
+Motivo:
+
+- `supabase start` fallo durante aplicacion de migraciones y detuvo los contenedores.
+- El reset local no pudo ejecutarse porque no quedo un proyecto local corriendo.
+
+### Decision
+
+No se hicieron reparaciones adicionales en cadena.
+
+Motivo: la tarea autorizaba resolver el bloqueo exacto de `agro_rank_top_crops_profit`. Ese bloqueo quedo superado, pero aparecio un bloqueo posterior distinto sobre `public.agro_crops`. Seguir creando repairs sin una revision explicita del orden de `agro_crops` repetiria el mismo patron de riesgo.
+
+`apps/gold/supabase/` NO se retiro.
+
+### Estado actual del frente Supabase
+
+Avance logrado:
+
+- `20260221231722_agro_profit_date_filters_inclusive.sql` ya encuentra la funcion que necesitaba.
+- El canon raiz avanzo un paso real en capacidad de bootstrap.
+
+Bloqueo vigente:
+
+- `supabase/migrations/20260224200000_agro_crops_status_allow_lost.sql`
+- Causa: intenta alterar `public.agro_crops` antes de que exista.
+- Tipo: orden historico de baseline `agro_crops`.
+
+Proxima fase sugerida:
+
+- evaluar una reparacion de orden para `public.agro_crops` antes de `20260224200000`, o convertir ese ALTER en una forma segura sin editar la migracion antigua;
+- validar luego `supabase start --workdir .` y `supabase db reset --workdir . --local --no-seed`;
+- no retirar `apps/gold/supabase/` hasta que el reset raiz pase completo.
+
+### Build status
+
+`pnpm build:gold` - OK.
+
+Notas:
+- `agent-guard`: OK
+- `agent-report-check`: OK
+- `vite build`: OK, 160 modules transformed
+- `check-llms`: OK
+- `check-dist-utf8`: OK
+- Advertencia no bloqueante: Node actual `v25.6.0` no coincide con engine esperado `20.x`.
+
+### QA sugerido
+
+- No retirar `apps/gold/supabase/` hasta resolver la migracion bloqueante de rankings/profit en raiz y repetir `supabase start`/`db reset`.
+- En una siguiente fase, crear una migracion raiz forward-only/idempotente que represente `agro_rank_top_crops_profit` antes del patch que la modifica, sin reescribir migraciones viejas ni falsificar timestamps.
+- Repetir validacion local desde cero: detener/limpiar `YavlGold`, iniciar desde `supabase/` raiz, ejecutar `supabase db reset --workdir . --local --no-seed`.
+- Mantener `apps/gold/supabase/` como evidencia historica temporal hasta que el reset raiz pase.
+
+---
+
+## Sesion activa: Bloqueo de orden RPC `agro_rank_top_crops_profit` (2026-04-17)
+
+### Objetivo
+
+Resolver el bloqueo exacto detectado en `supabase/migrations/20260221231722_agro_profit_date_filters_inclusive.sql`, donde el reset limpio falla porque intenta parchear `public.agro_rank_top_crops_profit(date,date,integer,uuid)` antes de que esa funcion exista en la secuencia canonica de migraciones raiz.
+
+### Archivos inspeccionados
+
+- `AGENTS.md`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+- `supabase/migrations/20260221231722_agro_profit_date_filters_inclusive.sql`
+- `supabase/migrations/20260221231536_agro_rpc_date_filters_inclusive.sql`
+- `supabase/sql/agro_rankings_rpc_v1.sql`
+- listado completo de `supabase/migrations/*.sql`
+- busqueda relacionada en `supabase/migrations` y `supabase/sql`
+
+### Diagnostico tecnico
+
+La funcion faltante existe como SQL auxiliar en `supabase/sql/agro_rankings_rpc_v1.sql` con esta firma:
+
+```sql
+public.agro_rank_top_crops_profit(
+  p_from date DEFAULT NULL,
+  p_to date DEFAULT NULL,
+  p_limit integer DEFAULT 5,
+  p_crop_id uuid DEFAULT NULL
+)
+```
+
+Retorna:
+
+```sql
+TABLE (
+  crop_id uuid,
+  crop_name text,
+  ingresos numeric,
+  gastos numeric,
+  profit numeric
+)
+```
+
+La migracion `20260221231722_agro_profit_date_filters_inclusive.sql` espera exactamente la firma `public.agro_rank_top_crops_profit(date,date,integer,uuid)` y llama:
+
+```sql
+pg_get_functiondef('public.agro_rank_top_crops_profit(date,date,integer,uuid)'::regprocedure)
+```
+
+Eso falla en un reset limpio porque ninguna migracion anterior de `supabase/` raiz crea esa funcion. Las migraciones previas de rankings crean/parchean `agro_rank_top_clients` y `agro_rank_pending_clients`, pero no `agro_rank_top_crops_profit`.
+
+### Dependencias revisadas
+
+La definicion de `agro_rank_top_crops_profit` usa:
+
+- `auth.uid()`
+- `public.agro_income`
+- `public.agro_operational_cycles`
+- `public.agro_operational_movements`
+- `public.agro_crops`
+- `information_schema.columns`
+- SQL dinamico con guardas `to_regclass(...)`
+
+La funcion es razonablemente apta para creacion temprana porque retorna sin operar si faltan tablas base como `agro_income`, y arma SQL dinamico solo despues de validar presencia de tablas/columnas. El problema no es su DDL, sino el orden de aplicacion.
+
+### Decision de migracion
+
+No se creo migracion nueva en esta sesion.
+
+Motivo: una migracion con timestamp actual de 2026-04-17 correria despues de `20260221231722_agro_profit_date_filters_inclusive.sql`, por lo que no puede hacer que esa migracion antigua encuentre la funcion durante un `supabase db reset` limpio.
+
+Crear una migracion actual que defina la funcion seria util para estados forward ya aplicados, pero no resolveria el bloqueo confirmado de bootstrap/reset. Eso dejaria una falsa sensacion de cierre.
+
+Para destrabar el reset sin editar migraciones antiguas, la unica alternativa tecnica viable es una migracion de reparacion de orden que se aplique antes de `20260221231722`. Eso exige una version anterior a `20260221231722`, documentada explicitamente como reparacion de orden creada el 2026-04-17. Esa decision requiere autorizacion explicita porque entra en tension con la regla pedida de usar timestamp actual y no falsificar historia.
+
+### Validacion Supabase
+
+No se reejecuto `supabase start` ni `supabase db reset` en esta sesion porque no se aplico ningun cambio capaz de modificar el resultado. La validacion previa ya demostro el fallo exacto y una migracion actual no cambiaria el orden que lo provoca.
+
+### Estado de cierre
+
+El frente Supabase sigue bloqueado.
+
+Bloqueo exacto vigente:
+
+- Tipo: orden historico de migraciones.
+- Funcion faltante antes del parche: `public.agro_rank_top_crops_profit(date,date,integer,uuid)`.
+- Archivo que falla: `supabase/migrations/20260221231722_agro_profit_date_filters_inclusive.sql`.
+- Causa: la definicion vive en `supabase/sql/agro_rankings_rpc_v1.sql`, pero no en una migracion previa.
+
+`apps/gold/supabase/` NO se retiro y debe seguir conservandose como arbol secundario hasta que el reset canonico raiz pase.
+
+### Build status
+
+`pnpm build:gold` - OK.
+
+Notas:
+- `agent-guard`: OK
+- `agent-report-check`: OK
+- `vite build`: OK, 160 modules transformed
+- `check-llms`: OK
+- `check-dist-utf8`: OK
+- Advertencia no bloqueante: Node actual `v25.6.0` no coincide con engine esperado `20.x`.
