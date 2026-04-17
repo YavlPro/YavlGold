@@ -1182,12 +1182,14 @@ function renderStats() {
 function renderListFilters() {
     if (!state.refs?.listFilters) return;
     const statusCounts = buildTaskStatusCounts();
+    const currentCropFilter = state.listFilters.cropId;
     const cropOptions = [
-        '<option value="all">Todos los cultivos</option>',
-        '<option value="uncropped">Sin cultivo</option>',
+        `<option value="all"${currentCropFilter === 'all' ? ' selected' : ''}>Todos los cultivos</option>`,
+        `<option value="cropped"${currentCropFilter === 'cropped' ? ' selected' : ''}>Con cultivo</option>`,
+        `<option value="uncropped"${currentCropFilter === 'uncropped' ? ' selected' : ''}>Sin cultivo</option>`,
         ...state.crops.map((crop) => {
             const display = buildCropDisplay(crop);
-            const selected = state.listFilters.cropId === display.id ? ' selected' : '';
+            const selected = currentCropFilter === display.id ? ' selected' : '';
             return `<option value="${escapeAttr(display.id)}"${selected}>${escapeHtml(display.label)}</option>`;
         })
     ];
