@@ -244,6 +244,198 @@ Notas:
 
 ---
 
+## Sesion activa: Repair de orden baseline facturero/Cartera Viva (2026-04-17)
+
+### Objetivo
+
+Resolver el tercer bloqueo exacto de bootstrap canonico raiz:
+
+```text
+ERROR: relation "public.agro_pending" does not exist
+create index if not exists agro_pending_user_buyer_id_idx
+    on public.agro_pending (user_id, buyer_id)
+```
+
+Archivo bloqueante:
+
+- `supabase/migrations/20260327001037_agro_buyer_foundation_v4.sql`
+
+### Archivos inspeccionados
+
+- `AGENTS.md`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+- `supabase/migrations/20260327001037_agro_buyer_foundation_v4.sql`
+- `supabase/migrations/20260225162000_agro_facturero_split_meta_v1.sql`
+- `supabase/migrations/20260226204000_agro_movements_currency_backfill.sql`
+- `supabase/migrations/20260226211000_agro_movements_currency_check.sql`
+- `supabase/migrations/20260227213000_agro_income_split_meta.sql`
+- `supabase/migrations/20260328005620_agro_buyer_portfolio_summary_v1.sql`
+- `supabase/migrations/20260330173000_agro_clients_master_equivalent_v1.sql`
+- `supabase/migrations/20260331000000_agro_buyer_portfolio_include_zero_buyers.sql`
+- `supabase/migrations/20260403143000_agro_delete_buyer_cascade_v1.sql`
+- `supabase/migrations/20260417113444_agro_buyer_portfolio_transfer_markers.sql`
+- `supabase/sql/agro_facturero_transfer_meta_v2.sql`
+- `supabase/sql/agro_pending_transfer_v1.sql`
+- `supabase/sql/agro_units_facturero_v1.sql`
+- `supabase/sql/agro_income_units_v1.sql`
+- referencias de lectura en `apps/gold/agro/agro-wizard.js`, `apps/gold/agro/agro-cartera-viva-view.js`, `apps/gold/agro/agro-stats.js`, `apps/gold/agro/agro-crop-report.js` y `apps/gold/agro/agro.js`
+
+### Diagnostico tecnico
+
+El bloqueo no era solo un indice faltante.
+
+La migracion `20260327001037_agro_buyer_foundation_v4.sql` presupone que ya existen:
+
+- `public.agro_pending`
+- `public.agro_income`
+- `public.agro_losses`
+
+Esa migracion:
+
+- agrega columnas buyer con `alter table if exists`;
+- crea indices sin guarda de existencia de tabla;
+- lee y actualiza las tres tablas;
+- depende de columnas como `id`, `user_id`, `cliente`, `concepto`, `causa`, `origin_table`, `buyer_id`, `buyer_group_key` y `buyer_match_status`.
+
+Tambien se confirmo que migraciones previas de facturero ya habian intentado parchear, de forma defensiva, tablas que todavia no existian en el reset limpio:
+
+- `agro_income`
+- `agro_pending`
+- `agro_losses`
+- `agro_expenses`
+- `agro_transfers`
+
+Por eso una repair que creara solo `agro_pending` habria sido demasiado pobre: destrabaria el primer indice, pero dejaria el baseline de Cartera Viva/facturero incompleto frente a los RPC y flujos posteriores.
+
+### Decision de migracion
+
+Se creo una unica repair migration de orden:
+
+- `supabase/migrations/20260327001000_agro_facturero_base_order_repair.sql`
+
+La migracion queda documentada dentro del archivo como:
+
+- `REPAIR MIGRATION`
+- creada el `2026-04-17`
+- versionada antes de `20260327001037` solo para reparar el orden de bootstrap
+- sin usar `apps/gold/supabase/` como canon
+- sin editar migraciones antiguas
+
+La repair crea el baseline raiz de las tablas base de facturero/Cartera Viva:
+
+- `public.agro_pending`
+- `public.agro_income`
+- `public.agro_losses`
+- `public.agro_expenses`
+- `public.agro_transfers`
+
+Incluye columnas necesarias para:
+
+- montos USD/multimoneda (`monto_usd`, `currency`, `exchange_rate`);
+- unidades (`unit_type`, `unit_qty`, `quantity_kg`);
+- cultivo asociado (`crop_id`);
+- soft-delete (`deleted_at`);
+- trazabilidad de transferencias (`origin_table`, `origin_id`, `transfer_state`, `transferred_*`);
+- splits parciales (`split_from_id`, `split_meta`);
+- identidad buyer (`buyer_id`, `buyer_group_key`, `buyer_match_status`);
+- RLS owner-only por `user_id`.
+
+### Validacion Supabase
+
+Comando ejecutado:
+
+```bash
+supabase start --workdir .
+```
+
+Resultado:
+
+- La secuencia avanzo correctamente por `20260327001000_agro_facturero_base_order_repair.sql`.
+- La migracion `20260327001037_agro_buyer_foundation_v4.sql` ya no fallo por `public.agro_pending`.
+- Tambien pasaron:
+  - `20260327001106_agro_buyer_foundation_v4_search_path_fix.sql`
+  - `20260328005620_agro_buyer_portfolio_summary_v1.sql`
+  - `20260330173000_agro_clients_master_equivalent_v1.sql`
+
+Nuevo bloqueo posterior:
+
+```text
+ERROR: cannot change return type of existing function (SQLSTATE 42P13)
+Row type defined by OUT parameters is different.
+```
+
+Archivo bloqueante nuevo:
+
+- `supabase/migrations/20260331000000_agro_buyer_portfolio_include_zero_buyers.sql`
+
+Causa precisa:
+
+- `20260330173000_agro_clients_master_equivalent_v1.sql` crea `public.agro_buyer_portfolio_summary_v1()` con retorno extendido:
+  - `canonical_name text`
+  - `client_status text`
+- `20260331000000_agro_buyer_portfolio_include_zero_buyers.sql` intenta `create or replace function` con una firma de retorno mas corta, sin esas dos columnas.
+- PostgreSQL no permite cambiar el row type de salida de una funcion existente usando solo `create or replace function`.
+
+### Reset local
+
+Comando ejecutado:
+
+```bash
+supabase db reset --workdir . --local --no-seed
+```
+
+Resultado:
+
+```text
+supabase start is not running.
+```
+
+Motivo: `supabase start` fallo durante la migracion `20260331000000` y detuvo los contenedores. Por eso el reset local no pudo ejecutarse.
+
+### Decision de cierre
+
+No se hicieron reparaciones adicionales en cadena.
+
+Motivo: el bloqueo solicitado sobre `agro_pending`/baseline facturero quedo resuelto. El nuevo bloqueo pertenece a otro contrato migratorio: incompatibilidad de firma de retorno entre dos versiones de `agro_buyer_portfolio_summary_v1()`.
+
+`apps/gold/supabase/` NO se retiro.
+
+### Estado actual del frente Supabase
+
+Avance logrado:
+
+- El tercer bloqueo de orden quedo destrabado.
+- El canon raiz ya tiene baseline de tablas base de facturero/Cartera Viva antes de `20260327001037`.
+- La secuencia canonica avanzo hasta `20260331000000`.
+
+Bloqueo vigente:
+
+- `supabase/migrations/20260331000000_agro_buyer_portfolio_include_zero_buyers.sql`
+- Tipo: contrato incompatible de funcion SQL.
+- Objeto: `public.agro_buyer_portfolio_summary_v1()`.
+- Causa: `create or replace function` intenta reemplazar una funcion con OUT parameters distintos.
+
+Proxima fase sugerida:
+
+- resolver el contrato de `agro_buyer_portfolio_summary_v1()` sin editar migraciones antiguas;
+- probablemente crear una repair de orden o una migracion correctiva que elimine/recree la funcion antes del reemplazo incompatible, si la evidencia lo justifica;
+- repetir `supabase start --workdir .`;
+- solo ejecutar `supabase db reset --workdir . --local --no-seed` si `supabase start` completa.
+
+### Build status
+
+`pnpm build:gold` - OK.
+
+Notas:
+- `agent-guard`: OK
+- `agent-report-check`: OK
+- `vite build`: OK, 160 modules transformed
+- `check-llms`: OK
+- `check-dist-utf8`: OK
+- Advertencia no bloqueante: Node actual `v25.6.0` no coincide con engine esperado `20.x`.
+
+---
+
 ## Sesion activa: Repair de orden para `agro_crops` antes de status patch (2026-04-17)
 
 ### Objetivo
