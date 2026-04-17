@@ -10942,3 +10942,95 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
 }
 
 
+/* ═══════════════════════════════════════════════════════════
+   MODO OPERATIVO — Segmented Control
+   ADN Visual V10 · Pill-shaped · Gold accent
+   ═══════════════════════════════════════════════════════════ */
+
+.agro-mode-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  padding: 3px;
+  border-radius: var(--radius-pill, 9999px);
+  border: 1px solid var(--border-neutral, rgba(255,255,255,0.08));
+  background: var(--bg-3, #111113);
+  flex-shrink: 0;
+}
+
+.agro-mode-switch__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.65rem;
+  border: none;
+  border-radius: var(--radius-pill, 9999px);
+  background: transparent;
+  color: var(--text-muted, #94A3B8);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: var(--text-xs, 0.70rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+  white-space: nowrap;
+  min-height: 32px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.agro-mode-switch__btn:hover {
+  color: var(--text-primary, #ffffff);
+}
+
+.agro-mode-switch__btn.is-active {
+  background: rgba(200,167,82,0.12);
+  color: var(--gold-5, #E8D48B);
+  box-shadow: var(--shadow-gold-xs, 0 1px 6px rgba(200,167,82,0.10));
+}
+
+.agro-mode-switch__btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg-1, #0a0a0a), 0 0 0 4px var(--gold-4, #C8A752);
+}
+
+.agro-mode-switch__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.8rem;
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.agro-mode-switch__label {
+  display: inline;
+}
+
+@media (max-width: 640px) {
+  .agro-mode-switch {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+  .agro-mode-switch__btn {
+    flex: 1;
+    min-height: 36px;
+  }
+}
+
+@media (max-width: 480px) {
+  .agro-mode-switch__label {
+    display: none;
+  }
+  .agro-mode-switch__btn {
+    padding: 0.3rem 0.55rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agro-mode-switch__btn {
+    transition: none;
+  }
+}

@@ -845,3 +845,108 @@ Notas:
 - `check-llms`: OK
 - `check-dist-utf8`: OK
 - Advertencia no bloqueante: Node actual `v25.6.0` no coincide con engine esperado `20.x`.
+
+---
+
+## Sesion activa: 3 fixes Agro + Modo Operativo Fase 5 (2026-04-17)
+
+### Objetivo
+
+Cuatro entregas secuenciales:
+
+1. **Bug 1**: Labels/iconos de cultivo duplicados e inconsistentes en task cycles, selectores y helpers compartidos.
+2. **Bug 2**: unit_type en Cartera Operativa siempre cae a "unidad" en vez del valor real (saco/cesta/kg).
+3. **Bug 3**: Asistente IA se comporta como modal/overlay en vez de superficie dedicada.
+4. **Fase 5**: Modo Operativo — switch global tri-estado (Cultivo / No cultivo / General) en header del shell.
+
+### Diagnostico previo
+
+**Bug 1**: Existian 4 implementaciones separadas de `buildCropDisplay` con logica diferente de extraccion de emojis y formateo. Se alineo agroTaskCycles con la version mas robusta de agroOperationalCycles.
+
+**Bug 2**: Doble causa: faltaba la opcion `unidad` en `INCOME_UNIT_OPTIONS` y la logica de guardado saltaba campos `unit_type`/`unit_qty` para gastos. Ademas, el headline de Base Operativa usaba `formatUniversalQuantityLabel()` (siempre "unidad") en vez del helper correcto.
+
+**Bug 3**: Las CSS overrides para `.asistente-dedicado` existian pero eran incompletas — faltaban reglas para `.agro-assistant`, backdrop y shell pulse.
+
+**Fase 5**: No existia ningun mecanismo de filtro global por contexto operativo. Los modulos ya tenian semantica parcial (FAMILY_LINKED/UNLINKED, cropId filter) pero sin switch centralizado.
+
+### Cambios realizados
+
+| # | Archivo | Tipo | Cambio principal |
+|---|---|---|---|
+| 1 | `apps/gold/agro/agroTaskCycles.js` | EDIT | buildCropDisplay robusto con extraccion de emojis + normalizacion de iconos + filtro `'cropped'` + listener `agro:modechange` |
+| 2 | `apps/gold/agro/agroOperationalCycles.js` | EDIT | formatQuantityLabel con unitType real + cesta handling + FAMILY_ALL + listener `agro:modechange` + toggle 3 opciones |
+| 3 | `apps/gold/agro/agro.js` | EDIT | Agregar `unidad` a INCOME_UNIT_OPTIONS + corregir skip de unit_type/unit_qty en gastos |
+| 4 | `apps/gold/agro/agro.css` | EDIT | Asistente dedicado overrides completos + ~80 lineas de estilos para segmented control modo operativo |
+| 5 | `apps/gold/agro/agro-mode.js` | CREAR | Modulo standalone del switch: estado, render, evento, localStorage, ~95 lineas |
+| 6 | `apps/gold/agro/index.html` | EDIT | Mount point `#agro-mode-switch` en header (~L218) + dynamic import de agro-mode.js (~L2465) |
+
+### Modulos Fase 1 que reaccionan al modo
+
+1. **Task Cycles** — filtro cropId (`'cropped'`/`'uncropped'`/`'all'`)
+2. **Operational Cycles** — filtro familyFilter (`FAMILY_LINKED`/`FAMILY_UNLINKED`/`FAMILY_ALL`)
+
+### Modulos Fase 2 (pendientes)
+
+- AgroRepo / Bitacora
+- Asistente IA
+- Rankings / Estadisticas
+- Reportes
+
+### Resultado build
+
+`pnpm build:gold` — OK. 161 modules, 2.25s, sin errores.
+
+### QA manual sugerido
+
+1. Cambiar entre Cultivo / No cultivo / General — verificar persistencia via localStorage
+2. Navegar a Cartera Operativa — verificar filtrado por modo activo
+3. Navegar a Tareas — verificar filtrado por modo activo
+4. Verificar mobile ≤640px (labels colapsan a iconos)
+5. Verificar focus-visible en botones del switch
+6. Verificar `prefers-reduced-motion`
+7. Verificar que el switch no aparece en superficies no-Agro
+
+### No se hizo
+
+- NO se toco `agro.js` excepto las 2 correcciones minimas de bugs
+- NO se rediseño Dashboard Agro
+- NO se tocaron modulos Fase 2
+- NO se altero Supabase ni migraciones
+
+---
+
+## Sesion activa: Micro-fix iconografia canonica Modo Operativo (2026-04-17)
+
+### Objetivo
+
+Reemplazar los emojis del switch Modo Operativo por iconografia canonica Font Awesome 6.5, coherente con el lenguaje visual del shell Agro.
+
+### Diagnostico
+
+`MODE_OPTIONS` en `agro-mode.js` usaba emojis Unicode (`🌱`, `🌾`, `📊`) como contenido de texto en un `<span>`. El shell Agro usa exclusivamente `fa-solid fa-*` en sidebar, header y todos los modulos. Los emojis rompian consistencia visual, tenian tamaño variable entre plataformas y se veian ajenos en la superficie premium del header.
+
+### Cambios realizados
+
+| # | Archivo | Tipo | Cambio |
+|---|---|---|---|
+| 1 | `apps/gold/agro/agro-mode.js` | EDIT | MODE_OPTIONS: emojis → clases FA (`fa-seedling`, `fa-tractor`, `fa-layer-group`). renderSwitch: texto emoji → `<i class="fa-solid ...">` |
+| 2 | `apps/gold/agro/agro.css` | EDIT | `.agro-mode-switch__icon`: agregar `display: inline-flex`, `width: 0.8rem` para alinear FA icon correctamente |
+
+### Iconografia final
+
+| Modo | Antes (emoji) | Despues (FA 6.5) | Razon |
+|---|---|---|---|
+| Cultivo | 🌱 | `fa-seedling` | Canonico en sidebar para cultivos |
+| No cultivo | 🌾 | `fa-tractor` | Operaciones agricolas, no ligado a cultivo |
+| General | 📊 | `fa-layer-group` | Todo apilado, vision completa |
+
+### Resultado build
+
+`pnpm build:gold` — OK. 161 modules, 2.20s, sin errores.
+
+### No se hizo
+
+- NO se cambio labels, spacing ni estructura del control
+- NO se agrego texto extra
+- NO se toco agro.js, index.html ni otros modulos
+- NO se altero Supabase
