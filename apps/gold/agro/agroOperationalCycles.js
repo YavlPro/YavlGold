@@ -13,9 +13,11 @@ const SUBVIEW_LOSSES = 'losses';
 const SUBVIEW_EXPORT = 'export';
 const FAMILY_LINKED = 'linked';
 const FAMILY_UNLINKED = 'unlinked';
-const FAMILY_OPTIONS = Object.freeze([FAMILY_LINKED, FAMILY_UNLINKED]);
+const FAMILY_ALL = 'all';
+const FAMILY_OPTIONS = Object.freeze([FAMILY_LINKED, FAMILY_UNLINKED, FAMILY_ALL]);
 const CROPS_READY_EVENT = 'AGRO_CROPS_READY';
 const VIEW_CHANGED_EVENT = 'agro:shell:view-changed';
+const MODE_CHANGE_EVENT = 'agro:modechange';
 const OPERATIONAL_PORTFOLIO_UPDATED_EVENT = 'agro:operational-portfolio-updated';
 const EMPTY_AMOUNT_LABEL = '📝 Monto no anotado';
 const EMPTY_BALANCE_LABEL = '📝 Sin balance monetario';
@@ -1946,9 +1948,9 @@ function filterCyclesByFamily(cycles, family) {
 }
 
 function getFamilyLabel(family) {
-    return family === FAMILY_UNLINKED
-        ? '🌾 No asociados al cultivo'
-        : '🌱 Asociados al cultivo';
+    if (family === FAMILY_UNLINKED) return '\u{1F33E} No asociados al cultivo';
+    if (family === FAMILY_ALL) return '\u{1F4CA} Todos los registros';
+    return '\u{1F331} Asociados al cultivo';
 }
 
 function getSubviewMeta(subview) {
@@ -2024,9 +2026,11 @@ function renderFamilyToggle() {
     const linkedCount = allActive.filter((c) => !!c?.crop_id).length + allFinished.filter((c) => !!c?.crop_id).length;
     const unlinkedCount = allActive.filter((c) => !c?.crop_id).length + allFinished.filter((c) => !c?.crop_id).length;
 
+    const totalCount = linkedCount + unlinkedCount;
     const options = [
-        { value: FAMILY_LINKED, label: '🌱 Asociados al cultivo', count: linkedCount },
-        { value: FAMILY_UNLINKED, label: '🌾 No asociados al cultivo', count: unlinkedCount }
+        { value: FAMILY_LINKED, label: '\u{1F331} Asociados al cultivo', count: linkedCount },
+        { value: FAMILY_UNLINKED, label: '\u{1F33E} No asociados al cultivo', count: unlinkedCount },
+        { value: FAMILY_ALL, label: '\u{1F4CA} Todos los registros', count: totalCount }
     ];
 
     state.refs.familyToggle.innerHTML = options.map((option) => `
@@ -3401,6 +3405,18 @@ function bindEvents() {
         }
     });
 
+    window.addEventListener(MODE_CHANGE_EVENT, (event) => {
+        const mode = normalizeToken(event?.detail?.mode);
+        if (mode === 'cultivo') state.familyFilter = FAMILY_LINKED;
+        else if (mode === 'no-cultivo') state.familyFilter = FAMILY_UNLINKED;
+        else state.familyFilter = FAMILY_ALL;
+        if (state.currentView !== VIEW_NAME) return;
+        renderFamilyToggle();
+        renderSubviewSwitch();
+        renderOverview();
+        renderCurrentSubview();
+    });
+
     window.addEventListener('keydown', (event) => {
         if (event.key !== 'Escape' || !state.modalOpen) return;
         resetForm();
@@ -3551,6 +3567,12 @@ export async function initAgroOperationalCycles(options = {}) {
     exposeGlobalApi();
     state.currentView = normalizeToken(document.body?.dataset?.agroActiveView || state.currentView);
     state.currentSubview = normalizeOperationalSubview(document.body?.dataset?.agroSubview || state.currentSubview);
+
+    const initialMode = normalizeToken(document.body?.dataset?.agroMode || 'general');
+    if (initialMode === 'cultivo') state.familyFilter = FAMILY_LINKED;
+    else if (initialMode === 'no-cultivo') state.familyFilter = FAMILY_UNLINKED;
+    else state.familyFilter = FAMILY_ALL;
+
     syncStandalonePeriodCyclesView();
 
     if (state.currentView === VIEW_NAME) {

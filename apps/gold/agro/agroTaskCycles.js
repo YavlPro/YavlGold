@@ -4,6 +4,7 @@ const ROOT_ID = 'agro-task-cycles-root';
 const VIEW_NAME = 'task-cycles';
 const VIEW_CHANGED_EVENT = 'agro:shell:view-changed';
 const CROPS_READY_EVENT = 'AGRO_CROPS_READY';
+const MODE_CHANGE_EVENT = 'agro:modechange';
 const TASKS_TABLE = 'agro_task_cycles';
 const TASK_SCHEMA_MISSING_COPY = 'Aplica la migración de Ciclos de Tareas para habilitar este módulo.';
 
@@ -744,8 +745,9 @@ function filterTasks(tasks = state.tasks, filters = state.listFilters, options =
         if (!options.ignoreStatus && filters.status !== 'all' && task.task_status !== normalizeTaskStatus(filters.status)) return false;
         if (filters.taskType !== 'all' && task.task_type !== taskType) return false;
         if (filters.effect !== 'all' && task.economic_effect !== effect) return false;
+        if (cropId === 'cropped' && !task.crop_id) return false;
         if (cropId === 'uncropped' && task.crop_id) return false;
-        if (cropId && cropId !== 'all' && cropId !== 'uncropped' && task.crop_id !== cropId) return false;
+        if (cropId && cropId !== 'all' && cropId !== 'uncropped' && cropId !== 'cropped' && task.crop_id !== cropId) return false;
         if (search && !buildSearchHaystack(task).includes(search)) return false;
         return true;
     });
@@ -1907,6 +1909,16 @@ function bindEvents() {
         }
     });
 
+    window.addEventListener(MODE_CHANGE_EVENT, (event) => {
+        const mode = normalizeToken(event?.detail?.mode);
+        if (mode === 'cultivo') state.listFilters.cropId = 'cropped';
+        else if (mode === 'no-cultivo') state.listFilters.cropId = 'uncropped';
+        else state.listFilters.cropId = 'all';
+        if (state.currentView !== VIEW_NAME) return;
+        renderListFilters();
+        renderList();
+    });
+
     window.addEventListener('keydown', (event) => {
         if (event.key !== 'Escape') return;
         if (state.deleteConfirmOpen) {
@@ -1954,6 +1966,12 @@ export async function initAgroTaskCycles(options = {}) {
 
     exposeGlobalApi();
     state.currentView = normalizeToken(document.body?.dataset?.agroActiveView || state.currentView);
+
+    const initialMode = normalizeToken(document.body?.dataset?.agroMode || 'general');
+    if (initialMode === 'cultivo') state.listFilters.cropId = 'cropped';
+    else if (initialMode === 'no-cultivo') state.listFilters.cropId = 'uncropped';
+    else state.listFilters.cropId = 'all';
+
     renderStats();
     renderListFilters();
     renderList();

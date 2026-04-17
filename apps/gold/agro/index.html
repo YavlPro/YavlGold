@@ -217,6 +217,8 @@
                     </button>
                 </nav>
 
+                <div class="agro-mode-switch" id="agro-mode-switch" role="group" aria-label="Modo operativo"></div>
+
                 <div class="agro-shell-header__utilities">
                     <!-- Notification Center (Dashboard Style) -->
                     <div class="agro-header-notifications">
@@ -2462,6 +2464,12 @@
                         mod.initAgroCyclesWorkspace();
                     }
                 }).catch(err => console.warn('[AGRO] Cycles workspace module load error:', err.message));
+
+                import('./agro-mode.js').then((mod) => {
+                    if (typeof mod.initAgroMode === 'function') {
+                        mod.initAgroMode();
+                    }
+                }).catch(err => console.warn('[AGRO] Mode module load error:', err.message));
 
                 import('./agroOperationalCycles.js').then((mod) => {
                     if (typeof mod.initAgroOperationalCycles === 'function') {
