@@ -8860,6 +8860,24 @@ body.agro-view-dense::after {
   background: rgba(5, 5, 5, 0.98);
 }
 
+/* Override modal styles — full page feel */
+.asistente-dedicado #modal-agro-assistant .agro-assistant {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--bg-1, #0a0a0a);
+}
+
+.asistente-dedicado #modal-agro-assistant .assistant-backdrop {
+  display: none;
+}
+
+.asistente-dedicado #modal-agro-assistant .assistant-shell::before {
+  display: none;
+}
+
 /* ── Layout 3 columnas ── */
 .asistente-dedicado .ast-layout {
   display: flex;
@@ -9124,18 +9142,18 @@ body.agro-view-dense::after {
   z-index: 2;
 }
 
-/* Header */
+/* Header — page-level prominence */
 .asistente-dedicado .ast-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.6rem 1.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(10, 10, 10, 0.92);
-  backdrop-filter: blur(12px);
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid var(--border-gold, rgba(200,167,82,0.25));
+  background: var(--bg-2, #0B0C0F);
   position: relative;
   z-index: 10;
-  min-height: 50px;
+  min-height: 56px;
+  flex-shrink: 0;
 }
 
 .asistente-dedicado .ast-header::after {
@@ -9210,9 +9228,9 @@ body.agro-view-dense::after {
 .asistente-dedicado .ast-header-info h3 {
   margin: 0;
   font-family: 'Orbitron', sans-serif;
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: #C8A752;
+  font-size: clamp(0.92rem, 2vw, 1.05rem);
+  font-weight: 900;
+  color: var(--gold-4, #C8A752);
   letter-spacing: 0.5px;
   line-height: 1.2;
 }
@@ -9236,6 +9254,10 @@ body.agro-view-dense::after {
   display: flex;
   align-items: center;
   gap: 0.35rem;
+}
+
+.asistente-dedicado #btn-close-agro-assistant i::before {
+  content: '\f060';
 }
 
 /* ── Messages area ── */

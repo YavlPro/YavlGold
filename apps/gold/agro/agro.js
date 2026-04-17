@@ -1027,6 +1027,7 @@ const WHO_FIELD_META = {
 
 const INCOME_UNIT_OPTIONS = [
     { value: '', label: 'Seleccionar...' },
+    { value: 'unidad', label: 'Unidad', singular: 'unidad', plural: 'unidades' },
     { value: 'saco', label: 'Saco', singular: 'saco', plural: 'sacos' },
     { value: 'cesta', label: 'Cesta', singular: 'cesta', plural: 'cestas' },
     { value: 'kg', label: 'Kg', singular: 'kg', plural: 'kg' }
@@ -6307,7 +6308,7 @@ async function saveEditModal() {
         // Add extra fields
         getFactureroEditFields(config, whoMeta?.field)
             .forEach(field => {
-                if (tabName === 'gastos' && (field === 'unit_type' || field === 'unit_qty' || field === 'quantity_kg')) {
+                if (tabName === 'gastos' && field === 'quantity_kg') {
                     return;
                 }
                 const el = document.getElementById(`edit-${field}`);

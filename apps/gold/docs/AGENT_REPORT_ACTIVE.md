@@ -17520,3 +17520,51 @@ _Pendiente de ejecución._
 - Navegar a «Ciclos activos» y «Períodos activos»: verificar que la vista cambia correctamente y el sidebar refleja el item activo.
 - Verificar que Operación Comercial sigue intacta con sus sublinks.
 - Verificar comportamiento mobile (sidebar no roto).
+
+---
+
+## Sesion: 3 fixes Agro — labels cultivo, unidad Cartera, Asistente IA (2026-04-17)
+
+### Objetivo
+Resolver 3 bugs reales en Agro con el menor diff posible.
+
+### Diagnostico
+
+#### Bug 1: Duplicacion de labels/iconos de cultivo
+- **Causa raiz**: `buildCropDisplay()` en `agroTaskCycles.js:407` no extrae emojis del nombre ni genera iconos, mientras que `agroOperationalCycles.js:619` si lo hace. Esto produce inconsistencia: las tareas muestran "Tomate" plano, pero la cartera muestra "Tomate (Roma)" con icono. Cuando un crop tiene emojis en el nombre, las tareas los muestran como texto literal.
+- **Archivos**: `agroTaskCycles.js:407-415`, `agroOperationalCycles.js:619-641`
+- **Plan**: Alinear `buildCropDisplay()` de `agroTaskCycles.js` con la version robusta de `agroOperationalCycles.js`, que maneja extraccion de emojis y limpieza del nombre.
+
+#### Bug 2: Unidad en Cartera Operativa siempre cae en fallback
+- **Causa raiz**: Doble problema:
+  1. `INCOME_UNIT_OPTIONS` en `agro.js:1028` NO incluye "unidad", entonces cuando el tipo guardado es "unidad", el render cae en fallback mostrando el raw value.
+  2. En la edicion de gastos (`agro.js:6310`), los campos `unit_type`, `unit_qty`, `quantity_kg` se **saltan completamente**, nunca se persisten al guardar.
+- **Archivos**: `agro.js:1028-1033`, `agro.js:6308-6312`
+- **Plan**: Agregar "unidad" a `INCOME_UNIT_OPTIONS` y eliminar el skip de `unit_type`/`unit_qty` para gastos.
+
+#### Bug 3: Asistente IA se percibe como modal/overlay
+- **Causa raiz**: El HTML ya usa `<section class="asistente-dedicado">` y el CSS ya tiene overrides para que dentro de esa section el `#modal-agro-assistant` sea static/flex. Pero el CSS heredado del modal (#modal-agro-assistant con position:fixed, z-index:10050, display:none) tiene especificidad alta y algunos estilos del modal no estan sobrepasados completamente. Ademas el header del asistente carece de una jerarquia clara de pagina dedicada.
+- **Archivos**: `agro.css:2497-2845` (modal styles), `agro.css:8824-9250` (dedicated overrides), `index.html:2582`
+- **Plan**: Agregar CSS para garantizar que en modo dedicado el asistente ocupe el 100% del viewport, tenga scroll correcto, header prominente y sin vestigios de modal. Mantener el wizard de configuracion como modal.
+
+### Build status
+`pnpm build:gold` — OK. 160 modules, 2.87s. Sin errores.
+
+### Cambios aplicados
+
+| Archivo | Fix | Cambio |
+|---|---|---|
+| `apps/gold/agro/agroTaskCycles.js` | Bug 1 | Agregados `CROP_EMOJI_TOKEN_RE`, `CROP_TEXT_TOKEN_RE`, `normalizeCropIcon`, `isCropEmojiToken`. `buildCropDisplay` reescrita para extraer emojis del nombre, normalizar icono, y producir label consistente `icon name (variety)` |
+| `apps/gold/agro/agro.js:1028` | Bug 2 | Agregada opcion `{ value: 'unidad', label: 'Unidad', singular: 'unidad', plural: 'unidades' }` a `INCOME_UNIT_OPTIONS` |
+| `apps/gold/agro/agro.js:6310` | Bug 2 | Eliminado el skip de `unit_type` y `unit_qty` para gastos. Solo se mantiene skip para `quantity_kg` |
+| `apps/gold/agro/agro.css:8861` | Bug 3 | Override de `.agro-assistant` en modo dedicado: width/height 100%, sin border/radius/shadow, bg con token |
+| `apps/gold/agro/agro.css:8865` | Bug 3 | Ocultados backdrop y shell::before radial pulse en modo dedicado |
+| `apps/gold/agro/agro.css:9146` | Bug 3 | Header mejorado: padding aumentado, border con token gold, bg con token bg-2, min-height 56px, flex-shrink 0 |
+| `apps/gold/agro/agro.css:9228` | Bug 3 | Titulo h3 del header: font-weight 900, color con token gold-4, clamp responsive |
+| `apps/gold/agro/agro.css:9236` | Bug 3 | Boton cerrar: icono cambiado de xmark a arrow-left en modo dedicado |
+
+### QA sugerido
+- Crear/editar tarea: verificar cultivo asociado sin duplicaciones
+- Editar registro de Cartera Operativa cambiando unidad entre unidad/saco/cesta/kg: verificar persistencia y render
+- Abrir Asistente IA: verificar que es superficie dedicada completa, no modal
+- pnpm build:gold sin errores

@@ -21,6 +21,11 @@ const TASK_TYPE_OPTIONS = Object.freeze([
     { value: 'otra', label: 'Otra' }
 ]);
 
+const CROP_DISPLAY_FALLBACK_ICON = '🌱';
+const CROP_DISPLAY_FALLBACK_NAME = 'Cultivo';
+const CROP_EMOJI_TOKEN_RE = /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u;
+const CROP_TEXT_TOKEN_RE = /[\p{L}\p{N}]/u;
+
 const ECONOMIC_EFFECT_OPTIONS = Object.freeze([
     { value: 'none', label: 'Sin impacto económico' },
     { value: 'expense', label: 'Gasto' },
@@ -404,12 +409,40 @@ function isSchemaMissingError(error) {
         || String(error?.code || '') === '42P01';
 }
 
+function isCropEmojiToken(token) {
+    const value = String(token || '').trim();
+    if (!value) return false;
+    return CROP_EMOJI_TOKEN_RE.test(value) && !CROP_TEXT_TOKEN_RE.test(value);
+}
+
+function normalizeCropIcon(icon, fallback = CROP_DISPLAY_FALLBACK_ICON) {
+    const value = String(icon || '').trim();
+    if (isCropEmojiToken(value)) return value;
+    return String(fallback || CROP_DISPLAY_FALLBACK_ICON).trim() || CROP_DISPLAY_FALLBACK_ICON;
+}
+
 function buildCropDisplay(crop = {}) {
-    const name = String(crop?.name || '').trim() || 'Cultivo';
+    const rawName = String(crop?.name || '').trim();
+    const tokens = rawName ? rawName.split(/\s+/).filter(Boolean) : [];
+    const leadingIcons = [];
+    let cursor = 0;
+
+    while (cursor < tokens.length && isCropEmojiToken(tokens[cursor])) {
+        leadingIcons.push(tokens[cursor]);
+        cursor += 1;
+    }
+
+    const cleanedName = tokens.slice(cursor).join(' ').trim();
+    const iconFromName = leadingIcons.length ? leadingIcons[leadingIcons.length - 1] : '';
+    const icon = normalizeCropIcon(iconFromName || crop?.icon);
+    const name = cleanedName || (rawName && leadingIcons.length === 0 ? rawName : CROP_DISPLAY_FALLBACK_NAME);
     const variety = String(crop?.variety || '').trim();
     return {
         id: normalizeId(crop?.id),
-        label: variety ? `${name} · ${variety}` : name,
+        icon,
+        name,
+        variety,
+        label: variety ? `${icon} ${name} (${variety})` : `${icon} ${name}`,
         shortLabel: name
     };
 }
