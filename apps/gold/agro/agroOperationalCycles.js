@@ -415,6 +415,30 @@ function todayLocalIso() {
     return `${year}-${month}-${day}`;
 }
 
+function isValidLocalDateIso(value) {
+    const raw = String(value || '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return false;
+    const [year, month, day] = raw.split('-').map(Number);
+    const parsed = new Date(year, month - 1, day);
+    return parsed.getFullYear() === year
+        && parsed.getMonth() === month - 1
+        && parsed.getDate() === day;
+}
+
+function assertMovementDateAllowed(value) {
+    const safeDate = String(value || '').trim();
+    if (!safeDate) {
+        throw new Error('La fecha del movimiento es obligatoria.');
+    }
+    if (!isValidLocalDateIso(safeDate)) {
+        throw new Error('La fecha del movimiento no es válida.');
+    }
+    if (safeDate > todayLocalIso()) {
+        throw new Error('No se permiten fechas futuras.');
+    }
+    return safeDate;
+}
+
 function currentMonthKey() {
     return todayLocalIso().slice(0, 7);
 }
@@ -1054,10 +1078,7 @@ function normalizePayload(source = {}, options = {}) {
         CATEGORY_OPTIONS.map((option) => option.value),
         'Categoría no valida.'
     );
-    const movementDate = String(source.movementDate || source.movement_date || source.openedAt || source.opened_at || todayLocalIso()).trim();
-    if (!movementDate) {
-        throw new Error('La fecha del movimiento es obligatoria.');
-    }
+    const movementDate = assertMovementDateAllowed(source.movementDate || source.movement_date || source.openedAt || source.opened_at || todayLocalIso());
 
     const amount = toNullableNumber(source.amount, 'El monto');
     const quantity = toNullableNumber(source.quantity, 'La cantidad');
@@ -1588,7 +1609,7 @@ function renderEditForm(focusSnapshot) {
                         </div>
                         <div class="input-group">
                             <label class="input-label" for="agro-operational-date">Fecha</label>
-                            <input type="date" id="agro-operational-date" class="styled-input" data-operational-draft="movementDate" value="${escapeAttr(values.movementDate)}">
+                            <input type="date" id="agro-operational-date" class="styled-input" data-operational-draft="movementDate" value="${escapeAttr(values.movementDate)}" max="${todayLocalIso()}">
                         </div>
                         <div class="input-group">
                             <label class="input-label" for="agro-operational-quantity">Cantidad</label>
@@ -1753,7 +1774,7 @@ function renderWizard() {
                             </div>
                             <div class="input-group">
                                 <label class="input-label" for="agro-operational-date">Fecha</label>
-                                <input type="date" id="agro-operational-date" class="styled-input" data-operational-draft="movementDate" value="${escapeAttr(values.movementDate)}">
+                                <input type="date" id="agro-operational-date" class="styled-input" data-operational-draft="movementDate" value="${escapeAttr(values.movementDate)}" max="${todayLocalIso()}">
                             </div>
                             <div class="input-group">
                                 <label class="input-label" for="agro-operational-quantity">Cantidad física</label>
@@ -2966,9 +2987,7 @@ function validateStep(step) {
         }
 
         if (step === 3) {
-            if (!String(values.movementDate || '').trim()) {
-                throw new Error('La fecha del movimiento es obligatoria.');
-            }
+            assertMovementDateAllowed(values.movementDate);
             toNullableNumber(values.amount, 'El monto');
             const quantity = toNullableNumber(values.quantity, 'La cantidad');
             const unitTypeRaw = toNullableText(values.unitType);

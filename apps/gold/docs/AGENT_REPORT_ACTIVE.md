@@ -17335,3 +17335,68 @@ Notas:
 ### Cambios fuera de documentacion
 
 Si hubo cambios fuera de documentacion: se creo una nueva migracion en `supabase/migrations/`. No se movio `supabase/`, no se borro `apps/gold/supabase/`, no se fusionaron carpetas, no se tocaron Edge Functions y no se edito `agro.js`. No se ejecuto retiro ni saneamiento final del arbol secundario.
+
+---
+
+## Sesion: Baseline Agro Supabase + bug fecha Cartera Operativa (2026-04-17)
+
+### Fecha
+
+2026-04-17
+
+### Diagnostico inicial
+
+Bloque A - Supabase: el bloqueo vigente esta en la base canonica de `agro_crops` y `agro_roi_calculations`. El DDL remoto debe mandar sobre `apps/gold/supabase/agro_schema.sql`. La inspeccion inicial confirma que `agro_schema.sql` es historico/obsoleto y que la raiz todavia no tiene una migracion `CREATE TABLE` canonica para estas tablas.
+
+Bloque B - Cartera Operativa: el bug reportado apunta a una validacion frontend de fechas que bloquea fechas pasadas legitimas. No se tocara hasta cerrar razonablemente el bloque A.
+
+### Archivos previstos antes de editar
+
+| Bloque | Archivos previstos |
+|---|---|
+| Supabase | `supabase/migrations/<timestamp>_agro_crops_roi_baseline.sql`, `apps/gold/docs/AGENT_REPORT_ACTIVE.md` |
+| Cartera Operativa | Pendiente de localizar validacion exacta; candidatos probables en `apps/gold/agro/agroOperationalCycles.js` o helpers de fecha relacionados |
+
+### Cambios aplicados
+
+| Archivo | Cambio |
+|---|---|
+| `supabase/migrations/20260417104335_agro_crops_roi_baseline.sql` | Nueva migracion raiz forward-only/idempotente para representar el baseline remoto observado de `public.agro_crops` y `public.agro_roi_calculations` sin usar `agro_schema.sql` como canon |
+| `apps/gold/agro/agro-period-cycles.js` | Ajuste quirurgico de `assertOperationalPeriodOpen`: ya no bloquea meses pasados por cierre calendario automatico; valida fecha real y rechaza fechas futuras |
+| `apps/gold/agro/agroOperationalCycles.js` | Validacion frontend de fecha de movimiento: permite pasado legitimo, rechaza fechas invalidas/futuras y limita el picker con `max` igual a hoy |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Cierre de sesion actualizado |
+
+### Evidencia Supabase revisada
+
+- Remoto Supabase inspeccionado: `gerzlzprkarikblqxpjt`.
+- `agro_crops` remoto contiene 19 columnas observadas: `id`, `user_id`, `name`, `variety`, `icon`, `status`, `progress`, `area_size`, `investment`, `start_date`, `expected_harvest_date`, `actual_harvest_date`, `notes`, `created_at`, `updated_at`, `revenue_projected`, `deleted_at`, `status_mode`, `status_override`.
+- `agro_roi_calculations` remoto contiene 10 columnas observadas: `id`, `user_id`, `investment_amount`, `projected_revenue`, `quantity_kg`, `calculated_profit`, `roi_percentage`, `crop_id`, `notes`, `created_at`.
+- `apps/gold/supabase/agro_schema.sql` queda confirmado como snapshot historico no apto para baseline canonico directo.
+- Diferencia importante: la migracion raiz `20260226190000_agro_crops_investment_multicurrency.sql` declara columnas multimoneda para `agro_crops`, pero esas columnas no aparecen en el remoto observado de `agro_crops`; por eso no se copiaron al baseline nuevo.
+
+### Build status
+
+`pnpm build:gold` - OK.
+
+Notas:
+- `agent-guard`: OK
+- `agent-report-check`: OK
+- `vite build`: OK, 160 modules transformed
+- `check-llms`: OK
+- `check-dist-utf8`: OK
+- Advertencia no bloqueante: Node actual `v25.6.0` no coincide con engine esperado `20.x`.
+
+### QA sugerido
+
+- Revisar manualmente la migracion nueva antes de aplicarla al remoto.
+- Probar registro de Cartera Operativa con fecha pasada real, fecha de hoy y fecha futura.
+- Confirmar que la fecha pasada ya no queda bloqueada por ciclos de periodo.
+- Confirmar que una fecha futura sigue mostrando error y no guarda el movimiento.
+
+### Cambios fuera de documentacion
+
+Si hubo cambios fuera de documentacion: se creo una nueva migracion en `supabase/migrations/` y se ajustaron dos modulos JS de Agro. No se movio `supabase/`, no se retiro `apps/gold/supabase/`, no se fusionaron carpetas, no se tocaron Edge Functions y no se edito `agro.js`.
+
+### Pendiente tecnico conocido
+
+Por restriccion de no reescribir migraciones antiguas, esta migracion de baseline tiene timestamp actual y no corrige por si sola el orden historico donde migraciones anteriores ya hacen `ALTER TABLE public.agro_crops` antes de que exista un `CREATE TABLE` en raiz. Antes de declarar `supabase db reset` como fuente totalmente confiable para Agro, hace falta una decision formal sobre el orden/base inicial de migraciones.

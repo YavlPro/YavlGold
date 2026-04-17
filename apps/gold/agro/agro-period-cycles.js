@@ -69,6 +69,16 @@ function todayLocalIso() {
     return `${year}-${month}-${day}`;
 }
 
+function isValidLocalDateIso(value) {
+    const raw = String(value || '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return false;
+    const [year, month, day] = raw.split('-').map(Number);
+    const parsed = new Date(year, month - 1, day);
+    return parsed.getFullYear() === year
+        && parsed.getMonth() === month - 1
+        && parsed.getDate() === day;
+}
+
 function currentMonthKey() {
     return todayLocalIso().slice(0, 7);
 }
@@ -1142,7 +1152,13 @@ export function getAgroPeriodCyclesSummary() {
 
 export async function assertOperationalPeriodOpen({ movementDate, userId = '' } = {}) {
     const safeDate = String(movementDate || '').trim();
-    if (!safeDate || !/^\d{4}-\d{2}-\d{2}$/.test(safeDate)) return { allowed: true, cycle: null };
+    if (!safeDate) return { allowed: true, cycle: null };
+    if (!isValidLocalDateIso(safeDate)) {
+        throw new Error('La fecha del movimiento no es válida.');
+    }
+    if (safeDate > todayLocalIso()) {
+        throw new Error('No se permiten fechas futuras.');
+    }
 
     const monthKey = safeDate.slice(0, 7);
     const resolvedUserId = await ensureUserId(userId);
@@ -1180,10 +1196,6 @@ export async function assertOperationalPeriodOpen({ movementDate, userId = '' } 
 
     if (result.data) {
         cycle = normalizePersistedCycle(result.data);
-    }
-
-    if (deriveCalendarStatus(cycle) === 'finalized') {
-        throw new Error(`El período ${formatMonthLabel(monthKey)} ya está finalizado. No se permiten nuevos movimientos en ese mes.`);
     }
 
     return { allowed: true, cycle };
