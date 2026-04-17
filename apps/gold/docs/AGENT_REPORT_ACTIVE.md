@@ -950,3 +950,33 @@ Reemplazar los emojis del switch Modo Operativo por iconografia canonica Font Aw
 - NO se agrego texto extra
 - NO se toco agro.js, index.html ni otros modulos
 - NO se altero Supabase
+
+---
+
+## Sesion activa: Reubicacion Modo Operativo al sidebar shell (2026-04-17)
+
+### Objetivo
+
+Reubicar el switch de Modo Operativo desde el header superior del shell al header del sidebar de Agro, debajo del titulo, sin cambiar logica funcional.
+
+### Diagnostico
+
+El mount point `#agro-mode-switch` estaba en `agro-shell-header__right` (linea ~220 del header), entre quicknav y utilities. El sidebar shell (`agro-shell-sidebar__head`, lineas 62-65) contiene eyebrow + titulo y es la ubicacion canonica para un filtro operativo global del modulo Agro.
+
+### Cambios realizados
+
+| # | Archivo | Tipo | Cambio |
+|---|---|---|---|
+| 1 | `apps/gold/agro/index.html` | EDIT | Mover mount point de header (`agro-shell-header__right`) a sidebar head (`agro-shell-sidebar__head`, debajo del `<h2>`) |
+| 2 | `apps/gold/agro/agro.css` | EDIT | `.agro-mode-switch`: `inline-flex` → `flex`, agregar `width: 100%` y `margin-top`. Simplificar `@media (max-width: 640px)`: eliminar `order:3`/`width`/`justify-content` (ya no esta en header row) |
+
+### Resultado build
+
+`pnpm build:gold` — OK. 161 modules, 2.41s, sin errores.
+
+### No se hizo
+
+- NO se toco agro-mode.js (logica intacta)
+- NO se toco filtros de Task/Operational Cycles
+- NO se toco agro.js
+- NO se altero Supabase

@@ -10948,7 +10948,7 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
    ═══════════════════════════════════════════════════════════ */
 
 .agro-mode-switch {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 0;
   padding: 3px;
@@ -10956,6 +10956,8 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
   border: 1px solid var(--border-neutral, rgba(255,255,255,0.08));
   background: var(--bg-3, #111113);
   flex-shrink: 0;
+  width: 100%;
+  margin-top: var(--space-2, 0.5rem);
 }
 
 .agro-mode-switch__btn {
@@ -11009,14 +11011,9 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
 }
 
 @media (max-width: 640px) {
-  .agro-mode-switch {
-    order: 3;
-    width: 100%;
-    justify-content: center;
-  }
   .agro-mode-switch__btn {
     flex: 1;
-    min-height: 36px;
+    min-height: 34px;
   }
 }
 
