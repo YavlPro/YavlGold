@@ -5,6 +5,7 @@
  */
 
 import supabase from '../assets/js/config/supabase-config.js';
+import { getPendingTransferToken } from './agro-unit-totals.js';
 
 // ============================================================
 // HELPERS
@@ -27,6 +28,48 @@ function pctSafe(numerator, denominator) {
 
 function escMd(str) {
     return String(str || '').replace(/\|/g, '·').replace(/\n/g, ' ');
+}
+
+const CROP_DISPLAY_FALLBACK_ICON = '🌱';
+const CROP_DISPLAY_FALLBACK_NAME = 'Cultivo';
+const CROP_EMOJI_TOKEN_RE = /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u;
+const CROP_TEXT_TOKEN_RE = /[\p{L}\p{N}]/u;
+
+function isCropEmojiToken(token) {
+    const value = String(token || '').trim();
+    if (!value) return false;
+    return CROP_EMOJI_TOKEN_RE.test(value) && !CROP_TEXT_TOKEN_RE.test(value);
+}
+
+function normalizeCropIcon(icon, fallback = CROP_DISPLAY_FALLBACK_ICON) {
+    const value = String(icon || '').trim();
+    if (isCropEmojiToken(value)) return value;
+    return String(fallback || CROP_DISPLAY_FALLBACK_ICON).trim() || CROP_DISPLAY_FALLBACK_ICON;
+}
+
+function buildCropDisplayLabel(crop) {
+    const rawName = String(crop?.name || '').trim();
+    const tokens = rawName ? rawName.split(/\s+/).filter(Boolean) : [];
+    const leadingIcons = [];
+    let cursor = 0;
+
+    while (cursor < tokens.length && isCropEmojiToken(tokens[cursor])) {
+        leadingIcons.push(tokens[cursor]);
+        cursor += 1;
+    }
+
+    const cleanedName = tokens.slice(cursor).join(' ').trim();
+    const iconFromName = leadingIcons.length ? leadingIcons[leadingIcons.length - 1] : '';
+    const icon = normalizeCropIcon(iconFromName || crop?.icon);
+    const name = cleanedName || (rawName && leadingIcons.length === 0 ? rawName : CROP_DISPLAY_FALLBACK_NAME);
+    const variety = String(crop?.variety || '').trim();
+    const label = `${icon} ${name}`;
+    return variety ? `${label} (${variety})` : label;
+}
+
+function isActivePendingRow(row) {
+    const token = getPendingTransferToken(row);
+    return token !== 'transferred' && token !== 'reverted';
 }
 
 function looksLikeSchemaMismatch(error) {
@@ -337,19 +380,19 @@ async function fetchCrops(userId) {
     try {
         const attempts = [
             {
-                select: 'id,name,variety,status,status_override,start_date,expected_harvest_date,actual_harvest_date,investment',
+                select: 'id,name,variety,icon,status,status_override,start_date,expected_harvest_date,actual_harvest_date,investment',
                 filterDeletedAt: true
             },
             {
-                select: 'id,name,variety,status,status_override,start_date,expected_harvest_date,actual_harvest_date,investment',
+                select: 'id,name,variety,icon,status,status_override,start_date,expected_harvest_date,actual_harvest_date,investment',
                 filterDeletedAt: false
             },
             {
-                select: 'id,name,variety,status,start_date,expected_harvest_date,actual_harvest_date,investment',
+                select: 'id,name,variety,icon,status,start_date,expected_harvest_date,actual_harvest_date,investment',
                 filterDeletedAt: false
             },
             {
-                select: 'id,name,variety,start_date,expected_harvest_date,investment',
+                select: 'id,name,variety,icon,start_date,expected_harvest_date,investment',
                 filterDeletedAt: false
             }
         ];
@@ -423,9 +466,8 @@ async function fetchPending(userId) {
     try {
         const attempts = [
             {
-                select: 'id,concepto,monto,monto_usd,currency,fecha,cliente,crop_id,deleted_at,transfer_state',
-                filterDeletedAt: true,
-                extendQuery: (query) => query.neq('transfer_state', 'transferred')
+                select: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,cliente,crop_id,deleted_at,transfer_state,transferred_to,transferred_income_id,reverted_at',
+                filterDeletedAt: true
             },
             {
                 select: 'id,concepto,monto,monto_usd,currency,fecha,cliente,crop_id,deleted_at',
@@ -440,7 +482,7 @@ async function fetchPending(userId) {
         if (error) {
             console.warn('[StatsReport] pending error:', error.message || error);
         }
-        return rows;
+        return rows.filter(isActivePendingRow);
     } catch (err) {
         console.warn('[StatsReport] pending exception:', err);
         return [];
@@ -491,6 +533,7 @@ function buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRo
         cropMap.set(String(c.id), {
             name: c.name || 'Sin nombre',
             variety: c.variety || '',
+            label: buildCropDisplayLabel(c),
             crop: c,
             investmentCents: toCents(c.investment),
             incomeCents: 0,
@@ -567,7 +610,7 @@ function buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRo
             totals.pendingCents += c.pendingCents;
             totals.lossesCents += c.lossesCents;
 
-            const label = c.variety ? `${c.name} (${c.variety})` : c.name;
+            const label = c.label || (c.variety ? `${c.name} (${c.variety})` : c.name);
             const costCents = c.investmentCents + c.expenseCents + c.lossesCents;
             const profitCents = c.incomeCents - costCents;
             const roi = costCents > 0 ? (((c.incomeCents - costCents) / costCents) * 100).toFixed(1) + '%' : 'N/A';

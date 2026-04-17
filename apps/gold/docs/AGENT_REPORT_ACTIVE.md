@@ -17400,3 +17400,78 @@ Si hubo cambios fuera de documentacion: se creo una nueva migracion en `supabase
 ### Pendiente tecnico conocido
 
 Por restriccion de no reescribir migraciones antiguas, esta migracion de baseline tiene timestamp actual y no corrige por si sola el orden historico donde migraciones anteriores ya hacen `ALTER TABLE public.agro_crops` antes de que exista un `CREATE TABLE` en raiz. Antes de declarar `supabase db reset` como fuente totalmente confiable para Agro, hace falta una decision formal sobre el orden/base inicial de migraciones.
+
+---
+
+## Sesion: Alineacion Cartera Viva, reportes y ciclos finalizados (2026-04-17)
+
+### Fecha
+
+2026-04-17
+
+### Paso 0 - Diagnostico antes de editar
+
+Bloque A - Fiados/reportes/estadisticas: la desalineacion principal observada esta en el criterio de "fiado activo". Hay registros de `agro_pending` que siguen con `transfer_state = active`, pero ya tienen marcas reales de transferencia como `transferred_income_id`. Si una superficie solo mira `transfer_state`, puede volver a contar deuda ya cerrada. El Perfil Global ademas estaba sumando fiados historicos no eliminados como saldo por cobrar.
+
+Bloque B - Emojis duplicados: hay nombres de cultivo persistidos con emojis al inicio y algunas vistas vuelven a anteponer `crop.icon`. La duplicacion parece de render/formatter, no de que el usuario haya elegido dos cultivos distintos.
+
+Bloque C - Ciclos finalizados: el conteo de ciclos finalizados existe, pero la superficie puede quedar sin desplegar el historial si el contenedor se crea despues de que el shell ya sincronizo la subvista `finalizados`. El problema apunta a visibilidad/filtro de UI, no a ausencia inicial de datos.
+
+### Archivos previstos antes de editar
+
+| Bloque | Archivos previstos |
+|---|---|
+| A - Fiados/reportes | `apps/gold/agro/agro-stats-report.js`, `apps/gold/agro/agroestadistica.js`, `apps/gold/agro/agroperfil.js`, `apps/gold/agro/agro-cartera-viva-view.js`, `apps/gold/docs/AGENT_REPORT_ACTIVE.md` |
+| B - Emojis/selectores | `apps/gold/agro/agroOperationalCycles.js`, `apps/gold/agro/agro-stats-report.js`, `apps/gold/agro/agroestadistica.js` |
+| C - Ciclos finalizados | `apps/gold/agro/agro.js` solo si hace falta un fix quirurgico de visibilidad |
+
+### Separacion de problemas
+
+- Datos/criterio: distinguir fiados activos reales de historial transferido/cerrado.
+- Visual/render: normalizar una sola capa de iconografia por cultivo al renderizar labels.
+- Visibilidad/filtro: asegurar que la subvista de ciclos finalizados muestre el historial cuando ya existe conteo y datos.
+
+### Cambios aplicados
+
+| Archivo | Cambio |
+|---|---|
+| `supabase/migrations/20260417113444_agro_buyer_portfolio_transfer_markers.sql` | Nueva migracion raiz forward-only para que `agro_buyer_portfolio_summary_v1` no cuente como deuda activa fiados con marcadores de transferencia (`transferred_income_id`, `transferred_to` o `transfer_state = transferred`); tambien asegura columnas de metadata si faltan |
+| `apps/gold/agro/agro-stats-report.js` | El Informe Estadistico ahora filtra fiados activos con `getPendingTransferToken`; deja fuera fiados transferidos/revertidos y normaliza labels de cultivos para no duplicar emojis |
+| `apps/gold/agro/agroestadistica.js` | `getGlobalStats()` deja de sumar todo `agro_pending` historico como saldo por cobrar; usa solo fiados activos y limpia labels de cultivos en Top Cultivos |
+| `apps/gold/agro/agroperfil.js` | Copy del Perfil Global aclarado: "Fiados activos" son saldo vigente; lo transferido queda como historial |
+| `apps/gold/agro/agro-cartera-viva-view.js` | Overlay por cultivo de Cartera Viva respeta marcadores de transferencia y no reabre como pendiente un fiado ya cerrado por pago/perdida/transferencia |
+| `apps/gold/agro/agroOperationalCycles.js` | Selector de cultivo en Cartera Operativa renderiza una sola capa de iconografia, limpiando emojis persistidos al inicio del nombre |
+| `apps/gold/agro/agro.js` | Fix quirurgico de visibilidad: en subvista `ciclos/finalizados`, el acordeon del historial queda abierto para que el contenido sea visible mientras el summary esta oculto por CSS |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Paso 0 y cierre de sesion actualizados |
+
+### Evidencia revisada
+
+- Informe Estadistico exportado: `C:\Users\yerik\Downloads\Estadisticas_YavlGold_2026-04-17.md`.
+- Perfil Agricultor exportado: `C:\Users\yerik\Downloads\agro_perfil_global_2026-04-17T15-05-59-822Z.md`.
+- Capturas de UI: selector con emojis duplicados y vista `Ciclos finalizados`.
+- Remoto Supabase observado: `agro_pending` tenia dos filas de batata de `jose luis` con `transfer_state = active`, pero con `transferred_income_id`; esas filas no deben contar como fiado activo.
+- Pepino conserva fiados activos reales; `Orlando Pineda` mantiene deuda activa en pepino, no en batata.
+
+### Build status
+
+`pnpm build:gold` - OK.
+
+Notas:
+- `agent-guard`: OK
+- `agent-report-check`: OK
+- `vite build`: OK, 160 modules transformed
+- `check-llms`: OK
+- `check-dist-utf8`: OK
+- Advertencia no bloqueante: Node actual `v25.6.0` no coincide con engine esperado `20.x`.
+
+### QA sugerido
+
+- Generar nuevamente el Informe Estadistico y confirmar que batata no conserve `$195.00` como fiado activo si esas filas ya estan transferidas.
+- Generar nuevamente el Perfil Agricultor y confirmar que el total de `Fiados activos` no incluya historial transferido.
+- Abrir Cartera Viva por cultivo: confirmar que `jose luis` no queda como deudor activo en batata y que `Orlando Pineda` solo queda como deudor donde exista saldo activo real.
+- Abrir el modal "Nueva cartera operativa" y revisar el selector de cultivo: cada cultivo debe mostrar un solo icono.
+- Abrir `Ciclos finalizados` y confirmar que las tarjetas finalizadas aparecen debajo del resumen.
+
+### Cambios fuera de documentacion
+
+Si hubo cambios fuera de documentacion: se creo una nueva migracion en `supabase/migrations/` y se ajustaron modulos JS de Agro. No se movio `supabase/`, no se retiro `apps/gold/supabase/`, no se tocaron Edge Functions y no se hizo saneamiento estructural.

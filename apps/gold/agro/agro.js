@@ -10745,6 +10745,12 @@ function createCycleHistoryGroupSection(config = {}) {
     return { section, title, grid };
 }
 
+function isFinishedCycleSubviewActive() {
+    const activeView = String(document.body?.dataset?.agroActiveView || '').trim();
+    const activeSubview = String(document.body?.dataset?.agroSubview || '').trim();
+    return activeView === 'ciclos' && activeSubview === 'finalizados';
+}
+
 function ensureCropCycleHistorySection() {
     const cropsSection = document.querySelector('.crops-section');
     if (!cropsSection) return null;
@@ -10849,6 +10855,12 @@ function ensureCropCycleHistorySection() {
 
     if (details.parentElement !== historyHost) {
         historyHost.appendChild(details);
+    }
+
+    if (isFinishedCycleSubviewActive()) {
+        details.open = true;
+        const summary = details.querySelector('summary');
+        if (summary) summary.setAttribute('aria-expanded', 'true');
     }
 
     let contentEl = details.querySelector(`#${CROP_CYCLE_HISTORY_SECTION_ID}-content`) || details.querySelector('.yg-accordion-content');

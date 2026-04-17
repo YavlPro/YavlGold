@@ -18,6 +18,7 @@ import {
     openBuyerProfileById,
     openNewBuyerProfile
 } from './agrocompradores.js';
+import { getPendingTransferToken } from './agro-unit-totals.js';
 
 const CARTERA_VIVA_VIEW = 'cartera-viva';
 const CARTERA_VIVA_ROOT_ID = 'agro-cartera-viva-root';
@@ -758,7 +759,7 @@ async function fetchOperationalProgressMap(supabaseClient, cropId = null) {
     const baseColumns = 'buyer_id,buyer_group_key,unit_type,unit_qty,quantity_kg,monto,monto_usd,buyer_match_status';
     const pendingQuery = supabaseClient
         .from('agro_pending')
-        .select(`${baseColumns},transfer_state,transferred_to,crop_id`)
+        .select(`${baseColumns},transfer_state,transferred_to,transferred_income_id,crop_id`)
         .is('deleted_at', null)
         .is('reverted_at', null);
     const incomeQuery = supabaseClient
@@ -791,7 +792,11 @@ async function fetchOperationalProgressMap(supabaseClient, cropId = null) {
     const nextSummaryMap = new Map();
 
     (Array.isArray(pendingResult?.data) ? pendingResult.data : []).forEach((row) => {
-        const transferState = String(row?.transfer_state || 'active').trim().toLowerCase();
+        const transferToken = getPendingTransferToken(row);
+        const isActivePending = transferToken !== 'transferred' && transferToken !== 'reverted';
+        const transferTarget = String(row?.transferred_to || '').trim().toLowerCase();
+        const isClosedIntoIncome = transferTarget === 'income' || !!row?.transferred_income_id;
+        const isClosedIntoLoss = transferTarget === 'losses';
         const matchStatus = String(row?.buyer_match_status || '').trim().toLowerCase();
         if (safeCropId) {
             appendCropScopedReview(nextSummaryMap, row);
@@ -800,18 +805,15 @@ async function fetchOperationalProgressMap(supabaseClient, cropId = null) {
                 if (bucket) {
                     const amount = readPortfolioAmount(row);
                     bucket.credited_total += amount;
-                    if (transferState === 'active') {
+                    if (isActivePending) {
                         bucket.pending_total += amount;
-                    } else if (
-                        transferState === 'transferred'
-                        && !['income', 'losses'].includes(String(row?.transferred_to || '').trim().toLowerCase())
-                    ) {
+                    } else if (transferToken === 'transferred' && !isClosedIntoIncome && !isClosedIntoLoss) {
                         bucket.transferred_total += amount;
                     }
                 }
             }
         }
-        if (transferState !== 'active') return;
+        if (!isActivePending) return;
         const scopeKey = buildBuyerPortfolioScopeKey(row);
         appendOperationalProgressEntry(nextMap, scopeKey, 'pending', row);
         appendOperationalProgressFamilyEntry(nextFamilyMap, scopeKey, 'pending', row);

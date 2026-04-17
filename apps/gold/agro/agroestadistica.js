@@ -1,4 +1,5 @@
 import { convertToUSD, getRate, initExchangeRates } from './agro-exchange.js';
+import { getPendingTransferToken } from './agro-unit-totals.js';
 
 const CROP_STATUSES = {
     FINALIZED: new Set(['finalizado', 'finalized', 'harvested', 'completed', 'cosechado']),
@@ -35,6 +36,47 @@ const EMPTY_STATS = {
 
 const USD_LEGACY_OUTLIER_THRESHOLD = 1000;
 const USD_AUDIT_PREVIEW_LIMIT = 40;
+const CROP_DISPLAY_FALLBACK_ICON = '🌱';
+const CROP_DISPLAY_FALLBACK_NAME = 'Cultivo';
+const CROP_EMOJI_TOKEN_RE = /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u;
+const CROP_TEXT_TOKEN_RE = /[\p{L}\p{N}]/u;
+
+function isCropEmojiToken(token) {
+    const value = String(token || '').trim();
+    if (!value) return false;
+    return CROP_EMOJI_TOKEN_RE.test(value) && !CROP_TEXT_TOKEN_RE.test(value);
+}
+
+function normalizeCropIcon(icon, fallback = CROP_DISPLAY_FALLBACK_ICON) {
+    const value = String(icon || '').trim();
+    if (isCropEmojiToken(value)) return value;
+    return String(fallback || CROP_DISPLAY_FALLBACK_ICON).trim() || CROP_DISPLAY_FALLBACK_ICON;
+}
+
+function buildCropDisplayLabel(crop) {
+    const rawName = String(crop?.name || '').trim();
+    const tokens = rawName ? rawName.split(/\s+/).filter(Boolean) : [];
+    const leadingIcons = [];
+    let cursor = 0;
+
+    while (cursor < tokens.length && isCropEmojiToken(tokens[cursor])) {
+        leadingIcons.push(tokens[cursor]);
+        cursor += 1;
+    }
+
+    const cleanedName = tokens.slice(cursor).join(' ').trim();
+    const iconFromName = leadingIcons.length ? leadingIcons[leadingIcons.length - 1] : '';
+    const icon = normalizeCropIcon(iconFromName || crop?.icon);
+    const name = cleanedName || (rawName && leadingIcons.length === 0 ? rawName : CROP_DISPLAY_FALLBACK_NAME);
+    const variety = String(crop?.variety || '').trim();
+    const label = `${icon} ${name}`;
+    return variety ? `${label} (${variety})` : label;
+}
+
+function isActivePendingRow(row) {
+    const token = getPendingTransferToken(row);
+    return token !== 'transferred' && token !== 'reverted';
+}
 
 function toSafeNumber(value) {
     if (typeof value === 'number') {
@@ -361,7 +403,8 @@ export async function getGlobalStats({ supabase: supabaseClient, userId, range }
             'agro_crops',
             resolvedUserId,
             [
-                'id,name,variety,status,status_override,investment,created_at,start_date,deleted_at',
+                'id,name,variety,icon,status,status_override,investment,created_at,start_date,deleted_at',
+                'id,name,variety,icon,status,investment,created_at,start_date',
                 'id,name,variety,status,investment,created_at,start_date'
             ],
             warnings,
@@ -384,7 +427,9 @@ export async function getGlobalStats({ supabase: supabaseClient, userId, range }
             'agro_pending',
             resolvedUserId,
             [
-                'id,crop_id,concepto,monto,monto_usd,currency,exchange_rate,created_at,fecha,deleted_at',
+                'id,crop_id,concepto,monto,monto_usd,currency,exchange_rate,created_at,fecha,deleted_at,transfer_state,transferred_to,transferred_income_id,reverted_at',
+                'id,crop_id,concepto,monto,monto_usd,currency,exchange_rate,created_at,fecha,deleted_at,transfer_state,transferred_to,transferred_income_id',
+                'id,crop_id,concepto,monto,monto_usd,currency,exchange_rate,created_at,fecha,deleted_at,transfer_state',
                 'id,crop_id,concepto,monto,monto_usd,currency,exchange_rate,created_at,fecha'
             ],
             warnings,
@@ -428,7 +473,7 @@ export async function getGlobalStats({ supabase: supabaseClient, userId, range }
 
     const crops = cropsRows.filter((row) => !row?.deleted_at);
     const incomes = incomeRows.filter((row) => !row?.deleted_at && !row?.reverted_at);
-    const pending = pendingRows.filter((row) => !row?.deleted_at);
+    const pending = pendingRows.filter((row) => !row?.deleted_at && isActivePendingRow(row));
     const expenses = expenseRows.filter((row) => !row?.deleted_at);
     const losses = lossesRows.filter((row) => !row?.deleted_at);
     const transfers = transferRows.filter((row) => !row?.deleted_at);
@@ -485,9 +530,7 @@ export async function getGlobalStats({ supabase: supabaseClient, userId, range }
     crops.forEach((row) => {
         const key = String(row?.id || '').trim();
         if (!key) return;
-        const name = String(row?.name || '').trim() || 'Cultivo';
-        const variety = String(row?.variety || '').trim();
-        cropMap.set(key, variety ? `${name} (${variety})` : name);
+        cropMap.set(key, buildCropDisplayLabel(row));
     });
 
     const buyerTotals = new Map();
