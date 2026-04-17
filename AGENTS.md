@@ -114,14 +114,79 @@ agro-cart.js         — carrito
 - `AGENT_REPORT_ACTIVE.md` en la raíz, si existe, es solo un puntero de compatibilidad y no compite con la ruta activa.
 - `global_rules.md` de Windsurf, si aparece, es solo copia operativa condensada y no fuente de verdad.
 
-### Regla de cierre de sesión
+### 4.1 — Rotación canónica de `AGENT_REPORT_ACTIVE.md`
 
-Cada sesión de trabajo de un agente debe agregar una sección al final de `apps/gold/docs/AGENT_REPORT_ACTIVE.md` con:
-- Fecha
-- Diagnóstico
-- Cambios aplicados (archivos + líneas)
-- Build status
-- QA sugerido
+Para evitar que `apps/gold/docs/AGENT_REPORT_ACTIVE.md` se convierta en un monolito documental difícil de leer, difícil de mantener y costoso para agentes, se establece la siguiente ley canónica de rotación:
+
+#### Regla de umbral
+
+- Cuando `apps/gold/docs/AGENT_REPORT_ACTIVE.md` alcance o supere **4000 líneas**, el agente debe tratarlo como candidato obligatorio a rotación.
+- No se debe seguir creciendo indefinidamente un reporte activo por comodidad.
+
+#### Acción obligatoria al superar el umbral
+
+Cuando el archivo supere el umbral:
+
+1. **Archivar el documento activo actual** como contexto histórico.
+2. **Renombrarlo** con formato explícito de rango temporal:
+
+   `AGENT_LEGACY_CONTEXT__<fecha-inicio>__<fecha-cierre>.md`
+
+   Ejemplo:
+
+   `AGENT_LEGACY_CONTEXT__2026-03-12__2026-04-17.md`
+
+3. El documento archivado debe conservar:
+   - fecha de inicio;
+   - fecha de cierre;
+   - contenido íntegro;
+   - naturaleza histórica / solo consulta.
+
+4. Luego, el agente debe **crear un nuevo**:
+
+   `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+   dejando ese archivo como la única fuente activa vigente.
+
+#### Regla semántica
+
+- `AGENT_REPORT_ACTIVE.md` = **estado vivo / contexto operativo actual**
+- `AGENT_LEGACY_CONTEXT__*.md` = **contexto histórico archivado**
+- Las crónicas mensuales siguen siendo memoria histórica mayor y no se reemplazan.
+
+#### Contenido mínimo del nuevo `AGENT_REPORT_ACTIVE.md`
+
+El nuevo archivo activo debe arrancar limpio, pero no ciego.
+Debe incluir al menos:
+
+- estado actual del proyecto;
+- frente(s) abiertos;
+- decisiones canónicas vigentes;
+- deuda técnica viva;
+- últimos cambios importantes todavía relevantes;
+- referencias a los archivos archivados si hacen falta.
+
+#### Regla de no-confusión
+
+- `AGENT_REPORT_ACTIVE.md` sigue siendo la única fuente activa de reportes de sesión.
+- Ningún archivo legacy archivado compite con él.
+- `AGENT_REPORT.md` no debe reactivarse como archivo activo.
+- Si existe `AGENT_REPORT.md`, sigue tratándose como legacy / compatibilidad / solo consulta, salvo cambio canónico explícito.
+
+#### Regla operativa para agentes
+
+Si durante una sesión un agente detecta que `AGENT_REPORT_ACTIVE.md` ya superó 4000 líneas, debe:
+
+1. diagnosticar si corresponde rotación;
+2. archivar el activo actual con rango temporal;
+3. crear el nuevo `AGENT_REPORT_ACTIVE.md`;
+4. dejar constancia breve de la rotación en el nuevo activo;
+5. seguir trabajando sobre el nuevo archivo, no sobre el archivado.
+
+#### Principio rector
+
+El reporte activo debe ser **útil para trabajar hoy**, no una acumulación infinita de pasado.
+La memoria completa se conserva, pero el contexto vivo debe mantenerse ligero, claro y operacional.
 
 ---
 
