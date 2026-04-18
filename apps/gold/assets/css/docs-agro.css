@@ -61,7 +61,7 @@ body {
   font-weight: 400;
   font-size: 0.95rem;
   line-height: 1.65;
-  background: var(--bg-1);
+  background: var(--bg-0);
   color: var(--text-secondary);
   min-height: 100vh;
   display: flex;
@@ -116,8 +116,8 @@ body {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: var(--bg-2);
-  border-bottom: 1px solid var(--border-neutral);
+  background: var(--bg-1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(12px);
   height: var(--header-h);
   display: flex;
@@ -158,9 +158,9 @@ body {
   font-family: var(--font-body);
   font-size: 0.7rem;
   font-weight: 600;
-  color: var(--gold-5);
-  background: rgba(200, 167, 82, 0.10);
-  border: 1px solid rgba(200, 167, 82, 0.15);
+  color: rgba(255, 255, 255, 0.40);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-pill);
   padding: 2px 10px;
   letter-spacing: 0.04em;
@@ -199,7 +199,7 @@ body {
 .docs-sidebar-toggle {
   display: none;
   background: none;
-  border: 1px solid var(--border-neutral);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: var(--radius-sm);
   color: var(--text-muted);
   padding: 0.5rem 0.6rem;
@@ -211,7 +211,7 @@ body {
 
 .docs-sidebar-toggle:hover {
   color: var(--gold-4);
-  border-color: var(--border-gold);
+  border-color: rgba(200, 167, 82, 0.15);
 }
 
 /* ---- Sidebar ---- */
@@ -221,8 +221,8 @@ body {
   left: 0;
   width: var(--sidebar-w);
   height: calc(100vh - var(--header-h));
-  background: var(--bg-2);
-  border-right: 1px solid var(--border-neutral);
+  background: var(--bg-1);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
   padding: 1rem 0;
   overflow-y: auto;
   z-index: 90;
@@ -234,7 +234,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 0 1rem 0.75rem;
-  border-bottom: 1px solid var(--border-neutral);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   margin-bottom: 0.5rem;
 }
 
@@ -302,7 +302,7 @@ body {
 
 .docs-sidebar__link.active {
   color: var(--gold-4);
-  background: rgba(200, 167, 82, 0.08);
+  background: rgba(200, 167, 82, 0.05);
 }
 
 /* ---- Overlay ---- */
@@ -369,7 +369,7 @@ body {
 .docs-section {
   padding-top: 2.5rem;
   padding-bottom: 2.5rem;
-  border-top: 1px solid var(--border-neutral);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .docs-section__title {
@@ -392,16 +392,15 @@ body {
 }
 
 .docs-card {
-  background: var(--bg-3);
-  border: 1px solid var(--border-neutral);
+  background: var(--bg-2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: var(--radius-md);
   padding: 1.25rem;
-  transition: border-color 180ms ease, box-shadow 180ms ease;
+  transition: border-color 180ms ease;
 }
 
 .docs-card:hover {
-  border-color: var(--border-gold);
-  box-shadow: var(--shadow-gold-sm);
+  border-color: rgba(255, 255, 255, 0.10);
 }
 
 .docs-card__icon {
@@ -474,8 +473,8 @@ body {
 }
 
 .docs-case {
-  background: var(--bg-3);
-  border: 1px solid var(--border-neutral);
+  background: var(--bg-2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: var(--radius-md);
   padding: 1.1rem 1.25rem;
 }
@@ -521,8 +520,8 @@ body {
   font-size: 0.85rem;
   font-weight: 700;
   color: var(--gold-4);
-  background: rgba(200, 167, 82, 0.10);
-  border: 1px solid rgba(200, 167, 82, 0.18);
+  background: rgba(200, 167, 82, 0.06);
+  border: none;
   width: 2rem;
   height: 2rem;
   display: flex;
@@ -555,15 +554,15 @@ body {
 }
 
 .docs-faq__item {
-  background: var(--bg-3);
-  border: 1px solid var(--border-neutral);
+  background: var(--bg-2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: var(--radius-sm);
   overflow: hidden;
   transition: border-color 180ms ease;
 }
 
 .docs-faq__item[open] {
-  border-color: var(--border-gold);
+  border-color: rgba(255, 255, 255, 0.10);
 }
 
 .docs-faq__question {
@@ -630,8 +629,8 @@ body {
 }
 
 .docs-cta__inner {
-  background: var(--bg-3);
-  border: 1px solid var(--border-gold);
+  background: var(--bg-2);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-lg);
   padding: 2.5rem 2rem;
   text-align: center;
@@ -697,8 +696,8 @@ body {
 
 /* ---- Footer ---- */
 .docs-footer {
-  background: var(--bg-2);
-  border-top: 1px solid var(--border-neutral);
+  background: var(--bg-1);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
   padding: 1.5rem;
   margin-left: var(--sidebar-w);
 }

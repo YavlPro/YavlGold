@@ -1386,3 +1386,87 @@ Crear la documentacion oficial publica de YavlGold Agro como pagina dedicada par
 - Supabase
 - `ADN-VISUAL-V10.0.md`
 - Logica del shell Agro
+
+---
+
+## Sesion activa: Segunda pasada visual + ubicacion en nav principal de docs-agro (2026-04-18)
+
+### Objetivo
+
+Segunda pasada visual y de ubicacion de la documentacion publica de Agro:
+1. Agregar "Documentacion" al header/nav principal de la landing
+2. Refinar visual: fondo negro profundo, eliminar sensacion de rejilla dorada invasiva
+
+### Diagnostico
+
+**Causa visual de la rejilla dorada:**
+- Cards con `border-color: var(--border-gold)` + `box-shadow: var(--shadow-gold-sm)` en hover creaban lineas doradas visibles en la grid de 3 columnas
+- Step numbers tenian `border: 1px solid rgba(200, 167, 82, 0.18)` generando circulos dorados
+- FAQ items con `border-color: var(--border-gold)` al abrirse
+- Header badge con colores dorados brillantes
+- Sidebar active link con `rgba(200, 167, 82, 0.08)` mas intenso de lo necesario
+- Body usaba `--bg-1` (#0a0a0a) en vez de `--bg-0` (#050505) para fondo
+
+**Ubicacion en nav:**
+- La landing tiene `.nav-links` (desktop) y `.nav-mobile` (mobile) con items: Inicio, Agro, Comunidad
+- Se inserto "Documentacion" entre Agro y Comunidad en ambos navs
+- Apunta a `/docs-agro` (clean URL con rewrite ya configurado)
+
+### Cambios realizados
+
+| # | Archivo | Tipo | Cambio |
+|---|---|---|---|
+| 1 | `apps/gold/index.html` | EDIT | Agregar `<a href="/docs-agro">Documentacion</a>` en `.nav-links` y `.nav-mobile` |
+| 2 | `apps/gold/assets/css/docs-agro.css` | EDIT | Body: `--bg-1` → `--bg-0` (fondo mas profundo) |
+| 3 | `apps/gold/assets/css/docs-agro.css` | EDIT | Header: `--bg-2` → `--bg-1`, borde `0.05` opacity |
+| 4 | `apps/gold/assets/css/docs-agro.css` | EDIT | Sidebar: `--bg-2` → `--bg-1`, borde `0.05` opacity |
+| 5 | `apps/gold/assets/css/docs-agro.css` | EDIT | Cards: `--bg-3` → `--bg-2`, sin gold shadow en hover, borde `0.05` |
+| 6 | `apps/gold/assets/css/docs-agro.css` | EDIT | Cases: `--bg-3` → `--bg-2`, borde `0.05` |
+| 7 | `apps/gold/assets/css/docs-agro.css` | EDIT | FAQ items: `--bg-3` → `--bg-2`, sin borde dorado al abrir |
+| 8 | `apps/gold/assets/css/docs-agro.css` | EDIT | CTA: `--bg-3` → `--bg-2`, sin borde dorado |
+| 9 | `apps/gold/assets/css/docs-agro.css` | EDIT | Footer: `--bg-2` → `--bg-1`, borde `0.05` |
+| 10 | `apps/gold/assets/css/docs-agro.css` | EDIT | Steps: sin borde dorado en numeros |
+| 11 | `apps/gold/assets/css/docs-agro.css` | EDIT | Badge header: colores neutros, sin dorado |
+| 12 | `apps/gold/assets/css/docs-agro.css` | EDIT | Sidebar active: `0.08` → `0.05` |
+| 13 | `apps/gold/assets/css/docs-agro.css` | EDIT | Section borders: `0.08` → `0.04` opacity |
+| 14 | `apps/gold/assets/css/docs-agro.css` | EDIT | Sidebar toggle: borde `0.05`, hover sutil |
+
+### Que NO se toco
+
+- `MANIFIESTO_AGRO.md`
+- `agro.js` ni modulos agro
+- Supabase
+- `ADN-VISUAL-V10.0.md`
+- Logica del shell Agro
+- Estructura informativa de la documentacion
+- `vite.config.js` ni `vercel.json` (ya estaban correctos)
+- CSS global de la landing (`landing-v10.css`)
+
+### Resultado build
+
+`pnpm build:gold` — OK. 166 modules, 2.33s.
+- agent-guard: OK
+- agent-report-check: OK
+- vite build: OK
+- check-llms: OK
+- check-dist-utf8: OK
+
+### QA manual sugerido
+
+1. Desktop landing: verificar "Documentacion" visible en nav entre Agro y Comunidad
+2. Mobile landing: verificar "Documentacion" en menu hamburguesa
+3. Click en "Documentacion" → debe navegar a `/docs-agro`
+4. Verificar fondo negro profundo (#050505) sin rejilla dorada
+5. Verificar cards con bordes sutiles sin sombra dorada
+6. Verificar step numbers sin borde dorado
+7. Verificar FAQ sin bordes dorados al abrir
+8. Verificar sidebar/hamburguesa de docs funcional en mobile
+9. Verificar buen contraste desktop y mobile
+
+### Comandos git sugeridos (sin ejecutar)
+
+```bash
+git status
+git add apps/gold/index.html apps/gold/assets/css/docs-agro.css apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "feat(docs): add Documentation to main nav + refine docs-agro visual — dark premium, no gold grid"
+```
