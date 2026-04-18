@@ -571,3 +571,90 @@ El control de modo parece publicar estado global (`agro:modechange` / `body[data
 - `agro.js`
 - Supabase
 - rutas, datos ni semantica de negocio fuera del shell/sidebar
+
+---
+
+## Sesion activa: Diagnostico 404 bundle Agro en produccion (2026-04-18)
+
+### Diagnostico inicial
+
+Produccion reporta `/agro` pegado en la pantalla `Cargando Agro`. La consola muestra 404 para `assets/agro-BBlqhVPW.js`. La evidencia inicial apunta a asset estatico, hash desfasado, path relativo mal resuelto, build desincronizado o routing/deploy, no a Supabase.
+
+### Hipotesis
+
+1. HTML de `/agro` publicado apunta a un hash viejo que ya no existe en assets.
+2. Vite esta generando rutas relativas `assets/...` incompatibles con clean URL `/agro`.
+3. Vercel sirve HTML y assets de builds distintas por cache/deploy parcial.
+4. `vercel.json` o rewrites interceptan assets.
+5. Solo si el bundle carga, revisar runtime posterior.
+
+### Plan quirurgico
+
+1. Inspeccionar `vite.config.js`, `vercel.json`, `agro/index.html`, `dist/agro/index.html` y `dist/assets`.
+2. Comparar el asset que pide produccion (`agro-BBlqhVPW.js`) contra los assets publicados/locales.
+3. Confirmar si el problema es path relativo, hash viejo, cache/deploy o runtime.
+4. Aplicar el menor diff posible solo si hay causa local reproducible.
+5. Ejecutar `pnpm build:gold` y documentar resultado.
+
+### Archivos a inspeccionar
+
+- `apps/gold/vite.config.js`
+- `apps/gold/vercel.json`
+- `vercel.json`
+- `apps/gold/agro/index.html`
+- `apps/gold/dist/agro/index.html`
+- `apps/gold/dist/assets/`
+- scripts de build relacionados
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Diagnostico real confirmado
+
+La evidencia HTTP actual no reproduce un 404 del bundle principal publicado. `https://yavlgold.com/agro` redirige a `https://www.yavlgold.com/agro` y el HTML servido referencia:
+
+- `../assets/agro-BBlqhVPW.js`
+- `../assets/agro-sHvVHAFj.css`
+- `../assets/preload-helper-PPVm8Dsz.js`
+- `../assets/session-guard-CeFd0xBq.js`
+- `../assets/supabase-config-Cr-hSp0z.js`
+
+Todos esos assets responden `200` bajo `/assets/...`. Tambien se probo el path anidado `https://yavlgold.com/agro/assets/agro-BBlqhVPW.js` y ese si responde `404`, lo que explica el sintoma si algun HTML/cache/request stale resolvio el asset como `agro/assets/...`.
+
+El build local fresco genera `apps/gold/dist/agro/index.html` con:
+
+- `../assets/agro-CXd4TTRv.js`
+- `../assets/agro-sHvVHAFj.css`
+
+y todos los assets referenciados existen en `apps/gold/dist/assets/`. La diferencia de hash entre local (`agro-CXd4TTRv.js`) y produccion (`agro-BBlqhVPW.js`) indica builds distintos, pero no una pareja HTML/assets rota en el estado HTTP actual.
+
+### Hipotesis descartadas
+
+- Supabase como causa primaria: descartado para este sintoma, porque el problema reportado era carga estatica del bundle antes del runtime.
+- Vite generando `assets/...` roto en el build local actual: descartado; el build genera `../assets/...` para `agro/index.html`.
+- Asset principal faltante en produccion actual: descartado; `/assets/agro-BBlqhVPW.js` responde `200`.
+- Chunks internos faltantes del bundle publicado: descartado; los chunks importados por `agro-BBlqhVPW.js` responden `200`.
+- `apps/gold/supabase/` o infraestructura Supabase: no intervino en este diagnostico.
+
+### Causa raiz operativa
+
+La captura corresponde a una peticion estatica que en ese momento termino resolviendo contra un asset no disponible o contra una ruta anidada invalida. En el estado actual verificado por HTTP, el deploy publicado ya sirve una pareja coherente de HTML + assets. La causa mas probable es cache/deploy desfasado del cliente o propagacion temporal de Vercel, no un bug reproducible en `vite.config.js`, `vercel.json` o el codigo de Agro.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+| --- | --- |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Se documento el Paso 0, el diagnostico, la evidencia HTTP y el resultado del build. |
+
+No se modifico codigo, configuracion de Vite, rutas de Vercel, Supabase ni `agro.js`, porque no hubo causa local reproducible que justificara un patch.
+
+### Validacion ejecutada
+
+- `pnpm build:gold`: OK.
+- Advertencia no bloqueante: Node local `v25.6.0` no coincide con engine esperado `20.x`.
+- `curl -L https://yavlgold.com/agro`: el HTML actual referencia `../assets/agro-BBlqhVPW.js`.
+- `curl -L -I https://yavlgold.com/assets/agro-BBlqhVPW.js`: `200 OK`.
+- `curl -L -I https://yavlgold.com/agro/assets/agro-BBlqhVPW.js`: `404 Not Found`.
+- Verificacion estatica de dependencias del bundle publicado: todos los chunks listados en `agro-BBlqhVPW.js` responden `200`.
+
+### NO QA manual realizado
+
+Por instruccion explicita de la sesion, no se hizo QA manual en navegador ni Playwright. La validacion fue por build local y comprobaciones HTTP/asset desde terminal.
