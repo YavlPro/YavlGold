@@ -648,14 +648,14 @@ Un filtro de navegación y lectura que opera sobre el shell de Agro. No es un m�
 ### Qué no es
 
 * **No es un módulo.** No aparece como sección en el menú lateral.
-* **No reemplaza la taxonomía de Agro.** No reclassifica superfícies ni mezcla conceitos.
+* **No reemplaza la taxonomía de Agro.** No reclasifica superficies ni mezcla conceptos.
 * **No es un filtro de datos.** No altera registros ni cálculos.
 * **No es un selector de tema.** No cambia colores ni modos visuales dark/light.
 
 ### Para qué sirve
 
 * Permitir lectura enfocada: cuando el usuario está trabajando solo con cultivos, puede filtrar el shell para mostrar solo lo relevante a ese contexto.
-* Reducir ruido visual: en pantallas con múltiples superfícies, el filtro oculta las que no corresponden al modo activo.
+* Reducir ruido visual: en pantallas con múltiples superficies, el filtro oculta las que no corresponden al modo activo.
 * Organizar la jornada: el agricultor puede cambiar de modo según el momento (cultivo vs. herramientas vs. operación general).
 
 ### Modos definidos
@@ -665,25 +665,100 @@ Un filtro de navegación y lectura que opera sobre el shell de Agro. No es un m�
 | `General` | Todo el contenido del shell | Nada |
 | `Cultivo` | Contenido asociado a ciclos de cultivo | Contenido transversales u operativos no asociados |
 | `No Cultivo` | Contenido no asociado a ningún ciclo de cultivo | Contenido específico de cultivo |
-| `Herramientas` | Superfícies transversales: Rankings, Clima, AgroRepo, IA, perfil | Contenido productivo y financiero |
+| `Herramientas` | Superficies transversales: Rankings, Clima, AgroRepo, IA, perfil | Contenido productivo y financiero |
 
 ### Comportamiento
 
-El switch cambia el **contexto de lectura** del shell, no la semántica del sistema. Cada modo mantiene la estructura de navegación lateral intacta; solo filtra qué superfícies aparecen como accesibles o relevantes en el área de contenido.
+El switch cambia el **contexto de lectura** del shell, no la semántica del sistema. Cada modo mantiene la estructura de navegación lateral intacta; solo filtra qué superficies aparecen como accesibles o relevantes en el área de contenido.
 
 ### Cómo se relaciona con la navegación lateral
 
-El switch vive en el header del sidebar shell, debajo del título. La navegación lateral (`apps/gold/docs/NAVEGACION.md`) sigue siendo la autoridad de qué superfícies existen y cómo se llaman. El switch no crea nuevas superfícies ni renombra existentes.
+El switch vive en el header del sidebar shell, debajo del título. La navegación lateral (`apps/gold/docs/NAVEGACION.md`) sigue siendo la autoridad de qué superficies existen y cómo se llaman. El switch no crea nuevas superficies ni renombra existentes.
 
 ### Límites
 
-* Si una superfície no está asociada a ningún modo, permanece visible en `General` y accesible siempre.
+* Si una superficie no está asociada a ningún modo, permanece visible en `General` y accesible siempre.
 * El switch no altera permisos ni visibilidad de datos por seguridad.
 * El modo activa se conserva en sesión hasta que el usuario lo cambia.
 
 ### Ejemplo de uso
 
-El agricultor entra al shell y ve todo disponible. Quiere enfocarse en sus ciclos de tomate. Activa el modo `Cultivo` y el shell filtra la lectura mostrando únicamente conteúdos ligados a cultivos. Después, en la misma sesión, cambia a `Herramientas` para consultar Rankings sin que los datos de cultivo interfieran en la vista.
+El agricultor entra al shell y ve todo disponible. Quiere enfocarse en sus ciclos de tomate. Activa el modo `Cultivo` y el shell filtra la lectura mostrando únicamente contenidos ligados a cultivos. Después, en la misma sesión, cambia a `Herramientas` para consultar Rankings sin que los datos de cultivo interfieran en la vista.
+
+---
+
+### 4.11.1 Favoritos del Shell
+
+#### Qué es
+
+Una capa de preferencia personal que permite al usuario marcar superficies del shell como accesibles directamente, sin necesidad de navegar por la estructura lateral. No es un módulo nuevo ni una vista independiente. Es el equivalente a marcar páginas en un navegador: el sistema conserva el recuerdo de qué zonas fueron marcadas, pero no cambia nada del sistema en sí.
+
+#### Qué no es
+
+* **No es un módulo.** No aparece como sección propia en el menú.
+* **No es una vista nueva.** No tiene pantalla dedicada.
+* **No altera datos ni cálculos.** No afecta registros ni lógica de negocio.
+* **No reemplaza la navegación lateral.** El sidebar sigue siendo la autoridad de qué superficies existen.
+* **No es un acceso de admin.** Cualquier usuario puede marcar sus propios favoritos.
+* **No redefine taxonomía.** Marcar un favorito no cambia el nombre, tipo ni categoría de una superficie.
+
+#### Para qué sirve
+
+* Acceso rápido a superficies que el usuario consulta con frecuencia.
+* Reducción de fricción: no tiene que recorrer la navegación cada vez que quiere llegar a Rankings o Cartera Viva.
+* Personalización sin consecuencias: marcar un favorito no afecta al sistema ni a otros usuarios.
+
+#### Cómo se relaciona con el shell
+
+Vive como bloque dinámico dentro del shell. Si el usuario no tiene favoritos marcados, el bloque no aparece. Si tiene uno o más, se renderiza un acceso directo a cada una, sin interferir con la navegación lateral ni con el switch maestro.
+
+#### Límites
+
+* Los favoritos son puramente personales. Un favorito de usuario A no existe para usuario B.
+* No hay favoritos "de sistema" predefinidos. El usuario decide.
+* Si una superficie deja de existir, su favorito asociado se vuelve inútil y debe poder limpiarse sin generar errores.
+
+---
+
+### 4.11.2 Búsqueda Agro Compacta
+
+#### Qué es
+
+Una herramienta de localización puntual dentro del shell Agro. Permite al usuario escribir un término y encontrar superficies, vistas o entradas navegables relacionadas, sin necesidad de recorrer la navegación manualmente. No busca en la base de datos general del sistema. No escanea clientes, facturero profundo ni notas de AgroRepo.
+
+#### Qué no es
+
+* **No es un buscador global.** No busca en toda la plataforma.
+* **No es un motor de consulta semántica.** No responde preguntas ni cruza tablas.
+* **No es un reemplazo de navegación.** El sidebar y el switch siguen siendo el camino principal.
+* **No es un filtro de datos.** No altera registros ni resultados.
+* **No busca en AgroRepo profundo.** No extrae notas ni contenido textual.
+* **No es persistente.** El término permanece solo mientras el usuario no lo limpie.
+
+#### Para qué sirve
+
+* Localizar una superficie o vista específica cuando el usuario sabe lo que busca pero no quiere recorrer el sidebar.
+* Redirigir al usuario al resultado elegido dentro del shell.
+* Ofrecer una ruta directa sin fricción.
+
+#### Cómo se relaciona con el shell
+
+Vive como componente compacto del header del sidebar. Se despliega con un input y muestra coincidencias relacionadas en una lista corta. Al elegir una opción, cierra el desplegable y lleva al usuario a la superficie o vista correspondiente.
+
+#### Límites
+
+* El alcance es solo del shell Agro: superficies, vistas y entradas navegables.
+* Si el término no coincide con ninguna superficie, no muestra resultados — no llena de ruido.
+* No compite con el switch maestro: búsqueda es localización, switch es contexto de lectura.
+* El resultado seleccionado se limpia automáticamente al cerrar o al navegar a otra vista.
+
+### Ejemplo de uso de favoritas y búsqueda
+
+**Escenario: acceso rápido en un día lleno**
+El agricultor tiene favoritos marcados: Rankings, Cartera Viva y Clima. Estos aparecen como accesos directos en su shell sin necesidad de tocar la navegación. Quiere consultar algo rápido: abre búsqueda compacta, escribe "rank", aparece "Rankings" como opción, hace clic y llega directo.
+
+**Escenario: ubicación de una superficie sin conocer la navegación**
+El usuario quiere ir a "Ciclos de período" pero no recuerda dónde está. Usa la búsqueda compacta, escribe "per", ve el resultado y llega sin recorrer todo el sidebar.
 
 ---
 
@@ -961,7 +1036,15 @@ La regla semántica correcta es que el usuario no quede atrapado por un error op
 
 ### 9.21 ¿Qué hace el filtro maestro del shell Agro?
 
-Es un switch de lectura que filtra qué contenidos aparecen como relevantes en el shell, sin cambiar la estructura de navegación ni inventar nuevas superfícies. Tiene cuatro modos: `General` (todo visible), `Cultivo` (solo contenidos asociados a ciclos de cultivo), `No Cultivo` (contenidos no asociados a ningún ciclo) y `Herramientas` (superfícies transversales como Rankings, Clima, AgroRepo, IA y perfil). No es un filtro de datos ni un selector de tema: solo ajusta qué áreas se muestran según el contexto operativo del momento.
+Es un switch de lectura que filtra qué contenidos aparecen como relevantes en el shell, sin cambiar la estructura de navegación ni inventar nuevas superficies. Tiene cuatro modos: `General` (todo visible), `Cultivo` (solo contenidos asociados a ciclos de cultivo), `No Cultivo` (contenidos no asociados a ningún ciclo) y `Herramientas` (superficies transversales como Rankings, Clima, AgroRepo, IA y perfil). No es un filtro de datos ni un selector de tema: solo ajusta qué áreas se muestran según el contexto operativo del momento.
+
+### 9.22 ¿Qué hacen los favoritos del shell Agro?
+
+Permiten al usuario marcar superficies que consulta con frecuencia para acceder directamente sin recorrer la navegación. Los favoritos son personales — otro usuario no ve los tuyos — y no alteran nada del sistema. Si no hay favoritos marcados, el bloque no aparece. No son un módulo ni una vista: son accesos directos personales que desaparecen si se desmarcan.
+
+### 9.23 ¿Qué busca exactamente la búsqueda compacta de Agro?
+
+Solo busca superficies, vistas y entradas navegables dentro del shell Agro. No busca clientes, facturas, notas de AgroRepo ni ningún registro de la base de datos. El usuario escribe un término corto, ve una lista de resultados relacionados y al elegir va directo a la superficie o vista. El término se limpia al cerrar. Es una herramienta de localización, no un buscador del sistema completo.
 
 ---
 
