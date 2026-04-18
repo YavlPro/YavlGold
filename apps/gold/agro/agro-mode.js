@@ -126,7 +126,7 @@ let wasDragged = false;
 let dragActive = false;
 let dragStartX = 0;
 let dragScrollLeft = 0;
-const DRAG_THRESHOLD = 4;
+const DRAG_THRESHOLD = 6;
 
 function onPointerDown(e) {
     if (e.pointerType === 'touch') return;
@@ -135,14 +135,17 @@ function onPointerDown(e) {
     wasDragged = false;
     dragStartX = e.clientX;
     dragScrollLeft = rootEl.scrollLeft;
-    rootEl.classList.add('is-dragging');
-    rootEl.setPointerCapture(e.pointerId);
 }
 
 function onPointerMove(e) {
     if (!dragActive) return;
     const dx = e.clientX - dragStartX;
-    if (Math.abs(dx) > DRAG_THRESHOLD) wasDragged = true;
+    if (Math.abs(dx) > DRAG_THRESHOLD) {
+        if (!wasDragged) {
+            wasDragged = true;
+            rootEl.classList.add('is-dragging');
+        }
+    }
     rootEl.scrollLeft = dragScrollLeft - dx;
 }
 
