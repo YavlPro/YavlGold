@@ -509,6 +509,48 @@ Se auditaron todos los documentos en `apps/gold/docs/` y se identificaron 6 info
 
 ---
 
+## Sesion activa: Canonizacion документальная del switch maestro Agro (2026-04-18)
+
+### Objetivo
+
+Documentar canonicamente el switch maestro/filtro de lectura del shell Agro en dos niveles: semantico y visual.
+
+### Diagnostico
+
+El switch estaba implementado y funcional, pero carecia de documentacion canonica. No existia en MANIFIESTO_AGRO.md ninguna referencia a este filtro, ni en ADN-VISUAL-V10.0.md ninguna especificacion de patron para switches/carruseles de modo.
+
+### Plan de insercion
+
+1. **MANIFIESTO_AGRO.md**: Subseccion `4.11 Modo de Lectura del Shell` antes de `5. Relaciones canonicas`.
+2. **ADN-VISUAL-V10.0.md**: Subseccion `🎚️ Switch de filtro / Carrusel de modos` dentro de `§7 — Componentes`.
+3. **FAQ**: Pregunta `9.21` sobre el filtro maestro.
+
+### Archivos editados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | Subseccion 4.11 | ~50 lineas: que es, que no es, modos, limites |
+| `apps/gold/docs/ADN-VISUAL-V10.0.md` | Subseccion §7 | ~90 lineas: estructura, tokens, responsive, anti-patrones |
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | FAQ | Pregunta 9.21 sobre el filtro |
+
+### Lo que NO se toco
+
+- `agro.js`, `agro-mode.js`, `agro-shell.js`
+- ninguna migracion Supabase
+- ningun CSS vivo del proyecto
+
+### Resultado build
+
+`pnpm build:gold` — OK. 161 modules, 6.63s.
+
+### QA sugerido
+
+1. Verificar que subseccion 4.11 queda logicamente placed en MANIFIESTO_AGRO.md
+2. Verificar que el patron en ADN-VISUAL-V10.0.md es fiel al comportamiento existente
+3. Confirmar que el texto/faq 9.21 es preciso y util
+
+---
+
 ## Sesion activa: Switch maestro del shell Agro (2026-04-18)
 
 ### Diagnostico

@@ -352,6 +352,143 @@ Reglas:
 - `.divider`
 - `.theme-toggle`
 
+### 🎚️ Switch de filtro / Carrusel de modos
+
+Patrón de selección de modo de lectura para el shell Agro. Usa chips deslizantes dentro de una cápsula viewport. Diseñado para ser táctil, premium y sobrio.
+
+#### Rol del componente
+
+Permite cambiar el contexto de lectura del shell sin alterar la estructura de navegación. Solo filtra qué contenidos aparecen como relevantes en cada modo.
+
+#### Estructura visual
+
+```
+┌─────────────────────────────────────────────────────┐
+│  ┌─ cápsula exterior ─────────────────────────────┐  │
+│  │  ┌─ rail/viewport ──────────────────────────┐ │  │
+│  │  │  [General] [Cultivo] [No Cultivo] [Herram.]│ │  │
+│  │  └───────────────────────────────────────────┘ │  │
+│  │           ↑ hint / metadata opcional            │  │
+│  └─────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────┘
+```
+
+| Parte | Descripción |
+|---|---|
+| Cápsula exterior | Contenedor con borde sutil, fondo `bg-2`, radios suaves |
+| Rail / viewport | Área scrolleable horizontal que contiene los chips |
+| Chips / opciones | Cada modo es un chip con estado activo / inactivo |
+| Hint / metadata | Texto auxiliar opcional debajo de los chips (ej: "4 surfaces") |
+
+#### Estado inactivo
+
+* Texto: `--text-muted` o gris premium (`#6b5a3e`)
+* Fondo: transparente
+* Sin glow ni sombra activa
+
+#### Estado activo
+
+* Texto: dorado fino (`--gold-4: #C8A752`)
+* Fondo: `rgba(200,167,82,0.12)` — dorado sutil sin ser gritón
+* Borde interior fino dorado o ausencia de borde con fondo
+* Sin glow exagerado, sin sombra pronunciada
+
+#### Tokens de estado
+
+| Token | Valor | Aplicación |
+|---|---|---|
+| `--chip-inactive-text` | `#6b5a3e` | Texto inactivo |
+| `--chip-active-text` | `#C8A752` | Texto activo |
+| `--chip-active-bg` | `rgba(200,167,82,0.12)` | Fondo activo |
+| `--chip-radius` | `999px` | Radios completamente redondeados |
+| `--chip-padding` | `6px 14px` | Padding interno del chip |
+| `--chip-gap` | `8px` | Espacio entre chips |
+| `--switch-capsule-padding` | `4px` | Espacio interno de la cápsula |
+
+#### Espaciado y medidas
+
+* Gap entre chips: `8px`
+* Padding de cada chip: `6px 14px`
+* Radios de chip: `999px` (pill completo)
+* Radios de cápsula: `12px`
+* La cápsula tiene `overflow: hidden` en el eje horizontal y permite scroll
+
+#### Comportamiento responsive
+
+**Móvil (≤768px)**
+
+* Solo 2 chips visibles por vista
+* El resto queda oculto fuera del viewport
+* Revelado por scroll horizontal (swipe o drag)
+* No se comprimen los chips para mostrar todos
+
+**Desktop (>768px)**
+
+* Scroll horizontal usable con trackpad, mouse wheel o drag
+* Soporte de navegación por teclado (flechas)
+* Se pueden mostrar 3-4 chips visibles sin comprimir
+
+#### Anti-patrones
+
+* **No mostrar todos los chips a la vez** en un espacio compacto — fuerza scroll
+* **No comprimir chips** — el texto debe ser legible sin reducir fuente
+* **No usar texto brillante** (`--gold-5`) para inactivos — el contraste es ruido
+* **No hacer el activo gritón** — `--gold-4` es suficiente como acento
+* **No romper accesibilidad** — cada chip debe tener `role="tab"` y `aria-selected`
+* **No animar con propiedades de layout** (`width/height/left/top`) — usar `transform` y `opacity`
+
+#### Ejemplo de implementación CSS
+
+```css
+.agro-mode-switch {
+  display: flex;
+  width: 100%;
+}
+
+.agro-mode-switch__capsule {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  gap: var(--chip-gap, 8px);
+  padding: var(--switch-capsule-padding, 4px);
+  background: var(--bg-2, #3a3228);
+  border-radius: 12px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.agro-mode-switch__capsule::-webkit-scrollbar {
+  display: none;
+}
+
+.agro-mode-switch__chip {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+  padding: var(--chip-padding, 6px 14px);
+  border-radius: var(--chip-radius, 999px);
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--chip-inactive-text, #6b5a3e);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color 180ms ease, background 180ms ease;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.agro-mode-switch__chip[aria-selected="true"] {
+  color: var(--chip-active-text, #C8A752);
+  background: var(--chip-active-bg, rgba(200,167,82,0.12));
+}
+
+.agro-mode-switch__chip:focus-visible {
+  outline: none;
+  box-shadow: var(--state-focus-ring);
+}
+```
+
 ---
 
 ## §8 — Ghost Emojis

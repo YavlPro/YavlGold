@@ -636,6 +636,55 @@ El asistente entiende las herramientas de Agro tal como las usas en la plataform
 * Se basa **únicamente** en los ingresos, gastos y anotaciones que tengas en la bitácora o en los totales contables.
 * **No hace predicciones** sobre el mercado externo ni sobre situaciones que no estén registradas en el sistema.
 * Para obtener respuestas útiles, pregúntale cosas concretas, como se las pedirías a un técnico de confianza.
+
+---
+
+## 4.11 Modo de Lectura del Shell
+
+### Qué es
+
+Un filtro de navegación y lectura que opera sobre el shell de Agro. No es un módulo nuevo ni una categoría semántica adicional. Es una capa de filtrado que permite al usuario ordenar qué tipo de contenido quiere ver operar sin cambiar la estructura de navegación.
+
+### Qué no es
+
+* **No es un módulo.** No aparece como sección en el menú lateral.
+* **No reemplaza la taxonomía de Agro.** No reclassifica superfícies ni mezcla conceitos.
+* **No es un filtro de datos.** No altera registros ni cálculos.
+* **No es un selector de tema.** No cambia colores ni modos visuales dark/light.
+
+### Para qué sirve
+
+* Permitir lectura enfocada: cuando el usuario está trabajando solo con cultivos, puede filtrar el shell para mostrar solo lo relevante a ese contexto.
+* Reducir ruido visual: en pantallas con múltiples superfícies, el filtro oculta las que no corresponden al modo activo.
+* Organizar la jornada: el agricultor puede cambiar de modo según el momento (cultivo vs. herramientas vs. operación general).
+
+### Modos definidos
+
+| Modo | Qué muestra | Qué oculta |
+|---|---|---|
+| `General` | Todo el contenido del shell | Nada |
+| `Cultivo` | Contenido asociado a ciclos de cultivo | Contenido transversales u operativos no asociados |
+| `No Cultivo` | Contenido no asociado a ningún ciclo de cultivo | Contenido específico de cultivo |
+| `Herramientas` | Superfícies transversales: Rankings, Clima, AgroRepo, IA, perfil | Contenido productivo y financiero |
+
+### Comportamiento
+
+El switch cambia el **contexto de lectura** del shell, no la semántica del sistema. Cada modo mantiene la estructura de navegación lateral intacta; solo filtra qué superfícies aparecen como accesibles o relevantes en el área de contenido.
+
+### Cómo se relaciona con la navegación lateral
+
+El switch vive en el header del sidebar shell, debajo del título. La navegación lateral (`apps/gold/docs/NAVEGACION.md`) sigue siendo la autoridad de qué superfícies existen y cómo se llaman. El switch no crea nuevas superfícies ni renombra existentes.
+
+### Límites
+
+* Si una superfície no está asociada a ningún modo, permanece visible en `General` y accesible siempre.
+* El switch no altera permisos ni visibilidad de datos por seguridad.
+* El modo activa se conserva en sesión hasta que el usuario lo cambia.
+
+### Ejemplo de uso
+
+El agricultor entra al shell y ve todo disponible. Quiere enfocarse en sus ciclos de tomate. Activa el modo `Cultivo` y el shell filtra la lectura mostrando únicamente conteúdos ligados a cultivos. Después, en la misma sesión, cambia a `Herramientas` para consultar Rankings sin que los datos de cultivo interfieran en la vista.
+
 ---
 
 ## 5. Relaciones canónicas entre módulos
@@ -909,6 +958,10 @@ No. Si un cliente paga solo una parte, esa parte se registra como cobrada y el r
 ### 9.20 ¿Qué pasa si me equivoco al transferir un registro?
 
 La regla semántica correcta es que el usuario no quede atrapado por un error operativo. Si una transferencia fue equivocada, debe poder revertirse o corregirse de forma segura, devolviendo el registro a su estado anterior cuando corresponda.
+
+### 9.21 ¿Qué hace el filtro maestro del shell Agro?
+
+Es un switch de lectura que filtra qué contenidos aparecen como relevantes en el shell, sin cambiar la estructura de navegación ni inventar nuevas superfícies. Tiene cuatro modos: `General` (todo visible), `Cultivo` (solo contenidos asociados a ciclos de cultivo), `No Cultivo` (contenidos no asociados a ningún ciclo) y `Herramientas` (superfícies transversales como Rankings, Clima, AgroRepo, IA y perfil). No es un filtro de datos ni un selector de tema: solo ajusta qué áreas se muestran según el contexto operativo del momento.
 
 ---
 
