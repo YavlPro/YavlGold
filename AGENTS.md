@@ -436,6 +436,92 @@ Es el que:
 
 ---
 
+## §10 — Gobernanza Operativa y Confiabilidad
+
+### §10.1 — Regla de Confiabilidad Operativa y Desacato
+
+La confiabilidad de un agente no se define únicamente por su capacidad técnica, velocidad de producción o apariencia de utilidad.
+
+La confiabilidad operativa se define, ante todo, por su obediencia estricta al alcance, a las restricciones y a las instrucciones explícitas de la sesión.
+
+#### Principio rector
+
+Un agente que produce contenido útil pero desobedece el scope sigue siendo un riesgo operativo.
+
+El valor parcial del resultado no compensa la ruptura de disciplina.
+
+En este proyecto, el desacato no se interpreta como un detalle menor, sino como una falla de gobernanza.
+
+#### Regla formal
+
+Si un agente:
+
+- ejecuta acciones no autorizadas;
+- modifica archivos fuera del alcance definido;
+- toca git, documentación canónica o zonas sensibles sin permiso;
+- expande la tarea más allá de lo solicitado;
+- ignora restricciones explícitas de lectura, diagnóstico o no intervención;
+
+entonces ese agente debe considerarse **operativamente no confiable** para trabajo sensible, aunque parte de su salida parezca correcta o aprovechable.
+
+#### Criterio de evaluación
+
+La obediencia al alcance tiene prioridad sobre la brillantez aparente.
+
+En YavlGold:
+- un agente limitado pero disciplinado es preferible a un agente capaz pero invasivo;
+- un agente que requiere contención constante degrada el flujo de trabajo;
+- un agente que desacata en patrón no debe recibir control libre sobre zonas críticas.
+
+#### Política derivada
+
+Cuando se confirme un patrón de desacato, el agente:
+
+1. no debe recibir tareas con acceso libre a git;
+2. no debe tocar documentación canónica sin supervisión explícita;
+3. no debe operar sobre infraestructura, autenticación, migraciones o capas sensibles;
+4. no debe ejecutar acciones de escritura cuando la instrucción haya sido diagnóstico, lectura o auditoría;
+5. debe tratarse como herramienta de bajo nivel de confianza, incluso si ocasionalmente produce material útil.
+
+#### Regla de protección del repo
+
+El repo no se contamina solo con código malo.
+También se contamina con acciones útiles ejecutadas fuera de control.
+
+Por tanto, cualquier cambio producido en desacato:
+- debe auditarse antes de aceptarse;
+- no debe presumirse válido por el solo hecho de compilar;
+- no corrige la falta de obediencia del agente que lo produjo.
+
+#### Criterio final
+
+La disciplina operativa no es opcional.
+
+En YavlGold, obedecer el alcance forma parte de la calidad.
+Un agente que no respeta límites no es un colaborador confiable del sistema vivo.
+
+#### Origen
+
+Lección consolidada a partir de patrones reales de desacato observados en sesiones operativas.
+
+### §10.2 — Nota de gobernanza — utilidad en desacato
+
+Se reconoce que un agente puede, en ocasiones, producir un cambio técnicamente útil mientras actúa fuera del alcance autorizado.
+
+Esa utilidad parcial no modifica la lectura operativa del hecho.
+
+Cuando una acción se ejecuta en desacato:
+- la conducta se considera inaceptable;
+- el cambio no se presume legítimo por su utilidad;
+- la confianza del agente no aumenta, sino que disminuye;
+- toda salida debe revisarse como material potencialmente contaminado por falta de obediencia.
+
+Regla práctica:
+un resultado correcto obtenido fuera del scope no se celebra como acierto pleno;
+se trata como excepción riesgosa dentro de una conducta operativamente defectuosa.
+
+---
+
 ## §11 — Deuda Técnica Documentada y Política de Mejora Continua
 
 ### 11.1 Monolito `agro.js`
