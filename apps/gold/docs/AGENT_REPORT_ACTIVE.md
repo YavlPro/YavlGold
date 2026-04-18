@@ -994,3 +994,43 @@ El contenedor tiene `overflow-x: auto` y `scroll-snap-type: x mandatory`, lo que
 git add apps/gold/agro/agro-mode.js apps/gold/agro/agro.css apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "feat(agro): add desktop drag-scroll and wheel to mode switch carousel"
 ```
+
+---
+
+## Sesion activa: Limpieza lockfile redundante en apps/gold (2026-04-18)
+
+### Objetivo
+
+Eliminar `apps/gold/package-lock.json` por redundancia operativa en monorepo basado en `pnpm`, manteniendo un solo lockfile canonico.
+
+### Diagnostico
+
+Se verifico que:
+
+- El repo usa `pnpm` como gestor canonico (`packageManager: pnpm@9.1.0` y scripts `pnpm ...`).
+- Existe `pnpm-lock.yaml` en raiz como lockfile activo del monorepo.
+- `apps/gold/package-lock.json` era lockfile de npm coexistente sin rol operativo canonico.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/package-lock.json` | DELETE | Eliminado por redundancia con `pnpm-lock.yaml` del monorepo. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | DOC | Registro de la sesion de limpieza y validacion. |
+
+### Resultado build
+
+`pnpm build:gold` — OK. 161 modules, 3.01s.
+- `agent-guard`: OK
+- `agent-report-check`: OK
+- `vite build`: OK
+- `check-llms`: OK
+- `check-dist-utf8`: OK
+- Advertencia no bloqueante: engine esperado `node 20.x`; entorno local corrio con `node v24.13.0`.
+
+### Que NO se toco
+
+- `agro.js` — sin cambios
+- Supabase — sin cambios
+- `MANIFIESTO_AGRO.md` — sin cambios
+- Configuracion de Vite o rutas — sin cambios
