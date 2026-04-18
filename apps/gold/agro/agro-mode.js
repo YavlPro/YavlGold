@@ -1,18 +1,40 @@
 /**
  * agro-mode.js — Modo Operativo switch (Fase 5)
- * Global tri-state segmented control: Cultivo / No cultivo / General
- * Communicates via body[data-agro-mode] + agro:modechange CustomEvent
+ * Global segmented control: General / Cultivo / No cultivo / Herramientas
+ * Communicates via body[data-agro-shell-mode], body[data-agro-mode] + agro:modechange CustomEvent
  */
 
 const STORAGE_KEY = 'YG_AGRO_MODE_V1';
 const EVENT_NAME = 'agro:modechange';
-const MODES = Object.freeze(['cultivo', 'no-cultivo', 'general']);
-const DEFAULT_MODE = 'general';
+const MODES = Object.freeze(['all', 'crop', 'non_crop', 'tools']);
+const DEFAULT_MODE = 'all';
+
+const MODE_ALIASES = Object.freeze({
+    general: 'all',
+    all: 'all',
+    todo: 'all',
+    cultivo: 'crop',
+    crop: 'crop',
+    'no-cultivo': 'non_crop',
+    'no_cultivo': 'non_crop',
+    'non-crop': 'non_crop',
+    non_crop: 'non_crop',
+    herramientas: 'tools',
+    tools: 'tools'
+});
+
+const LEGACY_MODE_BY_MODE = Object.freeze({
+    all: 'general',
+    crop: 'cultivo',
+    non_crop: 'no-cultivo',
+    tools: 'herramientas'
+});
 
 const MODE_OPTIONS = Object.freeze([
-    { value: 'cultivo',    icon: 'fa-seedling',    label: 'Cultivo' },
-    { value: 'no-cultivo', icon: 'fa-tractor',     label: 'No cultivo' },
-    { value: 'general',    icon: 'fa-layer-group', label: 'General' }
+    { value: 'all',      icon: 'fa-layer-group',       label: 'General' },
+    { value: 'crop',     icon: 'fa-seedling',          label: 'Cultivo' },
+    { value: 'non_crop', icon: 'fa-tractor',           label: 'No cultivo' },
+    { value: 'tools',    icon: 'fa-screwdriver-wrench', label: 'Herramientas' }
 ]);
 
 let currentMode = DEFAULT_MODE;
@@ -20,7 +42,17 @@ let rootEl = null;
 
 function normalizeMode(value) {
     const token = String(value || '').trim().toLowerCase();
-    return MODES.includes(token) ? token : DEFAULT_MODE;
+    const normalized = MODE_ALIASES[token] || token;
+    return MODES.includes(normalized) ? normalized : DEFAULT_MODE;
+}
+
+function toLegacyMode(mode) {
+    return LEGACY_MODE_BY_MODE[normalizeMode(mode)] || LEGACY_MODE_BY_MODE[DEFAULT_MODE];
+}
+
+function syncBodyMode() {
+    document.body.dataset.agroShellMode = currentMode;
+    document.body.dataset.agroMode = toLegacyMode(currentMode);
 }
 
 function readStoredMode() {
@@ -68,12 +100,15 @@ function setMode(next, options = {}) {
     const mode = normalizeMode(next);
     if (mode === currentMode) return;
     currentMode = mode;
-    document.body.dataset.agroMode = currentMode;
+    syncBodyMode();
     syncButtons();
     writeStoredMode(currentMode);
     if (options.broadcast !== false) {
         window.dispatchEvent(new CustomEvent(EVENT_NAME, {
-            detail: { mode: currentMode }
+            detail: {
+                mode: toLegacyMode(currentMode),
+                shellMode: currentMode
+            }
         }));
     }
 }
@@ -90,10 +125,16 @@ export function initAgroMode() {
     if (!rootEl) return null;
 
     currentMode = normalizeMode(readStoredMode());
-    document.body.dataset.agroMode = currentMode;
+    syncBodyMode();
 
     renderSwitch();
     rootEl.addEventListener('click', handleClick);
+    window.dispatchEvent(new CustomEvent(EVENT_NAME, {
+        detail: {
+            mode: toLegacyMode(currentMode),
+            shellMode: currentMode
+        }
+    }));
 
     return { getMode: () => currentMode, setMode };
 }

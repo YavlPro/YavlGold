@@ -1,5 +1,19 @@
 const AGRO_ACTIVE_VIEW_KEY = 'YG_AGRO_ACTIVE_VIEW_V1';
 const AGRO_DEFAULT_VIEW = 'dashboard';
+const AGRO_DEFAULT_SHELL_MODE = 'all';
+
+const SHELL_MODE_ALIASES = Object.freeze({
+    all: 'all',
+    general: 'all',
+    crop: 'crop',
+    cultivo: 'crop',
+    non_crop: 'non_crop',
+    'non-crop': 'non_crop',
+    'no-cultivo': 'non_crop',
+    no_cultivo: 'non_crop',
+    tools: 'tools',
+    herramientas: 'tools'
+});
 
 const TAB_TO_VIEW = Object.freeze({
     gastos: 'operaciones',
@@ -91,6 +105,28 @@ function resolveOperationsTab() {
 
 function normalizeViewToken(value) {
     return String(value || '').trim().toLowerCase();
+}
+
+function normalizeShellMode(value) {
+    const token = normalizeViewToken(value).replace(/\s+/g, '_');
+    return SHELL_MODE_ALIASES[token] || AGRO_DEFAULT_SHELL_MODE;
+}
+
+function parseShellModeScopes(value) {
+    return String(value || '')
+        .split(/[\s,|]+/)
+        .map((entry) => normalizeShellMode(entry))
+        .filter((entry) => entry && entry !== AGRO_DEFAULT_SHELL_MODE);
+}
+
+function shellNodeMatchesMode(node, mode) {
+    if (!node || mode === AGRO_DEFAULT_SHELL_MODE) return true;
+    const scopes = parseShellModeScopes(node.dataset?.agroModeScope);
+    return scopes.includes(mode);
+}
+
+function scopedNodeIsVisible(node) {
+    return !!node && !node.hidden && !node.closest('.agro-shell-nav-item[hidden]');
 }
 
 function resolveViewAlias(value) {
@@ -428,6 +464,40 @@ export function initAgroShell() {
         document.body.dataset.agroSubview = VIEWS_WITH_SUBNAV.has(activeView) ? activeSubview : '';
     };
 
+    const applyShellModeFilter = (nextMode) => {
+        const mode = normalizeShellMode(nextMode);
+        document.body.dataset.agroShellMode = mode;
+
+        const scopedNodes = Array.from(sidebar.querySelectorAll('[data-agro-mode-scope]'));
+        scopedNodes.forEach((node) => {
+            const shouldHide = !shellNodeMatchesMode(node, mode);
+            setElementHiddenInert(node, shouldHide);
+            node.classList.toggle('agro-shell-mode-filtered', shouldHide);
+        });
+
+        Array.from(sidebar.querySelectorAll('.agro-shell-nav-item')).forEach((item) => {
+            const scopedChildren = Array.from(item.querySelectorAll('[data-agro-mode-scope]'))
+                .filter((node) => node !== item);
+            const selfIsHidden = item.matches('[data-agro-mode-scope]') && item.hidden;
+            const hasVisibleChild = scopedChildren.some((node) => !node.hidden);
+            const shouldHide = item.matches('[data-agro-mode-scope]')
+                ? (selfIsHidden && !hasVisibleChild)
+                : (scopedChildren.length > 0 && !hasVisibleChild);
+
+            setElementHiddenInert(item, shouldHide);
+            item.classList.toggle('agro-shell-mode-filtered', shouldHide);
+        });
+
+        Array.from(sidebar.querySelectorAll('.agro-shell-sidebar__group')).forEach((group) => {
+            const scopedChildren = Array.from(group.querySelectorAll('[data-agro-mode-scope]'));
+            const shouldHide = scopedChildren.length > 0 && !scopedChildren.some(scopedNodeIsVisible);
+            setElementHiddenInert(group, shouldHide);
+            group.classList.toggle('agro-shell-mode-filtered', shouldHide);
+        });
+
+        syncSubnav();
+    };
+
     const syncViewButtons = () => {
         const config = VIEW_CONFIG[activeView] || VIEW_CONFIG[AGRO_DEFAULT_VIEW];
         document.body.dataset.agroActiveView = activeView;
@@ -607,7 +677,12 @@ export function initAgroShell() {
         });
     });
 
+    window.addEventListener('agro:modechange', (event) => {
+        applyShellModeFilter(event.detail?.shellMode || event.detail?.mode);
+    });
+
     sidebar.setAttribute('inert', '');
+    applyShellModeFilter(document.body?.dataset?.agroShellMode || document.body?.dataset?.agroMode || AGRO_DEFAULT_SHELL_MODE);
     closeSidebar();
     setActiveView(activeView, { scroll: false, syncTab: true, subview: activeSubview });
     document.body.classList.add('agro-shell-ready');

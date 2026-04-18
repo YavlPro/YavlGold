@@ -506,3 +506,68 @@ Se auditaron todos los documentos en `apps/gold/docs/` y se identificaron 6 info
 - Codigo de producto
 - Migraciones Supabase
 - `LOCAL_FIRST.md` (sigue activo)
+
+---
+
+## Sesion activa: Switch maestro del shell Agro (2026-04-18)
+
+### Diagnostico
+
+Se inicia correccion quirurgica del switch maestro del shell/sidebar de Agro. El switch existe visualmente, pero la hipotesis inicial es que no esta conectado a la visibilidad real de los items del shell. La tarea debe confirmar si el problema vive en `agro-mode.js`, `agro-shell.js`, el markup del sidebar en `agro/index.html`, CSS responsive, o una combinacion de wiring + metadata faltante.
+
+### Causa raiz probable
+
+El control de modo parece publicar estado global (`agro:modechange` / `body[data-agro-mode]`), pero los nodos de navegacion del shell probablemente no tienen una clasificacion semantica consumible (`all`, `crop`, `non_crop`, `tools`) ni un listener que aplique show/hide sobre esos nodos. En mobile, el control tambien puede estar limitado por CSS de ancho/overflow y no por logica.
+
+### Plan quirurgico
+
+1. Inspeccionar donde se renderiza el switch y como se inicializa.
+2. Inventariar items reales del sidebar/header y clasificar solo lo que ya existe, sin contradecir `MANIFIESTO_AGRO.md`.
+3. Agregar metadata semantica reutilizable en el shell o una capa JS pequeña.
+4. Conectar el modo activo a un filtro real de visibilidad, con fallback `all`.
+5. Ajustar CSS mobile para strip horizontal deslizable, maximo dos opciones visibles y metadata discreta: "Desliza para ver mas filtros o modos".
+6. Validar manualmente modos `all`, `crop`, `non_crop`, `tools` y ejecutar `pnpm build:gold`.
+
+### Archivos a tocar
+
+- `apps/gold/agro/agro-mode.js`
+- `apps/gold/agro/agro-shell.js`
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro.css` o CSS del shell existente, solo si hace falta para responsive/ADN
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Causa raiz confirmada
+
+`agro-mode.js` renderizaba el switch y actualizaba estado visual/localStorage, pero `agro-shell.js` no escuchaba `agro:modechange` para filtrar items reales del sidebar. El markup tampoco tenia metadata semantica por item, por lo que no existia una capa confiable para distinguir cultivo, no cultivo, herramientas o general. En mobile, el CSS compactaba ocultando labels, pero no convertia el control en un strip deslizable de dos opciones visibles.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+| --- | --- |
+| `apps/gold/agro/agro-mode.js` | Se ampliaron los modos a `all`, `crop`, `non_crop`, `tools`; se conservaron aliases legacy (`general`, `cultivo`, `no-cultivo`) para no romper consumidores existentes. |
+| `apps/gold/agro/agro-shell.js` | Se agrego filtro real por `data-agro-mode-scope`, listener de `agro:modechange`, ocultado con `hidden`/`inert` y fallback `all`. |
+| `apps/gold/agro/index.html` | Se etiquetaron los items reales del sidebar con `general`, `crop`, `non_crop` o `tools`; se agrego hint mobile del switch. |
+| `apps/gold/agro/agro.css` | Se ajusto el switch como strip horizontal, estado activo con fondo/borde/sombra, touch target mas comodo y mobile con dos opciones visibles por tramo. |
+
+### Clasificacion semantica aplicada
+
+- `all`: modo General, muestra todo.
+- `crop`: ciclos de cultivo, tareas filtrables por cultivo y accion `Nuevo cultivo`.
+- `non_crop`: ciclos de periodo, operacion comercial, Cartera Viva, Cartera Operativa y tareas filtrables sin cultivo.
+- `tools`: rankings, clima, herramientas, bitacora y Asistente IA.
+
+`Granja General` queda como agrupador navegacional mixto (`crop non_crop`), no como modulo financiero.
+
+### Validacion ejecutada
+
+- `pnpm build:gold`: OK. Advertencia no bloqueante: Node local `v25.6.0` no coincide con engine esperado `20.x`.
+- Comprobacion DOM con `jsdom`: OK. `all` mostro 19 items; `crop` mostro 6; `non_crop` mostro 7; `tools` mostro 5.
+- Comprobacion mobile por CSS: el switch usa `flex-basis: calc((100% - 4px) / 2)` en `max-width: 640px`, `overflow-x: auto` y `scroll-snap-type: x mandatory`, por lo que quedan dos opciones visibles por tramo.
+- Intento de medicion Playwright local: no ejecutado porque el paquete `playwright` no esta instalado en el repo. No se instalaron dependencias nuevas.
+
+### No se toco
+
+- `MANIFIESTO_AGRO.md`
+- `agro.js`
+- Supabase
+- rutas, datos ni semantica de negocio fuera del shell/sidebar

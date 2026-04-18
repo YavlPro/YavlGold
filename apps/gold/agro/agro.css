@@ -10950,7 +10950,7 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
 .agro-mode-switch {
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: 4px;
   padding: 3px;
   border-radius: var(--radius-pill, 9999px);
   border: 1px solid var(--border-neutral, rgba(255,255,255,0.08));
@@ -10958,15 +10958,21 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
   flex-shrink: 0;
   width: 100%;
   margin-top: var(--space-2, 0.5rem);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(200,167,82,0.45) transparent;
 }
 
 .agro-mode-switch__btn {
+  flex: 1 1 0;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.3rem;
   padding: 0.3rem 0.65rem;
-  border: none;
+  border: 1px solid transparent;
   border-radius: var(--radius-pill, 9999px);
   background: transparent;
   color: var(--text-muted, #94A3B8);
@@ -10978,8 +10984,9 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
   cursor: pointer;
   transition: color 180ms ease, background 180ms ease, box-shadow 180ms ease;
   white-space: nowrap;
-  min-height: 32px;
+  min-height: 38px;
   -webkit-tap-highlight-color: transparent;
+  scroll-snap-align: start;
 }
 
 .agro-mode-switch__btn:hover {
@@ -10988,8 +10995,9 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
 
 .agro-mode-switch__btn.is-active {
   background: rgba(200,167,82,0.12);
+  border-color: var(--border-gold, rgba(200,167,82,0.25));
   color: var(--gold-5, #E8D48B);
-  box-shadow: var(--shadow-gold-xs, 0 1px 6px rgba(200,167,82,0.10));
+  box-shadow: inset 0 1px 0 rgba(229,213,160,0.12), var(--shadow-gold-xs, 0 1px 6px rgba(200,167,82,0.10));
 }
 
 .agro-mode-switch__btn:focus-visible {
@@ -11010,19 +11018,40 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
   display: inline;
 }
 
+.agro-mode-switch__hint {
+  display: none;
+  margin: 0.35rem 0 0;
+  color: var(--text-muted, #94A3B8);
+  font-family: var(--font-body, 'Rajdhani', sans-serif);
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.agro-shell-mode-filtered[hidden] {
+  display: none !important;
+}
+
 @media (max-width: 640px) {
+  .agro-mode-switch {
+    scroll-snap-type: x mandatory;
+  }
   .agro-mode-switch__btn {
-    flex: 1;
-    min-height: 34px;
+    flex: 0 0 calc((100% - 4px) / 2);
+    min-height: 40px;
+  }
+  .agro-mode-switch__hint {
+    display: block;
   }
 }
 
 @media (max-width: 480px) {
-  .agro-mode-switch__label {
-    display: none;
-  }
   .agro-mode-switch__btn {
     padding: 0.3rem 0.55rem;
+  }
+  .agro-mode-switch__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 

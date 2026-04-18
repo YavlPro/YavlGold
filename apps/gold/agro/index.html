@@ -62,62 +62,67 @@
             <div class="agro-shell-sidebar__head">
                 <p class="agro-shell-sidebar__eyebrow">AGRO V1</p>
                 <h2 class="agro-shell-sidebar__title">Herramientas de trabajo para el agricultor</h2>
-                <div class="agro-mode-switch" id="agro-mode-switch" role="group" aria-label="Modo operativo"></div>
+                <div class="agro-mode-switch" id="agro-mode-switch" role="group" aria-label="Modo operativo"
+                    aria-describedby="agro-mode-switch-hint"></div>
+                <p class="agro-mode-switch__hint" id="agro-mode-switch-hint">Desliza para ver más filtros o modos</p>
             </div>
 
             <div class="agro-shell-sidebar__group">
                 <p class="agro-shell-sidebar__label"><i class="fa-solid fa-compass agro-shell-sidebar__label-icon"
                         aria-hidden="true"></i><span>Principal</span></p>
-                <button type="button" class="agro-shell-link" data-agro-view="perfil"><i
+                <button type="button" class="agro-shell-link" data-agro-view="perfil"
+                    data-agro-mode-scope="general"><i
                         class="fa-solid fa-circle-user agro-shell-link__icon" aria-hidden="true"></i><span
                         class="agro-shell-link__label">Mi Perfil</span></button>
-                <button type="button" class="agro-shell-link" data-agro-view="dashboard"><i
+                <button type="button" class="agro-shell-link" data-agro-view="dashboard"
+                    data-agro-mode-scope="general"><i
                         class="fa-solid fa-chart-line agro-shell-link__icon" aria-hidden="true"></i><span
                         class="agro-shell-link__label">Dashboard Agro</span></button>
-                <div class="agro-shell-nav-item" data-agro-nav-parent="granja-general">
+                <div class="agro-shell-nav-item" data-agro-nav-parent="granja-general"
+                    data-agro-mode-scope="crop non_crop">
                     <button type="button" class="agro-shell-link" data-agro-nav-toggle="granja-general"
-                        aria-expanded="false">
+                        data-agro-mode-scope="crop non_crop" aria-expanded="false">
                         <i class="fa-solid fa-wheat-awn agro-shell-link__icon" aria-hidden="true"></i><span
                             class="agro-shell-link__label">Granja General</span>
                     </button>
                     <div class="agro-shell-subnav">
-                        <span class="agro-shell-subgroup-label"><i
+                        <span class="agro-shell-subgroup-label" data-agro-mode-scope="crop"><i
                                 class="fa-solid fa-seedling agro-shell-link__icon"
                                 aria-hidden="true"></i><span>Ciclos de cultivos</span></span>
                         <button type="button" class="agro-shell-sublink" data-agro-view="ciclos"
-                            data-agro-subview="activos"><i class="fa-solid fa-leaf agro-shell-link__icon"
+                            data-agro-subview="activos" data-agro-mode-scope="crop"><i class="fa-solid fa-leaf agro-shell-link__icon"
                                 aria-hidden="true"></i><span class="agro-shell-link__label">Ciclos
                                 activos</span></button>
                         <button type="button" class="agro-shell-sublink" data-agro-view="ciclos"
-                            data-agro-subview="finalizados"><i class="fa-solid fa-flag-checkered agro-shell-link__icon"
+                            data-agro-subview="finalizados" data-agro-mode-scope="crop"><i class="fa-solid fa-flag-checkered agro-shell-link__icon"
                                 aria-hidden="true"></i><span class="agro-shell-link__label">Ciclos
                                 finalizados</span></button>
                         <button type="button" class="agro-shell-sublink" data-agro-view="ciclos"
-                            data-agro-subview="comparar"><i class="fa-solid fa-scale-balanced agro-shell-link__icon"
+                            data-agro-subview="comparar" data-agro-mode-scope="crop"><i class="fa-solid fa-scale-balanced agro-shell-link__icon"
                                 aria-hidden="true"></i><span class="agro-shell-link__label">Comparar
                                 ciclos</span></button>
                         <button type="button" class="agro-shell-sublink" data-agro-view="ciclos"
-                            data-agro-subview="estadisticas"><i class="fa-solid fa-chart-column agro-shell-link__icon"
+                            data-agro-subview="estadisticas" data-agro-mode-scope="crop"><i class="fa-solid fa-chart-column agro-shell-link__icon"
                                 aria-hidden="true"></i><span class="agro-shell-link__label">Estadísticas de
                                 ciclos</span></button>
-                        <span class="agro-shell-subgroup-label"><i
+                        <span class="agro-shell-subgroup-label" data-agro-mode-scope="non_crop"><i
                                 class="fa-solid fa-calendar-days agro-shell-link__icon"
                                 aria-hidden="true"></i><span>Ciclos de período</span></span>
                         <button type="button" class="agro-shell-sublink" data-agro-view="period-cycles"
-                            data-agro-subview="activos"><i class="fa-solid fa-calendar-day agro-shell-link__icon"
+                            data-agro-subview="activos" data-agro-mode-scope="non_crop"><i class="fa-solid fa-calendar-day agro-shell-link__icon"
                                 aria-hidden="true"></i><span class="agro-shell-link__label">Períodos
                                 activos</span></button>
                         <button type="button" class="agro-shell-sublink" data-agro-view="period-cycles"
-                            data-agro-subview="finalizados"><i class="fa-solid fa-calendar-check agro-shell-link__icon"
+                            data-agro-subview="finalizados" data-agro-mode-scope="non_crop"><i class="fa-solid fa-calendar-check agro-shell-link__icon"
                                 aria-hidden="true"></i><span class="agro-shell-link__label">Períodos
                                 finalizados</span></button>
                         <button type="button" class="agro-shell-sublink" data-agro-view="period-cycles"
-                            data-agro-subview="comparar"><i
+                            data-agro-subview="comparar" data-agro-mode-scope="non_crop"><i
                                 class="fa-solid fa-arrows-left-right-to-line agro-shell-link__icon"
                                 aria-hidden="true"></i><span class="agro-shell-link__label">Comparar
                                 períodos</span></button>
                         <button type="button" class="agro-shell-sublink" data-agro-view="period-cycles"
-                            data-agro-subview="estadisticas"><i class="fa-solid fa-chart-column agro-shell-link__icon"
+                            data-agro-subview="estadisticas" data-agro-mode-scope="non_crop"><i class="fa-solid fa-chart-column agro-shell-link__icon"
                                 aria-hidden="true"></i><span class="agro-shell-link__label">Estadísticas de
                                 períodos</span></button>
                     </div>
@@ -127,18 +132,21 @@
             <div class="agro-shell-sidebar__group">
                 <p class="agro-shell-sidebar__label"><i class="fa-solid fa-briefcase agro-shell-sidebar__label-icon"
                         aria-hidden="true"></i><span>Operación comercial</span></p>
-                <div class="agro-shell-nav-item" data-agro-nav-parent="historial-comercial">
+                <div class="agro-shell-nav-item" data-agro-nav-parent="historial-comercial"
+                    data-agro-mode-scope="non_crop">
                     <button type="button" class="agro-shell-link" data-agro-nav-toggle="historial-comercial"
-                        aria-expanded="false">
+                        data-agro-mode-scope="non_crop" aria-expanded="false">
                         <i class="fa-solid fa-briefcase agro-shell-link__icon" aria-hidden="true"></i><span
                             class="agro-shell-link__label">Operación comercial</span>
                     </button>
                     <div class="agro-shell-subnav">
-                        <button type="button" class="agro-shell-sublink" data-agro-view="cartera-viva">
+                        <button type="button" class="agro-shell-sublink" data-agro-view="cartera-viva"
+                            data-agro-mode-scope="non_crop">
                             <i class="fa-solid fa-users agro-shell-link__icon" aria-hidden="true"></i><span
                                 class="agro-shell-link__label">Cartera Viva</span>
                         </button>
-                        <button type="button" class="agro-shell-sublink" data-agro-view="operational">
+                        <button type="button" class="agro-shell-sublink" data-agro-view="operational"
+                            data-agro-mode-scope="non_crop">
                             <i class="fa-solid fa-wallet agro-shell-link__icon" aria-hidden="true"></i><span
                                 class="agro-shell-link__label">Cartera Operativa</span>
                         </button>
@@ -149,8 +157,9 @@
             <div class="agro-shell-sidebar__group">
                 <p class="agro-shell-sidebar__label"><i class="fa-solid fa-list-check agro-shell-sidebar__label-icon"
                         aria-hidden="true"></i><span>Trabajo diario</span></p>
-                <div class="agro-shell-nav-item">
-                    <button type="button" class="agro-shell-link" data-agro-view="task-cycles">
+                <div class="agro-shell-nav-item" data-agro-mode-scope="crop non_crop">
+                    <button type="button" class="agro-shell-link" data-agro-view="task-cycles"
+                        data-agro-mode-scope="crop non_crop">
                         <i class="fa-solid fa-list-check agro-shell-link__icon" aria-hidden="true"></i><span
                             class="agro-shell-link__label">Ciclos de Tareas</span>
                     </button>
@@ -160,7 +169,8 @@
             <div class="agro-shell-sidebar__group">
                 <p class="agro-shell-sidebar__label"><i class="fa-solid fa-chart-column agro-shell-sidebar__label-icon"
                         aria-hidden="true"></i><span>Operaciones</span></p>
-                <button type="button" class="agro-shell-link" data-agro-view="rankings"><i
+                <button type="button" class="agro-shell-link" data-agro-view="rankings"
+                    data-agro-mode-scope="tools"><i
                         class="fa-solid fa-trophy agro-shell-link__icon" aria-hidden="true"></i><span
                         class="agro-shell-link__label">Rankings</span></button>
             </div>
@@ -169,16 +179,20 @@
                 <p class="agro-shell-sidebar__label"><i
                         class="fa-solid fa-screwdriver-wrench agro-shell-sidebar__label-icon"
                         aria-hidden="true"></i><span>Herramientas</span></p>
-                <button type="button" class="agro-shell-link" data-agro-view="clima"><i
+                <button type="button" class="agro-shell-link" data-agro-view="clima"
+                    data-agro-mode-scope="tools"><i
                         class="fa-solid fa-cloud-sun agro-shell-link__icon" aria-hidden="true"></i><span
                         class="agro-shell-link__label">Clima Agro</span></button>
-                <button type="button" class="agro-shell-link" data-agro-view="herramientas"><i
+                <button type="button" class="agro-shell-link" data-agro-view="herramientas"
+                    data-agro-mode-scope="tools"><i
                         class="fa-solid fa-toolbox agro-shell-link__icon" aria-hidden="true"></i><span
                         class="agro-shell-link__label">Herramientas</span></button>
-                <button type="button" class="agro-shell-link" data-agro-view="agrorepo"><i
+                <button type="button" class="agro-shell-link" data-agro-view="agrorepo"
+                    data-agro-mode-scope="tools"><i
                         class="fa-solid fa-book-open agro-shell-link__icon" aria-hidden="true"></i><span
                         class="agro-shell-link__label">Bitácora</span></button>
-                <button type="button" class="agro-shell-link" data-agro-view="asistente"><i
+                <button type="button" class="agro-shell-link" data-agro-view="asistente"
+                    data-agro-mode-scope="tools"><i
                         class="fa-solid fa-robot agro-shell-link__icon" aria-hidden="true"></i><span
                         class="agro-shell-link__label">Asistente IA</span></button>
             </div>
@@ -186,7 +200,8 @@
             <div class="agro-shell-sidebar__group">
                 <p class="agro-shell-sidebar__label"><i class="fa-solid fa-bolt agro-shell-sidebar__label-icon"
                         aria-hidden="true"></i><span>Acciones</span></p>
-                <button type="button" class="agro-shell-link agro-shell-link--action" data-agro-action="new-crop"><i
+                <button type="button" class="agro-shell-link agro-shell-link--action" data-agro-action="new-crop"
+                    data-agro-mode-scope="crop"><i
                         class="fa-solid fa-plus agro-shell-link__icon" aria-hidden="true"></i><span
                         class="agro-shell-link__label">Nuevo cultivo</span></button>
             </div>
