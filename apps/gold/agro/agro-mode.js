@@ -114,10 +114,57 @@ function setMode(next, options = {}) {
 }
 
 function handleClick(event) {
+    if (wasDragged) { wasDragged = false; return; }
     const btn = event.target.closest('[data-agro-mode]');
     if (!btn) return;
     event.preventDefault();
     setMode(btn.dataset.agroMode);
+}
+
+/* ── Desktop drag-scroll ── */
+let wasDragged = false;
+let dragActive = false;
+let dragStartX = 0;
+let dragScrollLeft = 0;
+const DRAG_THRESHOLD = 4;
+
+function onPointerDown(e) {
+    if (e.pointerType === 'touch') return;
+    if (e.button !== 0) return;
+    dragActive = true;
+    wasDragged = false;
+    dragStartX = e.clientX;
+    dragScrollLeft = rootEl.scrollLeft;
+    rootEl.classList.add('is-dragging');
+    rootEl.setPointerCapture(e.pointerId);
+}
+
+function onPointerMove(e) {
+    if (!dragActive) return;
+    const dx = e.clientX - dragStartX;
+    if (Math.abs(dx) > DRAG_THRESHOLD) wasDragged = true;
+    rootEl.scrollLeft = dragScrollLeft - dx;
+}
+
+function onPointerUp() {
+    if (!dragActive) return;
+    dragActive = false;
+    rootEl.classList.remove('is-dragging');
+}
+
+function onWheel(e) {
+    if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+    e.preventDefault();
+    rootEl.scrollLeft += e.deltaY;
+}
+
+function initDrag() {
+    if (!rootEl) return;
+    rootEl.addEventListener('pointerdown', onPointerDown);
+    rootEl.addEventListener('pointermove', onPointerMove);
+    rootEl.addEventListener('pointerup', onPointerUp);
+    rootEl.addEventListener('pointercancel', onPointerUp);
+    rootEl.addEventListener('wheel', onWheel, { passive: false });
 }
 
 export function initAgroMode() {
@@ -129,6 +176,7 @@ export function initAgroMode() {
 
     renderSwitch();
     rootEl.addEventListener('click', handleClick);
+    initDrag();
     window.dispatchEvent(new CustomEvent(EVENT_NAME, {
         detail: {
             mode: toLegacyMode(currentMode),

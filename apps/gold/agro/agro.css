@@ -10969,6 +10969,16 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
   display: none;
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .agro-mode-switch {
+    cursor: grab;
+  }
+  .agro-mode-switch.is-dragging {
+    cursor: grabbing;
+    user-select: none;
+  }
+}
+
 .agro-mode-switch__btn {
   flex: 0 0 calc(50% - var(--space-1, 0.25rem));
   min-width: 0;

@@ -872,3 +872,83 @@ Con `gap: var(--space-2)` (8px) y `flex: 0 0 calc(50% - var(--space-1))`:
 git add apps/gold/agro/agro.css apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "style(agro): fix carousel geometry — force 2-per-view with flex-basis, proper gap and scroll-snap"
 ```
+
+---
+
+## Sesion activa: UX desktop — drag-scroll y wheel horizontal para el switch (2026-04-18)
+
+### Objetivo
+
+Agregar interaccion desktop al carrusel del switch maestro. El carrusel funciona bien en tactil pero en desktop con mouse no se puede arrastrar. Se agrega drag horizontal con mouse + wheel vertical traducido a scroll horizontal.
+
+### Diagnostico UX desktop
+
+El contenedor tiene `overflow-x: auto` y `scroll-snap-type: x mandatory`, lo que permite scroll nativo. Pero en desktop con mouse:
+- No hay forma intuitiva de arrastrar el carrusel
+- No hay cursor `grab`/`grabbing` que indique que es arrastrable
+- La rueda del mouse no desplaza horizontalmente
+- Click + drag no funciona como en un carrusel real
+
+### Solucion implementada
+
+**Drag con Pointer Events** (`pointerdown` / `pointermove` / `pointerup`):
+- `pointerdown` guarda `startX` y `scrollLeft`, captura el pointer
+- `pointermove` calcula delta y actualiza `scrollLeft` en tiempo real
+- `pointerup`/`pointercancel` cierra el drag
+- Se ignora `pointerType === 'touch'` para no interferir con scroll tactil nativo
+- Solo boton primario (`e.button === 0`)
+
+**Prevencion de click fantasma:**
+- Variable `wasDragged` se activa cuando el movimiento supera `DRAG_THRESHOLD` (4px)
+- `handleClick` verifica `wasDragged` antes de procesar el click
+- Click normal (sin movimiento): `wasDragged = false`, el click procede normalmente
+- Drag real: `wasDragged = true`, el click se cancela y se resetea el flag
+
+**Wheel horizontal:**
+- `wheel` event con `passive: false`
+- Si `deltaY > deltaX`, traduce scroll vertical a horizontal (`scrollLeft += deltaY`)
+- `preventDefault()` evita scroll vertical de pagina mientras el mouse esta sobre el switch
+
+**CSS:**
+- `cursor: grab` en reposo (solo en `@media (hover: hover) and (pointer: fine)`)
+- `cursor: grabbing` + `user-select: none` durante drag via clase `.is-dragging`
+- No afecta dispositivos tactiles donde cursor es irrelevante
+
+### Cambios por archivo
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro-mode.js` | JS | +48 lineas: funciones `onPointerDown`, `onPointerMove`, `onPointerUp`, `onWheel`, `initDrag`; modificacion de `handleClick` para prevenir click fantasma; llamada a `initDrag()` en `initAgroMode()` |
+| `apps/gold/agro/agro.css` | CSS | +9 lineas: media query `(hover: hover) and (pointer: fine)` con `cursor: grab`, `.is-dragging` con `cursor: grabbing` + `user-select: none` |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Doc | Sesion documentada |
+
+### Que NO se toco
+
+- `agro-shell.js` — sin cambios
+- Logica de filtrado por modo — intacta
+- Clasificacion semantica — intacta
+- Eventos `agro:modechange` — intactos
+- `agro.js` — sin cambios
+- Markup del sidebar — sin cambios
+
+### Resultado build
+
+`pnpm build:gold` — OK. 161 modules, 2.75s.
+- Modulo `agro-mode.js`: 2.26KB → 2.92KB (+660 bytes)
+
+### QA manual sugerido
+
+1. Desktop: click en un chip → debe seleccionar modo normalmente
+2. Desktop: click + arrastrar horizontal → debe mover el carrusel
+3. Desktop: despues de arrastrar, soltar → no debe cambiar modo (no click fantasma)
+4. Desktop: cursor debe ser `grab` en reposo y `grabbing` al arrastrar
+5. Desktop: rueda del mouse sobre el switch → debe mover carrusel horizontalmente
+6. Touch: verificar que el scroll tactil sigue funcionando normalmente
+7. Verificar que el filtrado del sidebar sigue intacto
+
+### Comandos git sugeridos (sin ejecutar)
+
+```bash
+git add apps/gold/agro/agro-mode.js apps/gold/agro/agro.css apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "feat(agro): add desktop drag-scroll and wheel to mode switch carousel"
+```
