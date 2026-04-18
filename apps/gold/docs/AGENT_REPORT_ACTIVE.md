@@ -212,3 +212,154 @@ El mount point `#agro-mode-switch` estaba en `agro-shell-header__right` (linea ~
 - NO se toco filtros de Task/Operational Cycles
 - NO se toco agro.js
 - NO se altero Supabase
+
+---
+
+## Sesion activa: Actualizacion AGENT_CONTEXT_INDEX (2026-04-17)
+
+### Objetivo
+
+Sincronizar el indice de contexto de agentes con la realidad documental del repo. AGENTS.md §12 indica que AGENT_CONTEXT_INDEX.md debe ser el mapa central, pero 9 documentos existian en `apps/gold/docs/` sin estar vinculados.
+
+### Diagnostico
+
+Inspeccion cruzada entre el listado real de archivos `.md` en `apps/gold/docs/` y los vinculos en `AGENT_CONTEXT_INDEX.md` (19 lineas original). Se identificaron 9 documentos sin vinculo y 1 archivo recen creado (`AGENT_LEGACY_CONTEXT__2026-04-16__2026-04-17.md`) tampoco indexado.
+
+### Nuevas vinculaciones agregadas
+
+Se reorganizo AGENT_CONTEXT_INDEX.md en 4 secciones:
+
+**Nucleo obligatorio** (6 vinculos):
+- AGENTS.md, AGENT_REPORT_ACTIVE.md, MANIFIESTO_AGRO.md, ADN-VISUAL-V10.0.md, yavlgold-context.md, FICHATECNICA.md (raiz)
+
+**Decisiones y planificacion vigentes** (3 vinculos, nuevos):
+- PLAN_BASELINE_AGRO_SUPABASE_16_ABRIL.md
+- PLAN_CONSOLIDACION_SUPABASE_16_ABRIL.md
+- MATRIZ_RECONCILIACION_SUPABASE_16_ABRIL.md
+
+**Informes de sesion** (2 vinculos, nuevos):
+- INFORME_SUPABASE_APPS_GOLD_16_ABRIL.md
+- INFORME_CODEX_16_ABRIL.md
+
+**Contexto historico**:
+- AGENT_LEGACY_CONTEXT__2026-04-16__2026-04-17.md (nuevo, recen creado)
+
+### Resultado build
+
+`pnpm build:gold` — OK. 161 modules, 3.91s.
+- `agent-guard`: OK
+- `agent-report-check`: OK
+- `vite build`: OK
+- `check-llms`: OK
+- `check-dist-utf8`: OK
+
+### QA sugerido
+
+1. Verificar que AGENT_CONTEXT_INDEX.md tiene todos los vinculos correctos
+2. Confirmar que no hay archivos .md en `apps/gold/docs/` sin indexar
+3. Verificar que FICHATECNICA.md existe en la raiz del repo
+
+---
+
+## Sesion activa: LLM Wiki Fase 1 — Implementacion (2026-04-17)
+
+### Objetivo
+
+Implementar la Fase 1 del patron LLM Wiki en YavlGold de forma compatible con el canon existente. Sin automatizacion pesada, sin tooling nuevo, sin contaminacion del repo.
+
+### Diagnostico
+
+**Ya existia el patron de forma organica:**
+- AGENTS.md actuaba como schema sin la seccion explicita
+- AGENT_REPORT_ACTIVE.md ya era wiki viva con formato de sesion
+- AGENT_CONTEXT_INDEX.md ya era mapa central (pero incompleto)
+- llms.txt ya hacia resumen operativo para LLMs
+
+**Huecos identificados:**
+- No existia la seccion §12.X en AGENTS.md formalizando el patron
+- AGENT_CONTEXT_INDEX.md no incluía la tabla de capas ni las operaciones (ingest/query/lint)
+- No estaban claros los criterios de inclusion/exclusion de documentos
+- AGENT_CONTEXT_INDEX.md no decia explicitamente que es el mapa central de navegacion
+
+**Hipotesis:**
+Opcion B (equilibrada) — fortalecer lo que ya existe en vez de crear documentos nuevos. Menor diff, maximo impacto.
+
+### Cambios realizados
+
+| # | Archivo | Tipo | Cambio |
+|---|---|---|---|
+| 1 | `AGENTS.md` | Nueva seccion | §12.X (~90 lineas) — Patron LLM Wiki formalizado |
+| 2 | `AGENT_CONTEXT_INDEX.md` | Rediseño | Nueva estructura con tabla de capas, operaciones wiki, criterios in/exclusion |
+
+### Detalle de lo implementado
+
+**AGENTS.md §12.X — Patron LLM Wiki:**
+- Capa schema: AGENTS.md, ADN-VISUAL-V10.0.md, MANIFIESTO_AGRO.md
+- Capa wiki viva: AGENT_REPORT_ACTIVE.md
+- Capa mapa central: AGENT_CONTEXT_INDEX.md
+- Capa resumen: llms.txt
+- Capa historica: AGENT_LEGACY_CONTEXT__*.md, chronicles/
+- Operaciones documentadas: ingest / query / lint
+- Criterios de inclusion y exclusion de documentos
+- Criterio de exito de Fase 1
+
+**AGENT_CONTEXT_INDEX.md — Rediseño completo:**
+- Tabla de capas documentales con ubicaciones y roles
+- Seccion "Operaciones wiki" con Ingest/Query/Lint
+- Criterios de inclusion y exclusion
+- Regla canonica: repo fuente de verdad, Obsidian capa de navegacion
+- Vinculos actualizados y reorganizados
+
+### Flujo canonico propuesto
+
+**INGEST:**
+1. Agente termina sesion → escribe en AGENT_REPORT_ACTIVE.md
+2. Formato obligatorio: fecha, objetivo, diagnostico, cambios, build, QA, NO se hizo
+3. Si supera 4,000 lineas → rotacion obligatoria (§4.1)
+4. AGENT_CONTEXT_INDEX.md se actualiza si hay nuevos documentos
+
+**QUERY:**
+1. Leer AGENTS.md primero
+2. Consultar AGENT_CONTEXT_INDEX.md para ubicar documento correcto
+3. IR segun tipo: reglas→AGENTS.md, visual→ADN-VISUAL, Agro→MANIFIESTO, estado→AGENT_REPORT_ACTIVE, tecnica→FICHA_TECNICA, rapido→llms.txt
+
+**LINT:**
+1. Al cerrar sesion: verificar formato de AGENT_REPORT_ACTIVE.md
+2. Agregar vinculo en AGENT_CONTEXT_INDEX.md si hay documento nuevo
+3. Ejecutar rotacion si se supero umbral
+4. Build gate obligatorio antes de cerrar
+
+### Qué NO se implemento
+
+- **NO se creo documento nuevo** — el patron vive en AGENTS.md + AGENT_CONTEXT_INDEX.md que ya existian
+- **NO se creo automatizacion** — solo disciplina de sesion documentada
+- **NO se toco Supabase** — sin cambios en base de datos
+- **NO se toco runtime** — sin cambios en codigo de producto
+- **NO se creo script MCP** — ninguna automatizacion de sincronizacion repo↔vault
+- **NO se creo "LLM_WIKI_SCHEMA.md"** — se uso AGENTS.md como schema maestro como ya preveia el documento §12
+
+### Resultado build
+
+`pnpm build:gold` — OK. 161 modules, 3.68s.
+- `agent-guard`: OK
+- `agent-report-check`: OK
+- `vite build`: OK
+- `check-llms`: OK
+- `check-dist-utf8`: OK
+
+### QA sugerido
+
+1. Verificar que §12.X existe en AGENTS.md despues de §12
+2. Confirmar que AGENT_CONTEXT_INDEX.md tiene la tabla de capas
+3. Confirmar que las operaciones ingest/query/lint estan documentadas
+4. Verificar quefuturos agentes entienden el sistema al leer estos documentos
+5. Confirmar que elllms.txt sigue sirviendo en produccion sin cambios
+
+### Comandos git sugeridos (sin ejecutar)
+
+```bash
+git status
+git add AGENTS.md apps/gold/docs/AGENT_CONTEXT_INDEX.md apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "feat(docs): LLM Wiki Fase 1 — patron formalizado en AGENTS.md §12.X y AGENT_CONTEXT_INDEX.md"
+git push
+```

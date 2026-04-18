@@ -681,6 +681,99 @@ La integración Obsidian ↔ YavlGold es correcta cuando:
 - los agentes entienden rápido el sistema
 - no aparece un carnaval de duplicados, rutas raras o tooling fuera de lugar
 
+### §12.X — Patron LLM Wiki de YavlGold (formalizacion)
+
+#### Diagnostico
+
+YavlGold ya opera con el patron LLM Wiki de forma organica. Este proyecto tiene:
+
+- **Schema**: AGENTS.md, ADN-VISUAL-V10.0.md, MANIFIESTO_AGRO.md, FICHA_TECNICA.md
+- **Wiki viva**: AGENT_REPORT_ACTIVE.md (crece por sesion, se rota cada 4000+ lineas)
+- **Mapa central**: AGENT_CONTEXT_INDEX.md (indice de documentos y su rol)
+- **Resumen operativo**: llms.txt (servido en produccion)
+- **Memoria historica**: cronicas mensuales, AGENT_LEGACY_CONTEXT__*.md, AGENT_REPORT.md
+
+No se necesita un documento "LLM_WIKI_SCHEMA" nuevo. AGENTS.md ya es el schema maestro.
+
+#### Regla de oro
+
+**Repo canónico primero. Obsidian como capa de navegación y memoria. Los agentes mantienen la wiki viva, pero no reemplazan la verdad del repo.**
+
+#### Capas del sistema documental
+
+| Capa | Rol | Documento canonico |
+|---|---|---|
+| **Schema / Ley** | Define qué es legal y cómo opera el sistema | AGENTS.md (ley operativa), ADN-VISUAL-V10.0.md (ley visual), MANIFIESTO_AGRO.md (verdad semantica) |
+| **Estructura** | Ficha tecnica del proyecto | FICHA_TECNICA.md |
+| **Wiki viva** | Memoria operativa acumulativa de sesiones de agentes | AGENT_REPORT_ACTIVE.md |
+| **Mapa central** | Indice y navegacion de la wiki | AGENT_CONTEXT_INDEX.md |
+| **Resumen operativo** | Contexto rapido para LLMs y produccion | apps/gold/public/llms.txt |
+| **Memoria historica** | Versiones anteriores de wiki viva y cronicas | AGENT_LEGACY_CONTEXT__*.md, chronicles/ |
+| **Vault Obsidian** | Capa de lectura, grafo y navegacion visual | vault del usuario (no es canon) |
+
+#### Operaciones del sistema wiki
+
+**INGEST (como nueva informacion entra a la wiki):**
+1. Un agente termina una sesion de trabajo en YavlGold
+2. Ese agente escribe en AGENT_REPORT_ACTIVE.md al final del archivo
+3. Formato obligatorio por sesion:
+   - Fecha
+   - Objetivo de la sesion
+   - Diagnostico (archivos inspeccionados, evidencia)
+   - Cambios realizados (tabla: archivo, tipo, cambio)
+   - Resultado de build
+   - QA sugerido o realizado
+   - NO se hizo (scope respetado)
+4. Si AGENT_REPORT_ACTIVE.md supera 4000 lineas → ejecutar rotacion (canonica §4.1)
+5. AGENT_CONTEXT_INDEX.md se actualiza cuando hay nuevos documentos canonicos o cambios de estructura
+
+**QUERY (como un agente consulta la wiki):**
+1. Leer AGENTS.md primero (schema de todo)
+2. Consultar AGENT_CONTEXT_INDEX.md para ubicar el documento correcto
+3. Ir al documento correspondiente segun el tipo de pregunta:
+   - Pregunta sobre reglas de agentes → AGENTS.md
+   - Pregunta sobre diseño visual → ADN-VISUAL-V10.0.md
+   - Pregunta sobre Agro → MANIFIESTO_AGRO.md
+   - Pregunta sobre estado operativo actual → AGENT_REPORT_ACTIVE.md
+   - Pregunta sobre estructura tecnica → FICHA_TECNICA.md
+   - Pregunta sobre contexto general rapido → llms.txt
+
+**LINT (como se mantiene la calidad de la wiki):**
+1. Al cerrar sesion, verificar que AGENT_REPORT_ACTIVE.md tiene el formato correcto (fecha, diagnostico, cambios, build, QA)
+2. Si se creo un documento nuevo, agregar el vinculo en AGENT_CONTEXT_INDEX.md con la seccion adecuada
+3. Si se cumplio el umbral de 4000 lineas, ejecutar rotacion (canonica §4.1)
+4. No dejar sesiones sin documentar o con formato incompleto
+5. Build gate obligatorio (`pnpm build:gold`) antes de cerrar sesion
+
+#### Criterios de inclusion de documentos en la wiki
+
+Un documento pertenece a la wiki de YavlGold si:
+- Es un documento operativo que refleja decisiones, cambios o estado del proyecto
+- Tiene vida util para agentes futuros o para el usuario
+- NO es redundante con otro documento existente (ej: yavlgold-context.md vs FICHA_TECNICA.md)
+
+#### Criterios de exclusion de documentos
+
+Un documento debe marcarse como legacy u archivarse si:
+- Su informacion ya esta cubierta por otro documento mas actualizado
+- Es un snapshot historico de un proceso ya cerrado
+- Esta duplicado en otro lugar del repo
+
+#### Qué NO es este sistema
+
+- **No es un sistema de knowledge management empresarial**: YavlGold es un proyecto agricola digital, no una corporacion
+- **No requiere automatizacion pesada**: el build gate + disciplina de sesion son suficientes
+- **No requiere un "LLM Wiki schema" nuevo**: AGENTS.md ya es el schema maestro
+- **No requiere Obsidian como fuente de verdad**: el repo es siempre la fuente canonica
+
+#### Criterio de exito de Fase 1
+
+La fase queda completa cuando:
+- AGENTS.md tiene la subseccion §12.X formalizando el patron
+- AGENT_CONTEXT_INDEX.md tiene metadata y operaciones
+- Futuros agentes pueden llegar al repo y entender en 5 minutos como funciona el sistema de memoria documental
+- El sistema esta documentado para que MiniMax/Codex/OpenCode/Claude lo mantengan
+
 ---
 
 ## §13 — Pruebas documentales con Obsidian
