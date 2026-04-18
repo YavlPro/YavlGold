@@ -703,6 +703,105 @@ Por instruccion explicita de la sesion, no se hizo QA manual en navegador ni Pla
 
 ---
 
+## Sesion activa: Favoritos del Shell + Busqueda Agro Compacta (2026-04-18)
+
+### Objetivo
+
+Agregar dos capas independientes dentro del shell Agro:
+
+- Favoritos del Shell como preferencia personal local-first.
+- Busqueda Agro Compacta como localizador puntual de superficies del shell.
+
+No se debe tocar la semantica del switch maestro ni convertir estas capas en modulos nuevos del catalogo.
+
+### Diagnostico
+
+El shell vive principalmente en `apps/gold/agro/index.html` y `apps/gold/agro/agro-shell.js`.
+
+- Los items navegables reales del sidebar son botones con `data-agro-view` o `data-agro-action`.
+- Los grupos padre con `data-agro-nav-toggle` expanden submenus, pero no son destino final por si solos.
+- El switch maestro ya filtra por `data-agro-mode-scope` desde `agro-shell.js`.
+- La mejor base para busqueda es construir un indice local desde labels visibles, `data-agro-view`, `data-agro-subview`, `data-agro-action`, grupo visual y scope existente.
+- La estrella de favorito no debe ir dentro del boton existente porque generaria boton dentro de boton. Debe inyectarse como control hermano dentro de una fila wrapper.
+- Favoritos y busqueda deben actuar como shortcuts/preferencias del shell, no como parte del switch.
+
+### Opciones A/B/C
+
+| Opcion | Descripcion | Riesgo | Lectura |
+| --- | --- | --- | --- |
+| A | Favoritos local-first + busqueda compacta por indice del shell + modulos pequenos separados | Bajo | Recomendada. No toca backend, no altera switch y mantiene ownership claro. |
+| B | Favoritos con puente futuro a `user_favorites` + busqueda local | Medio/alto | Demasiado pronto para V1; implica persistencia backend y mas superficie de fallo. |
+| C | Un solo modulo de utilidades del shell con favoritos + busqueda juntos | Medio | Menos archivos, pero mezcla responsabilidades y dificulta crecer sin ruido. |
+
+### Recomendacion
+
+Ejecutar Opcion A:
+
+1. Crear `agro-shell-favorites.js` para estrellas, persistencia local y bloque dinamico.
+2. Crear `agro-shell-search.js` para input compacto, panel de resultados y busqueda local.
+3. Hacer wiring minimo desde `agro-shell.js`, construyendo un indice de items desde el DOM real.
+4. Agregar contenedores sobrios bajo el switch en `index.html`.
+5. Agregar CSS compacto en `agro.css`, reutilizando tokens del ADN.
+
+### Archivos a tocar
+
+- `apps/gold/agro/agro-shell.js`
+- `apps/gold/agro/agro-shell-favorites.js`
+- `apps/gold/agro/agro-shell-search.js`
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro.css`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Decision ejecutada
+
+Se ejecuto la Opcion A. Favoritos y busqueda quedaron como capas independientes del shell:
+
+- No se modifico la semantica del switch maestro.
+- No se conecto backend ni Supabase.
+- No se agrego modulo nuevo al catalogo del producto.
+- No se toco `agro.js`.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+| --- | --- | --- |
+| `apps/gold/agro/agro-shell.js` | Wiring shell | Se agrego indice local de items navegables, keywords sobrias y conexion con favoritos/busqueda. |
+| `apps/gold/agro/agro-shell-favorites.js` | Nuevo modulo shell | Favoritos local-first con `localStorage`, estrellas discretas, bloque dinamico y limite visible de 5 shortcuts. |
+| `apps/gold/agro/agro-shell-search.js` | Nuevo modulo shell | Busqueda compacta local por labels, contexto, keywords y scopes del shell; panel pequeno con maximo 7 resultados. |
+| `apps/gold/agro/index.html` | Markup shell | Se agregaron contenedores bajo el switch para busqueda compacta y favoritos. |
+| `apps/gold/agro/agro.css` | Estilos | Capsule compacta, panel blur sobrio, bloque de favoritos y controles estrella con focus visible. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Doc | Paso 0, opciones y cierre de sesion. |
+
+### Semantica aplicada
+
+- Switch maestro: sigue siendo lectura contextual del shell y conserva `all | crop | non_crop | tools`.
+- Favoritos: preferencia personal local-first, independiente del switch, sin crear vistas ni modulos nuevos.
+- Busqueda: localizador puntual del shell, sin busqueda de registros, clientes, facturero profundo ni Supabase.
+
+### Validacion ejecutada
+
+- `pnpm build:gold`: OK.
+- Prueba tecnica con `jsdom`: OK.
+  - Se crearon estrellas para items elegibles.
+  - Marcar favorito persistio en `YG_AGRO_SHELL_FAVORITES_V1`.
+  - Desmarcar favorito oculto el bloque dinamico.
+  - Buscar `cultivo` devolvio entradas relacionadas como `Estadisticas de ciclos` y `Nuevo cultivo`.
+  - Limpiar input oculto el panel.
+  - Click en resultado `clima` activo la vista `clima`.
+  - Evento `agro:modechange` en modo `tools` siguio ocultando items `crop` y manteniendo visible `clima`.
+
+### QA manual sugerido
+
+1. Abrir shell Agro en desktop y mobile.
+2. Marcar y desmarcar favoritos en varios items.
+3. Recargar y confirmar persistencia local.
+4. Buscar `cultivo`, `clima`, `cartera`, `bitacora` y `tareas`.
+5. Click en resultado y confirmar navegacion.
+6. Borrar el termino y confirmar que se oculta el panel.
+7. Probar modos del switch y confirmar que el filtrado original no cambio.
+
+---
+
 ## Sesion activa: Pulido visual/UX del switch maestro del shell Agro (2026-04-18)
 
 ### Objetivo
@@ -1034,3 +1133,46 @@ Se verifico que:
 - Supabase — sin cambios
 - `MANIFIESTO_AGRO.md` — sin cambios
 - Configuracion de Vite o rutas — sin cambios
+
+---
+
+## Cierre de sesion: Favoritos del Shell + Busqueda Agro Compacta (2026-04-18)
+
+### Resultado
+
+Se implementaron Favoritos del Shell y Busqueda Agro Compacta como capas independientes del shell Agro.
+
+- Favoritos local-first con `localStorage` (`YG_AGRO_SHELL_FAVORITES_V1`).
+- Estrella discreta para cada item elegible del shell.
+- Bloque dinamico de favoritos solo cuando hay favoritos marcados.
+- Busqueda compacta bajo el switch maestro, con panel pequeno y maximo 7 resultados.
+- Busqueda limitada a labels, contexto, keywords y scopes del shell.
+- No se busco en DB, clientes, facturero profundo ni AgroRepo profundo.
+- No se modifico la semantica del switch maestro.
+- No se toco `agro.js`, Supabase ni `MANIFIESTO_AGRO.md`.
+
+### Archivos tocados
+
+| Archivo | Cambio |
+| --- | --- |
+| `apps/gold/agro/agro-shell.js` | Indice local de items del shell y wiring hacia favoritos/busqueda. |
+| `apps/gold/agro/agro-shell-favorites.js` | Nuevo modulo pequeno para favoritos local-first. |
+| `apps/gold/agro/agro-shell-search.js` | Nuevo modulo pequeno para busqueda local del shell. |
+| `apps/gold/agro/index.html` | Contenedores bajo el switch para busqueda y favoritos. |
+| `apps/gold/agro/agro.css` | Estilos sobrios para capsule, panel, favoritos y estrellas. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Registro de diagnostico, opciones, decision y cierre. |
+
+### Validacion
+
+- `pnpm build:gold`: OK.
+- `jsdom shell utilities checks`: OK.
+- Advertencia no bloqueante del entorno: Node local `v25.6.0`; engine esperado `20.x`.
+
+### QA manual sugerido
+
+1. Marcar/desmarcar favorito.
+2. Recargar y confirmar persistencia.
+3. Buscar `cultivo`, `clima`, `cartera`, `bitacora`, `tareas`.
+4. Click en resultado y confirmar navegacion.
+5. Borrar input y confirmar cierre del panel.
+6. Probar switch maestro para confirmar que el filtrado original sigue intacto.

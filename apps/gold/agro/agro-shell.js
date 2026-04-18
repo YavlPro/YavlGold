@@ -1,6 +1,15 @@
+import { initAgroShellFavorites } from './agro-shell-favorites.js';
+import { initAgroShellSearch } from './agro-shell-search.js';
+
 const AGRO_ACTIVE_VIEW_KEY = 'YG_AGRO_ACTIVE_VIEW_V1';
 const AGRO_DEFAULT_VIEW = 'dashboard';
 const AGRO_DEFAULT_SHELL_MODE = 'all';
+
+const SHELL_ENTRY_SELECTOR = [
+    '.agro-shell-link[data-agro-view]',
+    '.agro-shell-sublink[data-agro-view]',
+    '.agro-shell-link[data-agro-action]'
+].join(',');
 
 const SHELL_MODE_ALIASES = Object.freeze({
     all: 'all',
@@ -97,6 +106,34 @@ const VIEW_CONFIG = Object.freeze({
     asistente: { region: 'asistente', label: 'Asistente IA', focusSelector: '[data-agro-shell-region="asistente"]' }
 });
 
+const SHELL_VIEW_KEYWORDS = Object.freeze({
+    perfil: Object.freeze(['perfil', 'agricultor', 'finca', 'contacto', 'privacidad']),
+    dashboard: Object.freeze(['inicio', 'resumen', 'arranque', 'dia', 'panel']),
+    ciclos: Object.freeze(['cultivo', 'cultivos', 'siembra', 'cosecha', 'rendimiento', 'produccion']),
+    'period-cycles': Object.freeze(['periodo', 'periodos', 'mes', 'mensual', 'cierre']),
+    operational: Object.freeze(['cartera', 'operativa', 'facturero', 'movimiento', 'abono', 'pago']),
+    'task-cycles': Object.freeze(['tareas', 'trabajo diario', 'pendientes', 'agenda']),
+    operaciones: Object.freeze(['operacion comercial', 'gastos', 'ingresos', 'fiados', 'perdidas']),
+    carrito: Object.freeze(['carrito', 'insumos', 'compras', 'lista']),
+    rankings: Object.freeze(['ranking', 'rankings', 'estadisticas', 'top', 'comparacion']),
+    'cartera-viva': Object.freeze(['cartera viva', 'clientes', 'fiados', 'deudas', 'pendientes']),
+    clima: Object.freeze(['clima', 'temperatura', 'lluvia', 'tiempo']),
+    herramientas: Object.freeze(['herramientas', 'utilidades', 'operativas']),
+    agrorepo: Object.freeze(['bitacora', 'agrorepo', 'memoria', 'notas', 'historial']),
+    asistente: Object.freeze(['asistente', 'ia', 'ayuda', 'contexto'])
+});
+
+const SHELL_SUBVIEW_KEYWORDS = Object.freeze({
+    activos: Object.freeze(['activo', 'activos', 'en curso', 'abierto']),
+    finalizados: Object.freeze(['finalizado', 'finalizados', 'cerrado', 'cerrados', 'historial']),
+    comparar: Object.freeze(['comparar', 'comparacion', 'contraste']),
+    estadisticas: Object.freeze(['estadistica', 'estadisticas', 'metricas', 'resumen'])
+});
+
+const SHELL_ACTION_KEYWORDS = Object.freeze({
+    'new-crop': Object.freeze(['nuevo cultivo', 'crear cultivo', 'siembra', 'cultivo'])
+});
+
 function resolveOperationsTab() {
     const currentTab = String(document.querySelector('.financial-tab-btn.is-active')?.dataset?.tab || '').trim();
     if (CORE_OPERATIONS_TABS.has(currentTab)) return currentTab;
@@ -117,6 +154,101 @@ function parseShellModeScopes(value) {
         .split(/[\s,|]+/)
         .map((entry) => normalizeShellMode(entry))
         .filter((entry) => entry && entry !== AGRO_DEFAULT_SHELL_MODE);
+}
+
+function readShellLabel(node) {
+    return String(node?.querySelector('.agro-shell-link__label')?.textContent || node?.textContent || '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function readShellIconClass(node) {
+    return String(node?.querySelector('.agro-shell-link__icon')?.getAttribute('class') || '').trim();
+}
+
+function findGroupLabel(node) {
+    const group = node?.closest('.agro-shell-sidebar__group');
+    return String(group?.querySelector('.agro-shell-sidebar__label span')?.textContent || '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function findSubgroupLabel(node) {
+    let current = node?.previousElementSibling || null;
+    while (current) {
+        if (current.matches?.('.agro-shell-subgroup-label')) {
+            return String(current.textContent || '').replace(/\s+/g, ' ').trim();
+        }
+        current = current.previousElementSibling;
+    }
+    return '';
+}
+
+function buildShellEntryId(node) {
+    const action = normalizeViewToken(node?.dataset?.agroAction);
+    if (action) return `action:${action}`;
+
+    const rawView = normalizeViewToken(node?.dataset?.agroView);
+    const view = normalizeView(rawView);
+    const subview = normalizeViewToken(node?.dataset?.agroSubview);
+    return subview ? `view:${view}:${subview}` : `view:${view}`;
+}
+
+function buildShellKeywords(entry) {
+    const keywords = new Set([
+        entry.label,
+        entry.groupLabel,
+        entry.contextLabel,
+        entry.view,
+        entry.subview,
+        entry.action,
+        entry.modeScope
+    ].filter(Boolean));
+
+    (SHELL_VIEW_KEYWORDS[entry.view] || []).forEach((keyword) => keywords.add(keyword));
+    (SHELL_SUBVIEW_KEYWORDS[entry.subview] || []).forEach((keyword) => keywords.add(keyword));
+    (SHELL_ACTION_KEYWORDS[entry.action] || []).forEach((keyword) => keywords.add(keyword));
+
+    return [...keywords];
+}
+
+function collectShellEntries(sidebar) {
+    if (!sidebar) return [];
+
+    const entries = [];
+    const seen = new Set();
+    sidebar.querySelectorAll(SHELL_ENTRY_SELECTOR).forEach((node) => {
+        const id = buildShellEntryId(node);
+        if (!id || seen.has(id)) return;
+
+        const view = normalizeViewToken(node.dataset.agroView);
+        const action = normalizeViewToken(node.dataset.agroAction);
+        const subview = normalizeViewToken(node.dataset.agroSubview);
+        const label = readShellLabel(node);
+        if (!label) return;
+
+        const groupLabel = findGroupLabel(node);
+        const contextLabel = findSubgroupLabel(node) || groupLabel;
+        const entry = {
+            id,
+            type: action ? 'action' : 'view',
+            view,
+            action,
+            subview,
+            label,
+            groupLabel,
+            contextLabel,
+            modeScope: String(node.dataset.agroModeScope || '').trim(),
+            iconClass: readShellIconClass(node),
+            element: node
+        };
+
+        entry.keywords = buildShellKeywords(entry);
+        entries.push(entry);
+        seen.add(id);
+    });
+
+    return entries;
 }
 
 function shellNodeMatchesMode(node, mode) {
@@ -606,6 +738,33 @@ export function initAgroShell() {
             }
         }));
     };
+
+    const shellEntries = collectShellEntries(sidebar);
+    const activateShellEntry = (entry) => {
+        if (!entry) return false;
+        if (entry.type === 'action') {
+            const didRun = runAction(entry.action);
+            if (didRun) closeSidebar();
+            return didRun;
+        }
+
+        if (!entry.view) return false;
+        setActiveView(entry.view, { scroll: true, subview: entry.subview || null });
+        closeSidebar();
+        return true;
+    };
+
+    initAgroShellFavorites({
+        root: document.getElementById('agro-shell-favorites'),
+        entries: shellEntries,
+        onActivate: activateShellEntry
+    });
+
+    initAgroShellSearch({
+        root: document.getElementById('agro-shell-search'),
+        entries: shellEntries,
+        onActivate: activateShellEntry
+    });
 
     toggle.addEventListener('click', () => {
         if (sidebarOpen) {

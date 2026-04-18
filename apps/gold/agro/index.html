@@ -65,6 +65,23 @@
                 <div class="agro-mode-switch" id="agro-mode-switch" role="group" aria-label="Modo operativo"
                     aria-describedby="agro-mode-switch-hint"></div>
                 <p class="agro-mode-switch__hint" id="agro-mode-switch-hint">Desliza para ver mas opciones</p>
+                <div class="agro-shell-search" id="agro-shell-search" role="search">
+                    <label class="agro-shell-search__label" for="agro-shell-search-input">Buscar en Agro</label>
+                    <div class="agro-shell-search__control">
+                        <i class="fa-solid fa-magnifying-glass agro-shell-search__icon" aria-hidden="true"></i>
+                        <input id="agro-shell-search-input" class="agro-shell-search__input" type="search"
+                            placeholder="Buscar en Agro" autocomplete="off" data-agro-shell-search-input
+                            aria-controls="agro-shell-search-results" aria-expanded="false">
+                        <button type="button" class="agro-shell-search__clear" data-agro-shell-search-clear
+                            aria-label="Limpiar busqueda" hidden>
+                            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <div class="agro-shell-search__panel" id="agro-shell-search-results"
+                        data-agro-shell-search-panel hidden></div>
+                </div>
+                <section class="agro-shell-favorites" id="agro-shell-favorites" aria-label="Favoritos del shell"
+                    hidden></section>
             </div>
 
             <div class="agro-shell-sidebar__group">
