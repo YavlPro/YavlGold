@@ -24,6 +24,7 @@ export default defineConfig({
         soporte: 'soporte.html',
         terms: 'terms.html',
         privacy: 'privacy.html',
+        docsAgro: 'docs-agro.html',
         dashboard: 'dashboard/index.html',
         music: 'dashboard/music.html',
         perfil: 'dashboard/perfil.html',

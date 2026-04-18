@@ -1341,3 +1341,48 @@ Se ejecuto la **Opcion A**.
 ### Resultado
 
 El Asistente Agro queda como superficie completa dedicada dentro del shell Agro. La estructura activa ya no depende de un modal maximizado ni de un overlay/backdrop; el historial y la conversacion viven como partes de una pagina real.
+
+---
+
+## Sesion activa: Documentacion oficial publica de YavlGold Agro (2026-04-18)
+
+### Objetivo
+
+Crear la documentacion oficial publica de YavlGold Agro como pagina dedicada para usuarios reales, usando `MANIFIESTO_AGRO.md` como fuente de verdad semantica pero traducida a lenguaje humano y publico.
+
+### Diagnostico
+
+1. **Ruta MPA ideal**: `apps/gold/docs-agro.html` — pagina publica al nivel de `faq.html`, `soporte.html`, etc. No vive dentro de `agro/` (shell protegido).
+2. **Tipo**: Documentacion oficial publica del producto Agro, no centro de ayuda generico ni FAQ simple.
+3. **Conexion sin contaminar**: Enlace desde landing (footer o seccion de modulos) y desde el footer de la landing. No se modifica la landing mas alla de anadir enlaces limpios.
+4. **Secciones del manifiesto a traducir**: 1-4 (definicion, principios, mapa, modulos), 6 (flujo de trabajo), 7 (estadisticas/exportes), 8 (privacidad), 9 (FAQ), parcialmente 10 (malentendidos como aclaraciones utiles).
+5. **Partes que NO pasan**: 0 (proposito del doc), 5 (relaciones internas), 11 (reglas para agentes), 12-14 (pendientes, criterio, notas editoriales), toda la gobernanza interna.
+6. **SEO**: Meta tags, schema.org, headings semanticos, contenido indexable en espanol.
+
+### Opcion ejecutada: A — Pagina dedicada con sidebar documental
+
+- Ruta: `docs-agro.html` → `/docs-agro`
+- Sidebar tipo hamburguesa inspirado en shell Agro pero mas documental
+- CSS propio reutilizando tokens del ADN V10
+- JS ligero para navegacion interna
+- Enlace desde footer de la landing
+
+### Archivos a tocar
+
+| Archivo | Motivo |
+|---|---|
+| `apps/gold/docs-agro.html` | NUEVO — pagina dedicada de documentacion publica |
+| `apps/gold/assets/css/docs-agro.css` | NUEVO — estilos especificos |
+| `apps/gold/assets/js/docs-agro-nav.js` | NUEVO — navegacion sidebar/hamburguesa |
+| `apps/gold/vite.config.js` | EDIT — registrar nueva entrada MPA |
+| `apps/gold/vercel.json` | EDIT — agregar rewrite para clean URL |
+| `apps/gold/index.html` | EDIT MINIMO — enlace desde footer hacia docs-agro |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | DOC — registro de sesion |
+
+### No se tocara
+
+- `MANIFIESTO_AGRO.md`
+- `agro.js` ni modulos agro
+- Supabase
+- `ADN-VISUAL-V10.0.md`
+- Logica del shell Agro
