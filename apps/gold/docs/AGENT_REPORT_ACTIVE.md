@@ -730,3 +730,80 @@ git status
 git add apps/gold/agro/agro.css apps/gold/agro/index.html apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "style(agro): polish mode switch visual — premium carousel feel, refined spacing and active state"
 ```
+
+---
+
+## Sesion activa: Segunda pasada visual/UX del switch maestro (2026-04-18)
+
+### Objetivo
+
+Segunda pasada de refinacion visual sobre el switch maestro de modo operativo. La primera pasada (GLM) mejoro el componente pero el resultado seguia sintiendose comprimido, con texto demasiado prominente y sin alcanzar el tono premium oscuro de la referencia visual.
+
+### Diagnostico de lo que seguia comprimido
+
+1. **Contenedor** — `bg-3` (#111113) no era suficientemente profundo; no transmitia capsula oscura mate
+2. **Padding del contenedor** — `space-1` (4px) insuficiente para sensacion respirada
+3. **Texto inactivo** — `--text-muted` (#94A3B8) es un gris azulado con demasiado brillo
+4. **Botones** — gap `space-1` (4px) entre icono y texto insuficiente; padding horizontal `space-3` (12px) apretaba los labels
+5. **Estado activo** — fondo `0.10` + borde `0.20` + box-shadow + font-weight 700 = exceso de peso visual
+6. **Border-radius** — `md` (12px) no alcanza la sensacion capsula de la referencia
+7. **Hover** — blanco puro (`--text-primary`) rompia el tono sobrio
+8. **Iconos** — opacity `0.6` demasiado alto para inactivos; `1.0` para activos demasiado brillante
+9. **Hint** — `--text-muted` + opacity `0.6` = demasiado visible para algo que deberia ser casi invisible
+
+### Cambios realizados
+
+| # | Propiedad | Antes (GLM) | Despues (segunda pasada) |
+|---|---|---|---|
+| 1 | Container background | `var(--bg-3)` (#111113) | `var(--bg-0)` (#050505) — oscuro profundo mate |
+| 2 | Container padding | `var(--space-1)` (4px) | `var(--space-2)` (8px) — mas respiracion |
+| 3 | Container border-radius | `var(--radius-md)` (12px) | `var(--radius-lg)` (16px) — capsula mas redondeada |
+| 4 | Container border | `var(--border-neutral)` (0.08) | `rgba(255,255,255,0.05)` — casi invisible |
+| 5 | Button color (inactive) | `var(--text-muted)` (#94A3B8) | `rgba(255,255,255,0.35)` — gris premium bajo |
+| 6 | Button font-weight | 600 | 500 — mas sobrio |
+| 7 | Button padding-x | `var(--space-3)` (12px) | `var(--space-4)` (16px) — labels sin presion |
+| 8 | Button gap | `var(--space-1)` (4px) | `var(--space-1.5)` (6px) — icono-texto mas separado |
+| 9 | Button border-radius | `var(--radius-sm)` (8px) | `var(--radius-md)` (12px) — coherente con capsula |
+| 10 | Button min-height | 40px | 42px — mejor touch target |
+| 11 | Hover color | `var(--text-primary)` (#fff) | `rgba(255,255,255,0.6)` — sobrio |
+| 12 | Active background | `rgba(200,167,82,0.10)` | `rgba(200,167,82,0.08)` — mas sutil |
+| 13 | Active border | `rgba(200,167,82,0.20)` | `rgba(200,167,82,0.15)` — mas fino |
+| 14 | Active color | `var(--gold-4)` (#C8A752) | `var(--gold-5)` (#E8D48B) — dorado claro elegante |
+| 15 | Active box-shadow | `0 1px 4px rgba(...)` | `none` — sin sombra, mas limpio |
+| 16 | Active font-weight | 700 | 600 — no grita |
+| 17 | Icon opacity (inactive) | 0.6 | 0.35 — gris bajo premium |
+| 18 | Icon opacity (active) | 1.0 | 0.85 — dorado suave, no brillante |
+| 19 | Hint color | `var(--text-muted)` + opacity 0.6 | `rgba(255,255,255,0.25)` — casi invisible |
+| 20 | Mobile container padding | `var(--space-0.5)` (2px) | `var(--space-1.5)` (6px) — mas aire |
+| 21 | Mobile min-height | 42px | 44px — touch target comodo |
+
+### Que NO se toco
+
+- `agro-mode.js` — logica intacta
+- `agro-shell.js` — filtro intacto
+- Markup de sidebar items — sin cambios
+- Clasificacion semantica — sin cambios
+- Eventos, listeners, aliases — sin cambios
+- Supabase, agro.js, MANIFIESTO_AGRO.md — sin cambios
+
+### Resultado build
+
+`pnpm build:gold` — OK. 161 modules, 2.52s.
+
+### QA manual sugerido
+
+1. Desktop: verificar capsula oscura profunda con texto gris premium bajo
+2. Verificar que el activo se distingue como dorado claro elegante, sin peso visual
+3. Mobile: verificar 2 opciones por tramo con buen aire interno
+4. Deslizar en movil para verificar carrusel
+5. Verificar que el hint es casi invisible
+6. Probar hover: debe subir a gris medio, no a blanco
+7. Probar foco: anillo dorado accesible
+8. Verificar que el filtrado del sidebar sigue intacto
+
+### Comandos git sugeridos (sin ejecutar)
+
+```bash
+git add apps/gold/agro/agro.css apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "style(agro): second visual pass — dark premium capsule, soft gray inactive, elegant gold active"
+```
