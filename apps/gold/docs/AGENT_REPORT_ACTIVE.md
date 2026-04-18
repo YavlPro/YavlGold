@@ -807,3 +807,68 @@ Segunda pasada de refinacion visual sobre el switch maestro de modo operativo. L
 git add apps/gold/agro/agro.css apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "style(agro): second visual pass — dark premium capsule, soft gray inactive, elegant gold active"
 ```
+
+---
+
+## Sesion activa: Tercera pasada — correccion geometrica del carrusel (2026-04-18)
+
+### Objetivo
+
+Corregir la geometria del carrusel del switch maestro. Las dos pasadas anteriores mejoraron colores y estilo, pero el layout seguia mostrando todos los chips visibles a la vez en vez de forzar 2 por vista.
+
+### Diagnostico geometrico
+
+La causa raiz era que el boton base tenia `flex: 1 1 0` + `min-width: 0`:
+- `flex-grow: 1` → cada chip crecia para llenar espacio disponible
+- `flex-shrink: 1` → cada chip se encogia para caber
+- `flex-basis: 0` → sin ancho minimo de referencia
+- `min-width: 0` → permitia comprimirse por debajo del contenido
+- Resultado: los 4 chips se repartian el ancho del contenedor y todos cabian visibles
+
+El override mobile `flex: 0 0 calc(50% - ...)` solo existia en media query y usaba un gap tan pequeno (4px) que 3 chips se colaban.
+
+### Cambios realizados
+
+| # | Propiedad | Antes | Despues |
+|---|---|---|---|
+| 1 | Container gap | `var(--space-1)` (4px) | `var(--space-2)` (8px) — mas aire entre chips |
+| 2 | Container scroll-snap | Solo en `@media ≤640px` | En base — carrusel activo siempre |
+| 3 | Button flex | `flex: 1 1 0` | `flex: 0 0 calc(50% - var(--space-1))` — exactamente medio viewport |
+| 4 | Media query ≤640px | Override completo de flex/gap/padding | Solo min-height y hint |
+| 5 | Media query ≤480px | Override de flex + padding | Solo padding y font-size |
+
+### Geometria resultante
+
+Con `gap: var(--space-2)` (8px) y `flex: 0 0 calc(50% - var(--space-1))`:
+- Chip 1: 50% - 4px
+- Gap: 8px
+- Chip 2: 50% - 4px
+- Total visible: 100% exactamente
+- Chips 3-4: fuera del viewport, se revelan deslizando
+
+### Que NO se toco
+
+- `agro-mode.js` — logica intacta
+- `agro-shell.js` — filtro intacto
+- Markup del sidebar — sin cambios
+- Eventos, listeners, aliases — sin cambios
+
+### Resultado build
+
+`pnpm build:gold` — OK. 161 modules, 4.10s.
+
+### QA manual sugerido
+
+1. Verificar que solo se ven 2 chips visibles en cualquier viewport
+2. Deslizar horizontalmente y verificar que chips 3-4 se revelan
+3. Verificar scroll-snap: el desplazamiento se detiene en posicion correcta
+4. Probar los 4 modos: General, Cultivo, No cultivo, Herramientas
+5. Verificar que "Herramientas" no se corta en el chip visible
+6. Verificar que el filtrado del sidebar sigue intacto
+
+### Comandos git sugeridos (sin ejecutar)
+
+```bash
+git add apps/gold/agro/agro.css apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "style(agro): fix carousel geometry — force 2-per-view with flex-basis, proper gap and scroll-snap"
+```
