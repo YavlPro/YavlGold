@@ -6,7 +6,7 @@ Este documento describe el flujo Online/Offline para `apps/gold` usando Supabase
 
 - La unica carpeta Supabase canonica del repo es `supabase/` en la raiz.
 - Los comandos `pnpm sb:*` deben operar contra ese canon de raiz mediante `--workdir .`.
-- `apps/gold/supabase/` no es canonica. Es una duplicacion historica/parcial pendiente de reconciliacion formal; no crear alli nuevas migraciones, Edge Functions ni configuracion Supabase.
+- `apps/gold/supabase/` no es canonica y fue retirada del arbol activo el 2026-04-18 tras validacion controlada. No recrear alli migraciones, Edge Functions ni configuracion Supabase.
 
 ## Online vs Offline
 - Online: usa Supabase Cloud cuando necesitas datos reales compartidos, auth real o pruebas contra el entorno remoto.
@@ -33,9 +33,9 @@ Copy-Item .\apps\gold\.env.offline.example .\apps\gold\.env.offline
 - `pnpm sb:status`: muestra URL y anon key local del proyecto Supabase raiz (copiar de aqui el `anon key` para `.env.offline`).
 - `pnpm stop`: detiene Supabase local y libera RAM.
 
-## Nota provisional
+## Nota de cierre Supabase
 
-Mientras `apps/gold/supabase/` no haya sido reconciliada o retirada, debe leerse solo como contexto legacy. Si un flujo local, reporte viejo o instruccion antigua la menciona como fuente operativa, prevalece el canon actual: `supabase/` en la raiz.
+El flujo local vigente usa solo `supabase/` en la raiz. Si un reporte viejo o instruccion antigua menciona `apps/gold/supabase/`, debe leerse como historial de reconciliacion, no como flujo operativo.
 
 ## Recursos Docker Desktop (8GB)
 - Memoria sugerida: 4GB.

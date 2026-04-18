@@ -71,9 +71,9 @@ This file contains the current product, architecture and routing policy for `app
 - `apps/gold/public/` is the **canonical live public** directory for the product
 - `public/` at root was removed — all product assets live in `apps/gold/public/`
 - Canonical Supabase rule: the only canonical Supabase folder is `/supabase` at repo root
-- Do not use `apps/gold/supabase` as canon
-- Do not create new migrations, Edge Functions, or Supabase config in `apps/gold/supabase`
-- Any Supabase duplication is operational debt until formal reconciliation
+- `apps/gold/supabase` was retired from the active tree on 2026-04-18 after controlled root bootstrap/reset validation
+- Do not recreate migrations, Edge Functions, or Supabase config in `apps/gold/supabase`
+- Any new Supabase duplication is operational debt and should be corrected
 
 ## 10. Legacy note
 - YavlGold today is Agro. Everything else is compatibility or archive.

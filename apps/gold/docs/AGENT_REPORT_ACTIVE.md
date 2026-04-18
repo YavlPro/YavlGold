@@ -19,13 +19,13 @@ El trabajo documentado en el archivo archivado se centro en:
 - Rediseño de vista detalle Cartera Viva (cabecera compacta)
 - Canon de modales §19 (Modal Wizard como referencia)
 - Reemplazo de prompt() nativos por showPromptModal()
-- Diagnostico baseline Supabase (deuda documentada)
+- Diagnostico y cierre controlado del frente Supabase raiz
 
 ---
 
 ## Frentes abiertos
 
-1. **Supabase baseline pendiente**: El documento `PLAN_BASELINE_AGRO_SUPABASE_16_ABRIL.md` identifica que `apps/gold/supabase/agro_schema.sql` es snapshot obsoleto. Las migraciones de raiz presuponen tablas que ninguna migracion crea. Requiere creacion de migracion baseline forward-only.
+1. **Seguimiento post-cierre Supabase**: El 2026-04-18 `supabase/` raiz quedo validado con `supabase start --workdir .` y `supabase db reset --workdir . --local --no-seed`; `apps/gold/supabase/` fue retirado. Pendiente solo vigilancia para que no reaparezca un segundo arbol Supabase.
 
 2. **Migracion progresiva de modales legacy**: §19 canon de modales fue aprobado. La migracion de modales existentes (editar cliente, facturero, nuevo cultivo, carrito, tarea) es deuda pendiente priorizada.
 
@@ -40,7 +40,7 @@ El trabajo documentado en el archivo archivado se centro en:
 - **Stack**: Vanilla JS ES6+ / Vite MPA / Supabase / Vercel. Prohibido: React, Vue, Svelte, Tailwind, SPA.
 - **ADN Visual V10.0** inmutable + §19 Canon de Modales V10.1 (modal wizard como referencia).
 - **agro.js NO crece**: features nuevas en `agro-*.js` separados, importados dinamicamente.
-- **Supabase unico canonico**: `supabase/` en raiz. `apps/gold/supabase/` NO es canonico.
+- **Supabase unico canonico**: `supabase/` en raiz. `apps/gold/supabase/` fue retirado el 2026-04-18 y no debe recrearse.
 - **soft-delete** obligatorio con `deleted_at`, RLS filtrado por `user_id`.
 - **Monedas**: COP, USD, VES.
 - **Build gate**: `pnpm build:gold` obligatorio tras cualquier intervencion.
@@ -55,7 +55,7 @@ El trabajo documentado en el archivo archivado se centro en:
 |---|---|---|---|
 | 1 | agro.js monotono (~640KB) | `apps/gold/agro/agro.js` | Reconocido, gestionado con politica de no crecimiento |
 | 2 | window.XXX (104+ asignaciones) | `agro.js` | Migracion gradual cuando se toquen bloques |
-| 3 | Dualidad Supabase | `supabase/` vs `apps/gold/supabase/` | Diagnostico hecho, plan existe, ejecucion pendiente |
+| 3 | Supabase post-cierre | `supabase/` raiz | Dualidad cerrada el 2026-04-18; vigilar que no reaparezca `apps/gold/supabase/` |
 | 4 | Polling duplicado market | `agro-market.js` + `agro-interactions.js` | Plan de consolidacion pendiente |
 | 5 | CSS inline heredado | `apps/gold/index.html` ~1,144L | Migracion progresiva, no refactor masivo |
 
@@ -75,7 +75,7 @@ El trabajo documentado en el archivo archivado se centro en:
 
 - `AGENT_LEGACY_CONTEXT__2026-04-16__2026-04-17.md` — Contexto operativo completo del ciclo anterior (sesiones 2026-04-14 a 2026-04-17).
 - `AGENT_REPORT.md` — Historico legacy solo consulta (no es fuente activa).
-- `PLAN_BASELINE_AGRO_SUPABASE_16_ABRIL.md` — Plan de baseline Supabase pendiente de ejecutar.
+- `PLAN_BASELINE_AGRO_SUPABASE_16_ABRIL.md` — Plan historico usado como insumo del cierre Supabase raiz.
 
 ---
 
@@ -363,3 +363,100 @@ git add AGENTS.md apps/gold/docs/AGENT_CONTEXT_INDEX.md apps/gold/docs/AGENT_REP
 git commit -m "feat(docs): LLM Wiki Fase 1 — patron formalizado en AGENTS.md §12.X y AGENT_CONTEXT_INDEX.md"
 git push
 ```
+
+---
+
+## Sesion activa: Cierre RPC `agro_buyer_portfolio_summary_v1` y validacion Supabase (2026-04-18)
+
+### Paso 0 — Diagnostico inicial
+
+El frente Supabase sigue en fase de cierre controlado. El canon vigente es `supabase/` en raiz; `apps/gold/supabase/` sigue siendo arbol secundario no canonico y solo puede retirarse si la validacion completa de bootstrap/reset desde raiz pasa sin depender de ese arbol.
+
+Bloqueo actual confirmado:
+
+- Archivo: `supabase/migrations/20260331000000_agro_buyer_portfolio_include_zero_buyers.sql`
+- Objeto: `public.agro_buyer_portfolio_summary_v1()`
+- Error observado: `cannot change return type of existing function (SQLSTATE 42P13)`
+- Hipotesis tecnica inicial: `20260331000000` intenta `create or replace function` con OUT parameters distintos a los dejados por migraciones previas, y PostgreSQL no permite cambiar el row type de retorno mediante `CREATE OR REPLACE`.
+
+### Archivos a inspeccionar
+
+- `AGENTS.md`
+- `FICHA_TECNICA.md`
+- `apps/gold/docs/ADN-VISUAL-V10.0.md`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+- `apps/gold/docs/MATRIZ_RECONCILIACION_SUPABASE_16_ABRIL.md`
+- `apps/gold/docs/PLAN_CONSOLIDACION_SUPABASE_16_ABRIL.md`
+- `apps/gold/docs/PLAN_BASELINE_AGRO_SUPABASE_16_ABRIL.md`
+- `supabase/migrations/20260328005620_agro_buyer_portfolio_summary_v1.sql`
+- `supabase/migrations/20260330173000_agro_clients_master_equivalent_v1.sql`
+- `supabase/migrations/20260331000000_agro_buyer_portfolio_include_zero_buyers.sql`
+- migraciones relacionadas con `agro_buyer_portfolio_summary_v1`
+- `package.json`
+- `apps/gold/docs/LOCAL_FIRST.md`
+- `apps/gold/public/llms.txt`
+
+### Criterio de decision
+
+Se puede retirar `apps/gold/supabase/` solo si:
+
+1. `supabase start --workdir .` pasa completo.
+2. `supabase db reset --workdir . --local --no-seed` pasa razonablemente.
+3. Los scripts y documentos operativos vivos no dependen de `apps/gold/supabase/`.
+4. No queda evidencia tecnica viva que exista solo en el arbol secundario sin estar cubierta por `supabase/` raiz o documentada como legacy.
+
+No se puede retirar si:
+
+1. aparece otro bloqueo de migracion, DDL, funcion, reset o bootstrap;
+2. el contrato de `agro_buyer_portfolio_summary_v1()` no queda resuelto con evidencia;
+3. queda dependencia viva de scripts/docs hacia `apps/gold/supabase/`;
+4. la validacion local no es concluyente.
+
+### Alcance de esta sesion
+
+- Resolver solo el bloqueo actual del contrato RPC si la evidencia lo permite.
+- No editar migraciones antiguas.
+- No tocar `MANIFIESTO_AGRO.md`.
+- No tocar `agro.js`.
+- No tocar remoto real destructivamente.
+- No retirar `apps/gold/supabase/` salvo validacion completa explicita.
+
+### Diagnostico del contrato RPC
+
+El contrato previo inmediato creado por `20260330173000_agro_clients_master_equivalent_v1.sql` tenia 19 columnas de retorno e incluia `canonical_name text` y `client_status text`.
+
+La migracion `20260331000000_agro_buyer_portfolio_include_zero_buyers.sql` intentaba aplicar `CREATE OR REPLACE FUNCTION` sobre `public.agro_buyer_portfolio_summary_v1()` con el contrato corto anterior de 17 columnas, sin `canonical_name` ni `client_status`.
+
+PostgreSQL rechazo el cambio porque una funcion con parametros OUT define un tipo de fila de retorno, y `CREATE OR REPLACE FUNCTION` no puede cambiar ese row type. El error era correcto: no era falta de tabla, sino incompatibilidad de contrato RPC.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+| --- | --- | --- |
+| `supabase/migrations/20260330235959_agro_buyer_portfolio_contract_order_repair.sql` | Migracion repair | Drop controlado de `public.agro_buyer_portfolio_summary_v1()` antes de `20260331000000` para que el patch corto no choque con el contrato largo previo. |
+| `supabase/migrations/20260418120000_agro_buyer_portfolio_contract_restore.sql` | Migracion repair | Restauracion final del contrato actual de 19 columnas, conservando `canonical_name`, `client_status` y la logica de marcadores de transferencia de `20260417113444`. |
+| `AGENTS.md` | Documentacion canonica | Se actualizo la regla Supabase para dejar constancia de que `apps/gold/supabase/` fue retirada tras validacion explicita. |
+| `FICHA_TECNICA.md` | Documentacion tecnica | Se actualizo la arquitectura oficial para indicar que no existe segundo arbol Supabase activo dentro de `apps/gold/`. |
+| `apps/gold/docs/LOCAL_FIRST.md` | Documentacion operativa | Se reemplazo la nota provisional por nota de cierre: el flujo local usa solo `supabase/` raiz. |
+| `apps/gold/public/llms.txt` | Contexto LLM | Se actualizo el resumen rapido para indicar que `apps/gold/supabase` fue retirada y no debe recrearse. |
+| `apps/gold/supabase/` | Saneamiento estructural | Retiro del arbol secundario tras `supabase start` y `supabase db reset` limpios. |
+
+### Validacion ejecutada
+
+- `supabase start --workdir .`: OK. El primer intento previo requirio arrancar Docker Desktop; con Docker activo, el start aplico migraciones y levanto el entorno local.
+- `supabase db reset --workdir . --local --no-seed`: OK en el reintento final. Aplico todas las migraciones hasta `20260418120000_agro_buyer_portfolio_contract_restore.sql` y cerro con `Finished supabase db reset on branch main`.
+- Verificacion directa del contrato final en Postgres local: `public.agro_buyer_portfolio_summary_v1()` retorna 19 columnas, incluyendo `canonical_name text` y `client_status text`.
+- Auditoria de referencias vivas: `package.json` y `LOCAL_FIRST.md` operan contra `supabase/` raiz mediante `--workdir .`; no quedan scripts activos que dependan de `apps/gold/supabase/`.
+
+### Decision de cierre
+
+La validacion permitio retirar `apps/gold/supabase/`.
+
+El retiro no usa `apps/gold/supabase/` como canon, no edita migraciones antiguas, no toca remoto real y no modifica `agro.js` ni `MANIFIESTO_AGRO.md`.
+
+Las referencias que quedan en informes historicos o planes de reconciliacion se consideran memoria documental del proceso, no instrucciones operativas vigentes.
+
+### Pendiente de cierre de sesion
+
+- `pnpm build:gold`: OK. Advertencia no bloqueante: Node local `v25.6.0` no coincide con engine esperado `20.x`.
+- Revisar `git status` final.

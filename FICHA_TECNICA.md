@@ -100,13 +100,13 @@ Su rol es contener la infraestructura real de Supabase:
 - vínculo remoto;
 - soporte operativo del backend.
 
-Cualquier carpeta Supabase adicional dentro de `apps/gold/` debe considerarse no canónica, histórica, parcial o temporal hasta que sea reconciliada o retirada.
+No existe carpeta Supabase adicional valida dentro de `apps/gold/`. La duplicación histórica `apps/gold/supabase/` fue retirada del árbol activo el 2026-04-18 tras validación controlada del bootstrap/reset desde `supabase/` raíz. Si reaparece, debe tratarse como regresión operativa o contexto legacy accidental, no como segundo canon.
 
 Regla estricta:
 
 - no mantener dos árboles Supabase compitiendo como si ambos fueran válidos;
 - no crear nuevas migraciones ni funciones en árboles secundarios;
-- cualquier saneamiento de duplicaciones debe hacerse con diagnóstico y reconciliación previa.
+- cualquier nueva duplicación debe corregirse con diagnóstico y reconciliación previa.
 
 ---
 

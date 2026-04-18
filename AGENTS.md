@@ -581,17 +581,18 @@ se trata como excepción riesgosa dentro de una conducta operativamente defectuo
   - Edge Functions;
   - configuración principal de Supabase;
   - operaciones de infraestructura reales del proyecto.
-- `apps/gold/supabase/` **NO es canónica**.
-- `apps/gold/supabase/` debe tratarse como duplicación histórica, árbol secundario o contexto legacy hasta que exista una fase formal de reconciliación y saneamiento.
-- Ningún agente debe crear nuevas migraciones, funciones ni configuración Supabase en `apps/gold/supabase/`.
+- `apps/gold/supabase/` **NO es canónica** y fue retirada del árbol activo el 2026-04-18 tras validación controlada de `supabase start --workdir .` y `supabase db reset --workdir . --local --no-seed`.
+- Si `apps/gold/supabase/` reaparece, debe tratarse como regresión operativa o contexto legacy accidental, no como segundo proyecto Supabase válido.
+- Ningún agente debe recrear migraciones, funciones ni configuración Supabase en `apps/gold/supabase/`.
 - Ningún agente debe asumir que existen dos árboles Supabase válidos.
 - Evitar duplicaciones Supabase es una regla estricta del repo.
 
 ##### Política operativa derivada
 
 - Toda operación Supabase real debe partir del canon de raíz o referenciarlo explícitamente.
-- Si un script, documento o flujo local apunta a `apps/gold/supabase/`, eso debe tratarse como deuda operativa a corregir, no como segundo canon.
-- Antes de borrar, mover o fusionar cualquier árbol Supabase secundario, debe existir diagnóstico, reconciliación y validación explícita.
+- Si un script, documento vivo o flujo local vuelve a apuntar a `apps/gold/supabase/`, eso debe tratarse como deuda operativa a corregir, no como segundo canon.
+- Las referencias históricas en informes de diagnóstico no reactivan el árbol secundario ni autorizan su uso operativo.
+- Antes de crear, mover o fusionar cualquier árbol Supabase secundario, debe existir diagnóstico, reconciliación y validación explícita.
 
 ---
 
