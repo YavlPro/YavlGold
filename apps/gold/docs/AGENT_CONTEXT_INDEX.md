@@ -58,22 +58,17 @@ Actualizado: 2026-04-17.
 
 ---
 
-## Decisiones y planificación vigentes
+## Historico Supabase cerrado
 
-- [PLAN_BASELINE_AGRO_SUPABASE_16_ABRIL.md](./PLAN_BASELINE_AGRO_SUPABASE_16_ABRIL.md) — Baseline Supabase pendiente
-- [PLAN_CONSOLIDACION_SUPABASE_16_ABRIL.md](./PLAN_CONSOLIDACION_SUPABASE_16_ABRIL.md) — Plan de consolidación
-- [MATRIZ_RECONCILIACION_SUPABASE_16_ABRIL.md](./MATRIZ_RECONCILIACION_SUPABASE_16_ABRIL.md) — Matriz de reconciliación
+- [archive/supabase/](./archive/supabase/) — Carpeta de archivo
+  - [CIERRE_SUPABASE_16-18_ABRIL_2026.md](./archive/supabase/CIERRE_SUPABASE_16-18_ABRIL_2026.md) — Resumen de cierre (unico documento de referencia)
+  - [INFORME_CODEX_16_ABRIL__CERRADO.md](./archive/supabase/INFORME_CODEX_16_ABRIL__CERRADO.md) — Solo consulta
+  - [INFORME_SUPABASE_APPS_GOLD_16_ABRIL__CERRADO.md](./archive/supabase/INFORME_SUPABASE_APPS_GOLD_16_ABRIL__CERRADO.md) — Solo consulta
+  - [MATRIZ_RECONCILIACION_SUPABASE_16_ABRIL__CERRADO.md](./archive/supabase/MATRIZ_RECONCILIACION_SUPABASE_16_ABRIL__CERRADO.md) — Solo consulta
+  - [PLAN_BASELINE_AGRO_SUPABASE_16_ABRIL__CERRADO.md](./archive/supabase/PLAN_BASELINE_AGRO_SUPABASE_16_ABRIL__CERRADO.md) — Solo consulta
+  - [PLAN_CONSOLIDACION_SUPABASE_16_ABRIL__CERRADO.md](./archive/supabase/PLAN_CONSOLIDACION_SUPABASE_16_ABRIL__CERRADO.md) — Solo consulta
 
----
-
-## Informes de sesión
-
-- [INFORME_SUPABASE_APPS_GOLD_16_ABRIL.md](./INFORME_SUPABASE_APPS_GOLD_16_ABRIL.md) — Diagnóstico Supabase
-- [INFORME_CODEX_16_ABRIL.md](./INFORME_CODEX_16_ABRIL.md) — Diagnóstico Codex
-
----
-
-## Contexto histórico
+## Contexto historico
 
 - [AGENT_LEGACY_CONTEXT__2026-04-16__2026-04-17.md](./AGENT_LEGACY_CONTEXT__2026-04-16__2026-04-17.md) — Wiki viva anterior (17,610 líneas archivadas)
 - [AGENT_REPORT.md](./AGENT_REPORT.md) — Histórico diagnostics (solo consulta)

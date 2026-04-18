@@ -460,3 +460,49 @@ Las referencias que quedan en informes historicos o planes de reconciliacion se 
 
 - `pnpm build:gold`: OK. Advertencia no bloqueante: Node local `v25.6.0` no coincide con engine esperado `20.x`.
 - Revisar `git status` final.
+
+---
+
+## Sesion activa: Limpieza documental archive Supabase (2026-04-18)
+
+### Objetivo
+
+Ordenar y sanear los documentos cerrados relacionados con el frente Supabase del 16-18 de abril. Dejar claro quais documentos quedan activos, quais sao historicos e archiving os que ya no deben competir con el reporte activo.
+
+### Diagnostico
+
+Se auditaron todos los documentos en `apps/gold/docs/` y se identificaron 6 informes/planes relacionados com o frente Supabase ya cerrado. Todos correspondian a fases ya ejecutadas y validadas.
+
+### Clasificacion aplicada
+
+| Documento original | Nuevo nombre/ubicacion | Clasificacion |
+|---|---|---|
+| `INFORME_CODEX_16_ABRIL.md` | `archive/supabase/INFORME_CODEX_16_ABRIL__CERRADO.md` | Historico / solo consulta |
+| `INFORME_SUPABASE_APPS_GOLD_16_ABRIL.md` | `archive/supabase/INFORME_SUPABASE_APPS_GOLD_16_ABRIL__CERRADO.md` | Historico / solo consulta |
+| `PLAN_BASELINE_AGRO_SUPABASE_16_ABRIL.md` | `archive/supabase/PLAN_BASELINE_AGRO_SUPABASE_16_ABRIL__CERRADO.md` | Historico / solo consulta |
+| `PLAN_CONSOLIDACION_SUPABASE_16_ABRIL.md` | `archive/supabase/PLAN_CONSOLIDACION_SUPABASE_16_ABRIL__CERRADO.md` | Historico / solo consulta |
+| `MATRIZ_RECONCILIACION_SUPABASE_16_ABRIL.md` | `archive/supabase/MATRIZ_RECONCILIACION_SUPABASE_16_ABRIL__CERRADO.md` | Historico / solo consulta |
+| — | `archive/supabase/CIERRE_SUPABASE_16-18_ABRIL_2026.md` | Nuevo resumen unico de cierre |
+
+### Documentos mantenidos activos
+
+- `AGENT_REPORT_ACTIVE.md` — unica fuente activa de reportes de sesion
+- `LOCAL_FIRST.md` — documento operativo vigente (usado por `pnpm sb:*`)
+
+### Archivos creados
+
+- `apps/gold/docs/archive/supabase/CIERRE_SUPABASE_16-18_ABRIL_2026.md` — resumen unico de cierre con contexto, fases, decision canonica y referencias
+
+### Archivos modificados
+
+- `AGENT_CONTEXT_INDEX.md` — se reorganizaron las secciones "Decisiones y planificacion vigentes" e "Informes de sesion" hacia la nueva seccion "Historico Supabase cerrado" bajo `archive/supabase/`
+
+### No se toco
+
+- `MANIFIESTO_AGRO.md`
+- `AGENTS.md`
+- `ADN-VISUAL-V10.0.md`
+- `FICHA_TECNICA.md`
+- Codigo de producto
+- Migraciones Supabase
+- `LOCAL_FIRST.md` (sigue activo)
