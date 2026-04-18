@@ -545,60 +545,62 @@ El switch estaba implementado y funcional, pero carecia de documentacion canonic
 
 ### QA sugerido
 
-1. Verificar que subseccion 4.11 queda logicamente placed en MANIFIESTO_AGRO.md
-2. Verificar que el patron en ADN-VISUAL-V10.0.md es fiel al comportamiento existente
-3. Confirmar que el texto/faq 9.21 es preciso y util
+1. Verificar que subseccion 4.11.1 y 4.11.2 quedan logicamente placed dentro de 4.11
+2. Verificar que el ejemplo de uso al final de 4.11 integraambas funciones sin mezclarlas
+3. Confirmar que las FAQ 9.22 y 9.23 son precisas y no mezclan capacidades
+4. Confirmar que switch / favoritos / búsqueda quedan como tres capas distinctas
 
 ---
 
-## Sesion activa: Switch maestro del shell Agro (2026-04-18)
+## Sesion activa: Canonizacion Favoritos del Shell y Busqueda Compacta (2026-04-18)
+
+### Objetivo
+
+Documentar canonicamente Favoritos del Shell y Búsqueda Agro Compacta como dos capas separadas del switch maestro, sin mezclarlas.
 
 ### Diagnostico
 
-Se inicia correccion quirurgica del switch maestro del shell/sidebar de Agro. El switch existe visualmente, pero la hipotesis inicial es que no esta conectado a la visibilidad real de los items del shell. La tarea debe confirmar si el problema vive en `agro-mode.js`, `agro-shell.js`, el markup del sidebar en `agro/index.html`, CSS responsive, o una combinacion de wiring + metadata faltante.
+El MANIFIESTO_AGRO.md ya tiene el `4.11 Modo de Lectura del Shell` canonizado. Sin embargo, no existía documentación para dos funciones adicionales que también operan sobre el shell: Favoritos (preferencia personal) y Búsqueda Compacta (localización puntual). Sin esta documentación, las tres funciones corrían riesgo de mezclarse semánticamente.
 
-### Causa raiz probable
+### Plan de insercion
 
-El control de modo parece publicar estado global (`agro:modechange` / `body[data-agro-mode]`), pero los nodos de navegacion del shell probablemente no tienen una clasificacion semantica consumible (`all`, `crop`, `non_crop`, `tools`) ni un listener que aplique show/hide sobre esos nodos. En mobile, el control tambien puede estar limitado por CSS de ancho/overflow y no por logica.
+1. Expandir `4.11 Modo de Lectura del Shell` con dos subsecciones internas:
+   - `4.11.1 Favoritos del Shell`
+   - `4.11.2 Búsqueda Agro Compacta`
+2. Agregar preguntas FAQ `9.22` y `9.23` para clarification rapida.
 
-### Plan quirurgico
+### Archivos editados
 
-1. Inspeccionar donde se renderiza el switch y como se inicializa.
-2. Inventariar items reales del sidebar/header y clasificar solo lo que ya existe, sin contradecir `MANIFIESTO_AGRO.md`.
-3. Agregar metadata semantica reutilizable en el shell o una capa JS pequeña.
-4. Conectar el modo activo a un filtro real de visibilidad, con fallback `all`.
-5. Ajustar CSS mobile para strip horizontal deslizable, maximo dos opciones visibles y metadata discreta: "Desliza para ver mas filtros o modos".
-6. Validar manualmente modos `all`, `crop`, `non_crop`, `tools` y ejecutar `pnpm build:gold`.
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | Subseccion 4.11.1 | ~45 lineas: Favoritos como preferencia personal |
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | Subseccion 4.11.2 | ~45 lineas: Busqueda Compacta como localizacion puntual |
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | FAQ | Preguntas 9.22 y 9.23 |
 
-### Archivos a tocar
+### Diferenciacion canonica aplicada
 
-- `apps/gold/agro/agro-mode.js`
-- `apps/gold/agro/agro-shell.js`
-- `apps/gold/agro/index.html`
-- `apps/gold/agro/agro.css` o CSS del shell existente, solo si hace falta para responsive/ADN
-- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+| Funcion | Capa | Scope |
+|---|---|---|
+| Switch maestro | Contexto de lectura | Todo el shell, segun modo |
+| Favoritos | Preferencia personal | Accesos directos del usuario |
+| Busqueda compacta | Localizacion puntual | Superficies y vistas navegables |
 
-### Causa raiz confirmada
+### Lo que NO se toco
 
-`agro-mode.js` renderizaba el switch y actualizaba estado visual/localStorage, pero `agro-shell.js` no escuchaba `agro:modechange` para filtrar items reales del sidebar. El markup tampoco tenia metadata semantica por item, por lo que no existia una capa confiable para distinguir cultivo, no cultivo, herramientas o general. En mobile, el CSS compactaba ocultando labels, pero no convertia el control en un strip deslizable de dos opciones visibles.
+- `agro.js`, `agro-mode.js`, `agro-shell.js`
+- ninguna migracion Supabase
+- ningun CSS vivo
+- ADN-VISUAL-V10.0.md
 
-### Cambios realizados
+### Resultado build
 
-| Archivo | Cambio |
-| --- | --- |
-| `apps/gold/agro/agro-mode.js` | Se ampliaron los modos a `all`, `crop`, `non_crop`, `tools`; se conservaron aliases legacy (`general`, `cultivo`, `no-cultivo`) para no romper consumidores existentes. |
-| `apps/gold/agro/agro-shell.js` | Se agrego filtro real por `data-agro-mode-scope`, listener de `agro:modechange`, ocultado con `hidden`/`inert` y fallback `all`. |
-| `apps/gold/agro/index.html` | Se etiquetaron los items reales del sidebar con `general`, `crop`, `non_crop` o `tools`; se agrego hint mobile del switch. |
-| `apps/gold/agro/agro.css` | Se ajusto el switch como strip horizontal, estado activo con fondo/borde/sombra, touch target mas comodo y mobile con dos opciones visibles por tramo. |
+`pnpm build:gold` — OK. 161 modules, 6.49s.
 
-### Clasificacion semantica aplicada
+### QA sugerido
 
-- `all`: modo General, muestra todo.
-- `crop`: ciclos de cultivo, tareas filtrables por cultivo y accion `Nuevo cultivo`.
-- `non_crop`: ciclos de periodo, operacion comercial, Cartera Viva, Cartera Operativa y tareas filtrables sin cultivo.
-- `tools`: rankings, clima, herramientas, bitacora y Asistente IA.
-
-`Granja General` queda como agrupador navegacional mixto (`crop non_crop`), no como modulo financiero.
+1. Confirmar que switch / favoritos / busqueda quedan como tres capas distinctas
+2. Verificar que las subsecciones 4.11.1 y 4.11.2 no contaminan la 4.11 principal
+3. Confirmar que las FAQ 9.22 y 9.23 son consultables sin ambigüedad
 
 ### Validacion ejecutada
 
@@ -799,6 +801,61 @@ Se ejecuto la Opcion A. Favoritos y busqueda quedaron como capas independientes 
 5. Click en resultado y confirmar navegacion.
 6. Borrar el termino y confirmar que se oculta el panel.
 7. Probar modos del switch y confirmar que el filtrado original no cambio.
+
+---
+
+## Sesion activa: Cirugia editorial final del MANIFIESTO_AGRO — secciones shell (2026-04-18)
+
+### Objetivo editorial
+
+Limpiar redaccion, corregir mezclas de idioma (portugues, ingles, caracteres rotos) y dejar el canon escrito con espanol claro, humano y consistente en las secciones del shell del MANIFIESTO_AGRO.md.
+
+### Diagnostico
+
+Se identificaron 23 residuos editoriales en las secciones 4.11, 4.11.1, 4.11.2, 9.22 y 9.23:
+- Portugues infiltrado: `superfícies`, `reclassifica`, `conceitos`, `conteúdos`, `cada uma`, `uma`, `em uma lista`, `opção`, `com nenhuma`, `à superfície`, `vai direto`
+- Ingles infiltrado: `associated`
+- Caracteres rotos: `sin摩擦`
+- Errores de tipeo: `poderlimpiarse` (sin espacio), `rapido` (sin tilde), `specifica` (sin tilde)
+- Acentos faltantes en espanol: `especifica` → `específica`, `rapido` → `rápido`
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | Editorial | 23 correcciones de idioma en secciones 4.11, 4.11.1, 4.11.2, 9.22, 9.23 y bloque previo del switch |
+
+### Tipo de errores limpiados
+
+| Error | Ocurrencias | Correccion |
+|---|---|---|
+| `superfícies` (portugues) | 12 | `superficies` |
+| `reclassifica` (portugues) | 1 | `reclasifica` |
+| `conceitos` (portugues) | 1 | `conceptos` |
+| `conteúdos` (portugues) | 1 | `contenidos` |
+| `cada uma` (portugues) | 1 | `cada una` |
+| `uma superfície` (portugues) | 2 | `una superficie` |
+| `em uma lista` (portugues) | 1 | `en una lista` |
+| `uma opción` (portugues) | 1 | `una opción` |
+| `com nenhuma` (portugues) | 1 | `con ninguna` |
+| `à superfície` (portugues) | 1 | `a la superficie` |
+| `vai direto` (portugues) | 1 | `va directo` |
+| `associated` (ingles) | 2 | `asociado` |
+| `sin摩擦` (caracteres rotos) | 1 | `sin friccion` |
+| `poderlimpiarse` (sin espacio) | 1 | `poder limpiarse` |
+| `rapido` (sin tilde) | 1 | `rápido` |
+| `specifica` (sin tilde) | 1 | `específica` |
+
+### Que NO se toco
+
+- Estructura semantica del manifiesto
+- Jerarquia de secciones
+- Significado o contenido de las definiciones
+- Otras zonas del documento fuera de las secciones shell
+- Codigo de producto
+- AGENTS.md
+- ADN-VISUAL-V10.0.md
+- FICHA_TECNICA.md
 
 ---
 
