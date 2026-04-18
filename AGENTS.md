@@ -188,6 +188,50 @@ Si durante una sesión un agente detecta que `AGENT_REPORT_ACTIVE.md` ya superó
 El reporte activo debe ser **útil para trabajar hoy**, no una acumulación infinita de pasado.
 La memoria completa se conserva, pero el contexto vivo debe mantenerse ligero, claro y operacional.
 
+### 4.2 — Ley de Archivo por Frente Cerrado
+
+Cuando un frente de trabajo quede **cerrado y validado**, sus documentos de diagnóstico, matriz, plan, informe o cierre ya no deben competir con la documentación activa.
+
+#### Regla obligatoria
+- `AGENT_REPORT_ACTIVE.md` sigue siendo la única fuente activa de reportes de sesión.
+- Los documentos de un frente cerrado deben:
+  - archivarse por frente/categoría,
+  - o marcarse como histórico / solo consulta,
+  - pero no seguir aparentando estado activo.
+
+#### Estructura de archivo
+Los documentos cerrados deben moverse a una carpeta separada de las crónicas y de los documentos canónicos, por ejemplo:
+
+`apps/gold/docs/archive/<frente>/`
+
+Ejemplos:
+- `apps/gold/docs/archive/supabase/`
+- `apps/gold/docs/archive/frontend/`
+- `apps/gold/docs/archive/backend/`
+- `apps/gold/docs/archive/bugs/`
+- `apps/gold/docs/archive/ux/`
+
+#### Regla de no-confusión
+- No mezclar documentos archivados con `chronicles/`.
+- No mezclar documentos archivados con `AGENT_REPORT_ACTIVE.md`.
+- No mezclar documentos archivados con documentos canónicos como:
+  - `AGENTS.md`
+  - `MANIFIESTO_AGRO.md`
+  - `ADN-VISUAL-V10.0.md`
+  - `FICHA_TECNICA.md`
+
+#### Regla de conservación
+- Si el documento conserva valor histórico, técnico o explicativo, NO debe borrarse.
+- Si el documento es redundante puro y no aporta valor único, puede eliminarse.
+- Si existe duda, preferir archivar antes que borrar.
+
+#### Regla operativa
+Al cerrar un frente, el agente debe:
+1. clasificar los documentos del frente;
+2. dejar activo solo lo que realmente siga vivo;
+3. mover lo cerrado a `archive/<frente>/`;
+4. documentar la limpieza en `AGENT_REPORT_ACTIVE.md`.
+
 ---
 
 ## §5 — Build y QA
@@ -593,6 +637,50 @@ se trata como excepción riesgosa dentro de una conducta operativamente defectuo
 - Si un script, documento vivo o flujo local vuelve a apuntar a `apps/gold/supabase/`, eso debe tratarse como deuda operativa a corregir, no como segundo canon.
 - Las referencias históricas en informes de diagnóstico no reactivan el árbol secundario ni autorizan su uso operativo.
 - Antes de crear, mover o fusionar cualquier árbol Supabase secundario, debe existir diagnóstico, reconciliación y validación explícita.
+
+### 11.X — Ley Anti-Monolito General
+
+El repo debe evitar crecimiento monolítico innecesario en código, vistas, estilos y documentación operativa.
+
+#### Principio
+Separación modular por partes.
+Cada archivo debe mantener una responsabilidad clara y un tamaño razonable para humanos y agentes.
+
+#### JS
+- Ideal: < 800 líneas
+- Vigilancia: 800–1200
+- Si supera 1200: evaluar extracción modular
+- Si supera 2000: no crecer con nuevas features; solo cirugía o extracción
+
+#### HTML
+- Ideal: < 600 líneas
+- Vigilancia: 600–900
+- Si supera 900: evaluar separación por bloques o parciales
+- Si supera 1200: no seguir creciendo sin plan de división
+
+#### CSS
+- Ideal: < 900 líneas
+- Vigilancia: 900–1400
+- Si supera 1400: evaluar split por superficie o módulo
+- Si supera 1800: no seguir creciendo sin plan de separación
+
+#### Documentación operativa
+- Planes cerrados, matrices, informes y diagnósticos no deben quedarse mezclados en el árbol activo si ya fueron ejecutados.
+- Deben archivarse por frente conforme a la ley de archivo por frente cerrado.
+
+#### Excepción canónica
+Los documentos canónicos:
+- `AGENTS.md`
+- `MANIFIESTO_AGRO.md`
+- `ADN-VISUAL-V10.0.md`
+- `FICHA_TECNICA.md`
+
+no se gobiernan por un límite bruto de líneas, sino por:
+- claridad estructural,
+- secciones estables,
+- índice útil,
+- semántica limpia,
+- y ausencia de contaminación operativa.
 
 ---
 
