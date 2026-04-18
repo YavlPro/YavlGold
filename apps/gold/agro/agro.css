@@ -2489,779 +2489,6 @@ body.agro-social-open {
   }
 }
 
-/* V9.5.7: Asistente Agro modal */
-body.modal-open {
-  overflow: hidden;
-}
-
-#modal-agro-assistant {
-  position: fixed;
-  inset: 0;
-  z-index: 10050;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-}
-
-#modal-agro-assistant.is-open {
-  display: flex;
-}
-
-#modal-agro-assistant .assistant-backdrop {
-  position: absolute;
-  inset: 0;
-  z-index: 10050;
-  background: rgba(0, 0, 0, 0.78);
-  backdrop-filter: blur(8px);
-}
-
-#modal-agro-assistant .assistant-sheet {
-  position: relative;
-  z-index: 10060;
-}
-
-#modal-agro-assistant .agro-assistant {
-  width: min(1120px, 96vw);
-  height: min(86vh, 780px);
-  background: linear-gradient(135deg, rgba(12, 12, 12, 0.98), rgba(6, 6, 6, 0.98));
-  border: 1px solid rgba(200, 167, 82, 0.35);
-  border-radius: 18px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
-  overflow: hidden;
-  position: relative;
-}
-
-#modal-agro-assistant .assistant-shell::before {
-  content: '';
-  position: absolute;
-  inset: -40%;
-  background: radial-gradient(circle, rgba(200, 167, 82, 0.1) 0%, rgba(200, 167, 82, 0.02) 50%, transparent 70%);
-  animation: assistantPulse 10s ease-in-out infinite;
-  pointer-events: none;
-}
-
-@keyframes assistantPulse {
-  0%,
-  100% {
-    transform: scale(0.9);
-    opacity: 0.6;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 1;
-  }
-}
-
-#modal-agro-assistant .assistant-shell {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  height: 100%;
-  overflow: hidden;  /* V9.7: CLAVE para scroll */
-  background: rgba(5, 5, 5, 0.95);
-}
-
-#modal-agro-assistant .assistant-sidebar {
-  position: relative;
-  z-index: 4;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1.2rem 1rem;
-  border-right: 1px solid rgba(200, 167, 82, 0.2);
-  background: rgba(12, 12, 12, 0.95);
-  min-height: 0;     /* V9.7: para scroll thread-list */
-  overflow: hidden;  /* V9.7: para scroll thread-list */
-}
-
-#modal-agro-assistant .assistant-sidebar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-#modal-agro-assistant .assistant-sidebar-title {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 0.85rem;
-  letter-spacing: 1px;
-  color: var(--gold-primary, #C8A752);
-  text-transform: uppercase;
-}
-
-#modal-agro-assistant .assistant-new-thread {
-  border: 1px solid rgba(200, 167, 82, 0.4);
-  background: rgba(200, 167, 82, 0.12);
-  color: var(--gold-primary, #C8A752);
-  padding: 0.35rem 0.7rem;
-  border-radius: 999px;
-  font-size: 0.7rem;
-  font-family: 'Orbitron', sans-serif;
-  letter-spacing: 0.6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-#modal-agro-assistant .assistant-new-thread:hover {
-  border-color: rgba(200, 167, 82, 0.7);
-  box-shadow: 0 0 12px rgba(200, 167, 82, 0.2);
-}
-
-#modal-agro-assistant .assistant-thread-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  overflow-y: auto;
-  padding-right: 0.25rem;
-  flex: 1;
-  min-height: 0;
-}
-
-/* V9.7: Thread wrapper with delete button */
-#modal-agro-assistant .assistant-thread-wrapper {
-  display: flex;
-  align-items: stretch;
-  gap: 0;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.02);
-  transition: all 0.2s ease;
-}
-
-#modal-agro-assistant .assistant-thread-wrapper:hover {
-  border-color: rgba(200, 167, 82, 0.35);
-  background: rgba(200, 167, 82, 0.06);
-}
-
-#modal-agro-assistant .assistant-thread-wrapper.is-active {
-  border-color: rgba(200, 167, 82, 0.6);
-  background: linear-gradient(135deg, rgba(200, 167, 82, 0.15), rgba(200, 167, 82, 0.08));
-  box-shadow: 0 0 20px rgba(200, 167, 82, 0.12);
-}
-
-#modal-agro-assistant .assistant-thread {
-  flex: 1;
-  border: none;
-  background: transparent;
-  color: #fff;
-  padding: 0.75rem 0.9rem;
-  cursor: pointer;
-  display: grid;
-  gap: 0.3rem;
-  text-align: left;
-  transition: background 0.15s ease;
-}
-
-#modal-agro-assistant .assistant-thread:hover {
-  background: rgba(255, 255, 255, 0.03);
-}
-
-#modal-agro-assistant .assistant-thread-title {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #f5f1e5;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-#modal-agro-assistant .assistant-thread-meta {
-  font-size: var(--text-xs);
-  color: rgba(255, 255, 255, 0.5);
-  letter-spacing: 0.2px;
-}
-
-/* V9.7: Thread delete button */
-#modal-agro-assistant .assistant-thread-delete {
-  width: 36px;
-  border: none;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.25);
-  font-size: 0.85rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: all 0.15s ease;
-}
-
-#modal-agro-assistant .assistant-thread-wrapper:hover .assistant-thread-delete {
-  opacity: 1;
-  color: rgba(255, 120, 120, 0.7);
-}
-
-#modal-agro-assistant .assistant-thread-delete:hover {
-  background: rgba(255, 80, 80, 0.2);
-  color: rgba(255, 100, 100, 1);
-}
-
-#modal-agro-assistant .assistant-main {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;     /* V9.7: CLAVE para scroll */
-  overflow: hidden;  /* V9.7: CLAVE para scroll */
-}
-
-#modal-agro-assistant .assistant-topbar {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid rgba(200, 167, 82, 0.2);
-  background: rgba(10, 10, 10, 0.9);
-}
-
-#modal-agro-assistant .assistant-drawer-toggle {
-  border: 1px solid rgba(200, 167, 82, 0.3);
-  background: rgba(200, 167, 82, 0.1);
-  color: var(--gold-primary, #C8A752);
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  cursor: pointer;
-  display: none;
-  align-items: center;
-  justify-content: center;
-}
-
-#modal-agro-assistant .assistant-title-group {
-  flex: 1;
-  display: grid;
-  gap: 0.25rem;
-}
-
-#modal-agro-assistant .assistant-title-row {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-#modal-agro-assistant #agro-assistant-title {
-  margin: 0;
-  font-size: 1.05rem;
-  color: var(--gold-primary, #C8A752);
-  font-family: 'Orbitron', sans-serif;
-}
-
-#modal-agro-assistant .assistant-status {
-  font-size: 0.72rem;
-  padding: 0.15rem 0.5rem;
-  border-radius: 999px;
-  border: 1px solid rgba(200, 167, 82, 0.4);
-  color: var(--gold-primary, #C8A752);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-}
-
-#modal-agro-assistant .assistant-subtitle {
-  margin: 0;
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-/* V9.7: Topbar actions container for delete + close buttons */
-#modal-agro-assistant .assistant-topbar-actions {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-#modal-agro-assistant .btn-delete-thread {
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 8px;
-  background: rgba(255, 80, 80, 0.15);
-  color: rgba(255, 120, 120, 0.9);
-  font-size: 1rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-#modal-agro-assistant .btn-delete-thread:hover {
-  background: rgba(255, 80, 80, 0.3);
-  color: rgba(255, 100, 100, 1);
-}
-
-#modal-agro-assistant .assistant-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 1rem 1.25rem 1.25rem;
-  overflow: hidden;
-  min-height: 0;
-}
-
-#modal-agro-assistant .assistant-guide {
-  border: 1px solid rgba(200, 167, 82, 0.2);
-  background: linear-gradient(145deg, rgba(200, 167, 82, 0.1), rgba(200, 167, 82, 0.04));
-  border-radius: 14px;
-  padding: 0.85rem 1rem;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.74rem;
-  backdrop-filter: blur(4px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-
-#modal-agro-assistant .assistant-guide-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
-}
-
-#modal-agro-assistant .assistant-guide-toggle {
-  border: 1px solid rgba(200, 167, 82, 0.45);
-  background: rgba(200, 167, 82, 0.12);
-  color: var(--gold-primary, #C8A752);
-  padding: 0.25rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.62rem;
-  font-family: 'Orbitron', sans-serif;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-  cursor: pointer;
-  display: inline-flex;
-}
-
-#modal-agro-assistant .assistant-guide-title {
-  font-weight: 700;
-  color: var(--gold-primary, #C8A752);
-  margin-bottom: 0;
-  font-size: 0.78rem;
-  letter-spacing: 0.3px;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-#modal-agro-assistant .assistant-guide-title::before {
-  content: '💡';
-  font-size: 0.9rem;
-}
-
-#modal-agro-assistant .assistant-guide ul {
-  margin: 0;
-  padding-left: 1.1rem;
-  display: grid;
-  gap: 0.35rem;
-  line-height: 1.5;
-}
-
-#modal-agro-assistant .assistant-guide.is-collapsed ul {
-  display: none;
-}
-
-#modal-agro-assistant .assistant-guide.is-collapsed {
-  padding: 0.55rem 0.75rem;
-}
-
-#modal-agro-assistant .assistant-guide.is-collapsed .assistant-guide-header {
-  margin-bottom: 0;
-}
-
-#modal-agro-assistant .assistant-scroll {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scroll-behavior: smooth;
-  padding-right: 0.5rem;
-  padding-bottom: 96px;
-  scroll-padding-bottom: 96px;
-}
-
-#modal-agro-assistant .assistant-history {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-}
-
-#modal-agro-assistant .assistant-empty {
-  border: 1px dashed rgba(200, 167, 82, 0.4);
-  border-radius: 12px;
-  padding: 1rem;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.85rem;
-}
-
-#modal-agro-assistant .assistant-message {
-  padding: 0.75rem 0.9rem;
-  border-radius: 14px;
-  font-size: 0.9rem;
-  line-height: 1.45;
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  max-width: 86%;
-  white-space: pre-wrap;
-  word-break: break-word;
-  display: grid;
-  gap: 0.6rem;
-}
-
-#modal-agro-assistant .assistant-message.user {
-  align-self: flex-end;
-  border-color: rgba(200, 167, 82, 0.35);
-  background: rgba(200, 167, 82, 0.15);
-  color: #f9f3e4;
-}
-
-#modal-agro-assistant .assistant-message.assistant {
-  align-self: flex-start;
-  border-color: rgba(74, 222, 128, 0.25);
-  background: rgba(74, 222, 128, 0.08);
-}
-
-#modal-agro-assistant .assistant-message.system {
-  align-self: center;
-  border-color: rgba(200, 167, 82, 0.3);
-  background: rgba(200, 167, 82, 0.08);
-  color: #f9f3e4;
-  font-style: italic;
-}
-
-#modal-agro-assistant .assistant-message.error {
-  align-self: flex-start;
-  border-color: rgba(248, 113, 113, 0.4);
-  background: rgba(248, 113, 113, 0.15);
-  color: #ffecec;
-  animation: fadeIn 0.3s ease;
-}
-
-#modal-agro-assistant .assistant-message-body {
-  display: grid;
-  gap: 0.5rem;
-}
-
-#modal-agro-assistant .assistant-message-body p {
-  margin: 0;
-  white-space: pre-wrap;
-}
-
-#modal-agro-assistant .assistant-code {
-  border: 1px solid rgba(200, 167, 82, 0.35);
-  border-radius: 10px;
-  overflow: hidden;
-  background: rgba(0, 0, 0, 0.6);
-}
-
-#modal-agro-assistant .assistant-code-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.4rem 0.6rem;
-  background: rgba(200, 167, 82, 0.12);
-  font-size: 0.7rem;
-  color: var(--gold-primary, #C8A752);
-}
-
-#modal-agro-assistant .assistant-code-copy {
-  border: 1px solid rgba(200, 167, 82, 0.4);
-  background: transparent;
-  color: var(--gold-primary, #C8A752);
-  padding: 0.2rem 0.5rem;
-  border-radius: 999px;
-  font-size: 0.65rem;
-  cursor: pointer;
-}
-
-#modal-agro-assistant .assistant-code pre {
-  margin: 0;
-  padding: 0.7rem 0.8rem;
-  color: #f1f1f1;
-  font-size: 0.8rem;
-  overflow-x: auto;
-}
-
-#modal-agro-assistant .assistant-typing {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.75rem;
-}
-
-#modal-agro-assistant .assistant-typing[aria-hidden="true"] {
-  display: none;
-}
-
-#modal-agro-assistant .typing-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--gold-primary, #C8A752);
-  animation: typingPulse 1.2s infinite ease-in-out;
-}
-
-#modal-agro-assistant .typing-dot:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-#modal-agro-assistant .typing-dot:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-@keyframes typingPulse {
-  0%,
-  100% {
-    opacity: 0.3;
-    transform: translateY(0);
-  }
-  50% {
-    opacity: 1;
-    transform: translateY(-3px);
-  }
-}
-
-#modal-agro-assistant .assistant-controls textarea {
-  width: 100%;
-  min-height: 84px;
-  resize: vertical;
-}
-
-#modal-agro-assistant .assistant-controls textarea {
-  color: var(--text-primary, #ffffff);
-  -webkit-text-fill-color: var(--text-primary, #ffffff);
-  caret-color: var(--gold-primary, #C8A752);
-  opacity: 1;
-}
-
-#modal-agro-assistant .assistant-controls textarea::placeholder {
-  color: var(--text-muted, rgba(255, 255, 255, 0.45));
-  opacity: 1;
-}
-
-#modal-agro-assistant .assistant-message,
-#modal-agro-assistant .assistant-message-body,
-#modal-agro-assistant .assistant-message-body p,
-#modal-agro-assistant .assistant-message-body li,
-#modal-agro-assistant .assistant-message-body span,
-#modal-agro-assistant .assistant-message-body code,
-#modal-agro-assistant .assistant-message-body pre,
-#modal-agro-assistant .assistant-message-body a {
-  opacity: 1;
-  mix-blend-mode: normal;
-  filter: none;
-  -webkit-text-fill-color: currentColor;
-}
-
-/* HOTFIX: Agro Assistant visibility (input + messages) */
-#modal-agro-assistant #agro-assistant-input,
-#modal-agro-assistant textarea#agro-assistant-input,
-#modal-agro-assistant input#agro-assistant-input {
-  color: var(--text-primary, #eaeaea) !important;
-  -webkit-text-fill-color: var(--text-primary, #eaeaea) !important;
-  caret-color: var(--gold-primary, #c8a752) !important;
-  opacity: 1 !important;
-  filter: none !important;
-  mix-blend-mode: normal !important;
-  text-shadow: none !important;
-  background: rgba(0, 0, 0, 0.35) !important;
-}
-
-#modal-agro-assistant #agro-assistant-input::placeholder {
-  color: rgba(234, 234, 234, 0.45) !important;
-  -webkit-text-fill-color: rgba(234, 234, 234, 0.45) !important;
-}
-
-#modal-agro-assistant .assistant-history,
-#modal-agro-assistant .assistant-history * {
-  mix-blend-mode: normal !important;
-  filter: none !important;
-}
-
-#modal-agro-assistant .assistant-history .assistant-message,
-#modal-agro-assistant .assistant-history .assistant-message-body,
-#modal-agro-assistant .assistant-history .assistant-message-body p,
-#modal-agro-assistant .assistant-history .assistant-message-body li,
-#modal-agro-assistant .assistant-history .assistant-message-body pre,
-#modal-agro-assistant .assistant-history .assistant-message-body code,
-#modal-agro-assistant .assistant-history .assistant-message-body span,
-#modal-agro-assistant .assistant-history .assistant-message-body a {
-  color: var(--text-primary, #eaeaea) !important;
-  -webkit-text-fill-color: var(--text-primary, #eaeaea) !important;
-  opacity: 1 !important;
-}
-
-#modal-agro-assistant .assistant-mode-hint {
-  font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.65);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(200, 167, 82, 0.2);
-  padding: 0.5rem 0.75rem;
-  border-radius: 10px;
-}
-
-#modal-agro-assistant .assistant-new-messages {
-  align-self: center;
-  margin-top: 0.4rem;
-  border: 1px solid rgba(200, 167, 82, 0.4);
-  background: rgba(200, 167, 82, 0.15);
-  color: var(--gold-primary, #C8A752);
-  padding: 0.35rem 0.8rem;
-  border-radius: 999px;
-  font-size: 0.7rem;
-  cursor: pointer;
-  display: none;
-}
-
-#modal-agro-assistant .assistant-new-messages.is-visible {
-  display: inline-flex;
-}
-
-#modal-agro-assistant .assistant-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  margin-top: 0.6rem;
-}
-
-#modal-agro-assistant .assistant-actions .btn {
-  min-height: 44px;
-}
-
-#modal-agro-assistant .assistant-cooldown {
-  margin-top: 0.6rem;
-  font-size: 0.75rem;
-  color: rgba(200, 167, 82, 0.9);
-  min-height: 1rem;
-}
-
-#modal-agro-assistant .assistant-drawer-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-  z-index: 3;
-}
-
-#modal-agro-assistant .assistant-drawer-overlay.is-visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-#modal-agro-assistant .assistant-toast {
-  position: absolute;
-  top: 1rem;
-  right: 1.25rem;
-  padding: 0.45rem 0.8rem;
-  border-radius: 999px;
-  background: rgba(200, 167, 82, 0.15);
-  border: 1px solid rgba(200, 167, 82, 0.4);
-  color: var(--gold-primary, #C8A752);
-  font-size: 0.75rem;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-}
-
-#modal-agro-assistant .assistant-toast.is-visible {
-  opacity: 1;
-}
-
-@media (max-width: 960px) {
-  #modal-agro-assistant .assistant-drawer-toggle {
-    display: inline-flex;
-  }
-
-  #modal-agro-assistant .assistant-shell {
-    grid-template-columns: 1fr;
-  }
-
-  #modal-agro-assistant .assistant-sidebar {
-    position: absolute;
-    inset: 0 auto 0 0;
-    width: min(320px, 82vw);
-    transform: translateX(-100%);
-    transition: transform 0.2s ease;
-    box-shadow: 20px 0 40px rgba(0, 0, 0, 0.4);
-  }
-
-  #modal-agro-assistant .assistant-shell.drawer-open .assistant-sidebar {
-    transform: translateX(0);
-  }
-}
-
-@media (max-width: 640px) {
-  #modal-agro-assistant {
-    align-items: flex-end;
-    padding: 0.5rem;
-  }
-
-  #modal-agro-assistant .agro-assistant {
-    width: 100%;
-    height: 94vh;
-    border-radius: 18px;
-  }
-
-  #modal-agro-assistant .assistant-topbar {
-    padding: 0.75rem 0.9rem;
-  }
-
-  #modal-agro-assistant .assistant-content {
-    gap: 0.6rem;
-    padding: 0.75rem 0.9rem 0.9rem;
-  }
-
-  #modal-agro-assistant .assistant-guide {
-    padding: 0.6rem 0.75rem;
-    font-size: 0.7rem;
-  }
-
-  #modal-agro-assistant .assistant-guide.is-collapsed {
-    max-height: 46px;
-    overflow: hidden;
-  }
-
-  #modal-agro-assistant .assistant-scroll {
-    padding-bottom: 140px;
-    scroll-padding-bottom: 140px;
-  }
-
-  #modal-agro-assistant .assistant-controls textarea {
-    min-height: 64px;
-    padding: 0.7rem 0.85rem;
-    font-size: 0.9rem;
-  }
-
-  #modal-agro-assistant .assistant-mode-hint {
-    font-size: var(--text-xs);
-    padding: 0.45rem 0.6rem;
-  }
-
-  #modal-agro-assistant .assistant-actions {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.5rem;
-  }
-
-  #modal-agro-assistant .assistant-actions .btn {
-    min-height: 40px;
-    font-size: 0.72rem;
-  }
-}
-
 /* V9.5.5: Compact Facturero form */
 .facturero-grid {
   display: grid;
@@ -7419,8 +6646,7 @@ body.modal-open {
 /* Keep the feedback FAB out of modal and shell stacks on mobile/desktop. */
 body.agro-shell-open .agro-feedback-fab,
 .modal-overlay.active ~ .agro-feedback-fab,
-#modal-agro-profile.is-open ~ .agro-feedback-fab,
-#modal-agro-assistant.is-open ~ .agro-feedback-fab {
+#modal-agro-profile.is-open ~ .agro-feedback-fab {
   opacity: 0;
   pointer-events: none;
   transform: translateY(8px);
@@ -8813,69 +8039,120 @@ body.agro-view-dense::after {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   ASISTENTE IA — Vista dedicada inline
-   ═══════════════════════════════════════════════════════════ */
-
-/* ═══════════════════════════════════════════════════════════
-   ASISTENTE IA — Rediseño V2 (inspirado en chat ia new.html)
+   ASISTENTE IA — Superficie dedicada del shell Agro
    ADN Visual V10 · Dark/Gold · Orbitron + Rajdhani
    ═══════════════════════════════════════════════════════════ */
 
 .asistente-dedicado {
   width: 100%;
-  height: 100vh;
-  min-height: 100vh;
+  height: calc(100svh - 148px);
+  min-height: 640px;
   display: flex;
   flex-direction: column;
 }
 
-.asistente-dedicado #modal-agro-assistant {
-  position: static;
-  inset: auto;
-  z-index: auto;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  padding: 0;
+body[data-agro-active-view="asistente"] .app-container {
+  max-width: none;
 }
 
-.asistente-dedicado .agro-assistant-inline {
+body[data-agro-active-view="asistente"] .agro-shell-header {
+  margin-bottom: var(--space-4, 1rem);
+}
+
+body[data-agro-active-view="asistente"] .agro-feedback-fab {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+}
+
+.asistente-dedicado .agro-assistant-page,
+.asistente-dedicado .agro-assistant-workspace {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
 
-.asistente-dedicado .assistant-sheet {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
+.asistente-dedicado .agro-assistant-workspace {
   position: relative;
-  z-index: 1;
-  border: none;
-  border-radius: 0;
+  isolation: isolate;
   overflow: hidden;
-  background: rgba(5, 5, 5, 0.98);
+  border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
+  border-top-color: var(--border-gold, rgba(200, 167, 82, 0.25));
+  border-radius: var(--radius-lg, 16px);
+  background:
+    linear-gradient(180deg, rgba(200, 167, 82, 0.055), transparent 28%),
+    var(--bg-1, #0a0a0a);
 }
 
-/* Override modal styles — full page feel */
-.asistente-dedicado #modal-agro-assistant .agro-assistant {
-  width: 100%;
-  height: 100%;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-  background: var(--bg-1, #0a0a0a);
+.asistente-dedicado .ast-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4, 1rem);
+  padding: var(--space-4, 1rem) var(--space-5, 1.25rem);
+  border-bottom: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
+  background: var(--bg-0, #050505);
+  flex-shrink: 0;
 }
 
-.asistente-dedicado #modal-agro-assistant .assistant-backdrop {
-  display: none;
+.asistente-dedicado .ast-page-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 0.75rem);
+  min-width: 0;
 }
 
-.asistente-dedicado #modal-agro-assistant .assistant-shell::before {
-  display: none;
+.asistente-dedicado .ast-page-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md, 12px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid var(--border-gold, rgba(200, 167, 82, 0.25));
+  background: rgba(200, 167, 82, 0.10);
+  color: var(--gold-4, #C8A752);
+}
+
+.asistente-dedicado .ast-page-title-copy {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.asistente-dedicado .ast-page-eyebrow {
+  margin: 0;
+  font-family: var(--font-heading, 'Orbitron', sans-serif);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-gold-prestige, #E5D5A0);
+}
+
+.asistente-dedicado .ast-page-title h2 {
+  margin: 0;
+  font-family: var(--font-heading, 'Orbitron', sans-serif);
+  font-size: clamp(1rem, 2vw, 1.28rem);
+  line-height: 1.16;
+  color: var(--gold-4, #C8A752);
+}
+
+.asistente-dedicado .ast-page-title p:not(.ast-page-eyebrow) {
+  margin: 0;
+  color: var(--text-secondary, #cccccc);
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.asistente-dedicado .ast-page-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2, 0.5rem);
+  flex-shrink: 0;
 }
 
 /* ── Layout 3 columnas ── */
@@ -8886,7 +8163,7 @@ body.agro-view-dense::after {
   overflow: hidden;
   position: relative;
   z-index: 1;
-  background: rgba(5, 5, 5, 0.95);
+  background: var(--bg-1, #0a0a0a);
 }
 
 /* ── Sidebar ── */
@@ -9138,6 +8415,8 @@ body.agro-view-dense::after {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
   position: relative;
   z-index: 2;
 }
@@ -9254,10 +8533,6 @@ body.agro-view-dense::after {
   display: flex;
   align-items: center;
   gap: 0.35rem;
-}
-
-.asistente-dedicado #btn-close-agro-assistant i::before {
-  content: '\f060';
 }
 
 /* ── Messages area ── */
@@ -9966,22 +9241,6 @@ body.agro-view-dense::after {
 
 .asistente-dedicado .ast-toast.is-visible { opacity: 1; }
 
-/* ── Sidebar overlay (mobile) ── */
-.asistente-dedicado .ast-sidebar-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 3;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 250ms ease;
-}
-
-.asistente-dedicado .ast-sidebar-overlay.is-visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-
 /* ── Responsive ── */
 @media (max-width: 960px) {
   .asistente-dedicado .ast-context-panel:not(.collapsed) {
@@ -9994,29 +9253,66 @@ body.agro-view-dense::after {
 }
 
 @media (max-width: 768px) {
+  .asistente-dedicado {
+    height: auto;
+    min-height: calc(100svh - 116px);
+  }
+
+  .asistente-dedicado .agro-assistant-workspace {
+    min-height: calc(100svh - 116px);
+    border-radius: var(--radius-md, 12px);
+  }
+
+  .asistente-dedicado .ast-page-header {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 0.85rem 0.75rem;
+    gap: 0.75rem;
+  }
+
+  .asistente-dedicado .ast-page-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .asistente-dedicado .ast-page-title {
+    align-items: flex-start;
+  }
+
+  .asistente-dedicado .ast-page-title p:not(.ast-page-eyebrow) {
+    font-size: 0.82rem;
+  }
+
   .asistente-dedicado .ast-layout {
     flex-direction: column;
   }
 
   .asistente-dedicado .ast-sidebar {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: min(280px, 85vw);
+    position: static;
+    width: 100%;
     min-width: 0;
-    z-index: 20;
-    transform: translateX(-100%);
-    transition: transform 250ms ease;
-    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.4);
+    max-height: 220px;
+    transform: none;
+    border-right: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: none;
   }
 
   .asistente-dedicado .ast-sidebar.open {
-    transform: translateX(0);
+    transform: none;
   }
 
   .asistente-dedicado .ast-sidebar-close {
-    display: block;
+    display: none;
+  }
+
+  .asistente-dedicado .ast-thread-scroll {
+    max-height: 96px;
+  }
+
+  .asistente-dedicado .ast-sidebar-footer {
+    display: none;
   }
 
   .asistente-dedicado .ast-messages {
@@ -10055,12 +9351,20 @@ body.agro-view-dense::after {
 
 @media (max-width: 480px) {
   .asistente-dedicado {
-    height: 100vh;
-    min-height: 100vh;
+    min-height: calc(100svh - 104px);
   }
 
-  .asistente-dedicado .ast-header-info h3 {
-    font-size: 0.78rem;
+  .asistente-dedicado .agro-assistant-workspace {
+    min-height: calc(100svh - 104px);
+  }
+
+  .asistente-dedicado .ast-page-icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .asistente-dedicado .ast-page-title h2 {
+    font-size: 0.92rem;
   }
 
   .asistente-dedicado .ast-suggestion {

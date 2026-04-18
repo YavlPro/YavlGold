@@ -1233,3 +1233,111 @@ Se implementaron Favoritos del Shell y Busqueda Agro Compacta como capas indepen
 4. Click en resultado y confirmar navegacion.
 5. Borrar input y confirmar cierre del panel.
 6. Probar switch maestro para confirmar que el filtrado original sigue intacto.
+
+---
+
+## Sesion activa: Asistente Agro como superficie completa dedicada (2026-04-18)
+
+### Objetivo
+
+Convertir el Asistente Agro en una vista completa dedicada dentro del shell Agro, dejando de depender visual y estructuralmente de patrones de modal/overlay.
+
+### Diagnostico con evidencia
+
+1. **Herencia modal en markup**: `apps/gold/agro/index.html` declara la vista como `data-agro-shell-region="asistente"`, pero el contenedor principal sigue siendo `id="modal-agro-assistant"` y el wrapper usa clases `modal-content agro-assistant assistant-sheet` (lineas ~2621-2623). Esto hace que la estructura siga comunicando modal aunque este montada inline.
+2. **Herencia modal en CSS legacy**: `apps/gold/agro/agro.css` conserva el bloque `#modal-agro-assistant` con `position: fixed`, `inset: 0`, `z-index: 10050`, `display: none`, `padding: 1.5rem`, `.assistant-backdrop` con blur y `.agro-assistant` con `width: min(1120px, 96vw)` y `height: min(86vh, 780px)` (lineas ~2492-2529).
+3. **Doble capa de correccion**: mas abajo, `.asistente-dedicado #modal-agro-assistant` intenta deshacer el modal con `position: static`, `z-index: auto`, `padding: 0`; tambien oculta `.assistant-backdrop` y quita bordes/sombra a `.agro-assistant` (lineas ~8824-8879). La vista funciona, pero sobre una base equivocada.
+4. **Contenedor principal actual**: el shell ya usa `agro-shell.js` para mapear `asistente` a la region `asistente`; cuando se activa llama `window.openAgroAssistantInline()` (lineas ~655-710). Por tanto la navegacion de vista completa ya existe.
+5. **Historial y area principal existen**: `index.html` ya tiene `aside.ast-sidebar` para conversaciones, `main.ast-main`, `#assistant-scroll`, `#assistant-history`, composer y panel de contexto. La base visual heredada es el problema, no la logica del asistente.
+6. **Overlay residual**: hay `ast-sidebar-overlay` para el drawer movil y estilos `.ast-sidebar-overlay`/`.is-visible` (lineas ~9970-9983). No es el overlay modal principal, pero conviene retirarlo para cumplir el criterio "sin overlay/backdrop".
+7. **Cierre tipo popup**: el boton `btn-close-agro-assistant` usa `fa-xmark` y luego CSS le cambia el glyph a flecha via `content: '\f060'`. Es una senal de parche visual, no de navegacion de pagina.
+
+### Causa estructural
+
+El asistente fue migrado a region inline del shell, pero conserva identidad y contrato visual de modal: ID, clases, CSS legacy y overlays. La implementacion actual depende de una segunda capa que neutraliza el modal en lugar de nacer como superficie de pagina.
+
+### Opciones A/B/C
+
+#### Opcion A — Recomendada
+
+Mantener la logica del asistente y rehacer solo la estructura de layout/shell para que viva como pagina dedicada.
+
+- Cambiar el contenedor principal a una identidad de pagina (`agro-assistant-page` / `agro-assistant-workspace`).
+- Quitar clases `modal-content` y `assistant-sheet` del shell principal.
+- Dejar `agro-shell.js` como fuente de navegacion.
+- Ajustar CSS de la superficie dedicada para header propio, historial integrado, chat amplio y composer estable.
+- Retirar overlay/backdrop del drawer movil.
+- Tocar `agro.js` solo en wiring minimo de IDs y drawer sin overlay.
+
+Riesgo: bajo. La logica de mensajes, threads, cola, cooldown, contexto y exportacion se preserva.
+
+#### Opcion B
+
+Extraer el asistente a un modulo de vista dedicado nuevo dentro de Agro, con adaptador desde la entrada actual.
+
+- Seria util si la logica estuviera acoplada al patron modal.
+- Requeriria mover funciones fuera de `agro.js` y crear nuevo modulo `agro-assistant-view.js`.
+- Mayor diff y mayor riesgo por el tamaño del monolito.
+
+Riesgo: medio/alto para esta sesion. No se justifica porque el problema detectado es de layout y contrato visual.
+
+#### Opcion C
+
+Mantener estructura actual y solo disimularla visualmente para que parezca pagina.
+
+- Seguiria usando `modal-agro-assistant`, `.modal-content`, overrides y parches.
+- Puede mejorar apariencia, pero mantiene la causa raiz.
+
+Riesgo: bajo en diff pero alto en deuda. No recomendado.
+
+### Recomendacion
+
+Ejecutar **Opcion A**: conservar logica y estado existentes, pero cambiar la base estructural y visual del asistente para que sea una superficie completa dedicada, integrada al shell, sin overlay/backdrop modal y sin depender del layout legacy de modal.
+
+### Tesis visual / contenido / interaccion
+
+- **Tesis visual**: centro de consulta agricola oscuro, sobrio y metalico, con el historial como columna de trabajo y la conversacion como plano protagonista.
+- **Plan de contenido**: header de pagina del asistente; columna de conversaciones; area principal de mensajes; composer estable; panel de contexto como accion secundaria.
+- **Tesis de interaccion**: navegacion de vuelta con flecha explicita; historial integrado siempre visible en desktop y columna compacta en mobile; transiciones cortas por `opacity`/`transform` respetando `prefers-reduced-motion`.
+
+### Archivos a tocar
+
+| Archivo | Motivo |
+|---|---|
+| `apps/gold/agro/index.html` | Renombrar shell principal del asistente, quitar clases de modal, retirar overlay de drawer movil, convertir cierre en volver. |
+| `apps/gold/agro/agro.css` | Rehacer base visual de superficie dedicada, eliminar dependencia visual de `#modal-agro-assistant`, mejorar desktop/mobile. |
+| `apps/gold/agro/agro.js` | Wiring minimo: buscar el nuevo ID de pagina y hacer que el drawer no dependa de overlay. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Registrar diagnostico, decision, cambios, build y QA. |
+
+### No se tocara
+
+- Supabase.
+- Logica profunda del modelo/Edge Function.
+- `MANIFIESTO_AGRO.md`.
+- Refactor masivo de `agro.js`.
+
+### Ejecucion
+
+Se ejecuto la **Opcion A**.
+
+- `index.html`: el asistente dejo de usar `id="modal-agro-assistant"` y clases `modal-content agro-assistant assistant-sheet`; ahora vive como `agro-assistant-page` / `agro-assistant-workspace` dentro de `section.asistente-dedicado`.
+- `index.html`: se agrego header propio de pagina con titulo, estado, acciones secundarias y boton explicito de volver al dashboard.
+- `index.html`: se retiro el overlay movil del historial.
+- `agro.css`: se elimino el bloque legacy `#modal-agro-assistant` y el selector residual que escondia el FAB por modal.
+- `agro.css`: se definio layout de pagina completa para desktop y mobile, con historial integrado, chat protagonista y composer estable.
+- `agro.js`: se renombro el wiring a `initAgroAssistantSurface()`, se actualizo el ID principal y se simplifico el drawer para no depender de overlay.
+
+### Validacion
+
+- `rg` sobre `apps/gold/agro/index.html`, `apps/gold/agro/agro.js` y `apps/gold/agro/agro.css`: sin coincidencias para `modal-agro-assistant`, `assistant-backdrop`, `assistant-drawer-overlay`, `assistant-drawer-toggle`, `modal-content agro-assistant`, `assistant-sheet` ni `ast-sidebar-overlay`.
+- `pnpm build:gold`: OK.
+- Advertencia no bloqueante del entorno: Node local `v25.6.0`; engine esperado `20.x`.
+- QA local con Chromium/CDP sobre `apps/gold/dist` servido en `http://127.0.0.1:4177/agro/`.
+- Desktop `1440x900`: apertura desde `btn-open-agro-assistant`, `body[data-agro-active-view="asistente"]`, header visible, historial visible, main visible, composer visible, envio cliente con respuesta simulada, boton volver deja `dashboard` activo.
+- Mobile `390x844`: apertura desde el mismo boton, header apilado, historial como columna compacta sin drawer/overlay, main y composer visibles, envio cliente con respuesta simulada, boton volver deja `dashboard` activo.
+- QA no contamino datos reales: para la prueba visual se simularon `session-guard`, `auth.getUser` y `functions.invoke` en el navegador local; no se modifico Supabase ni se escribieron datos de backend.
+- Artefactos temporales de QA local fueron eliminados.
+
+### Resultado
+
+El Asistente Agro queda como superficie completa dedicada dentro del shell Agro. La estructura activa ya no depende de un modal maximizado ni de un overlay/backdrop; el historial y la conversacion viven como partes de una pagina real.

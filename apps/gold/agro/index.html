@@ -2617,13 +2617,36 @@
         </div>
     </div>
 
-    <!-- Asistente IA — Vista dedicada inline (rediseño V2) -->
-    <section class="asistente-dedicado" data-agro-shell-region="asistente" hidden inert>
-        <div id="modal-agro-assistant" class="agro-assistant-inline">
-            <div class="modal-content agro-assistant assistant-sheet">
-                <!-- Mobile sidebar overlay -->
-                <div class="ast-sidebar-overlay" id="assistant-drawer-overlay" data-drawer-close="true"></div>
-
+    <!-- Asistente IA — Superficie completa dedicada -->
+    <section class="asistente-dedicado" data-agro-shell-region="asistente" hidden inert
+        aria-labelledby="agro-assistant-title">
+        <div id="agro-assistant-page" class="agro-assistant-page">
+            <div class="agro-assistant-workspace">
+                <header class="ast-page-header">
+                    <div class="ast-page-title">
+                        <span class="ast-page-icon" aria-hidden="true"><i class="fa-solid fa-seedling"></i></span>
+                        <div class="ast-page-title-copy">
+                            <p class="ast-page-eyebrow">Centro de consulta Agro</p>
+                            <h2 id="agro-assistant-title">Asistente Agro</h2>
+                            <p>Consulta cultivos, clima, plagas y decisiones de campo con tu contexto.</p>
+                        </div>
+                    </div>
+                    <div class="ast-page-actions">
+                        <span class="ast-header-status" id="assistant-status">En linea</span>
+                        <button type="button" class="ast-header-icon" id="ast-toggle-context"
+                            aria-label="Panel de contexto" title="Contexto">
+                            <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="ast-header-icon" id="ast-export-chat" aria-label="Exportar"
+                            title="Exportar">
+                            <i class="fa-solid fa-download" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="ast-header-icon ast-header-icon--back" id="btn-close-agro-assistant"
+                            aria-label="Volver al dashboard" title="Volver al dashboard" data-agro-view="dashboard">
+                            <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </header>
                 <div class="ast-layout" id="assistant-shell">
                     <!-- ═══════ SIDEBAR ═══════ -->
                     <aside class="ast-sidebar" id="assistant-sidebar" aria-label="Historial de conversaciones">
@@ -2667,40 +2690,6 @@
 
                     <!-- ═══════ MAIN CHAT ═══════ -->
                     <main class="ast-main" id="ast-main-content">
-                        <!-- Header -->
-                        <header class="ast-header">
-                            <div class="ast-header-left">
-                                <button type="button" class="ast-header-icon" id="assistant-drawer-toggle"
-                                    aria-label="Historial" title="Historial">
-                                    <i class="fa-solid fa-bars" aria-hidden="true"></i>
-                                </button>
-                                <div class="ast-header-agent">
-                                    <div class="ast-header-avatar">
-                                        <i class="fa-solid fa-seedling" aria-hidden="true"></i>
-                                    </div>
-                                    <div class="ast-header-info">
-                                        <h3 id="agro-assistant-title">Asistente Agro</h3>
-                                        <span class="ast-header-status" id="assistant-status">En linea</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="ast-header-right">
-                                <button type="button" class="ast-header-icon" id="ast-toggle-context"
-                                    aria-label="Panel de contexto" title="Contexto">
-                                    <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
-                                </button>
-                                <button type="button" class="ast-header-icon" id="ast-export-chat" aria-label="Exportar"
-                                    title="Exportar">
-                                    <i class="fa-solid fa-download" aria-hidden="true"></i>
-                                </button>
-                                <button type="button" class="ast-header-icon" id="btn-close-agro-assistant"
-                                    aria-label="Volver al dashboard" title="Volver al dashboard"
-                                    data-agro-view="dashboard">
-                                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-                                </button>
-                            </div>
-                        </header>
-
                         <!-- Messages area -->
                         <div class="ast-messages" id="assistant-scroll" role="log" aria-label="Mensajes"
                             aria-live="polite">

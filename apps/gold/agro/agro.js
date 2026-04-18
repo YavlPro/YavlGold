@@ -14391,11 +14391,9 @@ function setAssistantLoading(isLoading) {
 function setAssistantDrawerOpen(open) {
     const shell = document.getElementById('assistant-shell');
     const sidebar = document.getElementById('assistant-sidebar');
-    const overlay = document.getElementById('assistant-drawer-overlay');
-    if (!shell || !overlay) return;
+    if (!shell) return;
     shell.classList.toggle('drawer-open', open);
     sidebar?.classList.toggle('open', open);
-    overlay.classList.toggle('is-visible', open);
 }
 
 function showAssistantToast(text) {
@@ -15047,9 +15045,9 @@ function syncAssistantGuideLayout({ messagesCount = 0, forceCollapse = false } =
 }
 
 function openAgroAssistant() {
-    const modal = document.getElementById('modal-agro-assistant');
-    if (!modal) {
-        console.warn('[AGRO] assistant element not found');
+    const page = document.getElementById('agro-assistant-page');
+    if (!page) {
+        console.warn('[AGRO] assistant page not found');
         return;
     }
     try {
@@ -15182,26 +15180,22 @@ async function sendAgroAssistantMessage() {
 }
 
 
-function initAgroAssistantModal() {
+function initAgroAssistantSurface() {
     if (document.__agroAssistantBound) return;
     document.__agroAssistantBound = true;
 
-    const modal = document.getElementById('modal-agro-assistant');
+    const page = document.getElementById('agro-assistant-page');
     const closeBtn = document.getElementById('btn-close-agro-assistant');
     const sendBtn = document.getElementById('btn-assistant-send');
     const templateBtn = document.getElementById('btn-assistant-template');
     const input = document.getElementById('agro-assistant-input');
     const newThreadBtn = document.getElementById('assistant-new-thread');
-    const drawerToggle = document.getElementById('assistant-drawer-toggle');
-    const drawerOverlay = document.getElementById('assistant-drawer-overlay');
     const mobileSidebarClose = document.getElementById('ast-mobile-sidebar-close');
 
-    if (!modal) return;
+    if (!page) return;
 
     closeBtn?.addEventListener('click', closeAgroAssistant);
     newThreadBtn?.addEventListener('click', createNewThreadAndActivate);
-    drawerToggle?.addEventListener('click', () => setAssistantDrawerOpen(true));
-    drawerOverlay?.addEventListener('click', () => setAssistantDrawerOpen(false));
     mobileSidebarClose?.addEventListener('click', () => setAssistantDrawerOpen(false));
 
     // Template button (hidden but wired for compat)
@@ -15213,7 +15207,7 @@ function initAgroAssistantModal() {
         }
     });
 
-    modal.addEventListener('click', (event) => {
+    page.addEventListener('click', (event) => {
         if (event.target?.dataset?.close === 'true') {
             closeAgroAssistant();
         }
@@ -15351,7 +15345,7 @@ function initAgroAssistantModal() {
 
     window.openAgroAssistantInline = openAgroAssistant;
 
-    console.info('[AGRO] assistant V2 redesign wired');
+    console.info('[AGRO] assistant dedicated surface wired');
 }
 
 // V2: Auto-resize textarea
@@ -15907,7 +15901,7 @@ export function initAgro() {
     bindAgroSocialOpenButton();
     initAgroPerfil({ supabase });
     initOperationsContextSteps();
-    initAgroAssistantModal();
+    initAgroAssistantSurface();
     populateCropDropdowns(); // V9.5: Poblar dropdowns de cultivo
     setupFactureroCrudListeners(); // V9.5.1: Event delegation para CRUD
     console.info('[AGRO] V9.6: facturero who-field enabled');
