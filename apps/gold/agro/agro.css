@@ -10950,18 +10950,22 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
 .agro-mode-switch {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px;
-  border-radius: var(--radius-pill, 9999px);
+  gap: var(--space-1, 0.25rem);
+  padding: var(--space-1, 0.25rem);
+  border-radius: var(--radius-md, 12px);
   border: 1px solid var(--border-neutral, rgba(255,255,255,0.08));
   background: var(--bg-3, #111113);
   flex-shrink: 0;
   width: 100%;
-  margin-top: var(--space-2, 0.5rem);
+  margin-top: var(--space-3, 0.75rem);
   overflow-x: auto;
   overscroll-behavior-x: contain;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(200,167,82,0.45) transparent;
+  scrollbar-width: none;
+  position: relative;
+}
+
+.agro-mode-switch::-webkit-scrollbar {
+  display: none;
 }
 
 .agro-mode-switch__btn {
@@ -10970,23 +10974,24 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.3rem;
-  padding: 0.3rem 0.65rem;
+  gap: var(--space-1, 0.25rem);
+  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
   border: 1px solid transparent;
-  border-radius: var(--radius-pill, 9999px);
+  border-radius: var(--radius-sm, 8px);
   background: transparent;
   color: var(--text-muted, #94A3B8);
   font-family: 'Rajdhani', sans-serif;
-  font-size: var(--text-xs, 0.70rem);
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  font-size: var(--text-sm, 0.80rem);
+  font-weight: 600;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+  transition: color 180ms ease, background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
   white-space: nowrap;
-  min-height: 38px;
+  min-height: 40px;
   -webkit-tap-highlight-color: transparent;
   scroll-snap-align: start;
+  position: relative;
 }
 
 .agro-mode-switch__btn:hover {
@@ -10994,10 +10999,11 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
 }
 
 .agro-mode-switch__btn.is-active {
-  background: rgba(200,167,82,0.12);
-  border-color: var(--border-gold, rgba(200,167,82,0.25));
-  color: var(--gold-5, #E8D48B);
-  box-shadow: inset 0 1px 0 rgba(229,213,160,0.12), var(--shadow-gold-xs, 0 1px 6px rgba(200,167,82,0.10));
+  background: rgba(200,167,82,0.10);
+  border-color: rgba(200,167,82,0.20);
+  color: var(--gold-4, #C8A752);
+  box-shadow: 0 1px 4px rgba(200,167,82,0.08);
+  font-weight: 700;
 }
 
 .agro-mode-switch__btn:focus-visible {
@@ -11009,9 +11015,15 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 0.8rem;
-  font-size: 0.7rem;
+  width: 1rem;
+  font-size: 0.8rem;
   line-height: 1;
+  opacity: 0.6;
+  transition: opacity 180ms ease;
+}
+
+.agro-mode-switch__btn.is-active .agro-mode-switch__icon {
+  opacity: 1;
 }
 
 .agro-mode-switch__label {
@@ -11020,12 +11032,16 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
 
 .agro-mode-switch__hint {
   display: none;
-  margin: 0.35rem 0 0;
+  margin: var(--space-2, 0.5rem) 0 0;
+  padding: 0 var(--space-1, 0.25rem);
   color: var(--text-muted, #94A3B8);
-  font-family: var(--font-body, 'Rajdhani', sans-serif);
-  font-size: 0.76rem;
-  font-weight: 600;
-  line-height: 1.25;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: var(--text-xs, 0.70rem);
+  font-weight: 400;
+  line-height: 1.3;
+  opacity: 0.6;
+  text-align: center;
+  transition: opacity 300ms ease;
 }
 
 .agro-shell-mode-filtered[hidden] {
@@ -11035,10 +11051,13 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
 @media (max-width: 640px) {
   .agro-mode-switch {
     scroll-snap-type: x mandatory;
+    padding: var(--space-0.5, 0.125rem);
+    gap: var(--space-1, 0.25rem);
   }
   .agro-mode-switch__btn {
-    flex: 0 0 calc((100% - 4px) / 2);
-    min-height: 40px;
+    flex: 0 0 calc(50% - var(--space-0.5, 0.125rem));
+    min-height: 42px;
+    padding: var(--space-2, 0.5rem) var(--space-2, 0.5rem);
   }
   .agro-mode-switch__hint {
     display: block;
@@ -11047,7 +11066,9 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
 
 @media (max-width: 480px) {
   .agro-mode-switch__btn {
-    padding: 0.3rem 0.55rem;
+    flex: 0 0 calc(50% - var(--space-0.5, 0.125rem));
+    padding: var(--space-2, 0.5rem) var(--space-1, 0.25rem);
+    font-size: 0.72rem;
   }
   .agro-mode-switch__label {
     overflow: hidden;

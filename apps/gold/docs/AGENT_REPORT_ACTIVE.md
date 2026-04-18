@@ -658,3 +658,75 @@ No se modifico codigo, configuracion de Vite, rutas de Vercel, Supabase ni `agro
 ### NO QA manual realizado
 
 Por instruccion explicita de la sesion, no se hizo QA manual en navegador ni Playwright. La validacion fue por build local y comprobaciones HTTP/asset desde terminal.
+
+---
+
+## Sesion activa: Pulido visual/UX del switch maestro del shell Agro (2026-04-18)
+
+### Objetivo
+
+Pulido visual y UX del switch maestro de modo operativo del sidebar Agro. La logica funcional ya fue resuelta por Codex y queda intacta. El objetivo es que el switch se perciba como un componente premium, compacto pero respirado, con sensacion de mini carrusel en movil.
+
+### Diagnostico visual
+
+Problemas detectados en el estado previo:
+
+1. **Contenedor plano** — padding de 3px insuficiente; el switch se veia "metido a presion"
+2. **Gap entre opciones muy estrecho** — solo 4px, sin respiracion lateral
+3. **Altura de boton baja** — min-height 38px, target tactil mejorable
+4. **Estado activo anemico** — solo tinte de fondo y borde, sin presencia premium
+5. **Icono microscopico** — 0.7rem, casi invisible
+6. **Hint generico** — texto largo ("Desliza para ver mas filtros o modos"), sin refinacion
+7. **Scrollbar visible** — interrumpia la sensacion limpia del carrusel
+8. **Border-radius pill excesivo** — en un contenedor cuadrado de 4 opciones se veia forzado
+9. **Letra demasiado condensada** — font-weight 700 + text-xs + uppercase gritaba demasiado
+
+### Cambios realizados
+
+| # | Archivo | Tipo | Cambio |
+|---|---|---|---|
+| 1 | `apps/gold/agro/agro.css` | EDIT | Contenedor: padding 3px→space-1, gap 4px→space-1, margin-top space-2→space-3, border-radius pill→md (12px), scrollbar oculto, position relative |
+| 2 | `apps/gold/agro/agro.css` | EDIT | Boton: padding mejorado (space-2 x space-3), gap space-1, font-size xs→sm, font-weight 700→600, letter-spacing 0.04→0.03, border-radius pill→sm (8px), min-height 38→40px, border-color en transition |
+| 3 | `apps/gold/agro/agro.css` | EDIT | Estado activo: fondo mas sutil (0.12→0.10), borde mas fino (0.25→0.20), color gold-5→gold-4 (mas sobrio), sombra mas ligera, font-weight sube a 700 solo en activo |
+| 4 | `apps/gold/agro/agro.css` | EDIT | Icono: tamaño 0.7rem→0.8rem, width 0.8rem→1rem, opacity 0.6 por defecto, opacity 1 en activo |
+| 5 | `apps/gold/agro/agro.css` | EDIT | Hint: font-weight 600→400, opacity 0.6, text-align center, padding lateral, transicion de opacity |
+| 6 | `apps/gold/agro/agro.css` | EDIT | Mobile ≤640px: flex-basis con variable CSS, min-height 42px, padding ajustado |
+| 7 | `apps/gold/agro/agro.css` | EDIT | Mobile ≤480px: flex-basis consistente, font-size 0.72rem, padding compacto |
+| 8 | `apps/gold/agro/index.html` | EDIT | Hint text: "Desliza para ver mas filtros o modos" → "Desliza para ver mas opciones" (mas corto, menos ruido) |
+
+### Que NO se toco (logica Codex preservada)
+
+- `agro-mode.js` — sin cambios (logica de modos, eventos, aliases, localStorage)
+- `agro-shell.js` — sin cambios (filtro por data-agro-mode-scope, listener agro:modechange)
+- Markup de sidebar items — sin cambios (data-agro-mode-scope intactos)
+- Clasificacion semantica — sin cambios (all, crop, non_crop, tools)
+- Eventos ni listeners — sin cambios
+- Supabase, agro.js, MANIFIESTO_AGRO.md — sin cambios
+
+### Resultado build
+
+`pnpm build:gold` — OK. 161 modules, 2.54s.
+- agent-guard: OK
+- agent-report-check: OK
+- vite build: OK
+- check-llms: OK
+- check-dist-utf8: OK
+
+### QA manual sugerido
+
+1. Desktop: verificar que el switch se ve limpio y premium, con 4 opciones visibles
+2. Mobile ≤640px: verificar que se ven 2 opciones por tramo
+3. Mobile: deslizar horizontalmente y verificar que revela las otras 2 opciones
+4. Verificar que el estado activo se distingue claramente (color gold, borde sutil, icono brillante)
+5. Verificar que el hint "Desliza para ver mas opciones" aparece solo en movil y es discreto
+6. Probar: General activo, Cultivo activo, No cultivo activo, Herramientas activo
+7. Verificar que el filtrado del sidebar sigue intacto por modo
+8. Verificar foco/hover/tap sin regresiones
+
+### Comandos git sugeridos (sin ejecutar)
+
+```bash
+git status
+git add apps/gold/agro/agro.css apps/gold/agro/index.html apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "style(agro): polish mode switch visual — premium carousel feel, refined spacing and active state"
+```
