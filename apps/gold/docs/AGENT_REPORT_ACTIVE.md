@@ -1682,6 +1682,126 @@ git commit -m "feat(agro): add documentation link to sidebar help zone — silen
 
 ---
 
+## Sesion activa: Coherencia publica — correccion de contradicciones (2026-04-19)
+
+### Objetivo
+
+Resolver inconsistencias publicas visibles detectadas por auditoria externa: contradicciones de monetizacion, cookies/privacidad, senales crypto dentro de Agro, legal preliminar mal encuadrado y soporte con tildes rotos.
+
+### Diagnostico
+
+**Contradicciones confirmadas con evidencia:**
+
+1. **Cookies/privacidad — tres historias incompatibles:**
+   - cookies.html: "No hay analitica comercial activa declarada para vender perfiles de usuario" + cero tildes en todo el archivo
+   - privacy.html: "Si en el futuro se incorpora analitica de producto, se debera reflejar en la politica de cookies y privacidad"
+   - docs-agro.html: "Si en el futuro se activa analitica de producto, debera informarse en la politica de cookies"
+
+2. **Agro-first sabotajeado por labels internos:**
+   - "Top Compradores (Pagados)" / "Top Cultivos (Pagados)" — "Pagados" lee como feature paga, no como ingresos cobrados
+   - "Rankings del Centro" — "Centro" suena a centro financiero crypto
+   - "Cargando referencias cripto..." — refuerza producto crypto independiente
+   - Tab label "Pagados" — mismo problema de ambiguedad
+   - "Ultimos Pagados (Sesion Actual)" — mismo problema
+
+3. **Legal preliminar:**
+   - terms.html: "Documento legal preliminar en redaccion." — suena demasiado borrador
+   - privacy.html: "Documento preliminar en redaccion." — mismo problema
+
+4. **Soporte:**
+   - "Cuentanos" sin tilde, "asesoria" sin tilde
+   - "Soporte" como texto dentro de span sin icono real
+
+5. **Monetizacion:**
+   - Los tres archivos publicos (faq, docs-agro, terms) ya son consistentes: "no hay pagos ni suscripciones activas"
+   - No se encontro "funciones avanzadas requieren una suscripcion" en el codigo actual
+   - La contradiccion de monetizacion no existe en el estado actual del codigo
+
+### Opcion elegida: B (copy + paginas estaticas + reencuadre minimo de superficies Agro visibles)
+
+### Cambios realizados
+
+| # | Archivo | Cambio | Por que |
+|---|---|---|---|
+| 1 | `agro/index.html` | "Top Compradores (Pagados)" → "Top Compradores (Ingresos cobrados)" | Eliminar ambiguedad "Pagados = feature paga" |
+| 2 | `agro/index.html` | "Top Cultivos (Pagados)" → "Top Cultivos (Ingresos cobrados)" | Mismo motivo |
+| 3 | `agro/index.html` | "Rankings del Centro" → "Rankings de Operacion" (3 instancias) | "Centro" sonaba a centro financiero crypto |
+| 4 | `agro/index.html` | Tab "Pagados" → "Ingresos" | Mas claro, data-tab="ingresos" ya existia |
+| 5 | `agro/index.html` | "Gastos, pagados, fiados..." → "Gastos, ingresos cobrados, fiados..." | Coherencia con labels nuevos |
+| 6 | `agro/index.html` | "Ultimos Pagados (Sesion Actual)" → "Ultimos ingresos cobrados (Sesion Actual)" | Coherencia |
+| 7 | `agro/index.html` | ROI label "Pagados" → "Ingresos cobrados" | Coherencia |
+| 8 | `agro/index.html` | "Cargando referencias cripto..." → "Cargando referencias de mercado..." | Reencuadrar como contexto agro |
+| 9 | `cookies.html` | Correccion masiva de tildes (todo el archivo estaba sin acentos) | Copy profesional |
+| 10 | `cookies.html` | Badge "Documento Legal" → agregar icono | Coherencia visual con terms/privacy |
+| 11 | `cookies.html` | "Politica operativa preliminar" → "Documento operativo preliminar" | Coherencia con terms |
+| 12 | `cookies.html` | "No hay analitica comercial activa declarada para vender perfiles" → "No hay analitica comercial activa ni rastreo de perfiles" | Unificacion con privacy |
+| 13 | `cookies.html` | Boton "Volver" href="./" → href="/" | Ruta correcta |
+| 14 | `privacy.html` | "Si en el futuro se incorpora analitica... se debera reflejar en la politica de cookies y privacidad" → "No hay analitica comercial activa. Si en el futuro se incorpora... se informara aqui y en la politica de cookies" | Unificar historia |
+| 15 | `privacy.html` | "Documento preliminar en redaccion" → "Documento preliminar. Se actualizara conforme la plataforma evolucione." | Menos drafty |
+| 16 | `docs-agro.html` | Tildes corregidos en seccion Informacion + unificar declaracion de cookies/privacidad | Coherencia |
+| 17 | `soporte.html` | "Cuentanos" → "Cuentanos", "asesoria" → "asesoria", meta "tecnico" → "tecnico" | Tildes |
+| 18 | `soporte.html` | Span "Soporte" sin icono → `<i class="fa-solid fa-headset">` | Icono real |
+| 19 | `soporte.html` | Agregar Font Awesome CDN | El icono necesita FA |
+
+### Decisiones editoriales / semanticas
+
+**Monetizacion final:** Agro V1 gratuito hoy, sin pagos ni suscripciones activas. Los tres archivos publicos ya eran consistentes.
+
+**Framing online/offline final:** Agro funciona principalmente online. Algunas superficies son local-first. No se cambio (ya era coherente).
+
+**Framing cookies/privacidad final:** Unificado a: "No hay analitica comercial activa. Si en el futuro se incorpora, se informara en la politica de cookies." Los tres archivos (cookies, privacy, docs-agro) ahora dicen lo mismo.
+
+**Tratamiento de mercados/divisas:** Se reencuadro "Cargando referencias cripto..." a "Cargando referencias de mercado..." para sentirse como contexto agro. Las tabs "REFERENCIAS CRIPTO" y "DIVISAS FIAT" se mantienen porque son funcionalidad legitima del dashboard Agro (inteligencia de mercado).
+
+**Tratamiento de legal preliminar:** Se cambio "en redaccion" por "Se actualizara conforme la plataforma evolucione" — honesto pero menos chocante con el mensaje de producto activo.
+
+### Riesgos o limites
+
+- docs-agro.html tiene tildes faltantes en secciones no tocadas — fuera de scope de esta sesion
+- Los labels "Pagados" dentro de agro.js (JS dinamico) no se tocaron — solo se editaron labels estaticos del HTML
+- Las tabs "REFERENCIAS CRIPTO" / "DIVISAS FIAT" se mantienen con nombre actual — son funcionales
+- No se agrego puente visible a GitHub/Open Source — requiere decision de producto sobre ubicacion
+
+### Resultado build
+
+`pnpm build:gold` — OK. 167 modules, 2.47s.
+- agent-guard: OK
+- agent-report-check: OK
+- vite build: OK
+- check-llms: OK
+- check-dist-utf8: OK
+
+### QA manual sugerido
+
+1. `/cookies`: verificar tildes corregidos, badge con icono, boton volver funcional
+2. `/privacy`: verificar nuevo framing de legal y cookies
+3. `/soporte`: verificar icono headset, tildes corregidos, FA cargado
+4. `/terms`: verificar framing sin "en redaccion"
+5. `/docs-agro`: verificar seccion Informacion con tildes y declaracion unificada
+6. `/agro` (sidebar): verificar Rankings de Operacion, Top Compradores (Ingresos cobrados)
+7. `/agro` (facturero): verificar tab "Ingresos" en vez de "Pagados"
+8. `/agro` (mercados): verificar "Cargando referencias de mercado..." en tab cripto
+9. `/agro` (ROI): verificar label "Ingresos cobrados" en calculadora
+10. Mobile: verificar que ningun cambio rompe layout
+
+### Que NO se toco
+
+- `MANIFIESTO_AGRO.md`
+- `agro.js` (labels dinamicos internos)
+- Logica de negocio
+- Switch maestro, favoritos, busqueda compacta
+- Supabase
+- `AGENTS.md`
+- `ADN-VISUAL-V10.0.md`
+
+### Comandos git sugeridos (sin ejecutar)
+
+```bash
+git status
+git add apps/gold/agro/index.html apps/gold/cookies.html apps/gold/privacy.html apps/gold/terms.html apps/gold/docs-agro.html apps/gold/soporte.html apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(site): resolve public inconsistencies — cookies/privacy alignment, agro-first reframe, soporte cleanup"
+```
+
 ## Sesion activa: Visualizacion multimoneda en ciclos de cultivo (2026-04-19)
 
 ### Objetivo
