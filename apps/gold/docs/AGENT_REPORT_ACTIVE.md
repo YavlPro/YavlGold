@@ -1590,3 +1590,92 @@ La produccion consultada antes del cambio todavia respondia 404 en las rutas lim
 - `agro.js`.
 - CSS.
 - Contenido informativo base de la documentacion publica.
+
+---
+
+## Sesion activa: Documentacion dentro del shell/sidebar Agro como enlace secundario (2026-04-19)
+
+### Objetivo
+
+Agregar un acceso a **Documentacion** dentro del shell/sidebar de Agro como enlace secundario de ayuda, no como superficie operativa principal. El enlace debe existir, ser facil de encontrar, pero sentirse secundario y no competir con los modulos operativos.
+
+### Diagnostico
+
+El sidebar de Agro tiene estos grupos: Principal, Operacion comercial, Trabajo diario, Operaciones, Herramientas, Acciones. No existe zona de ayuda, soporte ni utilidades. No habia referencia a `/docs-agro` dentro del modulo Agro. La pagina publica de documentacion ya existe en `/docs-agro` con enlace en la landing y el header publico.
+
+### Opciones evaluadas
+
+| Opcion | Descripcion | Lectura |
+|---|---|---|
+| A | Documentacion como item secundario en zona baja del sidebar, estilo silencioso, separado visualmente | Recomendada. Limpio, no intrusivo, semanticamente correcto. |
+| B | Mini bloque "Ayuda" con Documentacion + Soporte + FAQ | Mas bloque del necesario para un solo acceso. Riesgo de recargar. |
+| C | Documentacion dentro del bloque principal junto a modulos operativos | No recomendada. Demasiado protagonista, rompe jerarquia. |
+
+### Decision ejecutada
+
+**Opcion A**. Se agrego un bloque de ayuda al final del sidebar con `margin-top: auto` para empujarlo al fondo, borde separador sutil y enlace "Documentacion" con icono `fa-book`.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/index.html` | EDIT | Bloque `agro-shell-sidebar__help` al final del sidebar con enlace `/docs-agro` |
+| `apps/gold/agro/agro.css` | EDIT | Estilos silenciosos: texto gris bajo (0.35), hover gris medio (0.6), borde separador (0.05), sin gold shadow |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | DOC | Registro de sesion |
+
+### Tratamiento visual
+
+- Color texto: `rgba(255,255,255,0.35)` — gris premium bajo
+- Hover: `rgba(255,255,255,0.6)` — gris medio sobrio
+- Icono: `fa-book`, opacity 0.6
+- Separacion: `border-top: 1px solid rgba(255,255,255,0.05)` + `margin-top: auto` (empuja al fondo del sidebar)
+- No usa gold, no usa shimmer, no usa sombra dorada
+- Focus-visible: anillo dorado accesible
+- Touch target: min-height 44px
+
+### Criterio semantico respetado
+
+- **Switch maestro**: intacto, no se agrego data-agro-mode-scope al enlace
+- **Favoritos**: no afectado, el enlace es `<a>` externo, no boton del shell
+- **Busqueda compacta**: no afectada
+- **Documentacion**: ayuda publica / soporte informativo, no funcion operativa
+
+### Resultado build
+
+`pnpm build:gold` — OK. 166 modules, 2.63s.
+- agent-guard: OK
+- agent-report-check: OK
+- vite build: OK
+- check-llms: OK
+- check-dist-utf8: OK
+
+### Que NO se toco
+
+- `MANIFIESTO_AGRO.md`
+- `agro.js`
+- `agro-shell.js`
+- `agro-mode.js`
+- Switch maestro
+- Favoritos
+- Busqueda compacta
+- Supabase
+- Documentacion publica base (`docs-agro.html`)
+
+### QA manual sugerido
+
+1. Desktop: abrir sidebar Agro y verificar que "Documentacion" aparece al final, separado del bloque de Acciones
+2. Verificar que el texto se ve gris discreto, no dorado ni brillante
+3. Hover sobre "Documentacion" → debe aclararse a gris medio
+4. Click → debe abrir `/docs-agro` en nueva pestana
+5. Mobile: verificar que el enlace es accesible y el touch target es comodo
+6. Verificar que el switch maestro sigue intacto (4 modos funcionando)
+7. Verificar que favoritos y busqueda siguen intactos
+8. Verificar que el sidebar se scrollea correctamente si el contenido es largo
+
+### Comandos git sugeridos (sin ejecutar)
+
+```bash
+git status
+git add apps/gold/agro/index.html apps/gold/agro/agro.css apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "feat(agro): add documentation link to sidebar help zone — silent secondary access"
+```
