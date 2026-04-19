@@ -27,7 +27,7 @@ const MODULE_METADATA = {
     title: 'Crypto',
     icon: '📈',
     route: '/crypto/',
-    description: 'Datos del mercado y tasas de cambio. Herramientas financieras en construccion.'
+    description: 'Modulo independiente no disponible en V1. Las divisas y referencias de mercado viven como contexto dentro de Agro.'
   }
 };
 

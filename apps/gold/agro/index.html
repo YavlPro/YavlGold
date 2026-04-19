@@ -553,8 +553,8 @@
                     <h2 class="agro-dash-title section-title">
                         <span class="agro-dash-icon">📊</span> Dashboard Agro
                     </h2>
-                    <p class="agro-dash-subtitle">Clima, mercado y fase lunar en una sola lectura para arrancar el día
-                        con mejor contexto.</p>
+                    <p class="agro-dash-subtitle">Clima, divisas de referencia y fase lunar en una sola lectura para
+                        arrancar el día con mejor contexto.</p>
                 </div>
                 <div class="agro-dash-controls">
                     <button type="button" class="assistant-trigger agro-dash-btn-assistant" id="btn-open-agro-assistant"
@@ -625,9 +625,9 @@
                 <button type="button" class="dash-nav-card" onclick="window.openMarketHub?.('crypto')">
                     <span class="dash-nav-card__icon">📈</span>
                     <div class="dash-nav-card__body">
-                        <strong class="dash-nav-card__title">Mercados</strong>
+                        <strong class="dash-nav-card__title">Mercados de referencia</strong>
                         <span class="dash-nav-card__summary" id="market-location">Detectando...</span>
-                        <span class="dash-nav-card__hint">Cripto y divisas en vivo</span>
+                        <span class="dash-nav-card__hint">Contexto de divisas para Agro</span>
                     </div>
                     <span class="dash-nav-card__arrow"><i class="fa-solid fa-chevron-right"
                             aria-hidden="true"></i></span>
@@ -903,7 +903,7 @@
         </div>
     </div>
 
-    <!-- Modal: Centro Financiero (Market Hub v2) - DNA Visual V9.8 -->
+    <!-- Modal: Referencias de mercado (Market Hub v2) -->
     <div id="modal-market" class="modal-overlay hidden agro-legacy-modal-shell"
         onclick="if(event.target === this) window.closeModal('modal-market')">
         <div class="agro-inline-modal-surface agro-market-modal__dialog">
@@ -911,7 +911,7 @@
             <div class="agro-market-modal__header">
                 <div class="agro-market-modal__brand">
                     <i class="fa-solid fa-sack-dollar agro-market-modal__icon"></i>
-                    <h3 class="agro-market-modal__title">Centro Financiero</h3>
+                    <h3 class="agro-market-modal__title">Referencias de mercado</h3>
                 </div>
                 <button onclick="window.closeModal('modal-market')" class="agro-modal-inline-close">
                     <i class="fa-solid fa-xmark agro-modal-inline-close__icon"></i>
@@ -921,7 +921,7 @@
             <div class="agro-market-modal__tabs">
                 <button id="tab-btn-crypto" onclick="window.switchMarketTab('crypto')"
                     class="agro-market-modal__tab agro-market-modal__tab--default">
-                    <i class="fa-brands fa-bitcoin agro-market-modal__tab-icon"></i>CRIPTOMONEDAS
+                    <i class="fa-brands fa-bitcoin agro-market-modal__tab-icon"></i>REFERENCIAS CRIPTO
                 </button>
                 <button id="tab-btn-fiat" onclick="window.switchMarketTab('fiat')" class="agro-market-modal__tab">
                     <i class="fa-solid fa-money-bill-wave agro-market-modal__tab-icon"></i>DIVISAS FIAT
@@ -929,14 +929,14 @@
             </div>
             <!-- Content with Scroll -->
             <div class="agro-market-modal__content">
-                <!-- Crypto View -->
+                <!-- Cripto reference view -->
                 <div id="view-crypto" class="agro-market-modal__view">
                     <div id="crypto-list-container" class="agro-market-modal__list">
-                        <div class="agro-market-modal__loading">📡 Cargando mercado crypto...
+                        <div class="agro-market-modal__loading">📡 Cargando referencias cripto...
                         </div>
                     </div>
                 </div>
-                <!-- Fiat View (Cards - same as Crypto) -->
+                <!-- Fiat reference view -->
                 <div id="view-fiat" class="agro-market-modal__view agro-market-modal__view--hidden">
                     <div id="fiat-list-container" class="agro-market-modal__list">
                         <div class="agro-market-modal__loading">📡 Cargando divisas...</div>
@@ -1561,7 +1561,7 @@
                 aria-expanded="false">
                 <span class="yg-accordion-icon agrorepo-icon-box">🌾</span>
                 <span class="yg-accordion-title agrorepo-title">AgroRepo
-                    <small class="agrorepo-subtitle">Memoria agrícola local-first</small>
+                    <small class="agrorepo-subtitle">Memoria local de AgroRepo</small>
                 </span>
                 <span class="yg-accordion-chevron agrorepo-toggle"><i class="fa-solid fa-chevron-down"></i></span>
             </summary>
@@ -1583,7 +1583,7 @@
             para agricultores </p>
         <div class="footer-links">
             <a href="https://t.me/YavlPro" target="_blank" class="footer-link">Soporte</a>
-            <span class="footer-link">Datos protegidos</span>
+            <span class="footer-link">Acceso por usuario</span>
         </div>
         <div class="footer-build" id="agro-build-marker" data-build-version="V1" data-module-release="Agro V1"
             data-build-date="2026-03-08">
@@ -1686,7 +1686,7 @@
                         </div>
                         <div class="arw-storage-info">
                             <span class="arw-storage-indicator"></span>
-                            <span id="arw-storageStatus">LocalStorage · 100% Offline</span>
+                            <span id="arw-storageStatus">LocalStorage · offline parcial</span>
                         </div>
                     </div>
                 </aside>

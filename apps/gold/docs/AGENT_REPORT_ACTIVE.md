@@ -1783,3 +1783,110 @@ El producto ya es semanticamente multimoneda (`USD`, `COP`, `VES/BS`), pero el p
 - `check-dist-utf8`: OK.
 - Smoke tecnico `agro-display-currency.js` con tasas simuladas: OK (`USD -> COP -> BS -> USD`).
 - Warning no bloqueante: Node local `v25.6.0`; el repo declara engine `20.x`.
+
+---
+
+## Sesion activa: Coherencia publica Agro-first (2026-04-19)
+
+### Objetivo
+
+Ejecutar una cirugia integral de coherencia publica en YavlGold V1 para alinear home, docs, FAQ, legales, soporte y superficies publicas relacionadas con Agro. El objetivo es que la historia publica sea clara y honesta: Agro es el producto activo real, V1 es gratuito hoy, el funcionamiento es principalmente online con partes locales puntuales, las politicas de privacidad/cookies no sobreprometen y las senales de mercados/crypto quedan enmarcadas como contexto operativo de Agro, no como producto independiente.
+
+### Diagnostico inicial
+
+El canon leido confirma:
+
+- `AGENTS.md`: stack obligatorio Vanilla JS + Vite MPA + Supabase; no React/Tailwind/SPA; reporte activo obligatorio; build `pnpm build:gold`.
+- `ADN-VISUAL-V10.0.md`: no rediseño, respetar tokens y jerarquia visual.
+- `MANIFIESTO_AGRO.md`: Agro es herramienta agricola digital real y el dashboard incluye clima, mercados, fase lunar y contexto del dia.
+- `FICHA_TECNICA.md` vive en la raiz (`FICHA_TECNICA.md`), no en `apps/gold/docs/`; confirma Agro como modulo liberado y Crypto como placeholder/no activo.
+- `AGENT_REPORT_ACTIVE.md`: 1291 lineas, no requiere rotacion.
+
+### Inconsistencias confirmadas
+
+| Frente | Evidencia | Lectura |
+|---|---|---|
+| Monetizacion | `apps/gold/index.html` dice `Agro Activo · Acceso Gratuito`; `apps/gold/docs-agro.html` dice que V1 no tiene pagos ni suscripciones; `apps/gold/faq.html` dice "contenido gratuito y funciones premium" con suscripcion. | Contradiccion fuerte. No se encontro infraestructura de pagos/suscripciones activa; la verdad publica segura es "Agro V1 gratuito hoy, sin pagos ni suscripciones". |
+| Online/offline | `docs-agro.html` dice que Agro depende principalmente de internet; `apps/gold/agro/index.html` muestra AgroRepo como `Memoria agricola local-first` y `LocalStorage · 100% Offline`. | La verdad debe ser hibrida: Agro online/Supabase para datos principales; AgroRepo local-first/offline parcial en LocalStorage. |
+| Cookies/privacidad | `docs-agro.html` menciona solo cookies tecnicas; `cookies.html` menciona cookies esenciales, preferencias y analiticas. | Alinear a cookies esenciales/preferencias y hCaptcha; no afirmar analiticas activas si no hay evidencia de analytics real. |
+| Seguridad/legal | `privacy.html` dice "Documento completo en redaccion" pero tambien "cumplimiento de regulaciones"; `agro/index.html` footer dice "Datos protegidos". | Mantener tono honesto: HTTPS/TLS, Supabase Auth, RLS/controles por usuario, sin E2E; evitar sobreprometer cumplimiento legal cerrado. |
+| Terminos/privacidad | `terms.html` y `privacy.html` estan en redaccion. | No ocultarlo; ajustar copy para que sean avisos preliminares y no aparenten marco legal completo. |
+| Soporte | `soporte.html` contiene `? Volver al Inicio`, `??`, `?? Inicio`, `?? Agro`, `?? Contacto`. | Mojibake/emoji roto visible; corregir a texto/iconos ASCII sobrios. |
+| Mercados/crypto | `MANIFIESTO_AGRO.md` y `FICHA_TECNICA.md` permiten mercados como contexto del dashboard Agro; `crypto/index.html` declara Crypto no disponible; `agro/index.html` dice `Cripto y divisas en vivo` y modal `CRIPTOMONEDAS`. | Conservar mercado/divisas como contexto real de Agro, pero reencuadrar para que no parezca modulo Crypto independiente. |
+
+### Plan quirurgico por prioridad
+
+1. P0 monetizacion: unificar FAQ con home/docs: Agro V1 gratuito hoy, sin pagos ni suscripciones activas.
+2. P0 legal: conservar estado "en redaccion" pero reescribir privacidad/terminos con tono preliminar y no grandilocuente.
+3. P1 online/offline: docs y AgroRepo deben decir "principalmente online + AgroRepo local-first/offline parcial".
+4. P1 cookies/privacidad: alinear docs-agro, cookies y privacidad; quitar o matizar cookies analiticas sin evidencia de analytics real; mencionar hCaptcha con precision.
+5. P1 seguridad: cambiar "Datos protegidos" por copy mas preciso y sobrio.
+6. P2 identidad: reencuadrar mercados/crypto en Agro como "mercados y divisas de referencia", no modulo crypto independiente.
+7. P2 soporte: corregir mojibake, labels rotos y enlaces publicos relativos a rutas limpias.
+
+### Archivos a inspeccionar/tocar
+
+| Archivo | Motivo |
+|---|---|
+| `apps/gold/index.html` | Home, monetizacion, enlaces publicos, copy de registro. |
+| `apps/gold/docs-agro.html` | Docs publicas, FAQ interna, online/offline, cookies/privacidad. |
+| `apps/gold/faq.html` | Contradiccion directa de monetizacion. |
+| `apps/gold/privacy.html` | Estado legal, seguridad, cookies/terceros. |
+| `apps/gold/terms.html` | Estado legal en redaccion. |
+| `apps/gold/cookies.html` | Cookies tecnicas/preferencias/analiticas. |
+| `apps/gold/soporte.html` | Mojibake, links visibles, soporte honesto. |
+| `apps/gold/agro/index.html` | AgroRepo offline parcial, mercados/crypto como contexto, footer seguridad. |
+| `apps/gold/dashboard/index.html` | Mojibake visible en comentario/quote y senales publicas menores. |
+| `apps/gold/assets/js/modules/moduleIdentity.js` | Metadata de modulos si expone Crypto como activo o ambiguo. |
+
+### Opciones
+
+| Opcion | Descripcion | Decision |
+|---|---|---|
+| A | Limpieza de copy + labels + navegacion + paginas legales superficiales | Base recomendada, suficiente para cerrar la mayor parte de contradicciones publicas. |
+| B | Opcion A + pequeno reencuadre de superficies publicas del dashboard Agro cuando el copy crea confusion | Elegida. Necesaria porque AgroRepo y Mercado viven en `agro/index.html` y son visibles al usuario. |
+| C | Reescritura amplia/legal completa o rediseño publico | Descartada. Mayor diff, riesgo legal y visual innecesario. |
+
+### Cambios ejecutados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/faq.html` | Se elimino la contradiccion "funciones premium/suscripcion" y se declaro que Agro V1 es gratuito hoy, sin pagos ni suscripciones activas. Se agrego FAQ breve de online/offline hibrido. |
+| `apps/gold/docs-agro.html` | Se ajusto la respuesta de internet/offline para explicar Agro online + AgroRepo local-first parcial. Se alineo cookies/privacidad con cookies/almacenamiento de sesion, preferencias, hCaptcha y sin rastreo comercial. |
+| `apps/gold/cookies.html` | Politica preliminar: cookies esenciales, preferencias/LocalStorage y hCaptcha; se retiro la afirmacion de cookies analiticas activas. |
+| `apps/gold/privacy.html` | Copy legal preliminar y sobrio: HTTPS/TLS, Supabase Auth, controles por usuario, sin E2E, cookies/almacenamiento y sin venta de perfiles. |
+| `apps/gold/terms.html` | Estado preliminar honesto; se agrego que Agro V1 es gratuito actualmente y no tiene pagos/suscripciones activas. |
+| `apps/gold/soporte.html` | Correccion de mojibake visible (`?`, `??`) y enlaces legales a rutas limpias `/cookies`, `/faq`, `/soporte`. |
+| `apps/gold/agro/index.html` | Reencuadre minimo: "Mercados de referencia", "Contexto de divisas para Agro", "Referencias de mercado", "Referencias cripto"; AgroRepo queda como `offline parcial`; footer cambia "Datos protegidos" por "Acceso por usuario". |
+| `apps/gold/dashboard/index.html` | Se corrigio mojibake en comentarios visibles del codigo (`QUOTE`, `INSIGHTS`). |
+| `apps/gold/assets/js/modules/moduleIdentity.js` | Metadata de Crypto aclara que el modulo independiente no esta disponible en V1 y que las referencias de mercado viven dentro de Agro. |
+
+### Decisiones editoriales finales
+
+- Monetizacion: Agro V1 es gratuito hoy; no hay pagos ni suscripciones activas.
+- Online/offline: Agro es principalmente online por Supabase, clima y cuenta; AgroRepo es una superficie local-first/offline parcial en LocalStorage.
+- Cookies/privacidad: cookies o almacenamiento local para sesion, preferencias, seguridad anti-bots y superficies locales; sin publicidad dirigida ni rastreo comercial de terceros; analitica solo como posibilidad futura a documentar.
+- Seguridad: copy limitado a HTTPS/TLS, autenticacion, controles por usuario y ausencia de E2E; no se promete blindaje absoluto.
+- Crypto/mercados: Crypto independiente sigue no disponible; mercados/divisas quedan como referencias operativas dentro de Agro.
+
+### Validacion
+
+- `pnpm build:gold` — OK.
+- `agent-guard`: OK.
+- `agent-report-check`: OK.
+- `vite build`: OK, 167 modules, 3.06s.
+- `check-llms`: OK.
+- `check-dist-utf8`: OK.
+- `node --check apps/gold/assets/js/modules/moduleIdentity.js`: OK.
+- `git diff --check`: OK, con warning no bloqueante de normalizacion CRLF futura en `apps/gold/soporte.html`.
+- Busquedas post-cambio: sin `funciones premium`, `cookies analiticas` como uso activo, `100% Offline`, `Cripto y divisas en vivo`, `Centro Financiero`, mojibake visible `??` / `�` en paginas revisadas.
+
+### QA manual sugerido
+
+1. Home: verificar que Agro se lee como producto activo y gratuito.
+2. Docs Agro: verificar FAQ interna de pago, internet/offline y privacidad/cookies.
+3. FAQ publica: verificar que monetizacion y online/offline coinciden con docs.
+4. Terminos/Privacidad/Cookies: confirmar tono preliminar, sin sobrepromesas legales.
+5. Soporte: revisar header, CTA, footer y enlaces `/cookies`, `/faq`, `/soporte`.
+6. Agro dashboard: abrir Mercados de referencia y AgroRepo; confirmar que no parecen producto Crypto independiente ni offline total.
+7. Mobile: verificar que los cambios de copy no rompen layout.
