@@ -9816,6 +9816,11 @@ function buildCycleGlobalBreakdown(crop, options = {}) {
         pagados: formatCurrency(bucket.incomeTotal),
         costos: formatCurrency(bucket.totalCosts),
         fiados: formatCurrency(bucket.pendingTotal),
+        baseUsd: Number(bucket.baseInvestment) || 0,
+        gastosUsd: Number(bucket.expenseInvestment) || 0,
+        pagadosUsd: Number(bucket.incomeTotal) || 0,
+        costosUsd: Number(bucket.totalCosts) || 0,
+        fiadosUsd: Number(bucket.pendingTotal) || 0,
         unitChips
     };
 }

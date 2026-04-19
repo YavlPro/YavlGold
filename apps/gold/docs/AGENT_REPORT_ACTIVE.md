@@ -1679,3 +1679,107 @@ git status
 git add apps/gold/agro/index.html apps/gold/agro/agro.css apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "feat(agro): add documentation link to sidebar help zone — silent secondary access"
 ```
+
+---
+
+## Sesion activa: Visualizacion multimoneda en ciclos de cultivo (2026-04-19)
+
+### Objetivo
+
+Implementar soporte quirurgico de visualizacion multimoneda para ciclos de cultivo, permitiendo alternar USD -> COP -> BS -> USD desde la metadata/label de moneda y reflejar esa divisa visual en rentabilidad, potencial neto, desglose financiero y lecturas financieras directas del mismo contexto del ciclo.
+
+### Diagnostico inicial
+
+El producto ya es semanticamente multimoneda (`USD`, `COP`, `VES/BS`), pero el problema reportado indica que las cards y vistas de ciclos de cultivo siguen presentando rentabilidad/potencial neto en USD. La hipotesis inicial es que el calculo base ya vive en USD o normaliza a USD, y que falta una capa de presentacion desacoplada para convertir/formatear la moneda visible sin rehacer la logica financiera ni alterar la moneda base.
+
+### Plan quirurgico
+
+1. Localizar renderers reales de ciclos activos, finalizados y perdidos.
+2. Confirmar donde se calcula/renderiza `Rentabilidad`, `Potencial neto` y el `Desglose financiero`.
+3. Localizar helpers existentes de moneda/tasas (`agro-exchange.js`, formateadores, `amount_usd`, `exchange_rate`, `currency`).
+4. Evaluar opciones:
+   - Opcion A: modulo pequeño de visualizacion multimoneda + wiring minimo.
+   - Opcion B: parche local dentro de renderers existentes.
+   - Opcion C: alternativa si el codigo real exige otro punto de integracion.
+5. Ejecutar solo la opcion de menor diff confiable.
+6. Agregar estilos minimos ADN V10 si hace falta para hacer la metadata clicable/tocable.
+7. Ejecutar `pnpm build:gold` y documentar cierre.
+
+### Archivos a inspeccionar
+
+| Archivo | Motivo |
+|---|---|
+| `apps/gold/agro/agro.js` | Posible renderer legacy o wiring de ciclos. |
+| `apps/gold/agro/agro-stats.js` | Posibles calculos/render de rentabilidad y estadisticas. |
+| `apps/gold/agro/agro-crop-report.js` | Posible desglose/reporte por cultivo. |
+| `apps/gold/agro/agro-exchange.js` | Tasas/helpers existentes de conversion. |
+| `apps/gold/agro/agroOperationalCycles.js` | Posible renderer real de ciclos de cultivo/periodo. |
+| `apps/gold/agro/agro-cycles-workspace.js` | Posible superficie moderna de ciclos. |
+| `apps/gold/agro/agro.css` | Estilos minimos para label/metadata clicable. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Bitacora operativa de la sesion. |
+
+### Restricciones de alcance
+
+- No tocar `MANIFIESTO_AGRO.md`.
+- No tocar Supabase.
+- No agregar features nuevas dentro de `agro.js` salvo wiring minimo indispensable.
+- No inventar tasas falsas.
+- No rediseñar cards ni cambiar semantica de ciclos.
+
+### Diagnostico confirmado
+
+- Renderer real de cards: `apps/gold/agro/agrociclos.js`.
+- Las cards activas, finalizadas y perdidas comparten el mismo renderer (`renderCycleCards` / `renderFinishedCycles`).
+- Los datos vienen desde `buildActiveCycleCardsData` y `buildFinishedCycleCardsData` en `apps/gold/agro/agro.js`.
+- La moneda base de calculo ya llega como USD en campos crudos: `inversionUSD`, `rentabilidad`, `potencialNeto`, `baseInvestmentUsd`, `gastosUsd`, `pagadosUsd`, `costosUsd`, `fiadosUsd`, `perdidasUsd`, `operationalGastosUsd`, `operationalPendingUsd`.
+- El desglose estaba usando strings ya formateados en USD/tripleta, por eso no podia alternar de forma limpia.
+- Helper existente reutilizable: `apps/gold/agro/agro-exchange.js` (`initExchangeRates`, `getRate`, `convertFromUSD`).
+
+### Opciones evaluadas
+
+| Opcion | Descripcion | Decision |
+|---|---|---|
+| A | Capa desacoplada de visualizacion multimoneda + wiring minimo en renderer | Ejecutada. Mantiene USD como base y separa presentacion. |
+| B | Parche local en `agrociclos.js` | Descartada. Mezcla estado, conversion y renderer. |
+| C | Llevar moneda visual al monolito `agro.js` | Descartada. Mete estado de UI en calculo/datos. |
+
+### Cambios ejecutados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/agro-display-currency.js` | Nuevo modulo de visualizacion USD/COP/BS. Reutiliza tasas de `agro-exchange.js`, rota USD -> COP -> BS -> USD y persiste preferencia en `localStorage`. |
+| `apps/gold/agro/agrociclos.js` | La metadata de moneda en `Inversion` ahora es clicable. Rentabilidad, potencial neto, chips y filas del desglose se formatean desde montos USD crudos y se refrescan al rotar moneda. |
+| `apps/gold/agro/agrociclos.css` | Estilo sobrio ADN V10 para el toggle de moneda, sin rediseñar cards. |
+| `apps/gold/agro/agro.js` | Wiring minimo: `buildCycleGlobalBreakdown` expone totales USD crudos para que el desglose global tambien pueda alternar moneda. |
+
+### Comportamiento final
+
+- Click/tap en la etiqueta de moneda de `Inversion`: `USD -> COP -> BS -> USD`.
+- El cambio refresca todas las cards de ciclos visibles en el documento.
+- La moneda visible se aplica a:
+  - inversion de la card;
+  - rentabilidad;
+  - potencial neto / rentabilidad final;
+  - resumen del desglose;
+  - operativa vinculada;
+  - cartera viva;
+  - desglose global por tipo de cultivo cuando aplica.
+- Si no hay tasa confiable para COP/BS, se muestra `N/D COP` o `N/D BS` en vez de inventar conversion.
+
+### Limites documentados
+
+- La base numerica sigue siendo USD. Esto preserva la logica financiera existente.
+- La linea de cotizacion se mantiene como texto informativo original.
+- El comparador secundario de ciclos conserva su propia lectura USD porque no tiene metadata de moneda para tocar y ampliarlo implicaria otra interaccion.
+
+### Validacion
+
+`pnpm build:gold` — OK.
+
+- `agent-guard`: OK.
+- `agent-report-check`: OK.
+- `vite build`: OK, 167 modules, 2.14s.
+- `check-llms`: OK.
+- `check-dist-utf8`: OK.
+- Smoke tecnico `agro-display-currency.js` con tasas simuladas: OK (`USD -> COP -> BS -> USD`).
+- Warning no bloqueante: Node local `v25.6.0`; el repo declara engine `20.x`.

@@ -2,6 +2,14 @@
 // Responsabilidad: renderizar tarjetas de ciclos activos.
 
 import supabase from '../assets/js/config/supabase-config.js';
+import {
+  formatCycleDisplayMoneyFromUsd,
+  formatSignedCycleDisplayMoneyFromUsd,
+  getCycleDisplayCurrencyLabel,
+  getNextCycleDisplayCurrencyLabel,
+  initCycleDisplayCurrency,
+  rotateCycleDisplayCurrency
+} from './agro-display-currency.js';
 
 const OPERATIONAL_PORTFOLIO_UPDATED_EVENT = 'agro:operational-portfolio-updated';
 const BUYER_PORTFOLIO_STATE_UPDATED_EVENT = 'agro:buyer-portfolio-state-updated';
@@ -120,19 +128,80 @@ function bindOperationalPortfolioSync() {
 }
 
 function formatUsdCompact(value) {
-  const amount = Math.abs(toNumber(value, 0));
-  return amount.toLocaleString('es-VE', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  });
+  return formatCycleDisplayMoneyFromUsd(value);
 }
 
 function formatSignedUsd(value) {
-  const number = toNumber(value, 0);
-  const sign = number >= 0 ? '+' : '-';
-  return `${sign}${formatUsdCompact(number)}`;
+  return formatSignedCycleDisplayMoneyFromUsd(value);
+}
+
+function buildCycleMoneyAttrs(value, displayValue, options = {}) {
+  const parsed = Number(value);
+  const rawAttr = Number.isFinite(parsed)
+    ? ` data-cycle-money-usd="${escapeAttr(parsed)}"`
+    : '';
+  const signedAttr = options.signed ? ' data-cycle-money-signed="1"' : '';
+  const trendAttr = options.trend
+    ? ` data-cycle-money-trend="${escapeAttr(options.trend)}"`
+    : '';
+  return ` data-money="1" data-raw-money="${escapeAttr(displayValue)}"${rawAttr}${signedAttr}${trendAttr}`;
+}
+
+function buildCurrencyToggleMarkup() {
+  const label = getCycleDisplayCurrencyLabel();
+  const nextLabel = getNextCycleDisplayCurrencyLabel();
+  return `
+    <button type="button" class="cycle-currency-toggle" data-cycle-currency-toggle aria-label="Cambiar moneda visual. Actual: ${escapeAttr(label)}. Siguiente: ${escapeAttr(nextLabel)}" title="Cambiar moneda visual (${escapeAttr(label)} a ${escapeAttr(nextLabel)})">
+      ${escapeHtml(label)}
+    </button>
+  `;
+}
+
+function refreshCurrencyToggle(toggle) {
+  const label = getCycleDisplayCurrencyLabel();
+  const nextLabel = getNextCycleDisplayCurrencyLabel();
+  toggle.textContent = label;
+  toggle.setAttribute('aria-label', `Cambiar moneda visual. Actual: ${label}. Siguiente: ${nextLabel}`);
+  toggle.setAttribute('title', `Cambiar moneda visual (${label} a ${nextLabel})`);
+}
+
+function refreshCycleMoneyNode(node) {
+  const rawValue = Number(node?.dataset?.cycleMoneyUsd);
+  if (!Number.isFinite(rawValue)) return;
+
+  const signed = node.dataset.cycleMoneySigned === '1';
+  const displayValue = signed ? formatSignedUsd(rawValue) : formatUsdCompact(rawValue);
+  const trend = String(node.dataset.cycleMoneyTrend || '').trim();
+  const finalText = trend ? `${trend} ${displayValue}` : displayValue;
+  node.textContent = finalText;
+  node.dataset.rawMoney = displayValue;
+}
+
+function refreshCycleDisplayCurrency(root = document) {
+  if (!root?.querySelectorAll) return;
+  root.querySelectorAll('[data-cycle-currency-toggle]').forEach(refreshCurrencyToggle);
+  root.querySelectorAll('[data-cycle-money-usd]').forEach(refreshCycleMoneyNode);
+}
+
+function bindCycleCurrencyToggle(container) {
+  if (!container || container.dataset.cycleCurrencyBound === '1') return;
+  container.dataset.cycleCurrencyBound = '1';
+
+  container.addEventListener('click', async (event) => {
+    const trigger = event.target?.closest?.('[data-cycle-currency-toggle]');
+    if (!trigger || !container.contains(trigger)) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    trigger.disabled = true;
+
+    try {
+      await rotateCycleDisplayCurrency();
+    } finally {
+      trigger.disabled = false;
+      refreshCycleDisplayCurrency(document);
+    }
+  });
 }
 
 function resolveProgress(ciclo) {
@@ -187,36 +256,16 @@ function renderGlobalBreakdown(ciclo) {
   const cycleLabel = cycleCount === 1 ? 'ciclo' : 'ciclos';
   const cropTypeLabel = String(globalBreakdown?.typeLabel || ciclo?.nombre || 'Cultivo');
   const titleText = `Global — ${cropTypeLabel} (${cycleCount} ${cycleLabel})`;
-  const baseText = String(globalBreakdown?.base || 'N/D');
-  const gastosText = String(globalBreakdown?.gastos || 'N/D');
-  const pagadosText = String(globalBreakdown?.pagados || 'N/D');
-  const costosText = String(globalBreakdown?.costos || 'N/D');
-  const fiadosText = String(globalBreakdown?.fiados || 'N/D');
 
   return `
     <section class="desglose-global" data-global-breakdown="1">
       <div class="desglose-global-title">${escapeHtml(titleText)}</div>
       ${renderGlobalUnitChips(globalBreakdown)}
-      <div class="desglose-row">
-        <span>Base inversión multimoneda</span>
-        <span data-money="1" data-raw-money="${escapeAttr(baseText)}">${escapeHtml(baseText)}</span>
-      </div>
-      <div class="desglose-row">
-        <span>Gastos acumulados</span>
-        <span data-money="1" data-raw-money="${escapeAttr(gastosText)}">${escapeHtml(gastosText)}</span>
-      </div>
-      <div class="desglose-row">
-        <span>Pagados</span>
-        <span data-money="1" data-raw-money="${escapeAttr(pagadosText)}">${escapeHtml(pagadosText)}</span>
-      </div>
-      <div class="desglose-row">
-        <span>Costos</span>
-        <span data-money="1" data-raw-money="${escapeAttr(costosText)}">${escapeHtml(costosText)}</span>
-      </div>
-      <div class="desglose-row">
-        <span>Fiados</span>
-        <span data-money="1" data-raw-money="${escapeAttr(fiadosText)}">${escapeHtml(fiadosText)}</span>
-      </div>
+      ${renderBreakdownUsdRow('Base inversión multimoneda', globalBreakdown?.baseUsd, globalBreakdown?.base)}
+      ${renderBreakdownUsdRow('Gastos acumulados', globalBreakdown?.gastosUsd, globalBreakdown?.gastos)}
+      ${renderBreakdownUsdRow('Pagados', globalBreakdown?.pagadosUsd, globalBreakdown?.pagados)}
+      ${renderBreakdownUsdRow('Costos', globalBreakdown?.costosUsd, globalBreakdown?.costos)}
+      ${renderBreakdownUsdRow('Fiados', globalBreakdown?.fiadosUsd, globalBreakdown?.fiados)}
     </section>
   `;
 }
@@ -231,17 +280,41 @@ function renderBreakdownMoneyRow(label, rawValue) {
   `;
 }
 
+function renderBreakdownUsdRow(label, usdValue, fallbackValue = 'N/D') {
+  const parsed = Number(usdValue);
+  if (!Number.isFinite(parsed)) {
+    return renderBreakdownMoneyRow(label, fallbackValue);
+  }
+
+  const displayValue = formatUsdCompact(parsed);
+  return `
+    <div class="desglose-row">
+      <span>${escapeHtml(label)}</span>
+      <span${buildCycleMoneyAttrs(parsed, displayValue)}>${escapeHtml(displayValue)}</span>
+    </div>
+  `;
+}
+
 function renderBreakdownSectionSummary(items = []) {
-  const rows = (Array.isArray(items) ? items : []).filter((item) => item && item.label && item.value);
+  const rows = (Array.isArray(items) ? items : []).filter((item) => {
+    if (!item?.label) return false;
+    if (item.usdValue !== undefined && Number.isFinite(Number(item.usdValue))) return true;
+    return !!item.value;
+  });
   if (!rows.length) return '';
   return `
     <div class="desglose-section-meta">
-      ${rows.map((item) => `
+      ${rows.map((item) => {
+        const parsed = Number(item.usdValue);
+        const hasUsdValue = Number.isFinite(parsed);
+        const displayValue = hasUsdValue ? formatUsdCompact(parsed) : String(item.value || 'N/D');
+        return `
         <span class="desglose-section-chip">
           <span class="desglose-section-chip__label">${escapeHtml(item.label)}</span>
-          <span class="desglose-section-chip__value" data-money="1" data-raw-money="${escapeAttr(item.value)}">${escapeHtml(item.value)}</span>
+          <span class="desglose-section-chip__value"${hasUsdValue ? buildCycleMoneyAttrs(parsed, displayValue) : ` data-money="1" data-raw-money="${escapeAttr(displayValue)}"`}>${escapeHtml(displayValue)}</span>
         </span>
-      `).join('')}
+      `;
+      }).join('')}
     </div>
   `;
 }
@@ -291,6 +364,7 @@ function renderCard(ciclo, index = 0) {
   const inversionText = formatUsdCompact(ciclo?.inversionUSD);
   const trendIcon = esPositivo ? '↗' : '↘';
   const profitLabel = mode === 'finished' ? 'Rentabilidad Final' : 'Potencial Neto';
+  const currencyToggleMarkup = buildCurrencyToggleMarkup();
   const badges = resolveAllPortfolioBadges(ciclo);
   const progressText = mode === 'finished'
     ? 'Completado'
@@ -313,18 +387,20 @@ function renderCard(ciclo, index = 0) {
   const globalBreakdownMarkup = renderGlobalBreakdown(ciclo);
   const baseInvestmentUsd = toNumber(ciclo?.baseInvestmentUsd, 0);
   const directGastosUsd = toNumber(ciclo?.directGastosUsd, 0);
+  const gastosUsd = toNumber(ciclo?.gastosUsd, 0);
   const operationalGastosUsd = toNumber(ciclo?.operationalGastosUsd, 0);
   const operationalPendingUsd = toNumber(ciclo?.operationalPendingUsd, 0);
   const pagadosUsd = toNumber(ciclo?.pagadosUsd, 0);
+  const costosUsd = toNumber(ciclo?.costosUsd, 0);
   const fiadosUsd = toNumber(ciclo?.fiadosUsd, 0);
   const perdidasUsd = toNumber(ciclo?.perdidasUsd, 0);
   const carteraVivaTotal = baseInvestmentUsd + directGastosUsd + perdidasUsd;
   const carteraVivaRows = [
-    renderBreakdownMoneyRow('Base inversión multimoneda', desgloseBase),
-    renderBreakdownMoneyRow('Gastos directos del cultivo', desgloseGastosDirectos),
-    renderBreakdownMoneyRow('Pagados cartera viva', desglosePagados),
-    renderBreakdownMoneyRow('Fiados cartera viva', desgloseFiados),
-    renderBreakdownMoneyRow('Pérdidas cartera viva', desglosePerdidasCarteraViva)
+    renderBreakdownUsdRow('Base inversión multimoneda', baseInvestmentUsd, desgloseBase),
+    renderBreakdownUsdRow('Gastos directos del cultivo', directGastosUsd, desgloseGastosDirectos),
+    renderBreakdownUsdRow('Pagados cartera viva', pagadosUsd, desglosePagados),
+    renderBreakdownUsdRow('Fiados cartera viva', fiadosUsd, desgloseFiados),
+    renderBreakdownUsdRow('Pérdidas cartera viva', perdidasUsd, desglosePerdidasCarteraViva)
   ];
   if (globalBreakdownMarkup) {
     carteraVivaRows.push(globalBreakdownMarkup);
@@ -337,8 +413,8 @@ function renderCard(ciclo, index = 0) {
   const carteraVivaIsShort = carteraVivaRows.length <= 5;
   const breakdownSectionsMarkup = `
     <div class="desglose-summary">
-      ${renderBreakdownMoneyRow('Gastos totales del cultivo', desgloseGastos)}
-      ${renderBreakdownMoneyRow('Costos combinados del ciclo', desgloseCostos)}
+      ${renderBreakdownUsdRow('Gastos totales del cultivo', gastosUsd, desgloseGastos)}
+      ${renderBreakdownUsdRow('Costos combinados del ciclo', costosUsd, desgloseCostos)}
     </div>
     ${operationalGastosUsd > 0 || operationalPendingUsd > 0 ? renderBreakdownSection({
     title: 'Operativa vinculada',
@@ -346,12 +422,12 @@ function renderCard(ciclo, index = 0) {
     modifierClass: 'is-operativa',
     defaultOpen: true,
     summaryItems: [
-      { label: 'Pagado', value: formatUsdCompact(operationalGastosUsd) },
-      { label: 'Pendiente', value: formatUsdCompact(operationalPendingUsd) }
+      { label: 'Pagado', usdValue: operationalGastosUsd },
+      { label: 'Pendiente', usdValue: operationalPendingUsd }
     ],
     bodyMarkup: [
-      operationalGastosUsd > 0 ? renderBreakdownMoneyRow('Gastos operativos pagados', desgloseGastosOperativos) : '',
-      operationalPendingUsd > 0 ? renderBreakdownMoneyRow('Gastos operativos pendientes', desglosePendientesOperativos) : ''
+      operationalGastosUsd > 0 ? renderBreakdownUsdRow('Gastos operativos pagados', operationalGastosUsd, desgloseGastosOperativos) : '',
+      operationalPendingUsd > 0 ? renderBreakdownUsdRow('Gastos operativos pendientes', operationalPendingUsd, desglosePendientesOperativos) : ''
     ].filter(Boolean).join('')
   }) : ''}
     ${renderBreakdownSection({
@@ -360,9 +436,9 @@ function renderCard(ciclo, index = 0) {
     modifierClass: 'is-viva',
     defaultOpen: carteraVivaIsShort,
     summaryItems: [
-      { label: 'Total', value: formatUsdCompact(carteraVivaTotal) },
-      { label: 'Pagado', value: formatUsdCompact(pagadosUsd) },
-      { label: 'Fiado', value: formatUsdCompact(fiadosUsd) }
+      { label: 'Total', usdValue: carteraVivaTotal },
+      { label: 'Pagado', usdValue: pagadosUsd },
+      { label: 'Fiado', usdValue: fiadosUsd }
     ],
     bodyMarkup: carteraVivaRows.join('')
   })}
@@ -410,18 +486,18 @@ function renderCard(ciclo, index = 0) {
           <span class="data-value">${escapeHtml(ciclo?.cosechaEst || 'N/A')}</span>
         </div>
         <div class="data-cell">
-          <span class="data-label">Inversión USD</span>
-          <span class="data-value gold" data-money="1" data-raw-money="${escapeAttr(inversionText)}">${escapeHtml(inversionText)}</span>
+          <span class="data-label data-label--with-currency">Inversión ${currencyToggleMarkup}</span>
+          <span class="data-value gold"${buildCycleMoneyAttrs(ciclo?.inversionUSD, inversionText)}>${escapeHtml(inversionText)}</span>
         </div>
         <div class="data-cell">
           <span class="data-label">Rentabilidad</span>
-          <span class="data-value ${esPositivo ? 'success' : 'error'}" data-money="1" data-raw-money="${escapeAttr(rentabilidadText)}">${trendIcon} ${escapeHtml(rentabilidadText)}</span>
+          <span class="data-value ${esPositivo ? 'success' : 'error'}"${buildCycleMoneyAttrs(ciclo?.rentabilidad, rentabilidadText, { signed: true, trend: trendIcon })}>${trendIcon} ${escapeHtml(rentabilidadText)}</span>
         </div>
       </div>
 
       <div class="profit-row">
         <span class="profit-label">${profitLabel}</span>
-        <span class="profit-value ${netoPositivo ? 'success' : 'error'}" data-money="1" data-raw-money="${escapeAttr(potencialText)}">${escapeHtml(potencialText)}</span>
+        <span class="profit-value ${netoPositivo ? 'success' : 'error'}"${buildCycleMoneyAttrs(ciclo?.potencialNeto, potencialText, { signed: true })}>${escapeHtml(potencialText)}</span>
       </div>
 
       <details class="desglose">
@@ -478,6 +554,11 @@ export function renderCycleCards(container, cycles = [], options = {}) {
     </div>
   `;
   syncOperationalPortfolioBadges(container);
+  bindCycleCurrencyToggle(container);
+  refreshCycleDisplayCurrency(container);
+  initCycleDisplayCurrency().then(() => {
+    refreshCycleDisplayCurrency(container);
+  });
 }
 
 export function renderFinishedCycles(container, cycles, options = {}) {
