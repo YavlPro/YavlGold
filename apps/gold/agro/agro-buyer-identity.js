@@ -37,7 +37,7 @@ function cleanBuyerName(value) {
 
 function extractMatch(text, regex) {
     const safeText = String(text || '').trim();
-    if (!safeText) return '';
+    if (!safeText || safeText.length > 500) return '';
     const match = safeText.match(regex);
     return cleanBuyerName(match?.[1] || '');
 }

@@ -177,6 +177,7 @@ function setExportButtonBusy(isBusy) {
 
 function escapeMarkdownCell(value) {
     return String(value ?? '')
+        .replace(/\\/g, '\\\\')
         .replace(/\r?\n/g, ' ')
         .replace(/\|/g, '\\|')
         .trim();
@@ -584,7 +585,9 @@ function renderAvatarNode(container, avatarUrl, altText) {
         container.appendChild(img);
     }
     img.alt = altText || 'Avatar';
-    img.src = renderSrc;
+    if (/^(?:https?|blob|data):/i.test(renderSrc)) {
+        img.src = renderSrc;
+    }
     container.style.overflow = 'hidden';
 }
 

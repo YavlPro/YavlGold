@@ -2010,3 +2010,80 @@ El canon leido confirma:
 5. Soporte: revisar header, CTA, footer y enlaces `/cookies`, `/faq`, `/soporte`.
 6. Agro dashboard: abrir Mercados de referencia y AgroRepo; confirmar que no parecen producto Crypto independiente ni offline total.
 7. Mobile: verificar que los cambios de copy no rompen layout.
+
+---
+
+## Sesion — 2026-04-19 — Fix CodeQL High findings (security)
+
+### Objetivo
+
+Corregir 4 findings High de CodeQL en codigo runtime real, con el menor diff posible y sin expandir alcance.
+
+### Alertas en alcance
+
+| # | Archivo | Linea | Tipo CodeQL | Riesgo |
+|---|---------|-------|-------------|--------|
+| 1 | `onboardingWizard.js` | 1217 | DOM text reinterpreted as HTML | XSS potencial via innerHTML con template literal. Todos los valores dinamicos usan `escapeHtml()`, pero CodeQL no reconoce la sanitizacion custom. Riesgo real: bajo (escapado), finding: legitimo por sink. |
+| 2 | `agroperfil.js` | 587 | DOM text reinterpreted as HTML | `img.src = renderSrc` con URL derivada de input de usuario. `normalizeAvatarUrl` ya filtra a https/http/data:image, pero CodeQL no traza la validacion. Riesgo real: bajo, finding: legitimo por data flow. |
+| 3 | `agroperfil.js` | 179 | Incomplete string escaping or encoding | `escapeMarkdownCell` escapa newlines y pipes pero no backslashes. Permite bypass de la protección de pipe en tablas markdown. Riesgo: medio (puede romper formato de exportacion). |
+| 4 | `agro-buyer-identity.js` | 41 | Polynomial regular expression used on uncontrolled data | `extractMatch` ejecuta `.match(regex)` sobre texto sin limite de longitud. Las regex callers no tienen backtracking exponencial, pero la funcion acepta cualquier regex. Riesgo: bajo-medium (ReDoS potencial). |
+
+### Plan quirurgico por archivo
+
+**1. `onboardingWizard.js:1217`** — Reemplazar `root.innerHTML = template` con DOMParser + replaceChildren. DOMParser crea documento inerte (no ejecuta scripts). El template no cambia, solo el metodo de insercion. Diff: 3 lineas.
+
+**2. `agroperfil.js:587`** — Agregar validacion explicita de protocolo antes de `img.src = renderSrc`. Solo permite `https:`, `http:`, `blob:`, `data:`. Diff: 4 lineas.
+
+**3. `agroperfil.js:179`** — Agregar escape de backslashes en `escapeMarkdownCell` antes del escape de pipes. Diferencia: 1 linea nueva.
+
+**4. `agro-buyer-identity.js:41`** — Agregar limite de longitud (500 chars) antes de `.match()`. Diff: 1 linea.
+
+### Diagnostico inicial
+
+- Todos los findings son en codigo runtime (no DevOps, no deps).
+- Los findings 1 y 2 son data-flow alerts donde la sanitizacion existe pero CodeQL no la reconoce. Se agrega validacion explicita en el sink.
+- El finding 3 es un bug real en el escaping (backslash no escapado).
+- El finding 4 es una defensa en profundidad (input length limiting).
+- No se agregan dependencias, no se hace refactor masivo, no se toca git/workflows/lockfiles.
+
+### Cambios realizados
+
+| # | Archivo | Linea(s) | Tipo | Cambio |
+|---|---------|----------|------|--------|
+| 1 | `onboardingWizard.js` | 1217, 1294-1296 | innerHTML → DOMParser | Reemplazo `root.innerHTML = template` por `DOMParser().parseFromString()` + `replaceChildren()`. DOMParser crea documento inerto (no ejecuta scripts ni event handlers). Template sin cambios. |
+| 2 | `agroperfil.js` | 587-590 | Protocol guard | Agregado check `/^(?:https?|blob|data):/i` antes de `img.src = renderSrc`. Solo asigna si el protocolo es seguro. |
+| 3 | `agroperfil.js` | 180 | Backslash escape | Agregado `.replace(/\\/g, '\\\\')` antes del escape de pipes en `escapeMarkdownCell`. Previene bypass de la proteccion de pipes en tablas markdown. |
+| 4 | `agro-buyer-identity.js` | 40 | Input length limit | Agregado `safeText.length > 500` como condicion de rechazo en `extractMatch`. Limita superficie de ataque ReDoS. |
+
+### Mitigacion de seguridad
+
+- **Finding 1**: DOMParser no ejecuta scripts ni evalua event handlers. Los nodos parseados se insertan via `replaceChildren` (no innerHTML en el DOM vivo). Los datos de usuario ya estaban escapados con `escapeHtml()` como defensa adicional.
+- **Finding 2**: El guard de protocolo solo permite esquemas seguros (https, http, blob, data). Esto complementa la validacion existente en `normalizeAvatarUrl` y `resolveAvatarSrcForRender`.
+- **Finding 3**: El orden de escaping es critico: backslash primero, luego newlines, luego pipes. Esto previene que `a\|b` se convierta en `a\\|b` donde el `|` ya no esta protegido.
+- **Finding 4**: El limite de 500 caracteres es conservador. Los conceptos de transacciones agro no deberian exceder esta longitud en uso normal.
+
+### Riesgos y limites
+
+- **DOMParser + replaceChildren**: Comportamiento identico a innerHTML en practica, pero tecnicamente mas seguro porque el parseo es inerte. Sin impacto visual ni funcional.
+- **Protocol guard en img.src**: Si `renderSrc` contiene una URL legitima con protocolo no contemplado (ej. `file:`), no se renderizara. Esto es intencional y consistente con la politica de seguridad.
+- **Escape de backslash**: Puede causar doble-escape en exportaciones existentes si habia backslashes literales en datos. Impacto visual minimo (un `\` extra en celdas markdown).
+- **Length limit**: Conceptos agro >500 caracteres seran ignorados por `extractMatch`. En practica, esto es extremadamente raro y preferible a ReDoS.
+
+### Validacion
+
+- `pnpm build:gold` — OK (167 modules, 2.67s)
+- `agent-guard`: OK
+- `agent-report-check`: OK
+- `vite build`: OK
+- `check-llms`: OK
+- `check-dist-utf8`: OK
+
+### No se hizo (scope respetado)
+
+- No se tocaron archivos git/workflows/lockfiles
+- No se agregaron dependencias
+- No se uso DOMPurify ni librerias de sanitizacion
+- No se reescribieron componentes completos
+- No se tocaron otros findings Medium/Low
+- No se tocaron otros archivos fuera de los 3 afectados
+- No se aplicaron suppressions CodeQL

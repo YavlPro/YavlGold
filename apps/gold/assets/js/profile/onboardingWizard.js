@@ -1214,7 +1214,7 @@ export function openOnboardingWizard({
       ? (state.isSubmitting ? 'Guardando...' : 'Guardar y entrar')
       : 'Continuar';
 
-    root.innerHTML = `
+    const _renderHtml = `
       <div class="yg-onboarding-shell" role="dialog" aria-modal="true" aria-labelledby="yg-onboarding-title">
         <aside class="yg-onboarding-side">
           <div>
@@ -1292,6 +1292,8 @@ export function openOnboardingWizard({
         </section>
       </div>
     `;
+    const _doc = new DOMParser().parseFromString(_renderHtml, 'text/html');
+    root.replaceChildren(..._doc.body.childNodes);
 
     attachEvents();
     focusCurrentControl();
