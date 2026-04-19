@@ -1470,3 +1470,123 @@ git status
 git add apps/gold/index.html apps/gold/assets/css/docs-agro.css apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "feat(docs): add Documentation to main nav + refine docs-agro visual — dark premium, no gold grid"
 ```
+
+---
+
+## Sesion activa: Routing publico docs-agro y rutas legales/soporte (2026-04-19)
+
+### Objetivo
+
+Cerrar quirurgicamente el problema de routing publico/documentacion:
+
+1. Hacer que `/docs-agro` viva correctamente en produccion.
+2. Normalizar rutas publicas secundarias a forma limpia sin slash final.
+3. Evitar 404 por trailing slash.
+4. No dejar enlaces publicos apuntando a rutas inexistentes.
+5. Mantener una sola logica canonica de routing para paginas publicas.
+
+### Diagnostico inicial
+
+**Evidencia local:**
+- `apps/gold/vite.config.js` ya registra entradas MPA para `docs-agro.html`, `cookies.html`, `faq.html`, `soporte.html`, `terms.html` y `privacy.html`.
+- `apps/gold/dist` ya contiene `docs-agro.html`, `cookies.html`, `faq.html`, `soporte.html`, `terms.html` y `privacy.html`.
+- `apps/gold/docs-agro.html` contiene hrefs publicos con slash final hacia `/terms/`, `/privacy/`, `/faq/` y `/soporte/`.
+- `apps/gold/index.html` ya enlaza `/docs-agro` sin slash desde header, mobile nav y footer.
+
+**Evidencia de produccion:**
+- `/` responde 200 con `X-YG-Config: root-vercel-active`.
+- `/docs-agro.html` responde 200 con `X-YG-Config: root-vercel-active`.
+- `/docs-agro` responde 404 con `X-YG-Config: root-vercel-active`.
+- `/terms`, `/terms/`, `/privacy`, `/privacy/`, `/cookies`, `/cookies/`, `/faq`, `/faq/`, `/soporte` y `/soporte/` responden 404 con `X-YG-Config: root-vercel-active`.
+
+### Causa raiz por frente
+
+**Frente A - `/docs-agro`:**
+- La pagina real existe como `docs-agro.html` y el build la emite correctamente.
+- El rewrite de `/docs-agro` vive en `apps/gold/vercel.json`.
+- El deploy actual obedece el `vercel.json` de raiz, no el interno de `apps/gold`.
+- Resultado: `/docs-agro.html` funciona, pero `/docs-agro` queda sin clean URL/rewrite efectivo.
+
+**Frente B - rutas publicas con trailing slash:**
+- Las paginas reales existen como HTML de primer nivel.
+- El config activo de raiz no tenia `cleanUrls` ni `trailingSlash` para normalizar `/terms`, `/privacy`, `/cookies`, `/faq` o `/soporte`.
+- La documentacion publica tenia hrefs con slash final hacia varias de esas rutas.
+- Resultado: las rutas limpias y sus variantes con slash final caen en 404 aunque los archivos existen en `dist`.
+
+### Opciones evaluadas
+
+**Opcion A - Recomendada y elegida:**
+Unificar la logica publica en el `vercel.json` verdaderamente canonico del deploy (`vercel.json` raiz), activar clean URLs, normalizar sin trailing slash, retirar el config interno que ya no gobierna produccion y corregir hrefs secundarios a forma sin slash.
+
+**Opcion B:**
+Duplicar rewrites en ambos `vercel.json`. Resuelve el sintoma, pero mantiene dos fuentes con riesgo de drift.
+
+**Opcion C:**
+Cambiar enlaces publicos para apuntar directo a `.html`. Evita depender de routing limpio, pero contradice la preferencia publica y empeora UX/SEO.
+
+### Archivos a tocar
+
+| Archivo | Motivo |
+|---|---|
+| `vercel.json` | Convertirlo en fuente canonica real de clean URLs y trailing slash publico. |
+| `apps/gold/vercel.json` | Retirar config interno no canonico para evitar drift y ambiguedad. |
+| `apps/gold/docs-agro.html` | Normalizar hrefs publicos secundarios sin slash final. |
+| `FICHA_TECNICA.md` | Ajuste minimo para reflejar que el routing canonico del deploy vive en `vercel.json` raiz. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Documentar diagnostico, decision, cambios y validacion. |
+
+### No se tocara
+
+- `MANIFIESTO_AGRO.md`.
+- Supabase.
+- `agro.js`.
+- CSS.
+- Contenido informativo base de `docs-agro.html` fuera de hrefs.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `vercel.json` | EDIT | Activar `cleanUrls: true` y `trailingSlash: false` en el config canonico de raiz. |
+| `vercel.json` | EDIT | Normalizar redirects de `/agro/index` y alias `/music` para usar destinos limpios sin `.html`. |
+| `apps/gold/vercel.json` | DELETE | Retirado para evitar que exista un segundo config de Vercel no activo y propenso a drift. |
+| `apps/gold/docs-agro.html` | EDIT | Hrefs publicos secundarios normalizados a `/terms`, `/privacy`, `/faq` y `/soporte`. |
+| `FICHA_TECNICA.md` | EDIT | Referencias de routing actualizadas a `vercel.json` raiz como config publico canonico. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | DOC | Registro de diagnostico, decision, cambios y validacion. |
+
+### Validacion
+
+- `node -e "JSON.parse(...vercel.json...)"` - OK.
+- `Test-Path apps/gold/vercel.json` - `False`.
+- `pnpm build:gold` - OK.
+  - `agent-guard`: OK.
+  - `agent-report-check`: OK.
+  - `vite build`: OK, 166 modulos.
+  - `check-llms`: OK.
+  - `check-dist-utf8`: OK.
+- `dist` contiene:
+  - `docs-agro.html`
+  - `terms.html`
+  - `privacy.html`
+  - `cookies.html`
+  - `faq.html`
+  - `soporte.html`
+- Simulacion local de policy Vercel:
+  - `/docs-agro` -> sirve `docs-agro.html`.
+  - `/docs-agro.html` -> redirect clean URL a `/docs-agro`.
+  - `/docs-agro/` -> redirect sin slash a `/docs-agro`.
+  - `/terms`, `/privacy`, `/cookies`, `/faq`, `/soporte` -> sirven sus HTML respectivos.
+  - variantes con slash final -> redirect a forma sin slash.
+- `dist/index.html` mantiene 3 enlaces a `/docs-agro`: header desktop, nav mobile y footer.
+- `dist/docs-agro.html` ya no contiene hrefs con slash final hacia `/terms/`, `/privacy/`, `/faq/` ni `/soporte/`.
+
+### Nota de produccion
+
+La produccion consultada antes del cambio todavia respondia 404 en las rutas limpias porque esta correccion aun no estaba desplegada. El cierre real de 404 en `https://www.yavlgold.com` debe confirmarse despues del proximo deploy que incluya este cambio.
+
+### Que NO se toco
+
+- `MANIFIESTO_AGRO.md`.
+- Supabase.
+- `agro.js`.
+- CSS.
+- Contenido informativo base de la documentacion publica.

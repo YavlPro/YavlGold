@@ -71,8 +71,7 @@ apps/gold/
 │   ├── brand/              # Logos y favicons
 │   ├── site.webmanifest   # PWA manifest
 │   └── pwa/               # Icons PWA
-├── vite.config.js          # Configuración de entradas MPA
-└── vercel.json             # Routing y clean URLs
+└── vite.config.js          # Configuración de entradas MPA
 ```
 
 ### Infraestrutura del Repo
@@ -82,7 +81,7 @@ raiz/
 ├── node_modules/          # Dependencias
 ├── apps/gold/             # Producto YavlGold (único código activo)
 ├── .git/                  # Control de versiones
-├── vercel.json            # Deploy config
+├── vercel.json            # Deploy config y routing público canónico
 └── turbo.json             # Turborepo config
 ```
 
@@ -295,7 +294,7 @@ agro-wizard.js       — wizard de configuración
 ### Multi-Page Application (MPA)
 - Cada página es un HTML independiente
 - Entradas definidas en `apps/gold/vite.config.js`
-- Clean URLs configuradas en `apps/gold/vercel.json`
+- Clean URLs configuradas en `vercel.json` de la raíz del repo (config canónica del deploy)
 
 ### Proceso de Build
 ```bash
@@ -316,7 +315,7 @@ pnpm -C apps/gold build
 ### Agregar Nueva Página
 1. Crear HTML en ubicación apropiada
 2. Registrar entrada en `apps/gold/vite.config.js`
-3. Ajustar routing en `vercel.json` si necesario
+3. Ajustar routing en `vercel.json` raíz si necesario
 4. Mantener patrón: HTML + JS modular
 
 ---
@@ -372,7 +371,7 @@ pnpm -C apps/gold build
 - **Geolocalización:** `apps/gold/assets/js/geolocation.js`
 - **Weather:** `apps/gold/agro/dashboard.js`
 - **Build Config:** `apps/gold/vite.config.js`
-- **Routing:** `apps/gold/vercel.json`
+- **Routing:** `vercel.json` (raíz del repo)
 - **Agent Guard:** `apps/gold/scripts/agent-guard.mjs`
 
 ---

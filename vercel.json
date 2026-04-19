@@ -3,6 +3,8 @@
   "outputDirectory": "apps/gold/dist",
   "framework": null,
   "installCommand": "pnpm install",
+  "cleanUrls": true,
+  "trailingSlash": false,
   "redirects": [
     {
       "source": "/:path*",
@@ -27,19 +29,19 @@
       "permanent": true
     },
     {
-      "source": "/agro/index.html",
+      "source": "/agro/index",
       "destination": "/agro",
       "permanent": true
     },
     {
-      "source": "/agro/index.html/",
+      "source": "/agro/index/",
       "destination": "/agro",
       "permanent": true
     }
   ],
   "rewrites": [
-    { "source": "/music", "destination": "/dashboard/music.html" },
-    { "source": "/music/", "destination": "/dashboard/music.html" }
+    { "source": "/music", "destination": "/dashboard/music" },
+    { "source": "/music/", "destination": "/dashboard/music" }
   ],
   "headers": [
     {
