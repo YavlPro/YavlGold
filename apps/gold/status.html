@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estado del Servicio - YavlGold</title>
+  <meta name="description" content="Estado público básico de YavlGold Agro V1.">
+  <link rel="icon" type="image/webp" href="/assets/images/logo.webp">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/trust-pages.css">
+</head>
+
+<body class="trust-page">
+  <a href="#main-content" class="trust-skip-link">Saltar al contenido principal</a>
+  <main id="main-content" class="trust-shell">
+    <span class="trust-kicker">Status</span>
+    <h1 class="trust-title">Estado del servicio</h1>
+    <p class="trust-lead">Página pública básica para comunicar disponibilidad e incidentes de YavlGold Agro V1.</p>
+
+    <div class="trust-panel">
+      <section class="trust-section">
+        <h2>Estado actual</h2>
+        <div class="trust-status-list">
+          <div class="trust-status-item">
+            <div>
+              <strong>Aplicación web</strong>
+              <p>Landing, dashboard y Agro V1.</p>
+            </div>
+            <span class="trust-status-pill">Operativo</span>
+          </div>
+          <div class="trust-status-item">
+            <div>
+              <strong>Supabase</strong>
+              <p>Auth, base de datos, Storage y Edge Functions.</p>
+            </div>
+            <span class="trust-status-pill">Por verificar</span>
+          </div>
+          <div class="trust-status-item">
+            <div>
+              <strong>Health endpoint</strong>
+              <p>Respuesta JSON mínima sin secretos.</p>
+            </div>
+            <span class="trust-status-pill">Disponible en /health</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="trust-section">
+        <h2>Incidentes recientes</h2>
+        <p>No hay incidentes públicos registrados en esta página al 20 de abril de 2026.</p>
+        <p>Este estado no reemplaza monitoreo técnico interno. Los incidentes reales deben documentarse en el runbook operativo y comunicarse aquí cuando afecten usuarios.</p>
+      </section>
+
+      <section class="trust-section">
+        <h2>Cómo reportar un problema</h2>
+        <ul>
+          <li>Soporte general: <a href="mailto:soporte@yavlgold.com">soporte@yavlgold.com</a>.</li>
+          <li>Vulnerabilidades: usar SECURITY_EMAIL [PENDIENTE], no issues públicos.</li>
+          <li>Incluye fecha, hora, ruta afectada, navegador y pasos para reproducir.</li>
+        </ul>
+      </section>
+
+      <div class="trust-actions">
+        <a href="/" class="trust-button trust-button--primary">Volver al inicio</a>
+        <a href="/health" class="trust-button">Health JSON</a>
+        <a href="/open-source" class="trust-button">Open Source</a>
+      </div>
+    </div>
+  </main>
+</body>
+
+</html>
