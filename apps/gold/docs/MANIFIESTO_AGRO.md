@@ -135,7 +135,7 @@ No es un módulo de estadísticas. No es un facturero. No es una segunda cuenta 
 * Definir tu ubicación y el nombre de tu finca.
 * Controlar qué información es pública (perfil visible para otros usuarios) y qué es privada.
 * Activar tu presencia en la comunidad Social de Agro.
-* Gestionar tu privacidad: ocultar nombres de compradores y montos en la pantalla cuando trabajas con otras personas presentes.
+* Gestionar tu privacidad: ocultar nombres de clientes y montos en la pantalla cuando trabajas con otras personas presentes.
 
 ### Qué datos maneja
 
@@ -537,7 +537,7 @@ No es un informe contable detallado. Es una consulta rápida para orientarte.
 
 ### Para qué sirve
 
-* Ver de un vistazo a tus mejores compradores por volumen de compra.
+* Ver de un vistazo a tus mejores clientes por volumen de compra.
 * Identificar cuál de tus cultivos está generando más ganancia.
 * Mantener el foco en lo que realmente funciona.
 
@@ -906,7 +906,7 @@ Su único propósito es organizar el acceso a **Ciclos de Cultivo** y **Ciclos d
 
 ### Qué controles existen
 
-* Ocultar/ver nombres de compradores
+* Ocultar/ver nombres de clientes
 * Ocultar/ver montos financieros
 
 ### En qué superficies aplican
@@ -923,7 +923,7 @@ Su único propósito es organizar el acceso a **Ciclos de Cultivo** y **Ciclos d
 
 ### Qué problema resuelven
 
-* **Privacidad**: Ocultar los nombres de compradores o los montos cuando estás revisando la app con otras personas cerca (empleados, visitantes, etc.).
+* **Privacidad**: Ocultar los nombres de clientes o los montos cuando estás revisando la app con otras personas cerca (empleados, visitantes, etc.).
 * **Protección básica**: Evitar que terceros vean el total de tus finanzas con solo mirar la pantalla.
 
 ---

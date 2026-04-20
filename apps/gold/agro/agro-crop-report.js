@@ -533,7 +533,7 @@ function buildIncomeTable(items, historyMode = false) {
     if (!items.length) return 'Sin registros\n';
     const splitNotes = items.map((it) => buildSplitMdSummary(it, 'pagados'));
     const hasSplit = splitNotes.some(Boolean);
-    let md = '| Fecha | Concepto | Comprador | Cantidad | Moneda | Monto | USD';
+    let md = '| Fecha | Concepto | Cliente | Cantidad | Moneda | Monto | USD';
     md += hasSplit ? ' | Split |\n' : ' |\n';
     md += '|-------|----------|-----------|----------|--------|------:|----:';
     md += hasSplit ? '|-------|\n' : '|\n';

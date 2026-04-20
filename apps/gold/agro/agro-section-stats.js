@@ -21,7 +21,7 @@ const SECTIONS = {
         whoExtract: (r) => extractWhoFromConcept(r.concepto),
         label: 'Pagados',
         labelTotal: 'Total cobrado',
-        labelWho: 'Comprador',
+        labelWho: 'Cliente',
         icon: '\uD83D\uDCB0'
     },
     fiados: {

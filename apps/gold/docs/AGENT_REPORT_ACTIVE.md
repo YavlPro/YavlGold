@@ -2218,3 +2218,130 @@ Corregir 4 findings High de CodeQL en codigo runtime real, con el menor diff pos
 
 - Sin cambios a `agro.js` (labels internos "Pagados" para estados contables siguen igual).
 - Sin tocar git; FAQ/docs-agro ya alineados en sesiones previas.
+
+---
+
+## Sesion — 2026-04-19 — Barrido semantico: compradores → clientes
+
+### Objetivo
+
+Reemplazar "comprador/compradores" por "cliente/clientes" en todo el repo, priorizando copy visible y semantica publica, sin romper logica, contratos ni compatibilidad.
+
+### Diagnostico inicial
+
+Barrido completo del repo encontro ~40+ ocurrencias de "comprador/compradores" en 15+ archivos.
+
+**Clasificacion por grupo:**
+
+| Grupo | Archivos | Ocurrencias | Decision |
+|-------|----------|-------------|----------|
+| UI/copy visible (JS) | agro.js, agroperfil.js, agro-section-stats.js, agro-crop-report.js, agro-buyer-identity.js, agroestadistica.js | ~10 | CAMBIAR |
+| UI/copy visible (HTML) | agro/index.html, docs-agro.html | ~7 | CAMBIAR |
+| Docs/copy publico | MANIFIESTO_AGRO.md | 4 | CAMBIAR |
+| Comentarios internos | agro.js:16522 | 1 | CAMBIAR |
+| Regex de parseo (retrocompat) | agro-buyer-identity.js:4, agroestadistica.js:344, agro-section-stats.js:255, agro-stats-report.js:670 | 4 | NO TOCAR |
+| Tokens placeholder (retrocompat) | agro-buyer-identity.js:13, agro.js:12507 | 2 | NO TOCAR |
+| Field keys/DB data | agro.js:12484,1326, agro-stats-report.js:223 | 3 | NO TOCAR |
+| Folder key mapping | agro-repo-templates.js:182 | 1 | NO TOCAR |
+| Imports/modulo nombre | agro.js:12, agrocompradores.js, agro-cartera-viva-view.js:20 | 3 | NO TOCAR |
+| SQL/migraciones | supabase/sql/ | ~8 | NO TOCAR |
+| Docs historicos | chronicles/, AGENT_REPORT*.md | ~20 | NO TOCAR |
+
+**Totales:** ~18 cambios seguros, ~22+ ocurrencias intactas por compatibilidad.
+
+### Plan quirurgico
+
+**Se cambia (copy visible + docs):**
+- Labels UI en JS: `Comprador` → `Cliente`, `Compradores` → `Clientes`
+- Tooltips, placeholders, mensajes en HTML
+- Encabezados de exportes MD: `Top Compradores` → `Top Clientes`
+- Strings de fallback UI: `Sin comprador` → `Sin cliente` (cambiando comparacion + retorno consistentemente)
+- MANIFIESTO_AGRO.md: copy semantico
+
+**Se deja intacto (retrocompat/contratos):**
+- Regex que parsean `Comprador:` en datos historicos
+- Tokens placeholder `'sin comprador'` para comparacion con datos existentes
+- Field names `item?.comprador` (columna DB)
+- Array `OPS_RANKINGS_BUYER_NAME_FIELDS` (mapeo de campos)
+- Key mapping `compradores: 'mercado'` (AgroRepo)
+- Imports de `agrocompradores.js`
+- SQL, migraciones, columnas DB
+- Archivo `agrocompradores.js` (nombre de archivo)
+
+### Cambios realizados
+
+| # | Archivo | Linea | Antes | Despues | Tipo |
+|---|---------|-------|-------|---------|------|
+| 1 | `agro.js` | 1022 | `label: 'Comprador'` | `label: 'Cliente'` | UI label |
+| 2 | `agro.js` | 11960 | `\|\| 'Comprador'` | `\|\| 'Cliente'` | UI fallback |
+| 3 | `agro.js` | 16522 | Comentario "Comprador" | Comentario "Cliente" | Comentario |
+| 4 | `agroperfil.js` | 1232 | `Sin compradores con cobros registrados` | `Sin clientes con cobros registrados` | UI mensaje |
+| 5 | `agroperfil.js` | 1353 | `## Top Compradores` | `## Top Clientes` | Export MD |
+| 6 | `agro-section-stats.js` | 24 | `labelWho: 'Comprador'` | `labelWho: 'Cliente'` | UI label |
+| 7 | `agro-crop-report.js` | 536 | `\| Comprador \|` | `\| Cliente \|` | Export MD |
+| 8 | `agro-buyer-identity.js` | 179 | `\|\| 'Comprador'` | `\|\| 'Cliente'` | UI fallback |
+| 9 | `agroestadistica.js` | 291 | `'Sin comprador'` (comparacion) | `'Sin cliente'` | Logica + UI |
+| 10 | `agroestadistica.js` | 339 | `return 'Sin comprador'` | `return 'Sin cliente'` | Logica + UI |
+| 11 | `agroestadistica.js` | 347 | `return 'Sin comprador'` | `return 'Sin cliente'` | Logica + UI |
+| 12 | `agro/index.html` | 841 | `Top Compradores (Ingresos cobrados)` | `Top Clientes (Ingresos cobrados)` | UI heading |
+| 13 | `agro/index.html` | 1083 | `nombres de compradores` | `nombres de clientes` | Tooltip |
+| 14 | `agro/index.html` | 1416 | `nombres de compradores` | `nombres de clientes` | UI mensaje |
+| 15 | `agro/index.html` | 1530 | `Compradores, relaciones comerciales` | `Clientes, relaciones comerciales` | UI copy |
+| 16 | `agro/index.html` | 2353 | `group_key comprador` | `group_key cliente` | Placeholder |
+| 17 | `docs-agro.html` | 176 | `tus mejores compradores` | `tus mejores clientes` | Copy publico |
+| 18 | `docs-agro.html` | 362 | `nombres de compradores` | `nombres de clientes` | Copy publico |
+| 19 | `MANIFIESTO_AGRO.md` | 138 | `nombres de compradores` | `nombres de clientes` | Doc canonico |
+| 20 | `MANIFIESTO_AGRO.md` | 540 | `mejores compradores` | `mejores clientes` | Doc canonico |
+| 21 | `MANIFIESTO_AGRO.md` | 909 | `nombres de compradores` | `nombres de clientes` | Doc canonico |
+| 22 | `MANIFIESTO_AGRO.md` | 926 | `nombres de compradores` | `nombres de clientes` | Doc canonico |
+
+### Decisiones semanticas
+
+**Cambiado (comprador → cliente):**
+- 22 ocurrencias en 8 archivos: labels UI, mensajes, headings, tooltips, placeholders, exportes MD, copy publico, docs canonicos, un comentario.
+
+**Dejado intacto por compatibilidad:**
+- Regex que parsean `Comprador:` en datos historicos (4 regex en 4 archivos) — mantener para retrocompat con datos existentes.
+- Tokens `'sin comprador'` en Sets de comparacion (2 archivos) — mantener para que datos legacy se sigan reconociendo.
+- Field keys `item?.comprador`, `row?.comprador` (3 archivos) — columna DB, cambiar romperia acceso a datos.
+- Array `OPS_RANKINGS_BUYER_NAME_FIELDS` con `'comprador'` — mapeo de campos DB.
+- Key `compradores: 'mercado'` en AgroRepo templates — mapping de carpetas.
+- Nombre de archivo `agrocompradores.js` — renombrar requeriria actualizar imports en 3+ archivos.
+- Funcion `initAgroCompradores` — nombre de funcion exportada.
+- SQL/migraciones — columnas DB `comprador` en Supabase.
+
+### Riesgos y limites
+
+- **Regex legacy**: Las 4 regex que aun incluyen `Comprador` son necesarias para parsear datos historicos. Si en el futuro se migra la columna DB, se podran eliminar.
+- **Archivo `agrocompradores.js`**: Renombrar este archivo requeriria una sesion aparte con actualizacion de imports, HTML script tags y verificacion de build. No vale la pena en este barrido.
+- **`agro-repo-templates.js:182`**: La key `compradores` es un mapping de plural a carpeta. Si se renombra, los templates existentes que usen "compradores" como categoria no se resolverian. Se deja intacto.
+- **Chronicles y docs historicos**: No se tocaron por ser contexto historico, no copy activo del producto.
+
+### Validacion
+
+- `pnpm build:gold` — OK (167 modules, 2.37s)
+- `agent-guard`: OK
+- `agent-report-check`: OK
+- `vite build`: OK
+- `check-llms`: OK
+- `check-dist-utf8`: OK
+- Verificacion post-cambio: 0 ocurrencias de "comprador" en archivos `.html`. Solo quedan ocurrencias en JS/SQL por compatibilidad.
+
+### QA manual sugerido
+
+1. Agro dashboard: verificar que "Top Clientes" aparece como heading (antes "Top Compradores").
+2. Agro rankings: verificar tooltip de privacidad dice "nombres de clientes".
+3. Perfil Agro: verificar export MD dice "Top Clientes (ingresos cobrados)".
+4. Docs Agro: verificar que dice "mejores clientes" y "nombres de clientes".
+5. Panel Social Agro: verificar que dice "Clientes, relaciones comerciales".
+6. Agro estaticas: verificar que fallback dice "Sin cliente" (antes "Sin comprador").
+7. Mobile: verificar que los cambios de copy no rompen layout.
+
+### No se hizo (scope respetado)
+
+- No se toco git
+- No se renombraron archivos ni funciones exportadas
+- No se tocaron columnas DB ni migraciones SQL
+- No se tocaron regex de parseo legacy
+- No se tocaron tokens de comparacion legacy
+- No se expandio alcance mas alla del barrido semantico

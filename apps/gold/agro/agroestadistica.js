@@ -288,7 +288,7 @@ function evaluateUsdAmount(row, amountFields, options = {}) {
 function buildUsdUnverifiedEntry(row, evaluation, bucket) {
     const concept = String(row?.concepto || row?.concept || row?.description || 'Sin concepto').trim() || 'Sin concepto';
     const parsedBuyer = parseBuyerName(concept);
-    const fallbackBuyer = parsedBuyer && parsedBuyer !== 'Sin comprador' ? parsedBuyer : '';
+    const fallbackBuyer = parsedBuyer && parsedBuyer !== 'Sin cliente' ? parsedBuyer : '';
     const cliente = String(row?.cliente || row?.client || fallbackBuyer || '').trim() || 'Sin cliente';
     const rawDate = String(row?.fecha || row?.date || row?.created_at || '').trim();
     const normalizedDate = normalizeDateKey(rawDate);
@@ -336,7 +336,7 @@ function normalizeCropStatus(statusRaw) {
 
 function parseBuyerName(concepto) {
     const text = String(concepto || '').trim();
-    if (!text) return 'Sin comprador';
+    if (!text) return 'Sin cliente';
 
     const saleMatch = text.match(/^venta\s+a\s+(.+?)(?:\s*-\s*|$)/i);
     if (saleMatch?.[1]) return saleMatch[1].trim();
@@ -344,7 +344,7 @@ function parseBuyerName(concepto) {
     const taggedMatch = text.match(/(?:comprador|cliente|beneficiario|destino):\s*([^|·]+?)(?:\s*[·|]|$)/i);
     if (taggedMatch?.[1]) return taggedMatch[1].trim();
 
-    return 'Sin comprador';
+    return 'Sin cliente';
 }
 
 function resolveCropLabel(cropMap, cropId) {

@@ -1019,7 +1019,7 @@ function createEvidenceLinkElement(url) {
 // V9.6: FACTURERO "A QUIEN" (DISPLAY + PARSE + FALLBACK)
 // ============================================================
 const WHO_FIELD_META = {
-    ingresos: { label: 'Comprador', icon: '👤', field: null },
+    ingresos: { label: 'Cliente', icon: '👤', field: null },
     pendientes: { label: 'Cliente', icon: '👤', field: 'cliente' },
     transferencias: { label: 'Beneficiario', icon: '🎁', field: 'destino' },
     perdidas: { label: 'Causa/Responsable', icon: '⚠️', field: 'causa' }
@@ -11957,7 +11957,7 @@ function renderIncomeItem(listEl, income, signedUrl) {
         whoLine = document.createElement('div');
         whoLine.style.cssText = 'color: rgba(255,255,255,0.65); font-size: 0.75rem; margin-top: 2px;';
         const whoMeta = WHO_FIELD_META.ingresos;
-        const whoLabel = whoMeta?.label || 'Comprador';
+        const whoLabel = whoMeta?.label || 'Cliente';
         const whoIcon = whoMeta?.icon || '👤';
 
         const whoPrefix = document.createElement('span');
@@ -16519,7 +16519,7 @@ window.deleteCrop = deleteCrop;
                         const modal = document.querySelector('#modal-edit-facturero');
                         if (!modal) return;
 
-                        // Buscar el label que suele decir "Comprador" (o el segundo label dynamic)
+                        // Buscar el label que suele decir "Cliente" (o el segundo label dynamic)
                         const dynamicLabel = modal.querySelector('.input-group.field-dynamic .input-label');
                         if (dynamicLabel) {
                             dynamicLabel.textContent = 'Cliente';

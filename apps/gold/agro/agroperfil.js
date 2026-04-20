@@ -1229,7 +1229,7 @@ async function loadGlobalStats() {
         state.stats = stats;
         renderCropStats(stats.crops);
         renderMoneyStats(stats.money);
-        renderTopList('agro-profile-top-buyers', stats.topBuyers, 'Sin compradores con cobros registrados.');
+        renderTopList('agro-profile-top-buyers', stats.topBuyers, 'Sin clientes con cobros registrados.');
         renderTopList('agro-profile-top-crops', stats.topCrops, 'Sin cultivos con cobros registrados.', { markName: true });
         setStatsUpdatedAt(stats.updatedAt);
 
@@ -1350,7 +1350,7 @@ function buildProfileMarkdown(options = {}) {
         lines.push('', unitsMd);
     }
 
-    lines.push('', '## Top Compradores (ingresos cobrados)');
+    lines.push('', '## Top Clientes (ingresos cobrados)');
 
     const topBuyers = Array.isArray(stats.topBuyers) ? stats.topBuyers : [];
     if (!topBuyers.length) {

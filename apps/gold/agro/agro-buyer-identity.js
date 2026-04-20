@@ -176,7 +176,7 @@ export async function ensureBuyerIdentityLink({
             .from('agro_buyers')
             .insert([{
                 user_id: safeUserId,
-                display_name: candidate.rawName || 'Comprador',
+                display_name: candidate.rawName || 'Cliente',
                 group_key: candidate.groupKey,
                 canonical_name: candidate.groupKey,
                 status: 'active'
