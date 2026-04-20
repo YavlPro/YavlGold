@@ -186,3 +186,11 @@ body.module-unavailable-page {
     width: 100%;
   }
 }
+
+.module-unavailable-disclaimer {
+  margin-top: 20px;
+  font-size: 0.78rem;
+  color: var(--yg-unavailable-muted);
+  opacity: 0.6;
+  letter-spacing: 0.04em;
+}

@@ -529,6 +529,10 @@ body.landing-page .hero-desc {
   font-size: clamp(1rem, 2vw, 1.12rem); color: var(--v10-text-muted);
   margin-bottom: 2rem; max-width: 480px; line-height: 1.7;
 }
+body.landing-page .hero-product-note {
+  font-size: 0.85rem; color: var(--gold-principal, #C8A752); margin-bottom: 1.5rem;
+  letter-spacing: 0.04em; opacity: 0.85;
+}
 body.landing-page .hero-cta { display: flex; gap: 15px; flex-wrap: wrap; }
 
 /* V10 BUTTONS */
