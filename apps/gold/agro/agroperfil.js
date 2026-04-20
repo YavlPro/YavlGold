@@ -1350,7 +1350,7 @@ function buildProfileMarkdown(options = {}) {
         lines.push('', unitsMd);
     }
 
-    lines.push('', '## Top Compradores (Pagados)');
+    lines.push('', '## Top Compradores (ingresos cobrados)');
 
     const topBuyers = Array.isArray(stats.topBuyers) ? stats.topBuyers : [];
     if (!topBuyers.length) {
@@ -1361,7 +1361,7 @@ function buildProfileMarkdown(options = {}) {
         });
     }
 
-    lines.push('', '## Top Cultivos (Pagados)');
+    lines.push('', '## Top Cultivos (ingresos cobrados)');
     const topCrops = Array.isArray(stats.topCrops) ? stats.topCrops : [];
     if (!topCrops.length) {
         lines.push('- Sin datos');

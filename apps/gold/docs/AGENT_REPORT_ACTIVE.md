@@ -2182,3 +2182,39 @@ Corregir 4 findings High de CodeQL en codigo runtime real, con el menor diff pos
 ### No se hizo (scope)
 
 - Sin cambios a JS/CSS/HTML de la app, sin tocar `agro.js`, sin commits ni git, sin upgrades innecesarios del resto del arbol.
+
+---
+
+## Sesion — 2026-04-19 — Copy publico y navegacion (post-auditoria externa)
+
+### Paso 0 — Diagnostico puntual
+
+| Problema QA | Evidencia en arbol actual | Causa probable |
+|-------------|---------------------------|----------------|
+| "Top … (Pagados)" contradictorio con gratuito | `agro/index.html` ya mostraba "Ingresos cobrados" en rankings de perfil; persistia **`## Top … (Pagados)`** en export MD de `agroperfil.js` | Copy de export no alineado con UI |
+| `/soporte` link Agro → home | `soporte.html` footer: `href="/#modulos"` para "Agro" | Anchor al landing en vez de modulo |
+| Mojibake `??` en soporte | No hay caracteres de reemplazo en `soporte.html` leido; posible caché CDN o asset roto en cliente | Sin cambio binario forzado; link/logo revisados |
+| Privacidad sin capa perfil publico/Social | `privacy.html` sin parrafo dedicado | Falta texto sobrio opt-in |
+| "REFERENCIAS CRIPTO" | `agro/index.html` tab del modal mercado | Etiqueta muy "producto crypto" |
+| "Desarrollado con … para agricultores" roto | Salto de linea en `<p class="footer-text">` del footer Agro | HTML partido en dos lineas |
+| FAQ premium/suscripcion | `faq.html` solo menciona "sin … suscripciones activas" (negativo) | Sin texto premium activo en HTML publico grep |
+
+**Estrategia:** Opcion B — copy en `agro/index.html` + `agroperfil.js` (export) + paginas estaticas (`soporte`, `privacy`).
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---------|--------|
+| `apps/gold/agro/agroperfil.js` | Titulos de seccion MD: `(Pagados)` → `(ingresos cobrados)` para Top Compradores / Top Cultivos. |
+| `apps/gold/agro/index.html` | Tab mercado: `REFERENCIAS CRIPTO` → `CRIPTOMONEDAS (REFERENCIA)`; meta inversion: Facturero explicado como "registro de operaciones (Facturero)"; footer: una sola linea "Desarrollado con 🌾 para agricultores". |
+| `apps/gold/soporte.html` | Footer: `Agro` → `href="/agro"`; enlace mailto etiquetado "Correo de soporte" + `title`. |
+| `apps/gold/privacy.html` | Parrafo **Perfil publico y Social (opt-in)**: visibilidad, control/revocacion, sin inventar politicas nuevas. |
+
+### Validacion
+
+- `pnpm build:gold` — OK (agent-guard, agent-report-check, vite build, check-llms, check-dist-utf8).
+
+### No se hizo
+
+- Sin cambios a `agro.js` (labels internos "Pagados" para estados contables siguen igual).
+- Sin tocar git; FAQ/docs-agro ya alineados en sesiones previas.
