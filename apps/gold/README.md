@@ -60,6 +60,9 @@ pnpm -C apps/gold build
 - `apps/gold/docs/AGENT_REPORT_ACTIVE.md`: fuente de verdad activa y reporte operativo vigente.
 - `apps/gold/docs/AGENT_REPORT.md`: archivo legacy/histórico; no debe seguir creciendo salvo migración o consulta histórica.
 - `apps/gold/docs/LEGACY_SURFACES.md`: inventario de superficies legacy, huérfanas o candidatas a archivo.
+- `../../SECURITY.md`: política de reporte privado de vulnerabilidades.
+- `../../CONTRIBUTING.md`: guía de contribución y QA.
+- `../../CHANGELOG.md`: changelog público principal.
 
 ## Política de desarrollo
 
@@ -68,6 +71,13 @@ pnpm -C apps/gold build
 - Evitar dependencias pesadas.
 - No exponer secretos ni mover lógica sensible al frontend.
 - Validar siempre con `pnpm build:gold`.
+
+## Rutas de confianza
+
+- `/open-source` -> licencia MIT, repositorio y gobernanza OSS.
+- `/anti-suplantacion` -> aviso "no inversiones / no pedimos dinero".
+- `/privacy` y `/terms` -> plantillas operativas legales mínimas.
+- `/status` -> estado público básico del servicio.
 
 ## Nota sobre legado
 

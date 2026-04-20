@@ -63,7 +63,17 @@ gold/
 - Instrucciones para agentes: `AGENTS.md`
 - Reporte activo: `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
 - Sistema de diseño: `apps/gold/docs/ADN-VISUAL-V10.0.md`
+- Seguridad y reportes privados: `SECURITY.md`
+- Guia de contribucion: `CONTRIBUTING.md`
+- Release notes: `CHANGELOG.md`
 
 ## Licencia
 
 MIT License. Ver `LICENSE`.
+
+## Open Source y confianza
+
+- Repositorio publico: `https://github.com/ORG/REPO` [PENDIENTE]
+- Pagina Open Source: `apps/gold/open-source.html`
+- Aviso anti-suplantacion/no inversiones: `apps/gold/anti-suplantacion.html`
+- YavlGold no vende oro, no administra inversiones y no solicita dinero por canales no oficiales.
