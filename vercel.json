@@ -40,6 +40,7 @@
     }
   ],
   "rewrites": [
+    { "source": "/health", "destination": "/api/health" },
     { "source": "/music", "destination": "/dashboard/music" },
     { "source": "/music/", "destination": "/dashboard/music" }
   ],
@@ -97,6 +98,13 @@
         { "key": "X-XSS-Protection", "value": "1; mode=block" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
         { "key": "Permissions-Policy", "value": "geolocation=(), microphone=(), camera=()" }
+      ]
+    },
+    {
+      "source": "/health",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, max-age=0" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" }
       ]
     },
     {

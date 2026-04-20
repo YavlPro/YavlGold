@@ -2,154 +2,96 @@
 <html lang="es">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Política de Privacidad - YavlGold</title>
-    <link rel="icon" type="image/webp" href="/assets/images/logo.webp">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap"
-        rel="stylesheet">
-    <style>
-        :root {
-            --gold-principal: #C8A752;
-            --gold-light: #E4D08E;
-            --gold-dark: #9D8040;
-            --bg-primary: #0a0a0a;
-            --bg-secondary: #1a1a1a;
-            --text-primary: #ffffff;
-            --text-secondary: #cccccc;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Rajdhani', sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 4rem 2rem;
-            flex: 1;
-        }
-
-        h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2.5rem;
-            background: linear-gradient(135deg, var(--gold-dark), var(--gold-principal), var(--gold-light));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 2rem;
-            text-align: center;
-        }
-
-        .content {
-            background: var(--bg-secondary);
-            padding: 2rem;
-            border-radius: 16px;
-            border: 1px solid var(--gold-dark);
-            margin-bottom: 2rem;
-        }
-
-        .content p {
-            font-size: 1.1rem;
-            line-height: 1.8;
-            color: var(--text-secondary);
-            margin-bottom: 1rem;
-        }
-
-        .content ul {
-            margin: 1rem 0 1rem 1.5rem;
-            color: var(--text-secondary);
-        }
-
-        .content li {
-            margin-bottom: 0.5rem;
-        }
-
-        .highlight {
-            color: var(--gold-principal);
-            font-weight: 600;
-        }
-
-        .back-btn {
-            display: inline-block;
-            padding: 14px 32px;
-            background: linear-gradient(135deg, var(--gold-dark), var(--gold-principal));
-            color: #0a0a0a;
-            text-decoration: none;
-            border-radius: 50px;
-            font-weight: 700;
-            font-family: 'Rajdhani', sans-serif;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .back-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(200, 167, 82, 0.4);
-        }
-
-        .nav-container {
-            text-align: center;
-            margin-top: 1rem;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            background: var(--bg-secondary);
-            border: 1px solid var(--gold-principal);
-            border-radius: 50px;
-            font-size: 0.85rem;
-            color: var(--gold-principal);
-            margin-bottom: 1rem;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Política de Privacidad - YavlGold</title>
+  <meta name="description" content="Política de privacidad operativa de YavlGold Agro V1.">
+  <link rel="icon" type="image/webp" href="/assets/images/logo.webp">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/trust-pages.css">
 </head>
 
-<body>
-    <a href="#main-content" class="sr-only-focusable">Saltar al contenido principal</a>
-    <div id="main-content" class="container">
-        <span class="badge">🔒 Documento Legal</span>
-        <h1>Política de Privacidad</h1>
-        <div class="content">
-            <p><strong>Última actualización:</strong> 20 de abril de 2026.</p>
-            <p><strong>Seguridad y acceso:</strong> YavlGold usa HTTPS/TLS en tránsito, autenticación de usuario,
-                controles de acceso por cuenta y reglas de base de datos para separar información entre usuarios.</p>
-            <ul>
-                <li><span class="highlight">Supabase</span> - Base de datos y autenticación segura con
-                    HTTPS/TLS en tránsito; el cifrado en reposo depende de la infraestructura del proveedor.</li>
-                <li><span class="highlight">Nota:</span> Actualmente no implementamos cifrado de extremo a extremo
-                    (E2E) para el contenido de usuario.</li>
-                <li><span class="highlight">hCaptcha</span> - Protección contra bots y spam en formularios públicos.
-                </li>
-                <li><span class="highlight">Cookies y almacenamiento:</span> Usamos cookies o almacenamiento local para
-                    sesión, preferencias, seguridad y superficies locales puntuales.</li>
-            </ul>
-            <p>No usamos publicidad dirigida ni vendemos perfiles de usuario. Hoy no hay analítica comercial activa. Si esto cambia, se informará aquí y en la política de cookies antes de activarlo.</p>
-            <p><strong>Perfil público y Social (opt-in):</strong> Algunas partes de YavlGold pueden ofrecer un perfil
-                o datos visibles para otros usuarios solo si tú lo activas (por ejemplo, identidad o contenido en
-                módulos tipo Social). Lo que compartas en ese modo puede ser visto por otras cuentas según las
-                opciones que elijas en la propia aplicación. Puedes retirar o ajustar esa visibilidad cuando quieras
-                desde la configuración de perfil o equivalente; no publicamos listas de contacto ni datos fuera de lo
-                que tú autorices en la interfaz.</p>
-            <p>Para cualquier consulta sobre privacidad, contáctanos en <a href="mailto:soporte@yavlgold.com"
-                    style="color: var(--gold-principal);">soporte@yavlgold.com</a></p>
-        </div>
-        <div class="nav-container">
-            <a href="/" class="back-btn">← Volver al Inicio</a>
-        </div>
+<body class="trust-page">
+  <a href="#main-content" class="trust-skip-link">Saltar al contenido principal</a>
+  <main id="main-content" class="trust-shell">
+    <span class="trust-kicker">Privacidad</span>
+    <h1 class="trust-title">Política de Privacidad</h1>
+    <p class="trust-lead">Esta es una plantilla operativa de privacidad para YavlGold Agro V1. No sustituye revisión legal profesional.</p>
+
+    <div class="trust-panel">
+      <section class="trust-section">
+        <h2>Última actualización</h2>
+        <p>20 de abril de 2026.</p>
+      </section>
+
+      <section class="trust-section">
+        <h2>Qué datos tratamos</h2>
+        <ul>
+          <li>Datos de cuenta, como email, nombre visible y metadatos básicos de perfil.</li>
+          <li>Datos agrícolas ingresados por el usuario: cultivos, ciclos, tareas, bitácora, cartera, clientes, movimientos, evidencias y archivos asociados.</li>
+          <li>Datos técnicos necesarios para seguridad y operación: IP, navegador, logs de errores, sesión, eventos de autenticación y señales anti-abuso.</li>
+          <li>Preferencias locales y datos guardados en navegador para mantener la experiencia de uso.</li>
+        </ul>
+      </section>
+
+      <section class="trust-section">
+        <h2>Para qué usamos los datos</h2>
+        <ul>
+          <li>Prestar la herramienta Agro V1 y guardar la información que el usuario registra.</li>
+          <li>Autenticar usuarios, proteger sesiones y prevenir abuso automatizado.</li>
+          <li>Separar datos por cuenta mediante políticas de base de datos y controles de acceso.</li>
+          <li>Atender soporte, diagnosticar errores y mejorar estabilidad del servicio.</li>
+        </ul>
+      </section>
+
+      <section class="trust-section">
+        <h2>Proveedores</h2>
+        <ul>
+          <li><strong>Supabase:</strong> autenticación, base de datos, storage y Edge Functions.</li>
+          <li><strong>Vercel:</strong> hosting, despliegue y operación web.</li>
+          <li><strong>hCaptcha:</strong> protección anti-bot en flujos públicos de autenticación o formularios.</li>
+          <li><strong>Sentry u observabilidad equivalente:</strong> no detectado como activo en el repo al 20 de abril de 2026; si se activa, debe documentarse aquí antes de producción.</li>
+        </ul>
+      </section>
+
+      <section class="trust-section">
+        <h2>Cookies y almacenamiento</h2>
+        <p>Usamos cookies, LocalStorage o SessionStorage para sesión, seguridad, preferencias y funcionamiento básico. No usamos publicidad dirigida ni vendemos perfiles de usuario.</p>
+      </section>
+
+      <section class="trust-section">
+        <h2>Seguridad</h2>
+        <ul>
+          <li>El sitio opera sobre HTTPS en producción.</li>
+          <li>Supabase RLS debe proteger las tablas con datos de usuario.</li>
+          <li>Los buckets privados deben impedir lectura o escritura cross-user.</li>
+          <li>No implementamos cifrado de extremo a extremo para contenido de usuario por ahora.</li>
+        </ul>
+      </section>
+
+      <section class="trust-section">
+        <h2>Retención, exportación y borrado</h2>
+        <p>Conservamos los datos mientras la cuenta esté activa o mientras sean necesarios para operar el servicio, seguridad, soporte o requisitos legales aplicables.</p>
+        <ul>
+          <li>Exportación de datos: [PENDIENTE: definir canal y SLA].</li>
+          <li>Borrado de cuenta o datos: [PENDIENTE: definir canal, alcance y SLA].</li>
+          <li>Backups: pueden conservar copias por ventanas operativas limitadas hasta su rotación normal.</li>
+        </ul>
+      </section>
+
+      <section class="trust-section">
+        <h2>Derechos y contacto</h2>
+        <p>Para solicitudes de privacidad, soporte o corrección de datos, escribe a <a href="mailto:soporte@yavlgold.com">soporte@yavlgold.com</a>.</p>
+        <p>Canal de seguridad privado: SECURITY_EMAIL [PENDIENTE].</p>
+      </section>
+
+      <div class="trust-actions">
+        <a href="/" class="trust-button trust-button--primary">Volver al inicio</a>
+        <a href="/terms" class="trust-button">Términos</a>
+        <a href="/anti-suplantacion" class="trust-button">Anti-suplantación</a>
+      </div>
     </div>
+  </main>
 </body>
 
 </html>

@@ -842,6 +842,12 @@ body.landing-page .v10-footer-col span {
   transition: color 180ms; text-decoration: none;
 }
 body.landing-page .v10-footer-col a:hover { color: var(--v10-gold-4); }
+body.landing-page .v10-footer-copy a {
+  color: var(--v10-text-muted);
+  text-decoration: none;
+  transition: color 180ms;
+}
+body.landing-page .v10-footer-copy a:hover { color: var(--v10-gold-4); }
 body.landing-page .v10-footer-bottom {
   max-width: 1100px; margin: 3rem auto 0; padding-top: 1.5rem;
   border-top: 1px solid var(--v10-border-neutral);

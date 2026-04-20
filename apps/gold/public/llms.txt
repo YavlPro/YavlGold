@@ -28,6 +28,8 @@ This file contains the current product, architecture and routing policy for `app
 - `/dashboard/` user dashboard
 - `/agro/` released module
 - `/academia/`, `/social/`, `/tecnologia/`, `/crypto/` unavailable placeholders
+- `/open-source`, `/anti-suplantacion`, `/privacy`, `/terms`, `/status` trust and operations pages
+- `/health` public JSON health endpoint without secrets
 
 ## 4. Auth policy
 - Global protected areas: `/dashboard` and `/agro`
