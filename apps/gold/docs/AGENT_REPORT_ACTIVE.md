@@ -2141,3 +2141,44 @@ Corregir 4 findings High de CodeQL en codigo runtime real, con el menor diff pos
 ### No se hizo (scope)
 
 - Sin cambios en dependencias, lockfile, git, Dependabot, ni suppressions CodeQL.
+
+---
+
+## Sesion — 2026-04-19 — Dependabot Moderate: `brace-expansion` + `picomatch` (overrides minimos)
+
+### Paso 0 — Diagnostico inicial
+
+**Herramientas**
+
+- `pnpm why picomatch` (OK): `picomatch` entra como dependencia directa y transitiva de **vite 7.3.2** y **vitest 4.0.17**, via `fdir`, `tinyglobby` y peers. Antes coexistian **4.0.3** (vitest) y **4.0.4** (vite); el advisory **CVE-2026-33672** (POSIX / method injection) afecta `picomatch` **&lt; 4.0.4** en la linea 4.x; la correccion publicada es **4.0.4+**.
+- `pnpm why brace-expansion` en este entorno no imprimio arbol (salida vacia); el **pnpm-lock.yaml** mostraba `brace-expansion@5.0.2` como dependencia de **minimatch@10.2.4**, usado por **glob@13.0.0** (p. ej. **rimraf** en `apps/gold`). El paquete sin scope `brace-expansion` es distinto del override existente `@isaacs/brace-expansion@5.0.1`; hacia falta subir la version **sin scope** a un **patch** reciente (p. ej. **5.0.5**) que corrige el fallo de expansion tipo “zero-step” / agotamiento de memoria reportado en Dependabot.
+
+**Plan quirurgico (elegido: Opcion B — overrides puntuales en raiz)**
+
+- Anadir en `package.json` (raiz) dentro de `pnpm.overrides`:
+  - `"brace-expansion": "5.0.5"` — compatible con `minimatch@10.2.4` (`brace-expansion: ^5.0.2`).
+  - `"picomatch": "4.0.4"` — unifica todo el arbol a la version parcheada sin subir vite/vitest de golpe.
+- Ejecutar `pnpm install` y verificar que el lockfile solo resuelve `brace-expansion@5.0.5` y `picomatch@4.0.4` (sin entradas 5.0.2 ni 4.0.3).
+- No tocar codigo runtime ni `apps/gold/package.json` salvo lockfile heredado del workspace.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---------|--------|
+| `package.json` (raiz) | `pnpm.overrides`: `brace-expansion: 5.0.5`, `picomatch: 4.0.4` (se mantienen `@isaacs/brace-expansion`, `minimatch`, `rollup`). |
+| `pnpm-lock.yaml` | Regenerado: una sola version de `picomatch` (4.0.4); `brace-expansion` en 5.0.5 bajo `minimatch`. |
+
+### Por que es el cambio minimo correcto
+
+- Reutiliza el mecanismo ya presente (`pnpm.overrides`) sin upgrade masivo de **vite** / **vitest** / **turbo**.
+- **picomatch**: fuerza la version **ya** usada por vite en el mismo lockfile, eliminando la copia vulnerable 4.0.3 que arrastraba vitest.
+- **brace-expansion**: actualiza solo el paquete **sin scope** requerido por minimatch/glob; no invalida el override separado de `@isaacs/brace-expansion`.
+
+### Validacion
+
+- `pnpm install` — OK.
+- `pnpm build:gold` — OK (agent-guard, agent-report-check, vite build, check-llms, check-dist-utf8).
+
+### No se hizo (scope)
+
+- Sin cambios a JS/CSS/HTML de la app, sin tocar `agro.js`, sin commits ni git, sin upgrades innecesarios del resto del arbol.
