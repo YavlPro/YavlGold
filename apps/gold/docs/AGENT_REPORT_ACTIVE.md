@@ -2087,3 +2087,57 @@ Corregir 4 findings High de CodeQL en codigo runtime real, con el menor diff pos
 - No se tocaron otros findings Medium/Low
 - No se tocaron otros archivos fuera de los 3 afectados
 - No se aplicaron suppressions CodeQL
+
+---
+
+## Sesion — 2026-04-19 — CodeQL High #68 y #67 (sin DOMParser / sin img.src dinamico)
+
+### Paso 0 — Diagnostico puntual
+
+**Finding #68 — `assets/js/profile/onboardingWizard.js` (~1295)**
+
+| Item | Detalle |
+|------|---------|
+| Sink que CodeQL seguia viendo | `new DOMParser().parseFromString(_renderHtml, 'text/html')` seguido de `replaceChildren` con nodos del documento parseado. |
+| Por que fallo la mitigacion previa | Sustituir `innerHTML` por `DOMParser` **no elimina** la clase de problema: el string completo (incluido texto de usuario y `renderStepBody`) sigue entrando a un **parser HTML**. La regla trata ese parseo como reinterpretacion de texto como HTML. |
+| Dato potencialmente no confiable | `state.displayName`, `state.farmName`, textos de pasos, `stepMeta.*`, etiquetas de opciones, etc. (aunque muchos estaban escapados con `escapeHtml`, el flujo hacia el parser sigue existiendo). |
+| Correccion minima | Construir el modal solo con `document.createElement`, `textContent`, `append` / `appendChild`, `replaceChildren`, `setAttribute` y `appendStepBody` imperativo (sin cadenas HTML acumuladas para el cuerpo del wizard). |
+
+**Finding #67 — `agro/agroperfil.js` (~589)**
+
+| Item | Detalle |
+|------|---------|
+| Sink que CodeQL seguia viendo | Asignacion `img.src = renderSrc` donde `renderSrc` proviene de metadatos / storage / URL normalizada. |
+| Por que fallo la mitigacion previa | Un guard de protocolo con regex **antes** de `img.src` no rompe el modelo de data-flow hacia el sink `HTMLImageElement.src` que la consulta marca como problematico. |
+| Dato potencialmente no confiable | URL de avatar (`user_metadata.avatar_url`, localStorage, data URL acotada). |
+| Correccion minima | Dejar de usar `<img src=...>` para URLs variables: pintar el avatar con **CSS** `background-image: url(...)` sobre el contenedor existente, usando `JSON.stringify(renderSrc)` para formar un `url("...")` CSS seguro; accesibilidad con `role="img"` y `aria-label`; eliminar nodos `img` heredados si existen. |
+
+### Plan quirurgico (esta pasada)
+
+1. `onboardingWizard.js`: eliminar `DOMParser` y cualquier plantilla HTML grande; factorizar `appendOptionGrid`, `appendSummary`, `appendStepBody`; `render()` monta el arbol con API DOM nativa.
+2. `agroperfil.js`: reescribir `renderAvatarNode` sin asignar `img.src`; fondo + limpieza de estilos al volver al emoji.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---------|--------|
+| `apps/gold/assets/js/profile/onboardingWizard.js` | Eliminados `escapeHtml` (ya no necesario donde todo es `textContent`), `renderOptionGrid`/`renderSummary`/`renderStepBody` basados en strings; anadidos `appendOptionGrid`, `appendSummary`, `appendStepBody`; `render()` construye el shell del onboarding sin parseo HTML. |
+| `apps/gold/agro/agroperfil.js` | `renderAvatarNode`: quita `<img>`, aplica `background-image` con `url(' + JSON.stringify(renderSrc) + ')`; estado sin imagen restaura emoji y limpia `role`/`aria-label`/fondo. |
+
+### Por que el fix anterior no cerro los findings
+
+- **DOMParser**: sigue siendo parseo HTML sobre una cadena que mezcla estructura y datos; CodeQL lo cuenta como sink de la misma familia que `innerHTML` para esta regla.
+- **Guard en `img.src`**: el analisis estatico mantiene el flujo hasta la propiedad `.src`; hacia falta **eliminar ese sink** (no usar `img` con URL dinamica).
+
+### Validacion
+
+- `pnpm build:gold` — OK (agent-guard, agent-report-check, vite build, check-llms, check-dist-utf8).
+
+### QA sugerido
+
+1. Abrir onboarding (primer acceso): navegar los 5 pasos, inputs nombre/finca, grids de opciones, volver, enviar.
+2. Perfil Agro: avatar por URL https, por data URL, subir archivo, limpiar; comprobar preview y chip del header (imagen y emoji).
+
+### No se hizo (scope)
+
+- Sin cambios en dependencias, lockfile, git, Dependabot, ni suppressions CodeQL.

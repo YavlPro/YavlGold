@@ -567,28 +567,33 @@ function renderAvatarNode(container, avatarUrl, altText) {
     if (!container) return;
     const safeUrl = normalizeAvatarUrl(avatarUrl);
     const renderSrc = resolveAvatarSrcForRender(container, safeUrl);
+    const alt = String(altText || 'Avatar').trim() || 'Avatar';
+
+    const oldImg = container.querySelector('img');
+    if (oldImg) {
+        oldImg.remove();
+    }
+
     if (!renderSrc) {
         container.textContent = DEFAULT_AVATAR_EMOJI;
         container.style.overflow = '';
+        container.style.backgroundImage = '';
+        container.style.backgroundSize = '';
+        container.style.backgroundPosition = '';
+        container.style.backgroundRepeat = '';
+        container.removeAttribute('role');
+        container.removeAttribute('aria-label');
         return;
     }
 
-    let img = container.querySelector('img');
-    if (!img) {
-        container.textContent = '';
-        img = document.createElement('img');
-        img.alt = altText || 'Avatar';
-        img.style.width = '100%';
-        img.style.height = '100%';
-        img.style.objectFit = 'cover';
-        img.style.display = 'block';
-        container.appendChild(img);
-    }
-    img.alt = altText || 'Avatar';
-    if (/^(?:https?|blob|data):/i.test(renderSrc)) {
-        img.src = renderSrc;
-    }
+    container.textContent = '';
+    container.setAttribute('role', 'img');
+    container.setAttribute('aria-label', alt);
     container.style.overflow = 'hidden';
+    container.style.backgroundImage = 'url(' + JSON.stringify(renderSrc) + ')';
+    container.style.backgroundSize = 'cover';
+    container.style.backgroundPosition = 'center';
+    container.style.backgroundRepeat = 'no-repeat';
 }
 
 function resolveEffectiveAvatarUrl(user = null) {

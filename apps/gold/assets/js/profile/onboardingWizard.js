@@ -12,15 +12,6 @@ const STEP_COUNT = 5;
 
 let activeWizard = null;
 
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
-
 function ensureStyles() {
   if (document.getElementById(STYLE_ID)) return;
 
@@ -931,25 +922,28 @@ function buildPayload(state) {
   };
 }
 
-function renderOptionGrid(group, options, selectedValue) {
-  return `
-    <div class="yg-onboarding-option-grid">
-      ${options.map((option) => `
-        <button
-          type="button"
-          class="yg-onboarding-option ${selectedValue === option.value ? 'is-selected' : ''}"
-          data-select-group="${group}"
-          data-select-value="${escapeHtml(option.value)}"
-        >
-          <span class="yg-onboarding-option-title">${escapeHtml(option.label)}</span>
-          <span class="yg-onboarding-option-desc">${escapeHtml(option.description)}</span>
-        </button>
-      `).join('')}
-    </div>
-  `;
+function appendOptionGrid(parent, group, options, selectedValue) {
+  const grid = document.createElement('div');
+  grid.className = 'yg-onboarding-option-grid';
+  for (const option of options) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `yg-onboarding-option${selectedValue === option.value ? ' is-selected' : ''}`;
+    button.setAttribute('data-select-group', group);
+    button.setAttribute('data-select-value', String(option.value));
+    const titleSpan = document.createElement('span');
+    titleSpan.className = 'yg-onboarding-option-title';
+    titleSpan.textContent = option.label;
+    const descSpan = document.createElement('span');
+    descSpan.className = 'yg-onboarding-option-desc';
+    descSpan.textContent = option.description;
+    button.append(titleSpan, descSpan);
+    grid.appendChild(button);
+  }
+  parent.appendChild(grid);
 }
 
-function renderSummary(state) {
+function appendSummary(parent, state) {
   const rows = [
     ['Nombre visible', state.displayName || 'Sin definir'],
     ['Relación con Agro', getOnboardingLabel('relation', state.agroRelation) || 'Sin definir'],
@@ -958,83 +952,108 @@ function renderSummary(state) {
     ['Entrada inicial', getOnboardingLabel('entry', state.entryPreference) || 'Sin definir']
   ];
 
-  return `
-    <div class="yg-onboarding-summary">
-      ${rows.map(([label, value]) => `
-        <div class="yg-onboarding-summary-row">
-          <span class="yg-onboarding-summary-label">${escapeHtml(label)}</span>
-          <span class="yg-onboarding-summary-value">${escapeHtml(value)}</span>
-        </div>
-      `).join('')}
-      <div class="yg-onboarding-help">
-        Guardaremos este contexto para que el dashboard y tus próximas entradas se sientan más claras desde ya.
-      </div>
-    </div>
-  `;
+  const wrap = document.createElement('div');
+  wrap.className = 'yg-onboarding-summary';
+  for (const [label, value] of rows) {
+    const row = document.createElement('div');
+    row.className = 'yg-onboarding-summary-row';
+    const labelEl = document.createElement('span');
+    labelEl.className = 'yg-onboarding-summary-label';
+    labelEl.textContent = label;
+    const valueEl = document.createElement('span');
+    valueEl.className = 'yg-onboarding-summary-value';
+    valueEl.textContent = value;
+    row.append(labelEl, valueEl);
+    wrap.appendChild(row);
+  }
+  const help = document.createElement('div');
+  help.className = 'yg-onboarding-help';
+  help.textContent =
+    'Guardaremos este contexto para que el dashboard y tus próximas entradas se sientan más claras desde ya.';
+  wrap.appendChild(help);
+  parent.appendChild(wrap);
 }
 
-function renderStepBody(state) {
+function appendStepBody(parent, state) {
+  parent.replaceChildren();
+
   if (state.step === 0) {
-    return `
-      <div class="yg-onboarding-stack">
-        <div class="yg-onboarding-field">
-          <label for="yg-onboarding-display-name">Nombre visible</label>
-          <input
-            id="yg-onboarding-display-name"
-            class="yg-onboarding-input"
-            name="displayName"
-            maxlength="80"
-            placeholder="Ej. Yerik, Don Julio, La Finca El Sol"
-            value="${escapeHtml(state.displayName)}"
-            autocomplete="given-name"
-          >
-        </div>
-        <div class="yg-onboarding-help">
-          Este nombre se usa para saludarte mejor en el dashboard. No tiene que coincidir con un username único.
-        </div>
-      </div>
-    `;
+    const stack = document.createElement('div');
+    stack.className = 'yg-onboarding-stack';
+    const field = document.createElement('div');
+    field.className = 'yg-onboarding-field';
+    const label = document.createElement('label');
+    label.setAttribute('for', 'yg-onboarding-display-name');
+    label.textContent = 'Nombre visible';
+    const input = document.createElement('input');
+    input.id = 'yg-onboarding-display-name';
+    input.className = 'yg-onboarding-input';
+    input.name = 'displayName';
+    input.maxLength = 80;
+    input.placeholder = 'Ej. Yerik, Don Julio, La Finca El Sol';
+    input.value = state.displayName;
+    input.autocomplete = 'given-name';
+    field.append(label, input);
+    const help = document.createElement('div');
+    help.className = 'yg-onboarding-help';
+    help.textContent =
+      'Este nombre se usa para saludarte mejor en el dashboard. No tiene que coincidir con un username único.';
+    stack.append(field, help);
+    parent.appendChild(stack);
+    return;
   }
 
   if (state.step === 1) {
-    return renderOptionGrid('agroRelation', ONBOARDING_RELATION_OPTIONS, state.agroRelation);
+    appendOptionGrid(parent, 'agroRelation', ONBOARDING_RELATION_OPTIONS, state.agroRelation);
+    return;
   }
 
   if (state.step === 2) {
-    const farmLabel = state.agroRelation === 'exploring'
-      ? 'Proyecto o referencia (opcional)'
-      : 'Nombre de la finca o proyecto (opcional)';
-    const farmPlaceholder = state.agroRelation === 'exploring'
-      ? 'Ej. Estoy evaluando mi primera finca'
-      : 'Ej. Finca El Progreso';
+    const farmLabel =
+      state.agroRelation === 'exploring'
+        ? 'Proyecto o referencia (opcional)'
+        : 'Nombre de la finca o proyecto (opcional)';
+    const farmPlaceholder =
+      state.agroRelation === 'exploring'
+        ? 'Ej. Estoy evaluando mi primera finca'
+        : 'Ej. Finca El Progreso';
 
-    return `
-      <div class="yg-onboarding-stack yg-onboarding-stack--compact">
-        <div class="yg-onboarding-field">
-          <label for="yg-onboarding-farm-name">${escapeHtml(farmLabel)}</label>
-          <input
-            id="yg-onboarding-farm-name"
-            class="yg-onboarding-input yg-onboarding-input--compact"
-            name="farmName"
-            maxlength="120"
-            placeholder="${escapeHtml(farmPlaceholder)}"
-            value="${escapeHtml(state.farmName)}"
-            autocomplete="organization"
-          >
-        </div>
-        <div class="yg-onboarding-field">
-          <span class="yg-onboarding-label">Actividad principal (opcional)</span>
-          ${renderOptionGrid('mainActivity', ONBOARDING_ACTIVITY_OPTIONS, state.mainActivity)}
-        </div>
-      </div>
-    `;
+    const stack = document.createElement('div');
+    stack.className = 'yg-onboarding-stack yg-onboarding-stack--compact';
+    const farmField = document.createElement('div');
+    farmField.className = 'yg-onboarding-field';
+    const farmLabelEl = document.createElement('label');
+    farmLabelEl.setAttribute('for', 'yg-onboarding-farm-name');
+    farmLabelEl.textContent = farmLabel;
+    const farmInput = document.createElement('input');
+    farmInput.id = 'yg-onboarding-farm-name';
+    farmInput.className = 'yg-onboarding-input yg-onboarding-input--compact';
+    farmInput.name = 'farmName';
+    farmInput.maxLength = 120;
+    farmInput.placeholder = farmPlaceholder;
+    farmInput.value = state.farmName;
+    farmInput.autocomplete = 'organization';
+    farmField.append(farmLabelEl, farmInput);
+
+    const activityField = document.createElement('div');
+    activityField.className = 'yg-onboarding-field';
+    const activityLabel = document.createElement('span');
+    activityLabel.className = 'yg-onboarding-label';
+    activityLabel.textContent = 'Actividad principal (opcional)';
+    activityField.appendChild(activityLabel);
+    appendOptionGrid(activityField, 'mainActivity', ONBOARDING_ACTIVITY_OPTIONS, state.mainActivity);
+
+    stack.append(farmField, activityField);
+    parent.appendChild(stack);
+    return;
   }
 
   if (state.step === 3) {
-    return renderOptionGrid('entryPreference', ONBOARDING_ENTRY_OPTIONS, state.entryPreference);
+    appendOptionGrid(parent, 'entryPreference', ONBOARDING_ENTRY_OPTIONS, state.entryPreference);
+    return;
   }
 
-  return renderSummary(state);
+  appendSummary(parent, state);
 }
 
 function getFocusSelector(step) {
@@ -1214,86 +1233,130 @@ export function openOnboardingWizard({
       ? (state.isSubmitting ? 'Guardando...' : 'Guardar y entrar')
       : 'Continuar';
 
-    const _renderHtml = `
-      <div class="yg-onboarding-shell" role="dialog" aria-modal="true" aria-labelledby="yg-onboarding-title">
-        <aside class="yg-onboarding-side">
-          <div>
-            <span class="yg-onboarding-eyebrow">Primer acceso guiado</span>
-            <h2>Vamos a dejar Agro listo para ti.</h2>
-            <p>
-              Queremos que el primer acceso se sienta claro, útil y humano.
-              Por eso te pedimos decisiones pequeñas en vez de una pantalla fría.
-            </p>
-            <div class="yg-onboarding-progress-wrap">
-              <div class="yg-onboarding-progress-meta">
-                <span>Paso ${state.step + 1} de ${STEP_COUNT}</span>
-                <span>${state.displayName ? escapeHtml(state.displayName) : 'Configuración inicial'}</span>
-              </div>
-              <div class="yg-onboarding-progress-track">
-                <div class="yg-onboarding-progress-bar" style="width: ${progress};"></div>
-              </div>
-            </div>
-            <ul class="yg-onboarding-step-list">
-              ${stepList.map((stepItem, index) => {
-      const stateClass = index === state.step
-        ? 'is-active'
-        : index < state.step
-          ? 'is-complete'
-          : '';
+    const shell = document.createElement('div');
+    shell.className = 'yg-onboarding-shell';
+    shell.setAttribute('role', 'dialog');
+    shell.setAttribute('aria-modal', 'true');
+    shell.setAttribute('aria-labelledby', 'yg-onboarding-title');
 
-      return `
-                  <li class="yg-onboarding-step-item ${stateClass}">
-                    <span class="yg-onboarding-step-index">${index + 1}</span>
-                    <div>
-                      <span class="yg-onboarding-step-title">${escapeHtml(stepItem.title)}</span>
-                      <span class="yg-onboarding-step-desc">${escapeHtml(stepItem.description)}</span>
-                    </div>
-                  </li>
-                `;
-    }).join('')}
-            </ul>
-          </div>
-          <p>
-            ${escapeHtml(stepMeta.helper)}
-          </p>
-        </aside>
+    const aside = document.createElement('aside');
+    aside.className = 'yg-onboarding-side';
+    const asideInner = document.createElement('div');
+    const eyebrow = document.createElement('span');
+    eyebrow.className = 'yg-onboarding-eyebrow';
+    eyebrow.textContent = 'Primer acceso guiado';
+    const asideTitle = document.createElement('h2');
+    asideTitle.textContent = 'Vamos a dejar Agro listo para ti.';
+    const asideIntro = document.createElement('p');
+    asideIntro.textContent =
+      'Queremos que el primer acceso se sienta claro, útil y humano. Por eso te pedimos decisiones pequeñas en vez de una pantalla fría.';
 
-        <section class="yg-onboarding-card">
-          <header>
-            <p class="yg-onboarding-kicker">${escapeHtml(stepMeta.kicker)}</p>
-            <h3 id="yg-onboarding-title">${escapeHtml(stepMeta.title)}</h3>
-            <p>${escapeHtml(stepMeta.description)}</p>
-          </header>
+    const progressWrap = document.createElement('div');
+    progressWrap.className = 'yg-onboarding-progress-wrap';
+    const progressMeta = document.createElement('div');
+    progressMeta.className = 'yg-onboarding-progress-meta';
+    const stepCountSpan = document.createElement('span');
+    stepCountSpan.textContent = `Paso ${state.step + 1} de ${STEP_COUNT}`;
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = state.displayName ? state.displayName : 'Configuración inicial';
+    progressMeta.append(stepCountSpan, nameSpan);
 
-          <form class="yg-onboarding-form" data-onboarding-form>
-            <div class="yg-onboarding-body">
-              ${renderStepBody(state)}
-            </div>
+    const progressTrack = document.createElement('div');
+    progressTrack.className = 'yg-onboarding-progress-track';
+    const progressBar = document.createElement('div');
+    progressBar.className = 'yg-onboarding-progress-bar';
+    progressBar.style.width = progress;
+    progressTrack.appendChild(progressBar);
+    progressWrap.append(progressMeta, progressTrack);
 
-            <div class="yg-onboarding-footer">
-              <div class="${statusClass}" aria-live="polite">${escapeHtml(statusText)}</div>
-              <div class="yg-onboarding-actions">
-                ${state.step > 0 ? `
-                  <button type="button" class="yg-onboarding-btn yg-onboarding-btn-ghost" data-action="back" ${state.isSubmitting ? 'disabled' : ''}>
-                    Atrás
-                  </button>
-                ` : ''}
-                ${typeof onRequestLogout === 'function' ? `
-                  <button type="button" class="yg-onboarding-btn yg-onboarding-btn-secondary" data-action="logout" ${state.isSubmitting ? 'disabled' : ''}>
-                    Cerrar sesión
-                  </button>
-                ` : ''}
-                <button type="submit" class="yg-onboarding-btn yg-onboarding-btn-primary" ${state.isSubmitting ? 'disabled' : ''}>
-                  ${escapeHtml(primaryLabel)}
-                </button>
-              </div>
-            </div>
-          </form>
-        </section>
-      </div>
-    `;
-    const _doc = new DOMParser().parseFromString(_renderHtml, 'text/html');
-    root.replaceChildren(..._doc.body.childNodes);
+    const stepUl = document.createElement('ul');
+    stepUl.className = 'yg-onboarding-step-list';
+    stepList.forEach((stepItem, index) => {
+      const li = document.createElement('li');
+      li.className = `yg-onboarding-step-item${
+        index === state.step ? ' is-active' : index < state.step ? ' is-complete' : ''
+      }`;
+      const idx = document.createElement('span');
+      idx.className = 'yg-onboarding-step-index';
+      idx.textContent = String(index + 1);
+      const textWrap = document.createElement('div');
+      const titleS = document.createElement('span');
+      titleS.className = 'yg-onboarding-step-title';
+      titleS.textContent = stepItem.title;
+      const descS = document.createElement('span');
+      descS.className = 'yg-onboarding-step-desc';
+      descS.textContent = stepItem.description;
+      textWrap.append(titleS, descS);
+      li.append(idx, textWrap);
+      stepUl.appendChild(li);
+    });
+
+    asideInner.append(eyebrow, asideTitle, asideIntro, progressWrap, stepUl);
+    const helperP = document.createElement('p');
+    helperP.textContent = stepMeta.helper;
+    aside.append(asideInner, helperP);
+
+    const section = document.createElement('section');
+    section.className = 'yg-onboarding-card';
+    const header = document.createElement('header');
+    const kicker = document.createElement('p');
+    kicker.className = 'yg-onboarding-kicker';
+    kicker.textContent = stepMeta.kicker;
+    const titleH = document.createElement('h3');
+    titleH.id = 'yg-onboarding-title';
+    titleH.textContent = stepMeta.title;
+    const descP = document.createElement('p');
+    descP.textContent = stepMeta.description;
+    header.append(kicker, titleH, descP);
+
+    const form = document.createElement('form');
+    form.className = 'yg-onboarding-form';
+    form.setAttribute('data-onboarding-form', '');
+    const bodyEl = document.createElement('div');
+    bodyEl.className = 'yg-onboarding-body';
+    appendStepBody(bodyEl, state);
+
+    const footer = document.createElement('div');
+    footer.className = 'yg-onboarding-footer';
+    const statusEl = document.createElement('div');
+    statusEl.className = statusClass;
+    statusEl.setAttribute('aria-live', 'polite');
+    statusEl.textContent = statusText;
+    const actions = document.createElement('div');
+    actions.className = 'yg-onboarding-actions';
+
+    if (state.step > 0) {
+      const backBtn = document.createElement('button');
+      backBtn.type = 'button';
+      backBtn.className = 'yg-onboarding-btn yg-onboarding-btn-ghost';
+      backBtn.setAttribute('data-action', 'back');
+      backBtn.textContent = 'Atrás';
+      backBtn.disabled = Boolean(state.isSubmitting);
+      actions.appendChild(backBtn);
+    }
+
+    if (typeof onRequestLogout === 'function') {
+      const logoutBtn = document.createElement('button');
+      logoutBtn.type = 'button';
+      logoutBtn.className = 'yg-onboarding-btn yg-onboarding-btn-secondary';
+      logoutBtn.setAttribute('data-action', 'logout');
+      logoutBtn.textContent = 'Cerrar sesión';
+      logoutBtn.disabled = Boolean(state.isSubmitting);
+      actions.appendChild(logoutBtn);
+    }
+
+    const submitBtn = document.createElement('button');
+    submitBtn.type = 'submit';
+    submitBtn.className = 'yg-onboarding-btn yg-onboarding-btn-primary';
+    submitBtn.textContent = primaryLabel;
+    submitBtn.disabled = Boolean(state.isSubmitting);
+    actions.appendChild(submitBtn);
+
+    footer.append(statusEl, actions);
+    form.append(bodyEl, footer);
+    section.append(header, form);
+    shell.append(aside, section);
+    root.replaceChildren(shell);
 
     attachEvents();
     focusCurrentControl();
