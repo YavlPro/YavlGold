@@ -2345,3 +2345,60 @@ Barrido completo del repo encontro ~40+ ocurrencias de "comprador/compradores" e
 - No se tocaron regex de parseo legacy
 - No se tocaron tokens de comparacion legacy
 - No se expandio alcance mas alla del barrido semantico
+
+---
+
+## 2026-04-20 - Trust, OSS, legal, Supabase hardening y ops baseline
+
+### Objetivo
+
+Implementar el plan operativo de confianza para YavlGold Agro V1 en cuatro PRs logicos:
+
+1. PR1 security: audit and harden supabase access.
+2. PR2 docs: add security policy and OSS governance.
+3. PR3 trust: publish legal and anti-impersonation pages.
+4. PR4 ops: add public status and health baseline.
+
+### Cambios principales
+
+- Se agrego una migracion Supabase de hardening para `agro-evidence` y tablas factureras con RLS owner-based.
+- Se cambio `supabase/config.toml` para que `agro-assistant` use `verify_jwt = true`.
+- Se reemplazo `SECURITY.md` por una politica operativa de reporte privado de vulnerabilidades.
+- Se agregaron `CONTRIBUTING.md`, `CHANGELOG.md` y `apps/gold/docs/references.md`.
+- Se completo la licencia MIT con titular y anio en raiz y en `apps/gold`.
+- Se publicaron paginas de confianza: Open Source, anti-suplantacion, privacidad, terminos y status.
+- Se agrego CSS comun `trust-pages.css` respetando tokens V10 y sin estilos inline masivos.
+- Se agrego `/health` via `api/health.js` y rewrite en `vercel.json`.
+- Se agregaron runbooks de backup/restore e incident response.
+- Se actualizaron footer links, sitemap y `llms.txt`.
+
+### Verificacion realizada
+
+- `pnpm build:gold` - OK antes de registrar este cierre.
+- `agent-guard` - OK.
+- `agent-report-check` - OK.
+- `vite build` - OK.
+- `check-llms` - OK.
+- `check-dist-utf8` - OK.
+- Smoke test `/health` - OK: devuelve `ok`, `service`, `version`, `timestamp`, `environment`, `commit`, sin secretos.
+- Smoke test paginas trust - OK: todas cargan `trust-pages.css` y tienen skip link.
+- Escaneo `service_role|SUPABASE_SERVICE_ROLE` en bundle/rutas cliente - OK, sin coincidencias.
+- `vercel.json` parseado como JSON valido - OK.
+
+### Bloqueos / limites
+
+- `supabase db reset --workdir . --local --no-seed` no pudo ejecutarse porque Docker Desktop / docker engine no esta disponible en esta maquina.
+- No se pudo aplicar ni probar la migracion localmente contra Postgres por el bloqueo anterior.
+- Las pruebas manuales A/B de RLS y Storage quedan pendientes contra Supabase local o remoto controlado.
+- La politica del bucket `avatars` queda pendiente de decision de producto: hoy parece orientada a avatar publico.
+- `agro_events` aparece referenciado por Edge Function, pero no se encontro migracion canonica de tabla en `supabase/migrations`.
+
+### Pendientes de decision
+
+- Definir `SECURITY_EMAIL`.
+- Confirmar URL publica real `ORG/REPO`.
+- Confirmar `DOMINIO` oficial y canales de soporte.
+- Confirmar jurisdiccion legal aplicable.
+- Definir SLA operativo para exportacion/borrado de datos.
+- Decidir MFA/AAL2 para acciones sensibles.
+- Validar politicas en Supabase real con dos usuarios QA.
