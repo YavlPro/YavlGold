@@ -2470,3 +2470,60 @@ UTF-8 check: OK
 - No se modifico el prototipo aprobado (colores, fuentes, estructura)
 - No se agrego React, Tailwind ni SPA
 - No se toco main.js, authClient.js, authUI.js
+
+## Sesion: Cirugia post-integracion landing V10.1 (2026-04-23)
+
+### Objetivo
+
+Corregir 4 defectos post-integracion del reemplazo de landing: fondo gris, branding generico, nav incoherente, links rotos.
+
+### Cambios realizados
+
+| # | Defecto | Causa raiz | Fix | Archivo |
+|---|---|---|---|---|
+| 1 | Fondo gris/washed | `dashboard.css` usa `body { background: var(--bg-body) !important; }` = `#0B0C0F`, sobreescribe `var(--bg-1)` = `#0a0a0a` | `body.landing-page { background: var(--bg-1) !important; }` despues del body rule | `landing-v10.css` |
+| 2 | Icono gem generico | Navbar usaba `<i class="fa-solid fa-gem">` en vez del logo real | Reemplazado por `<img src="/brand/logo.webp">` en navbar y footer | `index.html` |
+| 3 | Nav "Respaldo" sin ruta real | Apuntaba a `#soberania` (anchor interno), nombre no coincide con pagina real | Renombrado a "Documentacion" → `/docs-agro` en desktop y mobile | `index.html` |
+| 4 | Footer links a `#` | 6 links con `aria-disabled` apuntando a `#` | Rutas reales: Legal (MIT→/open-source, Datos→/privacy, Terminos→/terms), Proyecto (Codigo→/open-source, Estado→/status, Docs→/docs-agro) | `index.html` |
+
+### Detalle de fixes
+
+**1. Fondo negro profundo** (`landing-v10.css`)
+- Agregado `body.landing-page { background: var(--bg-1) !important; }` despues de linea 111
+- `landing-page` ya estaba como clase en `<body>` del HTML
+
+**2. Logo real** (`index.html`)
+- Navbar: `<i class="fa-solid fa-gem">` → `<img src="/brand/logo.webp" alt="YavlGold" width="32" height="32" style="border-radius:50%;">`
+- Footer col 1: `<i class="fa-solid fa-gem">` → `<img src="/brand/logo.webp" ...>` + titulo "YavlGold" (sin "Agro")
+- Footer col 2: "Legal & Respaldo" → "Legal"
+- Footer col 3: "ADN Visual V10.1" → "Estado del servicio" → `/status`
+
+**3. Nav coherente** (`index.html`)
+- Desktop: `<a href="#soberania">Respaldo</a>` → `<a href="/docs-agro">Documentacion</a>`
+- Mobile: mismo cambio + icono `fa-shield-halved` → `fa-book`
+
+**4. Links reales footer** (`index.html`)
+- Legal: Licencia MIT → `/open-source`, Politica de datos → `/privacy`, Terminos de uso → `/terms`
+- Proyecto: Codigo fuente → `/open-source`, Estado del servicio → `/status`, Documentacion tecnica → `/docs-agro`
+- Eliminados `aria-disabled` y `tabindex="-1"`
+
+### Resultado de build
+
+```
+pnpm build:gold → OK
+agent-guard: OK
+agent-report-check: OK
+vite build: 169 modules, 2.25s
+UTF-8 check: OK
+```
+
+### Archivos tocados
+
+- `apps/gold/assets/css/landing-v10.css` — 1 regla nueva
+- `apps/gold/index.html` — 8 ediciones (logo x2, nav x2, footer links x4)
+
+### NO se toco
+
+- `dashboard.css`, `style.css`, `unificacion.css`, `tokens.css` — intocables por regla
+- `main.js`, `authClient.js`, `authUI.js` — sin cambios
+- Archivos backend, Supabase, modulos agro
