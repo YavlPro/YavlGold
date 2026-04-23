@@ -177,7 +177,7 @@ main { padding-top: var(--layout-navbar-h); }
 /* =========================================
    HERO & TRUST BAR
    ========================================= */
-.hero { text-align: center; padding-top: var(--space-12); overflow: hidden; position: relative; }
+.hero { text-align: center; padding-top: var(--space-12); overflow: hidden; position: relative; background: none; border-bottom: none; }
 .hero h1 {
   font-family: var(--font-brand); font-size: clamp(2.2rem, 5vw, 3.8rem); font-weight: 900;
   background: var(--metallic-text);
