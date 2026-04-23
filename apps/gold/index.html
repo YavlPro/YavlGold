@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 
 <head>
   <meta charset="utf-8">
@@ -28,7 +28,7 @@
   <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/pwa/yavlgold-pwa-192-v20260316.png">
   <link rel="apple-touch-icon" sizes="192x192" href="/pwa/yavlgold-pwa-192-v20260316.png">
-  <meta name="theme-color" content="#C8A752">
+  <meta name="theme-color" content="#0a0a0a">
   <link rel="manifest" href="/site.webmanifest?v=20260316">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -46,359 +46,693 @@
 
 <body class="landing-page">
   <a href="#main-content" class="sr-only-focusable">Saltar al contenido principal</a>
-  <!-- Loading Screen -->
-  <div class="loading-screen" id="loadingScreen">
-    <img src="/brand/logo.webp" alt="YavlGold" width="120" height="120" class="loading-logo-img" />
-    <div class="loading-text">YavlGold</div>
-    <div class="loading-subtitle">Preparando tu experiencia agrícola</div>
-    <div class="loading-bar">
-      <div class="loading-progress"></div>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="#" class="logo" aria-label="YavlGold Agro Inicio">
+        <i class="fa-solid fa-gem" aria-hidden="true"></i>
+        YavlGold Agro
+      </a>
+      <nav class="nav-links" aria-label="Navegación principal">
+        <a href="#modulos">Módulos</a>
+        <a href="#profundidad">Vistas</a>
+        <a href="#faq">Ayuda</a>
+        <a href="#soberania">Respaldo</a>
+      </nav>
+      <div class="header-actions">
+        <div id="auth-buttons">
+          <button id="login-btn" class="btn btn-outline btn-header" type="button"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i> Iniciar Sesión</button>
+          <button id="register-btn" class="btn btn-gold btn-header" type="button"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> Registrarse</button>
+        </div>
+        <div id="user-menu" class="user-menu" style="display: none;">
+          <button id="user-menu-btn" class="user-menu-btn" type="button">
+            <img src="" alt="" class="user-avatar-sm"><span>Usuario</span><i class="fas fa-chevron-down"></i>
+          </button>
+          <div id="user-dropdown" class="user-dropdown" style="display: none;">
+            <a href="/dashboard/"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="/dashboard/perfil.html"><i class="fas fa-user"></i> Mi Perfil</a>
+            <a href="/dashboard/configuracion.html"><i class="fas fa-cog"></i> Configuración</a>
+            <hr>
+            <button id="logout-btn" type="button"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
+          </div>
+        </div>
+        <button class="theme-toggle" id="themeToggle" aria-label="Cambiar tema claro/oscuro">
+          <i id="themeIcon" class="fa-solid fa-moon" aria-hidden="true"></i>
+        </button>
+        <button class="hamburger" id="menuToggle" aria-label="Abrir menú" aria-expanded="false">
+          <i class="fa-solid fa-bars" aria-hidden="true"></i>
+        </button>
+      </div>
     </div>
-  </div>
+  </header>
+
+  <!-- Overlay oscuro para menú móvil -->
   <div class="mobile-overlay" id="mobileOverlay"></div>
 
-  <!-- NAVBAR V10 -->
-  <nav class="navbar" id="navbar" role="navigation" aria-label="Navegación principal">
-    <div class="nav-brand" id="logoLink">
-      <div class="nav-logo-icon"><img src="/brand/logo.webp" alt="YavlGold" width="38" height="38" /></div>
-      <div>
-        <div class="nav-brand-text v10-text-metallic">YavlGold</div>
-        <div class="nav-version">TU FINCA DIGITAL</div>
-      </div>
-    </div>
-    <div class="nav-links">
-      <a href="#inicio">Inicio</a>
-      <a href="#modulos">Agro</a>
-      <a href="/docs-agro">Documentacion</a>
-      <a href="#comunidad">Comunidad</a>
-    </div>
-    <div class="nav-actions">
-      <button class="theme-toggle" id="themeToggle" title="Cambiar tema"
-        aria-label="Cambiar entre modo claro y oscuro">🌙</button>
-      <div id="auth-buttons" class="auth-buttons">
-        <button id="login-btn" class="btn-nav btn-nav-outline" type="button">ENTRAR</button>
-        <button id="register-btn" class="btn-nav btn-nav-filled" type="button">REGISTRO</button>
-      </div>
-      <div id="user-menu" class="user-menu" style="display: none;">
-        <button id="user-menu-btn" class="user-menu-btn" type="button">
-          <img src="" alt="" class="user-avatar-sm"><span>Usuario</span><i class="fas fa-chevron-down"></i>
-        </button>
-        <div id="user-dropdown" class="user-dropdown" style="display: none;">
-          <a href="/dashboard/"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-          <a href="/dashboard/perfil.html"><i class="fas fa-user"></i> Mi Perfil</a>
-          <a href="/dashboard/configuracion.html"><i class="fas fa-cog"></i> Configuración</a>
-          <hr>
-          <button id="logout-btn" class="logout-btn" type="button"><i class="fas fa-sign-out-alt"></i> Cerrar
-            Sesión</button>
-        </div>
-      </div>
-      <button class="hamburger" id="hamburger" aria-label="Abrir menú de navegación" aria-expanded="false">
-        <span></span><span></span><span></span>
-      </button>
+  <!-- Menú móvil -->
+  <nav class="mobile-menu" id="mobileMenu" aria-label="Menú de navegación móvil">
+    <a href="#modulos"><i class="fa-solid fa-seedling" aria-hidden="true" style="margin-right:var(--comp-icon-gap);font-size:var(--icon-sm);color:var(--gold-4);"></i> Módulos</a>
+    <a href="#profundidad"><i class="fa-solid fa-eye" aria-hidden="true" style="margin-right:var(--comp-icon-gap);font-size:var(--icon-sm);color:var(--gold-4);"></i> Vistas</a>
+    <a href="#faq"><i class="fa-solid fa-circle-question" aria-hidden="true" style="margin-right:var(--comp-icon-gap);font-size:var(--icon-sm);color:var(--gold-4);"></i> Ayuda</a>
+    <a href="#soberania"><i class="fa-solid fa-shield-halved" aria-hidden="true" style="margin-right:var(--comp-icon-gap);font-size:var(--icon-sm);color:var(--gold-4);"></i> Respaldo</a>
+    <div style="border-top:1px solid var(--border-neutral); margin-top:var(--space-3); padding-top:var(--space-3); display:flex; flex-direction:column; gap:var(--space-2);">
+      <button onclick="openAuthModal('login')" class="btn btn-outline" style="justify-content:center;" type="button"><i class="fa-solid fa-right-to-bracket" aria-hidden="true" style="margin-right:var(--comp-icon-gap);"></i> Iniciar Sesión</button>
+      <button onclick="openAuthModal('signup')" class="btn btn-gold" style="justify-content:center;" type="button"><i class="fa-solid fa-user-plus" aria-hidden="true" style="margin-right:var(--comp-icon-gap);"></i> Registrarse</button>
     </div>
   </nav>
 
-  <!-- Mobile Navigation -->
-  <div class="nav-mobile" id="navMobile" role="navigation" aria-label="Navegación móvil">
-    <a href="#inicio">Inicio</a>
-    <a href="#modulos">Agro</a>
-    <a href="/docs-agro">Documentacion</a>
-    <a href="#comunidad">Comunidad</a>
-    <div class="nav-mobile-actions">
-      <button onclick="openAuthModal('login')" class="btn-nav btn-nav-outline" type="button">ENTRAR</button>
-      <button onclick="openAuthModal('signup')" class="btn-nav btn-nav-filled" type="button">REGISTRO</button>
-    </div>
-  </div>
-
-  <!-- HERO V10 -->
-  <section class="v10-hero v10-ghost-emoji" id="main-content">
-    <div class="hero-grid"></div>
-    <div class="hero-inner">
-      <div class="hero-content">
-        <div class="hero-badge">
-          <span class="hero-badge-dot"></span>
-          <span class="hero-badge-text">Agro Activo · Acceso Gratuito</span>
-        </div>
-        <h1 class="hero-title v10-text-metallic">Tu finca merece<br>control agrícola real</h1>
-        <p class="hero-desc">YavlGold hoy es Agro: registra cultivos, controla movimientos en COP/USD/VES, consulta el
-          clima y lleva seguimiento operativo sin humo ni módulos inventados.</p>
-        <p class="hero-product-note">Agro es el producto principal de YavlGold en V1.</p>
+  <main id="main-content">
+    <section class="hero">
+      <div class="container">
+        <h1>Tu trabajo de campo, ordenado y conectado</h1>
+        <p>Registra lo que pasa en tu finca, entiende cómo van tus cultivos, controla tu cartera y gastos, y usa la IA con contexto real. No es un panel vacío: es tu herramienta de campo.</p>
         <div class="hero-cta">
-          <a id="hero-login-cta" href="/index.html#login" class="btn-v10 btn-v10-gold">Gestiona tu finca</a>
-          <button onclick="openAuthModal('signup')" class="btn-v10 btn-v10-outline">Crear cuenta gratis</button>
+          <a href="#modulos" class="btn btn-gold"><i class="fa-solid fa-seedling" aria-hidden="true"></i> Explorar Módulos</a>
+          <a href="#faq" class="btn btn-outline"><i class="fa-solid fa-book-open" aria-hidden="true"></i> Guía Rápida</a>
         </div>
       </div>
-      <div class="hero-visual">
-        <div class="logo-emblem" id="logoEmblem">
-          <div class="emblem-outer"></div>
-          <div class="emblem-inner">
-            <img src="/brand/logo.webp" alt="YavlGold" class="emblem-logo-img" />
-            <span class="emblem-sub">YavlGold</span>
+    </section>
+
+    <div class="container">
+      <div class="trust-bar reveal">
+        <div class="trust-item"><div class="trust-num">1</div><div class="trust-label">Módulo Agro · En producción</div></div>
+        <div class="trust-item"><div class="trust-num">3</div><div class="trust-label">Monedas (COP/USD/VES)</div></div>
+        <div class="trust-item"><div class="trust-num">100%</div><div class="trust-label">Tus Datos Son Tuyos</div></div>
+      </div>
+    </div>
+
+    <section id="modulos" class="reveal">
+      <div class="container">
+        <h2 class="section-title">Superficies de Agro</h2>
+        <p class="section-subtitle">Cada módulo con su nombre real. ¿Qué estoy haciendo, cómo avanza mi cultivo, qué estoy ganando o perdiendo, a qué debo prestarle atención hoy?</p>
+
+        <div class="modo-bar" role="toolbar" aria-label="Filtro por modo operativo">
+          <div class="container">
+            <div class="modo-bar-inner">
+              <button class="modo-chip" aria-selected="true" data-modo="todos"><i class="fa-solid fa-border-all" aria-hidden="true" style="margin-right:4px;font-size:0.7rem;"></i> Todos</button>
+              <button class="modo-chip" aria-selected="false" data-modo="productivo"><i class="fa-solid fa-seedling" aria-hidden="true" style="margin-right:4px;font-size:0.7rem;"></i> Productivo</button>
+              <button class="modo-chip" aria-selected="false" data-modo="comercial"><i class="fa-solid fa-coins" aria-hidden="true" style="margin-right:4px;font-size:0.7rem;"></i> Comercial</button>
+              <button class="modo-chip" aria-selected="false" data-modo="contextual"><i class="fa-solid fa-robot" aria-hidden="true" style="margin-right:4px;font-size:0.7rem;"></i> Contextual</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="features-grid">
+          <article class="feature-card card-featured" data-modo="productivo">
+            <div class="card-header">
+              <div class="icon-box"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></div>
+              <span class="card-title">Ciclos de Cultivo</span>
+              <span class="card-tag">Productivo</span>
+            </div>
+            <ul>
+              <li>Acompaña la vida real de cada siembra</li>
+              <li>Registra gastos, ingresos, fiados y pérdidas</li>
+              <li>Compara ciclos y conserva memoria operativa</li>
+              <li>Entidad viva: nace, cambia y deja aprendizaje</li>
+            </ul>
+          </article>
+
+          <article class="feature-card" data-modo="comercial">
+            <div class="card-header">
+              <div class="icon-box"><i class="fa-solid fa-wallet" aria-hidden="true"></i></div>
+              <span class="card-title">Cartera Viva</span>
+              <span class="card-tag">Comercial</span>
+            </div>
+            <ul>
+              <li>Quién te debe y cuánto (fiados reales)</li>
+              <li>Cobros parciales y transferencia de estado</li>
+              <li>Historial por cliente sin mezclar con gastos</li>
+              <li>Reversión segura si te equivocas al registrar</li>
+            </ul>
+          </article>
+
+          <article class="feature-card" data-modo="comercial">
+            <div class="card-header">
+              <div class="icon-box"><i class="fa-solid fa-coins" aria-hidden="true"></i></div>
+              <span class="card-title">Cartera Operativa</span>
+              <span class="card-tag">Comercial</span>
+            </div>
+            <ul>
+              <li>Libro general: gastos, ingresos, pérdidas, donaciones</li>
+              <li>Multimoneda real: COP, USD, VES</li>
+              <li>Asocia movimientos a un cultivo o déjalos generales</li>
+              <li>No es Cartera Viva: aquí va todo el facturero</li>
+            </ul>
+          </article>
+
+          <article class="feature-card" data-modo="contextual">
+            <div class="card-header">
+              <div class="icon-box"><i class="fa-solid fa-robot" aria-hidden="true"></i></div>
+              <span class="card-title">Bitácora & IA</span>
+              <span class="card-tag">Contextual</span>
+            </div>
+            <ul>
+              <li>Libreta de campo ligada a ciclos específicos</li>
+              <li>IA que solo lee lo que tú registraste</li>
+              <li>Consultas cruzadas: finanzas + clima + notas</li>
+              <li>Sin alucinaciones: si no anotas, no tiene datos</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="profundidad" class="reveal">
+      <div class="container">
+        <h2 class="section-title">Vistas Reales de Jornada</h2>
+        <p class="section-subtitle">Así se ve la información cuando entras a trabajar. Sin dashboards vacíos, solo datos que deciden tu día.</p>
+
+        <div class="switcher-wrap">
+          <div class="agro-switch">
+            <div class="switch-capsule" role="tablist" aria-label="Filtro de vistas">
+              <button class="switch-chip" role="tab" aria-selected="true" data-target="dive-clima"><i class="fa-solid fa-sun" aria-hidden="true" style="margin-right:4px;font-size:0.75rem;"></i> Clima</button>
+              <button class="switch-chip" role="tab" aria-selected="false" data-target="dive-ciclos"><i class="fa-solid fa-seedling" aria-hidden="true" style="margin-right:4px;font-size:0.75rem;"></i> Ciclos</button>
+              <button class="switch-chip" role="tab" aria-selected="false" data-target="dive-cartera"><i class="fa-solid fa-wallet" aria-hidden="true" style="margin-right:4px;font-size:0.75rem;"></i> Cartera</button>
+              <button class="switch-chip" role="tab" aria-selected="false" data-target="dive-trabajo"><i class="fa-solid fa-list-check" aria-hidden="true" style="margin-right:4px;font-size:0.75rem;"></i> Trabajo</button>
+              <button class="switch-chip" role="tab" aria-selected="false" data-target="dive-rankings"><i class="fa-solid fa-ranking-star" aria-hidden="true" style="margin-right:4px;font-size:0.75rem;"></i> Rankings</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="dive-clima" class="dive-section active">
+          <div class="dive-grid">
+            <div class="dive-card">
+              <h4><i class="fa-solid fa-sun" aria-hidden="true"></i> Clima Agro</h4>
+              <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:var(--space-3);">¿Siembro hoy? ¿Riego mañana? El clima decide tu jornada.</p>
+              <div class="mock-row"><span>Actual</span><span class="mock-val">28°C · Parcial</span></div>
+              <div class="mock-row"><span>Humedad</span><span class="mock-val">68%</span></div>
+              <div class="mock-row"><span>Viento</span><span class="mock-val">12 km/h NE</span></div>
+              <div class="climate-widget">
+                <div class="day-box"><div class="day-name">Mañana</div><div class="day-temp">33°/22°</div><div class="day-cond">Soleado</div></div>
+                <div class="day-box"><div class="day-name">Mié</div><div class="day-temp">29°/20°</div><div class="day-cond">Nublado</div></div>
+                <div class="day-box"><div class="day-name">Jue</div><div class="day-temp">25°/19°</div><div class="day-cond">Lluvia</div></div>
+                <div class="day-box"><div class="day-name">Vie</div><div class="day-temp">23°/18°</div><div class="day-cond">Tormenta</div></div>
+              </div>
+            </div>
+            <div class="dive-card">
+              <h4><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Decisión Operativa</h4>
+              <ul style="margin-top:var(--space-2);">
+                <li style="padding-left:var(--space-4); position:relative; margin-bottom:var(--space-2); color:var(--text-secondary); font-size:0.92rem;">Evita siembra si hay probabilidad de granizo</li>
+                <li style="padding-left:var(--space-4); position:relative; margin-bottom:var(--space-2); color:var(--text-secondary); font-size:0.92rem;">No apliques químicos en terreno húmedo</li>
+                <li style="padding-left:var(--space-4); position:relative; margin-bottom:var(--space-2); color:var(--text-secondary); font-size:0.92rem;">Adelanta cosecha si viene tormenta fuerte</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div id="dive-ciclos" class="dive-section">
+          <div class="dive-grid">
+            <div class="dive-card">
+              <h4><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Ciclos Activos</h4>
+              <div class="crop-card">
+                <div class="crop-head"><span class="crop-name">Tomate Cherry</span><span class="mock-status status-active">En producción</span></div>
+                <div class="crop-meta">2 ha · Siembra: 12 Mar · Riego ajustado por lluvias</div>
+                <div class="crop-stats"><span>Invertido: <strong>$480</strong></span><span>Recuperado: <strong>$320</strong></span></div>
+              </div>
+              <div class="crop-card">
+                <div class="crop-head"><span class="crop-name">Maíz Amarillo</span><span class="mock-status status-active">Monitoreo</span></div>
+                <div class="crop-meta">5 ha · Siembra: 05 Abr · Humedad estable</div>
+                <div class="crop-stats"><span>Invertido: <strong>$1,200</strong></span><span>Recuperado: <strong>$0</strong></span></div>
+              </div>
+            </div>
+            <div class="dive-card">
+              <h4><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Ciclo Finalizado</h4>
+              <div class="crop-card">
+                <div class="crop-head"><span class="crop-name">Café Arábica</span><span class="mock-status status-done">Cosechado</span></div>
+                <div class="crop-meta">3 ha · Memoria exportada · Rendimiento +15%</div>
+                <div class="crop-stats"><span>Invertido: <strong>$2,800</strong></span><span>Ganancia: <strong>+$1,450</strong></span></div>
+              </div>
+              <p style="color:var(--text-muted); font-size:0.85rem; margin-top:var(--space-3);">Los ciclos no son tarjetas quietas. Son unidades vivas de trabajo y memoria que alimentan estadísticas, cartera y bitácora.</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="dive-cartera" class="dive-section">
+          <div class="dive-grid">
+            <div class="dive-card">
+              <h4><i class="fa-solid fa-wallet" aria-hidden="true"></i> Cartera Viva (Fiados)</h4>
+              <div class="mock-row"><span>Juan Pérez</span><span class="mock-val">$890</span><span class="mock-status status-pending">Parcial</span></div>
+              <div class="mock-row"><span>María González</span><span class="mock-val">$1,200</span><span class="mock-status status-pending">Pendiente</span></div>
+              <div class="mock-row"><span>Carlos Ruiz</span><span class="mock-val">$250</span><span class="mock-status status-done">Pagado</span></div>
+              <p style="color:var(--text-muted); font-size:0.85rem; margin-top:var(--space-3);">Solo seguimiento de quién te debe. No mezcla gastos ni ventas cobradas.</p>
+            </div>
+            <div class="dive-card">
+              <h4><i class="fa-solid fa-coins" aria-hidden="true"></i> Cartera Operativa (Libro)</h4>
+              <div class="mock-row"><span>Abono orgánico</span><span class="mock-val" style="color:var(--color-error)">-$340</span><span style="font-size:0.8rem; color:var(--text-muted)">15 Abr</span></div>
+              <div class="mock-row"><span>Venta tomate</span><span class="mock-val" style="color:var(--color-success)">+$890</span><span style="font-size:0.8rem; color:var(--text-muted)">12 Abr</span></div>
+              <div class="mock-row"><span>Fiado J. Pérez</span><span class="mock-val">$250</span><span style="font-size:0.8rem; color:var(--text-muted)">10 Abr</span></div>
+              <p style="color:var(--text-muted); font-size:0.85rem; margin-top:var(--space-3);">Todo movimiento financiero. Multimoneda real. Asocia a cultivo o general.</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="dive-trabajo" class="dive-section">
+          <div class="dive-grid">
+            <div class="dive-card">
+              <h4><i class="fa-solid fa-list-check" aria-hidden="true"></i> Tareas del Día</h4>
+              <div class="mock-row"><span>Regar tomate cherry</span><span class="mock-status status-done">7:00 AM</span></div>
+              <div class="mock-row"><span>Revisar cercas lote 3</span><span class="mock-status status-pending">10:00 AM</span></div>
+              <div class="mock-row"><span>Aplicar fungicida maíz</span><span class="mock-status status-pending">2:00 PM</span></div>
+              <div class="mock-row"><span>Cobrar a Juan Pérez</span><span class="mock-status status-pending">4:00 PM</span></div>
+            </div>
+            <div class="dive-card">
+              <h4><i class="fa-solid fa-book" aria-hidden="true"></i> Bitácora Reciente</h4>
+              <div style="margin-bottom:var(--space-3); padding-bottom:var(--space-3); border-bottom:1px solid var(--border-neutral);">
+                <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:var(--space-1);">20 Abr 2026 · Aguacate Hass</div>
+                <p style="font-size:0.9rem; color:var(--text-secondary);">"Llovió fuerte en la madrugada. El drenaje del lote 2 funciona bien. Revisar exceso de humedad."</p>
+              </div>
+              <div>
+                <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:var(--space-1);">18 Abr 2026 · Tomate Cherry</div>
+                <p style="font-size:0.9rem; color:var(--text-secondary);">"Aplicé abono orgánico. Rendimiento del último ciclo fue 15% mejor."</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="dive-rankings" class="dive-section">
+          <div class="dive-grid">
+            <div class="dive-card">
+              <h4><i class="fa-solid fa-users" aria-hidden="true"></i> Mejores Compradores</h4>
+              <div class="mock-row"><span>1. Juan Pérez</span><span class="mock-val">$4,200</span><span style="font-size:0.8rem; color:var(--text-muted)">12 compras</span></div>
+              <div class="mock-row"><span>2. María González</span><span class="mock-val">$3,150</span><span style="font-size:0.8rem; color:var(--text-muted)">8 compras</span></div>
+              <div class="mock-row"><span>3. Carlos Ruiz</span><span class="mock-val">$1,800</span><span style="font-size:0.8rem; color:var(--text-muted)">5 compras</span></div>
+            </div>
+            <div class="dive-card">
+              <h4><i class="fa-solid fa-chart-line" aria-hidden="true"></i> Cultivos Más Rentables</h4>
+              <div class="mock-row"><span>1. Tomate Cherry</span><span class="mock-val" style="color:var(--color-success)">+45%</span><span style="font-size:0.8rem; color:var(--text-muted)">2 ha</span></div>
+              <div class="mock-row"><span>2. Aguacate Hass</span><span class="mock-val" style="color:var(--color-success)">+32%</span><span style="font-size:0.8rem; color:var(--text-muted)">4 ha</span></div>
+              <div class="mock-row"><span>3. Café Arábica</span><span class="mock-val" style="color:var(--color-success)">+28%</span><span style="font-size:0.8rem; color:var(--text-muted)">Cerrado</span></div>
+              <p style="color:var(--text-muted); font-size:0.85rem; margin-top:var(--space-3);">Vistazo directo que ahorra sumar cuentas a mano. Basado en registros reales.</p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    <button class="hero-scroll" onclick="document.getElementById('modulos').scrollIntoView({behavior:'smooth'})">
-      <span class="hero-scroll-label">Explorar</span>
-      <span class="hero-scroll-arrow">↓</span>
-    </button>
-  </section>
-  <div class="v10-gold-divider"></div>
+    </section>
 
-  <!-- MODULES V10 -->
-  <section class="v10-section v10-modules-section v10-ghost-emoji" id="modulos">
-    <div class="v10-section-inner">
-      <div class="v10-section-header v10-reveal">
-        <div class="v10-section-tag">Producto activo</div>
-        <h2 class="v10-section-title v10-text-metallic">Agro en operación</h2>
-        <div class="v10-gold-line"></div>
-        <p class="v10-section-desc">Cuatro beneficios claros, directos y utiles. Sin banners gigantes: solo lo que Agro
-          ya resuelve hoy en el campo.</p>
+    <section class="workflow reveal">
+      <div class="container">
+        <h2 class="section-title">Flujo real de jornada</h2>
+        <div class="steps">
+          <div class="step"><div class="step-num">01</div><h4><i class="fa-solid fa-gauge" aria-hidden="true"></i> Dashboard</h4><p>Revisa clima, fase lunar y atajos rápidos. Orienta tu día antes de salir al lote.</p></div>
+          <div class="step"><div class="step-num">02</div><h4><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Registrar</h4><p>Anota gastos, fiados, tareas o notas en el momento. Sin formularios eternos.</p></div>
+          <div class="step"><div class="step-num">03</div><h4><i class="fa-solid fa-magnifying-glass-chart" aria-hidden="true"></i> Consultar</h4><p>Revisa cartera, estadísticas de ciclo o rankings. Entiende qué rinde y qué no.</p></div>
+          <div class="step"><div class="step-num">04</div><h4><i class="fa-solid fa-lightbulb" aria-hidden="true"></i> Decidir</h4><p>Usa la IA o exporta tu informe MD. Planifica la siguiente temporada con memoria real.</p></div>
+        </div>
       </div>
-      <div class="v10-modules-grid">
-        <article class="v10-glass-card v10-module-card v10-reveal">
-          <div class="module-top"><span class="module-icon">🌾</span><span class="v10-status v10-status-available"><span
-                class="v10-status-dot"></span> Cultivos</span></div>
-          <div class="module-title">Cultivos y ciclos</div>
-          <div class="module-desc">Registra siembras, cierres y seguimiento productivo sin depender de hojas sueltas ni
-            memoria.</div>
-        </article>
-        <article class="v10-glass-card v10-module-card v10-reveal">
-          <div class="module-top"><span class="module-icon">💰</span><span class="v10-status v10-status-available"><span
-                class="v10-status-dot"></span> Finanzas</span></div>
-          <div class="module-title">Finanzas reales</div>
-          <div class="module-desc">Controla ingresos, gastos, fiados, perdidas y transferencias desde un mismo flujo
-            operativo.</div>
-        </article>
-        <article class="v10-glass-card v10-module-card v10-reveal">
-          <div class="module-top"><span class="module-icon">☁️</span><span class="v10-status v10-status-available"><span
-                class="v10-status-dot"></span> Seguimiento</span></div>
-          <div class="module-title">Clima y seguimiento</div>
-          <div class="module-desc">Consulta el clima y conserva contexto operativo para decidir mejor cada jornada en la
-            finca.</div>
-        </article>
-        <article class="v10-glass-card v10-module-card v10-reveal">
-          <div class="module-top"><span class="module-icon">🧾</span><span class="v10-status v10-status-available"><span
-                class="v10-status-dot"></span> Historial</span></div>
-          <div class="module-title">Historial operativo</div>
-          <div class="module-desc">Mantiene cultivos y movimientos en una sola base real para entender lo que pasa y lo
-            que ya paso.</div>
-        </article>
-      </div>
-      <div class="v10-section-action v10-reveal">
-        <p class="v10-section-action-copy">Agro ya esta activo y listo para trabajar con informacion real del campo.</p>
-        <a href="/agro/" class="btn-v10 btn-v10-gold">Entrar a Agro</a>
-      </div>
-    </div>
-  </section>
-  <div class="v10-gold-divider"></div>
+    </section>
 
-  <!-- DNA SECTION V10 -->
-  <section class="v10-section v10-dna-section">
-    <div class="v10-section-inner">
-      <div class="v10-reveal">
-        <span class="v10-growing-icon">🌱</span>
-        <p class="v10-growing-desc">"Construimos la mejor herramienta para el agricultor, paso a paso. Desde el Táchira
-          para el mundo, con las manos en la tierra y los ojos en el futuro."</p>
+    <section id="soberania" class="reveal">
+      <div class="container" style="text-align: center; max-width: 800px;">
+        <h2 class="section-title">Privacidad, Respaldo y Terreno</h2>
+        <p class="section-subtitle">Diseñado para manos grandes, guantes, sol directo y conexión intermitente.</p>
+        <div class="features-grid" style="text-align: left;">
+          <div class="feature-card">
+            <h3 style="font-family:var(--font-brand); font-size:1rem; margin-bottom:var(--space-3);"><i class="fa-solid fa-lock" aria-hidden="true" style="color:var(--gold-4); margin-right:var(--comp-icon-gap);"></i> Privacidad en campo</h3>
+            <ul>
+              <li>Oculta nombres de clientes y montos con un toque</li>
+              <li>Modo lectura segura cuando trabajas con terceros cerca</li>
+              <li>Sin datos expuestos en pantallas compartidas</li>
+            </ul>
+          </div>
+          <div class="feature-card">
+            <h3 style="font-family:var(--font-brand); font-size:1rem; margin-bottom:var(--space-3);"><i class="fa-solid fa-floppy-disk" aria-hidden="true" style="color:var(--gold-4); margin-right:var(--comp-icon-gap);"></i> Respaldo soberano</h3>
+            <ul>
+              <li>Exporta informes globales o por cultivo en formato .md</li>
+              <li>Archivos de texto ligero: abren en cualquier equipo</li>
+              <li>Tu historial es tuyo. Si sales de la plataforma, te lo llevas.</li>
+            </ul>
+          </div>
+          <div class="feature-card">
+            <h3 style="font-family:var(--font-brand); font-size:1rem; margin-bottom:var(--space-3);"><i class="fa-solid fa-wifi" aria-hidden="true" style="color:var(--gold-4); margin-right:var(--comp-icon-gap);"></i> Resiliencia offline</h3>
+            <ul>
+              <li>Interfaz liviana sin dependencias pesadas</li>
+              <li>Iconos y estilos embebidos: carga instantánea</li>
+              <li>Service Worker listo para cachear navegación y fuentes</li>
+            </ul>
+          </div>
+        </div>
       </div>
-      <div class="v10-dna-quote v10-reveal">
-        <p>En el campo, el diseño no es decoración — es la arquitectura de la confianza. Cada herramienta debe ser tan
-          robusta como la tierra que trabajas, y tan elegante como la cosecha que sueñas.</p>
-        <cite>— Filosofía YavlGold</cite>
-      </div>
-    </div>
-  </section>
-  <div class="v10-gold-divider"></div>
+    </section>
 
-  <!-- CTA V10 -->
-  <section class="v10-section v10-cta-section v10-ghost-emoji" id="comunidad">
-    <div class="v10-cta-inner v10-reveal">
-      <h2 class="v10-cta-title v10-text-metallic">Únete a la comunidad del campo</h2>
-      <p class="v10-cta-desc">Compartimos soporte, mejoras reales y aprendizaje practico alrededor de Agro, sin vender
-        un producto mas grande de lo que hoy existe.</p>
-      <a href="https://t.me/YavlEcosystem" target="_blank" rel="noopener noreferrer" class="btn-v10 btn-v10-gold"><i
-          class="fab fa-telegram"></i> Comunidad en Telegram</a>
-    </div>
-  </section>
+    <section id="faq" class="reveal">
+      <div class="container" style="max-width: 800px;">
+        <h2 class="section-title">Preguntas frecuentes</h2>
+        <div class="faq-item">
+          <button class="faq-trigger" aria-expanded="false" aria-controls="faq1">¿Qué gano trabajando con YavlGold Agro?<i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
+          <div id="faq1" class="faq-content" role="region"><p>Orden sobre tus números de campo reales. Mides qué sembraste, cuánto perdiste por lluvia o plaga y cuánto invertiste este mes con un solo pantallazo, sin hacer cuentas de memoria ni buscar en libretas.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-trigger" aria-expanded="false" aria-controls="faq2">¿Qué diferencia hay entre Cartera Viva y Cartera Operativa?<i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
+          <div id="faq2" class="faq-content" role="region"><p>Cartera Viva solo sigue fiados (dinero que te deben). Cartera Operativa es el libro mayor: registra todos los movimientos financieros (gastos de finca, cobros, pérdidas, donaciones). No se mezclan, se complementan.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-trigger" aria-expanded="false" aria-controls="faq3">¿La IA adivina el mercado o hace proyecciones mágicas?<i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
+          <div id="faq3" class="faq-content" role="region"><p>No. La IA solo lee lo que tú registraste en Agro: facturas, bitácoras, totales contables. Si no anotas, no tiene con qué trabajar. Te ayuda a cruzar datos y ahorrar tiempo, no a inventar realidades.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-trigger" aria-expanded="false" aria-controls="faq4">¿Cómo ejecuto un respaldo manual antes de salir o borrar mi cuenta?<i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
+          <div id="faq4" class="faq-content" role="region"><p>Entra a Estadísticas y presiona "Exportar Informe Global (MD)". También puedes descargar el reporte individual por cultivo. Guárdalo localmente. Según la política vigente, el borrado de cuenta puede dejar la información fuera de recuperación desde la plataforma.</p></div>
+        </div>
+      </div>
+    </section>
 
-  <!-- FOOTER V10 -->
-  <footer class="v10-footer">
-    <div class="v10-footer-inner">
-      <div>
-        <div class="v10-footer-brand v10-font-orbitron v10-text-metallic">YavlGold</div>
-        <p class="v10-footer-desc">Agro operativo para registrar cultivos, controlar movimientos y seguir la finca con
-          una base real y util.</p>
-        <p class="v10-footer-origin">🌾 Desde La Grita, Táchira para el mundo 🌾</p>
+    <section class="testimonial reveal">
+      <div class="container">
+        <p class="quote-text">"Antes anotaba todo en cuadernos que se perdían. Ahora tengo memoria real de cada ciclo, cada gasto, cada cosecha. YavlGold no me dice qué hacer: me muestra lo que pasó para que yo decida."</p>
+        <div class="quote-author">Yerikson Varela</div>
+        <div class="quote-role">Fundador de YavlGold · Táchira, Venezuela</div>
       </div>
-      <div class="v10-footer-col">
-        <h4>Plataforma</h4><a href="#modulos">Agro</a><a href="/docs-agro">Documentacion</a><a href="/dashboard/">Dashboard</a><a
-          href="#comunidad">Comunidad</a><a href="/status">Estado</a><a href="mailto:soporte@yavlgold.com">Contacto</a>
+    </section>
+
+    <section class="cta-section reveal">
+      <div class="container">
+        <h2>Empieza a ordenar tu campo hoy</h2>
+        <p>Sin configuraciones eternas. Sin dashboards vacíos. Entra, registra y entiende tu finca de verdad.</p>
+        <a href="#modulos" class="btn btn-gold"><i class="fa-solid fa-seedling" aria-hidden="true"></i> Comenzar Ahora</a>
       </div>
-      <div class="v10-footer-col">
-        <h4>Tecnología</h4><span>Vanilla JS (ES6+)</span><span>Vite MPA</span><span>Supabase
-          (PostgreSQL)</span><span>Vercel Hosting</span><a href="/open-source">Open Source MIT</a><a
-          href="/anti-suplantacion">No inversiones</a>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <h5><i class="fa-solid fa-gem" aria-hidden="true" style="margin-right:var(--comp-icon-gap);font-size:var(--icon-sm);color:var(--gold-4);"></i> YavlGold Agro</h5>
+          <a href="#modulos"><i class="fa-solid fa-seedling" aria-hidden="true"></i> Módulos</a>
+          <a href="#profundidad"><i class="fa-solid fa-eye" aria-hidden="true"></i> Vistas Reales</a>
+          <a href="#faq"><i class="fa-solid fa-circle-question" aria-hidden="true"></i> Ayuda Rápida</a>
+        </div>
+        <div class="footer-col">
+          <h5><i class="fa-solid fa-scale-balanced" aria-hidden="true" style="margin-right:var(--comp-icon-gap);font-size:var(--icon-sm);color:var(--gold-4);"></i> Legal & Respaldo</h5>
+          <a href="#" aria-disabled="true" tabindex="-1"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i> Licencia MIT</a>
+          <a href="#" aria-disabled="true" tabindex="-1"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Política de datos</a>
+          <a href="#" aria-disabled="true" tabindex="-1"><i class="fa-solid fa-file-export" aria-hidden="true"></i> Guía de exportación MD</a>
+        </div>
+        <div class="footer-col">
+          <h5><i class="fa-solid fa-code" aria-hidden="true" style="margin-right:var(--comp-icon-gap);font-size:var(--icon-sm);color:var(--gold-4);"></i> Proyecto</h5>
+          <a href="#" aria-disabled="true" tabindex="-1"><i class="fa-solid fa-code" aria-hidden="true"></i> Código fuente</a>
+          <a href="#" aria-disabled="true" tabindex="-1"><i class="fa-solid fa-gem" aria-hidden="true"></i> ADN Visual V10.1</a>
+          <a href="#" aria-disabled="true" tabindex="-1"><i class="fa-solid fa-book" aria-hidden="true"></i> Documentación técnica</a>
+        </div>
       </div>
-    </div>
-    <div class="v10-footer-bottom">
-      <p class="v10-footer-copy">© <span id="footer-year">2026</span> YavlGold · <a href="/terms">Términos</a> · <a
-          href="/privacy">Privacidad</a> · <span style="color:var(--v10-gold-4)">Hecho con el campo en mente</span></p>
-      <p class="v10-footer-dev">Developed by Yerikson Varela</p>
+      <div class="footer-bottom">
+        <p>&copy; <span id="footer-year">2026</span> YavlGold · Release V1 · ADN Visual V10.1 · Open Source (MIT)</p>
+        <p style="margin-top: var(--space-2); font-family: var(--font-prestige); font-style: italic; color: var(--text-gold-prestige);">Tu finca merece tecnología de primera. YavlGold nace del campo, para el campo.</p>
+      </div>
     </div>
   </footer>
 
   <noscript>
     <style>
-      .v10-glass-card,
-      .v10-reveal {
-        opacity: 1 !important;
-        transform: none !important
-      }
-
-      body {
-        opacity: 1 !important
-      }
+      .reveal, .reveal-hidden { opacity: 1 !important; transform: none !important; }
+      .dive-section { display: block !important; }
+      body { opacity: 1 !important; }
     </style>
-    <div
-      style="padding:20px;background:#C8A752;color:#0a0a0a;text-align:center;font-family:'Rajdhani',sans-serif;font-weight:700">
-      ⚠️ Por favor habilita JavaScript para una experiencia completa de YavlGold</div>
+    <div style="padding:20px;background:#C8A752;color:#0a0a0a;text-align:center;font-family:'Rajdhani',sans-serif;font-weight:700">
+      Por favor habilita JavaScript para una experiencia completa de YavlGold</div>
   </noscript>
 
-  <!-- Inline Scripts -->
+  <!-- Combined JS: Prototype engine + Auth integration + Theme bridge -->
   <script>
-    'use strict';
-    console.log('%c🌾 YavlGold — Tu Finca Digital', 'background:#0a0a0a;color:#C8A752;font-family:monospace;font-size:14px;padding:8px 16px;border:1px solid #C8A752;border-radius:4px');
+    /* =========================================
+       YavlGold Landing V10.1 — Interactive Engine
+       Combines prototype JS with auth integration
+       ========================================= */
+    (function() {
+      'use strict';
 
-    function openAuthModal(mode) {
-      if (window.AuthUI && typeof window.AuthUI.openAuthModal === 'function') { window.AuthUI.openAuthModal(mode); return; }
-      const modal = document.getElementById('auth-modal');
-      const loginTab = document.getElementById('login-tab');
-      const registerTab = document.getElementById('register-tab');
-      const loginForm = document.getElementById('login-form');
-      const registerForm = document.getElementById('register-form');
-      if (!modal) return;
-      modal.classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
-      modal.dataset.mode = (mode === 'signup' || mode === 'register') ? 'signup' : 'login';
-      if (mode === 'signup' || mode === 'register') {
-        registerTab?.classList.add('active'); loginTab?.classList.remove('active');
-        registerForm.style.display = 'block'; registerForm?.classList.add('active');
-        loginForm.style.display = 'none'; loginForm?.classList.remove('active');
-        setTimeout(() => { registerForm?.querySelector('#register-name')?.focus(); }, 100);
-      } else {
-        loginTab?.classList.add('active'); registerTab?.classList.remove('active');
-        loginForm.style.display = 'block'; loginForm?.classList.add('active');
-        registerForm.style.display = 'none'; registerForm?.classList.remove('active');
-        setTimeout(() => { loginForm?.querySelector('#login-email')?.focus(); }, 100);
-      }
-    }
-
-    function closeAuthModal() {
-      const modal = document.getElementById('auth-modal');
-      if (modal) {
-        modal.classList.add('hidden');
-        document.body.style.overflow = '';
-        if (window.location.hash === '#login' || window.location.hash === '#signup' || window.location.hash === '#register') {
-          window.history.replaceState({}, document.title, `${window.location.pathname}${window.location.search}`);
-        }
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const themeToggle = document.getElementById('themeToggle');
-      const hamburger = document.getElementById('hamburger');
-      const navMobile = document.getElementById('navMobile');
-      const mobileOverlay = document.getElementById('mobileOverlay');
-      const logoLink = document.getElementById('logoLink');
-      const loadingScreen = document.getElementById('loadingScreen');
-
-      function setInitialTheme() {
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        const isLightMode = savedTheme === 'light';
-        document.body.classList.toggle('light-mode', isLightMode);
-        document.documentElement.classList.toggle('light-mode', isLightMode);
-        themeToggle.textContent = savedTheme === 'light' ? '☀️' : '🌙';
-      }
-      function toggleTheme() {
-        const isLightMode = document.body.classList.toggle('light-mode');
-        document.documentElement.classList.toggle('light-mode', isLightMode);
-        localStorage.setItem('theme', isLightMode ? 'light' : 'dark');
-        themeToggle.textContent = isLightMode ? '☀️' : '🌙';
-      }
-      function showMobileMenu() {
-        navMobile.classList.add('active'); mobileOverlay.classList.add('active');
-        hamburger.classList.add('active'); hamburger.setAttribute('aria-expanded', 'true');
+      // =========================================
+      // AUTH MODAL FUNCTIONS (global scope)
+      // =========================================
+      window.openAuthModal = function(mode) {
+        if (window.AuthUI && typeof window.AuthUI.openAuthModal === 'function') { window.AuthUI.openAuthModal(mode); return; }
+        var modal = document.getElementById('auth-modal');
+        var loginTab = document.getElementById('login-tab');
+        var registerTab = document.getElementById('register-tab');
+        var loginForm = document.getElementById('login-form');
+        var registerForm = document.getElementById('register-form');
+        if (!modal) return;
+        modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
-      }
-      function hideMobileMenu() {
-        navMobile.classList.remove('active'); mobileOverlay.classList.remove('active');
-        hamburger.classList.remove('active'); hamburger.setAttribute('aria-expanded', 'false');
-        document.body.style.overflow = '';
-      }
-      function smoothScroll(targetId) {
-        const el = document.getElementById(targetId.substring(1));
-        if (el) window.scrollTo({ top: el.offsetTop - 80, behavior: 'smooth' });
-      }
+        modal.dataset.mode = (mode === 'signup' || mode === 'register') ? 'signup' : 'login';
+        if (mode === 'signup' || mode === 'register') {
+          if (registerTab) registerTab.classList.add('active');
+          if (loginTab) loginTab.classList.remove('active');
+          if (registerForm) { registerForm.style.display = 'block'; registerForm.classList.add('active'); }
+          if (loginForm) { loginForm.style.display = 'none'; loginForm.classList.remove('active'); }
+          setTimeout(function() { var el = document.getElementById('register-name'); if (el) el.focus(); }, 100);
+        } else {
+          if (loginTab) loginTab.classList.add('active');
+          if (registerTab) registerTab.classList.remove('active');
+          if (loginForm) { loginForm.style.display = 'block'; loginForm.classList.add('active'); }
+          if (registerForm) { registerForm.style.display = 'none'; registerForm.classList.remove('active'); }
+          setTimeout(function() { var el = document.getElementById('login-email'); if (el) el.focus(); }, 100);
+        }
+      };
 
-      // Navbar scroll effect
-      const navbar = document.getElementById('navbar');
-      window.addEventListener('scroll', () => { navbar?.classList.toggle('scrolled', window.scrollY > 50); });
-
-      // V10 Scroll reveal
-      const revealObserver = new IntersectionObserver((entries) => {
-        entries.forEach((entry, index) => {
-          if (entry.isIntersecting) {
-            setTimeout(() => entry.target.classList.add('visible'), index * 80);
-            revealObserver.unobserve(entry.target);
+      window.closeAuthModal = function() {
+        var modal = document.getElementById('auth-modal');
+        if (modal) {
+          modal.classList.add('hidden');
+          document.body.style.overflow = '';
+          if (window.location.hash === '#login' || window.location.hash === '#signup' || window.location.hash === '#register') {
+            window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
           }
-        });
-      }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
-      document.querySelectorAll('.v10-reveal').forEach(el => revealObserver.observe(el));
+        }
+      };
 
-      // 3D Emblem parallax (desktop only)
-      const emblem = document.getElementById('logoEmblem');
-      if (emblem && window.innerWidth > 768) {
-        document.addEventListener('mousemove', (e) => {
-          const xPos = (e.clientX / window.innerWidth - 0.5) * 2;
-          const yPos = (e.clientY / window.innerHeight - 0.5) * 2;
-          emblem.style.animation = 'none';
-          emblem.style.transform = `rotateX(${-yPos * 10}deg) rotateY(${xPos * 10}deg)`;
-        });
-        document.addEventListener('mouseleave', () => {
-          emblem.style.animation = 'v10-emblemFloat 8s ease-in-out infinite';
-          emblem.style.transform = '';
-        });
-      }
+      // Wire auth buttons
+      var loginBtn = document.getElementById('login-btn');
+      var registerBtn = document.getElementById('register-btn');
+      if (loginBtn) loginBtn.addEventListener('click', function() { openAuthModal('login'); });
+      if (registerBtn) registerBtn.addEventListener('click', function() { openAuthModal('signup'); });
 
-      function hideLoadingScreen() {
-        loadingScreen.classList.add('hidden');
-        setTimeout(() => { loadingScreen.remove(); }, 500);
-      }
-
-      function init() {
-        setInitialTheme();
-        themeToggle.addEventListener('click', toggleTheme);
-        hamburger.addEventListener('click', showMobileMenu);
-        mobileOverlay.addEventListener('click', hideMobileMenu);
-        logoLink.addEventListener('click', hideMobileMenu);
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-          anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            if (navMobile.classList.contains('active')) hideMobileMenu();
-            smoothScroll(this.getAttribute('href'));
-          });
-        });
-        setTimeout(hideLoadingScreen, 1500);
-      }
-      init();
-
-      // Auth modal events
-      const authModalClose = document.getElementById('auth-modal-close');
-      const authModalOverlay = document.querySelector('.auth-modal-overlay');
+      var authModalClose = document.getElementById('auth-modal-close');
+      var authModalOverlay = document.querySelector('.auth-modal-overlay');
       if (authModalClose) authModalClose.addEventListener('click', closeAuthModal);
       if (authModalOverlay) authModalOverlay.addEventListener('click', closeAuthModal);
-      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAuthModal(); });
-    });
+
+      // Handle #login/#register in URL
+      if (window.location.hash === '#login') { openAuthModal('login'); }
+      if (window.location.hash === '#signup' || window.location.hash === '#register') { openAuthModal('signup'); }
+
+      // =========================================
+      // THEME TOGGLE with bridge
+      // =========================================
+      var html = document.documentElement;
+      var themeBtn = document.getElementById('themeToggle');
+      var themeIcon = document.getElementById('themeIcon');
+
+      function updateThemeIcon(theme) {
+        if (!themeIcon) return;
+        themeIcon.className = theme === 'dark' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+        if (themeBtn) themeBtn.setAttribute('aria-label', theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro');
+      }
+
+      function applyTheme(theme) {
+        html.setAttribute('data-theme', theme);
+        html.classList.toggle('light-mode', theme === 'light');
+        document.body.classList.toggle('light-mode', theme === 'light');
+        updateThemeIcon(theme);
+      }
+
+      var savedTheme = localStorage.getItem('yavl-theme') || localStorage.getItem('theme') || 'dark';
+      applyTheme(savedTheme);
+
+      if (themeBtn) {
+        themeBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          var current = html.getAttribute('data-theme');
+          var next = current === 'dark' ? 'light' : 'dark';
+          localStorage.setItem('yavl-theme', next);
+          localStorage.setItem('theme', next);
+          applyTheme(next);
+        }, true);
+      }
+
+      // =========================================
+      // MOBILE NAV
+      // =========================================
+      var menuBtn = document.getElementById('menuToggle');
+      var mobileMenu = document.getElementById('mobileMenu');
+      var mobileOverlay = document.getElementById('mobileOverlay');
+
+      function openMenu() {
+        if (mobileMenu) mobileMenu.classList.add('open');
+        if (mobileOverlay) mobileOverlay.classList.add('open');
+        if (menuBtn) menuBtn.setAttribute('aria-expanded', 'true');
+        var icon = menuBtn ? menuBtn.querySelector('i') : null;
+        if (icon) icon.className = 'fa-solid fa-xmark';
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeMenu() {
+        if (mobileMenu) mobileMenu.classList.remove('open');
+        if (mobileOverlay) mobileOverlay.classList.remove('open');
+        if (menuBtn) menuBtn.setAttribute('aria-expanded', 'false');
+        var icon = menuBtn ? menuBtn.querySelector('i') : null;
+        if (icon) icon.className = 'fa-solid fa-bars';
+        document.body.style.overflow = '';
+      }
+
+      if (menuBtn) {
+        menuBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          var isOpen = mobileMenu && mobileMenu.classList.contains('open');
+          if (isOpen) closeMenu(); else openMenu();
+        }, true);
+      }
+
+      if (mobileOverlay) {
+        mobileOverlay.addEventListener('click', function(e) { e.preventDefault(); closeMenu(); });
+      }
+
+      if (mobileMenu) {
+        mobileMenu.querySelectorAll('a').forEach(function(link) {
+          link.addEventListener('click', function() { closeMenu(); });
+        });
+      }
+
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          if (mobileMenu && mobileMenu.classList.contains('open')) { closeMenu(); if (menuBtn) menuBtn.focus(); }
+          closeAuthModal();
+        }
+      });
+
+      // =========================================
+      // MODE SWITCHER (deep dives)
+      // =========================================
+      var chips = document.querySelectorAll('.switch-chip');
+      var diveSections = document.querySelectorAll('.dive-section');
+
+      function activateChip(chip) {
+        var targetId = chip.getAttribute('data-target');
+        if (!targetId) return;
+        chips.forEach(function(c) { c.setAttribute('aria-selected', 'false'); });
+        chip.setAttribute('aria-selected', 'true');
+        diveSections.forEach(function(d) { d.classList.remove('active'); });
+        var targetEl = document.getElementById(targetId);
+        if (targetEl) targetEl.classList.add('active');
+      }
+
+      chips.forEach(function(chip) {
+        chip.addEventListener('mousedown', function(e) { e.stopPropagation(); });
+        chip.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); activateChip(chip); }, true);
+        chip.addEventListener('touchend', function(e) { e.preventDefault(); activateChip(chip); }, { passive: false });
+      });
+
+      var switcherCapsule = document.querySelector('.switch-capsule');
+      if (switcherCapsule) {
+        switcherCapsule.addEventListener('click', function(e) {
+          var chip = e.target.closest('.switch-chip');
+          if (chip) { e.preventDefault(); e.stopPropagation(); activateChip(chip); }
+        }, true);
+      }
+
+      // =========================================
+      // FAQ ACCORDION
+      // =========================================
+      function toggleFaq(btn) {
+        var isExpanded = btn.getAttribute('aria-expanded') === 'true';
+        var contentId = btn.getAttribute('aria-controls');
+        var content = document.getElementById(contentId);
+        if (!content) return;
+        if (isExpanded) {
+          btn.setAttribute('aria-expanded', 'false');
+          content.style.maxHeight = '0';
+          content.classList.remove('open');
+        } else {
+          btn.setAttribute('aria-expanded', 'true');
+          content.classList.add('open');
+          content.style.maxHeight = content.scrollHeight + 'px';
+        }
+      }
+
+      document.querySelectorAll('.faq-trigger').forEach(function(btn) {
+        btn.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); toggleFaq(btn); }, true);
+        btn.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleFaq(btn); } });
+      });
+
+      // =========================================
+      // SCROLL REVEAL
+      // =========================================
+      var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var revealEls = document.querySelectorAll('.reveal');
+
+      if (!prefersReduced) {
+        revealEls.forEach(function(el) { el.classList.add('reveal-hidden'); });
+        var observer = new IntersectionObserver(function(entries) {
+          entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.remove('reveal-hidden');
+              entry.target.classList.add('visible');
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+        revealEls.forEach(function(el) { observer.observe(el); });
+        setTimeout(function() {
+          revealEls.forEach(function(el) { el.classList.remove('reveal-hidden'); el.classList.add('visible'); });
+        }, 3000);
+      } else {
+        revealEls.forEach(function(el) { el.classList.add('visible'); });
+      }
+
+      // =========================================
+      // SMOOTH SCROLL
+      // =========================================
+      document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
+        anchor.addEventListener('click', function(e) {
+          var targetId = this.getAttribute('href');
+          if (targetId === '#' || targetId === 'javascript:void(0)') return;
+          var target = document.querySelector(targetId);
+          if (target) {
+            e.preventDefault();
+            var headerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--layout-navbar-h')) || 56;
+            var top = target.getBoundingClientRect().top + window.pageYOffset - headerH - 16;
+            window.scrollTo({ top: top, behavior: 'smooth' });
+          }
+        });
+      });
+
+      // =========================================
+      // MODO OPERATIVO FILTER
+      // =========================================
+      var modoChips = document.querySelectorAll('.modo-chip');
+      var modCards = document.querySelectorAll('.features-grid .feature-card');
+
+      function filterByModo(modo) {
+        modoChips.forEach(function(c) { c.setAttribute('aria-selected', 'false'); });
+        modoChips.forEach(function(c) { if (c.getAttribute('data-modo') === modo) c.setAttribute('aria-selected', 'true'); });
+        modCards.forEach(function(card) {
+          var cardModo = card.getAttribute('data-modo');
+          if (modo === 'todos' || cardModo === modo) { card.classList.remove('modo-hidden'); }
+          else { card.classList.add('modo-hidden'); }
+        });
+      }
+
+      modoChips.forEach(function(chip) {
+        chip.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); filterByModo(chip.getAttribute('data-modo')); }, true);
+        chip.addEventListener('touchend', function(e) { e.preventDefault(); filterByModo(chip.getAttribute('data-modo')); }, { passive: false });
+      });
+
+      // =========================================
+      // OFFLINE / ONLINE
+      // =========================================
+      window.addEventListener('online', function() { console.log('[YavlGold] Conexión restaurada.'); });
+      window.addEventListener('offline', function() { console.log('[YavlGold] Modo offline activo.'); });
+
+      console.log('[YavlGold] Landing V10.1 cargada. Motor interactivo activo.');
+
+    })();
+
+    // PWA placeholder
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() { console.log('[YavlGold] Arquitectura PWA lista.'); });
+    }
   </script>
 
   <!-- Auth Modal Container -->
@@ -424,8 +758,7 @@
         <div class="form-group">
           <label for="login-password">Contraseña</label>
           <div class="input-group">
-            <input type="password" id="login-password" name="password" placeholder="••••••••" required
-              autocomplete="current-password">
+            <input type="password" id="login-password" name="password" placeholder="••••••••" required autocomplete="current-password">
             <span class="password-toggle"><i class="fas fa-eye"></i></span>
           </div>
         </div>
@@ -452,17 +785,15 @@
         <div class="form-group">
           <label for="register-password">Contraseña</label>
           <div class="input-group">
-            <input type="password" id="register-password" name="password" placeholder="••••••••" required
-              autocomplete="new-password" minlength="6">
+            <input type="password" id="register-password" name="password" placeholder="••••••••" required autocomplete="new-password" minlength="6">
             <span class="password-toggle"><i class="fas fa-eye"></i></span>
           </div>
         </div>
         <div id="hcaptcha-register"></div>
         <button type="submit" class="btn-premium btn-gold" style="width:100%">Crear Cuenta</button>
-        <div
-          style="margin-top:1rem;text-align:center;color:var(--v10-text-muted);font-family:var(--v10-font-body);font-size:0.9rem;">
-          Al registrarte, aceptas nuestros <a href="/terms" target="_blank" style="color:var(--v10-gold-4)">Términos y
-            Condiciones</a> y <a href="/privacy" target="_blank" style="color:var(--v10-gold-4)">Política de
+        <div style="margin-top:1rem;text-align:center;color:var(--text-muted);font-family:var(--font-ui);font-size:0.9rem;">
+          Al registrarte, aceptas nuestros <a href="/terms" target="_blank" style="color:var(--gold-4)">Términos y
+            Condiciones</a> y <a href="/privacy" target="_blank" style="color:var(--gold-4)">Política de
             Privacidad</a>
         </div>
       </form>
@@ -482,20 +813,20 @@
 
   <!-- hCaptcha Invisible Mode - Global Callbacks -->
   <script>
-    let loginCaptchaWidgetId = null;
-    let registerCaptchaWidgetId = null;
+    var loginCaptchaWidgetId = null;
+    var registerCaptchaWidgetId = null;
     window._pendingLogin = null;
     window._pendingRegister = null;
 
     function onHCaptchaLoad() {
       console.log('[hCaptcha] SDK loaded, rendering invisible widgets...');
-      const loginContainer = document.getElementById('hcaptcha-login');
+      var loginContainer = document.getElementById('hcaptcha-login');
       if (loginContainer) {
         loginCaptchaWidgetId = hcaptcha.render('hcaptcha-login', {
           sitekey: '22069708-c388-4a48-b054-fc12c4ee0ab6', size: 'invisible', theme: 'dark', callback: 'onLoginCaptchaSuccess'
         });
       }
-      const registerContainer = document.getElementById('hcaptcha-register');
+      var registerContainer = document.getElementById('hcaptcha-register');
       if (registerContainer) {
         registerCaptchaWidgetId = hcaptcha.render('hcaptcha-register', {
           sitekey: '22069708-c388-4a48-b054-fc12c4ee0ab6', size: 'invisible', theme: 'dark', callback: 'onRegisterCaptchaSuccess'
@@ -505,26 +836,26 @@
 
     function onLoginCaptchaSuccess(token) {
       if (window._pendingLogin) {
-        const { email, password, btn, originalText } = window._pendingLogin;
+        var pending = window._pendingLogin;
         window._pendingLogin = null;
-        doActualLogin(email, password, token, btn, originalText);
+        doActualLogin(pending.email, pending.password, token, pending.btn, pending.originalText);
       }
     }
     function onRegisterCaptchaSuccess(token) {
       if (window._pendingRegister) {
-        const { name, email, password, btn, originalText } = window._pendingRegister;
+        var pending = window._pendingRegister;
         window._pendingRegister = null;
-        doActualRegister(name, email, password, token, btn, originalText);
+        doActualRegister(pending.name, pending.email, pending.password, token, pending.btn, pending.originalText);
       }
     }
 
     window.executeLoginCaptcha = function (email, password, btn, originalText) {
-      window._pendingLogin = { email, password, btn, originalText };
+      window._pendingLogin = { email: email, password: password, btn: btn, originalText: originalText };
       if (loginCaptchaWidgetId !== null) { hcaptcha.execute(loginCaptchaWidgetId); }
       else { console.error('[hCaptcha] Login widget not ready'); if (btn) { btn.disabled = false; btn.textContent = originalText; } }
     };
     window.executeRegisterCaptcha = function (name, email, password, btn, originalText) {
-      window._pendingRegister = { name, email, password, btn, originalText };
+      window._pendingRegister = { name: name, email: email, password: password, btn: btn, originalText: originalText };
       if (registerCaptchaWidgetId !== null) { hcaptcha.execute(registerCaptchaWidgetId); }
       else { console.error('[hCaptcha] Register widget not ready'); if (btn) { btn.disabled = false; btn.textContent = originalText; } }
     };
@@ -532,7 +863,7 @@
     async function doActualLogin(email, password, captchaToken, btn, originalText) {
       try {
         if (!window.AuthClient) throw new Error('AuthClient no disponible');
-        const res = await window.AuthClient.loginWithToken(email, password, captchaToken);
+        var res = await window.AuthClient.loginWithToken(email, password, captchaToken);
         if (res.success) {
           window.YGUXMessages?.queueFlash(window.YGUXMessages.copy.welcomeBack());
           window.AuthUI?.hideAllAuthModals?.();
@@ -551,11 +882,11 @@
     async function doActualRegister(name, email, password, captchaToken, btn, originalText) {
       try {
         if (!window.AuthClient) throw new Error('AuthClient no disponible');
-        const res = await window.AuthClient.registerWithToken(email, password, name, captchaToken);
+        var res = await window.AuthClient.registerWithToken(email, password, name, captchaToken);
         if (res.success) {
           window.AuthUI?.showSuccess(window.YGUXMessages?.copy.registerSuccess?.() || 'Cuenta registrada con éxito. Revisa tu correo para confirmar el acceso.');
           document.getElementById('register-form')?.reset();
-          setTimeout(() => window.AuthUI?.switchToLogin(), 2000);
+          setTimeout(function() { window.AuthUI?.switchToLogin(); }, 2000);
           if (btn) { btn.disabled = false; btn.textContent = originalText; }
         } else {
           window.AuthUI?.showError('register', res.error || 'Error al registrarse');

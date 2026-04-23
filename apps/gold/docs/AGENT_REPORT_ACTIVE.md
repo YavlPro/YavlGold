@@ -2402,3 +2402,71 @@ Implementar el plan operativo de confianza para YavlGold Agro V1 en cuatro PRs l
 - Definir SLA operativo para exportacion/borrado de datos.
 - Decidir MFA/AAL2 para acciones sensibles.
 - Validar politicas en Supabase real con dos usuarios QA.
+
+---
+
+## Sesion: Reemplazo de Landing Page por Prototipo V10.1 (2026-04-23)
+
+### Objetivo
+
+Reemplazar la landing page actual de YavlGold por el prototipo aprobado (`YavlGold-Agro-ADN-V10-Corregido.html`), respetando estrictamente el diseno, sin romper backend, auth ni funcionalidad existente.
+
+### Diagnostico
+
+| Aspecto | Antes | Despues |
+|---|---|---|
+| HTML landing | `index.html` 574L, estructura V10 vieja (hero con emblem 3D, 4 cards genericas) | `index.html` con prototipo completo (hero, trust bar, 4 cards con modo operativo, 5 deep dives, workflow, soberania, FAQ, testimonial, CTA) |
+| CSS landing | `landing-v10.css` 1127L, tokens `--v10-*` | `landing-v10.css` con tokens ADN V10.1 sin prefijo + auth modal + user-menu |
+| Auth wiring | Botones `#login`/`#register` demo | Cableados a `openAuthModal()` real via JS |
+| Theme | `body.light-mode` class | Bridge: `data-theme` attr + `light-mode` class (compatibilidad dual) |
+| Tokens | `--v10-gold-4` etc. | `--gold-4` etc. (protocolo V10.1 sin prefijo) |
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/index.html` | Reemplazo completo | Markup+JS reemplazado por prototipo V10.1. Head preservado (meta OG, Twitter, schema, favicon, fonts). Auth modal preservado con tokens adaptados. CTAs cableados a openAuthModal(). Theme bridge implementado. |
+| `apps/gold/assets/css/landing-v10.css` | Reemplazo completo | 1127L viejas → CSS del prototipo + auth modal adaptado + user-menu. Tokens ADN V10.1 sin prefijo `--v10-`. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Append | Esta sesion documentada. |
+
+### Adaptaciones minimas (desviaciones del prototipo)
+
+1. **Botones login/register**: Prototipo usa `<a href="#login">`. Adaptado a `<button onclick="openAuthModal()">` + IDs para authUI.js.
+2. **User-menu**: Prototipo no lo tiene. Agregado para compatibilidad con authUI.js (muestra avatar/menu cuando usuario logueado).
+3. **Theme bridge**: Prototipo usa `data-theme` en `<html>`. Se agrego tambien `light-mode` class en body para compatibilidad con auth modal CSS existente.
+4. **localStorage dual**: Guarda tema en `yavl-theme` y `theme` (backward compat).
+
+### Resultado de build
+
+```
+pnpm build:gold → OK
+agent-guard: OK
+agent-report-check: OK
+vite build: 169 modules, 2.33s
+UTF-8 check: OK
+```
+
+### QA recomendado
+
+- [ ] Visual desktop: verificar que la landing se ve igual al prototipo aprobado
+- [ ] Visual mobile (≤480px): verificar responsive
+- [ ] Menu hamburguesa: abrir/cerrar, CTAs login/register
+- [ ] Theme toggle: cambiar dark/light y verificar que auth modal se adapta
+- [ ] Scroll reveal: las secciones aparecen al hacer scroll
+- [ ] Switcher de vistas (Clima/Ciclos/Cartera/Trabajo/Rankings): cada tab funciona
+- [ ] FAQ accordion: expandir/colapsar preguntas
+- [ ] Filtro modo operativo (Todos/Productivo/Comercial/Contextual): filtra cards
+- [ ] Auth flow: login y registro via modal con hCaptcha
+- [ ] Trust bar: muestra "1 Modulo Agro · En produccion", "3 Monedas", "100% Tus Datos Son Tuyos"
+- [ ] Footer: links "proximamente" aparecen deshabilitados
+- [ ] No hay enlaces rotos
+
+### NO se hizo (scope respetado)
+
+- No se toco backend, Supabase, RLS, Edge Functions
+- No se toco agro.js ni modulos agro
+- No se tocó dashboard ni paginas protegidas
+- No se crecerion archivos nuevos fuera de los autorizados
+- No se modifico el prototipo aprobado (colores, fuentes, estructura)
+- No se agrego React, Tailwind ni SPA
+- No se toco main.js, authClient.js, authUI.js
