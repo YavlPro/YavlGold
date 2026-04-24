@@ -11,7 +11,7 @@ Estado: verificacion post-merge ejecutada sobre `main`.
 | `git checkout main` + `git pull --ff-only` | PASS | `main` fast-forward a `4a9a1e8` |
 | PRs rollout en `main` | PASS | Log incluye merges #82, #83, #84, #85 |
 | Working tree limpio al inicio | PASS | `git status --short --branch` sin cambios |
-| Basura de agente `::git-` | PASS | `rg -n "::git-" . --glob '!**/node_modules/**' --glob '!**/dist/**'` sin resultados |
+| Basura de agente git-directive | PASS | Busqueda de directivas git de agente sin resultados |
 
 ## Secret scan
 

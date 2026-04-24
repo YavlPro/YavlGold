@@ -5,6 +5,8 @@ Estado: BLOQUEADO para DB RLS y BLOQUEADO para Storage.
 > No se afirma verificacion real de RLS/Storage. La prueba A/B no pudo ejecutarse contra DB viva por falta de Docker local y por ausencia de variables/usuarios QA configurados para el smoke test.
 >
 > Actualizacion 2026-04-24: tampoco se aplicaron migraciones ni se ejecuto `supabase db push --dry-run` remoto porque `supabase projects list` no mostro un proyecto cuyo nombre confirme staging/dev.
+>
+> Automatizacion preparada: ver `apps/gold/docs/security/RLS_STORAGE_SMOKE_TEST_RUNBOOK_2026-04-24.md` y `apps/gold/docs/ops/STAGING_GUARDRAILS_AND_SETUP.md`.
 
 ## Actualizacion 2026-04-24 - verificacion remota staging
 

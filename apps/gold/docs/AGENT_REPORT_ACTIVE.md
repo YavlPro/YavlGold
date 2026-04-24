@@ -2683,7 +2683,7 @@ Corregir la posicion del logo del proyecto dentro del footer de la landing page.
 ### Resultado
 
 - `main` actualizado a `4a9a1e8`; contiene merges #82, #83, #84 y #85.
-- Repo limpio, sin `::git-` en archivos versionados.
+- Repo limpio, sin directivas git de agente en archivos versionados.
 - Placeholders visibles en paginas publicas: PASS.
 - Secret scan runtime: PASS; no `service_role` ni `SUPABASE_SERVICE_ROLE` en `apps/gold/dist`, `api`, `apps/gold/assets` ni `apps/gold/agro`.
 - `pnpm build:gold`: PASS con warning esperado por Node local `v25.6.0` frente a engine Node 20.x.
@@ -2739,3 +2739,24 @@ Corregir la posicion del logo del proyecto dentro del footer de la landing page.
 | Archivo | Rol |
 |---|---|
 | `apps/gold/docs/security/POST_MERGE_RLS_STORAGE_VERIFICATION_2026-04-23.md` | Bloqueo remoto documentado con project ref listado, metodo de confirmacion staging, dry-run no ejecutado por seguridad y runbook exacto. |
+
+---
+
+## Sesion 2026-04-24 — Guardrails staging y smoke test RLS/Storage
+
+### Resultado
+
+- Se agrego guard local `tools/supabase-staging-guard.mjs`.
+- `pnpm guard:staging` bloquea si falta `SUPABASE_PROJECT_REF_STAGING`, si el ref no aparece en `supabase projects list`, o si el nombre del proyecto no contiene `staging`/`dev`.
+- `pnpm rls:staging:dryrun` y `pnpm rls:staging:apply` pasan por el guard antes de `supabase link`/`supabase db push`.
+- `tools/rls-smoke-test.js` ahora falla limpio con exit code `3` si faltan env vars y produce JSON sin secrets.
+- Se agrego migracion aislada `public.rls_smoke_items` para validar RLS owner-based sin tocar tablas reales del producto.
+- Se agrego workflow manual `.github/workflows/rls-smoke-staging.yml`.
+- No se aplicaron migraciones remotas porque sigue sin existir staging confirmado.
+
+### Evidencia/runbooks
+
+| Archivo | Rol |
+|---|---|
+| `apps/gold/docs/ops/STAGING_GUARDRAILS_AND_SETUP.md` | Politica y comandos de guardrail staging. |
+| `apps/gold/docs/security/RLS_STORAGE_SMOKE_TEST_RUNBOOK_2026-04-24.md` | Runbook exacto para dry-run, apply y smoke A/B. |
