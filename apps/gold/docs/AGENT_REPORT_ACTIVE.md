@@ -2718,3 +2718,24 @@ Corregir la posicion del logo del proyecto dentro del footer de la landing page.
 ### Verificacion pendiente de esta rama
 
 - Ejecutar `pnpm build:gold`.
+
+---
+
+## Sesion 2026-04-24 — Verificacion Supabase RLS/Storage post-merge
+
+### Resultado
+
+- DB RLS: BLOQUEADO.
+- Storage: BLOQUEADO.
+- `main` fue actualizado por fast-forward hasta `0972003`.
+- `tools/rls-smoke-test.js` existe.
+- `supabase login` OK.
+- `supabase projects list` solo mostro `YavlGold` / `gerzlzprkarikblqxpjt`; el nombre no confirma staging/dev.
+- No se ejecuto `supabase link`, `supabase db push --dry-run` ni `supabase db push` porque no hay staging confirmado.
+- `node tools/rls-smoke-test.js` fallo antes de autenticar por ausencia de `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
+
+### Evidencia actualizada
+
+| Archivo | Rol |
+|---|---|
+| `apps/gold/docs/security/POST_MERGE_RLS_STORAGE_VERIFICATION_2026-04-23.md` | Bloqueo remoto documentado con project ref listado, metodo de confirmacion staging, dry-run no ejecutado por seguridad y runbook exacto. |

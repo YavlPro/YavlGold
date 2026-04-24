@@ -1,8 +1,73 @@
 # Post-Merge RLS + Storage Verification — 2026-04-23
 
-Estado: BLOQUEADO / FAIL operativo para prueba A/B real.
+Estado: BLOQUEADO para DB RLS y BLOQUEADO para Storage.
 
 > No se afirma verificacion real de RLS/Storage. La prueba A/B no pudo ejecutarse contra DB viva por falta de Docker local y por ausencia de variables/usuarios QA configurados para el smoke test.
+>
+> Actualizacion 2026-04-24: tampoco se aplicaron migraciones ni se ejecuto `supabase db push --dry-run` remoto porque `supabase projects list` no mostro un proyecto cuyo nombre confirme staging/dev.
+
+## Actualizacion 2026-04-24 - verificacion remota staging
+
+| Item | Resultado |
+| --- | --- |
+| Fecha/hora local | `2026-04-24 09:54:22 -04:00` |
+| HEAD verificado | `0972003` (`Merge pull request #86 from YavlPro/codex/2026-04-23-post-merge-verification`) |
+| Supabase CLI | `2.72.7` |
+| Project ref usado para `link`/`db push` | Ninguno. No se confirmo staging. |
+| Proyecto listado/enlazado | `YavlGold` / `gerzlzprkarikblqxpjt` |
+| Metodo de confirmacion de staging | `supabase projects list`; criterio obligatorio: nombre del proyecto debe indicar claramente `staging` o `dev`. |
+| Resultado de confirmacion | BLOQUEADO: solo aparece `YavlGold`, sin indicador staging/dev. |
+| `supabase db push --dry-run` | NO EJECUTADO: bloqueado por falta de staging confirmado. |
+| `supabase db push` | NO EJECUTADO: prohibido aplicar migraciones sin staging confirmado. |
+| Smoke test A/B | BLOQUEADO: `node tools/rls-smoke-test.js` falla antes de autenticar por ausencia de `SUPABASE_URL` y `SUPABASE_ANON_KEY`. |
+
+### Comandos ejecutados el 2026-04-24
+
+```bash
+git checkout main
+git pull --ff-only
+supabase --version
+supabase login
+supabase projects list
+node tools/rls-smoke-test.js
+```
+
+### Resumen seguro de `supabase projects list`
+
+No se pega la salida completa. Resultado relevante:
+
+| Nombre | Ref | Lectura operativa |
+| --- | --- | --- |
+| `YavlGold` | `gerzlzprkarikblqxpjt` | No confirma staging/dev; tratado como no apto para `db push`. |
+
+### Resultado A/B 2026-04-24
+
+| Superficie | Caso | Resultado |
+| --- | --- | --- |
+| DB RLS | A no puede leer filas de B | BLOQUEADO / NO EJECUTADO |
+| DB RLS | A no puede update de B | BLOQUEADO / NO EJECUTADO |
+| DB RLS | A no puede delete de B | BLOQUEADO / NO EJECUTADO |
+| DB RLS | A no puede insert con `user_id != auth.uid()` | BLOQUEADO / NO EJECUTADO |
+| Storage | A puede subir/leer en su carpeta | BLOQUEADO / NO EJECUTADO |
+| Storage | A no puede subir en carpeta de B | BLOQUEADO / NO EJECUTADO |
+| Storage | A no puede leer objeto de B | BLOQUEADO / NO EJECUTADO |
+
+Salida segura del smoke test:
+
+```text
+Missing required env: SUPABASE_URL, SUPABASE_ANON_KEY
+```
+
+### Runbook exacto para desbloquear remoto
+
+1. Crear o identificar un proyecto Supabase cuyo nombre visible indique `staging` o `dev`.
+2. Repetir `supabase projects list` y registrar solo nombre + ref del proyecto staging/dev.
+3. Ejecutar `supabase link --project-ref <STAGING_PROJECT_REF>`.
+4. Ejecutar `supabase db push --dry-run`.
+5. Si el dry-run muestra solo migraciones/policies esperadas de RLS/Storage, ejecutar `supabase db push`.
+6. Exportar localmente las variables `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_USER_A_EMAIL`, `SUPABASE_USER_A_PASSWORD`, `SUPABASE_USER_B_EMAIL`, `SUPABASE_USER_B_PASSWORD`.
+7. Ejecutar `node tools/rls-smoke-test.js`.
+8. Registrar tabla PASS/FAIL por caso sin imprimir secretos.
 
 ## Entorno
 
