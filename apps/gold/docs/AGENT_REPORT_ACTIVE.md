@@ -2588,3 +2588,51 @@ UTF-8 check: OK
 - `dashboard.css`, `style.css`, `unificacion.css`, `tokens.css`
 - `main.js`, `authClient.js`, `authUI.js`
 - Backend, Supabase, modulos agro, auth modal
+
+---
+
+## Sesion: Correccion visual secundaria de paginas publicas del footer (2026-04-24)
+
+### Objetivo
+
+Corregir la segunda pasada de paginas publicas enlazadas desde el footer para que `/open-source`, `/privacy`, `/terms`, `/status` y paginas relacionadas se vean como parte directa de la familia visual de `/docs-agro`, sin gradientes genericos, placeholders falsos ni footers mal alineados.
+
+### Diagnostico previo
+
+- `/open-source`, `/privacy`, `/terms` y `/status` usan `assets/css/trust-pages.css`; la hoja comparte algunos tokens con docs-agro, pero mantiene fondo con `radial-gradient`, titulo blanco plano y footer centrado. Eso causa la sensacion de pagina suelta respecto a `/docs-agro`.
+- `/faq`, `/soporte` y `/cookies` siguen con CSS inline legacy, gradientes de boton/titulo, radios grandes y footers/navs distintos. Como `/faq` y `/soporte` estan enlazadas desde footers publicos, tambien contaminan la familia visual publica.
+- `anti-suplantacion.html` usa `trust-pages.css`, pero no tiene header/footer completo y conserva placeholders visibles: `DOMINIO [PENDIENTE]`, `ORG/REPO [PENDIENTE]` y `SECURITY_EMAIL [PENDIENTE]`.
+- El footer de `docs-agro.css` y `trust-pages.css` esta centrado; para el ajuste pedido conviene mover el bloque de marca/logo a una composicion izquierda-derecha, manteniendo la escala sobria de `/docs-agro`.
+- El flujo real de registro ya existe en `index.html`: `/#register` o `/#signup` abre el modal de registro por hash. Las paginas secundarias deben apuntar a ese flujo en CTAs de "Comenzar Ahora" sin crear otro auth flow.
+
+### Estrategia de menor diff
+
+- Reutilizar `trust-pages.css` como base comun para paginas publicas simples, alineandola a `docs-agro.css`.
+- Convertir solo las paginas legacy enlazadas desde footer (`faq`, `soporte`, `cookies`) al markup `trust-*` en vez de mantener CSS inline duplicado.
+- Ajustar footer de `docs-agro.css` y `trust-pages.css` con el mismo lenguaje visual y logo alineado a la izquierda.
+- Corregir CTAs a `/#register` y eliminar placeholders con copy honesto.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `assets/css/trust-pages.css` | Rehecha como base publica alineada a `/docs-agro`: fondo `--bg-0`, titulo metalico, panel sobrio, header coherente, CTA V10, footer grid con logo/marca a la izquierda y links a la derecha. |
+| `assets/css/docs-agro.css` | Footer de docs alineado al mismo patron izquierda-derecha; CTA compacto en header. |
+| `docs-agro.html` | CTA principal `Comenzar Ahora` apunta a `/#register`; footer suma Documentacion, Licencia MIT y Estado. |
+| `open-source.html`, `privacy.html`, `terms.html`, `status.html` | Header/nav/CTA/footer ajustados; `Comenzar Ahora` apunta al flujo real de registro; footer publico unificado. |
+| `faq.html`, `soporte.html`, `cookies.html` | Eliminado CSS inline legacy; migradas a la estructura `trust-*` compartida. |
+| `anti-suplantacion.html` | Agregado header/footer coherente y eliminados placeholders `DOMINIO [PENDIENTE]`, `ORG/REPO [PENDIENTE]`, `SECURITY_EMAIL [PENDIENTE]`. |
+
+### Verificacion
+
+- `pnpm build:gold` -> OK.
+- Rutas verificadas por HTTP local: `/docs-agro`, `/open-source`, `/privacy`, `/terms`, `/status`, `/faq`, `/soporte`, `/anti-suplantacion`, `/cookies`, `/#register` -> 200.
+- QA visual rapida con navegador local:
+  - Desktop `/docs-agro` y `/open-source`: misma familia dark/gold, sin fondo blanco ni gradiente radial generico.
+  - Mobile `/privacy` a 390px: header/CTA encajan sin solaparse.
+  - `/#register`: abre el modal real de registro con la tab Registro activa.
+
+### Riesgos / notas
+
+- `YavlGold-Agro-ADN-V10-Corregido.html` no aparece en el arbol del repo; se uso `/docs-agro` y las hojas V10 como canon visual local.
+- No se tocaron auth JS, Supabase, backend ni modulos Agro.

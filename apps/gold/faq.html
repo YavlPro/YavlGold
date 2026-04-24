@@ -2,179 +2,111 @@
 <html lang="es">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Preguntas Frecuentes - YavlGold V1</title>
-    <meta name="description"
-        content="Respuestas a las preguntas mas frecuentes sobre YavlGold Agro, su acceso actual y su uso en el campo.">
-    <link rel="icon" type="image/webp" href="/assets/images/logo.webp">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap"
-        rel="stylesheet">
-    <style>
-        :root {
-            --gold-principal: #C8A752;
-            --gold-light: #E4D08E;
-            --gold-dark: #9D8040;
-            --bg-primary: #0a0a0a;
-            --bg-secondary: #1a1a1a;
-            --text-primary: #ffffff;
-            --text-secondary: #cccccc;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Rajdhani', sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 4rem 2rem;
-            flex: 1;
-        }
-
-        h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2.5rem;
-            background: linear-gradient(135deg, var(--gold-dark), var(--gold-principal), var(--gold-light));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 2rem;
-            text-align: center;
-        }
-
-        .content {
-            background: var(--bg-secondary);
-            padding: 2rem;
-            border-radius: 16px;
-            border: 1px solid var(--gold-dark);
-            margin-bottom: 2rem;
-        }
-
-        .faq-item {
-            margin-bottom: 1.5rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 1px solid rgba(200, 167, 82, 0.2);
-        }
-
-        .faq-item:last-child {
-            margin-bottom: 0;
-            padding-bottom: 0;
-            border-bottom: none;
-        }
-
-        .faq-question {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--gold-principal);
-            margin-bottom: 0.5rem;
-        }
-
-        .faq-answer {
-            font-size: 1rem;
-            line-height: 1.8;
-            color: var(--text-secondary);
-        }
-
-        .faq-answer a {
-            color: var(--gold-principal);
-        }
-
-        .back-btn {
-            display: inline-block;
-            padding: 14px 32px;
-            background: linear-gradient(135deg, var(--gold-dark), var(--gold-principal));
-            color: #0a0a0a;
-            text-decoration: none;
-            border-radius: 50px;
-            font-weight: 700;
-            font-family: 'Rajdhani', sans-serif;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .back-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(200, 167, 82, 0.4);
-        }
-
-        .nav-container {
-            text-align: center;
-            margin-top: 1rem;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            background: var(--bg-secondary);
-            border: 1px solid var(--gold-principal);
-            border-radius: 50px;
-            font-size: 0.85rem;
-            color: var(--gold-principal);
-            margin-bottom: 1rem;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preguntas Frecuentes - YavlGold Agro</title>
+  <meta name="description"
+    content="Respuestas a las preguntas mas frecuentes sobre YavlGold Agro, su acceso actual y su uso en el campo.">
+  <link rel="icon" type="image/webp" href="/brand/logo.webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="/assets/css/trust-pages.css">
 </head>
 
-<body>
-    <a href="#main-content" class="sr-only-focusable">Saltar al contenido principal</a>
-    <div id="main-content" class="container">
-        <span class="badge">Preguntas Frecuentes</span>
-        <h1>FAQ - YavlGold V1</h1>
-        <div class="content">
-            <div class="faq-item">
-                <p class="faq-question">Que es YavlGold?</p>
-                <p class="faq-answer">YavlGold V1 es la release activa de una herramienta digital construida con
-                    Vanilla JS, Vite MPA y Supabase. Hoy YavlGold funciona como Agro: control agricola y operativo
-                    para la finca real.</p>
-            </div>
-            <div class="faq-item">
-                <p class="faq-question">Como puedo registrarme?</p>
-                <p class="faq-answer">Puedes crear una cuenta gratuita desde nuestra pagina principal haciendo clic en
-                    "Crear Cuenta". Solo necesitas un correo electronico valido y una contrasena segura.</p>
-            </div>
-            <div class="faq-item">
-                <p class="faq-question">Es gratis usar YavlGold?</p>
-                <p class="faq-answer">Hoy, en YavlGold V1, el uso general de Agro es gratuito. No hay pagos ni
-                    suscripciones activas. Si se habilitan planes o cobros, se informará antes de aplicarlos.</p>
-            </div>
-            <div class="faq-item">
-                <p class="faq-question">Puedo usar Agro sin internet?</p>
-                <p class="faq-answer">Agro funciona principalmente online porque guarda datos con Supabase, consulta
-                    clima y sincroniza informacion de tu cuenta. Algunas superficies puntuales, como AgroRepo, usan
-                    LocalStorage y pueden trabajar de forma local en ese contexto especifico.</p>
-            </div>
-            <div class="faq-item">
-                <p class="faq-question">Que modulos estan disponibles hoy?</p>
-                <p class="faq-answer">Hoy la experiencia activa del producto es Agro. Si entras a YavlGold, entras a
-                    una herramienta para registrar cultivos, movimientos y seguimiento real del campo.</p>
-            </div>
-            <div class="faq-item">
-                <p class="faq-question">Como contacto a soporte?</p>
-                <p class="faq-answer">Para cualquier consulta, puedes escribirnos a <a
-                        href="mailto:soporte@yavlgold.com">soporte@yavlgold.com</a>. Normalmente respondemos en menos de 24 horas (días hábiles).</p>
-            </div>
-            <div class="faq-item">
-                <p class="faq-question">Que significa V1?</p>
-                <p class="faq-answer">V1 identifica el release visible activo del producto. Las referencias a V9.8
-                    quedan solo como contexto historico cuando un documento o cronica lo marque expresamente.</p>
-            </div>
-        </div>
-        <div class="nav-container">
-            <a href="./" class="back-btn">Volver al Inicio</a>
-        </div>
+<body class="trust-page">
+  <a href="#main-content" class="trust-skip-link">Saltar al contenido principal</a>
+
+  <header class="trust-header">
+    <div class="trust-header__inner">
+      <a href="/" class="trust-header__brand" aria-label="Volver a YavlGold">
+        <img src="/brand/logo.webp" alt="YavlGold" width="32" height="32">
+        <span class="trust-header__title">YavlGold</span>
+      </a>
+      <span class="trust-header__badge">Preguntas frecuentes</span>
+      <nav class="trust-header__nav" aria-label="Enlaces principales">
+        <a href="/" class="trust-header__link"><i class="fas fa-arrow-left" aria-hidden="true"></i> <span>Inicio</span></a>
+        <a href="/docs-agro" class="trust-header__link"><i class="fas fa-book" aria-hidden="true"></i> <span>Documentacion</span></a>
+        <a href="/#register" class="trust-header__link trust-header__link--cta">Comenzar Ahora</a>
+      </nav>
     </div>
+  </header>
+
+  <main id="main-content" class="trust-shell">
+    <span class="trust-kicker">Ayuda</span>
+    <h1 class="trust-title">Preguntas frecuentes</h1>
+    <p class="trust-lead">Respuestas breves sobre el estado actual de YavlGold Agro V1, registro, datos y soporte.</p>
+
+    <div class="trust-panel">
+      <section class="trust-section">
+        <h2>Que es YavlGold?</h2>
+        <p>YavlGold V1 es la release activa de una herramienta digital construida con Vanilla JS, Vite MPA y Supabase. Hoy funciona como Agro: control agricola y operativo para la finca real.</p>
+      </section>
+
+      <section class="trust-section">
+        <h2>Como puedo registrarme?</h2>
+        <p>Puedes crear una cuenta gratuita desde el flujo real de registro en la pagina principal. Usa el boton Comenzar Ahora o entra directamente a <a href="/#register">/#register</a>.</p>
+      </section>
+
+      <section class="trust-section">
+        <h2>Es gratis usar YavlGold?</h2>
+        <p>Hoy, en YavlGold V1, el uso general de Agro es gratuito. No hay pagos ni suscripciones activas. Si se habilitan planes o cobros, se informara antes de aplicarlos.</p>
+      </section>
+
+      <section class="trust-section">
+        <h2>Puedo usar Agro sin internet?</h2>
+        <p>Agro funciona principalmente online porque guarda datos con Supabase, consulta clima y sincroniza informacion de tu cuenta. Algunas superficies puntuales, como AgroRepo, usan LocalStorage en ese contexto especifico.</p>
+      </section>
+
+      <section class="trust-section">
+        <h2>Que modulos estan disponibles hoy?</h2>
+        <p>La experiencia activa del producto es Agro. Al entrar a YavlGold entras a una herramienta para registrar cultivos, movimientos, tareas y seguimiento real del campo.</p>
+      </section>
+
+      <section class="trust-section">
+        <h2>Como contacto a soporte?</h2>
+        <p>Para consultas de uso, errores o solicitudes de privacidad puedes escribir a <a href="mailto:soporte@yavlgold.com">soporte@yavlgold.com</a>.</p>
+      </section>
+
+      <section class="trust-section">
+        <h2>Que significa V1?</h2>
+        <p>V1 identifica el release visible activo del producto. Las referencias a V9.8 quedan solo como contexto historico cuando un documento o cronica lo marque expresamente.</p>
+      </section>
+
+      <div class="trust-actions">
+        <a href="/#register" class="trust-button trust-button--primary">Comenzar Ahora</a>
+        <a href="/docs-agro" class="trust-button">Documentacion</a>
+        <a href="/soporte" class="trust-button">Soporte</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="trust-footer">
+    <div class="trust-footer__inner">
+      <div class="trust-footer__brand">
+        <img src="/brand/logo.webp" alt="YavlGold" width="24" height="24">
+        <span>YavlGold</span>
+      </div>
+      <nav class="trust-footer__links" aria-label="Enlaces del pie de pagina">
+        <a href="/">Inicio</a>
+        <a href="/agro/">Agro</a>
+        <a href="/docs-agro">Documentacion</a>
+        <a href="/open-source">Licencia MIT</a>
+        <a href="/status">Estado</a>
+        <a href="/faq">Preguntas frecuentes</a>
+        <a href="/soporte">Soporte</a>
+        <a href="/terms">Terminos</a>
+        <a href="/privacy">Privacidad</a>
+      </nav>
+      <p class="trust-footer__copy">&copy; 2026 YavlGold. Tu finca digital.</p>
+    </div>
+  </footer>
 </body>
 
 </html>

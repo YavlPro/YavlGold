@@ -1,310 +1,101 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>Soporte - YavlGold V1</title>
-    <meta name="description"
-        content="Contacta al equipo de YavlGold Agro. Soporte técnico y ayuda sobre el uso actual del producto.">
-    <link rel="icon" type="image/png" href="/assets/images/logo.webp">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-        integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <style>
-        :root {
-            /*  TIPOGRAFÍAS OFICIALES */
-            --font-heading: 'Orbitron', sans-serif;
-            --font-body: 'Rajdhani', sans-serif;
-            --gold-principal: #C8A752;
-            --gold-dark: #8B7842;
-            --bg-primary: #0B0C0F;
-            --bg-secondary: #101114;
-            --text-primary: #ffffff;
-            --text-secondary: #cccccc;
-            --border-color: #2a2a2a;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Rajdhani', sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
-        }
-
-        h1,
-        h2,
-        h3 {
-            font-family: 'Orbitron', sans-serif;
-        }
-
-        .navbar {
-            position: sticky;
-            top: 0;
-            background: var(--bg-secondary);
-            backdrop-filter: blur(20px);
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 1000;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            text-decoration: none;
-        }
-
-        .logo-container img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-        }
-
-        .logo-text {
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .logo-text span {
-            color: var(--gold-principal);
-        }
-
-        .nav-link {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-weight: 600;
-            transition: color 0.3s;
-        }
-
-        .nav-link:hover {
-            color: var(--gold-principal);
-        }
-
-        main {
-            max-width: 700px;
-            margin: 0 auto;
-            padding: 3rem 1.5rem;
-        }
-
-        .page-header {
-            text-align: center;
-            margin-bottom: 2.5rem;
-        }
-
-        .page-header .icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            display: block;
-        }
-
-        .page-header h1 {
-            font-size: 2.5rem;
-            color: var(--gold-principal);
-            margin-bottom: 0.5rem;
-        }
-
-        .page-header p {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-        }
-
-        .support-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 2.5rem;
-        }
-
-        .support-card p {
-            color: var(--text-secondary);
-            line-height: 1.7;
-            margin-bottom: 1.5rem;
-        }
-
-        .support-card ul {
-            list-style: disc;
-            padding-left: 1.5rem;
-            color: var(--text-secondary);
-            margin-bottom: 2rem;
-        }
-
-        .support-card ul li {
-            margin-bottom: 0.5rem;
-        }
-
-        .btn-gold {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            padding: 1rem 2rem;
-            background: linear-gradient(135deg, var(--gold-dark), var(--gold-principal));
-            color: #0B0C0F;
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 1.1rem;
-            font-weight: 700;
-            text-decoration: none;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-        }
-
-        .btn-gold:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(200, 167, 82, 0.3);
-        }
-
-        .note {
-            text-align: center;
-            margin-top: 2rem;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            opacity: 0.7;
-        }
-
-        .footer {
-            background: var(--bg-primary);
-            padding: 3rem 2rem;
-            text-align: center;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .footer-logo {
-            margin-bottom: 1rem;
-        }
-
-        .footer-logo img {
-            width: 60px;
-            height: 60px;
-        }
-
-        .footer-text {
-            color: var(--text-secondary);
-            margin-bottom: 1rem;
-            font-size: 1rem;
-        }
-
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            flex-wrap: wrap;
-            margin-bottom: 1.5rem;
-        }
-
-        .footer-links a {
-            color: var(--gold-principal);
-            text-decoration: none;
-            font-weight: 600;
-            transition: opacity 0.3s;
-        }
-
-        .footer-links a:hover {
-            opacity: 0.8;
-        }
-
-        .footer-legal {
-            display: flex;
-            justify-content: center;
-            gap: 1.5rem;
-            flex-wrap: wrap;
-            margin-bottom: 1rem;
-        }
-
-        .footer-legal a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: color 0.3s;
-        }
-
-        .footer-legal a:hover {
-            color: var(--gold-principal);
-        }
-
-        .footer-copy {
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            opacity: 0.7;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Soporte - YavlGold Agro</title>
+  <meta name="description" content="Contacta al equipo de YavlGold Agro para soporte tecnico y ayuda sobre el producto.">
+  <link rel="icon" type="image/webp" href="/brand/logo.webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="/assets/css/trust-pages.css">
 </head>
 
-<body>
-    <a href="#main-content" class="sr-only-focusable">Saltar al contenido principal</a>
-    <nav class="navbar">
-        <a href="/" class="logo-container">
-            <img src="./assets/images/logo.webp" alt="YavlGold">
-            <div class="logo-text">Yavl<span>Gold</span> V1</div>
-        </a>
-        <a href="/" class="nav-link">Volver al inicio</a>
-    </nav>
+<body class="trust-page">
+  <a href="#main-content" class="trust-skip-link">Saltar al contenido principal</a>
 
-    <main id="main-content">
-        <header class="page-header">
-            <i class="fa-solid fa-headset" style="font-size:3rem;color:var(--gold-principal);display:block;margin-bottom:1rem" aria-hidden="true"></i>
-            <h1>Estamos aquí para ti</h1>
-            <p>El equipo de YavlGold está listo para ayudarte</p>
-        </header>
+  <header class="trust-header">
+    <div class="trust-header__inner">
+      <a href="/" class="trust-header__brand" aria-label="Volver a YavlGold">
+        <img src="/brand/logo.webp" alt="YavlGold" width="32" height="32">
+        <span class="trust-header__title">YavlGold</span>
+      </a>
+      <span class="trust-header__badge">Soporte</span>
+      <nav class="trust-header__nav" aria-label="Enlaces principales">
+        <a href="/" class="trust-header__link"><i class="fas fa-arrow-left" aria-hidden="true"></i> <span>Inicio</span></a>
+        <a href="/docs-agro" class="trust-header__link"><i class="fas fa-book" aria-hidden="true"></i> <span>Documentacion</span></a>
+        <a href="/#register" class="trust-header__link trust-header__link--cta">Comenzar Ahora</a>
+      </nav>
+    </div>
+  </header>
 
-        <div class="support-card">
-            <p>
-                Cuéntanos con calma qué sucede: si es un error técnico, una duda sobre Agro o una idea para mejorar
-                la herramienta en el campo.
-            </p>
+  <main id="main-content" class="trust-shell">
+    <span class="trust-kicker">Soporte</span>
+    <h1 class="trust-title">Estamos aqui para ayudarte</h1>
+    <p class="trust-lead">Cuéntanos que sucede: un error tecnico, una duda sobre Agro o una idea para mejorar la herramienta en el campo.</p>
 
-            <ul>
-                <li>Incluye tu correo o usuario de YavlGold.</li>
-                <li>Si es un bug, describe los pasos que seguiste.</li>
-                <li>Recuerda que YavlGold hoy funciona como Agro; no damos asesoría financiera personalizada.</li>
-            </ul>
+    <div class="trust-panel">
+      <section class="trust-section">
+        <h2>Como pedir ayuda</h2>
+        <p>Escribe a soporte con el mayor contexto posible para poder revisar tu caso sin pedirte informacion innecesaria.</p>
+        <ul>
+          <li>Incluye tu correo o usuario de YavlGold.</li>
+          <li>Si es un bug, describe los pasos que seguiste y la ruta afectada.</li>
+          <li>No compartas contraseñas, tokens, codigos de acceso ni datos sensibles.</li>
+          <li>Recuerda que YavlGold hoy funciona como Agro; no damos asesoria financiera personalizada.</li>
+        </ul>
+      </section>
 
-            <a href="mailto:soporte@yavlgold.com?subject=Soporte%20YavlGold%20V1" class="btn-gold">
-                Escribir a soporte@yavlgold.com
-            </a>
+      <section class="trust-section">
+        <h2>Canales</h2>
+        <div class="trust-meta-grid">
+          <div class="trust-meta">
+            <span>Soporte general</span>
+            <strong>soporte@yavlgold.com</strong>
+          </div>
+          <div class="trust-meta">
+            <span>Seguridad</span>
+            <strong>soporte@yavlgold.com (asunto: Seguridad)</strong>
+          </div>
         </div>
+      </section>
 
-        <p class="note">
-            Si necesitas ayuda, respondemos por correo con contexto de Agro y del acceso actual.
-        </p>
-    </main>
+      <div class="trust-actions">
+        <a href="mailto:soporte@yavlgold.com?subject=Soporte%20YavlGold%20Agro" class="trust-button trust-button--primary">Escribir a soporte</a>
+        <a href="/#register" class="trust-button">Comenzar Ahora</a>
+        <a href="/status" class="trust-button">Estado</a>
+      </div>
+    </div>
+  </main>
 
-    <footer class="footer">
-        <div class="footer-logo">
-            <img src="./assets/images/logo.svg" alt="YavlGold">
-        </div>
-        <p class="footer-text">YavlGold V1 - Plataforma digital para el agro</p>
-        <div class="footer-links">
-            <a href="/">Inicio</a>
-            <a href="/agro">Agro</a>
-            <a href="mailto:soporte@yavlgold.com" title="Correo a soporte@yavlgold.com">Correo de soporte</a>
-        </div>
-        <div class="footer-legal">
-            <a href="/cookies">Cookies</a>
-            <a href="/faq">FAQ</a>
-            <a href="/soporte">Soporte</a>
-            <a href="/status">Estado</a>
-            <a href="/open-source">Open Source</a>
-            <a href="/anti-suplantacion">No inversiones</a>
-        </div>
-        <p class="footer-copy">© 2026 YavlGold V1. Open Source (MIT License).</p>
-    </footer>
+  <footer class="trust-footer">
+    <div class="trust-footer__inner">
+      <div class="trust-footer__brand">
+        <img src="/brand/logo.webp" alt="YavlGold" width="24" height="24">
+        <span>YavlGold</span>
+      </div>
+      <nav class="trust-footer__links" aria-label="Enlaces del pie de pagina">
+        <a href="/">Inicio</a>
+        <a href="/agro/">Agro</a>
+        <a href="/docs-agro">Documentacion</a>
+        <a href="/open-source">Licencia MIT</a>
+        <a href="/status">Estado</a>
+        <a href="/faq">Preguntas frecuentes</a>
+        <a href="/soporte">Soporte</a>
+        <a href="/terms">Terminos</a>
+        <a href="/privacy">Privacidad</a>
+      </nav>
+      <p class="trust-footer__copy">&copy; 2026 YavlGold. Tu finca digital.</p>
+    </div>
+  </footer>
 </body>
 
 </html>
