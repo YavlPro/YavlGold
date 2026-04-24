@@ -2760,3 +2760,253 @@ Corregir la posicion del logo del proyecto dentro del footer de la landing page.
 |---|---|
 | `apps/gold/docs/ops/STAGING_GUARDRAILS_AND_SETUP.md` | Politica y comandos de guardrail staging. |
 | `apps/gold/docs/security/RLS_STORAGE_SMOKE_TEST_RUNBOOK_2026-04-24.md` | Runbook exacto para dry-run, apply y smoke A/B. |
+
+---
+
+## Sesion 2026-04-24 — Staging Supabase creado, pendiente de migraciones
+
+### Resultado
+
+- Hora local: `2026-04-24 11:00:27 -04:00`.
+- Carpeta Supabase canonica confirmada: `supabase/` en raiz del repo.
+- Migraciones canonicas confirmadas en `supabase/migrations/`.
+- `apps/gold/supabase/` no existe y no se uso.
+- Migraciones `.sql` detectadas: 35.
+- Ultima migracion detectada: `supabase/migrations/20260424101000_rls_smoke_items.sql`.
+- Proyecto staging listado por Supabase CLI: `YavlGold-staging` / `trratydmsyysnoxhfsti`.
+- `pnpm guard:staging` PASS al usar ese ref staging confirmado.
+- Entorno inicial: `SUPABASE_ACCESS_TOKEN` presente; `SUPABASE_PROJECT_REF_STAGING`, `SUPABASE_DB_PASSWORD`, `SUPABASE_DB_PASSWORD_STAGING` y `PGPASSWORD` ausentes.
+- No se ejecuto `supabase link` ni `supabase db push` porque faltaban variables locales necesarias para hacerlo sin prompt/secret expuesto.
+
+### Scripts revisados
+
+| Archivo | Lectura |
+|---|---|
+| `package.json` | Expone `guard:staging`, `rls:staging:dryrun` y `rls:staging:apply`. |
+| `tools/supabase-staging-guard.mjs` | Bloquea si el ref no existe o si el nombre del proyecto no contiene `staging`/`dev`. |
+| `tools/rls-smoke-test.js` | Requiere variables QA A/B y produce JSON sin secrets; default DB test table: `rls_smoke_items`. |
+
+### Siguiente paso seguro
+
+Setear localmente `SUPABASE_PROJECT_REF_STAGING=trratydmsyysnoxhfsti` y proveer password DB solo en terminal local o prompt de Supabase CLI. Luego ejecutar dry-run/apply desde `supabase/` canonico via `--workdir .`, nunca desde `apps/gold/supabase`.
+
+---
+
+## Sesion 2026-04-24 — Intento de link/push staging Supabase
+
+### Resultado parcial
+
+- Hora local: `2026-04-24 11:11:51 -04:00`.
+- Workdir usado: `C:\Users\yerik\gold`.
+- `SUPABASE_PROJECT_REF_STAGING` seteado solo en proceso local como `trratydmsyysnoxhfsti`.
+- `pnpm guard:staging`: PASS, confirmo `YavlGold-staging` / `trratydmsyysnoxhfsti`.
+- `supabase link --project-ref $env:SUPABASE_PROJECT_REF_STAGING --workdir .`: PASS, sin pedir password en el ejecutor.
+- `supabase db push --workdir .`: BLOQUEADO operativo; el comando no devolvio salida y agoto timeout del ejecutor, compatible con prompt interactivo de password/confirmacion no capturable aqui.
+- No se imprimio ni guardo password.
+- No se creo `.env`.
+- No se uso `SUPABASE_DB_PASSWORD`.
+- No se ejecuto git.
+- No se usaron ni recrearon rutas `apps/gold/supabase`.
+
+### Siguiente paso manual
+
+Ejecutar en una terminal local del repo:
+
+```powershell
+cd C:\Users\yerik\gold
+supabase db push --workdir .
+```
+
+Pegar la database password solo cuando la CLI la pida. Al terminar, verificar tablas en staging, incluyendo `rls_smoke_items`.
+
+---
+
+## Sesion 2026-04-24 — Staging Supabase migrado
+
+### Resultado
+
+- Hora local de registro: `2026-04-24 16:10:46 -04:00`.
+- Staging creado: `YavlGold-staging` / `trratydmsyysnoxhfsti`.
+- Migraciones aplicadas en staging mediante `supabase db push --workdir .` desde el canon Supabase de raiz.
+- Tablas de YavlGold visibles en Supabase Table Editor.
+- Tabla de smoke test `rls_smoke_items` visible.
+- Causa real del bloqueo previo: Windows Firewall estaba bloqueando la conexion remota al pooler de Supabase.
+- Al corregir Windows Firewall, `supabase db push --workdir .` funciono.
+- Estado actual: staging listo para crear/configurar usuarios QA A/B y ejecutar el smoke test RLS/Storage.
+- No se imprimieron ni registraron credenciales.
+- No se ejecuto git.
+
+---
+
+## Sesion 2026-04-24 — Preparacion workflow smoke RLS/Storage staging
+
+### Resultado
+
+- Hora local de registro: `2026-04-24 16:45:08 -04:00`.
+- Workflow revisado: `.github/workflows/rls-smoke-staging.yml`.
+- Runbook revisado: `apps/gold/docs/security/RLS_STORAGE_SMOKE_TEST_RUNBOOK_2026-04-24.md`.
+- PR #88 confirmado como mergeado en `main`; el workflow manual debe estar disponible desde GitHub Actions.
+- Secrets requeridos por nombre en el workflow:
+  - `SUPABASE_URL`
+  - `SUPABASE_ANON_KEY`
+  - `SUPABASE_USER_A_EMAIL`
+  - `SUPABASE_USER_A_PASSWORD`
+  - `SUPABASE_USER_B_EMAIL`
+  - `SUPABASE_USER_B_PASSWORD`
+- Variables fijas del workflow: `RLS_SMOKE_TABLE=rls_smoke_items`, `RLS_SMOKE_BUCKET=agro-evidence`.
+- No se imprimieron ni pidieron valores de secrets.
+- Variables locales equivalentes no estan cargadas en esta sesion, por lo que no corresponde correr `node tools/rls-smoke-test.js` localmente.
+- No hay `GITHUB_TOKEN` ni `GH_TOKEN` local disponible y el conector GitHub expuesto no incluye `workflow_dispatch`; por tanto, no se disparo el workflow desde Codex.
+- Estado actual: listo para ejecutar manualmente el workflow `RLS Storage Smoke Test (Staging)` desde GitHub Actions.
+
+### Ejecucion manual segura
+
+1. Abrir GitHub > `YavlPro/YavlGold` > Actions.
+2. Seleccionar `RLS Storage Smoke Test (Staging)`.
+3. Ejecutar `Run workflow` sobre `main`.
+4. Revisar el job `Run RLS and storage smoke test`.
+5. Resultado esperado: `node tools/rls-smoke-test.js` imprime JSON con `status: PASS` sin mostrar secrets.
+
+---
+
+## Sesion 2026-04-24 — Intento de correccion secrets GitHub CLI
+
+### Resultado
+
+- Hora local de registro: `2026-04-24 17:27:59 -04:00`.
+- Objetivo: verificar/corregir repository secrets del workflow `RLS Storage Smoke Test (Staging)` usando GitHub CLI.
+- `gh auth status`: BLOQUEADO; `gh` no esta instalado o no esta disponible en `PATH` en este entorno.
+- `gh secret list -R YavlPro/YavlGold`: BLOQUEADO por la misma causa.
+- No se pudieron verificar secrets por nombre desde Codex.
+- No se pudo ejecutar `gh workflow run rls-smoke-staging.yml -R YavlPro/YavlGold --ref main`.
+- No se imprimieron ni pidieron credenciales.
+- No se guardo `.env`.
+- No se ejecuto git.
+
+### Estado
+
+- Resultado actual: BLOQUEADO por falta de GitHub CLI disponible en el entorno de Codex.
+- Los secrets esperados por nombre siguen siendo:
+  - `SUPABASE_URL`
+  - `SUPABASE_ANON_KEY`
+  - `SUPABASE_USER_A_EMAIL`
+  - `SUPABASE_USER_A_PASSWORD`
+  - `SUPABASE_USER_B_EMAIL`
+  - `SUPABASE_USER_B_PASSWORD`
+
+### Runbook seguro en terminal con GitHub CLI
+
+Ejecutar en una terminal local donde `gh` este instalado/autenticado:
+
+```powershell
+gh auth status
+gh secret list -R YavlPro/YavlGold
+gh secret set SUPABASE_URL -R YavlPro/YavlGold
+gh secret set SUPABASE_ANON_KEY -R YavlPro/YavlGold
+gh secret set SUPABASE_USER_A_EMAIL -R YavlPro/YavlGold
+gh secret set SUPABASE_USER_A_PASSWORD -R YavlPro/YavlGold
+gh secret set SUPABASE_USER_B_EMAIL -R YavlPro/YavlGold
+gh secret set SUPABASE_USER_B_PASSWORD -R YavlPro/YavlGold
+gh secret list -R YavlPro/YavlGold
+gh workflow run rls-smoke-staging.yml -R YavlPro/YavlGold --ref main
+gh run list -R YavlPro/YavlGold --workflow rls-smoke-staging.yml --limit 3
+```
+
+---
+
+## Sesion 2026-04-24 — Cierre final Supabase staging/RLS/Storage
+
+### Resultado final
+
+- Hora local de registro: `2026-04-24 18:22:15 -04:00`.
+- Frente: Supabase staging + RLS + Storage A/B.
+- Estado final: PASS.
+- Workflow: `RLS Storage Smoke Test (Staging)`.
+- Job: `Run RLS and storage smoke test`.
+- Resultado del job: succeeded.
+- Duracion aproximada: 18s.
+- `pnpm build:gold`: PASS.
+- `agent-guard`: OK.
+- `agent-report-check`: OK.
+- `vite build`: OK.
+- `check-llms`: OK.
+- UTF-8 Guardrail: OK.
+- Resultado funcional: staging/RLS/Storage validado.
+- No se imprimieron ni registraron secrets.
+- No se ejecuto git.
+
+### Bloqueos superados
+
+| Bloqueo | Causa | Resolucion |
+|---|---|---|
+| `supabase db push --workdir .` bloqueado | Windows Firewall bloqueaba la conexion remota al pooler de Supabase | Se corrigio Windows Firewall y el push funciono. |
+| Workflow sin secrets completos | Secrets mal nombrados/faltantes en GitHub Actions | Se cargaron los repository secrets requeridos por nombre con `gh secret set` interactivo, sin `--body`. |
+| Smoke test bloqueado por QA B | Usuarios QA A/B o passwords no sincronizadas | Se sincronizaron usuarios QA A/B y passwords en Supabase staging/GitHub Secrets. |
+
+### Estado operativo
+
+- Staging `YavlGold-staging` queda migrado.
+- Tablas YavlGold visibles en Table Editor.
+- `rls_smoke_items` disponible para pruebas aisladas.
+- Workflow manual `rls-smoke-staging.yml` queda como verificacion reproducible.
+- Frente Supabase staging/RLS/Storage cerrado como PASS.
+
+### Comandos git sugeridos
+
+No ejecutados en esta sesion:
+
+```powershell
+git status --short --branch
+git add apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "docs: close staging rls storage verification"
+git push
+```
+
+Pegar cada valor solo en el prompt interactivo de `gh secret set`; nunca en el chat ni en archivos.
+
+---
+
+## Sesion 2026-04-24 — Workflow RLS/Storage staging con GitHub CLI
+
+### Resultado
+
+- Hora local de registro: `2026-04-24 17:50:43 -04:00`.
+- GitHub CLI disponible en `C:\Program Files\GitHub CLI\gh.exe`.
+- `gh auth status`: PASS, autenticado como `YavlPro`.
+- Repository secrets presentes por nombre:
+  - `SUPABASE_URL`
+  - `SUPABASE_ANON_KEY`
+  - `SUPABASE_USER_A_EMAIL`
+  - `SUPABASE_USER_A_PASSWORD`
+  - `SUPABASE_USER_B_EMAIL`
+  - `SUPABASE_USER_B_PASSWORD`
+  - `SUPABASE_PROJECT_REF_STAGING`
+- Secrets faltantes iniciales cargados mediante `gh secret set <NOMBRE> -R YavlPro/YavlGold`, sin `--body`.
+- No se imprimieron valores de secrets.
+- No se guardo `.env`.
+- No se ejecuto git.
+
+### Runs ejecutados
+
+| Run ID | Resultado | Lectura |
+|---|---|---|
+| `24913161810` | FAILURE / BLOCKED | `User B login failed` con `Invalid login credentials`. |
+| `24913275639` | FAILURE / FAIL | User A y User B autenticaron como la misma cuenta; se reestablecio el par B como cuenta distinta. |
+| `24913444801` | FAILURE / BLOCKED | `User B login failed` con `Invalid login credentials`. |
+
+### Estado actual
+
+- Workflow ejecutado: SI, `rls-smoke-staging.yml` sobre `main`.
+- Resultado actual: BLOCKED.
+- Causa actual: credenciales o usuario QA B no validos en Supabase staging.
+- Build dentro del workflow: PASS.
+- Smoke test no llego a validar DB/Storage porque se detuvo en login de User B.
+
+### Siguiente paso
+
+Verificar en Supabase staging que el usuario QA B exista, este habilitado/confirmado si aplica, y que el secret `SUPABASE_USER_B_EMAIL` + `SUPABASE_USER_B_PASSWORD` correspondan a esa cuenta. Luego relanzar:
+
+```powershell
+gh workflow run rls-smoke-staging.yml -R YavlPro/YavlGold --ref main
+gh run list -R YavlPro/YavlGold --workflow rls-smoke-staging.yml --limit 3
+```
