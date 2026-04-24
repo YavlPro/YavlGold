@@ -7,17 +7,11 @@ module.exports = function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.setHeader('X-Content-Type-Options', 'nosniff');
 
-  const commit = process.env.VERCEL_GIT_COMMIT_SHA
-    ? process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 12)
-    : null;
-
   const payload = {
     ok: true,
     service: 'yavlgold-agro',
     version: '1.0.0',
-    timestamp: new Date().toISOString(),
-    environment: process.env.VERCEL_ENV || 'local',
-    commit
+    timestamp: new Date().toISOString()
   };
 
   if (req.method === 'HEAD') {
