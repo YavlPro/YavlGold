@@ -2527,3 +2527,64 @@ UTF-8 check: OK
 - `dashboard.css`, `style.css`, `unificacion.css`, `tokens.css` — intocables por regla
 - `main.js`, `authClient.js`, `authUI.js` — sin cambios
 - Archivos backend, Supabase, modulos agro
+
+## Sesion: Unificacion visual de paginas publicas del footer (2026-04-23)
+
+### Objetivo
+
+Las 4 paginas trust (`/open-source`, `/privacy`, `/terms`, `/status`) no tenian header ni footer. Se veian como paginas sueltas sin identidad. Tambien contenian placeholders falsos y el CTA "Comenzar Ahora" de la landing no dirigia a registro.
+
+### Diagnostico
+
+- Las trust pages usaban `trust-pages.css` con buen contenido panel pero sin header/footer
+- Faltaba Font Awesome CDN en sus `<head>` (necesario para iconos de nav/footer)
+- Favicon apuntaba a `/assets/images/logo.webp` en vez de `/brand/logo.webp`
+- Placeholders: `ORG/REPO [PENDIENTE]`, `SECURITY_EMAIL [PENDIENTE]`, `[PENDIENTE: definir...]` en 7 ubicaciones
+- Landing CTA "Comenzar Ahora" apuntaba a `#modulos` en vez de abrir modal de registro
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `assets/css/trust-pages.css` | CSS de header sticky + footer centrado (espejan docs-agro.css). Body flex column. Shell padding ajustado. Responsive badge oculto en mobile. |
+| `open-source.html` | Header con logo/badge/nav + Footer con brand/links/copy. FA CDN. Favicon corregido. Placeholders `ORG/REPO` eliminados. |
+| `privacy.html` | Header + footer. FA CDN. Favicon. Placeholders `SECURITY_EMAIL` y `[PENDIENTE: definir]` reemplazados con info real. |
+| `terms.html` | Header + footer. FA CDN. Favicon. Placeholders jurisdiccion y `SECURITY_EMAIL` reemplazados. |
+| `status.html` | Header + footer. FA CDN. Favicon. Placeholder `SECURITY_EMAIL` reemplazado. |
+| `index.html` | CTA "Comenzar Ahora" → `<button onclick="openAuthModal('signup')">` en vez de `<a href="#modulos">`. |
+
+### Placeholder cleanup
+
+| Placeholder | Reemplazo |
+|---|---|
+| `https://github.com/ORG/REPO [PENDIENTE]` | "se publicara cuando este disponible" |
+| `SECURITY_EMAIL [PENDIENTE]` (x3) | `soporte@yavlgold.com` asunto "Seguridad" |
+| `[PENDIENTE: definir canal y SLA]` | Info real sobre export desde Agro + contacto soporte |
+| `[PENDIENTE: definir jurisdiccion]` | "Legislacion aplicable en Venezuela" |
+
+### Resultado de build
+
+```
+pnpm build:gold → OK
+agent-guard: OK
+agent-report-check: OK
+vite build: 169 modules, 2.30s
+UTF-8 check: OK
+```
+
+### QA recomendado
+
+- [ ] Abrir `/open-source`, `/privacy`, `/terms`, `/status` — verificar header sticky con logo/badge/nav
+- [ ] Verificar footer con brand logo centrado, links, copyright
+- [ ] Comparar visualmente con `/docs-agro` (canon)
+- [ ] Verificar que CTA "Comenzar Ahora" en landing abre modal de registro
+- [ ] Confirmar que no quedan `[PENDIENTE]` ni `ORG/REPO` en ninguna pagina
+- [ ] Verificar links del footer: todos apuntan a rutas reales
+- [ ] Mobile responsive: badge se oculta en pantallas pequenas
+
+### NO se toco
+
+- `docs-agro.html` / `docs-agro.css` — canon, solo lectura
+- `dashboard.css`, `style.css`, `unificacion.css`, `tokens.css`
+- `main.js`, `authClient.js`, `authUI.js`
+- Backend, Supabase, modulos agro, auth modal
