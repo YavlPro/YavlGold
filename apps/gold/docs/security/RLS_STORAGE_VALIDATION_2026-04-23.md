@@ -10,7 +10,7 @@ Estado: script reproducible agregado; prueba A/B real no ejecutada por bloqueo d
 | Staging Supabase | `project-ref` detectado, pero `supabase db push --dry-run` quedo colgado en inicializacion |
 | Migraciones aplicadas en esta sesion | Ninguna |
 | Script reproducible | `tools/rls-smoke-test.js` |
-| Commit | Completar al cerrar rama |
+| Commit | Ver ultimo commit de la rama `codex/2026-04-23-prA-rls-validation` |
 
 ## Script A/B
 
