@@ -2675,3 +2675,24 @@ Corregir la posicion del logo del proyecto dentro del footer de la landing page.
 - No se cambiaron colores, tipografias, textos ni animaciones.
 - No se agregaron estilos inline.
 - No se modifico markup HTML.
+
+---
+
+## Sesion 2026-04-23 — PR C Node 20
+
+### Diagnostico breve
+
+- `package.json` raiz y `apps/gold/package.json` ya declaraban `engines.node = 20.x`.
+- El repo no tenia `.nvmrc`, por lo que entornos locales podian iniciar con Node distinto y disparar warnings de engine.
+- README no tenia una seccion explicita de requisitos de runtime.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `.nvmrc` | Fijado a `20`. |
+| `README.md` | Seccion `Requisitos` con Node 20.x, pnpm 9.1.0, Supabase CLI y Docker solo para Supabase local. |
+
+### Verificacion pendiente de esta rama
+
+- Ejecutar `pnpm build:gold`.
