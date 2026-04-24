@@ -26,6 +26,13 @@ AI coding agents: read AGENTS.md first and follow it strictly.
 - Monorepo: Turborepo + pnpm.
 - Deploy: Vercel (build `pnpm build:gold`).
 
+## Requisitos
+
+- Node.js 20.x.
+- pnpm 9.1.0 recomendado; `package.json` mantiene `pnpm@9.1.0` como package manager.
+- Supabase CLI para operaciones locales o staging de base de datos.
+- Docker Desktop solo es necesario para `supabase start` local.
+
 ## Desarrollo rapido
 
 ```bash
