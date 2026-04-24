@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seguridad - YavlGold</title>
+  <meta name="description" content="Politica operativa de seguridad y reporte privado de vulnerabilidades de YavlGold Agro V1.">
+  <link rel="icon" type="image/webp" href="/brand/logo.webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="/assets/css/trust-pages.css">
+</head>
+
+<body class="trust-page">
+  <a href="#main-content" class="trust-skip-link">Saltar al contenido principal</a>
+
+  <header class="trust-header">
+    <div class="trust-header__inner">
+      <a href="/" class="trust-header__brand" aria-label="Volver a YavlGold">
+        <img src="/brand/logo.webp" alt="YavlGold" width="32" height="32">
+        <span class="trust-header__title">YavlGold</span>
+      </a>
+      <span class="trust-header__badge">Seguridad</span>
+      <nav class="trust-header__nav" aria-label="Enlaces principales">
+        <a href="/" class="trust-header__link"><i class="fas fa-arrow-left" aria-hidden="true"></i> <span>Inicio</span></a>
+        <a href="/docs-agro" class="trust-header__link"><i class="fas fa-book" aria-hidden="true"></i> <span>Documentacion</span></a>
+        <a href="/#register" class="trust-header__link trust-header__link--cta">Comenzar Ahora</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main-content" class="trust-shell">
+    <span class="trust-kicker">Seguridad</span>
+    <h1 class="trust-title">Reporte privado de vulnerabilidades</h1>
+    <p class="trust-lead">Esta pagina resume el canal operativo para reportar vulnerabilidades de YavlGold Agro V1. No sustituye revision legal, auditoria externa ni certificacion de cumplimiento.</p>
+
+    <div class="trust-panel">
+      <section class="trust-section">
+        <h2>Canal de reporte</h2>
+        <p>No abras issues publicos para reportar vulnerabilidades.</p>
+        <div class="trust-meta-grid">
+          <div class="trust-meta">
+            <span>Email privado</span>
+            <strong><a href="mailto:soporte@yavlgold.com?subject=Seguridad%20YavlGold">soporte@yavlgold.com</a></strong>
+          </div>
+          <div class="trust-meta">
+            <span>Asunto sugerido</span>
+            <strong>Seguridad</strong>
+          </div>
+          <div class="trust-meta">
+            <span>Repositorio</span>
+            <strong><a href="https://github.com/YavlPro/YavlGold" target="_blank" rel="noopener noreferrer">github.com/YavlPro/YavlGold</a></strong>
+          </div>
+          <div class="trust-meta">
+            <span>Security policy</span>
+            <strong><a href="https://github.com/YavlPro/YavlGold/security/policy" target="_blank" rel="noopener noreferrer">GitHub Security Policy</a></strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="trust-section">
+        <h2>Alcance</h2>
+        <ul>
+          <li>YavlGold Agro V1 y sus paginas publicas.</li>
+          <li>Supabase Auth, RLS, Storage policies y Edge Functions.</li>
+          <li>Configuracion de despliegue en Vercel y endpoint /health.</li>
+          <li>Separacion de datos por usuario y controles anti cross-user.</li>
+        </ul>
+      </section>
+
+      <section class="trust-section">
+        <h2>Fuera de alcance</h2>
+        <ul>
+          <li>Denegacion de servicio, spam, scraping masivo o pruebas destructivas.</li>
+          <li>Ingenieria social, ataques fisicos o intento de acceder a cuentas de terceros.</li>
+          <li>Reportes sin impacto tecnico reproducible.</li>
+        </ul>
+      </section>
+
+      <section class="trust-section">
+        <h2>Objetivos de respuesta</h2>
+        <p>Estos tiempos son objetivos operativos, no garantias legales.</p>
+        <ul>
+          <li>Acuse de recibo: 72 horas.</li>
+          <li>Primera triage: 7 dias.</li>
+          <li>Mitigacion: segun severidad, explotabilidad y alcance.</li>
+        </ul>
+      </section>
+
+      <section class="trust-section">
+        <h2>Buenas practicas para reportar</h2>
+        <ul>
+          <li>Incluye ruta, modulo, tabla, bucket o funcion afectada.</li>
+          <li>Agrega pasos de reproduccion y resultado esperado.</li>
+          <li>Elimina llaves, tokens, contrasenas, datos de usuarios o capturas sensibles.</li>
+          <li>Indica si el impacto involucra datos cross-user, auth, storage o privacidad.</li>
+        </ul>
+      </section>
+
+      <div class="trust-actions">
+        <a href="mailto:soporte@yavlgold.com?subject=Seguridad%20YavlGold" class="trust-button trust-button--primary">Reportar seguridad</a>
+        <a href="/open-source" class="trust-button">Open Source</a>
+        <a href="/status" class="trust-button">Estado</a>
+        <a href="/anti-suplantacion" class="trust-button">Anti-suplantacion</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="trust-footer">
+    <div class="trust-footer__inner">
+      <div class="trust-footer__brand">
+        <img src="/brand/logo.webp" alt="YavlGold" width="24" height="24">
+        <span>YavlGold</span>
+      </div>
+      <nav class="trust-footer__links" aria-label="Enlaces del pie de pagina">
+        <a href="/">Inicio</a>
+        <a href="/agro/">Agro</a>
+        <a href="/docs-agro">Documentacion</a>
+        <a href="/open-source">Licencia MIT</a>
+        <a href="/status">Estado</a>
+        <a href="/security">Seguridad</a>
+        <a href="/anti-suplantacion">Anti-suplantacion</a>
+        <a href="/faq">Preguntas frecuentes</a>
+        <a href="/soporte">Soporte</a>
+        <a href="/terms">Terminos</a>
+        <a href="/privacy">Privacidad</a>
+      </nav>
+      <p class="trust-footer__copy">&copy; 2026 YavlGold. Tu finca digital.</p>
+    </div>
+  </footer>
+</body>
+
+</html>

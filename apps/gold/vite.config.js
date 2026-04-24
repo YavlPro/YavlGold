@@ -26,6 +26,7 @@ export default defineConfig({
         privacy: 'privacy.html',
         openSource: 'open-source.html',
         antiSuplantacion: 'anti-suplantacion.html',
+        security: 'security.html',
         status: 'status.html',
         docsAgro: 'docs-agro.html',
         dashboard: 'dashboard/index.html',

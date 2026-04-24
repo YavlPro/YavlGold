@@ -16,8 +16,8 @@ Do not open public GitHub issues for vulnerabilities.
 
 Use one of these private channels:
 
-- `SECURITY_EMAIL` [PENDIENTE]
-- GitHub private vulnerability reporting [PENDIENTE: habilitar si el repo es publico]
+- Email: `soporte@yavlgold.com` with subject `Seguridad`.
+- GitHub private vulnerability reporting only if it is visibly enabled in the public repository UI.
 
 Include:
 
