@@ -24,6 +24,9 @@
     "sb:up:ui": "supabase start --workdir . -x imgproxy,vector,logflare,edge-runtime,supavisor,mailpit",
     "sb:down": "supabase stop --workdir .",
     "sb:status": "supabase status --workdir .",
+    "guard:staging": "node tools/supabase-staging-guard.mjs",
+    "rls:staging:dryrun": "node tools/supabase-staging-guard.mjs --dry-run",
+    "rls:staging:apply": "node tools/supabase-staging-guard.mjs --apply",
     "dev:online": "pnpm -C apps/gold dev -- --mode online",
     "dev:offline": "pnpm sb:up && pnpm -C apps/gold dev -- --mode offline",
     "stop": "pnpm sb:down"

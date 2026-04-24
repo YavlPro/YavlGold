@@ -2683,7 +2683,7 @@ Corregir la posicion del logo del proyecto dentro del footer de la landing page.
 ### Resultado
 
 - `main` actualizado a `4a9a1e8`; contiene merges #82, #83, #84 y #85.
-- Repo limpio, sin `::git-` en archivos versionados.
+- Repo limpio, sin directivas git de agente en archivos versionados.
 - Placeholders visibles en paginas publicas: PASS.
 - Secret scan runtime: PASS; no `service_role` ni `SUPABASE_SERVICE_ROLE` en `apps/gold/dist`, `api`, `apps/gold/assets` ni `apps/gold/agro`.
 - `pnpm build:gold`: PASS con warning esperado por Node local `v25.6.0` frente a engine Node 20.x.

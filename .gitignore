@@ -29,6 +29,7 @@ testqacredentials.md
 *password*.txt
 *secret*.txt
 .supabase-keys.md
+.supabase-staging.local.json
 
 # Dependencies
 node_modules/
