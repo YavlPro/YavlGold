@@ -2678,6 +2678,28 @@ Corregir la posicion del logo del proyecto dentro del footer de la landing page.
 
 ---
 
+## Sesion 2026-04-23 — Verificacion post-merge rollout
+
+### Resultado
+
+- `main` actualizado a `4a9a1e8`; contiene merges #82, #83, #84 y #85.
+- Repo limpio, sin `::git-` en archivos versionados.
+- Placeholders visibles en paginas publicas: PASS.
+- Secret scan runtime: PASS; no `service_role` ni `SUPABASE_SERVICE_ROLE` en `apps/gold/dist`, `api`, `apps/gold/assets` ni `apps/gold/agro`.
+- `pnpm build:gold`: PASS con warning esperado por Node local `v25.6.0` frente a engine Node 20.x.
+- Health/status local y deploy publico: PASS.
+- Supabase RLS/Storage A/B real: BLOQUEADO/FAIL operativo; Docker daemon no disponible, dry-run remoto queda en timeout, no hay env QA A/B local.
+
+### Evidencia creada
+
+| Archivo | Rol |
+|---|---|
+| `apps/gold/docs/ops/POST_MERGE_ROLLOUT_VERIFICATION_2026-04-23.md` | Repo, build, secret scan, placeholders, deploy y ramas locales ahead. |
+| `apps/gold/docs/ops/POST_MERGE_HEALTH_STATUS_VERIFICATION_2026-04-23.md` | Contrato local/deploy de `/health` y `/status`. |
+| `apps/gold/docs/security/POST_MERGE_RLS_STORAGE_VERIFICATION_2026-04-23.md` | Estado BLOQUEADO/FAIL de prueba A/B real y runbook exacto. |
+
+---
+
 ## Sesion 2026-04-23 — PR C Node 20
 
 ### Diagnostico breve
