@@ -2636,3 +2636,42 @@ Corregir la segunda pasada de paginas publicas enlazadas desde el footer para qu
 
 - `YavlGold-Agro-ADN-V10-Corregido.html` no aparece en el arbol del repo; se uso `/docs-agro` y las hojas V10 como canon visual local.
 - No se tocaron auth JS, Supabase, backend ni modulos Agro.
+
+---
+
+## Sesion 2026-04-23 — Alineacion del logo en footer de landing
+
+### Objetivo
+
+Corregir la posicion del logo del proyecto dentro del footer de la landing page. El logo estaba visualmente desacoplado del texto "YavlGold" y pegado al borde izquierdo de la primera columna del footer.
+
+### Diagnostico
+
+**Causa raiz**: El reset global `img { display: block; }` en `landing-v10.css:117` fuerza que el `<img>` dentro del `<h5>` del footer se comporte como bloque, rompiendo el flujo inline con el texto "YavlGold". El resultado: el logo queda en una linea y el texto en otra, visualmente separado y pegado al borde.
+
+**Selector responsable**: `.footer-col h5` no tenia `display: flex`, por lo que no podia compensar el `display: block` heredado del reset global.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/assets/css/landing-v10.css` | CSS | Agregar `display: flex; align-items: center;` a `.footer-col h5` |
+
+### Resultado de build
+
+`pnpm build:gold` — OK (0 errores, UTF-8 OK, agent-guard OK, agent-report-check OK)
+
+### QA sugerido
+
+- Verificar landing en desktop: el logo y "YavlGold" deben aparecer en la misma linea, centrados verticalmente.
+- Verificar footer en mobile (<=480px): el bloque de marca debe mantenerse coherente.
+- Confirmar que las columnas Legal y Proyecto del footer no cambiaron.
+- Confirmar que no cambio nada fuera del footer.
+
+### NO se hizo (scope respetado)
+
+- No se rediseño el footer.
+- No se tocaron otras columnas, navbar, hero, CTA, trust bar ni otras secciones.
+- No se cambiaron colores, tipografias, textos ni animaciones.
+- No se agregaron estilos inline.
+- No se modifico markup HTML.

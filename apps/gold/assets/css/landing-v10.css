@@ -435,7 +435,7 @@ main { padding-top: var(--layout-navbar-h); }
    ========================================= */
 .site-footer { background: var(--bg-0); padding: var(--layout-footer-y) 0 var(--space-6); border-top: 1px solid var(--border-neutral); margin-top: var(--layout-section-y); }
 .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-8); margin-bottom: var(--space-8); }
-.footer-col h5 { font-family: var(--font-brand); font-size: 0.9rem; margin-bottom: var(--space-3); color: var(--gold-prestige); }
+.footer-col h5 { font-family: var(--font-brand); font-size: 0.9rem; margin-bottom: var(--space-3); color: var(--gold-prestige); display: flex; align-items: center; }
 .footer-col a { display: inline-flex; align-items: center; gap: var(--comp-icon-gap); color: var(--text-muted); font-size: 0.9rem; margin-bottom: var(--space-2); transition: var(--state-transition); min-height: var(--a11y-touch-min); }
 .footer-col a:hover { color: var(--gold-4); transform: translateX(2px); }
 .footer-col a i { font-size: var(--icon-sm); color: var(--gold-4); width: var(--icon-sm); text-align: center; flex-shrink: 0; }
