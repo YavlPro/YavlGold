@@ -1,0 +1,41 @@
+name: RLS Storage Smoke Test (Staging)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  rls-smoke:
+    name: Run RLS and storage smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_USER_A_EMAIL: ${{ secrets.SUPABASE_USER_A_EMAIL }}
+      SUPABASE_USER_A_PASSWORD: ${{ secrets.SUPABASE_USER_A_PASSWORD }}
+      SUPABASE_USER_B_EMAIL: ${{ secrets.SUPABASE_USER_B_EMAIL }}
+      SUPABASE_USER_B_PASSWORD: ${{ secrets.SUPABASE_USER_B_PASSWORD }}
+      RLS_SMOKE_TABLE: rls_smoke_items
+      RLS_SMOKE_BUCKET: agro-evidence
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.1.0 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Gold
+        run: pnpm build:gold
+
+      - name: Run smoke test
+        run: node tools/rls-smoke-test.js
