@@ -80,7 +80,8 @@ MIT License. Ver `LICENSE`.
 
 ## Open Source y confianza
 
-- Repositorio publico: `https://github.com/ORG/REPO` [PENDIENTE]
+- Repositorio publico: `https://github.com/YavlPro/YavlGold`
 - Pagina Open Source: `apps/gold/open-source.html`
+- Politica de seguridad: `SECURITY.md` y `apps/gold/security.html`
 - Aviso anti-suplantacion/no inversiones: `apps/gold/anti-suplantacion.html`
 - YavlGold no vende oro, no administra inversiones y no solicita dinero por canales no oficiales.

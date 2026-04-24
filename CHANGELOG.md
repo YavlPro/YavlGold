@@ -12,15 +12,15 @@ This file follows the spirit of Keep a Changelog and keeps release notes useful 
 
 ### Changed
 
-- [PENDIENTE] Document production decisions such as `SECURITY_EMAIL`, public repository URL, and legal jurisdiction.
+- Documented production trust defaults: security contact `soporte@yavlgold.com`, public repository `https://github.com/YavlPro/YavlGold`, Venezuelan applicable-law wording, and operational response targets.
 
 ### Fixed
 
-- [PENDIENTE]
+- Removed visible trust-page placeholders and added a public security page to the Vite MPA build.
 
 ### Security
 
-- [PENDIENTE] Confirm RLS/Storage checks against production with two QA users before marking hardening fully closed.
+- Added reproducible RLS/Storage validation runbook and smoke-test script for two-user A/B checks.
 
 ## [1.0.0] - 2026-04-20
 

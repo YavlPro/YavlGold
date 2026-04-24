@@ -52,10 +52,10 @@ Cada incidente cerrado debe registrar:
 
 - Vercel: alertas de 5xx y despliegues fallidos.
 - Supabase: errores Auth, Edge Function failures y actividad anomala.
-- Sentry u observabilidad equivalente: [PENDIENTE si se adopta].
+- Sentry u observabilidad equivalente: no configurado como requisito operativo activo; documentar aqui antes de adoptarlo.
 
 ## Pendientes
 
 - Definir canal interno de guardia.
-- Definir `SECURITY_EMAIL`.
+- Confirmar si se habilita GitHub private vulnerability reporting ademas del canal `soporte@yavlgold.com`.
 - Definir politica de postmortem publico vs interno.
