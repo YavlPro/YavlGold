@@ -636,6 +636,88 @@ body {
   text-underline-offset: 3px;
 }
 
+/* ---- Official social channels ---- */
+.official-socials {
+  border-top: 1px solid var(--border-neutral);
+}
+
+.official-socials__inner {
+  background: var(--bg-2);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-md);
+  padding: 2rem;
+  text-align: center;
+}
+
+.official-socials__eyebrow {
+  font-family: var(--font-heading);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--gold-4);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.official-socials h2 {
+  font-family: var(--font-heading);
+  font-size: clamp(1rem, 2.5vw, 1.35rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+}
+
+.official-socials__text {
+  max-width: 580px;
+  margin: 0 auto 1.25rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.official-socials__actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.official-socials__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  padding: 0.7rem 1.15rem;
+  background: var(--bg-3);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-sm);
+  color: var(--gold-4);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 180ms ease, background 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.official-socials__btn:hover {
+  background: var(--bg-4);
+  border-color: var(--gold-4);
+  color: var(--gold-5);
+  transform: translateY(-1px);
+}
+
+.official-socials__btn i {
+  font-size: 0.95rem;
+  color: currentColor;
+  flex-shrink: 0;
+}
+
+.official-socials__btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg-1), 0 0 0 4px var(--gold-4);
+}
+
 /* ---- CTA ---- */
 .docs-cta {
   margin-top: 2rem;
@@ -829,6 +911,18 @@ body {
 
   .docs-cta__inner {
     padding: 1.75rem 1.25rem;
+  }
+
+  .official-socials__inner {
+    padding: 1.5rem 1rem;
+  }
+
+  .official-socials__actions {
+    flex-direction: column;
+  }
+
+  .official-socials__btn {
+    width: 100%;
   }
 }
 

@@ -40,7 +40,55 @@
     rel="stylesheet">
   <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
   <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"Organization","name":"YavlGold","url":"https://www.yavlgold.com","logo":"https://www.yavlgold.com/assets/images/logo.webp","description":"YavlGold hoy es Agro: una herramienta agricola digital para registrar cultivos, ciclos, movimientos y clima en una sola base real."}
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://www.yavlgold.com/#organization",
+        "name": "YavlGold",
+        "url": "https://www.yavlgold.com/",
+        "logo": "https://www.yavlgold.com/brand/logo.png",
+        "description": "YavlGold Agro es una herramienta agricola digital para registrar cultivos, controlar ingresos, gastos, fiados, perdidas y seguimiento operativo real de finca.",
+        "founder": {
+          "@id": "https://www.yavlgold.com/#yerikson-varela"
+        },
+        "sameAs": [
+          "https://x.com/Yavlcapitan",
+          "https://youtube.com/@yavlgoldpro"
+        ]
+      },
+      {
+        "@type": "Person",
+        "@id": "https://www.yavlgold.com/#yerikson-varela",
+        "name": "Yerikson Varela",
+        "jobTitle": "Fundador de YavlGold",
+        "worksFor": {
+          "@id": "https://www.yavlgold.com/#organization"
+        },
+        "url": "https://www.yavlgold.com/",
+        "sameAs": [
+          "https://ve.linkedin.com/in/yerikson-varela-7372b0302",
+          "https://x.com/Yavlcapitan"
+        ],
+        "knowsAbout": [
+          "Agricultura digital",
+          "Gestion agricola",
+          "YavlGold Agro",
+          "Software agricola"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://www.yavlgold.com/#website",
+        "name": "YavlGold",
+        "url": "https://www.yavlgold.com/",
+        "publisher": {
+          "@id": "https://www.yavlgold.com/#organization"
+        }
+      }
+    ]
+  }
   </script>
 </head>
 
@@ -401,6 +449,33 @@
         <p class="quote-text">"Antes anotaba todo en cuadernos que se perdían. Ahora tengo memoria real de cada ciclo, cada gasto, cada cosecha. YavlGold no me dice qué hacer: me muestra lo que pasó para que yo decida."</p>
         <div class="quote-author">Yerikson Varela</div>
         <div class="quote-role">Fundador de YavlGold · Táchira, Venezuela</div>
+      </div>
+    </section>
+
+    <section class="official-socials reveal" aria-labelledby="official-socials-title">
+      <div class="official-socials__inner">
+        <p class="official-socials__eyebrow">Canales oficiales</p>
+        <h2 id="official-socials-title">Síguenos en nuestras redes sociales</h2>
+        <p class="official-socials__text">
+          Avances del proyecto, videos, documentación viva y presencia oficial de YavlGold Agro.
+        </p>
+
+        <div class="official-socials__actions" aria-label="Redes sociales oficiales de YavlGold">
+          <a class="official-socials__btn" href="https://x.com/Yavlcapitan" target="_blank" rel="me noopener noreferrer" aria-label="Seguir a YavlGold en X">
+            <i class="fa-brands fa-x-twitter" aria-hidden="true"></i>
+            <span>X / Comunidad YavlGold</span>
+          </a>
+
+          <a class="official-socials__btn" href="https://youtube.com/@yavlgoldpro" target="_blank" rel="me noopener noreferrer" aria-label="Ver el canal YavlGold Pro en YouTube">
+            <i class="fa-brands fa-youtube" aria-hidden="true"></i>
+            <span>YouTube / YavlGold Pro</span>
+          </a>
+
+          <a class="official-socials__btn" href="https://ve.linkedin.com/in/yerikson-varela-7372b0302" target="_blank" rel="me noopener noreferrer" aria-label="Ver el perfil de Yerikson Varela en LinkedIn">
+            <i class="fa-brands fa-linkedin" aria-hidden="true"></i>
+            <span>LinkedIn / Yerikson Varela</span>
+          </a>
+        </div>
       </div>
     </section>
 

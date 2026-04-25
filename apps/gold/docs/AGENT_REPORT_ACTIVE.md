@@ -705,6 +705,65 @@ Por instruccion explicita de la sesion, no se hizo QA manual en navegador ni Pla
 
 ---
 
+## Sesion activa: Diagnostico general del modulo Agro (2026-04-24)
+
+### Objetivo
+
+Diagnosticar el estado actual del modulo Agro sin realizar cambios de codigo.
+
+### Diagnostico
+
+**Estructura del modulo:**
+- Monolito principal: `agro.js` (640KB, ~18k lineas) - politica de no crecimiento activa
+- 36 modulos agro-*.js separados (agenda, carrito, cartera viva, notificaciones, wizard, etc.)
+- 14 archivos CSS (agro.css 246KB, dashboard, cartera viva, operations, etc.)
+
+**Estado del build:**
+- `pnpm build:gold`: OK (167 modules, 3.47s)
+- agent-guard: OK
+- agent-report-check: OK
+- vite build: OK
+- check-llms: OK
+- check-dist-utf8: OK
+- Advertencia no bloqueante: Node local v24.13.0 vs engine esperado 20.x
+
+**Supabase:**
+- Canon unico: `supabase/` en raiz (validado 2026-04-18)
+- 34 migraciones activas
+- `apps/gold/supabase/` retirado, no debe recrearse
+
+**Deuda tecnica documentada:**
+1. agro.js monolito gestionado con politica de no crecimiento
+2. window.XXX (104+ asignaciones) - migracion gradual
+3. Polling duplicado market/interactions - consolidacion pendiente
+4. CSS inline heredado en index.html - migracion progresiva
+
+**Frentes abiertos:**
+1. Migracion de modales legacy a canon §19
+2. Consolidacion polling Binance
+3. Migracion CSS inline a tokens ADN V10
+
+### Cambios realizados
+
+Ninguno. Esta fue una sesion de diagnostico solo lectura.
+
+### Resultado build
+
+`pnpm build:gold` — OK. 167 modules, 3.47s.
+
+### QA sugerido
+
+No aplica (sesion de diagnostico sin cambios).
+
+### No se hizo
+
+- NO se modifico codigo
+- NO se tocaron migraciones
+- NO se altero configuracion de Supabase
+- NO se modifico documentacion canonica
+
+---
+
 ## Sesion activa: Favoritos del Shell + Busqueda Agro Compacta (2026-04-18)
 
 ### Objetivo
@@ -3010,3 +3069,59 @@ Verificar en Supabase staging que el usuario QA B exista, este habilitado/confir
 gh workflow run rls-smoke-staging.yml -R YavlPro/YavlGold --ref main
 gh run list -R YavlPro/YavlGold --workflow rls-smoke-staging.yml --limit 3
 ```
+
+---
+
+## Sesion 2026-04-25 — Presencia publica oficial en landing y documentacion
+
+### Objetivo
+
+Conectar la identidad publica oficial de YavlGold con la landing, la documentacion publica, el contexto LLM y la metadata SEO, sin tocar Agro, Supabase ni logica financiera.
+
+### Diagnostico
+
+- La landing real es `apps/gold/index.html`.
+- La documentacion publica oficial real es `apps/gold/docs-agro.html`, con CSS dedicado en `apps/gold/assets/css/docs-agro.css`.
+- El logo publico confirmado existe en `apps/gold/public/brand/logo.png`; se uso como `https://www.yavlgold.com/brand/logo.png` para JSON-LD.
+- `AGENT_REPORT_ACTIVE.md` tenia 2800 lineas al inicio, por debajo del umbral de rotacion.
+- Ya existia una modificacion previa no propia en este reporte; se preservo y se agrego esta sesion al final.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/index.html` | Se reemplazo el JSON-LD simple por `Organization` + `Person` + `WebSite`; se agrego el bloque visual "Siguenos en nuestras redes sociales" con botones X, YouTube y LinkedIn. |
+| `apps/gold/assets/css/landing-v10.css` | Se agregaron estilos `.official-socials` usando tokens ADN V10, focus visible, responsive mobile y botones sobrios. |
+| `apps/gold/docs-agro.html` | Se agrego seccion "Canales oficiales" y enlace en sidebar hacia el bloque. |
+| `apps/gold/assets/css/docs-agro.css` | Se agregaron estilos equivalentes para el bloque publico de documentacion. |
+| `apps/gold/public/llms.txt` | Se agrego seccion `Official channels` con X, YouTube y LinkedIn del fundador. |
+
+### Verificacion
+
+- JSON-LD parseado localmente: `Organization, Person, WebSite`.
+- Logo JSON-LD confirmado: `apps/gold/public/brand/logo.png` existe.
+- Enlaces externos verificados: 6 botones con `target="_blank"` y `rel="me noopener noreferrer"`.
+- ARIA labels verificados: 6 labels esperados entre landing y documentacion.
+
+### Resultado build
+
+`pnpm build:gold` — OK. 167 modules transformed, `agent-guard` OK, `agent-report-check` OK, `check-llms` OK, `check-dist-utf8` OK.
+
+Advertencia no bloqueante: Node local `v25.6.0` frente a engine esperado `20.x`.
+
+### QA manual sugerido
+
+- Desktop landing: verificar bloque social entre testimonio y CTA, sin romper footer.
+- Mobile <=480px: verificar botones apilados, sin overflow horizontal.
+- Documentacion `/docs-agro`: verificar sidebar "Canales oficiales" y bloque antes del CTA.
+- Teclado: verificar focus visible en los tres botones.
+- Click: verificar que X, YouTube y LinkedIn abren la URL correcta en nueva pestana.
+- SEO: validar JSON-LD en Schema Markup Validator o Rich Results Test tras deploy.
+
+### No se hizo
+
+- NO se toco `apps/gold/agro/`.
+- NO se toco Supabase ni migraciones.
+- NO se agregaron dependencias.
+- NO se introdujo React, Tailwind ni SPA.
+- NO se modifico logica financiera ni auth.
