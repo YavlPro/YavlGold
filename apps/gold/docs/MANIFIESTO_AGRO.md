@@ -752,6 +752,25 @@ Vive como componente compacto del header del sidebar. Se despliega con un input 
 * No compite con el switch maestro: búsqueda es localización, switch es contexto de lectura.
 * El resultado seleccionado se limpia automáticamente al cerrar o al navegar a otra vista.
 
+---
+
+### 4.11.3 Navegación del Shell
+
+#### Qué es
+
+La navegación del shell se organiza en dos capas complementarias: el rail persistente y el launcher expandido. El rail persistente es la navegación rápida de Agro. El botón `Menú` del rail abre el launcher expandido, que funciona como mapa organizado del sistema.
+
+#### Qué no es
+
+No debe existir una segunda hamburguesa en el header que abra el mismo launcher o compita con el botón `Menú` del rail. El header conserva identidad, accesos rápidos, notificaciones y perfil, pero no duplica la entrada principal al mapa de navegación.
+
+#### Regla canónica
+
+* Rail persistente = navegación rápida.
+* Botón `Menú` del rail = entrada principal al launcher expandido.
+* Launcher expandido = mapa organizado del sistema Agro.
+* Header = identidad, contexto y acciones rápidas; no debe duplicar hamburguesas legacy.
+
 ### Ejemplo de uso de favoritas y búsqueda
 
 **Escenario: acceso rápido en un día lleno**

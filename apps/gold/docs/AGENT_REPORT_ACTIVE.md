@@ -3835,6 +3835,51 @@ Transformar el menu completo de Agro en un launcher expandido tipo Windows 11, a
 
 ---
 
+## Sesion 2026-04-26 — Eliminacion hamburguesa legacy del header Agro
+
+### Diagnostico
+
+- El boton duplicado señalado por el usuario es `#agro-shell-toggle`, ubicado en el header junto al logo.
+- `#agro-shell-rail-menu` ya existe en el rail persistente y debe quedar como entrada principal al launcher.
+- `apps/gold/agro/agro-shell.js` todavia exige `#agro-shell-toggle` en el guard inicial de `initAgroShell()`; si se elimina solo el HTML, el shell no inicializa.
+- Las funciones `openSidebar()` y `closeSidebar()` actualizan `aria-expanded` sobre el toggle legacy; deben tolerar que ya no exista.
+- `apps/gold/agro/agro.css` conserva estilos dedicados a `.agro-shell-toggle`, que quedarian como deuda visual si se elimina el boton.
+- El usuario autorizo actualizar `apps/gold/docs/MANIFIESTO_AGRO.md` para fijar la nueva semantica de navegacion.
+
+### Plan
+
+1. Eliminar el boton `#agro-shell-toggle` del header en `apps/gold/agro/index.html`.
+2. Hacer opcional el toggle legacy en `apps/gold/agro/agro-shell.js`, conservando `#agro-shell-rail-menu` como abridor del launcher.
+3. Retirar estilos especificos de `.agro-shell-toggle` en `apps/gold/agro/agro.css`.
+4. Documentar en `MANIFIESTO_AGRO.md` que rail persistente es navegacion rapida y el boton Menú del rail abre el launcher expandido.
+5. Validar con `git diff --check` y `pnpm build:gold`.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/index.html` | Eliminado el boton hamburguesa legacy `#agro-shell-toggle` del header. |
+| `apps/gold/agro/agro-shell.js` | `#agro-shell-toggle` queda opcional para que el shell inicialice sin el boton legacy; `#agro-shell-rail-menu` sigue abriendo el launcher. |
+| `apps/gold/agro/agro.css` | Retirados estilos dedicados a `.agro-shell-toggle`. |
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | Agregada seccion `4.11.3 Navegacion del Shell` con la semantica rail persistente + launcher expandido. |
+
+### Verificacion
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS (`agent-guard`, `agent-report-check`, `vite build`, `check-llms`, `check-dist-utf8`).
+- `#agro-shell-rail-menu` queda como unica entrada principal al launcher.
+- `#agro-shell-toggle` ya no existe en HTML ni CSS activo; solo queda como referencia opcional de compatibilidad en JS.
+- Advertencia local no bloqueante: engine declara Node `20.x`, pero esta sesion corrio con Node `v25.6.0`.
+
+### Alcance respetado
+
+- No se toco `apps/gold/agro/agro.js`.
+- No se toco Supabase.
+- No se toco Vercel ni workflows.
+- No se tocaron credenciales, `.env` ni `testqacredentials.md`.
+
+---
+
 ## Sesion 2026-04-26 — Feedback mobile rail overlap
 
 ### Diagnostico

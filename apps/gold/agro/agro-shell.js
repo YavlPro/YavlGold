@@ -521,7 +521,7 @@ export function initAgroShell() {
     const toggle = document.getElementById('agro-shell-toggle');
     const railToggle = document.getElementById('agro-shell-rail-toggle');
     const railMenu = document.getElementById('agro-shell-rail-menu');
-    if (!sidebar || !backdrop || !toggle) return null;
+    if (!sidebar || !backdrop) return null;
 
     const launcherClose = sidebar.querySelector('.agro-launcher__close');
     const bootViewToken = AGRO_DEFAULT_VIEW;
@@ -548,7 +548,7 @@ export function initAgroShell() {
     const closeSidebar = () => {
         sidebarOpen = false;
         document.body.classList.remove('agro-shell-open');
-        toggle.setAttribute('aria-expanded', 'false');
+        toggle?.setAttribute('aria-expanded', 'false');
         sidebar.setAttribute('aria-hidden', 'true');
         sidebar.setAttribute('inert', '');
         backdrop.hidden = true;
@@ -558,7 +558,7 @@ export function initAgroShell() {
     const openSidebar = () => {
         sidebarOpen = true;
         document.body.classList.add('agro-shell-open');
-        toggle.setAttribute('aria-expanded', 'true');
+        toggle?.setAttribute('aria-expanded', 'true');
         sidebar.setAttribute('aria-hidden', 'false');
         sidebar.removeAttribute('inert');
         backdrop.hidden = false;
@@ -786,7 +786,7 @@ export function initAgroShell() {
         onActivate: activateShellEntry
     });
 
-    toggle.addEventListener('click', () => {
+    toggle?.addEventListener('click', () => {
         if (sidebarOpen) {
             closeSidebar();
         } else {

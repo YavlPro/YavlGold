@@ -7750,30 +7750,6 @@ body.agro-shell-rail-expanded .agro-shell-rail__toggle span {
   flex-wrap: wrap;
 }
 
-.agro-shell-toggle {
-  position: relative;
-  z-index: 170;
-  width: 46px;
-  height: 46px;
-  display: inline-flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 4px;
-  border-radius: 14px;
-  border: 1px solid rgba(200, 167, 82, 0.26);
-  background: linear-gradient(180deg, rgba(200, 167, 82, 0.1), rgba(200, 167, 82, 0.03));
-  cursor: pointer;
-  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
-}
-
-.agro-shell-toggle span {
-  width: 18px;
-  height: 2px;
-  margin-inline: auto;
-  border-radius: 999px;
-  background: var(--gold-4, #C8A752);
-}
-
 .agro-header-link {
   display: inline-flex;
   align-items: center;
@@ -8250,12 +8226,6 @@ body.agro-shell-rail-expanded .agro-shell-rail__toggle span {
   .agro-shell-header__left,
   .agro-shell-header__utilities {
     gap: 0.55rem;
-  }
-
-  .agro-shell-toggle {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
   }
 
   .agro-shell-header__utilities {
