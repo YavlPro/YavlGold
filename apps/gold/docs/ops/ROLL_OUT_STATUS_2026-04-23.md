@@ -1,6 +1,6 @@
 # Rollout Status - 2026-04-23
 
-Estado: operativo / validacion real bloqueada por entorno local.
+Estado: operativo / validacion real staging RLS-Storage cerrada en PASS.
 
 ## Alcance
 
@@ -19,6 +19,8 @@ Rollout end-to-end solicitado para seguridad Supabase, trust pages, Node 20 y he
 | Supabase CLI | `2.72.7` |
 | Docker CLI | instalado, pero daemon Docker Desktop no disponible |
 | Supabase project ref local | `gerzlzprkarikblqxpjt` detectado en `supabase/.temp/project-ref` |
+| Staging RLS/Storage | PASS por workflow manual `RLS Storage Smoke Test (Staging)` sobre `main` |
+| Workflow run | Pendiente de pegar URL exacta |
 
 ## Estado Docker / Supabase local
 
@@ -32,13 +34,27 @@ failed to inspect service: dockerDesktopLinuxEngine pipe not found
 
 ## Estado staging / remoto
 
-Existe un `project-ref` local, pero `supabase db push --dry-run --workdir .` quedo detenido en `Initialising login role...` y se aborto manualmente para evitar una sesion colgada. No se aplicaron migraciones remotas desde esta sesion.
+El bloqueo documentado el 2026-04-23 quedo superado por el cierre posterior de staging.
 
-TODO externo: reintentar staging con sesion Supabase CLI autenticada y red estable.
+Evidencia registrada:
+
+| Item | Resultado |
+| --- | --- |
+| Proyecto staging | `YavlGold-staging` / `trratydmsyysnoxhfsti` |
+| Branch | `main` |
+| Workflow | `RLS Storage Smoke Test (Staging)` |
+| Job | `Run RLS and storage smoke test` |
+| Resultado | PASS / verde / `succeeded` |
+| Fecha aproximada | 2026-04-24 |
+| Duracion aproximada | 18s |
+| Workflow run | Pendiente de pegar URL exacta |
+| Fuente | `apps/gold/docs/AGENT_REPORT_ACTIVE.md`, seccion `Sesion 2026-04-24 — Cierre final Supabase staging/RLS/Storage`; confirmacion del usuario en sesion 2026-04-26 |
+
+Nota: el intento original de `supabase db push --dry-run --workdir .` que quedo en `Initialising login role...` se conserva como antecedente historico, pero ya no bloquea el rollout.
 
 ## Inventario SQL requerido
 
-No se pudo consultar `pg_class`, `pg_policies`, `role_table_grants` ni `storage.buckets` contra una DB viva en esta sesion. La evidencia disponible es estatica por migraciones.
+En la sesion original del 2026-04-23 no se pudo consultar `pg_class`, `pg_policies`, `role_table_grants` ni `storage.buckets` contra una DB viva. Esa limitacion quedo cerrada para RLS/Storage por el workflow manual staging PASS registrado el 2026-04-24 aprox.; el inventario siguiente queda como contexto estatico por migraciones.
 
 ### Tablas owner-scoped detectadas en migraciones
 
@@ -104,5 +120,4 @@ Resultado:
 ## TODOs pendientes por decision externa
 
 - Confirmar si el bucket `avatars` debe seguir publico o migrarse a signed URLs.
-- Reintentar validacion A/B real con Docker Desktop activo o staging autenticado.
 - Confirmar si GitHub private vulnerability reporting esta habilitado en `YavlPro/YavlGold`.

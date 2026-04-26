@@ -3530,3 +3530,64 @@ No se ejecuto `supabase db reset --workdir .` porque es una operacion destructiv
 - NO se toco Vercel.
 - NO se tocaron `.env`, credenciales ni `testqacredentials.md`.
 - NO se insertaron datos reales ni sensibles.
+
+---
+
+## Sesion 2026-04-26 — Cierre documental RLS/Storage staging
+
+### Objetivo
+
+Cerrar unicamente la deuda documental P1 de RLS/Storage staging marcada por la auditoria del 2026-04-26, sin reabrir implementacion, migraciones, workflows ni pruebas destructivas.
+
+### Diagnostico previo
+
+- `AGENTS.md` confirma que el trabajo debe ser quirurgico, documentado y sin tocar zonas fuera del alcance.
+- `AUDITORIA_COMPLETA_DEL_PROYECTO_2026-04-26.md` marco como P1 que la validacion real RLS/Storage seguia pendiente porque documentos operativos conservaban estado `TODO`/bloqueado.
+- Este mismo reporte activo ya contiene el cierre tecnico previo: sesion `2026-04-24 — Cierre final Supabase staging/RLS/Storage`, estado final `PASS`, workflow `RLS Storage Smoke Test (Staging)`, job `Run RLS and storage smoke test`, resultado `succeeded`, duracion aproximada 18s y `pnpm build:gold` PASS.
+- El usuario confirma para esta sesion que el run manual mas reciente del workflow `RLS Storage Smoke Test (Staging)` paso en verde en GitHub Actions sobre `main`.
+- `apps/gold/docs/security/RLS_STORAGE_VALIDATION_2026-04-23.md` sigue diciendo que la prueba A/B real no fue ejecutada y conserva matriz con `TODO ejecutar`.
+- `apps/gold/docs/ops/ROLL_OUT_STATUS_2026-04-23.md` sigue diciendo que la validacion real esta bloqueada por entorno local/staging.
+- No se tiene URL exacta del run; se documentara como `Workflow run: pendiente de pegar URL exacta` sin inventar evidencia.
+
+### Plan
+
+1. Actualizar la matriz RLS/Storage para reflejar cierre PASS en staging por workflow manual.
+2. Actualizar el rollout status para retirar el bloqueo stale por validacion staging.
+3. Registrar evidencia disponible: workflow, branch `main`, resultado PASS/verde, fecha aproximada `2026-04-24`, job succeeded y URL pendiente.
+4. No tocar codigo, migraciones, Supabase config, Edge Functions, Agro, workflows, secretos ni credenciales.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/docs/security/RLS_STORAGE_VALIDATION_2026-04-23.md` | Matriz RLS/Storage actualizada de `TODO ejecutar` a `PASS`; agregado bloque de evidencia real staging con workflow, branch `main`, job, resultado y URL pendiente. |
+| `apps/gold/docs/ops/ROLL_OUT_STATUS_2026-04-23.md` | Estado de rollout actualizado de bloqueado a validacion staging PASS; eliminado TODO de reintentar validacion A/B real. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Documentado diagnostico, plan, cambios y verificacion de esta sesion documental. |
+
+### Verificacion
+
+- `pnpm build:gold`: PASS.
+- `agent-guard`: OK.
+- `agent-report-check`: OK.
+- `vite build`: OK, 165 modules transformed.
+- `check-llms`: OK.
+- `check-dist-utf8`: OK.
+- Advertencia local no bloqueante: engine declara Node `20.x`, pero esta sesion corrio sobre Node `v25.6.0`.
+
+### Alcance protegido
+
+- NO se toco codigo.
+- NO se toco Agro.
+- NO se tocaron migraciones.
+- NO se toco Supabase config.
+- NO se tocaron Edge Functions.
+- NO se tocaron workflows.
+- NO se tocaron secretos, credenciales, `.env` ni `testqacredentials.md`.
+- NO se ejecuto `supabase db reset` ni otra prueba destructiva.
+
+### Resultado
+
+- La deuda documental P1 de RLS/Storage staging queda cerrada en los documentos vivos del frente.
+- La matriz RLS/Storage ya no queda como TODO.
+- El rollout status ya no queda bloqueado por validacion staging.
+- La URL exacta del run queda marcada como pendiente, sin inventar evidencia.
