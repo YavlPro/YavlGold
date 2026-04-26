@@ -3703,3 +3703,80 @@ Propuesta de commits:
 - No se modifico dashboard.
 - No se implemento rail visual.
 - No se cambio la logica de aterrizaje todavia.
+
+---
+
+## Sesion 2026-04-26 — CodeQL workflow permissions, entrada Dashboard Agro y rail minimal
+
+### Objetivo
+
+Ejecutar tres frentes en orden y sin mezclar responsabilidades: cerrar alertas CodeQL de permisos en workflows, corregir el arranque de Agro para aterrizar siempre en Dashboard Agro, e implementar una primera version de rail minimalista persistente adaptada al ADN Visual V10.
+
+### Diagnostico previo — Fase 1 workflow permissions
+
+- `AGENTS.md` confirma enfoque quirurgico, minimo privilegio y build canonico final.
+- `.github/workflows/gold-build.yml` no declara bloque `permissions`.
+- `.github/workflows/rls-smoke-staging.yml` no declara bloque `permissions`.
+- `gold-build.yml` solo necesita checkout, setup pnpm/Node, install y `pnpm build:gold`.
+- `rls-smoke-staging.yml` solo necesita checkout, setup Node/pnpm, install, build y ejecutar `tools/rls-smoke-test.js` con secrets ya inyectados por entorno.
+- Ninguno de los dos workflows necesita permisos de escritura sobre contents, pull requests, checks, actions o id-token.
+
+### Plan — Fase 1 workflow permissions
+
+1. Agregar `permissions: contents: read` en ambos workflows a nivel workflow.
+2. No tocar jobs, triggers, secrets, pasos ni comandos.
+3. Validar sintaxis YAML de forma estatica y con `pnpm build:gold`.
+
+### Diagnostico previo — Fase 2 entrada Dashboard Agro
+
+- `apps/gold/agro/agro-shell.js` define `AGRO_DEFAULT_VIEW = 'dashboard'`.
+- La shell lee `YG_AGRO_ACTIVE_VIEW_V1` mediante `readStoredViewToken()`.
+- `initAgroShell()` usa ese valor persistido para inicializar `activeView`, lo que permite reabrir una seccion secundaria anterior al entrar a `/agro/`.
+- `setActiveView()` escribe la vista en `YG_AGRO_ACTIVE_VIEW_V1`; esa persistencia puede seguir existiendo para estado interno, pero no debe decidir la entrada inicial.
+
+### Plan — Fase 2 entrada Dashboard Agro
+
+1. Cambiar solo el boot de `initAgroShell()` para inicializar con `AGRO_DEFAULT_VIEW`.
+2. Mantener `writeStoredView()` y la persistencia durante navegacion interna.
+3. No tocar `agro.js`, Supabase, Vercel ni dashboard.
+
+### Diagnostico previo — Fase 3 rail minimal Agro
+
+- `apps/gold/agro/index.html` ya contiene el drawer completo `.agro-shell-sidebar`; se conserva como menu completo.
+- `apps/gold/agro/agro-shell.js` ya delega clicks en cualquier `[data-agro-view]`, por lo que el rail puede reutilizar `setActiveView()` sin crecer `agro.js`.
+- `syncViewButtons()` ya marca `is-active` y `aria-current` en botones externos al drawer.
+- `apps/gold/agro/agro.css` ya contiene la seccion `Agro Shell V10`; para respetar el alcance actual se agregara el rail ahi, sin crear dependencias ni tocar estilos de negocio.
+- En mobile conviene no forzar un drawer lateral permanente: el rail debe comportarse como acceso inferior compacto y mantener el drawer actual para navegacion completa.
+
+### Plan — Fase 3 rail minimal Agro
+
+1. Agregar un `nav` persistente antes del drawer con accesos principales a Dashboard, Cultivos, Operacion, Agenda, AgroRepo, Asistente, Estadisticas y Perfil.
+2. Mantener un boton de menu completo que abre el drawer existente.
+3. Agregar estado expandido/colapsado persistido solo para el rail, independiente de la vista activa.
+4. Estilizar desktop como rail lateral dark/gold compacto y mobile como barra inferior compacta, usando tokens V10.
+
+### Cambios realizados
+
+| Frente | Archivo | Cambio |
+|---|---|---|
+| CodeQL permissions | `.github/workflows/gold-build.yml` | Agregado `permissions: contents: read`. |
+| CodeQL permissions | `.github/workflows/rls-smoke-staging.yml` | Agregado `permissions: contents: read`. |
+| Entrada Agro | `apps/gold/agro/agro-shell.js` | El boot inicial usa `AGRO_DEFAULT_VIEW` y ya no lee `YG_AGRO_ACTIVE_VIEW_V1` para decidir la vista de entrada. |
+| Rail Agro | `apps/gold/agro/index.html` | Agregado rail persistente con accesos principales y boton de menu completo. |
+| Rail Agro | `apps/gold/agro/agro-shell.js` | Agregado estado expandido/colapsado del rail con `YG_AGRO_RAIL_EXPANDED_V1` y apertura del drawer desde el rail. |
+| Rail Agro | `apps/gold/agro/agro.css` | Agregados estilos desktop/mobile del rail usando tokens V10. |
+
+### Verificacion
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS (`agent-guard`, `agent-report-check`, `vite build`, `check-llms`, `check-dist-utf8`).
+- `vite preview` local en `http://127.0.0.1:4174/agro/`: disponible; sin sesion local redirige a login, por lo que no se forzo QA autenticada ni se usaron credenciales.
+- `dist/agro/index.html` contiene el markup del rail y ambos workflows contienen `contents: read`.
+- Advertencia local no bloqueante: engine declara Node `20.x`, pero esta sesion corrio con Node `v25.6.0`.
+
+### Alcance respetado
+
+- No se toco `apps/gold/agro/agro.js`.
+- No se toco Supabase.
+- No se toco Vercel.
+- No se tocaron credenciales, `.env` ni `testqacredentials.md`.

@@ -56,6 +56,71 @@
         <div class="particle"></div>
         <div class="particle"></div>
     </div>
+    <nav class="agro-shell-rail" id="agro-shell-rail" aria-label="Navegación rápida Agro">
+        <div class="agro-shell-rail__inner">
+            <button type="button" class="agro-shell-rail__toggle" id="agro-shell-rail-toggle"
+                aria-label="Expandir navegación rápida Agro" aria-pressed="false" title="Expandir navegación">
+                <i class="fa-solid fa-bars-staggered" aria-hidden="true"></i>
+                <span>Navegación</span>
+            </button>
+
+            <div class="agro-shell-rail__group" aria-label="Vistas principales">
+                <button type="button" class="agro-shell-rail__item" data-agro-view="dashboard"
+                    aria-label="Dashboard Agro" title="Dashboard Agro">
+                    <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button type="button" class="agro-shell-rail__item" data-agro-view="ciclos"
+                    data-agro-subview="activos" aria-label="Cultivos" title="Cultivos">
+                    <i class="fa-solid fa-seedling" aria-hidden="true"></i>
+                    <span>Cultivos</span>
+                </button>
+                <button type="button" class="agro-shell-rail__item" data-agro-view="cartera-viva"
+                    aria-label="Operación comercial" title="Operación comercial">
+                    <i class="fa-solid fa-briefcase" aria-hidden="true"></i>
+                    <span>Operación</span>
+                </button>
+                <button type="button" class="agro-shell-rail__item" data-agro-view="task-cycles"
+                    aria-label="Agenda de tareas" title="Agenda">
+                    <i class="fa-solid fa-list-check" aria-hidden="true"></i>
+                    <span>Agenda</span>
+                </button>
+                <button type="button" class="agro-shell-rail__item" data-agro-view="agrorepo"
+                    aria-label="AgroRepo" title="AgroRepo">
+                    <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+                    <span>AgroRepo</span>
+                </button>
+                <button type="button" class="agro-shell-rail__item" data-agro-view="asistente"
+                    aria-label="Asistente IA" title="Asistente IA">
+                    <i class="fa-solid fa-robot" aria-hidden="true"></i>
+                    <span>Asistente</span>
+                </button>
+                <button type="button" class="agro-shell-rail__item" data-agro-view="rankings"
+                    aria-label="Estadísticas y rankings" title="Estadísticas">
+                    <i class="fa-solid fa-chart-column" aria-hidden="true"></i>
+                    <span>Estadísticas</span>
+                </button>
+                <button type="button" class="agro-shell-rail__item" data-agro-view="perfil"
+                    aria-label="Perfil" title="Perfil">
+                    <i class="fa-solid fa-circle-user" aria-hidden="true"></i>
+                    <span>Perfil</span>
+                </button>
+            </div>
+
+            <div class="agro-shell-rail__group agro-shell-rail__group--bottom" aria-label="Accesos secundarios">
+                <button type="button" class="agro-shell-rail__item" id="agro-shell-rail-menu"
+                    aria-label="Abrir menú completo" title="Menú completo">
+                    <i class="fa-solid fa-compass" aria-hidden="true"></i>
+                    <span>Menú</span>
+                </button>
+                <a class="agro-shell-rail__item" href="/" aria-label="Volver al dashboard principal"
+                    title="Dashboard principal">
+                    <i class="fa-solid fa-house" aria-hidden="true"></i>
+                    <span>Inicio</span>
+                </a>
+            </div>
+        </div>
+    </nav>
     <button type="button" class="agro-shell-backdrop" id="agro-shell-backdrop" hidden aria-hidden="true"></button>
     <aside class="agro-shell-sidebar" id="agro-shell-sidebar" aria-label="Navegación Agro" aria-hidden="true">
         <div class="agro-shell-sidebar__inner">
