@@ -15,6 +15,7 @@ Actualizado: 2026-04-17.
 | **Verdad semantica** | MANIFIESTO_AGRO.md | docs/ | Qué es cada superficie de Agro |
 | **Estructura** | FICHA_TECNICA.md | raiz | Ficha técnica del proyecto |
 | **Wiki viva** | AGENT_REPORT_ACTIVE.md | docs/ | Estado operativo acumulativo |
+| **Bitácora mensual** | daily-log-YYYY-MM-DD.md | docs/ops/ | Handoff operativo temporal entre agentes |
 | **Mapa central** | AGENT_CONTEXT_INDEX.md | docs/ | Este archivo |
 | **Resumen operativo** | llms.txt | public/ | Contexto para LLMs (servido en prod) |
 
@@ -47,6 +48,7 @@ Actualizado: 2026-04-17.
    - Diseño visual → ADN-VISUAL-V10.0.md
    - Agro → MANIFIESTO_AGRO.md
    - Estado operativo → AGENT_REPORT_ACTIVE.md
+   - Bitácora del mes actual → docs/ops/daily-log-YYYY-MM-DD.md
    - Estructura técnica → FICHA_TECNICA.md
    - Contexto rápido → llms.txt
 

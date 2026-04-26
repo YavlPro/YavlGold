@@ -232,6 +232,55 @@ Al cerrar un frente, el agente debe:
 3. mover lo cerrado a `archive/<frente>/`;
 4. documentar la limpieza en `AGENT_REPORT_ACTIVE.md`.
 
+### 4.3 — Sistema de Bitácora Operativa Diaria
+
+Los reportes diarios de agentes son archivos operativos temporales, no memoria histórica permanente.
+Sirven como materia prima para la Crónica mensual y se eliminan tras validación.
+
+#### Regla de archivo diario
+
+- Cada día trabajado genera un archivo individual con fecha completa:
+  `apps/gold/docs/ops/daily-log-YYYY-MM-DD.md`
+- Ejemplo: `apps/gold/docs/ops/daily-log-2026-04-25.md`
+- No crear un solo archivo mensual. Un archivo por día trabajado.
+- No convertir los daily logs en narrativa larga.
+- No duplicar información que ya esté en documentos canónicos.
+
+#### Formato de cada archivo diario
+
+```md
+# Daily Agent Log — YYYY-MM-DD
+
+Estado: GREEN/YELLOW/RED — resumen de una línea
+
+Hecho:
+- máximo 5 bullets
+
+Commits/PRs:
+- referencias cortas
+
+Bloqueos:
+- máximo 3, solo si existen
+
+Próximo paso:
+1. paso exacto
+2. paso exacto
+```
+
+#### Ciclo mensual
+
+1. Durante el mes se acumulan reportes diarios individuales en `docs/ops/`.
+2. Al final del mes se revisan todos los `daily-log-YYYY-MM-DD.md` de ese mes.
+3. Se crea la Crónica mensual en `apps/gold/docs/chronicles/YYYY-MM.md`.
+4. Se valida que la Crónica conserva los hitos, decisiones, commits y aprendizajes importantes.
+5. Lo operativo que siga vivo debe quedar en `AGENT_REPORT_ACTIVE.md` o en el documento canónico correspondiente.
+6. Después de validar la Crónica, se eliminan todos los reportes diarios temporales de ese mes.
+7. El mes siguiente empieza con nuevos reportes diarios limpios.
+
+#### Principio rector
+
+Un archivo por día trabajado. Crónica única al cierre del mes. Limpieza después.
+
 ---
 
 ## §5 — Build y QA
