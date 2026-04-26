@@ -30,7 +30,6 @@ export default defineConfig({
         status: 'status.html',
         docsAgro: 'docs-agro.html',
         dashboard: 'dashboard/index.html',
-        music: 'dashboard/music.html',
         perfil: 'dashboard/perfil.html',
         configuracion: 'dashboard/configuracion.html',
         // Module apps
@@ -54,4 +53,3 @@ export default defineConfig({
     target: 'es2020',
   },
 });
-

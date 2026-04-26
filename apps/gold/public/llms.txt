@@ -87,7 +87,7 @@ This file contains the current product, architecture and routing policy for `app
 - Placeholder routes for unavailable modules exist to avoid 404s, not to suggest active products.
 - Archived legacy HTML lives under `apps/gold/archive/legacy-html/`
 - Archived legacy auth bridge lives under `apps/gold/archive/legacy-js/`
-- `dashboard/music.html` is an internal dashboard utility outside the official module catalog
+- The former dashboard music utility is retired from active build, routing, and navigation
 - `herramientas/` is a residual directory with no active content
 
 # EOF — YavlGold llms.txt (do not truncate)

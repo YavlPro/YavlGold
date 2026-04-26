@@ -11,7 +11,7 @@ Resumen operativo actual de `apps/gold`.
 ## Estado actual del proyecto
 
 **Release visible: V1**
-YavlGold Agro es el unico modulo activo y released. Academia, Social, Tecnologia y Crypto son placeholders "no disponible". Dashboard es app secundaria con utilidad interna (auth, perfil, configuracion, music).
+YavlGold Agro es el unico modulo activo y released. Academia, Social, Tecnologia y Crypto son placeholders "no disponible". Dashboard es app secundaria con superficies de soporte (auth, perfil, configuracion), sin utilidades legacy activas.
 
 El trabajo documentado en el archivo archivado se centro en:
 - Alineacion visual del sidebar shell al ADN V10
@@ -3302,3 +3302,76 @@ Advertencia no bloqueante: Node local `v25.6.0` frente a engine esperado `20.x`.
 - NO se toco auth.
 - NO se modifico copy ni logica de negocio.
 - NO se agregaron dependencias.
+
+---
+
+## Sesion 2026-04-26 — Cierre P1 canon `/music` y guard HTML
+
+### Objetivo
+
+Cerrar el primer bloque P1 de desviaciones activas detectadas en `AUDITORIA_COMPLETA_DEL_PROYECTO_2026-04-26.md`, con foco quirurgico en `/music` y en el guard de build para HTML.
+
+### Diagnostico previo
+
+- `AGENTS.md` confirma que la release visible activa es V1, el stack canonico es Vanilla JS + Vite MPA + Supabase, y Tailwind/fuentes no canonicas quedan fuera del ADN Visual V10.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md` confirma que Agro es el unico modulo activo/released; Dashboard queda como superficie secundaria, no como catalogo de modulos.
+- La auditoria del 2026-04-26 marca como P1 que `apps/gold/dashboard/music.html` usa Tailwind CDN, Montserrat y `jsmediatags@latest` estando activa en build/routing.
+- Evidencia local previa a cambios:
+  - `apps/gold/vite.config.js` registra `music: 'dashboard/music.html'`.
+  - `vercel.json` reescribe `/music` y `/music/` hacia `/dashboard/music`.
+  - `apps/gold/dashboard/index.html` enlaza `href="/dashboard/music.html"` desde el topbar.
+  - `apps/gold/dashboard/music.html` contiene Tailwind CDN, Montserrat y `@latest`.
+- Causa raiz: `/music` seguia conectada como superficie activa aunque el foco actual del producto es Agro; ademas, `agent-guard.mjs` solo revisaba dependencias de `package.json`, por lo que no bloqueaba CDNs prohibidos en HTML.
+
+### Plan
+
+1. Retirar `/music` del build MPA y del routing publico sin migrar visualmente la pagina.
+2. Retirar el enlace activo del dashboard hacia `dashboard/music.html`.
+3. Extender `agent-guard.mjs` para escanear HTML activo y bloquear Tailwind CDN, Montserrat y dependencias externas con `@latest`.
+4. Mantener fuera del escaneo los archivos `dist/`, `archive/` y `docs/` para no romper por historico/documentacion.
+5. Ejecutar `pnpm build:gold` y documentar resultado final.
+
+### Alcance protegido
+
+- NO tocar Agro.
+- NO tocar Supabase.
+- NO tocar `.env`, credenciales ni `testqacredentials.md`.
+- NO introducir dependencias nuevas.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/vite.config.js` | Se retiro `music: 'dashboard/music.html'` del input MPA; `/music` deja de entrar al build activo. |
+| `vercel.json` | Se retiraron los rewrites `/music` y `/music/` hacia `/dashboard/music`; queda solo `/health` en rewrites. |
+| `apps/gold/dashboard/index.html` | Se retiro el boton/enlace activo hacia `/dashboard/music.html` del topbar. |
+| `apps/gold/dashboard/index.html` | Se elimino Montserrat de la carga de Google Fonts y se reemplazaron los tres usos locales por Rajdhani. |
+| `apps/gold/scripts/agent-guard.mjs` | Se agrego escaneo de HTML activo declarado en `vite.config.js` para bloquear Tailwind CDN, Montserrat y dependencias externas con `@latest`. |
+| `apps/gold/public/llms.txt` | Se actualizo la nota legacy para indicar que la utilidad musical quedo retirada de build, routing y navegacion activa. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Se actualizo el estado vivo para quitar `music` de las superficies secundarias activas del dashboard. |
+
+### Verificacion
+
+- `node scripts/agent-guard.mjs` desde `apps/gold`: PASS.
+- `pnpm build:gold`: PASS.
+- `agent-guard`: OK.
+- `agent-report-check`: OK.
+- `vite build`: OK, 165 modules transformed.
+- `check-llms`: OK.
+- `check-dist-utf8`: OK.
+- Advertencia no bloqueante: Node local `v25.6.0` frente a engine esperado `20.x`.
+
+### Resultado
+
+- `/music` ya no queda como entrada de build MPA.
+- `/music` ya no queda como rewrite publico en Vercel.
+- El dashboard ya no muestra enlace activo hacia la utilidad musical.
+- El build falla si una superficie HTML activa en Vite vuelve a incluir Tailwind CDN, Montserrat o una dependencia externa `@latest`.
+
+### No se hizo
+
+- NO se migro visualmente `dashboard/music.html`.
+- NO se toco `apps/gold/agro/`.
+- NO se toco Supabase.
+- NO se tocaron `.env`, credenciales ni `testqacredentials.md`.
+- NO se agregaron dependencias nuevas.

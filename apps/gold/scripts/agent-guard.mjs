@@ -19,13 +19,20 @@ const depKeys = [
   'optionalDependencies'
 ];
 
-const root = process.cwd();
+const cwd = process.cwd();
+const goldRoot = fs.existsSync(path.join(cwd, 'apps', 'gold', 'package.json'))
+  ? path.join(cwd, 'apps', 'gold')
+  : cwd;
+const repoRoot = path.basename(goldRoot) === 'gold' && path.basename(path.dirname(goldRoot)) === 'apps'
+  ? path.resolve(goldRoot, '..', '..')
+  : cwd;
+
 const targets = new Set();
 
-targets.add(path.join(root, 'package.json'));
-targets.add(path.join(root, 'apps', 'gold', 'package.json'));
+targets.add(path.join(repoRoot, 'package.json'));
+targets.add(path.join(goldRoot, 'package.json'));
 
-const appsGoldDir = path.join(root, 'apps', 'gold');
+const appsGoldDir = goldRoot;
 if (fs.existsSync(appsGoldDir)) {
   const entries = fs.readdirSync(appsGoldDir, { withFileTypes: true });
   for (const entry of entries) {
@@ -36,6 +43,42 @@ if (fs.existsSync(appsGoldDir)) {
 }
 
 const hits = [];
+const htmlHits = [];
+
+const htmlRules = [
+  {
+    label: 'Tailwind CDN',
+    pattern: /cdn\.tailwindcss\.com/i
+  },
+  {
+    label: 'non-canonical font Montserrat',
+    pattern: /Montserrat/i
+  },
+  {
+    label: 'floating external dependency @latest',
+    pattern: /https?:\/\/[^"'<>\\\s]+@latest\b/i
+  }
+];
+
+function toRelative(file) {
+  return path.relative(repoRoot, file).replaceAll(path.sep, '/');
+}
+
+function getActiveHtmlEntries() {
+  const viteConfigPath = path.join(goldRoot, 'vite.config.js');
+  if (!fs.existsSync(viteConfigPath)) return [];
+
+  const viteConfig = fs.readFileSync(viteConfigPath, 'utf8');
+  const entries = new Set();
+  const htmlPathPattern = /['"`]([^'"`]+\.html)['"`]/g;
+  let match;
+
+  while ((match = htmlPathPattern.exec(viteConfig)) !== null) {
+    entries.add(path.resolve(goldRoot, match[1]));
+  }
+
+  return Array.from(entries);
+}
 
 for (const file of targets) {
   if (!fs.existsSync(file)) continue;
@@ -61,9 +104,28 @@ for (const file of targets) {
   }
 }
 
-if (hits.length > 0) {
+for (const file of getActiveHtmlEntries()) {
+  if (!fs.existsSync(file)) continue;
+
+  const html = fs.readFileSync(file, 'utf8');
+  for (const rule of htmlRules) {
+    const match = html.match(rule.pattern);
+    if (match) {
+      htmlHits.push({
+        rule: rule.label,
+        match: match[0],
+        file
+      });
+    }
+  }
+}
+
+if (hits.length > 0 || htmlHits.length > 0) {
   for (const hit of hits) {
     console.error(`agent-guard: blocked dependency "${hit.dep}" (${hit.version}) in ${hit.file}`);
+  }
+  for (const hit of htmlHits) {
+    console.error(`agent-guard: blocked HTML "${hit.rule}" (${hit.match}) in ${toRelative(hit.file)}`);
   }
   process.exit(1);
 }

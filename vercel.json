@@ -40,9 +40,7 @@
     }
   ],
   "rewrites": [
-    { "source": "/health", "destination": "/api/health" },
-    { "source": "/music", "destination": "/dashboard/music" },
-    { "source": "/music/", "destination": "/dashboard/music" }
+    { "source": "/health", "destination": "/api/health" }
   ],
   "headers": [
     {
