@@ -3940,3 +3940,82 @@ Actualizar la documentacion tecnica y publica de Agro para reflejar el nuevo pat
 - No se toco `apps/gold/agro/agro.css`.
 - No se toco `apps/gold/docs/MANIFIESTO_AGRO.md`.
 - No se toco Supabase, Vercel, workflows ni credenciales.
+
+---
+
+## 2026-04-26 — Cierre P1 auditoria + evolucion Agro Shell
+
+### Estado: GREEN
+
+### Objetivo
+
+- Cerrar hallazgos P1 de auditoria del proyecto.
+- Mejorar gobernanza de CI/dependencias.
+- Evolucionar navegacion Agro Shell con rail persistente y launcher expandido.
+- Documentar la nueva semantica de navegacion en canon y docs publicas.
+
+### Cambios por bloque
+
+**Auditoria y canon:**
+- Retiro de `/music` como superficie activa.
+- Guard en `agent-guard` contra HTML activo con CDNs prohibidos.
+
+**CI/seguridad:**
+- Workflow Node 20 obligatorio para build.
+- Permisos explicitos minimos en workflows (CodeQL verde).
+- PostCSS actualizado de `8.5.8` a `8.5.10` (Dependabot).
+
+**Supabase/docs:**
+- `supabase/seed.sql` vacio seguro creado.
+- Cierre documental de validacion RLS/Storage staging (ya verde).
+
+**Agro Shell:**
+- Entrada siempre al Dashboard Agro al entrar al shell.
+- Rail persistente minimalista implementado.
+- Launcher expandido con categorias organizadas.
+- Corregido solape mobile del boton Feedback con rail inferior.
+- Eliminada hamburguesa legacy duplicada del header.
+
+**Documentacion:**
+- `MANIFIESTO_AGRO.md` seccion 4.11.3 con navegacion canonica del shell.
+- `FICHA_TECNICA.md` con descripcion actualizada de `agro-shell.js`.
+- `docs-agro.html` con seccion "Como moverte dentro de Agro" para usuario final.
+
+### Commits del dia
+
+1. `chore(gold): retire music surface and guard active html`
+2. `ci(gold): enforce node 20 build workflow`
+3. `chore(supabase): add canonical empty seed`
+4. `docs: close rls storage staging validation`
+5. `fix(deps): update postcss security advisory`
+6. `docs(agro): plan persistent minimal shell rail`
+7. `ci(security): add explicit workflow permissions`
+8. `fix(agro): always land on dashboard on shell entry`
+9. `feat(agro): add persistent minimal shell rail`
+10. `feat(agro): add launcher menu panel`
+11. `fix(agro): avoid feedback overlap on mobile rail`
+12. `fix(agro): remove legacy header menu toggle`
+13. `docs(agro): document shell rail launcher navigation`
+
+### Validacion
+
+- `pnpm build:gold`: PASS (multiple veces durante el dia).
+- `git diff --check`: PASS donde aplico.
+- GitHub Actions `Gold Build`: verde.
+- CodeQL: verde despues de permisos explicitos.
+- Vercel deployments: completados.
+- Dependabot/PostCSS: actualizacion aplicada, audit PASS.
+
+### No se hizo
+
+- No se toco `agro.js`.
+- No se tocaron credenciales.
+- No se hicieron migraciones RLS nuevas.
+- No se hizo QA autenticada pesada.
+- No se creo cronica mensual.
+
+### Proximo paso recomendado
+
+1. QA visual final de Agro Shell en mobile real con sesion autenticada.
+2. Al cierre de abril, preparar cronica mensual consolidando hitos del mes.
+3. Revisar P2 con calma: dialogos nativos, CSP/HSTS, limpieza documental/archivos legacy.
