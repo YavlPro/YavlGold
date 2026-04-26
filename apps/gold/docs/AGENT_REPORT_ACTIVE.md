@@ -3451,3 +3451,82 @@ Cerrar los dos frentes P1 de runtime/CI detectados en `AUDITORIA_COMPLETA_DEL_PR
 - NO se tocaron `.env`, credenciales ni `testqacredentials.md`.
 - NO se abrio frente de tests, seed.sql ni RLS/Storage.
 - NO se agregaron dependencias de runtime.
+
+---
+
+## Sesion 2026-04-26 — Cierre P1 Supabase seed canonico vacio
+
+### Objetivo
+
+Resolver la incongruencia P1 detectada en `AUDITORIA_COMPLETA_DEL_PROYECTO_2026-04-26.md`: `supabase/config.toml` tiene `[db.seed] enabled = true` y `sql_paths = ["./seed.sql"]`, pero `supabase/seed.sql` no existe.
+
+### Diagnostico previo
+
+- `AGENTS.md` confirma que `supabase/` en raiz es el unico canon Supabase.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md` mantiene el frente Supabase raiz cerrado y exige no recrear arboles secundarios.
+- La auditoria del 2026-04-26 marca como P1 el seed local configurado pero ausente.
+- `supabase/config.toml` confirma:
+  - `[db.seed]`
+  - `enabled = true`
+  - `sql_paths = ["./seed.sql"]`
+- `supabase/seed.sql` no existe antes de esta sesion.
+- No hay necesidad de asumir estructura de tablas ni insertar fixtures para cerrar el contrato.
+
+### Plan
+
+1. Crear `supabase/seed.sql` minimo, canonico y seguro.
+2. Incluir solo comentarios de proposito y `select 1;`.
+3. No insertar datos reales, usuarios auth, clientes, cultivos, ventas, montos, emails ni secretos.
+4. No tocar migraciones, RLS, Edge Functions, Agro, Vercel ni credenciales.
+5. Ejecutar `pnpm build:gold`.
+6. No ejecutar `supabase db reset` salvo que el entorno local Supabase este claramente disponible y sea seguro.
+
+### Alcance protegido
+
+- NO tocar migraciones existentes.
+- NO tocar RLS.
+- NO tocar Edge Functions.
+- NO tocar Agro.
+- NO tocar Vercel.
+- NO tocar `.env`, credenciales ni `testqacredentials.md`.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `supabase/seed.sql` | Creado seed canonico minimo con comentarios de proposito y `select 1;`. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Documentado diagnostico, plan, cambios, verificacion y decision de no ejecutar reset. |
+
+### Verificacion
+
+- `supabase/seed.sql` existe.
+- El seed no inserta datos reales, usuarios auth, clientes, cultivos, ventas, montos, emails ni secretos.
+- No hay cambios en `supabase/migrations/`.
+- No hay cambios en `supabase/functions/`.
+- No hay cambios en `apps/gold/agro/`.
+- `pnpm build:gold`: PASS.
+- `agent-guard`: OK.
+- `agent-report-check`: OK.
+- `vite build`: OK, 165 modules transformed.
+- `check-llms`: OK.
+- `check-dist-utf8`: OK.
+- Advertencia local no bloqueante: engine declara Node `20.x`, pero esta sesion corrio sobre Node `v25.6.0`.
+
+### Resultado
+
+- El contrato configurado en `supabase/config.toml` (`[db.seed] enabled = true`, `sql_paths = ["./seed.sql"]`) ya tiene archivo destino.
+- El seed es intencionalmente vacio de fixtures productivos y seguro para versionar.
+
+### Supabase reset
+
+No se ejecuto `supabase db reset --workdir .` porque es una operacion destructiva sobre la base local y el entorno Supabase local no fue declarado como disponible/seguro para reset en este bloque. El cierre verificable de esta sesion es estatico + build canonico.
+
+### No se hizo
+
+- NO se tocaron migraciones existentes.
+- NO se toco RLS.
+- NO se tocaron Edge Functions.
+- NO se toco Agro.
+- NO se toco Vercel.
+- NO se tocaron `.env`, credenciales ni `testqacredentials.md`.
+- NO se insertaron datos reales ni sensibles.
