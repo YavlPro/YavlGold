@@ -3181,3 +3181,50 @@ Advertencia no bloqueante: Node local `v25.6.0` frente a engine esperado `20.x`.
 - NO se toco auth.
 - NO se modifico logica financiera.
 - NO se agregaron dependencias.
+
+---
+
+## Sesion 2026-04-25 — Logo oficial en hero de landing
+
+### Objetivo
+
+Agregar el logo oficial de YavlGold como sello circular centrado sobre el titulo principal del hero publico, manteniendo ADN Visual V10 y una animacion metalica sutil.
+
+### Diagnostico
+
+- El hero principal vive en `apps/gold/index.html`, dentro de `<section class="hero">`.
+- Los estilos responsables viven en `apps/gold/assets/css/landing-v10.css`.
+- La landing ya usa el logo oficial desde `/brand/logo.webp`, respaldado por `apps/gold/public/brand/logo.webp`.
+- No habia bloque visual de marca centrado sobre el H1 del hero.
+- `AGENT_REPORT_ACTIVE.md` tenia 3183 lineas antes de documentar esta sesion, por debajo del umbral de rotacion.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/index.html` | Se agrego `.hero-mark` sobre el H1 `Tu trabajo de campo, ordenado y conectado`, usando `/brand/logo.webp` con `aria-hidden="true"` y dimensiones explicitas. |
+| `apps/gold/assets/css/landing-v10.css` | Se agregaron estilos `.hero-mark`, `.hero-mark__ring` y `.hero-mark__logo` para sello circular con anillo metalico basado en tokens existentes. |
+| `apps/gold/assets/css/landing-v10.css` | Se agrego `@keyframes heroMetalSweep` para brillo lento y discreto sobre el aro, sin mover ni escalar el logo. |
+| `apps/gold/assets/css/landing-v10.css` | Se ajustaron tamanos responsive para <=768px y <=480px, y se incluyo el sweep en `prefers-reduced-motion`. |
+
+### Resultado build
+
+`pnpm build:gold` — OK. 167 modules transformed, `agent-guard` OK, `agent-report-check` OK, `check-llms` OK, `check-dist-utf8` OK.
+
+Advertencia no bloqueante: Node local `v25.6.0` frente a engine esperado `20.x`.
+
+### QA manual sugerido
+
+- Desktop landing: verificar que el logo queda centrado sobre el titulo y no desplaza torpemente CTAs ni subtitulo.
+- Mobile <=480px: verificar que el sello baja a 84px y no rompe el layout.
+- Movimiento: confirmar que el brillo se percibe sobrio, sin pulso ni rebote.
+- Reduced motion: confirmar que el sweep queda desactivado.
+- Dark/light mode si aplica: verificar contraste del anillo y presencia premium.
+
+### No se hizo
+
+- NO se toco `apps/gold/agro/`.
+- NO se toco Supabase ni migraciones.
+- NO se toco auth.
+- NO se modifico logica de negocio ni financiera.
+- NO se agregaron dependencias.
