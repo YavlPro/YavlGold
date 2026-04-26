@@ -162,3 +162,7 @@ apps/suite/
 
 lint_output.txt
 test_output.txt
+
+# Daily logs temporales (se borran tras cronica mensual)
+apps/gold/docs/ops/daily-log-*.md
+apps/gold/docs/ops/daily-log-*.txt
