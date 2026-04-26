@@ -3591,3 +3591,115 @@ Cerrar unicamente la deuda documental P1 de RLS/Storage staging marcada por la a
 - La matriz RLS/Storage ya no queda como TODO.
 - El rollout status ya no queda bloqueado por validacion staging.
 - La URL exacta del run queda marcada como pendiente, sin inventar evidencia.
+
+---
+
+## Sesion 2026-04-26 — PostCSS advisory y diagnostico rail Agro
+
+### Objetivo
+
+Cerrar primero la alerta Dependabot de `postcss` con diff minimo y luego dejar solo diagnostico/plan tecnico para una evolucion futura del sidebar Agro hacia un rail minimalista persistente inspirado en YuupAI/Yupp, adaptado al ADN Visual V10.
+
+### Diagnostico previo — Fase 1 PostCSS
+
+- Advisory revisado: `GHSA-qx2v-qp2m-jg93`, XSS por `</style>` no escapado en salida stringificada de PostCSS.
+- Versiones afectadas: `postcss <8.5.10`.
+- Version parcheada: `8.5.10`.
+- `package.json` no declara `postcss` como dependencia directa.
+- `apps/gold/package.json` no declara `postcss` como dependencia directa.
+- `pnpm why postcss` muestra que entra transitivamente por `vite 7.3.2` y `vitest 4.0.17`.
+- `pnpm-lock.yaml` fija actualmente `postcss@8.5.8`, version vulnerable.
+- Plan: actualizar solo la resolucion transitiva de `postcss` en `pnpm-lock.yaml` a `8.5.10` o superior compatible, sin tocar codigo fuente ni Agro.
+
+### Alcance protegido
+
+- NO tocar codigo fuente para la fase de seguridad.
+- NO tocar Agro durante la fase PostCSS.
+- NO tocar Supabase.
+- NO tocar credenciales, `.env` ni `testqacredentials.md`.
+- NO mezclar implementacion del rail Agro con el fix de seguridad.
+
+### Cambios realizados — Fase 1 PostCSS
+
+| Archivo | Cambio |
+|---|---|
+| `pnpm-lock.yaml` | Actualizada solo la resolucion transitiva `postcss@8.5.8` a `postcss@8.5.10`. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Documentado diagnostico, alcance, plan, validacion y plan UX separado. |
+
+Notas:
+
+- `package.json` no se modifico porque `postcss` no es dependencia directa.
+- `apps/gold/package.json` no se modifico porque `postcss` no es dependencia directa.
+- El primer intento de `pnpm update postcss --latest` re-resolvio dependencias no relacionadas dentro de rangos existentes; se redujo el diff manualmente al minimo necesario antes de validar.
+
+### Verificacion — Fase 1 PostCSS
+
+- `pnpm install --frozen-lockfile`: PASS; lockfile consistente.
+- `pnpm why postcss`: `postcss 8.5.10` bajo `vite 7.3.2` y `vitest 4.0.17`.
+- `pnpm list postcss -r --depth Infinity`: `postcss 8.5.10` en root y `apps/gold`.
+- `pnpm audit`: PASS, no known vulnerabilities found.
+- `pnpm audit --prod`: PASS, no known vulnerabilities found.
+- `pnpm build:gold`: PASS al cierre de sesion.
+- Advertencia local no bloqueante: engine declara Node `20.x`, pero esta sesion corrio con Node `v25.6.0`.
+
+### Diagnostico — Fase 2 Rail Agro
+
+Referencia visual observada: rail vertical minimalista tipo YuupAI/Yupp, pero la implementacion futura debe mantenerse dark/gold, sobria, agricola y con tokens del ADN Visual V10.
+
+Hallazgos:
+
+- La entrada canonica a Agro ya es `/agro/` desde `apps/gold/assets/js/modules/moduleIdentity.js` y desde el fallback del dashboard.
+- `apps/gold/dashboard/index.html` renderiza accesos con `getModuleRoute(mod)` y el fallback de Agro apunta a `/agro/`.
+- La causa de que Agro pueda abrir en una seccion secundaria no esta en la ruta del dashboard, sino en `apps/gold/agro/agro-shell.js`: `readStoredViewToken()` lee `YG_AGRO_ACTIVE_VIEW_V1` y `initAgroShell()` arranca con `normalizeBootView(storedViewToken)`.
+- `setActiveView()` escribe cada cambio en `YG_AGRO_ACTIVE_VIEW_V1`; por eso una visita previa a `cartera-viva`, `operational`, `asistente`, etc. puede persistir y reabrirse al entrar de nuevo a `/agro/`.
+- `apps/gold/agro/index.html` ya tiene un drawer completo `.agro-shell-sidebar` con botones `data-agro-view` y un toggle de hamburguesa.
+- `apps/gold/agro/agro-shell.js` ya delega clicks globalmente sobre `[data-agro-view]`, por lo que un rail nuevo podria reutilizar `setActiveView()` sin tocar `agro.js`.
+- `apps/gold/agro/agro.css` contiene la seccion actual `Agro Shell V10`, pero el archivo es muy grande; para una implementacion nueva conviene crear CSS separado.
+- `apps/gold/agro/agro-mode.js` solo gobierna modo operativo y filtros; no controla la vista inicial.
+
+### Plan recomendado — Rail Agro
+
+Archivos a tocar:
+
+| Archivo | Riesgo | Motivo |
+|---|---:|---|
+| `apps/gold/agro/agro-shell.js` | Medio | Cambiar politica de arranque para que `/agro/` siempre inicie en `dashboard`; opcionalmente exponer soporte para rail root si se filtra por modo. |
+| `apps/gold/agro/index.html` | Medio | Agregar markup del rail persistente y enlazar CSS nuevo. |
+| `apps/gold/agro/agro-shell-rail.css` | Bajo/Medio | Nuevo CSS aislado para no crecer mas `agro.css`; usar tokens V10, Font Awesome existente y breakpoints canonicos. |
+| `apps/gold/dashboard/index.html` | Bajo | Solo si se decide normalizar explicitamente todos los accesos Agro a `/agro/`; hoy ya apunta ahi. |
+| `apps/gold/agro/agro-mode.js` | Bajo | No tocar salvo que el rail necesite reaccionar al modo operativo. |
+| `apps/gold/agro/agro.js` | Alto | Evitar. Solo seria aceptable wiring minimo si el shell no puede cubrir algun estado. |
+
+Logica para garantizar Dashboard Agro al entrar:
+
+1. En `agro-shell.js`, hacer que el boot inicial use `AGRO_DEFAULT_VIEW` para entradas normales a `/agro/`, ignorando `YG_AGRO_ACTIVE_VIEW_V1`.
+2. Mantener `setActiveView()` y `agro:shell:set-view` para navegacion interna despues del arranque.
+3. Si se quiere conservar restauracion en casos puntuales, exigir una senal explicita futura como `?restore=1`; no restaurar por defecto.
+4. No resolver esto desde el dashboard solamente, porque usuarios pueden entrar por URL directa, favoritos, auth redirect o links publicos a `/agro/`.
+
+Introduccion del rail sin romper la shell:
+
+1. Crear un rail desktop fijo con botones icon-only y `aria-label`, usando los mismos `data-agro-view` existentes: `dashboard`, `ciclos`, `operational` o `cartera-viva`, `task-cycles`, `herramientas`, `asistente`, `perfil`.
+2. Mantener el drawer actual como navegacion completa y subnav; el rail solo seria acceso rapido a familias principales.
+3. Reutilizar la sincronizacion actual: `syncViewButtons()` ya marca `is-active` en cualquier `[data-agro-view]`.
+4. En desktop, reservar ancho estable para el rail con padding/margen en `.app-container`; en mobile, mantener inicialmente el hamburger actual o crear una barra inferior en un commit separado.
+5. Usar tokens (`--gold-4`, `--bg-0`, `--border-gold`, `--text-secondary`, etc.) y evitar colores claros/rosados de la referencia.
+
+Propuesta de commits:
+
+1. `fix(deps): update postcss security advisory`
+   - `pnpm-lock.yaml`
+2. `fix(agro): default shell entry to dashboard`
+   - `apps/gold/agro/agro-shell.js`
+   - validacion desktop/mobile basica
+3. `feat(agro): add persistent minimal shell rail`
+   - `apps/gold/agro/index.html`
+   - `apps/gold/agro/agro-shell-rail.css`
+   - opcional `apps/gold/agro/agro-shell.js` solo si hace falta soporte de modo/rail
+
+### No se implemento — Fase 2
+
+- No se toco `apps/gold/agro/*` en esta sesion.
+- No se modifico dashboard.
+- No se implemento rail visual.
+- No se cambio la logica de aterrizaje todavia.
