@@ -3780,3 +3780,55 @@ Ejecutar tres frentes en orden y sin mezclar responsabilidades: cerrar alertas C
 - No se toco Supabase.
 - No se toco Vercel.
 - No se tocaron credenciales, `.env` ni `testqacredentials.md`.
+
+---
+
+## Sesion 2026-04-26 — Panel Launcher Agro
+
+### Objetivo
+
+Transformar el menu completo de Agro en un launcher expandido tipo Windows 11, adaptado al ADN Visual V10, manteniendo el rail persistente visible y sin romper buscador, favoritos, modos operativos ni navegacion existente.
+
+### Diagnostico previo
+
+- `#agro-shell-sidebar` es el drawer canonico que abre tanto `#agro-shell-toggle` como `#agro-shell-rail-menu`; se debe conservar el ID.
+- `#agro-shell-backdrop` cierra con click por listener existente y `Escape` ya llama `closeSidebar()`.
+- `collectShellEntries(sidebar)` solo indexa `.agro-shell-link[data-agro-view]`, `.agro-shell-sublink[data-agro-view]` y `.agro-shell-link[data-agro-action]`; por eso los tiles del launcher deben conservar esas clases y atributos.
+- `#agro-shell-search` y `#agro-shell-favorites` reciben sus datos desde `initAgroShellSearch()` e `initAgroShellFavorites()`; se pueden mover visualmente dentro del panel mientras se mantengan sus IDs.
+- `data-agro-mode-scope` se filtra desde `applyShellModeFilter()` sobre nodos dentro del sidebar; los tiles y grupos deben conservar scopes `crop`, `non_crop` y `tools`.
+- `data-agro-nav-parent` y `data-agro-nav-toggle` controlan acordeones/subnav; conviene mantenerlos para Granja General y Operacion Comercial.
+- La regla actual `.agro-shell-open .agro-shell-rail` oculta el rail; debe neutralizarse porque el launcher debe convivir con el rail visible.
+
+### Plan
+
+1. Reorganizar el interior de `#agro-shell-sidebar` como launcher con header, boton cerrar, modo, busqueda, favoritos y grid de categorias.
+2. Convertir accesos principales en tiles manteniendo `.agro-shell-link`, `.agro-shell-sublink`, `.agro-shell-link__icon`, `.agro-shell-link__label` y atributos `data-agro-*`.
+3. Ajustar CSS del sidebar a panel desktop de `min(580px, 88vw)` desplazado a la derecha del rail; en mobile usar bottom sheet que deja visible el rail inferior.
+4. Agregar listener para `.agro-launcher__close` sin reescribir la delegacion global de navegacion.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/index.html` | Reorganizado `#agro-shell-sidebar` como launcher con header, boton X, modo, busqueda, favoritos y grid de categorias. |
+| `apps/gold/agro/index.html` | Convertidos accesos en tiles manteniendo `.agro-shell-link`, `.agro-shell-sublink`, `.agro-shell-link__label`, `.agro-shell-link__icon` y atributos `data-agro-*`. |
+| `apps/gold/agro/agro.css` | Convertido el sidebar en panel launcher desktop, desplazado a la derecha del rail para que el rail siga visible. |
+| `apps/gold/agro/agro.css` | Agregado comportamiento mobile como bottom sheet con espacio inferior para conservar el rail inferior. |
+| `apps/gold/agro/agro-shell.js` | Agregado listener de `.agro-launcher__close` que llama `closeSidebar()`. |
+
+### Verificacion
+
+- `git diff --check`: PASS antes de la verificacion final.
+- `pnpm build:gold`: PASS (`agent-guard`, `agent-report-check`, `vite build`, `check-llms`, `check-dist-utf8`).
+- `#agro-shell-sidebar`, `#agro-shell-search` y `#agro-shell-favorites` se conservaron.
+- `SHELL_ENTRY_SELECTOR` sigue encontrando tiles porque mantienen `.agro-shell-link` / `.agro-shell-sublink` con `data-agro-view` o `data-agro-action`.
+- El rail ya no se oculta por CSS cuando `body.agro-shell-open` esta activo.
+- Advertencia local no bloqueante: engine declara Node `20.x`, pero esta sesion corrio con Node `v25.6.0`.
+
+### Alcance respetado
+
+- No se toco `apps/gold/agro/agro.js`.
+- No se tocaron `agro-shell-search.js` ni `agro-shell-favorites.js`.
+- No se toco Supabase.
+- No se toco Vercel ni workflows.
+- No se tocaron credenciales, `.env` ni `testqacredentials.md`.

@@ -523,6 +523,7 @@ export function initAgroShell() {
     const railMenu = document.getElementById('agro-shell-rail-menu');
     if (!sidebar || !backdrop || !toggle) return null;
 
+    const launcherClose = sidebar.querySelector('.agro-launcher__close');
     const bootViewToken = AGRO_DEFAULT_VIEW;
     let activeView = normalizeBootView(bootViewToken);
     let activeSubview = normalizeSubview(activeView, resolveViewAlias(bootViewToken)?.subview);
@@ -810,6 +811,12 @@ export function initAgroShell() {
         event.preventDefault();
         event.stopPropagation();
         openSidebar();
+    });
+
+    launcherClose?.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        closeSidebar();
     });
 
     backdrop.addEventListener('click', closeSidebar);
