@@ -3908,3 +3908,35 @@ Transformar el menu completo de Agro en un launcher expandido tipo Windows 11, a
 - No se toco Supabase.
 - No se toco Vercel ni workflows.
 - No se tocaron credenciales, `.env` ni `testqacredentials.md`.
+
+---
+
+## Sesion 2026-04-26 — Documentacion de navegacion Shell/Rail/Launcher
+
+### Objetivo
+
+Actualizar la documentacion tecnica y publica de Agro para reflejar el nuevo patron de navegacion: rail persistente + launcher expandido.
+
+### Diagnostico
+
+- `MANIFIESTO_AGRO.md` seccion 4.11.3 ya documenta la navegacion canonica del shell.
+- `FICHA_TECNICA.md` listaba `agro-shell.js` como "shell UI" sin detalle del rail/launcher.
+- `docs-agro.html` existe como documentacion publica orientada al usuario final; no mencionaba el patron de navegacion.
+- No se encontro `apps/gold/docs-agro/` ni `apps/gold/docs/agro*.md`.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `FICHA_TECNICA.md` (raiz) | Descripcion de `agro-shell.js` actualizada de "shell UI" a descripcion completa que menciona rail persistente, launcher expandido, busqueda compacta, favoritos y entrada al Dashboard Agro. |
+| `apps/gold/docs-agro.html` | Agregada seccion "Como moverte dentro de Agro" (#navegacion) con explicacion para usuario final: rail, boton Menu, Dashboard y header. Agregada entrada correspondiente en el sidebar de navegacion. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Documentacion de esta sesion. |
+
+### Alcance respetado
+
+- No se toco `apps/gold/agro/agro.js`.
+- No se toco `apps/gold/agro/agro-shell.js`.
+- No se toco `apps/gold/agro/index.html`.
+- No se toco `apps/gold/agro/agro.css`.
+- No se toco `apps/gold/docs/MANIFIESTO_AGRO.md`.
+- No se toco Supabase, Vercel, workflows ni credenciales.
