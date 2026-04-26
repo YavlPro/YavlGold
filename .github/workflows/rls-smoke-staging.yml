@@ -3,6 +3,9 @@ name: RLS Storage Smoke Test (Staging)
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   rls-smoke:
     name: Run RLS and storage smoke test
