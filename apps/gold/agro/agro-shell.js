@@ -2,6 +2,7 @@ import { initAgroShellFavorites } from './agro-shell-favorites.js';
 import { initAgroShellSearch } from './agro-shell-search.js';
 
 const AGRO_ACTIVE_VIEW_KEY = 'YG_AGRO_ACTIVE_VIEW_V1';
+const AGRO_RAIL_EXPANDED_KEY = 'YG_AGRO_RAIL_EXPANDED_V1';
 const AGRO_DEFAULT_VIEW = 'dashboard';
 const AGRO_DEFAULT_SHELL_MODE = 'all';
 
@@ -301,21 +302,25 @@ function isViewWithinNavParent(view, navParent) {
     return token === view;
 }
 
-function readStoredViewToken() {
-    try {
-        return String(localStorage.getItem(AGRO_ACTIVE_VIEW_KEY) || '').trim();
-    } catch (_err) {
-        return '';
-    }
-}
-
-function readStoredView() {
-    return normalizeView(readStoredViewToken());
-}
-
 function writeStoredView(view) {
     try {
         localStorage.setItem(AGRO_ACTIVE_VIEW_KEY, normalizeView(view));
+    } catch (_err) {
+        // Ignore storage errors.
+    }
+}
+
+function readRailExpanded() {
+    try {
+        return localStorage.getItem(AGRO_RAIL_EXPANDED_KEY) === '1';
+    } catch (_err) {
+        return false;
+    }
+}
+
+function writeRailExpanded(isExpanded) {
+    try {
+        localStorage.setItem(AGRO_RAIL_EXPANDED_KEY, isExpanded ? '1' : '0');
     } catch (_err) {
         // Ignore storage errors.
     }
@@ -514,12 +519,15 @@ export function initAgroShell() {
     const sidebar = document.getElementById('agro-shell-sidebar');
     const backdrop = document.getElementById('agro-shell-backdrop');
     const toggle = document.getElementById('agro-shell-toggle');
+    const railToggle = document.getElementById('agro-shell-rail-toggle');
+    const railMenu = document.getElementById('agro-shell-rail-menu');
     if (!sidebar || !backdrop || !toggle) return null;
 
-    const storedViewToken = readStoredViewToken();
-    let activeView = normalizeBootView(storedViewToken);
-    let activeSubview = normalizeSubview(activeView, resolveViewAlias(storedViewToken)?.subview);
+    const bootViewToken = AGRO_DEFAULT_VIEW;
+    let activeView = normalizeBootView(bootViewToken);
+    let activeSubview = normalizeSubview(activeView, resolveViewAlias(bootViewToken)?.subview);
     let sidebarOpen = false;
+    let railExpanded = readRailExpanded();
     let ignoreToggleHitClose = false;
     let expandedNavParent = resolveNavParentForView(activeView);
 
@@ -556,6 +564,17 @@ export function initAgroShell() {
         backdrop.setAttribute('aria-hidden', 'false');
         expandedNavParent = resolveNavParentForView(activeView);
         syncSubnav();
+    };
+
+    const syncRailExpanded = () => {
+        document.body.classList.toggle('agro-shell-rail-expanded', railExpanded);
+        if (!railToggle) return;
+        railToggle.setAttribute('aria-pressed', railExpanded ? 'true' : 'false');
+        railToggle.setAttribute(
+            'aria-label',
+            railExpanded ? 'Colapsar navegación rápida Agro' : 'Expandir navegación rápida Agro'
+        );
+        railToggle.setAttribute('title', railExpanded ? 'Colapsar navegación' : 'Expandir navegación');
     };
 
     const syncSubnav = () => {
@@ -779,6 +798,20 @@ export function initAgroShell() {
         });
     });
 
+    railToggle?.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        railExpanded = !railExpanded;
+        writeRailExpanded(railExpanded);
+        syncRailExpanded();
+    });
+
+    railMenu?.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        openSidebar();
+    });
+
     backdrop.addEventListener('click', closeSidebar);
 
     document.addEventListener('keydown', (event) => {
@@ -843,6 +876,7 @@ export function initAgroShell() {
     sidebar.setAttribute('inert', '');
     applyShellModeFilter(document.body?.dataset?.agroShellMode || document.body?.dataset?.agroMode || AGRO_DEFAULT_SHELL_MODE);
     closeSidebar();
+    syncRailExpanded();
     setActiveView(activeView, { scroll: false, syncTab: true, subview: activeSubview });
     document.body.classList.add('agro-shell-ready');
     const splash = document.getElementById('agro-splash');
