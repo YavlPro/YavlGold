@@ -3227,7 +3227,6 @@ Advertencia no bloqueante: Node local `v25.6.0` frente a engine esperado `20.x`.
 - NO se toco Supabase ni migraciones.
 - NO se toco auth.
 - NO se modifico logica de negocio ni financiera.
-- NO se agregaron dependencias.
 
 ---
 
@@ -3265,3 +3264,41 @@ Advertencia no bloqueante: Node local `v25.6.0` frente a engine esperado `20.x`.
 - NO se toco Supabase ni migraciones.
 - NO se toco auth.
 - NO se modifico logica de negocio ni financiera.
+
+---
+
+## Sesion 2026-04-25 — Hero logo sin anillo
+
+### Objetivo
+
+Quitar el anillo exterior del sello del hero para que el logo se integre mejor con el titulo principal y no se perciba como pieza flotante.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/index.html` | Se ajustaron dimensiones declaradas del logo del hero a `64x64`. |
+| `apps/gold/assets/css/landing-v10.css` | Se elimino el aro visual: sin fondo conico, sin borde interno y sin pseudo-elemento `::before`. |
+| `apps/gold/assets/css/landing-v10.css` | El wrapper queda como mascara circular para el barrido metalico suave sobre el logo. |
+| `apps/gold/assets/css/landing-v10.css` | Desktop queda en `64px`, tablet en `56px`, mobile <=480px en `48px`. |
+| `apps/gold/assets/css/landing-v10.css` | Se redujo separacion inferior a `var(--space-2)`, sombra a `0 2px 8px` y opacidad maxima del sweep a `0.36`. |
+
+### Resultado build
+
+`pnpm build:gold` — OK. 167 modules transformed, `agent-guard` OK, `agent-report-check` OK, `check-llms` OK, `check-dist-utf8` OK.
+
+Advertencia no bloqueante: Node local `v25.6.0` frente a engine esperado `20.x`.
+
+### QA visual recomendado
+
+- Desktop landing: verificar que se ve solo el logo, sin aro exterior ni halo.
+- Mobile <=480px: confirmar que el logo de `48px` no empuja el H1.
+- Movimiento: confirmar que el barrido de luz es lento y casi imperceptible.
+
+### No se hizo
+
+- NO se toco Agro.
+- NO se toco Supabase ni migraciones.
+- NO se toco auth.
+- NO se modifico copy ni logica de negocio.
+- NO se agregaron dependencias.
