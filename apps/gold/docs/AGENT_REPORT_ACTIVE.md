@@ -3375,3 +3375,79 @@ Cerrar el primer bloque P1 de desviaciones activas detectadas en `AUDITORIA_COMP
 - NO se toco Supabase.
 - NO se tocaron `.env`, credenciales ni `testqacredentials.md`.
 - NO se agregaron dependencias nuevas.
+
+---
+
+## Sesion 2026-04-26 — Cierre P1 Node 20 y CI Gold Build
+
+### Objetivo
+
+Cerrar los dos frentes P1 de runtime/CI detectados en `AUDITORIA_COMPLETA_DEL_PROYECTO_2026-04-26.md`:
+
+1. Alinear el repo para usar Node 20 de forma explicita y reproducible.
+2. Crear CI automatico para proteger `pnpm build:gold` en `push` y `pull_request` contra `main`.
+
+### Diagnostico previo
+
+- `package.json` ya declara `"engines": { "node": "20.x", "pnpm": ">=8.0.0" }` y `packageManager: "pnpm@9.1.0"`.
+- `apps/gold/package.json` ya declara `"engines": { "node": "20.x", "pnpm": ">=8.0.0" }`.
+- `pnpm-workspace.yaml` mantiene paquetes `apps/*` y `packages/*`.
+- `.nvmrc` ya existe, esta versionado y contiene `20`.
+- `.node-version` no existe.
+- `.github/workflows/` contiene solo `rls-smoke-staging.yml`, manual por `workflow_dispatch`.
+- El workflow manual de RLS ya instala Node 20, pero no reemplaza un CI automatico de build para PR/push.
+- El build local sigue emitiendo advertencia porque el ejecutor actual usa Node `v25.6.0`; esto no puede corregirse desde el repo local sin cambiar el runtime de la maquina, pero si puede quedar explicitado para herramientas y CI.
+
+### Plan
+
+1. Crear `.node-version` con `20` para compatibilidad con herramientas que no leen `.nvmrc`.
+2. Crear `.github/workflows/gold-build.yml` con `push` y `pull_request` contra `main`.
+3. En el workflow usar `pnpm/action-setup@v4`, `actions/setup-node@v4` con `node-version: 20`, cache `pnpm`, `pnpm install --frozen-lockfile` y `pnpm build:gold`.
+4. No modificar `package.json` ni `apps/gold/package.json` porque ya declaran Node 20.
+5. Ejecutar `pnpm build:gold` local y documentar resultado.
+
+### Alcance protegido
+
+- NO tocar Agro.
+- NO tocar Supabase.
+- NO tocar Vercel.
+- NO tocar `.env`, credenciales ni `testqacredentials.md`.
+- NO abrir frente de tests, seed.sql ni RLS/Storage.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `.node-version` | Creado con `20` para declarar Node 20 en herramientas compatibles con este archivo. |
+| `.github/workflows/gold-build.yml` | Creado workflow automatico `Gold Build` para `push` y `pull_request` contra `main`. |
+| `.github/workflows/gold-build.yml` | El job usa `pnpm/action-setup@v4`, `actions/setup-node@v4` con `node-version: 20`, cache pnpm, `pnpm install --frozen-lockfile` y `pnpm build:gold`. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Documentado diagnostico, plan, cambios y verificacion de la sesion. |
+
+### Verificacion
+
+- `node --version`: `v25.6.0` en el ejecutor local actual.
+- `pnpm --version`: `9.1.0`.
+- `pnpm build:gold`: PASS.
+- `agent-guard`: OK.
+- `agent-report-check`: OK.
+- `vite build`: OK, 165 modules transformed.
+- `check-llms`: OK.
+- `check-dist-utf8`: OK.
+- Advertencia local esperada: engine declara Node `20.x`, pero esta sesion corrio sobre Node `v25.6.0`.
+
+### Resultado
+
+- El repo ya tenia `.nvmrc` versionado con `20`.
+- El repo ahora tambien tiene `.node-version` con `20`.
+- `package.json` y `apps/gold/package.json` no se modificaron porque ya declaraban Node `20.x`.
+- Existe CI automatico para `pnpm build:gold` en `push` y `pull_request` contra `main`.
+- El CI fija Node 20 y usa instalacion congelada con pnpm.
+
+### No se hizo
+
+- NO se toco Agro.
+- NO se toco Supabase.
+- NO se toco Vercel.
+- NO se tocaron `.env`, credenciales ni `testqacredentials.md`.
+- NO se abrio frente de tests, seed.sql ni RLS/Storage.
+- NO se agregaron dependencias de runtime.
