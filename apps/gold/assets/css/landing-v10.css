@@ -179,18 +179,18 @@ main { padding-top: var(--layout-navbar-h); }
    ========================================= */
 .hero { text-align: center; padding-top: var(--space-12); overflow: hidden; position: relative; background: none; border-bottom: none; }
 .hero .container { position: relative; z-index: 1; }
-.hero-mark { display: flex; justify-content: center; margin-bottom: var(--space-5); }
+.hero-mark { display: flex; justify-content: center; margin-bottom: var(--space-3); }
 .hero-mark__ring {
   position: relative;
-  width: 108px;
-  height: 108px;
+  width: 96px;
+  height: 96px;
   display: grid;
   place-items: center;
   border-radius: var(--radius-pill);
   background: var(--metallic-conic);
   box-shadow:
     0 0 0 1px var(--border-gold),
-    0 10px 28px color-mix(in srgb, var(--bg-0) 72%, transparent);
+    0 6px 18px color-mix(in srgb, var(--bg-0) 58%, transparent);
   overflow: hidden;
 }
 .hero-mark__ring::before {
@@ -223,8 +223,8 @@ main { padding-top: var(--layout-navbar-h); }
 .hero-mark__logo {
   position: relative;
   z-index: 1;
-  width: 74px;
-  height: 74px;
+  width: 66px;
+  height: 66px;
   object-fit: contain;
   border-radius: var(--radius-pill);
 }
@@ -630,16 +630,16 @@ main { padding-top: var(--layout-navbar-h); }
   .btn { width: 100%; max-width: 320px; }
   .trust-bar { gap: var(--space-4); }
   .dive-grid { grid-template-columns: 1fr; }
-  .hero-mark__ring { width: 92px; height: 92px; }
-  .hero-mark__logo { width: 62px; height: 62px; }
+  .hero-mark__ring { width: 86px; height: 86px; }
+  .hero-mark__logo { width: 58px; height: 58px; }
   .official-socials__inner { padding: var(--space-6) var(--space-4); }
   .official-socials__actions { flex-direction: column; }
   .official-socials__btn { width: 100%; }
 }
 @media (max-width: 480px) {
-  .hero-mark { margin-bottom: var(--space-4); }
-  .hero-mark__ring { width: 84px; height: 84px; }
-  .hero-mark__logo { width: 56px; height: 56px; }
+  .hero-mark { margin-bottom: var(--space-3); }
+  .hero-mark__ring { width: 78px; height: 78px; }
+  .hero-mark__logo { width: 52px; height: 52px; }
   .hero h1 { font-size: 2rem; }
   .feature-card { padding: var(--space-4); }
   .switch-chip { font-size: 0.8rem; padding: 5px 12px; }

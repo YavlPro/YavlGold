@@ -3228,3 +3228,40 @@ Advertencia no bloqueante: Node local `v25.6.0` frente a engine esperado `20.x`.
 - NO se toco auth.
 - NO se modifico logica de negocio ni financiera.
 - NO se agregaron dependencias.
+
+---
+
+## Sesion 2026-04-25 — Ajuste fino del sello en hero
+
+### Objetivo
+
+Integrar mejor el sello circular del logo con el titulo principal del hero, evitando que se perciba como un elemento flotante separado.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/assets/css/landing-v10.css` | `.hero-mark` reduce su separacion inferior de `var(--space-5)` a `var(--space-3)`. |
+| `apps/gold/assets/css/landing-v10.css` | El sello baja de `108px` a `96px` en desktop, con logo interno de `66px`. |
+| `apps/gold/assets/css/landing-v10.css` | La sombra baja de `0 10px 28px` a `0 6px 18px` para reducir la sensacion de flotacion. |
+| `apps/gold/assets/css/landing-v10.css` | Se ajustaron los tamanos responsive a `86px` en tablet y `78px` en mobile <=480px. |
+
+### Resultado build
+
+`pnpm build:gold` — OK. 167 modules transformed, `agent-guard` OK, `agent-report-check` OK, `check-llms` OK, `check-dist-utf8` OK.
+
+Advertencia no bloqueante: Node local `v25.6.0` frente a engine esperado `20.x`.
+
+### QA visual recomendado
+
+- Desktop landing: verificar que el sello queda mas cerca del H1 y se siente anclado al encabezado.
+- Mobile <=480px: verificar que el sello de `78px` no empuja torpemente el contenido.
+- Movimiento: confirmar que el sweep metalico sigue sobrio y sin pulso.
+
+### No se hizo
+
+- NO se toco HTML ni copy.
+- NO se toco `apps/gold/agro/`.
+- NO se toco Supabase ni migraciones.
+- NO se toco auth.
+- NO se modifico logica de negocio ni financiera.
