@@ -3832,3 +3832,34 @@ Transformar el menu completo de Agro en un launcher expandido tipo Windows 11, a
 - No se toco Supabase.
 - No se toco Vercel ni workflows.
 - No se tocaron credenciales, `.env` ni `testqacredentials.md`.
+
+---
+
+## Sesion 2026-04-26 — Feedback mobile rail overlap
+
+### Diagnostico
+
+- La captura mobile muestra que `.agro-feedback-fab` ocupa la misma zona inferior que el rail mobile.
+- `apps/gold/agro/agro-feedback.js` crea el boton flotante y el modal; no se debe tocar ni duplicar esa logica.
+- El launcher ya tiene seccion `Sistema`, por lo que puede alojar un acceso alterno a Feedback en mobile.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/agro.css` | Oculta `.agro-feedback-fab` en `max-width: 768px` para evitar solape con el rail inferior. |
+| `apps/gold/agro/index.html` | Agrega tile `Feedback` en la seccion `Sistema` del launcher, reutilizando el FAB existente para abrir el modal. |
+
+### Verificacion
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS (`agent-guard`, `agent-report-check`, `vite build`, `check-llms`, `check-dist-utf8`).
+- Advertencia local no bloqueante: engine declara Node `20.x`, pero esta sesion corrio con Node `v25.6.0`.
+- QA manual recomendado: desktop mantiene FAB visible; mobile oculta FAB y permite abrir Feedback desde launcher.
+
+### Alcance respetado
+
+- No se toco `apps/gold/agro/agro.js`.
+- No se toco Supabase.
+- No se toco Vercel ni workflows.
+- No se tocaron credenciales, `.env` ni `testqacredentials.md`.

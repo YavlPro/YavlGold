@@ -373,6 +373,15 @@
                             <span class="agro-launcher__tile-desc">Utilidades y soporte operativo.</span>
                         </span>
                     </button>
+                    <button type="button" class="agro-shell-link agro-launcher__tile"
+                        data-agro-mode-scope="crop non_crop tools"
+                        onclick="document.querySelector('.agro-launcher__close')?.click(); window.setTimeout(function(){ document.querySelector('.agro-feedback-fab')?.click(); }, 0);">
+                        <i class="fa-solid fa-comment-dots agro-shell-link__icon" aria-hidden="true"></i>
+                        <span class="agro-launcher__tile-copy">
+                            <span class="agro-shell-link__label">Feedback</span>
+                            <span class="agro-launcher__tile-desc">Reportar bug o sugerir mejora.</span>
+                        </span>
+                    </button>
                     <a href="/" class="agro-launcher__tile agro-launcher__tile--link"
                         data-agro-mode-scope="crop non_crop tools">
                         <i class="fa-solid fa-house agro-shell-link__icon" aria-hidden="true"></i>

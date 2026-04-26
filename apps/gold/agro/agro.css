@@ -6904,6 +6904,12 @@ body.agro-shell-open .agro-feedback-fab,
   }
 }
 
+@media (max-width: 768px) {
+  .agro-feedback-fab {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .agro-feedback-fab {
     transition: none;
