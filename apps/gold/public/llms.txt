@@ -34,7 +34,7 @@ This file contains the current product, architecture and routing policy for `app
 ## 3.1 Official channels
 - X / Comunidad YavlGold: https://x.com/Yavlcapitan
 - YouTube / YavlGold Pro: https://youtube.com/@yavlgoldpro
-- LinkedIn / Yerikson Varela: https://ve.linkedin.com/in/yerikson-varela-7372b0302
+- LinkedIn / Yerikson Varela: https://www.linkedin.com/in/yavl-gold-7372b0302
 
 ## 4. Auth policy
 - Global protected areas: `/dashboard` and `/agro`

@@ -3125,3 +3125,59 @@ Advertencia no bloqueante: Node local `v25.6.0` frente a engine esperado `20.x`.
 - NO se agregaron dependencias.
 - NO se introdujo React, Tailwind ni SPA.
 - NO se modifico logica financiera ni auth.
+
+---
+
+## Sesion 2026-04-25 — Correccion LinkedIn oficial y scroll modal creador
+
+### Objetivo
+
+Corregir el LinkedIn oficial publico de YavlGold y ajustar el modal "Sobre mi / Creador" del Dashboard / Mi Finca para que no se corte en pantallas pequenas.
+
+### Diagnostico
+
+- LinkedIn antiguo detectado en landing, JSON-LD, docs-agro, llms.txt y dashboard.
+- Link correcto definido por el usuario: `https://www.linkedin.com/in/yavl-gold-7372b0302`.
+- El modal real vive en `apps/gold/dashboard/index.html` como `#about-creator-modal`.
+- El panel responsable es `.yg-about-creator-panel`.
+- Causa del corte: `.yg-about-creator-panel` tenia `overflow: hidden` y no tenia `max-height`; en pantallas bajas los botones GitHub/LinkedIn quedaban fuera del area accesible.
+- `AGENT_REPORT_ACTIVE.md` tenia 3127 lineas al inicio, por debajo del umbral de rotacion.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/index.html` | LinkedIn actualizado en boton publico y `Person.sameAs` del JSON-LD. |
+| `apps/gold/docs-agro.html` | LinkedIn actualizado en el bloque "Canales oficiales". |
+| `apps/gold/public/llms.txt` | LinkedIn actualizado en `Official channels`. |
+| `apps/gold/dashboard/index.html` | LinkedIn del modal creador actualizado; botones GitHub/LinkedIn quedan con `target="_blank"`, `rel="me noopener noreferrer"` y aria-labels claros. |
+| `apps/gold/dashboard/index.html` | `.yg-about-creator-panel` ahora usa `max-height: min(86vh, 760px)`, `overflow-y: auto`, `overflow-x: hidden`, `overscroll-behavior: contain` y `-webkit-overflow-scrolling: touch`; en mobile `max-height: calc(100dvh - 32px)`. |
+
+### Verificacion
+
+- Busqueda de LinkedIn antiguo bajo `apps/gold`: sin resultados.
+- Busqueda del nuevo LinkedIn: landing, docs-agro, llms.txt y dashboard apuntan a `https://www.linkedin.com/in/yavl-gold-7372b0302`.
+- JSON-LD parseado localmente: `Person.sameAs` incluye el nuevo LinkedIn.
+- Dashboard revisado: boton LinkedIn conserva `target="_blank"`, suma `rel="me noopener noreferrer"` y aria-label claro.
+
+### Resultado build
+
+`pnpm build:gold` — OK. 167 modules transformed, `agent-guard` OK, `agent-report-check` OK, `check-llms` OK, `check-dist-utf8` OK.
+
+Advertencia no bloqueante: Node local `v25.6.0` frente a engine esperado `20.x`.
+
+### QA manual sugerido
+
+- Landing: verificar que el boton LinkedIn abre `https://www.linkedin.com/in/yavl-gold-7372b0302`.
+- `/docs-agro`: verificar que el boton LinkedIn abre el mismo perfil.
+- Dashboard / Mi Finca: abrir "Sobre el Creador" y confirmar scroll interno.
+- Mobile <=480px: verificar que el modal no se corta y que GitHub/LinkedIn quedan accesibles.
+- Teclado: verificar foco en cerrar, GitHub y LinkedIn.
+
+### No se hizo
+
+- NO se toco `apps/gold/agro/`.
+- NO se toco Supabase ni migraciones.
+- NO se toco auth.
+- NO se modifico logica financiera.
+- NO se agregaron dependencias.
