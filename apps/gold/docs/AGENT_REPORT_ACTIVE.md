@@ -914,3 +914,63 @@ Nota: si QA manual detecta que evidencias privadas no abren por `getSignedEviden
 
 - `git diff --check`: PASS.
 - `pnpm build:gold`: PASS con advertencia local conocida por Node `v25.6.0`; repo/CI fijan Node `20.x`.
+
+---
+
+## 2026-04-27 — P2-C Storage agro-evidence limits
+
+**Estado:** YELLOW CONTROLADO — fix P2-C aplicado, pendiente QA Supabase real
+
+**Objetivo:** Endurecer el bucket `agro-evidence` con contrato explicito de MIME types y limite de tamano, preservando privacidad y policies owner-scoped.
+
+### Diagnostico
+
+- El bucket exacto es `agro-evidence`.
+- `supabase/migrations/20260420120000_security_trust_hardening_v1.sql` crea/actualiza el bucket con `public = false`.
+- Las policies `agro_evidence_select_own`, `agro_evidence_insert_own`, `agro_evidence_update_own` y `agro_evidence_delete_own` ya estan owner-scoped por carpeta de `auth.uid()`.
+- No se encontro contrato explicito de `allowed_mime_types` ni `file_size_limit` por bucket; solo existe el limite global de Storage en `supabase/config.toml`.
+- `tools/rls-smoke-test.js` sube actualmente un objeto `text/plain` con extension `.txt`, por lo que debe ajustarse si el bucket queda limitado a imagenes/PDF.
+- `avatars` queda fuera de alcance y no debe tocarse en esta sesion.
+
+### Plan
+
+- Crear una migracion nueva que actualice solo `storage.buckets` para `id = 'agro-evidence'`.
+- Definir MIME permitidos: `image/jpeg`, `image/png`, `image/webp`, `application/pdf`.
+- Definir `file_size_limit = 10485760` bytes (10 MB).
+- No modificar `public`, policies, RPC, grants, `profiles`, `avatars` ni codigo Agro.
+- Cambiar el smoke test para subir un PNG minimo con `contentType: 'image/png'`.
+- Validar con `git diff --check` y `pnpm build:gold`.
+
+### Cambios aplicados
+
+| Archivo | Cambio |
+|---|---|
+| `supabase/migrations/20260427133000_p2c_agro_evidence_storage_limits.sql` | Agrega contrato explicito para `agro-evidence`: MIME permitidos y limite de 10 MB. |
+| `tools/rls-smoke-test.js` | Cambia el upload de Storage del smoke de `text/plain`/`.txt` a PNG minimo `image/png`/`.png`. |
+
+### Contrato aplicado
+
+- MIME permitidos: `image/jpeg`, `image/png`, `image/webp`, `application/pdf`.
+- Limite por archivo: `10485760` bytes (10 MB).
+- Bucket: `agro-evidence`.
+- Privacidad: se conserva el estado privado existente; esta migracion no cambia `public`.
+- Policies: no se tocaron; se preservan las owner-scoped policies existentes.
+
+### Validacion
+
+- `node --check tools/rls-smoke-test.js`: PASS.
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS con advertencia local conocida por Node `v25.6.0`; repo/CI fijan Node `20.x`.
+- `supabase db reset`: NO ejecutado; no hubo autorizacion explicita para reset ni conexion a DB viva.
+
+### NO se hizo
+
+- No se toco Agro.
+- No se toco `apps/gold/agro/agro.js`.
+- No se tocaron policies RLS.
+- No se tocaron RPC/grants.
+- No se toco `profiles`.
+- No se toco `avatars`.
+- No se toco Supabase config.
+- No se tocaron Edge Functions, Vercel ni workflows.
+- No se tocaron credenciales.

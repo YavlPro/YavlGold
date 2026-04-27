@@ -16,6 +16,11 @@ const requiredEnv = [
 const args = new Set(process.argv.slice(2));
 const cleanupOnly = args.has('--cleanup-only');
 const runId = process.env.RLS_SMOKE_RUN_ID || `rls-smoke-${Date.now()}`;
+const STORAGE_SMOKE_CONTENT_TYPE = 'image/png';
+const STORAGE_SMOKE_BODY = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=',
+  'base64'
+);
 
 const config = {
   url: process.env.SUPABASE_URL,
@@ -212,10 +217,10 @@ async function cleanupRowsByMarker(session) {
   return { rows: Array.isArray(data) ? data.length : 0 };
 }
 
-async function storageUpload(session, path, label) {
-  const body = new Blob([`${config.runId}:${label}`], { type: 'text/plain' });
+async function storageUpload(session, path) {
+  const body = new Blob([STORAGE_SMOKE_BODY], { type: STORAGE_SMOKE_CONTENT_TYPE });
   return session.client.storage.from(config.bucket).upload(path, body, {
-    contentType: 'text/plain',
+    contentType: STORAGE_SMOKE_CONTENT_TYPE,
     upsert: false
   });
 }
@@ -280,9 +285,9 @@ async function run() {
 
   let aRow = null;
   let bRow = null;
-  const aPath = `${a.user.id}/agro/income/${config.runId}-a.txt`;
-  const bPath = `${b.user.id}/agro/income/${config.runId}-b.txt`;
-  const crossPath = `${b.user.id}/agro/income/${config.runId}-a-to-b.txt`;
+  const aPath = `${a.user.id}/agro/income/${config.runId}-a.png`;
+  const bPath = `${b.user.id}/agro/income/${config.runId}-b.png`;
+  const crossPath = `${b.user.id}/agro/income/${config.runId}-a-to-b.png`;
 
   try {
     aRow = await insertSmokeRow(a, smokeRow(a.user.id, 'A'), 'db_insert_own_a');
@@ -314,7 +319,7 @@ async function run() {
       'User A inserted a smoke row with User B user_id'
     );
 
-    const ownUpload = await storageUpload(a, aPath, 'A');
+    const ownUpload = await storageUpload(a, aPath);
     if (ownUpload.error) {
       if (isMissingBucket(ownUpload.error)) {
         block('Storage bucket is unavailable. Apply storage migration in confirmed staging first.', {
@@ -332,7 +337,7 @@ async function run() {
     }
     record('storage_read_own', 'PASS');
 
-    const bUpload = await storageUpload(b, bPath, 'B');
+    const bUpload = await storageUpload(b, bPath);
     if (bUpload.error) {
       if (isMissingBucket(bUpload.error)) {
         block('Storage bucket is unavailable. Apply storage migration in confirmed staging first.', {
@@ -344,7 +349,7 @@ async function run() {
     }
     record('storage_upload_b_own_setup', 'PASS');
 
-    const crossUpload = await storageUpload(a, crossPath, 'A-to-B');
+    const crossUpload = await storageUpload(a, crossPath);
     if (!crossUpload.error) {
       securityFail('User A uploaded into User B storage folder');
     }
