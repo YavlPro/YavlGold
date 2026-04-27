@@ -15581,7 +15581,13 @@ function refreshContextPanel() {
 function appendContextItem(container, key, value) {
     const item = document.createElement('div');
     item.className = 'ast-ctx-item';
-    item.innerHTML = `<strong>${key}:</strong> ${value}`;
+
+    const keyNode = document.createElement('strong');
+    keyNode.textContent = `${key ?? ''}:`;
+
+    const valueNode = document.createTextNode(` ${value ?? ''}`);
+    item.append(keyNode, valueNode);
+
     container.appendChild(item);
 }
 

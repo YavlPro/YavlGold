@@ -1088,3 +1088,47 @@ Dominios permitidos en esta primera observacion: `self`, Google Fonts, CDNJS, js
 - No se reemplazaron los `alert()` existentes de error/sesion en `deleteFactureroItem()`.
 - No se cambio la logica de soft-delete, hard-delete, undo, restore, refresh ni payloads.
 - No se toco Supabase, migraciones, Storage, RPC/grants, Vercel, workflows ni credenciales.
+
+---
+
+## 2026-04-27 — XSS appendContextItem con DOM seguro
+
+**Estado:** YELLOW CONTROLADO — fix aplicado, QA manual pendiente
+
+**Objetivo:** Reemplazar el render inseguro de `appendContextItem()` para que valores dinamicos de contexto no pasen por `innerHTML`.
+
+### Diagnostico
+
+- `appendContextItem(container, key, value)` vive en `apps/gold/agro/agro.js`.
+- La funcion actual crea `.ast-ctx-item` y usa `item.innerHTML = \`<strong>${key}:</strong> ${value}\`;`.
+- Sus llamadas reciben valores de perfil, finca, ubicacion, cultivo activo, clima y estadisticas de contexto.
+- `profile.*`, `cropCtx.*`, `weather.*` y `loc.*` pueden provenir de usuario, Supabase o APIs/contexto externo.
+- El riesgo concreto es DOM XSS por interpretar `key` o `value` como HTML.
+- No se requiere cambio visual ni cambio de datos; basta construir `strong` y texto con DOM APIs.
+
+### Plan
+
+- Tocar solo `appendContextItem()` en `apps/gold/agro/agro.js`.
+- Reemplazar `innerHTML` por `document.createElement('strong')`, `textContent` y nodos de texto.
+- Preservar clase `.ast-ctx-item`, orden visual y formato `Etiqueta: valor`.
+- No tocar otros `innerHTML`, renderizadores, Supabase, Vercel ni migraciones.
+- Validar con `git diff --check` y `pnpm build:gold`.
+
+### Cambios aplicados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/agro.js` | `appendContextItem()` deja de usar `innerHTML` y construye `strong` + texto con DOM APIs. |
+
+### Validacion
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS con advertencia local conocida por Node `v25.6.0`; repo/CI fijan Node `20.x`.
+
+### NO se hizo
+
+- No se reemplazaron otros `innerHTML`.
+- No se tocaron otros renderizadores.
+- No se cambio la logica de perfil, cultivo, clima, ubicacion ni contexto.
+- No se instalo DOMPurify ni ninguna dependencia.
+- No se toco Supabase, migraciones, Storage, RPC/grants, Vercel, workflows ni credenciales.
