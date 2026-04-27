@@ -296,3 +296,113 @@ El toggle usaba `right: -0.9rem` lo que dejaba un hueco visible entre el rail y 
 - No se toco `agro.js`, `index.html` ni `agro-shell.js`.
 - No se toco Supabase, Vercel, workflows ni credenciales.
 - No se cambio logica de collapse ni localStorage.
+
+---
+
+## 2026-04-27 — Diagnostico y plan P2 Supabase/RLS
+
+**Objetivo:** abrir el frente Seguridad Supabase P2 solo como diagnostico/plan, sin fixes, sin migraciones y sin conexion a DB viva.
+
+### Alcance ejecutado
+
+- `git status --short`: sin salida al inicio; worktree limpio.
+- Lectura estatica de `AGENTS.md`, `FICHA_TECNICA.md`, este reporte activo, docs `security/` y `ops/`, `supabase/config.toml`, `supabase/migrations/` y `tools/rls-smoke-test.js`.
+- No se ejecuto `supabase db reset`.
+- No se conecto a Supabase remoto ni staging.
+
+### Veredicto
+
+**YELLOW controlado.** No aparece P1 nuevo por auditoria estatica. El smoke staging RLS/Storage sigue documentado como PASS para `agro_pending` + `agro-evidence`. La deuda viva es P2/P3 de endurecimiento, inventario remoto y modernizacion gradual.
+
+### Evidencia principal
+
+| Area | Evidencia | Lectura |
+|---|---|---|
+| Storage `agro-evidence` | `supabase/migrations/20260420120000_security_trust_hardening_v1.sql` | Bucket privado y policies owner-folder con `(select auth.uid())`. |
+| Smoke staging | `apps/gold/docs/security/RLS_STORAGE_VALIDATION_2026-04-23.md` | PASS en workflow manual sobre `main`; URL exacta del run sigue pendiente de pegar. |
+| Config Supabase | `supabase/config.toml` | API expone `public` y `graphql_public`; Storage tiene limite global `50MiB`; no hay bucket config local con MIME types. |
+| Indices operativos | `supabase/migrations/20260427120000_agro_operational_user_id_indexes.sql` | Primer fix seguro ya existe para `agro_operational_cycles` y `agro_operational_movements`. |
+| Smoke script | `tools/rls-smoke-test.js` | Usa anon key + usuarios A/B; valida aislamiento DB y Storage; no usa `service_role`. |
+
+### Hallazgos P2
+
+1. **Policies owner-based antiguas sin modernizacion completa.**
+   - `supabase/migrations/20260411130000_create_agro_period_cycles.sql` define policies sin `to authenticated` y con `auth.uid()` directo.
+   - `supabase/migrations/20260417104335_agro_crops_roi_baseline.sql` hace lo mismo para `agro_crops` y `agro_roi_calculations`.
+   - Riesgo: no es bypass confirmado, pero queda por debajo del patron moderno ya usado en `20260420120000_security_trust_hardening_v1.sql`.
+
+2. **RPCs public con grants no explicitados en varias migraciones.**
+   - `agro_rank_top_clients`, `agro_rank_pending_clients`, `agro_buyer_portfolio_summary_v1` y `agro_delete_buyer_cascade_v1` viven en esquema `public`.
+   - Solo se vio `REVOKE/GRANT` explicito para `public.log_event` y `agro_rank_top_crops_profit`.
+   - Riesgo: sin inventario vivo de `pg_proc`/grants no conviene cambiar aun; planificar REVOKE/GRANT explicito por funcion tras confirmar consumidores.
+
+3. **Funciones `SECURITY DEFINER` a revisar por contrato.**
+   - `public.handle_new_user()` es trigger de Auth esperado.
+   - `public.log_event()` es wrapper `SECURITY DEFINER` con revoke/grant a `authenticated`.
+   - `security.log_event()` esta en esquema no expuesto por API, pero hay `GRANT USAGE ON SCHEMA security TO authenticated`; conviene revisar si ese grant sigue siendo necesario.
+
+4. **Storage contract incompleto para limites/MIME por bucket.**
+   - `agro-evidence` tiene owner policies y bucket privado.
+   - No se ve contrato explicito de `allowed_mime_types` ni `file_size_limit` por bucket en migraciones; solo limite global `50MiB`.
+   - `avatars` sigue pendiente de decision: publico por diseno vs signed URLs/private.
+
+### Hallazgos P3
+
+1. **Uso directo de `auth.uid()` en policies ya owner-based.**
+   - Aparece en tablas como `agro_feedback`, `agro_buyers`, `agro_farmer_profile`, `agro_public_profiles`, `agro_social_*`, `agro_task_cycles`, `announcements`, `notifications`, `feedback`, `user_favorites`, `user_onboarding_context` y objetos operativos.
+   - Riesgo principal: rendimiento/consistencia, no bypass confirmado.
+
+2. **`profiles` conserva semantica publica legacy.**
+   - `001_setup_profiles_trigger.sql` tiene `select using (true)` y policies insert/update con `auth.uid()` directo.
+   - No tocar sin decision de producto, porque cambiarlo podria modificar comportamiento publico esperado.
+
+3. **Views.**
+   - No se detectaron `CREATE VIEW` activos en migraciones raiz.
+   - `apps/gold/docs/security/rls-profiles-policies.sql` conserva una propuesta documental de `profiles_public` con nota `security_invoker`, pero no es migracion activa.
+
+### Plan por grupos pequenos
+
+1. **P2-A / Policies owner-based de bajo riesgo.**
+   - Tablas: `agro_period_cycles`, `agro_crops`, `agro_roi_calculations`.
+   - Cambio futuro: migracion idempotente que dropee/recree solo esas policies con `to authenticated` y `((select auth.uid()) = user_id)`.
+   - No tocar `profiles` en este grupo.
+
+2. **P2-B / Inventario RPC y grants.**
+   - Antes de migrar: consultar en DB autorizada `pg_proc`, `pg_namespace` y grants efectivos.
+   - Luego: migracion explicita por RPC con `REVOKE ALL FROM PUBLIC` y `GRANT EXECUTE TO authenticated` donde corresponda.
+   - Revisar especialmente `agro_buyer_portfolio_summary_v1` y `agro_delete_buyer_cascade_v1`.
+
+3. **P2-C / Storage contract.**
+   - Confirmar MIME reales usados por evidencias Agro antes de fijar `allowed_mime_types`.
+   - Definir limite por bucket para `agro-evidence`.
+   - Resolver decision `avatars` en documento/manifesto antes de tocar policies.
+
+4. **P2-D / Profiles y superficie publica.**
+   - Decidir si `profiles` sigue con lectura publica legacy o se migra a vista `profiles_public`.
+   - Si se crea vista, exigir `security_invoker = true` en Postgres compatible.
+
+5. **P3 / Limpieza y consistencia.**
+   - Modernizar direct `auth.uid()` restante por tandas pequenas.
+   - Solo limpiar policies duplicadas facturero si `pg_policies` vivo confirma duplicidad real.
+
+### Primer fix recomendado posterior
+
+Crear una unica migracion pequena para **P2-A**:
+
+- `agro_period_cycles`: `select/insert/update/delete`.
+- `agro_crops`: `select/insert/update/delete`.
+- `agro_roi_calculations`: `select/insert/delete`.
+- Patron: `for <cmd> to authenticated using ((select auth.uid()) = user_id)` y `with check ((select auth.uid()) = user_id)` cuando aplique.
+
+### Validacion futura
+
+- `git diff --check`.
+- `pnpm build:gold`.
+- Si el usuario autoriza DB viva: consultar `pg_policies`, `role_table_grants`, `pg_proc` y `storage.buckets`; no ejecutar resets destructivos.
+
+### NO se hizo
+
+- No se crearon migraciones.
+- No se tocaron policies, RPCs, Storage ni Supabase config.
+- No se toco Agro, `agro.js`, Edge Functions, Vercel, workflows ni credenciales.
+- No se uso `git add`.
