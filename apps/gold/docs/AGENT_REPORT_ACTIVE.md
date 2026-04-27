@@ -1149,3 +1149,53 @@ Dominios permitidos en esta primera observacion: `self`, Google Fonts, CDNJS, js
 - **P2-A RLS cross-user Usuario B:** PENDIENTE. Bloqueo por hCaptcha impidió crear cuenta secundaria. No se debe declarar GREEN global basándose solo en inferencia de policy SQL.
 
 **Pendiente:** Validar aislamiento empírico con Usuario B. Continuar diálogos nativos restantes e innerHTML por prioridad.
+
+---
+
+## 2026-04-27 — QA RLS cross-user completado
+
+**Estado:** GREEN
+
+**Objetivo:** Completar la validación pendiente de aislamiento RLS entre usuarios reales.
+
+### Diagnostico
+
+El QA anterior había validado Usuario A, acceso anónimo, limpieza QA y XSS, pero faltaba la prueba empírica con Usuario B. Se realizó una validación manual usando dos navegadores separados para evitar compartir sesión, localStorage o cookies.
+
+### Plan
+
+- Usar Chrome con la cuenta oficial.
+- Usar Edge con la cuenta Capitán QA.
+- Confirmar que cada cuenta solo ve sus propios datos.
+- Confirmar que ninguna cuenta ve datos ajenos.
+
+### Resultado
+
+- Chrome con cuenta oficial no pudo ver datos creados o pertenecientes a Capitán QA.
+- Edge con cuenta Capitán QA no pudo ver datos creados o pertenecientes a la cuenta oficial.
+- El aislamiento cross-user quedó validado empíricamente en ambas direcciones.
+- El acceso anónimo ya estaba validado como bloqueado/redirigido a login.
+- XSS en `appendContextItem()` ya estaba validado como seguro: el payload se renderiza como texto y no ejecuta script.
+
+### Estado final
+
+- P2-A RLS owner policies: GREEN.
+- P2-B1 RPC grants: GREEN por QA funcional previo.
+- P2-C Storage: GREEN por validación previa.
+- CSP/headers baseline: GREEN por deploy/build y revisión funcional.
+- Modal deleteFactureroItem: GREEN por QA previo.
+- XSS appendContextItem: GREEN.
+
+### Pendiente
+
+- Continuar con diálogos nativos restantes por prioridad.
+- Continuar con auditoría `innerHTML` por riesgo.
+- Mantener CSP en Report-Only hasta acumular evidencia suficiente antes de endurecerla.
+
+### NO se hizo
+
+- No se tocaron migraciones.
+- No se tocó código.
+- No se tocó Supabase config.
+- No se ejecutó `supabase db reset`.
+- No se usaron credenciales en documentos versionados.
