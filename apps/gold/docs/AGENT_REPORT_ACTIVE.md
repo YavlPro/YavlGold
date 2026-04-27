@@ -258,3 +258,41 @@ El toggle anterior era mobile-only (`display: none` en base, `display: flex` sol
 - No se toco Supabase, Vercel, workflows ni credenciales.
 - No se elimino el rail.
 - No se rompio desktop.
+
+---
+
+## 2026-04-27 — Integracion visual del toggle como handle del rail
+
+**Objetivo:** Corregir el aspecto visual del toggle del rail para que se perciba como un handle integrado al borde derecho del rail, no como un boton flotante desconectado.
+
+### Diagnostico
+
+El toggle usaba `right: -0.9rem` lo que dejaba un hueco visible entre el rail y la pestana. La pestana no compartia el estilo de borde ni el backdrop del rail, dando la impresion de un elemento flotante ajeno al rail.
+
+### Plan
+
+- Mover toggle a `right: 0` con `transform: translateX(100%)` para flush contra el borde.
+- Emparejar borde con el rail usando `color-mix(in srgb, var(--gold-4) 18%, var(--border-neutral))` sin borde izquierdo.
+- Agregar `box-shadow` lateral y `backdrop-filter: blur(14px)` coherentes con el rail.
+- Simplificar transforms collapsed a `translateX(-100%)` / `translateX(100%)` limpios.
+- Eliminar override mobile `right: -1.1rem` que recreaba el gap.
+
+### Cambios
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro.css` | CSS toggle base | `right: 0`, `transform: translateY(-50%) translateX(100%)`, borde coherente sin `border-left`, `box-shadow: 1px 0 6px rgba(0,0,0,0.2)`, `backdrop-filter: blur(14px)` igual al rail. |
+| `apps/gold/agro/agro.css` | CSS collapsed | Rail: `translateX(-100%)` limpio. Toggle: `translateY(-50%) translateX(100%)` reposicionado al borde viewport. |
+| `apps/gold/agro/agro.css` | CSS mobile | Eliminado `right: -1.1rem` que recreaba gap en mobile. Override conserva solo dimensiones touch. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | docs | Sesion documentada. |
+
+### Validacion
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS (agent-guard OK, agent-report-check OK, vite build 165 modules, check-llms OK, UTF-8 OK).
+
+### NO se hizo
+
+- No se toco `agro.js`, `index.html` ni `agro-shell.js`.
+- No se toco Supabase, Vercel, workflows ni credenciales.
+- No se cambio logica de collapse ni localStorage.
