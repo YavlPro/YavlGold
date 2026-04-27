@@ -564,3 +564,62 @@ commit;
 - No se conecto a DB viva.
 - No se ejecuto `supabase db reset`.
 - No se uso `git add`.
+
+---
+
+## 2026-04-27 — Plan de ejecucion P2-B1 RPC grants
+
+**Objetivo:** aplicar el primer fix P2-B1 recomendado: endurecer execution grants de 4 RPC activas en `public` con `REVOKE ALL FROM PUBLIC` y `GRANT EXECUTE TO authenticated`.
+
+### Diagnostico
+
+- `git status --short`: sin salida antes de editar.
+- `agro_rank_top_clients`:
+  - Definicion vigente: `supabase/migrations/20260221231536_agro_rpc_date_filters_inclusive.sql`.
+  - Firma exacta: `public.agro_rank_top_clients(date, date, integer, uuid)`.
+  - No se encontro `REVOKE/GRANT` explicito para esta funcion en migraciones.
+- `agro_rank_pending_clients`:
+  - Definicion vigente: `supabase/migrations/20260221231536_agro_rpc_date_filters_inclusive.sql`.
+  - Firma exacta: `public.agro_rank_pending_clients(date, date, integer, uuid)`.
+  - No se encontro `REVOKE/GRANT` explicito para esta funcion en migraciones.
+- `agro_buyer_portfolio_summary_v1`:
+  - Contrato final: `supabase/migrations/20260418120000_agro_buyer_portfolio_contract_restore.sql`.
+  - Firma exacta: `public.agro_buyer_portfolio_summary_v1()`.
+  - No se encontro `REVOKE/GRANT` explicito para esta funcion en migraciones.
+- `agro_delete_buyer_cascade_v1`:
+  - Definicion: `supabase/migrations/20260403143000_agro_delete_buyer_cascade_v1.sql`.
+  - Firma exacta: `public.agro_delete_buyer_cascade_v1(uuid)`.
+  - Es `security invoker`, valida `auth.uid()` y ownership del comprador, pero no tiene `REVOKE/GRANT` explicito.
+- Referencia endurecida:
+  - `supabase/migrations/20260221231650_agro_rank_top_crops_profit_order_repair.sql` usa `REVOKE ALL ... FROM PUBLIC` + `GRANT EXECUTE ... TO authenticated`.
+  - No se tocara `agro_rank_top_crops_profit`, porque ya esta endurecida.
+
+### Plan
+
+- Crear `supabase/migrations/20260427124500_p2b_rpc_grants_hardening.sql`.
+- Aplicar solo `REVOKE ALL FROM PUBLIC` y `GRANT EXECUTE TO authenticated` sobre las 4 firmas confirmadas.
+- No agregar grants a `service_role`, porque el objetivo de esta sesion autoriza explicitamente `authenticated` y las llamadas activas revisadas son de cliente autenticado.
+- No tocar helpers/triggers (`handle_new_user`, `update_updated_at`, `agro_canonicalize_buyer_name`, `log_event`) ni RPC ya endurecidas.
+- Ejecutar `git diff --check` y `pnpm build:gold`.
+
+### Cambios
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `supabase/migrations/20260427124500_p2b_rpc_grants_hardening.sql` | Migracion RPC grants | Aplica `REVOKE ALL FROM PUBLIC` y `GRANT EXECUTE TO authenticated` sobre las 4 RPC activas confirmadas. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Docs | Diagnostico, plan, cambios y cierre P2-B1. |
+
+### Validacion
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS (agent-guard OK, agent-report-check OK, vite build 165 modules, check-llms OK, UTF-8 OK).
+- Nota: el build conserva el warning local de Node `v25.6.0` vs engine declarado `20.x`; no bloquea el build.
+
+### NO se hizo
+
+- No se tocaron helpers/triggers (`handle_new_user`, `update_updated_at`, `agro_canonicalize_buyer_name`, `log_event`).
+- No se toco `agro_rank_top_crops_profit`.
+- No se tocaron codigo Agro, `agro.js`, policies RLS, Storage, `profiles`, Supabase config, Edge Functions, Vercel, workflows ni credenciales.
+- No se conecto a DB viva.
+- No se ejecuto `supabase db reset`.
+- No se uso `git add`.
