@@ -143,3 +143,40 @@ El nuevo `AGENT_REPORT_ACTIVE.md` fue creado correctamente como reporte activo l
 - No se toco codigo.
 - No se toco Supabase.
 - No se toco Vercel.
+
+---
+
+## 2026-04-27 — Rail mobile lateral + Feedback restaurado
+
+**Objetivo:** Reemplazar el rail inferior mobile por un rail lateral compacto, evitar solapes con contenido Agro y restaurar Feedback visible en mobile.
+
+### Diagnostico
+
+El rail mobile era una barra horizontal fija en la parte inferior (`top: auto; bottom: ...; left: ...; right: ...`) que solapaba contenido del dashboard. El boton Feedback estaba oculto con `display: none` en `max-width: 768px`. El `padding-bottom: 5.4rem` compensaba la barra inferior pero no era suficiente.
+
+### Plan
+
+- Eliminar la barra inferior mobile del rail.
+- Posicionar el rail como lateral izquierdo compacto en mobile (`width: 3.4rem`, centrado verticalmente).
+- Restaurar Feedback FAB como pill flotante en esquina inferior derecha.
+- Ajustar `padding-left` del contenedor principal para compensar el rail lateral.
+
+### Cambios
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro.css` | CSS mobile rail | Barra inferior eliminada; rail lateral izquierdo compacto con `width: 3.4rem`, centrado verticalmente, `flex-direction: column`, items reducidos a icono con `min-height: 2.6rem`. |
+| `apps/gold/agro/agro.css` | CSS feedback | `.agro-feedback-fab` restaurado en mobile: `display: inline-flex`, posicionado abajo-derecha, `z-index: 110`, pill con sombra. |
+| `apps/gold/agro/agro.css` | CSS layout | `app-container` en mobile: `padding-left: 4.2rem`, `padding-bottom: 0` (sin barra inferior). |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | docs | Sesion documentada. |
+
+### Validacion
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS (agent-guard OK, agent-report-check OK, vite build 165 modules, check-llms OK, UTF-8 OK).
+
+### NO se hizo
+
+- No se toco `agro.js`.
+- No se toco `index.html` ni `agro-shell.js`.
+- No se toco Supabase, Vercel, workflows ni credenciales.
