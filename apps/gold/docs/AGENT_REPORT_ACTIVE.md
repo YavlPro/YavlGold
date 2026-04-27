@@ -687,3 +687,230 @@ No se detecto P1 nuevo durante los diagnosticos previos. El estado sigue siendo 
 - No se toco Storage.
 - No se toco `profiles`.
 - No se tocaron credenciales.
+
+---
+
+## 2026-04-27 — Diagnostico integral P2-C/P3: Storage, headers, dialogos nativos y XSS
+
+**Estado:** YELLOW CONTROLADO — diagnostico integral, sin cambios tecnicos
+
+**Objetivo:** Auditar cuatro frentes pendientes sin aplicar fixes masivos: Storage, CSP/headers, dialogos nativos y XSS/innerHTML.
+
+### Diagnostico
+
+No aparece P1 nuevo confirmado por auditoria estatica. El proyecto mantiene build verde y el frente Supabase/RLS previo queda en espera de QA funcional del usuario. Los cuatro frentes revisados quedan asi:
+
+- Storage: `agro-evidence` ya es privado y owner-scoped, pero falta contrato explicito de MIME/file size por bucket y `avatars` sigue sin decision canonica documentada.
+- CSP/headers: `vercel.json` ya tiene headers base (`nosniff`, `DENY`, `Referrer-Policy`, `Permissions-Policy`), pero no define CSP ni HSTS. La CSP estricta no puede aplicarse de golpe por inline scripts/handlers activos.
+- Dialogos nativos: quedan usos de `alert`, `confirm` y `prompt`, sobre todo en `agro.js`. Hay modal canonico para prompt, pero todavia existen fallbacks y confirmaciones nativas en flujos sensibles.
+- XSS/innerHTML: hay volumen alto de sinks HTML. Muchos son templates internos escapados o iconos estaticos, pero hay riesgos reales puntuales con datos de usuario/Supabase y Markdown.
+
+### Plan
+
+- No aplicar fixes masivos.
+- Separar por frentes.
+- Priorizar cambios de bajo riesgo.
+- Mantener build verde.
+- Ejecutar cada fix futuro en commit separado.
+- No endurecer Storage/CSP sin considerar scripts de smoke, inline handlers y dominios reales usados por Agro.
+
+---
+
+### Frente 3 — P2-C Storage
+
+| Severidad | Elemento | Archivo/evidencia | Hallazgo | Recomendacion |
+|---|---|---|---|---|
+| P2 | `agro-evidence` | `supabase/migrations/20260420120000_security_trust_hardening_v1.sql:19-22` | Bucket privado por migracion. | Mantener private; no revertir a publico. |
+| P2 | Policies owner-scoped | `supabase/migrations/20260420120000_security_trust_hardening_v1.sql:40-128` | Select/insert/update/delete usan `to authenticated` y folder de `auth.uid()`. | Estado base correcto; cualquier fix debe preservar owner folders. |
+| P2 | MIME/file size por bucket | `supabase/config.toml:106`, `supabase/migrations/20260420120000_security_trust_hardening_v1.sql` | Solo se ve limite global `50MiB`; no hay `allowed_mime_types` ni `file_size_limit` especifico para `agro-evidence`. | Agregar migracion futura que actualice `storage.buckets` para `agro-evidence`. |
+| P2 | Smoke test | `tools/rls-smoke-test.js:215-219` | El smoke sube `text/plain` a `agro-evidence`; si se restringe MIME a imagen/pdf sin ajustar el smoke, el workflow fallara. | En el fix futuro, decidir si se permite `text/plain` para smoke o se cambia el smoke a un MIME permitido. |
+| P2 | Signed URLs evidencia | `apps/gold/agro/agro.js:960-981` | `resolveEvidenceUrl()` llama `getSignedEvidenceUrl(...)`; no se encontro definicion por busqueda estatica. Puede afectar lectura de evidencias privadas si el flujo se ejecuta. | Validar manualmente evidencia real antes de tocar limites; si falla, abrir fix separado de helper signed URL. |
+| P3 | `avatars` | `apps/gold/assets/js/profile/profileManager.js:291-306` | Sube a bucket `avatars` y usa `getPublicUrl`; auditorias previas lo dejan pendiente de decision UX. | No cambiar a privado hasta decidir contrato producto: avatar publico por diseno vs signed URLs. |
+| P3 | Avatar MIME/tamano cliente | `apps/gold/assets/js/profile/profileManager.js:271-280` | El cliente limita JPG/PNG/GIF/WebP y 2MB; no hay evidencia estatica de bucket/policy remoto. | Documentar contrato `avatars` antes de migrar. |
+
+**Primer fix recomendado Storage:**
+Crear una migracion P2-C pequena para `agro-evidence` que conserve `public=false`, agregue limite especifico y MIME permitidos. Propuesta inicial a validar: `image/jpeg`, `image/png`, `image/webp`, `application/pdf`; revisar `tools/rls-smoke-test.js` antes de aplicar porque hoy usa `text/plain`.
+
+**SQL conceptual futuro, NO aplicado:**
+
+```sql
+begin;
+
+update storage.buckets
+set
+  public = false,
+  file_size_limit = 10485760,
+  allowed_mime_types = array[
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'application/pdf'
+  ]
+where id = 'agro-evidence';
+
+commit;
+```
+
+**Prompt futuro Storage:**
+
+```md
+Crear migracion P2-C solo para `agro-evidence`: mantener `public=false`, fijar `file_size_limit` y `allowed_mime_types`, revisar impacto sobre `tools/rls-smoke-test.js`, ejecutar `pnpm build:gold`, sin tocar Agro ni Storage fuera de este bucket.
+```
+
+---
+
+### Frente 4 — CSP / headers
+
+| Severidad | Header/Fuente | Archivo/evidencia | Hallazgo | Recomendacion |
+|---|---|---|---|---|
+| P2 | CSP | `vercel.json:45-120` | No existe `Content-Security-Policy`. | Aplicar primero en modo conservador/report-only o con allowlist amplia; no intentar CSP estricta inicial. |
+| P3 | HSTS | `vercel.json:45-120` | No existe `Strict-Transport-Security`. | Aplicar solo tras confirmar HTTPS estable en `yavlgold.com` y `yavlgold.gold`; empezar sin `preload`. |
+| OK | `X-Content-Type-Options` | `vercel.json:50,61,72,83,94,105` | `nosniff` ya existe en rutas principales y health. | Mantener. |
+| OK | Clickjacking base | `vercel.json:51,62,73,84,95` | `X-Frame-Options: DENY` ya existe. | CSP futura debe agregar `frame-ancestors 'none'` como defensa moderna. |
+| OK | Referrer | `vercel.json:53,64,75,86,97` | `strict-origin-when-cross-origin` ya existe. | Mantener. |
+| OK/P3 | Permissions | `vercel.json:54,65,76,87,98` | Global bloquea geoloc; Agro permite `geolocation=(self)`. | Mantener separacion Agro/no-Agro. |
+| P3 | `X-XSS-Protection` | `vercel.json:52,63,74,85,96` | Header legacy/deprecated. | No priorizar; CSP y sinks DOM importan mas. |
+| P2 | Fuentes/script CDN | `apps/gold/agro/index.html:19-27`, `apps/gold/index.html:33-41,886,894` | Google Fonts, Font Awesome/CDNJS, jsDelivr, hCaptcha y Chart.js requieren allowlist. | CSP debe incluirlos o mover a self-hosting en otro frente. |
+| P2 | APIs externas | `apps/gold/agro/agro-clima.js:9-10`, `apps/gold/agro/agro-market.js:18`, `apps/gold/agro/agro-interactions.js:678` | Open-Meteo, Binance Vision, ER API e IP API se usan en `connect-src`. | Inventario debe entrar en CSP conservadora. |
+| P2 | Inline scripts/handlers | `apps/gold/agro/index.html`, `apps/gold/index.html`, `apps/gold/assets/js/components/*` | Hay inline scripts y `onclick`, lo que rompe una CSP sin `'unsafe-inline'`. | Primer CSP no debe ser estricta; planear migracion gradual de inline handlers. |
+
+**Inventario de fuentes reales detectadas:**
+
+- `self`
+- `https://fonts.googleapis.com`
+- `https://fonts.gstatic.com`
+- `https://cdnjs.cloudflare.com`
+- `https://cdn.jsdelivr.net`
+- `https://js.hcaptcha.com`
+- `https://hcaptcha.com` / `https://*.hcaptcha.com`
+- `https://*.supabase.co`
+- `https://api.open-meteo.com`
+- `https://geocoding-api.open-meteo.com`
+- `https://ipapi.co`
+- `https://data-api.binance.vision`
+- `https://open.er-api.com`
+
+**CSP conservadora propuesta:**
+
+```txt
+default-src 'self';
+base-uri 'self';
+object-src 'none';
+frame-ancestors 'none';
+img-src 'self' data: blob: https://*.supabase.co https://www.yavlgold.com;
+font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com;
+style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
+script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://js.hcaptcha.com;
+connect-src 'self' https://*.supabase.co https://api.open-meteo.com https://geocoding-api.open-meteo.com https://ipapi.co https://data-api.binance.vision https://open.er-api.com https://hcaptcha.com https://*.hcaptcha.com;
+frame-src https://hcaptcha.com https://*.hcaptcha.com;
+worker-src 'self' blob:;
+manifest-src 'self';
+form-action 'self';
+upgrade-insecure-requests;
+```
+
+**Primer fix recomendado Headers:**
+Agregar CSP conservadora en commit separado, preferiblemente como `Content-Security-Policy-Report-Only` si se quiere medir primero. Si se aplica en enforcement, aceptar temporalmente `'unsafe-inline'` por deuda existente y abrir luego un frente para eliminar inline handlers/scripts.
+
+**Prompt futuro Headers:**
+
+```md
+Actualizar solo `vercel.json` con CSP conservadora compatible con Vite/Vanilla/Supabase/hCaptcha/fonts/APIs reales. No tocar Agro. No activar CSP estricta sin `'unsafe-inline'` todavia. Ejecutar `pnpm build:gold` y documentar dominios permitidos.
+```
+
+---
+
+### Frente 5 — Dialogos nativos
+
+| Severidad | Tipo | Archivo | Flujo | Hallazgo | Recomendacion |
+|---|---|---|---|---|---|
+| P2 | `confirm` | `apps/gold/agro/agro.js:5778` | Eliminar registro facturero | Confirm nativo en operacion frecuente y sensible. | Primer candidato a modal canonico de confirmacion. |
+| P2 | `confirm` | `apps/gold/agro/agro.js:6375` | Devolucion parcial append-only | Confirm nativo en flujo complejo con impacto financiero. | Migrar tras el primer confirm simple. |
+| P2 | `confirm` | `apps/gold/agro/agro.js:16344` | Eliminar cultivo | Dialogo nativo en flujo sensible; copy dice que no se puede deshacer. | Migrar a modal canonico con copy claro y consecuencias. |
+| P2 | `confirm` | `apps/gold/agro/agroOperationalCycles.js:1338-1340` | Eliminar cartera operativa/ciclo | Puede borrar historial asociado. | Migrar a confirm modal compartido. |
+| P2 | `confirm` | `apps/gold/agro/agro-cart.js:230,335` | Eliminar carrito/item | Flujo operativo frecuente. | Migrar despues de facturero/cultivo. |
+| P2/P3 | `prompt` fallback | `apps/gold/agro/agro.js:6504-6537` | Duplicar registro | Ya usa `showPromptModal` cuando existe, pero conserva fallback nativo. | Confirmar carga del modulo y luego retirar fallback o dejarlo solo como degradacion documentada. |
+| P3 | `prompt` fallback | `apps/gold/agro/agro-cartera-viva-view.js:1416-1420` | Nueva cartera operativa | Ya intenta modal canonico antes de fallback. | Puede esperar. |
+| P3 | `alert` | `apps/gold/agro/index.html:1981-2310` | Guardado/validacion cultivo | Feedback nativo de UX, no seguridad directa. | Reemplazar por `YGUXMessages` progresivamente. |
+| P3 | `alert` | `apps/gold/agro/agro-cart.js`, `apps/gold/agro/agro-agenda.js` | Errores y validaciones | Bloquea mobile y rompe canon modal/toast. | Migrar por modulo cuando se toque. |
+
+**Conteo rapido:** `agro.js` concentra 47 apariciones; luego `agro-cart.js` 12, `agro-agenda.js` 6 e `index.html` 6.
+
+**Primer dialogo recomendado para migrar:**
+`deleteFactureroItem()` en `apps/gold/agro/agro.js:5774-5784`, porque toca borrado frecuente de movimientos financieros y hoy depende de `confirm` + `alert`.
+
+**Prompt futuro Dialogos:**
+
+```md
+Migrar solo `deleteFactureroItem()` de `confirm/alert` nativos a modal canonico/UX messages. Tocar solo el minimo necesario, no redisenar Agro, no tocar Supabase, no crecer `agro.js` mas que wiring quirurgico, ejecutar `pnpm build:gold`.
+```
+
+---
+
+### Frente 6 — XSS / innerHTML
+
+| Severidad | Patron | Archivo | Fuente de datos | Hallazgo | Recomendacion |
+|---|---|---|---|---|---|
+| P2 | `innerHTML` con datos de usuario | `apps/gold/agro/agro.js:15452-15456` | Perfil/cultivos/clima/location desde estado/Supabase | `appendContextItem()` interpola `value` sin escape. | Primer fix XSS: construir nodos con `textContent`. |
+| P2 | Markdown a HTML | `apps/gold/agro/agro-repo-app.js:203-209,249-356,569` | Contenido editable AgroRepo | Escapa texto base, pero convierte links/img a `href/src` sin allowlist de protocolo; `javascript:` en links queda posible al click. | Validar URLs y/o construir DOM; no instalar DOMPurify aun. |
+| P2 | `innerHTML` con dato Supabase | `apps/gold/assets/js/admin/adminManager.js:334-340` | `ann.title` desde tabla `announcements` | Titulo se interpola sin `_escapeHtml`; superficie admin, pero dato de DB. | Escapar `ann.title` y `ann.type`/atributos o construir DOM. |
+| P2 | `innerHTML` con error externo | `apps/gold/agro/agro-clima.js:300-302` | `err.message` desde fetch/geocoding | Mensaje de error se interpola como HTML. | Usar `textContent` para el mensaje. |
+| P2/P3 | `innerHTML` + inline handlers | `apps/gold/agro/index.html`, `apps/gold/agro/agro-interactions.js:118,619` | Templates internos | No es XSS confirmado por si solo, pero bloquea CSP estricta. | Migrar gradualmente a listeners. |
+| P3 | `insertAdjacentHTML` | `apps/gold/agro/agro-interactions.js:402-411` | Interno/calculado | Badge estatico con edad calculada; bajo riesgo. | Puede esperar. |
+| P3 | Templates escapados | `apps/gold/agro/agro-cartera-viva-view.js:2440-2524` | Supabase owner rows | Usa `escapeHtml`/`escapeAttribute` en render principal. | Mantener bajo observacion, no priorizar. |
+| P3 | Templates escapados | `apps/gold/agro/agroOperationalCycles.js` | Supabase owner rows | Alto volumen de `innerHTML`, pero evidencia de `escapeHtml` en campos dinamicos. | No migrar masivamente. |
+| P3 | Iconos estaticos | multiples `innerHTML = '<i ...>'` | Interno | Falsos positivos comunes. | Dejar o migrar solo si se toca el componente. |
+
+**Top riesgos reales:**
+
+1. `appendContextItem()` en `apps/gold/agro/agro.js:15452-15456`: valor user/Supabase directo en HTML.
+2. `renderInlineMarkdown()` en `apps/gold/agro/agro-repo-app.js:203-209`: links/img sin allowlist de protocolo.
+3. `preview.innerHTML = renderMarkdown(...)` en `apps/gold/agro/agro-repo-app.js:569`: sink principal para contenido AgroRepo editable.
+4. `adminManager.js:334-340`: `ann.title` sin escape en admin.
+5. `agro-clima.js:302`: `err.message` interpolado en HTML.
+6. Inline handlers en Agro/Assets: no son XSS confirmado, pero impiden CSP fuerte.
+7. `agro-planning.js:272,275`: HTML rico interno; hoy bajo riesgo por fuentes estaticas.
+8. `agro-interactions.js:455,630,712`: datos externos de mercado; revisar escape si se toca market hub.
+9. `agro-cartera-viva-view.js` templates: bajo riesgo actual por escape consistente.
+10. `agroOperationalCycles.js` templates: bajo riesgo actual por escape consistente, no migrar en bloque.
+
+**Primer fix recomendado XSS:**
+Reemplazar `appendContextItem()` por construccion DOM segura (`createElement`, `textContent`) en un commit pequeno. Es local, no cambia datos, y reduce riesgo real con minimo impacto.
+
+**Prompt futuro XSS:**
+
+```md
+Tocar solo `apps/gold/agro/agro.js` para reemplazar `appendContextItem()` por DOM seguro con `textContent`. No cambiar flujo IA/contexto, no tocar Supabase ni otros sinks. Ejecutar `git diff --check` y `pnpm build:gold`.
+```
+
+---
+
+### Orden recomendado de proximos commits
+
+1. `fix(storage): enforce agro evidence upload limits` o equivalente.
+2. `security(headers): add baseline conservative csp` o equivalente.
+3. `refactor(agro): replace first native dialog with modal canon` o equivalente.
+4. `security(agro): replace high-risk context innerHTML` o equivalente.
+
+Nota: si QA manual detecta que evidencias privadas no abren por `getSignedEvidenceUrl()` no definido, adelantar un commit funcional pequeno antes del hardening MIME/file-size.
+
+---
+
+### No se hizo
+
+- No se toco codigo.
+- No se tocaron migraciones.
+- No se toco Storage.
+- No se toco `vercel.json`.
+- No se tocaron dialogos.
+- No se reemplazo `innerHTML`.
+- No se instalaron dependencias.
+- No se conecto a DB viva.
+- No se ejecuto `supabase db reset`.
+- No se ejecuto Playwright ni QA browser.
+- No se tocaron credenciales.
+
+### Validacion
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS con advertencia local conocida por Node `v25.6.0`; repo/CI fijan Node `20.x`.
