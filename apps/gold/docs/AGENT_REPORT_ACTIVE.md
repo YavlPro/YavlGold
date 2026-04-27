@@ -4019,3 +4019,41 @@ Actualizar la documentacion tecnica y publica de Agro para reflejar el nuevo pat
 1. QA visual final de Agro Shell en mobile real con sesion autenticada.
 2. Al cierre de abril, preparar cronica mensual consolidando hitos del mes.
 3. Revisar P2 con calma: dialogos nativos, CSP/HSTS, limpieza documental/archivos legacy.
+
+---
+
+## Sesion 2026-04-27 — Indices RLS operativos Agro
+
+### Diagnostico
+
+- Auditoria estatica Supabase/RLS quedo en YELLOW sin P1 confirmado.
+- `20260416190000_consolidate_legacy_app_supabase_objects.sql` crea `public.agro_operational_cycles` y `public.agro_operational_movements` con `user_id` y RLS owner-scoped.
+- No se encontraron indices `user_id` dedicados para esas dos tablas en migraciones posteriores.
+- `AGENT_REPORT_ACTIVE.md` ya supera 4000 lineas; no se rota en esta sesion porque el alcance autorizado solo permite tocar este reporte y la nueva migracion.
+
+### Plan
+
+1. Crear migracion idempotente con indices btree `user_id` para ambas tablas.
+2. No tocar policies, RPC, Storage, config, Edge Functions ni codigo Agro.
+3. Validar con `git diff --check` y `pnpm build:gold`.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `supabase/migrations/20260427120000_agro_operational_user_id_indexes.sql` | Nueva migracion idempotente con indices `user_id` para `agro_operational_cycles` y `agro_operational_movements`. |
+
+### Verificacion
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS (`agent-guard`, `agent-report-check`, `vite build`, `check-llms`, `check-dist-utf8`).
+- Advertencia local no bloqueante: engine declara Node `20.x`, pero esta sesion corrio con Node `v25.6.0`.
+
+### Alcance respetado
+
+- No se toco Agro ni `agro.js`.
+- No se tocaron policies RLS.
+- No se tocaron RPC/grants.
+- No se toco Storage ni `supabase/config.toml`.
+- No se tocaron Edge Functions, Vercel, workflows, `.env`, credenciales ni `testqacredentials.md`.
+- No se ejecuto `supabase db reset` ni conexion a DB viva.
