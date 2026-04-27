@@ -109,3 +109,37 @@ El contexto histórico previo quedó archivado en:
 - Ejecutar `pnpm build:gold` al cerrar cambios.
 - No usar `git add .`.
 - Mantener daily logs fuera de Git si están definidos como temporales locales.
+
+---
+
+## 2026-04-27 — Formato activo post-rotación
+
+**Objetivo:** Restaurar compatibilidad del reporte activo con el guard documental del build tras la rotación canónica.
+
+### Diagnostico
+
+El nuevo `AGENT_REPORT_ACTIVE.md` fue creado correctamente como reporte activo limpio tras archivar `AGENT_LEGACY_CONTEXT__2026-04-17__2026-04-27.md`, pero el build requiere que la fuente activa conserve las marcas `Diagnostico` y `Plan`.
+
+### Plan
+
+- Mantener la rotación canonica.
+- Conservar el archivo legacy como historico integro.
+- Anadir esta seccion minima al reporte activo para cumplir el guard documental.
+- Validar con `pnpm build:gold`.
+
+### Cambios
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | docs | Se agrego seccion minima con `Diagnostico` y `Plan` para cumplir `agent-report-check.mjs`. |
+
+### Validacion
+
+- Pendiente ejecutar `pnpm build:gold`.
+
+### NO se hizo
+
+- No se revirtio la rotacion.
+- No se toco codigo.
+- No se toco Supabase.
+- No se toco Vercel.
