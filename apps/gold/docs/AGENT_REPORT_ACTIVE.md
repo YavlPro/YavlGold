@@ -218,5 +218,43 @@ El rail lateral mobile anterior era siempre visible y en pantallas pequenas podi
 
 - No se toco `agro.js`.
 - No se toco Supabase, Vercel, workflows ni credenciales.
+
+---
+
+## 2026-04-27 — Toggle universal del rail + ocultamiento correcto
+
+**Objetivo:** Corregir el toggle del rail para que funcione en desktop y mobile, y que al colapsar el rail desaparezca completamente dejando solo la pestaña.
+
+### Diagnostico
+
+El toggle anterior era mobile-only (`display: none` en base, `display: flex` solo en `max-width: 768px`). Al colapsar, `translateX(calc(-100% + 1.4rem))` dejaba parte del rail visible con iconos. En desktop no existia toggle.
+
+### Plan
+
+- Convertir el toggle en universal (visible en desktop y mobile).
+- Corregir el translateX: rail se mueve `calc(-100% - 0.2rem)` y la pestaña se reposiciona con `translateX(calc(100% + 0.4rem))`.
+- Override mobile: pestaña mas grande para touch target.
+- Desktop breakpoint: padding-left reducido al colapsar.
+
+### Cambios
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro.css` | CSS universal | Toggle visible por defecto: pestaña discreta en borde derecho del rail (1.1rem x 1.8rem). Estado collapsed: rail `translateX(calc(-100% - 0.2rem))`, toggle reposicionado `translateX(calc(100% + 0.4rem))`. Padding del contenido eliminado. |
+| `apps/gold/agro/agro.css` | CSS mobile | Override en `max-width: 768px`: pestaña mas grande (1.4rem x 2.2rem) para touch. Reglas duplicadas eliminadas. |
+| `apps/gold/agro/agro.css` | CSS desktop | En `min-width: 961px`: `padding-left: var(--space-4)` cuando collapsed. |
+| `apps/gold/agro/agro.css` | Reduced motion | Toggle e icono agregados a `prefers-reduced-motion`. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | docs | Sesion documentada. |
+
+### Validacion
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS (agent-guard OK, agent-report-check OK, vite build 165 modules, check-llms OK, UTF-8 OK).
+
+### NO se hizo
+
+- No se toco `agro.js`.
+- No se toco `index.html` ni `agro-shell.js` (el markup y JS del toggle ya estaban correctos de la sesion anterior).
+- No se toco Supabase, Vercel, workflows ni credenciales.
 - No se elimino el rail.
 - No se rompio desktop.
