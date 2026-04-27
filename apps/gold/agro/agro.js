@@ -5767,6 +5767,129 @@ async function refreshFactureroAfterChange(tabName) {
     }
 }
 
+let agroConfirmDialogSeq = 0;
+
+function showAgroConfirmDialog(options = {}) {
+    if (typeof document === 'undefined') return Promise.resolve(false);
+
+    const existing = document.getElementById('agro-confirm-dialog');
+    if (existing) existing.remove();
+
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const titleId = `agro-confirm-dialog-title-${++agroConfirmDialogSeq}`;
+    const descId = `agro-confirm-dialog-desc-${agroConfirmDialogSeq}`;
+    const title = String(options.title || 'Confirmar acción');
+    const message = String(options.message || '¿Deseas continuar?');
+    const confirmText = String(options.confirmText || 'Confirmar');
+    const cancelText = String(options.cancelText || 'Cancelar');
+
+    const overlay = document.createElement('div');
+    overlay.id = 'agro-confirm-dialog';
+    overlay.className = 'agro-confirm-dialog';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', titleId);
+    overlay.setAttribute('aria-describedby', descId);
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'agro-confirm-dialog__backdrop';
+
+    const panel = document.createElement('div');
+    panel.className = 'agro-confirm-dialog__panel';
+
+    const header = document.createElement('header');
+    header.className = 'agro-confirm-dialog__header';
+
+    const headerMain = document.createElement('div');
+    headerMain.className = 'agro-confirm-dialog__title-wrap';
+
+    const icon = document.createElement('i');
+    icon.className = 'fa-solid fa-trash-can agro-confirm-dialog__icon';
+    icon.setAttribute('aria-hidden', 'true');
+
+    const titleNode = document.createElement('h3');
+    titleNode.id = titleId;
+    titleNode.className = 'agro-confirm-dialog__title';
+    titleNode.textContent = title;
+
+    headerMain.append(icon, titleNode);
+
+    const closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.className = 'agro-confirm-dialog__close';
+    closeButton.setAttribute('aria-label', 'Cerrar confirmación');
+    closeButton.textContent = '×';
+
+    header.append(headerMain, closeButton);
+
+    const body = document.createElement('div');
+    body.className = 'agro-confirm-dialog__body';
+
+    const messageNode = document.createElement('p');
+    messageNode.id = descId;
+    messageNode.className = 'agro-confirm-dialog__message';
+    messageNode.textContent = message;
+    body.appendChild(messageNode);
+
+    const footer = document.createElement('footer');
+    footer.className = 'agro-confirm-dialog__footer';
+
+    const cancelButton = document.createElement('button');
+    cancelButton.type = 'button';
+    cancelButton.className = 'agro-confirm-dialog__button agro-confirm-dialog__button--secondary';
+    cancelButton.textContent = cancelText;
+
+    const confirmButton = document.createElement('button');
+    confirmButton.type = 'button';
+    confirmButton.className = 'agro-confirm-dialog__button agro-confirm-dialog__button--danger';
+    confirmButton.textContent = confirmText;
+
+    footer.append(cancelButton, confirmButton);
+    panel.append(header, body, footer);
+    overlay.append(backdrop, panel);
+    document.body.appendChild(overlay);
+
+    return new Promise((resolve) => {
+        let settled = false;
+
+        const finish = (confirmed) => {
+            if (settled) return;
+            settled = true;
+            document.removeEventListener('keydown', handleKeydown);
+            overlay.classList.remove('is-open');
+            window.setTimeout(() => {
+                overlay.remove();
+                if (previousFocus && typeof previousFocus.focus === 'function' && document.contains(previousFocus)) {
+                    previousFocus.focus({ preventScroll: true });
+                }
+            }, 180);
+            resolve(confirmed === true);
+        };
+
+        const handleKeydown = (event) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                finish(false);
+            }
+        };
+
+        closeButton.addEventListener('click', () => finish(false));
+        cancelButton.addEventListener('click', () => finish(false));
+        confirmButton.addEventListener('click', () => finish(true));
+        overlay.addEventListener('click', (event) => {
+            if (event.target === overlay || event.target === backdrop) {
+                finish(false);
+            }
+        });
+        document.addEventListener('keydown', handleKeydown);
+
+        requestAnimationFrame(() => {
+            overlay.classList.add('is-open');
+            cancelButton.focus({ preventScroll: true });
+        });
+    });
+}
+
 // ============================================================
 // V9.5.1: FACTURERO CRUD HANDLERS
 // ============================================================
@@ -5775,7 +5898,13 @@ async function deleteFactureroItem(tabName, itemId) {
     const config = FACTURERO_CONFIG[tabName];
     if (!config) return;
 
-    if (!confirm('¿Eliminar este registro?')) return;
+    const confirmed = await showAgroConfirmDialog({
+        title: 'Eliminar registro',
+        message: '¿Seguro que quieres eliminar este registro? Esta acción moverá el elemento a la papelera si aplica.',
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar'
+    });
+    if (!confirmed) return;
 
     try {
         const { data: { user } } = await supabase.auth.getUser();

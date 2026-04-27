@@ -1035,3 +1035,56 @@ Dominios permitidos en esta primera observacion: `self`, Google Fonts, CDNJS, js
 - No se toco codigo Agro.
 - No se toco Supabase.
 - No se tocaron migraciones, Storage, RPC/grants, Vercel workflows ni credenciales.
+
+---
+
+## 2026-04-27 — Dialogo canonico para deleteFactureroItem
+
+**Estado:** YELLOW CONTROLADO — confirm nativo reemplazado, QA manual pendiente
+
+**Objetivo:** Reemplazar el `confirm()` nativo de `deleteFactureroItem()` por un modal canonico V10.1, sin cambiar la logica de borrado.
+
+### Diagnostico
+
+- `deleteFactureroItem(tabName, itemId)` vive en `apps/gold/agro/agro.js`.
+- El `confirm()` objetivo esta al inicio del flujo, antes de consultar usuario y ejecutar soft-delete/hard-delete.
+- Existen modales de confirmacion en otros modulos, pero estan acoplados a dominios concretos como comprador/tareas y no son un helper generico compartido.
+- El modulo `agro-prompt-modal.js` reemplaza `prompt()`, pero no cubre confirmaciones booleanas.
+- `agro.css` ya contiene estilos de modales; se agregara solo un bloque generico pequeno para este confirm canonico.
+- No se migraran otros `alert`, `confirm` ni `prompt` en esta sesion.
+
+### Plan
+
+- Crear `showAgroConfirmDialog(options)` como helper local minimo en `agro.js`.
+- Construir el modal con DOM APIs, no con HTML string.
+- Cumplir §19: `role="dialog"`, `aria-modal`, `aria-labelledby`, cierre con Escape, click en overlay, boton cerrar, focus inicial y retorno de foco.
+- Reemplazar solo `if (!confirm('¿Eliminar este registro?')) return;`.
+- Mantener intactas las ramas de soft-delete, hard-delete, undo toast, refresh y errores.
+- Validar con `git diff --check` y `pnpm build:gold`.
+
+### Cambios aplicados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/agro.js` | Agrega helper local `showAgroConfirmDialog(options)` y reemplaza el `confirm()` nativo de `deleteFactureroItem()`. |
+| `apps/gold/agro/agro.css` | Agrega estilos del modal canonico sobrio para `.agro-confirm-dialog`. |
+
+### Modal/helper
+
+- `showAgroConfirmDialog(options)` devuelve `Promise<boolean>`.
+- Construye el modal con DOM APIs y `textContent`.
+- Incluye `role="dialog"`, `aria-modal`, `aria-labelledby` y `aria-describedby`.
+- Cierra con Escape, click en overlay/backdrop, boton X y boton cancelar.
+- Enfoca `Cancelar` al abrir y devuelve foco al trigger si sigue en el DOM.
+
+### Validacion
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS con advertencia local conocida por Node `v25.6.0`; repo/CI fijan Node `20.x`.
+
+### NO se hizo
+
+- No se migraron otros dialogos nativos.
+- No se reemplazaron los `alert()` existentes de error/sesion en `deleteFactureroItem()`.
+- No se cambio la logica de soft-delete, hard-delete, undo, restore, refresh ni payloads.
+- No se toco Supabase, migraciones, Storage, RPC/grants, Vercel, workflows ni credenciales.
