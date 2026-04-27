@@ -1132,3 +1132,20 @@ Dominios permitidos en esta primera observacion: `self`, Google Fonts, CDNJS, js
 - No se cambio la logica de perfil, cultivo, clima, ubicacion ni contexto.
 - No se instalo DOMPurify ni ninguna dependencia.
 - No se toco Supabase, migraciones, Storage, RPC/grants, Vercel, workflows ni credenciales.
+
+---
+
+## 2026-04-27 — QA seguridad P2 parcial
+
+**Estado:** YELLOW CONTROLADO hasta validar con una segunda cuenta real.
+
+**Objetivo:** Validar mediante QA empírico los cambios de seguridad implementados en la sesión (P2-A, P2-B1, P2-C, CSP headers, modal de delete y protección XSS en `appendContextItem()`).
+
+### Resultado
+- **XSS appendContextItem:** GREEN. El payload fue tratado como texto plano, sin ejecución.
+- **Anon:** GREEN. Redirección forzosa al login verificada.
+- **Usuario A:** GREEN. Ciclos/ROI visibles y sin romper.
+- **Cleanup QA:** GREEN. Cultivo QA destruido de la base de datos.
+- **P2-A RLS cross-user Usuario B:** PENDIENTE. Bloqueo por hCaptcha impidió crear cuenta secundaria. No se debe declarar GREEN global basándose solo en inferencia de policy SQL.
+
+**Pendiente:** Validar aislamiento empírico con Usuario B. Continuar diálogos nativos restantes e innerHTML por prioridad.
