@@ -974,3 +974,64 @@ Nota: si QA manual detecta que evidencias privadas no abren por `getSignedEviden
 - No se toco Supabase config.
 - No se tocaron Edge Functions, Vercel ni workflows.
 - No se tocaron credenciales.
+
+---
+
+## 2026-04-27 — P2 Headers baseline y CSP Report-Only
+
+**Estado:** YELLOW CONTROLADO — baseline conservador aplicado, sin CSP bloqueante
+
+**Objetivo:** Agregar una primera capa de headers de seguridad en `vercel.json` sin romper runtime ni rutas.
+
+### Diagnostico
+
+- `vercel.json` ya tiene bloque `headers`.
+- Las rutas principales ya declaran `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` y `Permissions-Policy`.
+- No se encontro `Strict-Transport-Security`.
+- No se encontro `Content-Security-Policy` ni `Content-Security-Policy-Report-Only`.
+- Hay inline scripts, inline styles y handlers `onclick` activos en superficies publicas y Agro; una CSP bloqueante sin `'unsafe-inline'` romperia runtime.
+- Fuentes externas reales detectadas: Google Fonts, Font Awesome/CDNJS, jsDelivr, hCaptcha, Supabase, Open-Meteo, Binance Vision, ER API, Frankfurter API e IP API.
+
+### Plan
+
+- No tocar rewrites, redirects ni routing.
+- No tocar codigo Agro ni Supabase.
+- Agregar `Strict-Transport-Security: max-age=31536000` sin `preload` ni `includeSubDomains`.
+- Agregar `Content-Security-Policy-Report-Only`, no `Content-Security-Policy`, con allowlist conservadora para recursos actuales.
+- Mantener `'unsafe-inline'` temporalmente por deuda inline existente y documentar que el cierre estricto queda para un frente posterior.
+- Completar `Permissions-Policy` existente con `payment=()` y `usb=()` sin duplicar headers.
+- Validar JSON, `git diff --check` y `pnpm build:gold`.
+
+### Cambios aplicados
+
+| Archivo | Cambio |
+|---|---|
+| `vercel.json` | Agrega bloque global `/(.*)` con `Strict-Transport-Security` y `Content-Security-Policy-Report-Only`. |
+| `vercel.json` | Completa `Permissions-Policy` existente con `payment=()` y `usb=()`, manteniendo `geolocation=(self)` solo en Agro. |
+
+### Headers agregados o completados
+
+- `Strict-Transport-Security: max-age=31536000`
+- `Content-Security-Policy-Report-Only: default-src 'self'; ...`
+- `Permissions-Policy`: se agregan `payment=()` y `usb=()` a las reglas existentes.
+
+### CSP Report-Only
+
+La CSP queda como `Content-Security-Policy-Report-Only`, no bloqueante, porque el frontend mantiene inline scripts, inline styles y handlers activos. Se conserva `'unsafe-inline'` temporalmente para observar reportes sin romper landing, dashboard ni Agro.
+
+Dominios permitidos en esta primera observacion: `self`, Google Fonts, CDNJS, jsDelivr, hCaptcha, Supabase, Open-Meteo, Binance Vision, ER API, Frankfurter API e IP API.
+
+### Validacion
+
+- `vercel.json` JSON parse + duplicados por bloque: PASS.
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS con advertencia local conocida por Node `v25.6.0`; repo/CI fijan Node `20.x`.
+
+### NO se hizo
+
+- No se aplico `Content-Security-Policy` bloqueante.
+- No se uso `preload` ni `includeSubDomains` en HSTS.
+- No se tocaron redirects, rewrites ni routing.
+- No se toco codigo Agro.
+- No se toco Supabase.
+- No se tocaron migraciones, Storage, RPC/grants, Vercel workflows ni credenciales.
