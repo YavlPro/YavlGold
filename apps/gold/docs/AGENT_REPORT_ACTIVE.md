@@ -460,3 +460,107 @@ Crear una unica migracion pequena para **P2-A**:
 - No se conecto a DB viva.
 - No se ejecuto `supabase db reset`.
 - No se uso `git add`.
+
+---
+
+## 2026-04-27 — Diagnostico P2-B RPC public/functions grants
+
+**Objetivo:** auditar funciones/RPC en schema `public` y preparar plan seguro para endurecer grants sin aplicar migraciones ni cambiar comportamiento.
+
+### Alcance ejecutado
+
+- `git status --short`: sin salida antes de editar; worktree limpio.
+- Lectura estatica de `AGENTS.md`, `FICHA_TECNICA.md`, `AGENT_REPORT_ACTIVE.md`, docs `security/` y `ops/`, migraciones Supabase y `tools/rls-smoke-test.js`.
+- Busqueda de llamadas RPC en `apps/gold/agro/` con `rg`.
+- No se conecto a DB viva.
+- No se ejecuto `supabase db reset`.
+
+### Veredicto
+
+**YELLOW controlado.** No aparece P1 confirmado por auditoria estatica. La superficie P2-B real es pequena: cuatro RPC activas de Agro no muestran `REVOKE/GRANT` explicito en migraciones, mientras `agro_rank_top_crops_profit` y `public.log_event` ya tienen grants explicitos.
+
+### RPC usadas por Agro
+
+| RPC | Uso frontend | Evidencia en migraciones | Lectura |
+|---|---|---|---|
+| `public.agro_rank_top_clients(date,date,integer,uuid)` | `apps/gold/agro/agro.js` usa `supabase.rpc('agro_rank_top_clients', params)` | Ultima definicion en `20260221231536_agro_rpc_date_filters_inclusive.sql`; no se encontro `REVOKE/GRANT` explicito para esta funcion. | P2: lectura owner-scoped por `auth.uid()`, pero executable grant queda implicito/default si no se confirma en DB viva. |
+| `public.agro_rank_pending_clients(date,date,integer,uuid)` | `apps/gold/agro/agro.js` usa `supabase.rpc('agro_rank_pending_clients', params)` | Ultima definicion en `20260221231536_agro_rpc_date_filters_inclusive.sql`; no se encontro `REVOKE/GRANT` explicito para esta funcion. | P2: lectura owner-scoped por `auth.uid()`, pero falta contrato explicito de execution grants. |
+| `public.agro_rank_top_crops_profit(date,date,integer,uuid)` | `apps/gold/agro/agro.js` usa `supabase.rpc('agro_rank_top_crops_profit', params)` | `20260221231650_agro_rank_top_crops_profit_order_repair.sql` define `SECURITY INVOKER`, `REVOKE ALL FROM PUBLIC`, `GRANT EXECUTE TO authenticated` y `service_role`. | Ya endurecida; no tocar en primer fix salvo inventario vivo contradiga. |
+| `public.agro_buyer_portfolio_summary_v1()` | `apps/gold/agro/agro-cartera-viva.js` usa `supabaseClient.rpc(AGRO_BUYER_PORTFOLIO_RPC)` | Contrato final restaurado en `20260418120000_agro_buyer_portfolio_contract_restore.sql`; no se encontro `REVOKE/GRANT` explicito. | P2: RPC principal de Cartera Viva; lectura owner-scoped con `auth.uid()` en CTE. |
+| `public.agro_delete_buyer_cascade_v1(uuid)` | `apps/gold/agro/agrocompradores.js` usa `state.supabase.rpc('agro_delete_buyer_cascade_v1', ...)` | `20260403143000_agro_delete_buyer_cascade_v1.sql` define `security invoker`, valida `auth.uid()` y ownership del comprador; no se encontro `REVOKE/GRANT` explicito. | P2 mas sensible: funcion destructiva, aunque owner-scoped. Debe ser el primer grant a cerrar. |
+
+### Funciones public no clasificadas como primer fix
+
+| Funcion | Tipo | Lectura |
+|---|---|---|
+| `public.log_event(text,jsonb)` | Wrapper `SECURITY DEFINER` | Ya tiene `REVOKE ALL FROM PUBLIC` y `GRANT EXECUTE TO authenticated` en `20260104130000_security_audit_log.sql`. No tocar en P2-B inicial. |
+| `public.handle_new_user()` | Trigger de Auth | `RETURNS trigger`, `SECURITY DEFINER`, `set search_path = public`; no aparece como RPC de Agro. No tocar sin validar impacto de triggers. |
+| `public.agro_canonicalize_buyer_name(text)` | Helper SQL immutable | No accede datos; usado en migraciones y equivalencias de compradores. Si se endurece, hacerlo como P3 separado tras verificar que no rompa inserts/updates que dependan del helper. |
+| `public.agro_task_cycles_set_updated_at()`, `public.update_updated_at()`, `public.set_user_onboarding_context_updated_at()`, `public.update_agro_crops_timestamp()` | Trigger helpers | No son RPC de producto. No mezclar con P2-B frontend RPC grants. |
+
+### Riesgos
+
+- No se consulto `pg_proc`, `information_schema.routine_privileges` ni grants efectivos contra DB viva; por tanto, el diagnostico es estatico por migraciones.
+- Revocar grants sin reotorgar `authenticated` romperia Agro.
+- Tocar helpers/trigger functions junto con RPC activas aumentaria el riesgo sin necesidad.
+
+### Plan seguro por grupos
+
+1. **P2-B1 / RPC activas de Agro con grants faltantes.**
+   - Crear una migracion pequena solo para:
+     - `public.agro_delete_buyer_cascade_v1(uuid)`.
+     - `public.agro_buyer_portfolio_summary_v1()`.
+     - `public.agro_rank_top_clients(date,date,integer,uuid)`.
+     - `public.agro_rank_pending_clients(date,date,integer,uuid)`.
+   - Patron: `REVOKE ALL ON FUNCTION ... FROM PUBLIC;` y `GRANT EXECUTE ON FUNCTION ... TO authenticated;`.
+   - No tocar `agro_rank_top_crops_profit`, porque ya tiene contrato explicito.
+
+2. **P2-B2 / Validacion real previa o posterior si el usuario autoriza DB viva.**
+   - Consultar `pg_proc`, `pg_namespace`, `pg_get_function_arguments`, `pg_get_userbyid(proowner)` y privileges efectivos.
+   - Ejecutar smoke/manual en staging para:
+     - rankings dashboard (`agro_rank_*`);
+     - Cartera Viva (`agro_buyer_portfolio_summary_v1`);
+     - borrado cascade de comprador con usuario autenticado QA.
+
+3. **P3 / Helpers y trigger functions.**
+   - Revisar `handle_new_user`, trigger helpers y `agro_canonicalize_buyer_name` en frente separado.
+   - No aplicar revokes a helpers hasta confirmar que no afectan triggers, generated/default expressions o writes indirectos.
+
+### Primer fix recomendado posterior
+
+Migracion minima:
+
+```sql
+begin;
+
+revoke all on function public.agro_delete_buyer_cascade_v1(uuid) from public;
+grant execute on function public.agro_delete_buyer_cascade_v1(uuid) to authenticated;
+
+revoke all on function public.agro_buyer_portfolio_summary_v1() from public;
+grant execute on function public.agro_buyer_portfolio_summary_v1() to authenticated;
+
+revoke all on function public.agro_rank_top_clients(date, date, integer, uuid) from public;
+grant execute on function public.agro_rank_top_clients(date, date, integer, uuid) to authenticated;
+
+revoke all on function public.agro_rank_pending_clients(date, date, integer, uuid) from public;
+grant execute on function public.agro_rank_pending_clients(date, date, integer, uuid) to authenticated;
+
+notify pgrst, 'reload schema';
+
+commit;
+```
+
+### Validacion
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS (agent-guard OK, agent-report-check OK, vite build 165 modules, check-llms OK, UTF-8 OK).
+- Nota: el build conserva el warning local de Node `v25.6.0` vs engine declarado `20.x`; no bloquea el build.
+
+### NO se hizo
+
+- No se crearon migraciones.
+- No se tocaron RPC/grants, policies, Storage, `profiles`, Supabase config ni Edge Functions.
+- No se toco Agro ni `agro.js`.
+- No se conecto a DB viva.
+- No se ejecuto `supabase db reset`.
+- No se uso `git add`.
