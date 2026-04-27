@@ -406,3 +406,57 @@ Crear una unica migracion pequena para **P2-A**:
 - No se tocaron policies, RPCs, Storage ni Supabase config.
 - No se toco Agro, `agro.js`, Edge Functions, Vercel, workflows ni credenciales.
 - No se uso `git add`.
+
+---
+
+## 2026-04-27 — Plan de ejecucion P2-A policies owner-based
+
+**Objetivo:** aplicar el primer fix P2-A recomendado: recrear solo las policies RLS owner-based antiguas de `agro_period_cycles`, `agro_crops` y `agro_roi_calculations` con rol explicito `to authenticated` y patron `((select auth.uid()) = user_id)`.
+
+### Diagnostico
+
+- `git status --short`: sin salida antes de editar.
+- `agro_period_cycles` vive en `supabase/migrations/20260411130000_create_agro_period_cycles.sql`.
+  - Policies: `user_own_period_cycles_select`, `user_own_period_cycles_insert`, `user_own_period_cycles_update`, `user_own_period_cycles_delete`.
+  - Operaciones: select/insert/update/delete.
+  - Condicion actual: `auth.uid() = user_id`.
+  - Tiene `deleted_at`, pero la policy actual no filtra soft-delete; no se agregara condicion nueva.
+- `agro_crops` vive en `supabase/migrations/20260417104335_agro_crops_roi_baseline.sql`.
+  - Policies: `Users can view own crops`, `Users can insert own crops`, `Users can update own crops`, `Users can delete own crops`.
+  - Operaciones: select/insert/update/delete.
+  - Condicion actual: `auth.uid() = user_id`; update ya usa `using` + `with check`.
+  - Tiene `deleted_at`, pero la policy actual no filtra soft-delete; no se agregara condicion nueva.
+- `agro_roi_calculations` vive en `supabase/migrations/20260417104335_agro_crops_roi_baseline.sql`.
+  - Policies: `Users can view own ROI calculations`, `Users can insert own ROI calculations`, `Users can delete own ROI calculations`.
+  - Operaciones: select/insert/delete.
+  - Condicion actual: `auth.uid() = user_id`.
+  - No tiene `deleted_at`.
+
+### Plan
+
+- Crear una migracion nueva `supabase/migrations/20260427123000_p2a_owner_policies_authenticated.sql`.
+- No tocar tablas, datos, RPC, grants, Storage, profiles ni config.
+- Dropear y recrear solo las 11 policies listadas.
+- Mantener semantica owner-based: `select/delete using`, `insert with check`, `update using + with check`.
+- Ejecutar `git diff --check` y `pnpm build:gold`.
+
+### Cambios
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `supabase/migrations/20260427123000_p2a_owner_policies_authenticated.sql` | Migracion RLS | Recrea 11 policies owner-based con `to authenticated` y `((select auth.uid()) = user_id)`. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Docs | Diagnostico, plan y cierre de la sesion P2-A. |
+
+### Validacion
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS (agent-guard OK, agent-report-check OK, vite build 165 modules, check-llms OK, UTF-8 OK).
+- Nota: el build conserva el warning local de Node `v25.6.0` vs engine declarado `20.x`; no bloquea el build.
+
+### NO se hizo
+
+- No se tocaron tablas, datos, RPC/grants, Storage, `profiles`, Supabase config ni Edge Functions.
+- No se toco Agro ni `agro.js`.
+- No se conecto a DB viva.
+- No se ejecuto `supabase db reset`.
+- No se uso `git add`.
