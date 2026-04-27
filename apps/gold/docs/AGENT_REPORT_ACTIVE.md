@@ -180,3 +180,43 @@ El rail mobile era una barra horizontal fija en la parte inferior (`top: auto; b
 - No se toco `agro.js`.
 - No se toco `index.html` ni `agro-shell.js`.
 - No se toco Supabase, Vercel, workflows ni credenciales.
+
+---
+
+## 2026-04-27 — Rail mobile colapsable con toggle lateral
+
+**Objetivo:** Agregar control de visibilidad del rail lateral mobile para evitar solapes con contenido cuando el usuario necesita pantalla completa.
+
+### Diagnostico
+
+El rail lateral mobile anterior era siempre visible y en pantallas pequenas podia tapar contenido del borde izquierdo. No existia mecanismo para ocultarlo temporalmente. El Feedback FAB ya habia sido restaurado en la sesion previa.
+
+### Plan
+
+- Agregar boton toggle en el borde derecho del rail mobile (solo visible en `max-width: 768px`).
+- Estado colapsado: rail se desplaza fuera de pantalla con `transform`, queda visible solo la pestaña del toggle.
+- Estado expandido: rail visible con padding-left en el contenido.
+- Persistir preferencia en localStorage (`YG_AGRO_MOBILE_RAIL_COLLAPSED_V1`).
+- Respetar `prefers-reduced-motion`.
+
+### Cambios
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/index.html` | Markup | Boton `#agro-shell-rail-mobile-toggle` agregado dentro del `nav` del rail, con chevron izquierdo y aria-label. |
+| `apps/gold/agro/agro.css` | CSS base | `.agro-shell-rail__mobile-toggle` oculto por defecto (`display: none`). Agregado a `prefers-reduced-motion`. |
+| `apps/gold/agro/agro.css` | CSS mobile | En `max-width: 768px`: toggle visible como pestaña en borde derecho del rail; `body.agro-shell-rail-collapsed` desplaza rail con `transform` y elimina padding-left del contenido. |
+| `apps/gold/agro/agro-shell.js` | JS | Nuevas funciones `readMobileRailCollapsed`/`writeMobileRailCollapsed` con localStorage seguro; listener en toggle que alterna body class, aria-expanded y label. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | docs | Sesion documentada. |
+
+### Validacion
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS (agent-guard OK, agent-report-check OK, vite build 165 modules, check-llms OK, UTF-8 OK).
+
+### NO se hizo
+
+- No se toco `agro.js`.
+- No se toco Supabase, Vercel, workflows ni credenciales.
+- No se elimino el rail.
+- No se rompio desktop.

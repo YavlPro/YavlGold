@@ -3,6 +3,7 @@ import { initAgroShellSearch } from './agro-shell-search.js';
 
 const AGRO_ACTIVE_VIEW_KEY = 'YG_AGRO_ACTIVE_VIEW_V1';
 const AGRO_RAIL_EXPANDED_KEY = 'YG_AGRO_RAIL_EXPANDED_V1';
+const AGRO_MOBILE_RAIL_COLLAPSED_KEY = 'YG_AGRO_MOBILE_RAIL_COLLAPSED_V1';
 const AGRO_DEFAULT_VIEW = 'dashboard';
 const AGRO_DEFAULT_SHELL_MODE = 'all';
 
@@ -321,6 +322,22 @@ function readRailExpanded() {
 function writeRailExpanded(isExpanded) {
     try {
         localStorage.setItem(AGRO_RAIL_EXPANDED_KEY, isExpanded ? '1' : '0');
+    } catch (_err) {
+        // Ignore storage errors.
+    }
+}
+
+function readMobileRailCollapsed() {
+    try {
+        return localStorage.getItem(AGRO_MOBILE_RAIL_COLLAPSED_KEY) === '1';
+    } catch (_err) {
+        return false;
+    }
+}
+
+function writeMobileRailCollapsed(isCollapsed) {
+    try {
+        localStorage.setItem(AGRO_MOBILE_RAIL_COLLAPSED_KEY, isCollapsed ? '1' : '0');
     } catch (_err) {
         // Ignore storage errors.
     }
@@ -811,6 +828,33 @@ export function initAgroShell() {
         event.preventDefault();
         event.stopPropagation();
         openSidebar();
+    });
+
+    const mobileRailToggle = document.getElementById('agro-shell-rail-mobile-toggle');
+    let mobileRailCollapsed = readMobileRailCollapsed();
+
+    const syncMobileRail = () => {
+        document.body.classList.toggle('agro-shell-rail-collapsed', mobileRailCollapsed);
+        if (!mobileRailToggle) return;
+        mobileRailToggle.setAttribute('aria-expanded', mobileRailCollapsed ? 'false' : 'true');
+        mobileRailToggle.setAttribute(
+            'aria-label',
+            mobileRailCollapsed ? 'Mostrar navegación' : 'Ocultar navegación'
+        );
+        mobileRailToggle.setAttribute(
+            'title',
+            mobileRailCollapsed ? 'Mostrar navegación' : 'Ocultar navegación'
+        );
+    };
+
+    syncMobileRail();
+
+    mobileRailToggle?.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        mobileRailCollapsed = !mobileRailCollapsed;
+        writeMobileRailCollapsed(mobileRailCollapsed);
+        syncMobileRail();
     });
 
     launcherClose?.addEventListener('click', (event) => {
