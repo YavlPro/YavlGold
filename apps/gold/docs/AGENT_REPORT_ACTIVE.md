@@ -1199,3 +1199,106 @@ El QA anterior había validado Usuario A, acceso anónimo, limpieza QA y XSS, pe
 - No se tocó Supabase config.
 - No se ejecutó `supabase db reset`.
 - No se usaron credenciales en documentos versionados.
+
+---
+
+## 2026-04-27 — Diagnóstico V3 deuda operativa Agro
+
+**Estado:** YELLOW CONTROLADO — diagnóstico, sin cambios técnicos
+
+### Diagnostico
+
+Se auditó deuda operativa en `apps/gold/agro/` y `apps/gold/assets/` bajo el Plan Maestro V3, sin aplicar fixes. El reporte activo tiene 864 líneas antes de esta sección, por debajo del umbral canónico de rotación de 4000 líneas.
+
+Resumen cuantitativo:
+
+- Temporizadores detectados: 143 líneas con `setInterval`, `setTimeout`, `clearInterval` o `clearTimeout`.
+- Listeners detectados: 424 líneas con `addEventListener` o `removeEventListener`.
+- Referencias `window.*`: 488 líneas, con 45 asignaciones directas en `agro.js`.
+- Diálogos nativos residuales: 91 líneas con `alert`, `confirm`, `prompt` o variantes `window.*`.
+- Tamaño actual de `apps/gold/agro/agro.js`: 14821 líneas. Sigue siendo el centro de la deuda, aunque shell, favoritos y búsqueda ya están mayormente estabilizados.
+
+La deuda no apunta a un único bug crítico, sino a contratos operativos incompletos: modales no unificados, listeners globales sin ciclo de vida explícito, temporizadores con teardown parcial, puentes `window.*` heredados y bloques autocontenidos que siguen dentro de `agro.js`.
+
+### Hallazgos
+
+#### Temporizadores
+
+| Severidad | Archivo | Línea | Hallazgo | Recomendación |
+|---|---:|---:|---|---|
+| ALTA | `apps/gold/assets/js/components/notifications.js` | 24 | `setInterval(() => this.checkUnread(), 120000)` no guarda id ni tiene `clearInterval`. | Guardar `_unreadTimer`, evitar doble init y limpiar en `destroy()`/`pagehide`. |
+| MEDIA | `apps/gold/agro/agro-market.js` | 622, 630, 636 | Ticker tiene singleton y `stopTickerAutoRefresh()`, pero no está atado a ciclo de vida de página/shell. | Conectar stop a `pagehide` o teardown explícito; mantener un solo dueño del polling. |
+| MEDIA | `apps/gold/agro/dashboard.js` | 890, 896 | Weather refresh tiene `stopDashboardWidgets()` expuesto en `window`, pero no se observa binding automático de cleanup. | Registrar cleanup en `pagehide` o al desactivar vista dashboard. |
+| MEDIA | `apps/gold/agro/agro.js` | 14704, 14721 | Timers del asistente tienen `stopAssistantTimers()` y cierre local, pero no cleanup final de documento. | Añadir cleanup de seguridad en `pagehide`/`beforeunload` cuando se toque asistente. |
+| BAJA | `apps/gold/agro/agro-cartera-viva-view.js` | 2911 | Debounce `externalRefreshTimer` se limpia al reprogramar, pero no tiene disposer de módulo. | Mantener como aceptable por ahora; agregar disposer cuando exista lifecycle modular. |
+
+#### Listeners
+
+| Severidad | Archivo | Línea | Hallazgo | Recomendación |
+|---|---:|---:|---|---|
+| ALTA | `apps/gold/agro/agro-selection.js` | 34, 59, 71, 85 | `initFactureroSelection()` agrega listeners globales sin guard idempotente ni remover. | Primer fix seguro: guard de inicialización + `AbortController`/disposer. |
+| ALTA | `apps/gold/agro/agro-shell.js` | 535, 868, 874, 906, 915, 923 | `initAgroShell()` registra document/window listeners sin singleton explícito ni teardown. | Hacer init idempotente y retornar API estable con `destroy()` futuro. |
+| MEDIA | `apps/gold/assets/js/auth/authUI.js` | 18, 112, 130, 133, 145, 150, 155, 676 | `AuthUI.init()` no muestra guard `_initialized`; si se invoca dos veces duplica listeners globales. | Agregar guard local antes de `attachEventListeners()`. |
+| MEDIA | `apps/gold/agro/agro-cartera-viva-view.js` | 3036-3044 | Tiene `initialized` contra duplicación, pero no remueve listeners cuando el módulo deje de vivir. | Aceptable en MPA actual; agregar teardown si se modulariza lifecycle. |
+| MEDIA | `apps/gold/agro/agro-repo-app.js` | 1555-1571 | Buenas banderas `documentBound`/`viewportBound`, sin `removeEventListener` futuro. | Usarlo como patrón intermedio y añadir `destroyAgroRepo()` si se vuelve desmontable. |
+| BAJA | `apps/gold/agro/agro-cart.js` | 1398-1401 | Buen patrón: aborta listeners de render con `AbortController`. | Reutilizar este patrón en módulos pequeños antes de tocar `agro.js`. |
+
+#### Window globals
+
+| Severidad | Archivo | Símbolo | Hallazgo | Recomendación |
+|---|---|---|---|---|
+| ALTA | `apps/gold/agro/agro.js` | `window.populateCropDropdowns`, `window.refreshFactureroHistory`, `window.launchAgroWizard`, `window.switchTab` | Puentes necesarios hoy para HTML/módulos, pero mezclan API pública con deuda legacy. | Mantener mientras se extrae; documentar contrato y mover a objetos puente acotados. |
+| ALTA | `apps/gold/agro/index.html` | `window.saveCrop` | Lógica operativa de cultivo vive en inline script HTML. | Mover a módulo de cultivo/modal antes de endurecer CSP. |
+| MEDIA | `apps/gold/agro/agro.js` | `window.getTodayLocalISO`, `window.isValidISODate`, `window.assertDateNotFuture` | Helpers de fecha expuestos por dependencia inline. | Extraer `agro-date-utils.js` y consumir por import/puente mínimo. |
+| MEDIA | `apps/gold/agro/agro-interactions.js` | `window.closeModal`, `window.selectDate`, `window.saveTask`, `window.deleteTask` | Globals legacy orientados a handlers inline/DOM. | Encapsular en namespace único o migrar listeners delegados. |
+| MEDIA | `apps/gold/assets/js/main.js`, `apps/gold/assets/js/ui/uxMessages.js` | `window.showGoldToast` | Definición duplicada de toast global. | Centralizar en `YGUXMessages` y dejar alias único de compatibilidad. |
+| BAJA | `apps/gold/agro/agro-market.js` | `window.__YG_MARKET_TICKER__` | Singleton global consciente para ticker. | Aceptable si queda con dueño único y cleanup explícito. |
+
+#### Diálogos nativos
+
+| Severidad | Archivo | Tipo | Flujo | Recomendación |
+|---|---|---|---|---|
+| ALTA | `apps/gold/agro/agro.js` | `confirm` | Guardrails USD, eliminar pagado, conversaciones IA, eliminar cultivo. | Migrar a modal base V10.1 por prioridad destructiva/financiera. |
+| ALTA | `apps/gold/agro/agro-cart.js` | `alert`/`confirm` | Crear/eliminar carrito, eliminar item, validación de item, fallback `notifyCart`. | Primer frente real para `showAgroConfirm()` + `showAgroAlert()` fuera del monolito. |
+| ALTA | `apps/gold/agro/agro-agenda.js` | `alert`/`confirm` | Eliminar actividad y validaciones del modal crear actividad. | Segundo frente de modales; reemplazar validación nativa por feedback inline/modal base. |
+| MEDIA | `apps/gold/agro/agro-period-cycles.js` | `prompt`/`confirm` | Renombrar y eliminar ciclo de período. | Ya usa `showPromptModal` si existe; falta confirm base y retirar fallback nativo. |
+| MEDIA | `apps/gold/agro/agro-cartera-viva-view.js` | `window.prompt` fallback | Nombre de cartera operativa. | Cuando `agro-prompt-modal.js` sea garantizado, eliminar fallback nativo. |
+| MEDIA | `apps/gold/assets/js/auth/authUI.js`, `apps/gold/assets/js/admin/adminManager.js` | `confirm` | Logout y admin delete. | Tratar en frente site/global, no mezclar con modales Agro. |
+
+### Candidatos a extracción de `agro.js`
+
+| Prioridad | Bloque | Motivo | Riesgo | Primer paso |
+|---|---|---|---|---|
+| P0 | Date helpers, líneas 400-462 | Bajo acoplamiento y globales claros. | Bajo | Crear `agro-date-utils.js` y dejar alias `window.*` temporal. |
+| P1 | ROI calculator, líneas 11659-11849 | Bloque UI/datos autocontenido, menor riesgo que facturero/ciclos. | Bajo-Medio | Extraer `calculateROI`, `initRoiCurrencySelector`, `injectRoiClearButton` con deps explícitas. |
+| P1 | USD audit modal, líneas 3259-3580 | Modal y refresh debounce autocontenidos. | Medio | Mover a `agro-usd-audit.js`; exponer init/refresh con cleanup de timer. |
+| P2 | Rankings operativos, líneas 12897-13758 | Bloque cohesivo de rankings, filtros y export. | Medio | Crear `agro-ops-rankings.js` y pasar deps (`supabase`, tab activo, privacy). |
+| P2 | Asistente Agro, líneas 14075-15594 | Superficie completa con estado, timers, storage y UI. | Alto | Primero aislar listeners/timers; luego extraer a `agro-assistant.js`. |
+| P3 | Ciclos/crop cards, líneas 8731-11656 | Bloque grande y semánticamente central. | Alto | No tocar como primera extracción; requiere contrato de datos/caché. |
+| P3 | Facturero CRUD/historial, líneas 820-8724 | Núcleo crítico del sistema. | Muy alto | Solo cirugía puntual o wrappers; no extracción inicial. |
+
+### Orden recomendado de ataques
+
+1. Primer fix seguro: hacer idempotente `initFactureroSelection()` en `apps/gold/agro/agro-selection.js` y añadir cleanup técnico mínimo.
+2. Segundo fix seguro: guardar y limpiar el intervalo de `NotificationsManager` en `apps/gold/assets/js/components/notifications.js`.
+3. Primer frente de modales base: crear/usar un helper reusable de confirm/alert y aplicarlo en `apps/gold/agro/agro-cart.js`.
+4. Segunda migración de modales: `apps/gold/agro/agro-agenda.js`, por confirm destructivo y validaciones nativas.
+5. Primera extracción real: `agro-roi.js` desde el bloque ROI de `agro.js`; antes, una extracción P0 de date helpers puede servir como prueba de bajo riesgo.
+6. Siguiente extracción de valor: `agro-ops-rankings.js`, solo después de estabilizar listeners y modales.
+
+### No se hizo
+
+- No se tocó código.
+- No se aplicaron fixes.
+- No se tocaron migraciones.
+- No se tocó Supabase.
+- No se tocó Vercel.
+- No se tocaron workflows.
+- No se tocaron credenciales.
+- No se modificó `MANIFIESTO_AGRO.md`.
+- No se modificó `ADN-VISUAL-V10.0.md`.
+
+### Validación
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS con advertencia local conocida por Node `v25.6.0`; repo/CI fijan Node `20.x`.
