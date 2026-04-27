@@ -623,3 +623,67 @@ commit;
 - No se conecto a DB viva.
 - No se ejecuto `supabase db reset`.
 - No se uso `git add`.
+
+---
+
+## 2026-04-27 — Cierre tecnico P2-A/P2-B1 Supabase
+
+**Estado:** YELLOW CONTROLADO — fixes aplicados, QA funcional pendiente por usuario
+
+**Objetivo:** Dejar documentado el cierre tecnico de los bloques P2-A y P2-B1 antes de QA manual.
+
+### Diagnostico
+
+Se aplicaron dos bloques de endurecimiento Supabase de bajo alcance:
+
+- P2-A modernizo policies owner-based antiguas para `agro_period_cycles`, `agro_crops` y `agro_roi_calculations`, usando `to authenticated` y `((select auth.uid()) = user_id)`.
+- P2-B1 endurecio grants de cuatro RPC activas en `public`, quitando ejecucion publica y permitiendo ejecucion solo a usuarios autenticados.
+
+No se detecto P1 nuevo durante los diagnosticos previos. El estado sigue siendo YELLOW controlado hasta completar QA funcional.
+
+### Plan
+
+- No aplicar mas migraciones hasta validar P2-A/P2-B1.
+- El usuario realizara QA manual con sesion autenticada.
+- Si QA pasa, actualizar estado a GREEN.
+- Si QA falla, documentar flujo roto y corregir con diff quirurgico.
+- Proximo frente tras QA: P2-C Storage (`agro-evidence` MIME/file size + decision `avatars`).
+
+### Cambios tecnicos ya aplicados
+
+| Bloque | Archivo | Cambio |
+|---|---|---|
+| P2-A | `supabase/migrations/20260427123000_p2a_owner_policies_authenticated.sql` | Recreate policies owner-based con `to authenticated` + `(select auth.uid())`. |
+| P2-B1 | `supabase/migrations/20260427124500_p2b_rpc_grants_hardening.sql` | `REVOKE ALL FROM PUBLIC` + `GRANT EXECUTE TO authenticated` para 4 RPC activas. |
+
+### QA manual pendiente por usuario
+
+- [ ] Confirmar que `/agro/` abre en Dashboard Agro.
+- [ ] Confirmar que ciclos de cultivo cargan.
+- [ ] Confirmar que ciclos de periodo cargan si existen.
+- [ ] Confirmar que ROI/calculos no se rompen.
+- [ ] Confirmar que rankings de clientes cargan.
+- [ ] Confirmar que rankings de pendientes cargan.
+- [ ] Confirmar que resumen de cartera/comprador carga.
+- [ ] Probar `delete buyer cascade` solo con cliente QA temporal.
+- [ ] Confirmar que usuario anonimo no accede a datos privados.
+- [ ] Confirmar que Operacion Comercial / Cartera Viva no se rompen.
+
+### Validacion tecnica previa
+
+- `git diff --check`: PASS en las sesiones de implementacion.
+- `pnpm build:gold`: PASS en las sesiones de implementacion.
+- Nota local conocida: entorno con Node `v25.6.0`; repo/CI fijan Node `20.x`.
+
+### NO se hizo
+
+- No se aplico QA funcional en esta sesion.
+- No se conecto a DB viva.
+- No se ejecuto `supabase db reset`.
+- No se tocaron nuevas migraciones.
+- No se toco codigo Agro.
+- No se toco `agro.js`.
+- No se tocaron RPC fuera de P2-B1.
+- No se toco Storage.
+- No se toco `profiles`.
+- No se tocaron credenciales.
