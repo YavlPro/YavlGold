@@ -488,7 +488,34 @@
             <p class="agro-mobile-contextbar__title" data-agro-mobile-context-title>Módulo</p>
         </div>
 
-        <section class="agro-mobile-hub" data-agro-mobile-hub-root aria-label="Hub móvil Agro">
+        <section class="agro-mobile-hub agro-shell-hub" data-agro-mobile-hub-root aria-label="Hub Agro">
+            <nav class="agro-shell-hub-tabs" aria-label="Puertas principales Agro" role="tablist">
+                <button type="button" class="agro-shell-hub-tab" id="agro-hub-tab-inicio"
+                    data-agro-mobile-tab="inicio" role="tab" aria-controls="agro-mobile-panel-inicio"
+                    aria-selected="true">
+                    <i class="fa-solid fa-house" aria-hidden="true"></i>
+                    <span>Inicio</span>
+                </button>
+                <button type="button" class="agro-shell-hub-tab" id="agro-hub-tab-operacion"
+                    data-agro-mobile-tab="operacion" role="tab" aria-controls="agro-mobile-panel-operacion"
+                    aria-selected="false">
+                    <i class="fa-solid fa-briefcase" aria-hidden="true"></i>
+                    <span>Operación</span>
+                </button>
+                <button type="button" class="agro-shell-hub-tab" id="agro-hub-tab-memoria"
+                    data-agro-mobile-tab="memoria" role="tab" aria-controls="agro-mobile-panel-memoria"
+                    aria-selected="false">
+                    <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+                    <span>Memoria</span>
+                </button>
+                <button type="button" class="agro-shell-hub-tab" id="agro-hub-tab-menu"
+                    data-agro-mobile-tab="menu" role="tab" aria-controls="agro-mobile-panel-menu"
+                    aria-selected="false">
+                    <i class="fa-solid fa-compass" aria-hidden="true"></i>
+                    <span>Menú</span>
+                </button>
+            </nav>
+
             <div class="agro-mobile-hub__panel" id="agro-mobile-panel-inicio" data-agro-mobile-panel="inicio"
                 role="tabpanel" aria-labelledby="agro-mobile-tab-inicio">
                 <div class="agro-mobile-hub__head">

@@ -1307,7 +1307,7 @@ La deuda no apunta a un único bug crítico, sino a contratos operativos incompl
 
 ## 2026-04-28 — MVP navegacion movil Hub/Modulo Agro
 
-**Estado:** YELLOW EN CURSO — diagnostico y plan registrados antes de editar codigo
+**Estado:** GREEN — implementado y validado con build
 
 **Objetivo:** Implementar navegacion movil tipo hub/inmersiva con cuatro puertas: Inicio, Operacion, Memoria y Menu.
 
@@ -1366,4 +1366,65 @@ La deuda no apunta a un único bug crítico, sino a contratos operativos incompl
 
 - No se toco `apps/gold/agro/agro.js`.
 - No se toco Supabase, migraciones, RPC/grants, Storage, Vercel, workflows ni credenciales.
+- No se cambio logica financiera, logica de cultivos, logica de cartera ni logica profunda de AgroRepo.
+
+---
+
+## 2026-04-28 — Desktop hub/module y separacion Operacion Agro
+
+**Estado:** YELLOW EN CURSO — diagnostico y plan registrados antes de editar codigo
+
+**Objetivo:** Extender a desktop el patron aprobado de navegacion `hub/module`, ocultar navegacion global dentro de modulos profundos, reforzar el topbar contextual y separar Cartera Viva / Cartera Operativa como entradas claras del hub Operacion.
+
+### Diagnostico
+
+- El MVP anterior agrego `body[data-agro-shell-depth="hub|module"]`, hub mobile, tabbar inferior y topbar contextual, pero su CSS operativo esta limitado a `@media (max-width: 768px)`.
+- En desktop, el rail persistente y el launcher siguen visibles/operables aunque el usuario entre a vistas profundas como `cartera-viva`, `operational` o `agrorepo`.
+- La estructura de `agro-shell.js` ya permite resolver la profundidad en un solo punto (`setActiveView()`, `setShellDepth()`, `setMobileHub()`), por lo que no hace falta tocar `agro.js`.
+- El hub Operacion ya contiene accesos separados en mobile, pero desktop sigue dependiendo del rail/launcher; se necesita una superficie de hub visible tambien en desktop y no una mezcla de Cartera Viva + Cartera Operativa como una unica entrada ambigua.
+- Los titulos actuales de algunas superficies usan blancos protagonistas o estilos locales; se puede alinear el shell nuevo con el tono de `docs-agro`: Orbitron sobrio, gold principal, subtitulo muted y jerarquia compacta.
+
+### Plan de ejecucion
+
+1. Convertir el hub actual en una superficie responsive compartida desktop/mobile, no solo mobile.
+2. Agregar tabs de hub para desktop usando los mismos grupos: Inicio, Operacion, Memoria y Menu.
+3. Ajustar CSS para que `hub` muestre navegacion global/hub y `module` oculte rail, launcher/tabbar global y muestre topbar contextual.
+4. Mantener la tabbar inferior solo para mobile y usar navegacion de hub superior en desktop.
+5. Reforzar visualmente titulos del hub/topbar con tokens V10 y lenguaje docs: gold, muted, Orbitron/Rajdhani, sin titulo blanco protagonista.
+6. Asegurar que Operacion muestre `Cartera Viva` y `Cartera Operativa` como entradas independientes.
+7. Validar con `git diff --check` y `pnpm build:gold`.
+
+### Riesgos
+
+- Ocultar el rail en desktop durante `module` puede afectar accesos rapidos si el boton Volver no queda siempre visible; mitigacion: topbar contextual sticky con Volver.
+- `operaciones`, `cartera-viva` y `operational` comparten parte del legacy financiero; el cambio debe separar navegacion/superficie, no tocar logica comercial ni datos.
+- El CSS de Agro es grande; el cambio debe quedarse acotado al bloque del shell/hub para evitar regresiones visuales no relacionadas.
+
+### Archivos a tocar
+
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro.css`
+- `apps/gold/agro/agro-shell.js`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Resultado de implementacion
+
+- `index.html`: el hub existente pasa a ser `Hub Agro` responsive y suma tabs desktop para Inicio, Operacion, Memoria y Menu reutilizando el contrato `data-agro-mobile-tab`.
+- `agro.css`: se agrego una capa shell hub/module fuera del media query mobile. En `hub` se ocultan regiones profundas y se muestra hub; en `module` se ocultan rail/sidebar/quicknav y se muestra topbar contextual sticky.
+- `agro.css`: se mantuvo la tabbar inferior solo para mobile; desktop usa tabs superiores del hub.
+- `agro.css`: titulos principales de hub/topbar/modulo usan gold V10 y gradiente estatico estilo docs-agro, evitando blanco protagonista.
+- `agro-shell.js`: el estado `hub/module` y el foco al volver ya no dependen de viewport; las acciones profundas tambien activan topbar contextual en desktop.
+- `agro-shell.js`: `operaciones` queda rotulado como `Operacion Comercial`.
+- Operacion muestra `Cartera Viva` y `Cartera Operativa` como entradas independientes del hub y cada una abre su vista dedicada.
+
+### Validacion
+
+- `node --check apps/gold/agro/agro-shell.js`: PASS.
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS. Warning no bloqueante: engine local Node `v25.6.0` vs requerido `20.x`.
+
+### Alcance respetado
+
+- No se toco `apps/gold/agro/agro.js`.
+- No se toco Supabase, migraciones, RLS, RPC/grants, Storage, Vercel, workflows ni credenciales.
 - No se cambio logica financiera, logica de cultivos, logica de cartera ni logica profunda de AgroRepo.

@@ -124,7 +124,7 @@ const VIEW_CONFIG = Object.freeze({
     'period-cycles': { region: 'period-cycles', label: 'Ciclos de período', focusSelector: '#agro-period-cycles-root' },
     operational: { region: 'operational', label: 'Cartera Operativa', focusSelector: '#agro-operational-root' },
     'task-cycles': { region: 'task-cycles', label: 'Ciclos de Tareas', focusSelector: '#agro-task-cycles-root' },
-    operaciones: { region: 'ops', label: 'Operaciones', resolveTab: resolveOperationsTab, dense: true },
+    operaciones: { region: 'ops', label: 'Operación Comercial', resolveTab: resolveOperationsTab, dense: true },
     carrito: { region: 'ops', label: 'Carrito', tab: 'carrito', focusSelector: '#agro-carrito-dedicated', dense: true },
     rankings: { region: 'ops', label: 'Rankings', tab: 'rankings', focusSelector: '#agro-rankings-dedicated', dense: true },
     'cartera-viva': { region: 'cartera-viva', label: 'Cartera Viva', focusSelector: '#agro-cartera-viva-root' },
@@ -384,10 +384,6 @@ function writeMobileRailCollapsed(isCollapsed) {
 
 function prefersReducedMotion() {
     return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true;
-}
-
-function isMobileShellViewport() {
-    return window.matchMedia?.('(max-width: 768px)')?.matches === true;
 }
 
 function setElementHiddenInert(element, shouldHide) {
@@ -667,7 +663,7 @@ export function initAgroShell() {
         activeMobileHub = normalizeMobileHub(nextHub);
         syncMobileHub();
 
-        if (options.focus === true && isMobileShellViewport()) {
+        if (options.focus === true) {
             focusTarget(`[data-agro-mobile-panel="${activeMobileHub}"]`, { scroll: true });
         }
     };
@@ -690,7 +686,7 @@ export function initAgroShell() {
         }
         syncShellDepth();
 
-        if (options.focus === true && shellDepth === 'hub' && isMobileShellViewport()) {
+        if (options.focus === true && shellDepth === 'hub') {
             focusTarget(`[data-agro-mobile-panel="${activeMobileHub}"]`, { scroll: true });
         }
     };
@@ -1042,9 +1038,7 @@ export function initAgroShell() {
                     ? resolveSourceHub(actionButton, activeView)
                     : (actionMeta.hub || resolveSourceHub(actionButton, activeView));
                 setMobileHub(sourceHub);
-                if (isMobileShellViewport()) {
-                    setShellDepth('module', { title: label });
-                }
+                setShellDepth('module', { title: label });
                 closeSidebar();
             }
         }
