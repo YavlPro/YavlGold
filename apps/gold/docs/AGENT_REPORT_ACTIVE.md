@@ -1372,7 +1372,7 @@ La deuda no apunta a un único bug crítico, sino a contratos operativos incompl
 
 ## 2026-04-28 — Desktop hub/module y separacion Operacion Agro
 
-**Estado:** YELLOW EN CURSO — diagnostico y plan registrados antes de editar codigo
+**Estado:** GREEN — implementado y validado con build
 
 **Objetivo:** Extender a desktop el patron aprobado de navegacion `hub/module`, ocultar navegacion global dentro de modulos profundos, reforzar el topbar contextual y separar Cartera Viva / Cartera Operativa como entradas claras del hub Operacion.
 
@@ -1409,6 +1409,26 @@ La deuda no apunta a un único bug crítico, sino a contratos operativos incompl
 
 ### Resultado de implementacion
 
+- `index.html`: se elimino la quicknav superior del header (`Dashboard Principal` y `Nuevo registro`). El logo conserva la salida principal y el hub conserva `Dashboard Agro` / `Nuevo registro` dentro de Inicio.
+- `agro.css`: se oculto el rail legacy desktop y su toggle cuando `agro-shell-ready` esta activo; tambien se neutralizo el padding lateral residual del layout.
+- `agro.css`: las tabs desktop `Inicio / Operacion / Memoria / Menu` se reordenan visualmente al fondo del hub, sobre el footer.
+- `agro.css`: los titulos/eyebrow del hub mobile vuelven a centrarse para evitar la lectura desbalanceada de las capturas.
+- `agro.css`: dentro de `Cartera Viva` y `Cartera Operativa` se oculta la navegacion hermana `.agro-commercial-family`, evitando que ambas superficies parezcan vivir mezcladas.
+- `agro-shell.js`: auditado; no requirio cambios.
+
+### Validacion
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS. Warning no bloqueante: engine local Node `v25.6.0` vs requerido `20.x`.
+
+### Alcance respetado
+
+- No se toco `apps/gold/agro/agro.js`.
+- No se toco Supabase, migraciones, RLS, RPC/grants, Storage, Vercel, workflows ni credenciales.
+- No se cambio logica financiera, logica de cultivos, logica de cartera ni logica profunda de AgroRepo.
+
+### Resultado de implementacion
+
 - `index.html`: el hub existente pasa a ser `Hub Agro` responsive y suma tabs desktop para Inicio, Operacion, Memoria y Menu reutilizando el contrato `data-agro-mobile-tab`.
 - `agro.css`: se agrego una capa shell hub/module fuera del media query mobile. En `hub` se ocultan regiones profundas y se muestra hub; en `module` se ocultan rail/sidebar/quicknav y se muestra topbar contextual sticky.
 - `agro.css`: se mantuvo la tabbar inferior solo para mobile; desktop usa tabs superiores del hub.
@@ -1428,3 +1448,41 @@ La deuda no apunta a un único bug crítico, sino a contratos operativos incompl
 - No se toco `apps/gold/agro/agro.js`.
 - No se toco Supabase, migraciones, RLS, RPC/grants, Storage, Vercel, workflows ni credenciales.
 - No se cambio logica financiera, logica de cultivos, logica de cartera ni logica profunda de AgroRepo.
+
+---
+
+## 2026-04-28 — Shell hub/module V2 limpieza visual
+
+**Estado:** YELLOW EN CURSO — diagnostico y plan registrados antes de editar codigo
+
+**Objetivo:** Segunda pasada quirurgica sobre el shell Agro para quitar duplicidades visuales, limpiar header, centrar mejor el hub mobile, eliminar el rail legacy en desktop y reforzar la separacion semantica entre Cartera Viva y Cartera Operativa.
+
+### Diagnostico
+
+- Mobile ya usa hub y tabbar inferior, pero el bloque de titulo del hub quedo alineado a la izquierda en el ultimo override y se percibe descentrado.
+- El header superior conserva acciones de acceso rapido como `Nuevo registro`; duplican accesos del hub y agregan ruido visual.
+- Desktop muestra simultaneamente el hub nuevo y el rail legacy izquierdo, generando dos sistemas globales de navegacion.
+- La barra desktop `Inicio / Operacion / Memoria / Menu` se lee mejor como navegacion inferior del hub, cerca del footer, no como otro elemento protagonista sobre el contenido.
+- Cartera Viva y Cartera Operativa ya tienen entradas separadas en Operacion, pero la subnavegacion legacy puede volver a presentarlas como hermanas dentro de la misma superficie.
+
+### Plan
+
+1. Auditar markup actual del header, rail, hub tabs y subnavegacion financiera.
+2. Eliminar del header superior la accion `Nuevo registro`, conservando solo accesos estrictamente necesarios.
+3. Centrar titulos/eyebrow del hub en mobile y desktop con tokens V10.
+4. Ocultar el rail legacy en desktop cuando el shell hub/module esta activo y neutralizar padding lateral residual.
+5. Reubicar tabs desktop del hub al fondo de la superficie, justo sobre el footer.
+6. Ocultar o neutralizar la subnavegacion `Cartera Viva / Cartera Operativa` cuando ya se esta dentro de una de esas vistas, manteniendo separacion semantica.
+7. Validar con `git diff --check` y `pnpm build:gold`.
+
+### Riesgos
+
+- Ocultar el rail desktop cambia un habito de navegacion legacy; mitigacion: hub visible en profundidad `hub` y topbar con `Volver` en profundidad `module`.
+- La navegacion financiera legacy comparte componentes; el ajuste debe ocultar mezcla visual sin tocar logica financiera ni datos.
+
+### Archivos a tocar
+
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro.css`
+- `apps/gold/agro/agro-shell.js`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
