@@ -438,6 +438,11 @@ No es la Cartera Viva (la sección destinada solo a llevar el saldo de quienes t
 
 Cuando un fiado cambia de estado, la Cartera Operativa debe reflejar la historia de forma comprensible: qué se cobró, qué quedó pendiente, qué se perdió o qué se donó. Esa lectura evita que las estadísticas mezclen deuda viva con dinero realmente recibido.
 
+### Regla de separación visual
+
+En la navegación hub, Cartera Viva y Cartera Operativa pueden aparecer como accesos hermanos dentro de Operación.
+Pero cuando una de ellas está abierta como módulo profundo, debe presentarse como superficie dedicada, sin tabs hermanas que mezclen la lectura con la otra cartera.
+
 ---
 
 ## 4.5.3 Mi Carrito
@@ -758,18 +763,52 @@ Vive como componente compacto del header del sidebar. Se despliega con un input 
 
 #### Qué es
 
-La navegación del shell se organiza en dos capas complementarias: el rail persistente y el launcher expandido. El rail persistente es la navegación rápida de Agro. El botón `Menú` del rail abre el launcher expandido, que funciona como mapa organizado del sistema.
+La navegación del shell sigue un patrón hub/module. El hub es la superficie de orientación donde el agricultor elige qué área abrir. Los módulos profundos son superficies inmersivas donde el agricultor trabaja enfocado. La navegación global desaparece dentro de un módulo profundo y reaparece al volver al hub.
 
 #### Qué no es
 
-No debe existir una segunda hamburguesa en el header que abra el mismo launcher o compita con el botón `Menú` del rail. El header conserva identidad, accesos rápidos, notificaciones y perfil, pero no duplica la entrada principal al mapa de navegación.
+No debe existir una segunda hamburguesa en el header que abra el mismo launcher o compita con el hub. El header conserva identidad, accesos rápidos, notificaciones y perfil, pero no duplica la entrada principal al mapa de navegación.
 
 #### Regla canónica
 
-* Rail persistente = navegación rápida.
-* Botón `Menú` del rail = entrada principal al launcher expandido.
-* Launcher expandido = mapa organizado del sistema Agro.
-* Header = identidad, contexto y acciones rápidas; no debe duplicar hamburguesas legacy.
+* Hub principal = mapa de entrada de Agro.
+* Módulo profundo = superficie inmersiva de trabajo.
+* En el hub se muestran las puertas principales: Inicio, Operación, Memoria, Menú.
+* En módulo profundo se oculta navegación global y se muestra Volver + título.
+* Mobile usa barra inferior para el hub.
+* Desktop usa hub central, sin rail legacy protagonista.
+* El rail/sidebar legacy no debe competir con el hub nuevo.
+* Header = identidad, usuario, notificaciones y acciones estrictamente necesarias; no debe duplicar navegación.
+
+### 4.11.4 Navegación Hub/Module
+
+#### Qué es
+
+El patrón hub/module organiza Agro en dos estados de experiencia:
+
+- **Hub:** superficie de orientación donde el agricultor elige qué área abrir.
+- **Module:** superficie inmersiva donde el agricultor trabaja enfocado dentro de un módulo.
+
+#### Regla canónica
+
+- Hub = elegir camino.
+- Module = trabajar enfocado.
+- Volver = regresar al hub correcto.
+- Mobile = barra inferior con `Inicio · Operación · Memoria · Menú`.
+- Desktop = hub central sin rail legacy protagonista.
+
+#### Puertas principales del hub
+
+- **Inicio:** entrada rápida, dashboard, nuevo registro y nuevo cultivo.
+- **Operación:** cultivos, operación comercial, Cartera Viva, Cartera Operativa, Mi Carrito, Trabajo Diario, Rankings y Clima Agro.
+- **Memoria:** AgroRepo y Asistente IA.
+- **Menú:** perfil, documentación, feedback, ajustes y soporte.
+
+#### Regla de módulos profundos
+
+Al entrar a un módulo profundo, la navegación global desaparece. La vista debe mostrar una topbar contextual con `Volver` y el título del módulo.
+
+Esto reduce ruido visual y evita que la navegación compita con la tarea principal.
 
 ### Ejemplo de uso de favoritas y búsqueda
 

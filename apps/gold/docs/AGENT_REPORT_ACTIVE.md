@@ -1486,3 +1486,47 @@ La deuda no apunta a un único bug crítico, sino a contratos operativos incompl
 - `apps/gold/agro/agro.css`
 - `apps/gold/agro/agro-shell.js`
 - `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+---
+
+## 2026-04-28 — Documentacion canon hub/module Agro
+
+**Estado:** EN PROGRESO
+
+### Diagnostico
+
+El shell Agro cambio su navegacion principal hacia un patron hub/module. La documentacion canonica y publica debe reflejarlo para evitar que futuros agentes vuelvan a tratar el rail legacy como navegacion principal activa.
+
+### Plan
+
+- Actualizar Manifiesto Agro con la regla semantica hub/module.
+- Actualizar Ficha Tecnica con la descripcion actual de `agro-shell.js`.
+- Actualizar documentacion publica Agro si describe navegacion anterior.
+- Revisar README/llms.txt y actualizar solo si mencionan navegacion/shell de Agro.
+- No tocar ADN Visual V10 por ser inmutable.
+
+### Cambios
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | docs | Seccion 4.11.3 reescrita con canon hub/module. Se agrego seccion 4.11.4 Navegacion Hub/Module con puertas, regla canonica y regla de modulos profundos. Se agrego regla de separacion visual para Cartera Viva / Cartera Operativa en 4.5.2. |
+| `FICHA_TECNICA.md` | docs | Linea `agro-shell.js` actualizada: ahora describe navegacion hub/module, hub central desktop, barra inferior mobile, topbar contextual. |
+| `apps/gold/docs-agro.html` | docs | Seccion "Como moverte dentro de Agro" reescrita para usuario final con las cuatro puertas (Inicio, Operacion, Memoria, Menu), patron hub/module y explicacion mobile/desktop. |
+| `apps/gold/public/llms.txt` | docs | Agregada linea sobre navegacion hub/module en seccion 8. |
+
+### No se toco
+
+- `README.md` (raiz): no menciona navegacion Agro.
+- `apps/gold/README.md`: no menciona navegacion Agro.
+- `apps/gold/docs/ADN-VISUAL-V10.0.md`: inmutable, no se toco.
+- Codigo: no se toco ningun archivo de codigo.
+- Supabase, migraciones, Vercel, workflows, credenciales: no se tocaron.
+
+### Validacion
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS (agent-guard OK, agent-report-check OK, 165 modules, check-llms OK, UTF-8 OK).
+
+### Estado final
+
+GREEN. Documentacion canonica actualizada sin tocar codigo ni ADN Visual.
