@@ -37,7 +37,7 @@
     <link rel="stylesheet" href="./agro-index-critical.css">
 </head>
 
-<body>
+<body data-agro-shell-depth="hub" data-agro-mobile-hub="inicio">
     <a href="#main-content" class="sr-only-focusable">Saltar al contenido principal</a>
     <div class="agro-splash" id="agro-splash" aria-label="Cargando Agro" role="status">
         <div class="agro-splash__inner">
@@ -399,6 +399,32 @@
             </div>
         </div>
     </aside>
+    <nav class="agro-mobile-tabbar" data-agro-mobile-tabbar aria-label="Navegación móvil Agro" role="tablist">
+        <button type="button" class="agro-mobile-tabbar__item" id="agro-mobile-tab-inicio"
+            data-agro-mobile-tab="inicio" role="tab" aria-controls="agro-mobile-panel-inicio"
+            aria-selected="true">
+            <i class="fa-solid fa-house" aria-hidden="true"></i>
+            <span>Inicio</span>
+        </button>
+        <button type="button" class="agro-mobile-tabbar__item" id="agro-mobile-tab-operacion"
+            data-agro-mobile-tab="operacion" role="tab" aria-controls="agro-mobile-panel-operacion"
+            aria-selected="false">
+            <i class="fa-solid fa-briefcase" aria-hidden="true"></i>
+            <span>Operación</span>
+        </button>
+        <button type="button" class="agro-mobile-tabbar__item" id="agro-mobile-tab-memoria"
+            data-agro-mobile-tab="memoria" role="tab" aria-controls="agro-mobile-panel-memoria"
+            aria-selected="false">
+            <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+            <span>Memoria</span>
+        </button>
+        <button type="button" class="agro-mobile-tabbar__item" id="agro-mobile-tab-menu"
+            data-agro-mobile-tab="menu" role="tab" aria-controls="agro-mobile-panel-menu"
+            aria-selected="false">
+            <i class="fa-solid fa-compass" aria-hidden="true"></i>
+            <span>Menú</span>
+        </button>
+    </nav>
 
     <div class="app-container" id="main-content"> <!-- Header -->
         <header class="header animate-in agro-shell-header">
@@ -452,6 +478,127 @@
                 </div>
             </div>
         </header>
+
+        <div class="agro-mobile-contextbar" data-agro-mobile-contextbar hidden inert>
+            <button type="button" class="agro-mobile-contextbar__back" data-agro-mobile-back
+                aria-label="Volver al hub">
+                <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                <span>Volver</span>
+            </button>
+            <p class="agro-mobile-contextbar__title" data-agro-mobile-context-title>Módulo</p>
+        </div>
+
+        <section class="agro-mobile-hub" data-agro-mobile-hub-root aria-label="Hub móvil Agro">
+            <div class="agro-mobile-hub__panel" id="agro-mobile-panel-inicio" data-agro-mobile-panel="inicio"
+                role="tabpanel" aria-labelledby="agro-mobile-tab-inicio">
+                <div class="agro-mobile-hub__head">
+                    <p class="agro-mobile-hub__eyebrow">Agro V1</p>
+                    <h2 class="agro-mobile-hub__title">Inicio</h2>
+                </div>
+                <div class="agro-mobile-hub__grid">
+                    <button type="button" class="agro-mobile-hub__item" data-agro-view="dashboard">
+                        <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
+                        <span>Dashboard Agro</span>
+                    </button>
+                    <button type="button" class="agro-mobile-hub__item" data-agro-action="new-record">
+                        <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+                        <span>Nuevo registro</span>
+                    </button>
+                    <button type="button" class="agro-mobile-hub__item" data-agro-action="new-crop">
+                        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                        <span>Nuevo cultivo</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="agro-mobile-hub__panel" id="agro-mobile-panel-operacion" data-agro-mobile-panel="operacion"
+                role="tabpanel" aria-labelledby="agro-mobile-tab-operacion" hidden inert>
+                <div class="agro-mobile-hub__head">
+                    <p class="agro-mobile-hub__eyebrow">Agro V1</p>
+                    <h2 class="agro-mobile-hub__title">Operación</h2>
+                </div>
+                <div class="agro-mobile-hub__grid">
+                    <button type="button" class="agro-mobile-hub__item" data-agro-view="ciclos"
+                        data-agro-subview="activos">
+                        <i class="fa-solid fa-seedling" aria-hidden="true"></i>
+                        <span>Cultivos</span>
+                    </button>
+                    <button type="button" class="agro-mobile-hub__item" data-agro-view="operaciones">
+                        <i class="fa-solid fa-briefcase" aria-hidden="true"></i>
+                        <span>Operación Comercial</span>
+                    </button>
+                    <button type="button" class="agro-mobile-hub__item" data-agro-view="cartera-viva">
+                        <i class="fa-solid fa-users" aria-hidden="true"></i>
+                        <span>Cartera Viva</span>
+                    </button>
+                    <button type="button" class="agro-mobile-hub__item" data-agro-view="operational">
+                        <i class="fa-solid fa-wallet" aria-hidden="true"></i>
+                        <span>Cartera Operativa</span>
+                    </button>
+                    <button type="button" class="agro-mobile-hub__item" data-agro-view="carrito">
+                        <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+                        <span>Mi Carrito</span>
+                    </button>
+                    <button type="button" class="agro-mobile-hub__item" data-agro-view="task-cycles">
+                        <i class="fa-solid fa-list-check" aria-hidden="true"></i>
+                        <span>Trabajo Diario</span>
+                    </button>
+                    <button type="button" class="agro-mobile-hub__item" data-agro-view="rankings">
+                        <i class="fa-solid fa-chart-column" aria-hidden="true"></i>
+                        <span>Rankings</span>
+                    </button>
+                    <button type="button" class="agro-mobile-hub__item" data-agro-view="clima">
+                        <i class="fa-solid fa-cloud-sun" aria-hidden="true"></i>
+                        <span>Clima Agro</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="agro-mobile-hub__panel" id="agro-mobile-panel-memoria" data-agro-mobile-panel="memoria"
+                role="tabpanel" aria-labelledby="agro-mobile-tab-memoria" hidden inert>
+                <div class="agro-mobile-hub__head">
+                    <p class="agro-mobile-hub__eyebrow">Agro V1</p>
+                    <h2 class="agro-mobile-hub__title">Memoria</h2>
+                </div>
+                <div class="agro-mobile-hub__grid">
+                    <button type="button" class="agro-mobile-hub__item" data-agro-view="agrorepo">
+                        <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+                        <span>AgroRepo</span>
+                    </button>
+                    <button type="button" class="agro-mobile-hub__item" data-agro-view="asistente">
+                        <i class="fa-solid fa-robot" aria-hidden="true"></i>
+                        <span>Asistente IA</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="agro-mobile-hub__panel" id="agro-mobile-panel-menu" data-agro-mobile-panel="menu"
+                role="tabpanel" aria-labelledby="agro-mobile-tab-menu" hidden inert>
+                <div class="agro-mobile-hub__head">
+                    <p class="agro-mobile-hub__eyebrow">Agro V1</p>
+                    <h2 class="agro-mobile-hub__title">Menú</h2>
+                </div>
+                <div class="agro-mobile-hub__grid">
+                    <button type="button" class="agro-mobile-hub__item" data-agro-view="perfil">
+                        <i class="fa-solid fa-circle-user" aria-hidden="true"></i>
+                        <span>Perfil</span>
+                    </button>
+                    <a href="/docs-agro" class="agro-mobile-hub__item agro-mobile-hub__item--link" target="_blank"
+                        rel="noopener">
+                        <i class="fa-solid fa-book" aria-hidden="true"></i>
+                        <span>Documentación</span>
+                    </a>
+                    <button type="button" class="agro-mobile-hub__item" data-agro-mobile-feedback>
+                        <i class="fa-solid fa-comment-dots" aria-hidden="true"></i>
+                        <span>Feedback</span>
+                    </button>
+                    <button type="button" class="agro-mobile-hub__item" data-agro-view="herramientas">
+                        <i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i>
+                        <span>Ajustes y soporte</span>
+                    </button>
+                </div>
+            </div>
+        </section>
 
         <!-- ============================================
              👤 SECCIÓN PERFIL — Vista dedicada del agricultor

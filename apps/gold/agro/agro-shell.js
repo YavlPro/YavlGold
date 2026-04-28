@@ -6,6 +6,7 @@ const AGRO_RAIL_EXPANDED_KEY = 'YG_AGRO_RAIL_EXPANDED_V1';
 const AGRO_MOBILE_RAIL_COLLAPSED_KEY = 'YG_AGRO_MOBILE_RAIL_COLLAPSED_V1';
 const AGRO_DEFAULT_VIEW = 'dashboard';
 const AGRO_DEFAULT_SHELL_MODE = 'all';
+const AGRO_DEFAULT_MOBILE_HUB = 'inicio';
 
 const SHELL_ENTRY_SELECTOR = [
     '.agro-shell-link[data-agro-view]',
@@ -45,6 +46,31 @@ const CORE_OPERATIONS_TABS = new Set([
     'transferencias',
     'otros'
 ]);
+
+const MOBILE_HUBS = new Set(['inicio', 'operacion', 'memoria', 'menu']);
+
+const VIEW_TO_MOBILE_HUB = Object.freeze({
+    dashboard: 'inicio',
+    ciclos: 'operacion',
+    'period-cycles': 'operacion',
+    operational: 'operacion',
+    operaciones: 'operacion',
+    carrito: 'operacion',
+    rankings: 'operacion',
+    'cartera-viva': 'operacion',
+    clima: 'operacion',
+    'task-cycles': 'operacion',
+    agrorepo: 'memoria',
+    asistente: 'memoria',
+    perfil: 'menu',
+    herramientas: 'menu'
+});
+
+const ACTION_TO_MOBILE_CONTEXT = Object.freeze({
+    'new-record': Object.freeze({ hub: 'inicio', label: 'Nuevo registro' }),
+    'new-crop': Object.freeze({ hub: 'inicio', label: 'Nuevo cultivo' }),
+    social: Object.freeze({ hub: 'operacion', label: 'Panel Agro Social' })
+});
 
 const VIEW_ALIASES = Object.freeze({
     cultivos: Object.freeze({ view: 'ciclos', subview: 'activos' }),
@@ -104,7 +130,7 @@ const VIEW_CONFIG = Object.freeze({
     'cartera-viva': { region: 'cartera-viva', label: 'Cartera Viva', focusSelector: '#agro-cartera-viva-root' },
     clima: { region: 'clima', label: 'Clima Agro', focusSelector: '[data-agro-shell-region="clima"]' },
     herramientas: { region: 'herramientas', label: 'Herramientas', focusSelector: '#agro-tools-section' },
-    agrorepo: { region: 'agrorepo', label: 'Bitacora', focusSelector: '#agro-repo-section', dense: true },
+    agrorepo: { region: 'agrorepo', label: 'AgroRepo', focusSelector: '#agro-repo-section', dense: true },
     asistente: { region: 'asistente', label: 'Asistente IA', focusSelector: '[data-agro-shell-region="asistente"]' }
 });
 
@@ -151,6 +177,11 @@ function normalizeShellMode(value) {
     return SHELL_MODE_ALIASES[token] || AGRO_DEFAULT_SHELL_MODE;
 }
 
+function normalizeMobileHub(value) {
+    const token = normalizeViewToken(value);
+    return MOBILE_HUBS.has(token) ? token : AGRO_DEFAULT_MOBILE_HUB;
+}
+
 function parseShellModeScopes(value) {
     return String(value || '')
         .split(/[\s,|]+/)
@@ -160,6 +191,14 @@ function parseShellModeScopes(value) {
 
 function readShellLabel(node) {
     return String(node?.querySelector('.agro-shell-link__label')?.textContent || node?.textContent || '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function readInteractiveLabel(node) {
+    const explicitLabel = node?.querySelector('.agro-shell-link__label')?.textContent
+        || (node?.matches?.('.agro-mobile-hub__item') ? node.querySelector('span')?.textContent : '');
+    return String(explicitLabel || node?.textContent || '')
         .replace(/\s+/g, ' ')
         .trim();
 }
@@ -347,6 +386,10 @@ function prefersReducedMotion() {
     return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true;
 }
 
+function isMobileShellViewport() {
+    return window.matchMedia?.('(max-width: 768px)')?.matches === true;
+}
+
 function setElementHiddenInert(element, shouldHide) {
     if (!element) return;
     element.hidden = !!shouldHide;
@@ -496,7 +539,7 @@ function clickIfExists(selector) {
     return true;
 }
 
-function runAction(action) {
+function runAction(action, currentView = '') {
     const token = String(action || '').trim().toLowerCase();
     switch (token) {
         case 'profile':
@@ -509,7 +552,7 @@ function runAction(action) {
             return clickIfExists('#btn-new-crop');
         case 'new-record':
             if (typeof window.launchAgroWizard === 'function') {
-                if (activeView === 'cartera-viva' && typeof window.openCarteraVivaRecordContext === 'function') {
+                if (currentView === 'cartera-viva' && typeof window.openCarteraVivaRecordContext === 'function') {
                     return window.openCarteraVivaRecordContext() === true;
                 }
                 window.launchAgroWizard('gastos');
@@ -538,6 +581,12 @@ export function initAgroShell() {
     const toggle = document.getElementById('agro-shell-toggle');
     const railToggle = document.getElementById('agro-shell-rail-toggle');
     const railMenu = document.getElementById('agro-shell-rail-menu');
+    const mobileHubRoot = document.querySelector('[data-agro-mobile-hub-root]');
+    const mobileTabbar = document.querySelector('[data-agro-mobile-tabbar]');
+    const mobileContextbar = document.querySelector('[data-agro-mobile-contextbar]');
+    const mobileContextTitle = document.querySelector('[data-agro-mobile-context-title]');
+    const mobileHubTabs = Array.from(document.querySelectorAll('[data-agro-mobile-tab]'));
+    const mobileHubPanels = Array.from(document.querySelectorAll('[data-agro-mobile-panel]'));
     if (!sidebar || !backdrop) return null;
 
     const launcherClose = sidebar.querySelector('.agro-launcher__close');
@@ -548,6 +597,9 @@ export function initAgroShell() {
     let railExpanded = readRailExpanded();
     let ignoreToggleHitClose = false;
     let expandedNavParent = resolveNavParentForView(activeView);
+    let activeMobileHub = normalizeMobileHub(document.body?.dataset?.agroMobileHub || AGRO_DEFAULT_MOBILE_HUB);
+    let shellDepth = document.body?.dataset?.agroShellDepth === 'module' ? 'module' : 'hub';
+    let shellContextTitle = '';
 
     const topLevelRegions = Array.from(document.querySelectorAll('[data-agro-shell-region]'));
     const isPointerInsideToggle = (event) => {
@@ -593,6 +645,60 @@ export function initAgroShell() {
             railExpanded ? 'Colapsar navegación rápida Agro' : 'Expandir navegación rápida Agro'
         );
         railToggle.setAttribute('title', railExpanded ? 'Colapsar navegación' : 'Expandir navegación');
+    };
+
+    const syncMobileHub = () => {
+        document.body.dataset.agroMobileHub = activeMobileHub;
+
+        mobileHubTabs.forEach((tab) => {
+            const isActive = normalizeMobileHub(tab.dataset.agroMobileTab) === activeMobileHub;
+            tab.classList.toggle('is-active', isActive);
+            tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            tab.setAttribute('tabindex', isActive ? '0' : '-1');
+        });
+
+        mobileHubPanels.forEach((panel) => {
+            const isActive = normalizeMobileHub(panel.dataset.agroMobilePanel) === activeMobileHub;
+            setElementHiddenInert(panel, !isActive);
+        });
+    };
+
+    const setMobileHub = (nextHub, options = {}) => {
+        activeMobileHub = normalizeMobileHub(nextHub);
+        syncMobileHub();
+
+        if (options.focus === true && isMobileShellViewport()) {
+            focusTarget(`[data-agro-mobile-panel="${activeMobileHub}"]`, { scroll: true });
+        }
+    };
+
+    const syncShellDepth = () => {
+        document.body.dataset.agroShellDepth = shellDepth;
+        setElementHiddenInert(mobileHubRoot, shellDepth !== 'hub');
+        setElementHiddenInert(mobileTabbar, shellDepth !== 'hub');
+        setElementHiddenInert(mobileContextbar, shellDepth !== 'module');
+
+        if (mobileContextTitle) {
+            mobileContextTitle.textContent = shellContextTitle || 'Módulo';
+        }
+    };
+
+    const setShellDepth = (nextDepth, options = {}) => {
+        shellDepth = nextDepth === 'module' ? 'module' : 'hub';
+        if (typeof options.title === 'string' && options.title.trim()) {
+            shellContextTitle = options.title.trim();
+        }
+        syncShellDepth();
+
+        if (options.focus === true && shellDepth === 'hub' && isMobileShellViewport()) {
+            focusTarget(`[data-agro-mobile-panel="${activeMobileHub}"]`, { scroll: true });
+        }
+    };
+
+    const resolveSourceHub = (node, fallbackView = '') => {
+        const panel = node?.closest?.('[data-agro-mobile-panel]');
+        if (panel) return normalizeMobileHub(panel.dataset.agroMobilePanel);
+        return normalizeMobileHub(VIEW_TO_MOBILE_HUB[fallbackView] || activeMobileHub);
     };
 
     const syncSubnav = () => {
@@ -766,6 +872,10 @@ export function initAgroShell() {
         syncRegions(config.region);
         syncViewButtons();
         applyViewEffects(view, options);
+        if (options.preserveDepth !== true) {
+            setMobileHub(options.mobileHub || VIEW_TO_MOBILE_HUB[view] || activeMobileHub);
+            setShellDepth('module', { title: options.label || config.label });
+        }
         window.dispatchEvent(new CustomEvent('agro:shell:view-changed', {
             detail: {
                 view,
@@ -780,13 +890,23 @@ export function initAgroShell() {
     const activateShellEntry = (entry) => {
         if (!entry) return false;
         if (entry.type === 'action') {
-            const didRun = runAction(entry.action);
-            if (didRun) closeSidebar();
+            const didRun = runAction(entry.action, activeView);
+            if (didRun) {
+                const actionMeta = ACTION_TO_MOBILE_CONTEXT[entry.action] || {};
+                setMobileHub(actionMeta.hub || activeMobileHub);
+                setShellDepth('module', { title: actionMeta.label || entry.label });
+                closeSidebar();
+            }
             return didRun;
         }
 
         if (!entry.view) return false;
-        setActiveView(entry.view, { scroll: true, subview: entry.subview || null });
+        setActiveView(entry.view, {
+            scroll: true,
+            subview: entry.subview || null,
+            label: entry.label,
+            mobileHub: VIEW_TO_MOBILE_HUB[entry.view] || activeMobileHub
+        });
         closeSidebar();
         return true;
     };
@@ -879,10 +999,52 @@ export function initAgroShell() {
             return;
         }
 
+        const mobileHubTab = event.target.closest('[data-agro-mobile-tab]');
+        if (mobileHubTab) {
+            event.preventDefault();
+            event.stopPropagation();
+            setMobileHub(mobileHubTab.dataset.agroMobileTab, { focus: true });
+            setShellDepth('hub');
+            closeSidebar();
+            return;
+        }
+
+        const mobileBackButton = event.target.closest('[data-agro-mobile-back]');
+        if (mobileBackButton) {
+            event.preventDefault();
+            event.stopPropagation();
+            setShellDepth('hub', { focus: true });
+            closeSidebar();
+            return;
+        }
+
+        const mobileFeedbackButton = event.target.closest('[data-agro-mobile-feedback]');
+        if (mobileFeedbackButton) {
+            event.preventDefault();
+            event.stopPropagation();
+            setMobileHub('menu');
+            setShellDepth('hub');
+            closeSidebar();
+            window.setTimeout(() => {
+                document.querySelector('.agro-feedback-fab')?.click();
+            }, 0);
+            return;
+        }
+
         const actionButton = event.target.closest('[data-agro-action]');
         if (actionButton) {
-            const didRun = runAction(actionButton.dataset.agroAction);
+            const action = normalizeViewToken(actionButton.dataset.agroAction);
+            const didRun = runAction(action, activeView);
             if (didRun) {
+                const actionMeta = ACTION_TO_MOBILE_CONTEXT[action] || {};
+                const label = readInteractiveLabel(actionButton) || actionMeta.label;
+                const sourceHub = actionButton.closest('[data-agro-mobile-panel]')
+                    ? resolveSourceHub(actionButton, activeView)
+                    : (actionMeta.hub || resolveSourceHub(actionButton, activeView));
+                setMobileHub(sourceHub);
+                if (isMobileShellViewport()) {
+                    setShellDepth('module', { title: label });
+                }
                 closeSidebar();
             }
         }
@@ -899,7 +1061,12 @@ export function initAgroShell() {
         if (!viewButton) return;
         const nextView = normalizeView(viewButton.dataset.agroView);
         const subviewAttr = viewButton.dataset.agroSubview || null;
-        setActiveView(nextView, { scroll: true, subview: subviewAttr });
+        setActiveView(nextView, {
+            scroll: true,
+            subview: subviewAttr,
+            label: readInteractiveLabel(viewButton),
+            mobileHub: resolveSourceHub(viewButton, nextView)
+        });
         closeSidebar();
     });
 
@@ -928,7 +1095,9 @@ export function initAgroShell() {
     applyShellModeFilter(document.body?.dataset?.agroShellMode || document.body?.dataset?.agroMode || AGRO_DEFAULT_SHELL_MODE);
     closeSidebar();
     syncRailExpanded();
-    setActiveView(activeView, { scroll: false, syncTab: true, subview: activeSubview });
+    syncMobileHub();
+    setActiveView(activeView, { scroll: false, syncTab: true, subview: activeSubview, preserveDepth: true });
+    setShellDepth('hub');
     document.body.classList.add('agro-shell-ready');
     const splash = document.getElementById('agro-splash');
     if (splash) {

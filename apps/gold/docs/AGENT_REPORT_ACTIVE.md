@@ -1302,3 +1302,68 @@ La deuda no apunta a un único bug crítico, sino a contratos operativos incompl
 
 - `git diff --check`: PASS.
 - `pnpm build:gold`: PASS con advertencia local conocida por Node `v25.6.0`; repo/CI fijan Node `20.x`.
+
+---
+
+## 2026-04-28 — MVP navegacion movil Hub/Modulo Agro
+
+**Estado:** YELLOW EN CURSO — diagnostico y plan registrados antes de editar codigo
+
+**Objetivo:** Implementar navegacion movil tipo hub/inmersiva con cuatro puertas: Inicio, Operacion, Memoria y Menu.
+
+### Diagnostico
+
+- `apps/gold/agro/index.html` ya tiene rail persistente, launcher expandido y regiones dedicadas con `data-agro-shell-region`.
+- `apps/gold/agro/agro-shell.js` ya es el punto correcto para navegar: centraliza `data-agro-view`, `data-agro-action`, `syncRegions()`, `setActiveView()` y el evento `agro:shell:view-changed`.
+- `apps/gold/agro/agro.css` actualmente convierte el rail a una navegacion lateral compacta tambien en mobile; no existe aun una barra inferior limitada al hub.
+- La solucion segura es agregar una capa mobile nueva dentro del shell, sin tocar `agro.js`: estado `body[data-agro-shell-depth="hub|module"]`, hub mobile de agrupacion, tabbar inferior mobile y topbar contextual con Volver.
+- El cambio no toca Supabase, datos, logica financiera, cultivos, cartera ni AgroRepo; solo orquestacion visual/navegacion del shell.
+- `AGENT_REPORT_ACTIVE.md` tiene 942 lineas antes de esta seccion, por debajo del umbral canonico de rotacion de 4000.
+
+### Plan
+
+1. Agregar en `index.html` el hub mobile con paneles Inicio, Operacion, Memoria y Menu, mas topbar contextual y barra inferior mobile.
+2. Mapear los accesos del hub a los `data-agro-view` / `data-agro-action` existentes para reutilizar el shell actual.
+3. En `agro-shell.js`, mantener el tab activo de hub, manejar profundidad `hub/module`, boton Volver y titulo contextual del modulo.
+4. En `agro.css`, ocultar el rail legacy en mobile, mostrar tabbar solo en `hub`, ocultarla en `module`, mostrar topbar solo en `module`, ajustar padding inferior y evitar solape con Feedback.
+5. Validar con `git diff --check` y `pnpm build:gold`.
+
+### DoD
+
+- Mobile <=768px entra a `/agro/` en depth `hub` con barra inferior visible.
+- Cambiar tabs muestra solo la agrupacion de ese hub.
+- Entrar a AgroRepo cambia a depth `module`, oculta barra inferior y muestra Volver + titulo.
+- Volver regresa a Memoria y reaparece la barra.
+- Operacion y Menu funcionan como hubs.
+- Desktop conserva rail/launcher actual.
+- `agro.js`, Supabase, migraciones, Storage, RPC/grants, Vercel, workflows, credenciales y logica de datos quedan sin tocar.
+
+### Cambios aplicados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/index.html` | Agrega `body[data-agro-shell-depth]`, tabbar movil, topbar contextual y hub movil con paneles Inicio, Operacion, Memoria y Menu. |
+| `apps/gold/agro/agro.css` | Agrega estilos responsive <=768px para ocultar rail legacy, mostrar tabbar solo en hub, ocultarla en modulo, mostrar Volver contextual y evitar solape con Feedback. |
+| `apps/gold/agro/agro-shell.js` | Agrega estado de hub/depth, manejo de Volver, mapeo view->hub, feedback mobile y titulo contextual; corrige `runAction()` para recibir la vista activa como parametro local. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Registra diagnostico, plan, cambios y validacion de la sesion. |
+
+### Validacion
+
+- `node --check apps/gold/agro/agro-shell.js`: PASS.
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS con advertencia local conocida por Node `v25.6.0`; repo/CI fijan Node `20.x`.
+
+### QA manual recomendado
+
+1. Mobile <=768px: entrar a `/agro/`, confirmar hub Inicio y barra inferior visible.
+2. Cambiar a Operacion, Memoria y Menu; confirmar panel correcto y sin estadisticas protagonistas.
+3. Desde Memoria abrir AgroRepo; confirmar barra oculta, topbar visible y boton Volver.
+4. Volver; confirmar regreso a Memoria y barra visible.
+5. Probar Operacion, Menu y Feedback; confirmar que Feedback no queda debajo de la barra.
+6. Desktop: confirmar rail/launcher actual sin regresiones.
+
+### NO se hizo
+
+- No se toco `apps/gold/agro/agro.js`.
+- No se toco Supabase, migraciones, RPC/grants, Storage, Vercel, workflows ni credenciales.
+- No se cambio logica financiera, logica de cultivos, logica de cartera ni logica profunda de AgroRepo.
