@@ -12854,11 +12854,6 @@ let carritoDedicatedEventsBound = false;
 
 function resolveCarritoMountTarget() {
     const activeView = String(document.body.dataset.agroActiveView || '').trim();
-    const activeSubview = String(document.body.dataset.agroSubview || '').trim();
-
-    if (activeView === 'operational' && activeSubview === 'cart') {
-        return document.getElementById('agro-operational-cart-slot') || document.getElementById('agro-operational-list');
-    }
 
     if (activeView === 'carrito') {
         return document.getElementById('carrito-dedicated-root');

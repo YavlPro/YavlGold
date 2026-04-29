@@ -1453,7 +1453,7 @@ La deuda no apunta a un único bug crítico, sino a contratos operativos incompl
 
 ## 2026-04-28 — Shell hub/module V2 limpieza visual
 
-**Estado:** YELLOW EN CURSO — diagnostico y plan registrados antes de editar codigo
+**Estado:** GREEN — implementado y validado con build; QA browser omitida por instruccion del usuario
 
 **Objetivo:** Segunda pasada quirurgica sobre el shell Agro para quitar duplicidades visuales, limpiar header, centrar mejor el hub mobile, eliminar el rail legacy en desktop y reforzar la separacion semantica entre Cartera Viva y Cartera Operativa.
 
@@ -1530,3 +1530,63 @@ El shell Agro cambio su navegacion principal hacia un patron hub/module. La docu
 ### Estado final
 
 GREEN. Documentacion canonica actualizada sin tocar codigo ni ADN Visual.
+
+---
+
+## 2026-04-29 — Separacion Mi Carrito / Cartera Operativa
+
+**Estado:** YELLOW EN CURSO — diagnostico y plan registrados antes de editar codigo
+
+**Objetivo:** Corregir la mezcla visual entre `Mi Carrito` y `Cartera Operativa` dentro del nuevo shell hub/module Agro.
+
+### Diagnostico
+
+- `apps/gold/agro/index.html` muestra `Mi Carrito` como acceso hermano dentro del hub Operacion. Eso es correcto y debe conservarse.
+- `apps/gold/agro/agro-shell.js` contiene el alias `carrito -> operational/cart`; por eso el acceso profundo `Mi Carrito` termina montando la superficie `operational` con topbar de carrito.
+- `apps/gold/agro/agro-shell.js` tambien mapea el tab financiero legacy `carrito` hacia `operational`, reforzando la mezcla.
+- `apps/gold/agro/agroOperationalCycles.js` define `SUBVIEW_CART` dentro de `SUBVIEW_OPTIONS`, lo usa como subvista inicial y lo renderiza como chip `Mi Carrito` en `renderSubviewSwitch()`.
+- `apps/gold/agro/agroOperationalCycles.js` mueve `#agro-cart-root` hacia `#agro-operational-list` cuando la subvista es `cart`, haciendo que el carrito viva dentro de Cartera Operativa.
+- `apps/gold/agro/agro-cart.js` ya conserva la funcion de convertir items del carrito en gasto/deuda/donacion/perdida real mediante `handleRegisterPurchase()` y `CART_OPERATION_REGISTRATION_OPTIONS`; no hace falta duplicar ni tocar esa logica.
+
+### Plan
+
+1. Cambiar el routing del shell para que `carrito` abra la vista dedicada existente y no `operational/cart`.
+2. Quitar `cart` de las subviews internas de `Cartera Operativa` y dejar el default en `active`.
+3. Retirar el chip `Mi Carrito` y la rama de render que monta carrito dentro de `agroOperationalCycles.js`.
+4. Mantener el mount dedicado `#carrito-dedicated-root` para `Mi Carrito` y conservar la conversion de items a operaciones reales.
+5. Ajustar CSS mobile para ocultar Feedback flotante en modulos profundos, reforzar padding inferior con safe-area y evitar solapes de header/contextbar en 360/390/430.
+6. Validar con navegador en mobile y desktop, luego `pnpm build:gold`.
+
+### Riesgos
+
+- `agro.js` mantiene helpers legacy de reparent del carrito; el cambio debe ser minimo y compatible con ese patron existente.
+- Si algun link historico usa `operational-cart`, debe redirigir a la vista dedicada de carrito, no recrear el subtab dentro de Cartera Operativa.
+
+### Cambios
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro-shell.js` | JS routing | `carrito` y `operational-cart` ahora resuelven a la vista dedicada `carrito`; `operational` queda con default `active` y sin subview `cart`. |
+| `apps/gold/agro/agroOperationalCycles.js` | JS vista | Eliminada la subvista interna `cart`, el chip `Mi Carrito`, el resumen de carrito y el mount de `#agro-cart-root` dentro de Cartera Operativa. |
+| `apps/gold/agro/agro.js` | JS wiring legacy | El reparent legacy del carrito ya no permite montar `#agro-cart-root` dentro de `operational/cart`; solo lo monta en `#carrito-dedicated-root` cuando la vista activa es `carrito`. |
+| `apps/gold/agro/index.html` | Markup/copy | El acceso del launcher a Cartera Operativa deja de mencionar carrito; el header dedicado usa `Mi Carrito`. |
+| `apps/gold/agro/agro.css` | CSS mobile | En modulos profundos mobile se oculta el FAB de Feedback, se refuerza padding inferior con `env(safe-area-inset-bottom)` y se ajusta header <=480/390 para evitar compresion. |
+
+### Validacion
+
+- `node --check apps/gold/agro/agro-shell.js`: PASS.
+- `node --check apps/gold/agro/agroOperationalCycles.js`: PASS.
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS. Warning local no bloqueante: Node `v25.6.0` vs engine esperado `20.x`.
+
+### QA
+
+- QA browser/manual no ejecutada por instruccion expresa del usuario el 2026-04-29.
+- Se detuvo el servidor Vite local abierto para el intento inicial de QA y se elimino la carpeta temporal `.playwright-mcp/`.
+
+### NO se hizo
+
+- No se leyo `testqacredentials.md`.
+- No se hizo QA autenticada ni se tocaron datos reales.
+- No se toco Supabase, migraciones, RLS, Storage, Vercel, workflows ni credenciales.
+- No se hizo commit ni push.

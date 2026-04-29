@@ -34,7 +34,7 @@ const TAB_TO_VIEW = Object.freeze({
     perdidas: 'operaciones',
     transferencias: 'operaciones',
     otros: 'operaciones',
-    carrito: 'operational',
+    carrito: 'carrito',
     rankings: 'rankings'
 });
 
@@ -75,13 +75,13 @@ const ACTION_TO_MOBILE_CONTEXT = Object.freeze({
 const VIEW_ALIASES = Object.freeze({
     cultivos: Object.freeze({ view: 'ciclos', subview: 'activos' }),
     'historial-comercial': Object.freeze({ view: 'cartera-viva', subview: '' }),
-    carrito: Object.freeze({ view: 'operational', subview: 'cart' }),
+    carrito: Object.freeze({ view: 'carrito', subview: 'summary' }),
     'operational-periods': Object.freeze({ view: 'period-cycles', subview: '' }),
     'period-cycles-active': Object.freeze({ view: 'period-cycles', subview: 'activos' }),
     'period-cycles-finalized': Object.freeze({ view: 'period-cycles', subview: 'finalizados' }),
     'period-cycles-compare': Object.freeze({ view: 'period-cycles', subview: 'comparar' }),
     'period-cycles-stats': Object.freeze({ view: 'period-cycles', subview: 'estadisticas' }),
-    'operational-cart': Object.freeze({ view: 'operational', subview: 'cart' }),
+    'operational-cart': Object.freeze({ view: 'carrito', subview: 'summary' }),
     'operational-active': Object.freeze({ view: 'operational', subview: 'active' }),
     'operational-finished': Object.freeze({ view: 'operational', subview: 'finished' }),
     'operational-donations': Object.freeze({ view: 'operational', subview: 'donations' }),
@@ -112,7 +112,7 @@ const VIEW_SUBNAV_CONFIG = Object.freeze({
     ciclos: Object.freeze({ defaultSubview: 'finalizados', allowed: ['activos', 'finalizados', 'comparar', 'estadisticas'] }),
     'period-cycles': Object.freeze({ defaultSubview: 'activos', allowed: ['activos', 'finalizados', 'comparar', 'estadisticas'] }),
     carrito: Object.freeze({ defaultSubview: 'summary', allowed: ['summary', 'planning', 'calculator'] }),
-    operational: Object.freeze({ defaultSubview: 'cart', allowed: ['cart', 'active', 'finished', 'donations', 'losses', 'export'] })
+    operational: Object.freeze({ defaultSubview: 'active', allowed: ['active', 'finished', 'donations', 'losses', 'export'] })
 });
 
 const VIEWS_WITH_SUBNAV = new Set(Object.keys(VIEW_SUBNAV_CONFIG));
@@ -125,7 +125,7 @@ const VIEW_CONFIG = Object.freeze({
     operational: { region: 'operational', label: 'Cartera Operativa', focusSelector: '#agro-operational-root' },
     'task-cycles': { region: 'task-cycles', label: 'Ciclos de Tareas', focusSelector: '#agro-task-cycles-root' },
     operaciones: { region: 'ops', label: 'Operación Comercial', resolveTab: resolveOperationsTab, dense: true },
-    carrito: { region: 'ops', label: 'Carrito', tab: 'carrito', focusSelector: '#agro-carrito-dedicated', dense: true },
+    carrito: { region: 'ops', label: 'Mi Carrito', tab: 'carrito', focusSelector: '#agro-carrito-dedicated', dense: true },
     rankings: { region: 'ops', label: 'Rankings', tab: 'rankings', focusSelector: '#agro-rankings-dedicated', dense: true },
     'cartera-viva': { region: 'cartera-viva', label: 'Cartera Viva', focusSelector: '#agro-cartera-viva-root' },
     clima: { region: 'clima', label: 'Clima Agro', focusSelector: '[data-agro-shell-region="clima"]' },
@@ -1067,9 +1067,7 @@ export function initAgroShell() {
     window.addEventListener('agro:finance-tab:changed', (event) => {
         const tabName = normalizeViewToken(event.detail?.tabName);
         const nextView = mapTabToView(tabName);
-        const nextSubview = nextView === 'operational' && tabName === 'carrito'
-            ? 'cart'
-            : activeSubview;
+        const nextSubview = nextView === 'carrito' ? 'summary' : activeSubview;
         setActiveView(nextView, { scroll: false, syncTab: false, subview: nextSubview });
     });
 

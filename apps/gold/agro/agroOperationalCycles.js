@@ -5,7 +5,6 @@ const ROOT_ID = 'agro-operational-root';
 const PERIOD_ROOT_ID = 'agro-period-cycles-root';
 const VIEW_NAME = 'operational';
 const PERIOD_VIEW_NAME = 'period-cycles';
-const SUBVIEW_CART = 'cart';
 const SUBVIEW_ACTIVE = 'active';
 const SUBVIEW_FINISHED = 'finished';
 const SUBVIEW_DONATIONS = 'donations';
@@ -24,7 +23,7 @@ const EMPTY_BALANCE_LABEL = '📝 Sin balance monetario';
 
 const ACTIVE_STATUS_VALUES = Object.freeze(['open', 'in_progress', 'compensating']);
 const FINISHED_STATUS_VALUES = Object.freeze(['closed', 'lost']);
-const SUBVIEW_OPTIONS = Object.freeze([SUBVIEW_CART, SUBVIEW_ACTIVE, SUBVIEW_FINISHED, SUBVIEW_DONATIONS, SUBVIEW_LOSSES, SUBVIEW_EXPORT]);
+const SUBVIEW_OPTIONS = Object.freeze([SUBVIEW_ACTIVE, SUBVIEW_FINISHED, SUBVIEW_DONATIONS, SUBVIEW_LOSSES, SUBVIEW_EXPORT]);
 const CURRENCY_OPTIONS = Object.freeze(['COP', 'USD', 'VES']);
 const CROP_DISPLAY_FALLBACK_ICON = '🌱';
 const CROP_DISPLAY_FALLBACK_NAME = 'Cultivo';
@@ -133,7 +132,7 @@ const state = {
     needsRefresh: false,
     modalOpen: false,
     currentView: '',
-    currentSubview: SUBVIEW_CART,
+    currentSubview: SUBVIEW_ACTIVE,
     familyFilter: FAMILY_LINKED,
     editId: '',
     schemaMissing: false,
@@ -1954,14 +1953,6 @@ function getFamilyLabel(family) {
 }
 
 function getSubviewMeta(subview) {
-    if (subview === SUBVIEW_CART) {
-        return {
-            eyebrow: '🛒 Mi Carrito',
-            title: '🛒 Mi Carrito — borrador operativo',
-            copy: 'Prepara compras y decisiones sin convertirlas todavía en deuda real. Cuando registres un item, recién pasa a No pagados o Pagados.'
-        };
-    }
-
     const familyLabel = getFamilyLabel(state.familyFilter);
 
     if (subview === SUBVIEW_FINISHED) {
@@ -2013,13 +2004,8 @@ function getSubviewMeta(subview) {
 
 function renderFamilyToggle() {
     if (!state.refs?.familyToggle) return;
-    const shouldShow = state.currentSubview !== SUBVIEW_CART;
-    state.refs.familyToggle.hidden = !shouldShow;
-    state.refs.familyToggle.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
-    if (!shouldShow) {
-        state.refs.familyToggle.innerHTML = '';
-        return;
-    }
+    state.refs.familyToggle.hidden = false;
+    state.refs.familyToggle.setAttribute('aria-hidden', 'false');
 
     const allActive = state.datasets[SUBVIEW_ACTIVE]?.cycles || [];
     const allFinished = state.datasets[SUBVIEW_FINISHED]?.cycles || [];
@@ -2094,7 +2080,6 @@ function renderSubviewSwitch() {
     const lossCount = lossCycles.length;
     const totalCount = activeCount + paidCount + donationCount + lossCount;
     const options = [
-        { value: SUBVIEW_CART, label: '🛒 Mi Carrito', count: null },
         { value: SUBVIEW_ACTIVE, label: '🟡 No pagados', count: activeCount },
         { value: SUBVIEW_FINISHED, label: '✅ Pagados', count: paidCount },
         { value: SUBVIEW_DONATIONS, label: '🤝 Donaciones', count: donationCount },
@@ -2115,22 +2100,6 @@ function renderSubviewSwitch() {
     `).join('');
 }
 
-function restoreCartNodeHome() {
-    const cartNode = state.refs?.list?.querySelector('#agro-cart-root') || document.getElementById('agro-cart-root');
-    const tabPanel = document.getElementById('tab-panel-carrito');
-    if (!cartNode || !tabPanel || cartNode.parentElement === tabPanel) return;
-    tabPanel.appendChild(cartNode);
-}
-
-function ensureOperationalCartSlot() {
-    if (!state.refs?.list) return null;
-    let slot = state.refs.list.querySelector('#agro-operational-cart-slot');
-    if (slot) return slot;
-    if (state.refs.list.querySelector('#agro-cart-root')) return state.refs.list;
-    state.refs.list.innerHTML = '<div id="agro-operational-cart-slot" class="agro-operational-cart-slot"></div>';
-    return state.refs.list.querySelector('#agro-operational-cart-slot');
-}
-
 function syncStandalonePeriodCyclesView() {
     const root = document.getElementById(PERIOD_ROOT_ID);
     if (!root) return;
@@ -2144,28 +2113,6 @@ function syncStandalonePeriodCyclesView() {
     }
 
     unmountAgroPeriodCycles();
-}
-
-function renderCartOverview() {
-    return `
-        <div class="agro-operational-summary-grid">
-            <article class="agro-operational-summary-card">
-                <span class="agro-operational-summary-card__label">🛒 Mi Carrito</span>
-                <strong class="agro-operational-summary-card__value">Borrador</strong>
-                <p class="agro-operational-summary-card__hint">Aquí preparas compras, insumos y decisiones antes de registrarlas como operación real.</p>
-            </article>
-            <article class="agro-operational-summary-card">
-                <span class="agro-operational-summary-card__label">🟡 No pagados</span>
-                <strong class="agro-operational-summary-card__value">Deuda activa</strong>
-                <p class="agro-operational-summary-card__hint">Solo aparece aquí lo que ya pasó del carrito a una cartera real pendiente.</p>
-            </article>
-            <article class="agro-operational-summary-card">
-                <span class="agro-operational-summary-card__label">✅ Pagados</span>
-                <strong class="agro-operational-summary-card__value">Operación cerrada</strong>
-                <p class="agro-operational-summary-card__hint">Representa deuda cobrada o ciclo ya cerrado, separado del borrador temporal.</p>
-            </article>
-        </div>
-    `;
 }
 
 function renderFilterPills(filters) {
@@ -2313,11 +2260,6 @@ function renderOverview() {
     state.refs.overviewTitle.textContent = meta.title;
     state.refs.overviewCopy.textContent = meta.copy;
     state.refs.overviewSection?.classList.toggle('is-refreshing', isSoftRefreshing);
-
-    if (state.currentSubview === SUBVIEW_CART) {
-        state.refs.overviewBody.innerHTML = renderCartOverview();
-        return;
-    }
 
     const shouldBlockInitialLoading = !state.loadedOnce && !state.schemaMissing;
 
@@ -2796,17 +2738,7 @@ function renderCurrentSubview() {
     state.refs.listSection?.classList.toggle('is-refreshing', isSoftRefreshing);
     state.refs.listStatus.classList.toggle('is-refreshing', isSoftRefreshing);
 
-    if (state.currentSubview === SUBVIEW_CART) {
-        unmountAgroPeriodCycles();
-        clearFiltersHost();
-        state.refs.listStatus.textContent = 'Mi Carrito prepara la operación antes de llevarla a No pagados o Pagados.';
-        ensureOperationalCartSlot();
-        document.dispatchEvent(new Event('data-refresh'));
-        return;
-    }
-
     unmountAgroPeriodCycles();
-    restoreCartNodeHome();
     const shouldBlockInitialLoading = !state.loadedOnce && !state.schemaMissing;
 
     if (shouldBlockInitialLoading) {
