@@ -1037,7 +1037,7 @@ ul { list-style: none; }
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: border-color 180ms ease, color 180ms ease, background 180ms ease;
 }
 .btn-logout:hover,
 .btn-settings:hover {
@@ -1264,7 +1264,7 @@ body > header,
   z-index: 9999;
   opacity: 0;
   visibility: hidden;
-  transition: all 0.3s ease;
+  transition: opacity 180ms ease, visibility 180ms ease;
 }
 .yg-modal.active {
   opacity: 1;
@@ -1276,33 +1276,33 @@ body > header,
   width: min(980px, 92vw);
   height: min(640px, 85vh);
   background: var(--bg-1);
-  border-radius: 20px;
+  border-radius: 12px;
   border: 1px solid var(--border-gold);
   overflow: hidden;
-  box-shadow: 0 25px 80px rgba(0,0,0,0.5), 0 0 40px rgba(200,167,82,0.1);
-  transform: translateY(20px) scale(0.98);
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  transform: none;
+  transition: opacity 180ms ease;
 }
 .yg-modal.active .yg-profile-panel {
-  transform: translateY(0) scale(1);
+  transform: none;
 }
 .yg-profile-sidebar {
   width: 260px;
   flex-shrink: 0;
-  background: linear-gradient(180deg, #0f0f0f 0%, #080808 100%);
-  border-right: 1px solid rgba(200,167,82,0.15);
+  background: var(--bg-1);
+  border-right: 1px solid var(--border-neutral);
   padding: 24px 0;
   display: flex;
   flex-direction: column;
 }
 .yg-profile-sidebar__title {
   font-family: var(--font-titulo);
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--gold-principal);
   padding: 0 24px 20px;
-  border-bottom: 1px solid rgba(200,167,82,0.15);
-  letter-spacing: 1px;
+  border-bottom: 1px solid var(--border-neutral);
+  letter-spacing: 0.5px;
 }
 .yg-profile-nav {
   margin-top: 16px;
@@ -1367,7 +1367,8 @@ body > header,
   top: 0; left: 0;
   width: 100%; height: 120px;
   z-index: 1 !important;
-  background: linear-gradient(135deg, #B8860B 0%, #1a1a1a 50%, #000 100%) !important;
+  background: var(--bg-1) !important;
+  border-bottom: 1px solid var(--border-neutral);
   border-radius: 0 !important;
   overflow: hidden;
 }
@@ -1375,23 +1376,23 @@ body > header,
   position: absolute;
   top: 16px; right: 16px;
   width: 36px; height: 36px;
-  border-radius: 50%;
-  background: rgba(0,0,0,0.5);
-  border: 1px solid rgba(255,255,255,0.2);
-  color: rgba(255,255,255,0.9);
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: rgba(255,255,255,0.72);
   font-size: 1.2rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999 !important;
 }
 .yg-profile-close:hover {
-  background: var(--gold-principal);
-  color: #000;
-  border-color: var(--gold-principal);
-  transform: rotate(90deg);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.94);
+  border-color: transparent;
+  transform: none;
 }
 .yg-profile-close:focus {
   outline: 2px solid var(--gold-principal);
@@ -1423,8 +1424,8 @@ body > header,
   border-radius: 50%;
   background: var(--bg-1);
   padding: 4px;
-  border: 2px solid var(--border-gold);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+  border: 1px solid var(--border-gold);
+  box-shadow: none;
 }
 .yg-profile-avatar {
   width: 100%; height: 100%;
@@ -1487,19 +1488,19 @@ body > header,
   width: 100%;
   padding: 12px 16px;
   background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 10px;
-  color: #fff;
+  border: 1px solid var(--border-neutral);
+  border-radius: 8px;
+  color: var(--text-primary);
   font-family: var(--font-cuerpo);
   font-size: 1rem;
-  transition: all 0.2s ease;
+  transition: border-color 150ms ease, background 150ms ease;
 }
 .yg-field input:focus,
 .yg-field textarea:focus {
   outline: none;
   border-color: var(--gold-principal);
-  background: rgba(200,167,82,0.05);
-  box-shadow: 0 0 0 3px rgba(200,167,82,0.1);
+  background: rgba(255,255,255,0.04);
+  box-shadow: none;
 }
 .yg-field input:read-only {
   opacity: 0.6;
@@ -1519,12 +1520,12 @@ body > header,
 }
 .yg-btn {
   padding: 12px 28px;
-  border-radius: 10px;
+  border-radius: 8px;
   font-family: var(--font-cuerpo);
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: opacity 150ms ease, color 150ms ease, border-color 150ms ease, background 150ms ease;
 }
 .yg-btn:focus {
   outline: 2px solid var(--gold-principal);
@@ -1540,14 +1541,14 @@ body > header,
   color: var(--gold-principal);
 }
 .yg-btn--primary {
-  background: linear-gradient(135deg, var(--gold-principal) 0%, var(--gold-dark) 100%);
-  border: none;
-  color: #000;
+  background: var(--gold-principal);
+  border: 1px solid var(--gold-principal);
+  color: var(--bg-0);
   font-weight: 700;
 }
 .yg-btn--primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(200,167,82,0.4);
+  transform: none;
+  box-shadow: none;
 }
 .yg-btn--primary:disabled {
   opacity: 0.6;
@@ -1789,7 +1790,7 @@ body > header,
     height: auto !important;
     border-right: none !important;
     padding: 0 !important;
-    background: #111;
+    background: var(--bg-1);
   }
   .yg-profile-sidebar__title { display: none; }
   .yg-profile-nav {
@@ -1805,7 +1806,7 @@ body > header,
     border-radius: 0 !important;
     border-bottom: 3px solid transparent;
     background: transparent !important;
-    color: #888;
+    color: var(--text-secondary);
     font-size: 0.9rem;
   }
   .yg-profile-nav__item.is-active {
@@ -1869,4 +1870,115 @@ body > header,
   .footer-legal { flex-direction: column; gap: 8px; }
   .hero-avatar { width: 48px; height: 48px; }
   .hero-title { font-size: 1.1rem; }
+}
+
+/* V3.1 Pase 3: settings modal final canon override */
+.yg-modal {
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: opacity 180ms ease, visibility 180ms ease;
+}
+
+.yg-profile-panel {
+  background: var(--bg-1);
+  border: 1px solid var(--gold-principal);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  transform: none;
+  transition: opacity 180ms ease;
+}
+
+.yg-modal.active .yg-profile-panel {
+  transform: none;
+}
+
+.yg-profile-sidebar {
+  background: var(--bg-1);
+  border-right: 1px solid var(--border-neutral);
+}
+
+.yg-profile-sidebar__title {
+  color: var(--gold-principal);
+  border-bottom: 1px solid var(--border-neutral);
+  font-size: 0.95rem;
+}
+
+.yg-profile-nav__item {
+  transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
+}
+
+.yg-profile-panel .yg-profile-cover {
+  background: var(--bg-1) !important;
+  border-bottom: 1px solid var(--border-neutral);
+}
+
+.yg-profile-close {
+  border-radius: 8px;
+  border: 0;
+  background: transparent;
+  color: rgba(255,255,255,0.72);
+  transition: color 150ms ease, background 150ms ease;
+}
+
+.yg-profile-close:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: transparent;
+  color: rgba(255,255,255,0.94);
+  transform: none;
+}
+
+.yg-profile-avatarWrap {
+  border: 1px solid var(--border-gold);
+  box-shadow: none;
+}
+
+.yg-profile-name {
+  color: var(--text-primary);
+  font-size: 1.05rem;
+}
+
+.yg-profile-sub,
+.yg-field label {
+  color: var(--text-secondary);
+}
+
+.yg-field input,
+.yg-field textarea {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-neutral);
+  border-radius: 8px;
+}
+
+.yg-field input:focus,
+.yg-field textarea:focus {
+  border-color: var(--gold-principal);
+  box-shadow: none;
+}
+
+.yg-btn {
+  border-radius: 8px;
+  transition: opacity 150ms ease, color 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+
+.yg-btn--primary {
+  background: var(--gold-principal);
+  border: 1px solid var(--gold-principal);
+  color: var(--bg-0);
+}
+
+.yg-btn--primary:hover {
+  box-shadow: none;
+  transform: none;
+  opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+  .yg-profile-sidebar {
+    background: var(--bg-1) !important;
+  }
+
+  .yg-profile-panel .yg-profile-cover {
+    height: 72px !important;
+  }
 }

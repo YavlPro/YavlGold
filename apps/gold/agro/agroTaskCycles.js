@@ -1832,6 +1832,17 @@ async function handleRootClick(event) {
     }
 }
 
+function handleModalOverlayClick(event) {
+    if (event.target === state.refs?.deleteModal && state.deleteConfirmOpen) {
+        closeDeleteConfirm();
+        return;
+    }
+
+    if (event.target === state.refs?.modal && state.modalOpen) {
+        closeComposerModal();
+    }
+}
+
 function handleRootInput(event) {
     const filterField = event.target.dataset.taskFilter;
     if (filterField === 'search') {
@@ -1886,6 +1897,7 @@ function bindEvents() {
 
     state.root.addEventListener('click', (event) => {
         void handleRootClick(event);
+        handleModalOverlayClick(event);
     });
     state.root.addEventListener('input', handleRootInput);
     state.root.addEventListener('change', handleRootChange);

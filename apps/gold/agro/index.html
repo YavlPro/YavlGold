@@ -113,10 +113,10 @@
                     <i class="fa-solid fa-compass" aria-hidden="true"></i>
                     <span>Menú</span>
                 </button>
-                <a class="agro-shell-rail__item" href="/" aria-label="Volver al dashboard principal"
+                <a class="agro-shell-rail__item" href="/dashboard" aria-label="Volver al dashboard principal"
                     title="Dashboard principal">
                     <i class="fa-solid fa-house" aria-hidden="true"></i>
-                    <span>Inicio</span>
+                    <span>Dashboard</span>
                 </a>
             </div>
         </div>
@@ -377,11 +377,11 @@
                             <span class="agro-launcher__tile-desc">Documentación, soporte y privacidad.</span>
                         </span>
                     </button>
-                    <a href="/" class="agro-launcher__tile agro-launcher__tile--link"
+                    <a href="/dashboard" class="agro-launcher__tile agro-launcher__tile--link"
                         data-agro-mode-scope="crop non_crop tools">
                         <i class="fa-solid fa-house agro-shell-link__icon" aria-hidden="true"></i>
                         <span class="agro-launcher__tile-copy">
-                            <span class="agro-shell-link__label">Inicio</span>
+                            <span class="agro-shell-link__label">Dashboard</span>
                             <span class="agro-launcher__tile-desc">Volver al dashboard principal.</span>
                         </span>
                     </a>
@@ -428,6 +428,11 @@
 
             <div class="agro-shell-header__right">
                 <div class="agro-shell-header__utilities">
+                    <a class="agro-header-link agro-header-dashboard-link" href="/dashboard"
+                        aria-label="Ir al Dashboard general" title="Ir al Dashboard general">
+                        <i class="fa-solid fa-table-columns" aria-hidden="true"></i>
+                        <span>Dashboard</span>
+                    </a>
                     <!-- Notification Center (Dashboard Style) -->
                     <div class="agro-header-notifications">
                         <button id="notif-btn" class="notification-bell notification-bell--agro yg-glowpulse"

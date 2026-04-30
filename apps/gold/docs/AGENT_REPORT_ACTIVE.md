@@ -6,6 +6,37 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-17__2026-04-27.md`
 
 ---
 
+## 2026-04-30 — V3.1 Modales Pase 3: QA visual y bug Trabajo Diario
+
+**Estado:** CERRADO
+
+### Diagnóstico
+
+El Pase 2 migró varios modales al canon, pero QA visual humano detectó que aún quedan desviaciones: el modal de Trabajo Diario bloquea el flujo y no permite avanzar/cerrar correctamente; Ajustes dashboard conserva hardcodes, bloque dorado y títulos fuera del canon; persisten glows/brillos en algunos modales; y Agro necesita una salida visible hacia el Dashboard general.
+
+### Plan
+
+- Corregir primero el bug funcional del modal de Trabajo Diario.
+- Alinear Ajustes dashboard al canon modal “Configura tu asistente”.
+- Eliminar glows/brillos/gradientes restantes en shells de modal.
+- Restaurar botón discreto hacia `/dashboard` desde Agro.
+- No tocar documentación canónica.
+- No tocar Supabase/datos.
+- Validar con `node --check` si se toca JS, `git diff --check` y `pnpm build:gold`.
+
+### Resultado
+
+- Trabajo Diario: se corrigió la causa del overlay bloqueante al forzar que los modales canon con `aria-hidden="true"` queden ocultos aunque el CSS base cargue después; además se agregó cierre por click en overlay para el compositor y la confirmación de borrado.
+- Dashboard: Ajustes quedó alineado al canon sobrio dark/gold, sin bloque dorado dominante, sin gradiente fuerte, sin títulos/controles fuera de escala y sin hover con rotación/glow.
+- Modales dashboard: se neutralizó el brillo/animación del modal de presentación y se mantuvieron sombras oscuras funcionales.
+- Agro: se agregó acceso discreto `Dashboard` hacia `/dashboard` en el header y se corrigieron accesos legacy que apuntaban a `/`.
+- No se tocó `apps/gold/agro/agro.js`.
+- No se tocó Supabase, migraciones, RLS, RPC, Storage, Vercel, workflows, credenciales, datos, queries ni cálculos.
+- No se tocó documentación canónica (`MANIFIESTO_AGRO.md`, `ADN-VISUAL-V10.0.md`, `FICHA_TECNICA.md`, `README.md`, `llms.txt`, `docs-agro.html`).
+- Validación: `node --check apps/gold/agro/agroTaskCycles.js` PASS; `git diff --check` PASS; `pnpm build:gold` PASS con warning de engine local Node v25 vs esperado Node 20.x.
+
+---
+
 ## 2026-04-30 — V3.1 Modales Pase 2: migración de modales restantes
 
 **Estado:** CERRADO

@@ -335,6 +335,13 @@
   box-shadow: var(--state-focus-ring);
 }
 
+.agro-modal-canon[aria-hidden="true"],
+.agro-task-modal[aria-hidden="true"],
+.agro-operational-modal[aria-hidden="true"] {
+  display: none !important;
+  pointer-events: none;
+}
+
 @media (max-width: 480px) {
   .agro-modal-canon {
     padding: 0.75rem;
@@ -7075,18 +7082,17 @@ body[data-agro-active-view="rankings"] .ops-cultivos-finished-picker {
   letter-spacing: 0.2px;
   cursor: pointer;
   backdrop-filter: blur(10px);
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  transition: box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
 .agro-feedback-fab:hover {
-  transform: translateY(-1px);
-  border-color: rgba(200, 167, 82, 0.6);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 16px rgba(200, 167, 82, 0.2);
+  border-color: var(--border-gold);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 .agro-feedback-fab.has-queue {
-  border-color: rgba(200, 167, 82, 0.65);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.42), 0 0 20px rgba(200, 167, 82, 0.25);
+  border-color: var(--border-gold);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.42);
 }
 
 /* Keep the feedback FAB out of modal and shell stacks on mobile/desktop. */
@@ -8278,6 +8284,22 @@ body.agro-shell-rail-collapsed.agro-shell-ready .app-container {
   font-size: 0.85rem;
   cursor: pointer;
   transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.agro-header-dashboard-link {
+  background: transparent;
+  border-color: var(--border-neutral);
+  color: var(--text-secondary);
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8rem;
+}
+
+.agro-header-dashboard-link:hover,
+.agro-header-dashboard-link:focus-visible {
+  background: var(--bg-3);
+  border-color: var(--border-gold);
+  color: var(--gold-4);
+  transform: none;
 }
 
 .agro-dash-guide {

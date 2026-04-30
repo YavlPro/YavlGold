@@ -926,26 +926,26 @@
       display: flex;
       width: min(980px, 92vw);
       height: min(640px, 85vh);
-      background: #0a0a0a;
-      border-radius: 20px;
+      background: var(--negro-puro, #0a0a0a);
+      border-radius: 12px;
       border: 1px solid rgba(200, 167, 82, 0.25);
       overflow: hidden;
       /* Cut anything that escapes */
-      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5), 0 0 40px rgba(200, 167, 82, 0.1);
-      transform: translateY(20px) scale(0.98);
-      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      transform: none;
+      transition: opacity 180ms ease;
     }
 
     .yg-modal.active .yg-profile-panel {
-      transform: translateY(0) scale(1);
+      transform: none;
     }
 
     /* Sidebar */
     .yg-profile-sidebar {
       width: 260px;
       flex-shrink: 0;
-      background: linear-gradient(180deg, #0f0f0f 0%, #080808 100%);
-      border-right: 1px solid rgba(200, 167, 82, 0.15);
+      background: var(--negro-puro, #0a0a0a);
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
       padding: 24px 0;
       display: flex;
       flex-direction: column;
@@ -953,12 +953,12 @@
 
     .yg-profile-sidebar__title {
       font-family: 'Orbitron', sans-serif;
-      font-size: 1.1rem;
+      font-size: 0.95rem;
       font-weight: 700;
       color: var(--dorado-yavl, #C8A752);
       padding: 0 24px 20px;
-      border-bottom: 1px solid rgba(200, 167, 82, 0.15);
-      letter-spacing: 1px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      letter-spacing: 0.5px;
     }
 
     .yg-profile-nav {
@@ -980,7 +980,7 @@
       font-family: 'Rajdhani', sans-serif;
       font-size: 0.95rem;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
       text-align: left;
       position: relative;
     }
@@ -1043,7 +1043,8 @@
       width: 100%;
       height: 120px;
       z-index: 1 !important;
-      background: linear-gradient(135deg, #B8860B 0%, #1a1a1a 50%, #000 100%) !important;
+      background: var(--negro-puro, #0a0a0a) !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 0 !important;
       overflow: hidden;
     }
@@ -1055,14 +1056,14 @@
       right: 16px;
       width: 36px;
       height: 36px;
-      border-radius: 50%;
-      background: rgba(0, 0, 0, 0.5);
+      border-radius: 8px;
+      background: transparent;
       /* Semi-transparent */
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: rgba(255, 255, 255, 0.9);
+      border: 1px solid transparent;
+      color: rgba(255, 255, 255, 0.72);
       font-size: 1.2rem;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1071,10 +1072,10 @@
     }
 
     .yg-profile-close:hover {
-      background: var(--dorado-yavl, #C8A752);
-      color: #000;
-      border-color: var(--dorado-yavl, #C8A752);
-      transform: rotate(90deg);
+      background: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.94);
+      border-color: transparent;
+      transform: none;
       /* UX Feedback */
     }
 
@@ -1213,20 +1214,20 @@
       width: 100%;
       padding: 12px 16px;
       background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      color: rgba(255, 255, 255, 0.94);
       font-family: 'Rajdhani', sans-serif;
       font-size: 1rem;
-      transition: all 0.2s ease;
+      transition: border-color 150ms ease, background 150ms ease;
     }
 
     .yg-field input:focus,
     .yg-field textarea:focus {
       outline: none;
       border-color: var(--dorado-yavl, #C8A752);
-      background: rgba(200, 167, 82, 0.05);
-      box-shadow: 0 0 0 3px rgba(200, 167, 82, 0.1);
+      background: rgba(255, 255, 255, 0.04);
+      box-shadow: none;
     }
 
     .yg-field input:read-only {
@@ -1251,12 +1252,12 @@
 
     .yg-btn {
       padding: 12px 28px;
-      border-radius: 10px;
+      border-radius: 8px;
       font-family: 'Rajdhani', sans-serif;
       font-size: 0.95rem;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: opacity 150ms ease, color 150ms ease, border-color 150ms ease, background 150ms ease;
     }
 
     .yg-btn:focus {
@@ -1276,15 +1277,15 @@
     }
 
     .yg-btn--primary {
-      background: linear-gradient(135deg, var(--dorado-yavl, #C8A752) 0%, #A8903A 100%);
-      border: none;
-      color: #000;
+      background: var(--dorado-yavl, #C8A752);
+      border: 1px solid var(--dorado-yavl, #C8A752);
+      color: var(--negro-puro, #0a0a0a);
       font-weight: 700;
     }
 
     .yg-btn--primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(200, 167, 82, 0.4);
+      transform: none;
+      box-shadow: none;
     }
 
     .yg-btn--primary:disabled {
@@ -1356,7 +1357,7 @@
         height: auto !important;
         border-right: none !important;
         padding: 0 !important;
-        background: #111;
+        background: var(--negro-puro, #0a0a0a);
       }
 
       .yg-profile-sidebar__title {
@@ -1377,7 +1378,7 @@
         border-radius: 0 !important;
         border-bottom: 3px solid transparent;
         background: transparent !important;
-        color: #888;
+        color: rgba(255, 255, 255, 0.72);
         font-size: 0.9rem;
       }
 
@@ -1920,16 +1921,14 @@
       position: relative;
       width: min(450px, 90vw);
       max-height: min(86vh, 760px);
-      background:
-        radial-gradient(circle at top, rgba(200, 167, 82, 0.08), transparent 36%),
-        linear-gradient(180deg, rgba(12, 12, 12, 0.98) 0%, rgba(7, 7, 7, 0.98) 100%);
+      background: var(--negro-tarjeta, #1a1a1a);
       border: 1px solid var(--about-border-soft);
-      border-radius: 28px;
+      border-radius: 12px;
       padding: 3rem 2rem 2.1rem;
       text-align: center;
-      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45), 0 0 30px rgba(200, 167, 82, 0.05);
-      transform: translateY(20px) scale(0.98);
-      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      transform: none;
+      transition: opacity 180ms ease;
       overflow-y: auto;
       overflow-x: hidden;
       overscroll-behavior: contain;
@@ -1941,15 +1940,11 @@
       position: absolute;
       inset: 0;
       pointer-events: none;
-      background: linear-gradient(135deg,
-          rgba(255, 255, 255, 0.03),
-          transparent 30%,
-          transparent 70%,
-          rgba(200, 167, 82, 0.03));
+      display: none;
     }
 
     .yg-modal.active .yg-about-creator-panel {
-      transform: translateY(0) scale(1);
+      transform: none;
     }
 
     .yg-about-close {
@@ -1958,13 +1953,13 @@
       right: 16px;
       width: 44px;
       height: 44px;
-      border-radius: 50%;
+      border-radius: 8px;
       background: transparent;
       border: 1px solid rgba(255, 255, 255, 0.18);
       color: #d9d2c3;
       font-size: 1.5rem;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1974,7 +1969,7 @@
     .yg-about-close:hover {
       border-color: rgba(200, 167, 82, 0.45);
       color: var(--about-champagne);
-      transform: scale(1.05);
+      transform: none;
     }
 
     .yg-about-header {
@@ -1993,28 +1988,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow:
-        0 0 0 4px rgba(200, 167, 82, 0.08),
-        0 0 28px rgba(200, 167, 82, 0.22);
-      animation: aboutBreathe 4s ease-in-out infinite;
-    }
-
-    @keyframes aboutBreathe {
-
-      0%,
-      100% {
-        box-shadow:
-          0 0 0 4px rgba(200, 167, 82, 0.08),
-          0 0 28px rgba(200, 167, 82, 0.22);
-        transform: scale(1);
-      }
-
-      50% {
-        box-shadow:
-          0 0 0 4px rgba(200, 167, 82, 0.1),
-          0 0 36px rgba(200, 167, 82, 0.28);
-        transform: scale(1.03);
-      }
+      box-shadow: none;
+      animation: none;
     }
 
     .yg-about-initials {
@@ -2032,7 +2007,7 @@
       line-height: 1.08;
       letter-spacing: 0.01em;
       color: var(--about-champagne);
-      text-shadow: 0 0 18px rgba(200, 167, 82, 0.08);
+      text-shadow: none;
       margin-bottom: 0.45rem;
     }
 
@@ -2088,14 +2063,14 @@
       font-size: 0.95rem;
       font-weight: 500;
       text-decoration: none;
-      transition: transform 0.18s ease, border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+      transition: border-color 150ms ease, color 150ms ease, background 150ms ease;
     }
 
     .yg-social-btn:hover {
       background: rgba(200, 167, 82, 0.05);
       border-color: rgba(200, 167, 82, 0.5);
       color: var(--about-champagne);
-      transform: translateY(-2px);
+      transform: none;
     }
 
     .yg-social-btn i {
