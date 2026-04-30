@@ -1741,3 +1741,26 @@ El hub funciona bien pero usa lenguaje operativo ("Operación", "Producción", "
 - `node --check apps/gold/agro/agro-shell.js`: PASS
 - `git diff --check`: PASS
 - `pnpm build:gold`: PASS (165 modules, check-llms OK, UTF-8 OK)
+
+---
+
+## 2026-04-30 — Clarificar label de períodos activos en hub
+
+**Estado:** COMPLETADO
+
+### Diagnóstico
+
+La card dentro de "Ciclos de períodos" decía "Ciclos de período", lo que confunde porque la sección ya se llama Ciclos de períodos. La card representa los períodos activos.
+
+### Cambios
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/index.html` | Markup/copy | Hub card "Ciclos de período" → "Períodos activos" (línea 560). Rail subgroup label → "Períodos activos" (línea 228). |
+| `apps/gold/agro/agro-shell.js` | Label visible | `period-cycles.label` → "Períodos activos" (topbar contextual). |
+
+### Validación
+
+- `node --check apps/gold/agro/agro-shell.js`: PASS
+- `git diff --check`: PASS
+- `pnpm build:gold`: PASS (165 modules, check-llms OK, UTF-8 OK)
