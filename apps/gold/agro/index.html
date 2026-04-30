@@ -1304,14 +1304,16 @@
     </div>
 
     <!-- Modal: Nuevo Cultivo - DNA Visual V9.8 -->
-    <div id="modal-new-crop" class="modal-overlay">
-        <div class="modal-container agro-new-crop-modal__container">
-            <div class="modal-header">
-                <h3 class="modal-title">🌱 Nuevo Cultivo</h3>
+    <div id="modal-new-crop" class="modal-overlay agro-modal-canon" role="dialog" aria-modal="true"
+        aria-labelledby="new-crop-modal-title">
+        <div class="modal-container agro-new-crop-modal__container agro-modal-canon__dialog">
+            <div class="modal-header agro-modal-canon__header">
+                <h3 id="new-crop-modal-title" class="modal-title">Nuevo Cultivo</h3>
                 <button class="modal-close agro-new-crop-modal__close"
-                    onclick="window.closeCropModal()">&times;</button>
+                    onclick="window.closeCropModal()" aria-label="Cerrar cultivo">&times;</button>
             </div>
-            <form id="form-new-crop" class="modal-body" onsubmit="event.preventDefault(); window.saveCrop();">
+            <form id="form-new-crop" class="modal-body agro-modal-canon__body"
+                onsubmit="event.preventDefault(); window.saveCrop();">
                 <input type="hidden" id="crop-edit-id" value="">
                 <div class="input-group agro-modal-field-block">
                     <label class="input-label" for="crop-name">Nombre del Cultivo *</label>
@@ -1392,10 +1394,12 @@
                     </select>
                 </div>
             </form>
-            <div class="modal-footer">
-                <button type="button" class="btn-cancel" onclick="window.closeCropModal()">Cancelar</button>
-                <button type="submit" id="btn-save-crop" class="btn btn-primary" onclick="window.saveCrop()">🌾 Guardar
-                    Siembra</button>
+            <div class="modal-footer agro-modal-canon__footer">
+                <button type="button" class="btn-cancel agro-modal-canon__button agro-modal-canon__button--secondary"
+                    onclick="window.closeCropModal()">Cancelar</button>
+                <button type="submit" id="btn-save-crop"
+                    class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary"
+                    onclick="window.saveCrop()">Guardar Siembra</button>
             </div>
         </div>
     </div>
@@ -2500,15 +2504,17 @@
 
     <!-- modal-agro-profile moved inline to .perfil-dedicado section -->
 
-    <div id="modal-agro-buyer" class="agro-buyer-modal" aria-hidden="true">
+    <div id="modal-agro-buyer" class="agro-buyer-modal agro-modal-canon" aria-hidden="true">
         <div class="agro-buyer-backdrop" data-agro-buyer-close></div>
-        <div class="agro-buyer-panel" role="dialog" aria-modal="true" aria-labelledby="agro-buyer-title" tabindex="-1">
-            <header class="agro-buyer-header">
+        <div class="agro-buyer-panel agro-modal-canon__dialog" role="dialog" aria-modal="true"
+            aria-labelledby="agro-buyer-title" tabindex="-1">
+            <header class="agro-buyer-header agro-modal-canon__header">
                 <div>
                     <p id="agro-buyer-eyebrow" class="agro-buyer-eyebrow">Cliente nuevo</p>
                     <h3 id="agro-buyer-title" class="agro-buyer-title">Ficha del Cliente</h3>
                 </div>
-                <button type="button" class="agro-buyer-close" data-agro-buyer-close aria-label="Cerrar ficha">
+                <button type="button" class="agro-buyer-close agro-modal-canon__close" data-agro-buyer-close
+                    aria-label="Cerrar ficha">
                     <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                 </button>
             </header>
@@ -2572,11 +2578,13 @@
                     </label>
                 </fieldset>
 
-                <footer class="agro-buyer-footer">
+                <footer class="agro-buyer-footer agro-modal-canon__footer">
                     <p id="agro-buyer-status" class="agro-buyer-status" data-level="muted"></p>
                     <div class="agro-buyer-footer__row agro-buyer-footer__row--primary">
-                        <button type="button" class="btn" data-agro-buyer-close>Cancelar</button>
-                        <button type="submit" id="btn-save-agro-buyer" class="btn btn-primary">Guardar cambios</button>
+                        <button type="button" class="btn agro-modal-canon__button agro-modal-canon__button--secondary"
+                            data-agro-buyer-close>Cancelar</button>
+                        <button type="submit" id="btn-save-agro-buyer"
+                            class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary">Guardar cambios</button>
                     </div>
                     <div class="agro-buyer-footer__row agro-buyer-footer__row--secondary">
                         <button type="button" class="btn btn-ghost" id="btn-open-buyer-public-profile">Ver perfil
@@ -2590,16 +2598,16 @@
         </div>
     </div>
 
-    <div id="modal-agro-buyer-delete-confirm" class="agro-buyer-confirm-modal" aria-hidden="true">
+    <div id="modal-agro-buyer-delete-confirm" class="agro-buyer-confirm-modal agro-modal-canon" aria-hidden="true">
         <div class="agro-buyer-confirm-backdrop" data-agro-buyer-delete-close></div>
-        <div class="agro-buyer-confirm-panel" role="dialog" aria-modal="true" aria-labelledby="agro-buyer-delete-title"
-            tabindex="-1">
-            <header class="agro-buyer-confirm-header">
+        <div class="agro-buyer-confirm-panel agro-modal-canon__dialog" role="dialog" aria-modal="true"
+            aria-labelledby="agro-buyer-delete-title" tabindex="-1">
+            <header class="agro-buyer-confirm-header agro-modal-canon__header">
                 <div>
                     <p class="agro-buyer-confirm-eyebrow">Confirmación</p>
                     <h3 id="agro-buyer-delete-title" class="agro-buyer-confirm-title">Eliminar cliente</h3>
                 </div>
-                <button type="button" class="agro-buyer-confirm-close" data-agro-buyer-delete-close
+                <button type="button" class="agro-buyer-confirm-close agro-modal-canon__close" data-agro-buyer-delete-close
                     aria-label="Cerrar confirmación">
                     <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                 </button>
@@ -2608,19 +2616,21 @@
                 <p id="agro-buyer-delete-copy" class="agro-buyer-confirm-copy">¿Deseas eliminar este cliente?</p>
                 <ul id="agro-buyer-delete-impact" class="agro-buyer-confirm-impact" hidden></ul>
             </div>
-            <footer class="agro-buyer-confirm-footer">
-                <button type="button" class="btn" data-agro-buyer-delete-close>No, cancelar</button>
-                <button type="button" class="btn agro-buyer-confirm__danger" id="btn-confirm-agro-buyer-delete">Sí,
+            <footer class="agro-buyer-confirm-footer agro-modal-canon__footer">
+                <button type="button" class="btn agro-modal-canon__button agro-modal-canon__button--secondary"
+                    data-agro-buyer-delete-close>No, cancelar</button>
+                <button type="button" class="btn agro-modal-canon__button agro-buyer-confirm__danger"
+                    id="btn-confirm-agro-buyer-delete">Sí,
                     eliminar</button>
             </footer>
         </div>
     </div>
 
-    <div id="modal-agro-public-profile" class="agro-public-modal" aria-hidden="true">
+    <div id="modal-agro-public-profile" class="agro-public-modal agro-modal-canon" aria-hidden="true">
         <div class="agro-public-backdrop" data-agro-public-close></div>
-        <div class="agro-public-panel" role="dialog" aria-modal="true" aria-labelledby="agro-public-title"
+        <div class="agro-public-panel agro-modal-canon__dialog" role="dialog" aria-modal="true" aria-labelledby="agro-public-title"
             tabindex="-1">
-            <header class="agro-public-header">
+            <header class="agro-public-header agro-modal-canon__header">
                 <div class="agro-public-header-main">
                     <div id="agro-public-avatar" class="agro-public-avatar" aria-hidden="true">👨‍🌾</div>
                     <div>
@@ -2630,7 +2640,7 @@
                             data-state="private">PRIVADO</span>
                     </div>
                 </div>
-                <button type="button" class="agro-public-close" data-agro-public-close
+                <button type="button" class="agro-public-close agro-modal-canon__close" data-agro-public-close
                     aria-label="Cerrar perfil público">
                     <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                 </button>

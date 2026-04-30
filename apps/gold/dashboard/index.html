@@ -1547,6 +1547,68 @@
       color: var(--dorado-yavl);
       font-weight: 700;
     }
+
+    /* V3.1: dashboard settings modal aligned with Agro assistant canon */
+    .yg-modal {
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: opacity 180ms ease, visibility 180ms ease;
+    }
+
+    .yg-profile-panel {
+      background: var(--negro-tarjeta);
+      border: 1px solid var(--dorado-yavl);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      transform: none;
+      transition: opacity 180ms ease;
+    }
+
+    .yg-modal.active .yg-profile-panel {
+      transform: none;
+    }
+
+    .yg-profile-sidebar {
+      background: var(--negro-puro);
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .yg-profile-sidebar__title {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--dorado-yavl);
+    }
+
+    .yg-profile-panel .yg-profile-cover {
+      background: var(--negro-puro) !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .yg-profile-close {
+      border-radius: 8px;
+      background: transparent;
+      border: 0;
+      color: rgba(255, 255, 255, 0.72);
+      transition: color 150ms ease, background 150ms ease;
+    }
+
+    .yg-profile-close:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.94);
+      transform: none;
+    }
+
+    .yg-btn--primary {
+      background: var(--dorado-yavl);
+      border: 1px solid var(--dorado-yavl);
+      color: var(--negro-puro);
+    }
+
+    .yg-btn--primary:hover {
+      box-shadow: none;
+      transform: none;
+      opacity: 0.9;
+    }
   </style>
   <link rel="stylesheet" href="/assets/css/dashboard-v1.css">
 
@@ -2070,6 +2132,58 @@
         width: min(450px, calc(100vw - 32px));
         max-height: calc(100dvh - 32px);
       }
+    }
+
+    /* V3.1: creator presentation modal aligned with Agro assistant canon */
+    .yg-about-creator-panel {
+      background: var(--negro-tarjeta);
+      border: 1px solid var(--dorado-yavl);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      transform: none;
+      transition: opacity 180ms ease;
+    }
+
+    .yg-about-creator-panel::before {
+      display: none;
+    }
+
+    .yg-modal.active .yg-about-creator-panel {
+      transform: none;
+    }
+
+    .yg-about-close {
+      border-radius: 8px;
+      border: 0;
+      color: rgba(255, 255, 255, 0.72);
+      transition: color 150ms ease, background 150ms ease;
+    }
+
+    .yg-about-close:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.94);
+      transform: none;
+    }
+
+    .yg-about-avatar {
+      border: 1px solid var(--dorado-yavl);
+      box-shadow: none;
+      animation: none;
+    }
+
+    .yg-about-bio {
+      border-radius: 12px;
+      border-color: rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .yg-social-btn {
+      border-radius: 8px;
+      transition: border-color 150ms ease, color 150ms ease, background 150ms ease;
+    }
+
+    .yg-social-btn:hover {
+      transform: none;
     }
   </style>
 

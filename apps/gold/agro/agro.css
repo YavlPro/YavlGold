@@ -366,6 +366,115 @@
   }
 }
 
+/* V3.1: Nuevo Cultivo aligned with assistant modal canon */
+#modal-new-crop.modal-overlay {
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+#modal-new-crop .agro-new-crop-modal__container {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  padding: 0;
+  overflow: hidden;
+  background: var(--bg-2);
+  border: 1px solid var(--gold-4);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+#modal-new-crop .modal-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border-neutral);
+}
+
+#modal-new-crop .modal-title {
+  margin: 0;
+  color: var(--text-primary);
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  background-clip: initial;
+  font-size: 0.95rem;
+  font-weight: 600;
+  animation: none;
+}
+
+#modal-new-crop .modal-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+#modal-new-crop .modal-footer {
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--border-neutral);
+}
+
+#modal-new-crop .modal-close {
+  width: var(--a11y-touch-min, 44px);
+  min-width: var(--a11y-touch-min, 44px);
+  height: var(--a11y-touch-min, 44px);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  transition: color 150ms ease, background 150ms ease;
+}
+
+#modal-new-crop .modal-close:hover {
+  color: var(--text-primary);
+  background: var(--bg-3);
+}
+
+#modal-new-crop .btn-cancel,
+#modal-new-crop #btn-save-crop {
+  min-height: var(--a11y-touch-min, 44px);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+  transform: none;
+}
+
+#modal-new-crop .btn-cancel {
+  background: var(--bg-3);
+  border: 1px solid var(--border-neutral);
+  color: var(--text-secondary);
+}
+
+#modal-new-crop #btn-save-crop {
+  background: var(--gold-4);
+  border: 1px solid var(--gold-4);
+  color: var(--bg-1);
+}
+
+#modal-new-crop .btn-cancel:hover {
+  border-color: var(--gold-5);
+}
+
+#modal-new-crop #btn-save-crop:hover {
+  opacity: 0.9;
+  box-shadow: none;
+  transform: none;
+}
+
+@media (max-width: 480px) {
+  #modal-new-crop .agro-new-crop-modal__container {
+    width: 100%;
+    max-height: calc(100vh - 24px);
+    border-radius: var(--radius-sm);
+  }
+
+  #modal-new-crop .modal-body {
+    padding: 16px;
+  }
+
+  #modal-new-crop .modal-footer {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+}
+
 .agro-confirm-dialog {
   position: fixed;
   inset: 0;
@@ -794,8 +903,8 @@ body.agro-profile-open {
 #modal-agro-profile .agro-profile-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.82);
-  backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
 }
 
 #modal-agro-profile .agro-profile-panel {
@@ -803,12 +912,10 @@ body.agro-profile-open {
   z-index: 1;
   width: min(1120px, 96vw);
   max-height: min(92vh, 860px);
-  background: var(--glass-bg, rgba(17,17,17,0.85));
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--border-gold, rgba(200,167,82,0.25));
-  border-radius: var(--radius-xl, 24px);
-  box-shadow: var(--shadow-gold-lg, 0 10px 40px rgba(200,167,82,0.35));
+  background: var(--bg-2);
+  border: 1px solid var(--gold-4);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -820,7 +927,7 @@ body.agro-profile-open {
   justify-content: space-between;
   gap: 1rem;
   padding: 1rem 1.15rem;
-  border-bottom: 1px solid var(--border-gold, rgba(200,167,82,0.25));
+  border-bottom: 1px solid var(--border-neutral);
 }
 
 #modal-agro-profile .agro-profile-eyebrow {
@@ -828,7 +935,7 @@ body.agro-profile-open {
   font-size: 0.72rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--gold-prestige, #E5D5A0);
+  color: var(--gold-4);
   font-family: "Orbitron", sans-serif;
 }
 
@@ -837,29 +944,25 @@ body.agro-profile-open {
   font-family: "Orbitron", sans-serif;
   font-size: 1.2rem;
   font-weight: 900;
-  background: var(--metallic-text, linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e));
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: agro-guide-borderShimmer 5s linear infinite;
+  color: var(--text-primary);
+  background: none;
+  animation: none;
 }
 
 #modal-agro-profile .agro-profile-close {
-  width: 2.2rem;
-  height: 2.2rem;
-  border-radius: 50%;
-  border: 1px solid var(--border-gold, rgba(200,167,82,0.25));
-  background: rgba(200,167,82,0.08);
-  color: var(--gold-4, #C8A752);
+  width: var(--a11y-touch-min, 44px);
+  height: var(--a11y-touch-min, 44px);
+  border-radius: var(--radius-sm);
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  transition: background 150ms ease, color 150ms ease;
 }
 
 #modal-agro-profile .agro-profile-close:hover {
-  background: rgba(200,167,82,0.2);
-  border-color: var(--gold-4, #C8A752);
-  transform: translateY(-1px);
+  background: var(--bg-3);
+  color: var(--text-primary);
 }
 
 #modal-agro-profile .agro-profile-body {
@@ -872,9 +975,9 @@ body.agro-profile-open {
 
 #modal-agro-profile .agro-profile-section {
   padding: 0.95rem;
-  border: 1px solid var(--border-prestige, rgba(229,213,160,0.18));
+  border: 1px solid var(--border-neutral);
   border-radius: var(--radius-md, 12px);
-  background: var(--bg-4, #1a1a1f);
+  background: var(--bg-3);
 }
 
 #modal-agro-profile .agro-profile-section-title {
@@ -883,11 +986,8 @@ body.agro-profile-open {
   font-size: 0.9rem;
   font-weight: 900;
   letter-spacing: 0.04em;
-  background: var(--metallic-text, linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e));
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  background: none;
+  color: var(--text-primary);
 }
 
 #modal-agro-profile .agro-profile-form {
@@ -902,14 +1002,14 @@ body.agro-profile-open {
   gap: 0.9rem;
   margin-top: 0.8rem;
   padding: 1rem;
-  border: 1px solid var(--border-gold, rgba(200,167,82,0.25));
+  border: 1px solid var(--border-neutral);
   border-radius: var(--radius-lg, 16px);
   background: var(--bg-3, #111113);
 }
 
 #modal-agro-profile .agro-profile-wizard-copy {
   margin: 0;
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--text-secondary);
   font-family: "Rajdhani", sans-serif;
   font-size: 1rem;
   line-height: 1.5;
@@ -926,12 +1026,12 @@ body.agro-profile-open {
   gap: 0.2rem;
   padding: 0.8rem 0.9rem;
   border-radius: var(--radius-md, 12px);
-  border: 1px solid var(--border-prestige, rgba(229,213,160,0.18));
+  border: 1px solid var(--border-neutral);
   background: var(--bg-4, #1a1a1f);
 }
 
 #modal-agro-profile .agro-profile-wizard-chip span {
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--text-secondary);
   font-family: "Rajdhani", sans-serif;
   font-size: 0.72rem;
   font-weight: 700;
@@ -940,7 +1040,7 @@ body.agro-profile-open {
 }
 
 #modal-agro-profile .agro-profile-wizard-chip strong {
-  color: #fff5dd;
+  color: var(--text-primary);
   font-family: "Rajdhani", sans-serif;
   font-size: 1rem;
   font-weight: 700;
@@ -992,7 +1092,7 @@ body.agro-profile-open {
   gap: 0.75rem;
   align-items: start;
   padding: 0.65rem;
-  border: 1px solid var(--border-gold, rgba(200,167,82,0.25));
+  border: 1px solid var(--border-neutral);
   border-radius: var(--radius-sm, 8px);
   background: var(--bg-3, #111113);
 }
@@ -1001,9 +1101,9 @@ body.agro-profile-open {
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  border: 2px solid var(--gold-3, #6b5a3e);
-  background: conic-gradient(from 0deg, var(--gold-2, #3a3228), var(--gold-3, #6b5a3e), var(--gold-4, #C8A752), var(--gold-5, #E8D48B), var(--gold-4, #C8A752), var(--gold-3, #6b5a3e), var(--gold-2, #3a3228));
-  color: var(--bg-2, #0B0C0F);
+  border: 1px solid var(--border-gold);
+  background: var(--bg-3);
+  color: var(--gold-4);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1309,14 +1409,14 @@ body.agro-profile-open {
 }
 
 #modal-agro-profile .agro-profile-footer {
-  border-top: 1px solid var(--border-prestige, rgba(229,213,160,0.18));
+  border-top: 1px solid var(--border-neutral);
   padding: 0.72rem 1.15rem 0.88rem;
 }
 
 #modal-agro-profile .agro-profile-status {
   margin: 0;
   font-size: 0.76rem;
-  color: rgba(255, 255, 255, 0.64);
+  color: var(--text-secondary);
 }
 
 #modal-agro-profile .agro-profile-status[data-level="ok"] {
@@ -1390,8 +1490,8 @@ body.agro-buyer-open {
 #modal-agro-buyer .agro-buyer-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.82);
-  backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
 }
 
 #modal-agro-buyer .agro-buyer-panel {
@@ -1401,18 +1501,16 @@ body.agro-buyer-open {
   max-height: min(92vh, 760px);
   display: flex;
   flex-direction: column;
-  background: var(--glass-bg, rgba(17,17,17,0.85));
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--border-gold, rgba(200,167,82,0.25));
-  border-radius: var(--radius-xl, 24px);
-  box-shadow: var(--shadow-gold-lg, 0 10px 40px rgba(200,167,82,0.35));
+  background: var(--bg-2);
+  border: 1px solid var(--gold-4);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   overflow: hidden;
 }
 
 #modal-agro-buyer .agro-buyer-header {
   padding: 0.95rem 1.05rem;
-  border-bottom: 1px solid var(--border-gold, rgba(200,167,82,0.25));
+  border-bottom: 1px solid var(--border-neutral);
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -1424,7 +1522,7 @@ body.agro-buyer-open {
   font-size: 0.7rem;
   letter-spacing: 0.11em;
   text-transform: uppercase;
-  color: var(--gold-prestige, #E5D5A0);
+  color: var(--gold-4);
   font-family: "Orbitron", sans-serif;
 }
 
@@ -1433,27 +1531,24 @@ body.agro-buyer-open {
   font-family: "Orbitron", sans-serif;
   font-size: 1rem;
   font-weight: 900;
-  background: var(--metallic-text, linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e));
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  background: none;
+  color: var(--text-primary);
 }
 
 #modal-agro-buyer .agro-buyer-close {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  border: 1px solid var(--border-gold, rgba(200,167,82,0.25));
-  background: rgba(200,167,82,0.08);
-  color: var(--gold-4, #C8A752);
+  width: var(--a11y-touch-min, 44px);
+  height: var(--a11y-touch-min, 44px);
+  border-radius: var(--radius-sm);
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: background 150ms ease, color 150ms ease;
 }
 
 #modal-agro-buyer .agro-buyer-close:hover {
-  background: rgba(200,167,82,0.2);
-  border-color: var(--gold-4, #C8A752);
+  background: var(--bg-3);
+  color: var(--text-primary);
 }
 
 #modal-agro-buyer .agro-buyer-form {
@@ -1476,7 +1571,7 @@ body.agro-buyer-open {
 }
 
 #modal-agro-buyer .agro-buyer-section + .agro-buyer-section {
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid var(--border-neutral);
 }
 
 #modal-agro-buyer .agro-buyer-section__head {
@@ -1491,7 +1586,7 @@ body.agro-buyer-open {
   font-size: 0.64rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--gold-5, #E5D5A0);
+  color: var(--gold-4);
 }
 
 #modal-agro-buyer .agro-buyer-section__title {
@@ -1499,14 +1594,14 @@ body.agro-buyer-open {
   font-family: 'Rajdhani', sans-serif;
   font-size: 0.82rem;
   font-weight: 600;
-  color: var(--text-secondary, #94A3B8);
+  color: var(--text-secondary);
 }
 
 /* ── Edit Modal Footer ──────────────────────────────────────── */
 
 #modal-agro-buyer .agro-buyer-footer {
   margin-top: 0;
-  border-top: 1px solid rgba(200, 167, 82, 0.14);
+  border-top: 1px solid var(--border-neutral);
   padding: 0.65rem 1.05rem 0.75rem;
   display: flex;
   flex-direction: column;
@@ -1531,8 +1626,8 @@ body.agro-buyer-open {
 
 #modal-agro-buyer .btn-ghost {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--text-secondary, #94A3B8);
+  border: 1px solid var(--border-neutral);
+  color: var(--text-secondary);
   font-size: 0.74rem;
   min-height: 36px;
   padding: 0.25rem 0.7rem;
@@ -1540,20 +1635,20 @@ body.agro-buyer-open {
 }
 
 #modal-agro-buyer .btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: var(--text-primary, #fff);
+  background: var(--bg-3);
+  border-color: var(--border-gold);
+  color: var(--text-primary);
 }
 
 #modal-agro-buyer .btn-ghost--danger {
-  color: rgba(248, 113, 113, 0.75);
-  border-color: rgba(248, 113, 113, 0.15);
+  color: var(--color-error);
+  border-color: color-mix(in srgb, var(--color-error) 24%, var(--border-neutral));
 }
 
 #modal-agro-buyer .btn-ghost--danger:hover {
-  background: rgba(248, 113, 113, 0.08);
-  border-color: rgba(248, 113, 113, 0.3);
-  color: rgba(248, 113, 113, 0.95);
+  background: color-mix(in srgb, var(--color-error) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-error) 36%, var(--border-neutral));
+  color: var(--color-error);
 }
 
 #modal-agro-buyer .agro-buyer-inline {
@@ -1583,7 +1678,7 @@ body.agro-buyer-open {
 #modal-agro-buyer .agro-buyer-status {
   margin: 0;
   font-size: 0.74rem;
-  color: rgba(255, 255, 255, 0.64);
+  color: var(--text-secondary);
 }
 
 #modal-agro-buyer .agro-buyer-status[data-level="ok"] {
@@ -1609,7 +1704,7 @@ body.agro-buyer-open {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.45rem;
   padding: 0.85rem 1.05rem 0.65rem;
-  border-bottom: 1px solid rgba(200, 167, 82, 0.14);
+  border-bottom: 1px solid var(--border-neutral);
 }
 
 .buyer-wizard-step {
@@ -1623,11 +1718,10 @@ body.agro-buyer-open {
   color: var(--text-secondary, #94A3B8);
   cursor: pointer;
   text-align: left;
-  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+  transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
 }
 
 .buyer-wizard-step:hover {
-  transform: translateY(-1px);
   border-color: var(--border-gold, rgba(200, 167, 82, 0.25));
 }
 
@@ -1714,7 +1808,7 @@ body.agro-buyer-open {
   font-size: 0.64rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--gold-5, #E5D5A0);
+  color: var(--gold-4);
 }
 
 .buyer-wizard-panel__title {
@@ -1726,7 +1820,7 @@ body.agro-buyer-open {
 
 .buyer-wizard-panel__copy {
   margin: 0;
-  color: var(--text-secondary, #94A3B8);
+  color: var(--text-secondary);
   font-size: 0.8rem;
   line-height: 1.45;
 }
@@ -1740,8 +1834,8 @@ body.agro-buyer-open {
 .buyer-wizard-review-item {
   padding: 0.55rem 0.65rem;
   border-radius: var(--radius-sm, 8px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-neutral);
+  background: var(--bg-3);
 }
 
 .buyer-wizard-review-item--full {
@@ -1752,7 +1846,7 @@ body.agro-buyer-open {
   font-size: 0.64rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--text-muted, #64748B);
+  color: var(--text-secondary);
   margin-bottom: 0.15rem;
 }
 
@@ -1763,7 +1857,7 @@ body.agro-buyer-open {
 }
 
 .buyer-wizard-review-item__value--empty {
-  color: var(--text-muted, #64748B);
+  color: var(--text-secondary);
   font-style: italic;
 }
 
@@ -1802,7 +1896,7 @@ body.agro-buyer-open {
   justify-content: space-between;
   gap: 0.5rem;
   padding: 0.6rem 1.05rem 0.85rem;
-  border-top: 1px solid rgba(200, 167, 82, 0.14);
+  border-top: 1px solid var(--border-neutral);
 }
 
 .buyer-wizard-footer .btn {
@@ -1893,8 +1987,8 @@ body.agro-buyer-open {
 #modal-agro-buyer-delete-confirm .agro-buyer-confirm-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.82);
-  backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
 }
 
 #modal-agro-buyer-delete-confirm .agro-buyer-confirm-panel {
@@ -1904,12 +1998,10 @@ body.agro-buyer-open {
   display: flex;
   flex-direction: column;
   gap: 0;
-  background: var(--glass-bg, rgba(17,17,17,0.9));
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(248, 113, 113, 0.24);
-  border-radius: var(--radius-xl, 24px);
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.45), 0 0 32px rgba(248, 113, 113, 0.08);
+  background: var(--bg-2);
+  border: 1px solid color-mix(in srgb, var(--color-error) 30%, var(--border-neutral));
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   overflow: hidden;
 }
 
@@ -1923,7 +2015,7 @@ body.agro-buyer-open {
 }
 
 #modal-agro-buyer-delete-confirm .agro-buyer-confirm-header {
-  border-bottom: 1px solid rgba(248, 113, 113, 0.16);
+  border-bottom: 1px solid var(--border-neutral);
 }
 
 #modal-agro-buyer-delete-confirm .agro-buyer-confirm-eyebrow {
@@ -1931,7 +2023,7 @@ body.agro-buyer-open {
   font-size: 0.7rem;
   letter-spacing: 0.11em;
   text-transform: uppercase;
-  color: rgba(255, 205, 205, 0.72);
+  color: var(--text-secondary);
   font-family: "Orbitron", sans-serif;
 }
 
@@ -1944,19 +2036,19 @@ body.agro-buyer-open {
 }
 
 #modal-agro-buyer-delete-confirm .agro-buyer-confirm-close {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  border: 1px solid rgba(248, 113, 113, 0.24);
-  background: rgba(248, 113, 113, 0.08);
-  color: rgba(255, 209, 209, 0.92);
+  width: var(--a11y-touch-min, 44px);
+  height: var(--a11y-touch-min, 44px);
+  border-radius: var(--radius-sm);
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: background 150ms ease, color 150ms ease;
 }
 
 #modal-agro-buyer-delete-confirm .agro-buyer-confirm-close:hover {
-  background: rgba(248, 113, 113, 0.16);
-  border-color: rgba(248, 113, 113, 0.38);
+  background: var(--bg-3);
+  color: var(--text-primary);
 }
 
 #modal-agro-buyer-delete-confirm .agro-buyer-confirm-body {
@@ -1977,18 +2069,18 @@ body.agro-buyer-open {
   list-style: none;
   display: grid;
   gap: 0.38rem;
-  border: 1px solid rgba(248, 113, 113, 0.12);
+  border: 1px solid color-mix(in srgb, var(--color-error) 18%, var(--border-neutral));
   border-radius: var(--radius-md, 14px);
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg-3);
 }
 
 #modal-agro-buyer-delete-confirm .agro-buyer-confirm-impact li {
-  color: rgba(255, 255, 255, 0.76);
+  color: var(--text-secondary);
   font-size: 0.76rem;
 }
 
 #modal-agro-buyer-delete-confirm .agro-buyer-confirm-footer {
-  border-top: 1px solid rgba(248, 113, 113, 0.14);
+  border-top: 1px solid var(--border-neutral);
   justify-content: flex-end;
   flex-wrap: wrap;
 }
@@ -1998,14 +2090,14 @@ body.agro-buyer-open {
 }
 
 #modal-agro-buyer-delete-confirm .agro-buyer-confirm__danger {
-  border-color: rgba(248, 113, 113, 0.36);
-  background: rgba(248, 113, 113, 0.12);
-  color: rgba(255, 222, 222, 0.96);
+  border-color: color-mix(in srgb, var(--color-error) 36%, var(--border-neutral));
+  background: color-mix(in srgb, var(--color-error) 12%, transparent);
+  color: var(--color-error);
 }
 
 #modal-agro-buyer-delete-confirm .agro-buyer-confirm__danger:hover {
-  border-color: rgba(248, 113, 113, 0.5);
-  background: rgba(248, 113, 113, 0.18);
+  border-color: color-mix(in srgb, var(--color-error) 48%, var(--border-neutral));
+  background: color-mix(in srgb, var(--color-error) 16%, transparent);
 }
 
 @media (max-width: 640px) {
@@ -2073,8 +2165,8 @@ body.agro-public-open {
 #modal-agro-public-profile .agro-public-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.84);
-  backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
 }
 
 #modal-agro-public-profile .agro-public-panel {
@@ -2084,10 +2176,10 @@ body.agro-public-open {
   max-height: min(92vh, 760px);
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, rgba(13, 13, 13, 0.98), rgba(6, 6, 6, 0.98));
-  border: 1px solid rgba(200, 167, 82, 0.28);
-  border-radius: 16px;
-  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.55);
+  background: var(--bg-2);
+  border: 1px solid var(--gold-4);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   overflow: hidden;
 }
 
@@ -2097,7 +2189,7 @@ body.agro-public-open {
   justify-content: space-between;
   gap: 0.8rem;
   padding: 0.95rem 1.05rem;
-  border-bottom: 1px solid rgba(200, 167, 82, 0.2);
+  border-bottom: 1px solid var(--border-neutral);
 }
 
 #modal-agro-public-profile .agro-public-header-main {
@@ -2111,9 +2203,9 @@ body.agro-public-open {
   width: 58px;
   height: 58px;
   border-radius: 50%;
-  border: 1px solid rgba(200, 167, 82, 0.34);
-  background: rgba(200, 167, 82, 0.1);
-  color: #c8a752;
+  border: 1px solid var(--border-gold);
+  background: var(--bg-3);
+  color: var(--gold-4);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2125,7 +2217,7 @@ body.agro-public-open {
   font-size: 0.7rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(200, 167, 82, 0.85);
+  color: var(--gold-4);
   font-family: "Orbitron", sans-serif;
 }
 
@@ -2133,7 +2225,7 @@ body.agro-public-open {
   margin: 0.2rem 0 0;
   font-size: 1rem;
   font-family: "Orbitron", sans-serif;
-  color: rgba(245, 245, 245, 0.96);
+  color: var(--text-primary);
 }
 
 #modal-agro-public-profile .agro-public-visibility {
@@ -2142,9 +2234,9 @@ body.agro-public-open {
   align-items: center;
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.78);
+  border: 1px solid var(--border-neutral);
+  background: var(--bg-3);
+  color: var(--text-secondary);
   font-size: 0.64rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -2158,19 +2250,25 @@ body.agro-public-open {
 }
 
 #modal-agro-public-profile .agro-public-visibility[data-state="owner"] {
-  border-color: rgba(200, 167, 82, 0.5);
-  background: rgba(200, 167, 82, 0.14);
-  color: rgba(200, 167, 82, 0.96);
+  border-color: var(--border-gold);
+  background: color-mix(in srgb, var(--gold-4) 12%, transparent);
+  color: var(--gold-4);
 }
 
 #modal-agro-public-profile .agro-public-close {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  border: 1px solid rgba(200, 167, 82, 0.34);
-  background: rgba(200, 167, 82, 0.08);
-  color: #c8a752;
+  width: var(--a11y-touch-min, 44px);
+  height: var(--a11y-touch-min, 44px);
+  border-radius: var(--radius-sm);
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
   cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+#modal-agro-public-profile .agro-public-close:hover {
+  background: var(--bg-3);
+  color: var(--text-primary);
 }
 
 #modal-agro-public-profile .agro-public-body {
@@ -2187,9 +2285,9 @@ body.agro-public-open {
 
 #modal-agro-public-profile .agro-public-row {
   margin: 0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-neutral);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg-3);
   padding: 0.55rem;
   display: flex;
   flex-direction: column;
@@ -2200,12 +2298,12 @@ body.agro-public-open {
   font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.58);
+  color: var(--text-secondary);
 }
 
 #modal-agro-public-profile .agro-public-row dd {
   margin: 0;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--text-primary);
   font-size: 0.83rem;
   word-break: break-word;
   white-space: pre-wrap;
@@ -2216,14 +2314,14 @@ body.agro-public-open {
 }
 
 #modal-agro-public-profile .agro-public-footer {
-  border-top: 1px solid rgba(200, 167, 82, 0.14);
+  border-top: 1px solid var(--border-neutral);
   padding: 0.72rem 1.05rem 0.85rem;
 }
 
 #modal-agro-public-profile .agro-public-status {
   margin: 0;
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.64);
+  color: var(--text-secondary);
 }
 
 #modal-agro-public-profile .agro-public-status[data-level="ok"] {
@@ -7004,40 +7102,42 @@ body.agro-shell-open .agro-feedback-fab,
   position: fixed;
   inset: 0;
   z-index: 10050;
-  background: rgba(0, 0, 0, 0.64);
+  background: rgba(0, 0, 0, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .agro-feedback-card {
   width: min(520px, 100%);
-  border-radius: 16px;
-  border: 1px solid rgba(200, 167, 82, 0.25);
-  background: rgba(10, 10, 10, 0.96);
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.48);
-  padding: 14px;
-  color: rgba(255, 255, 255, 0.92);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gold-4);
+  background: var(--bg-2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  padding: 20px;
+  color: var(--text-primary);
 }
 
 .agro-feedback-title {
   margin: 0 0 6px;
-  color: var(--gold-primary, #C8A752);
+  color: var(--text-primary);
   font-family: 'Orbitron', sans-serif;
   font-size: 1.02rem;
 }
 
 .agro-feedback-hint {
   margin: 0 0 10px;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--text-secondary);
   font-size: 0.88rem;
 }
 
 .agro-feedback-field-label {
   display: block;
   margin: 0 0 6px;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary);
   font-size: 0.8rem;
   letter-spacing: 0.3px;
 }
@@ -7045,10 +7145,10 @@ body.agro-shell-open .agro-feedback-fab,
 .agro-feedback-input,
 .agro-feedback-textarea {
   width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--border-neutral);
+  border-radius: var(--radius-sm);
+  background: var(--bg-3);
+  color: var(--text-primary);
   font-family: 'Rajdhani', sans-serif;
   padding: 10px;
 }
@@ -7065,15 +7165,15 @@ body.agro-shell-open .agro-feedback-fab,
 .agro-feedback-input:focus,
 .agro-feedback-textarea:focus {
   outline: none;
-  border-color: rgba(200, 167, 82, 0.6);
-  box-shadow: 0 0 0 2px rgba(200, 167, 82, 0.15);
+  border-color: var(--gold-4);
+  box-shadow: var(--state-focus-ring);
 }
 
 .agro-feedback-status {
   margin-top: 8px;
   font-size: 0.86rem;
   min-height: 1.2em;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--text-secondary);
 }
 
 .agro-feedback-actions {
@@ -7084,9 +7184,9 @@ body.agro-shell-open .agro-feedback-fab,
 }
 
 .agro-feedback-btn {
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   padding: 10px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid var(--border-neutral);
   font-family: 'Rajdhani', sans-serif;
   font-weight: 700;
   cursor: pointer;
@@ -7099,18 +7199,18 @@ body.agro-shell-open .agro-feedback-fab,
 
 .agro-feedback-btn-ghost {
   background: transparent;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--text-secondary);
 }
 
 .agro-feedback-btn-secondary {
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.9);
+  background: var(--bg-3);
+  color: var(--text-secondary);
 }
 
 .agro-feedback-btn-primary {
-  background: rgba(200, 167, 82, 0.18);
-  border-color: rgba(200, 167, 82, 0.36);
-  color: rgba(255, 255, 255, 0.95);
+  background: var(--gold-4);
+  border-color: var(--gold-4);
+  color: var(--bg-1);
 }
 
 /* Fix: opciones del <select> legibles en el dropdown nativo (Chrome/Windows) */
@@ -7126,15 +7226,15 @@ body.agro-shell-open .agro-feedback-fab,
 /* Feedback Inbox */
 .agro-feedback-history {
   margin-top: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-neutral);
+  border-radius: var(--radius-sm);
+  background: var(--bg-3);
   padding: 8px 10px;
 }
 
 .agro-feedback-history-summary {
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--text-secondary);
   font-weight: 700;
   list-style: none;
 }
@@ -7156,12 +7256,12 @@ body.agro-shell-open .agro-feedback-fab,
 }
 
 .agro-feedback-history-hint {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary);
   font-size: 0.82rem;
 }
 
 .agro-feedback-history-status {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary);
   font-size: 0.86rem;
   min-height: 1.2em;
   margin-bottom: 8px;
@@ -7173,10 +7273,10 @@ body.agro-shell-open .agro-feedback-fab,
 }
 
 .agro-feedback-history-item {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  border: 1px solid var(--border-neutral);
+  border-radius: var(--radius-sm);
   padding: 10px;
-  background: rgba(0, 0, 0, 0.18);
+  background: var(--bg-2);
 }
 
 .agro-feedback-history-head {
@@ -7189,22 +7289,22 @@ body.agro-shell-open .agro-feedback-fab,
 
 .agro-feedback-history-cat {
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text-primary);
 }
 
 .agro-feedback-history-date {
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--text-secondary);
 }
 
 .agro-feedback-history-msg {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--text-primary);
   white-space: pre-wrap;
   line-height: 1.25;
 }
 
 .agro-feedback-history-empty {
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--text-secondary);
   font-size: 0.86rem;
 }
 
@@ -7226,12 +7326,8 @@ body.agro-shell-open .agro-feedback-fab,
   position: sticky;
   bottom: 0;
   padding-top: 10px;
-  background: linear-gradient(
-    180deg,
-    rgba(10, 10, 10, 0) 0%,
-    rgba(10, 10, 10, 0.96) 38%,
-    rgba(10, 10, 10, 0.96) 100%
-  );
+  background: var(--bg-2);
+  border-top: 1px solid var(--border-neutral);
 }
 
 @media (max-width: 640px) {

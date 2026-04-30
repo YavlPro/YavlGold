@@ -330,14 +330,16 @@ function createFabButton() {
 
 function createModal() {
   const overlay = document.createElement('div');
-  overlay.className = 'agro-feedback-overlay';
+  overlay.className = 'agro-feedback-overlay agro-modal-canon';
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-labelledby', 'agro-feedback-title');
 
   const card = document.createElement('div');
-  card.className = 'agro-feedback-card';
+  card.className = 'agro-feedback-card agro-modal-canon__dialog';
 
   const title = document.createElement('h3');
+  title.id = 'agro-feedback-title';
   title.className = 'agro-feedback-title';
   title.textContent = 'Feedback del Agricultor';
 
@@ -355,9 +357,9 @@ function createModal() {
   category.className = 'agro-feedback-input';
 
   const options = [
-    { value: 'bug', text: '🐛 Bug' },
-    { value: 'sugerencia', text: '💡 Sugerencia' },
-    { value: 'pregunta', text: '❓ Pregunta' }
+    { value: 'bug', text: 'Bug' },
+    { value: 'sugerencia', text: 'Sugerencia' },
+    { value: 'pregunta', text: 'Pregunta' }
   ];
 
   for (const optionData of options) {
@@ -388,17 +390,17 @@ function createModal() {
 
   const cancelBtn = document.createElement('button');
   cancelBtn.type = 'button';
-  cancelBtn.className = 'agro-feedback-btn agro-feedback-btn-ghost';
+  cancelBtn.className = 'agro-feedback-btn agro-feedback-btn-ghost agro-modal-canon__button agro-modal-canon__button--ghost';
   cancelBtn.textContent = 'Cancelar';
 
   const sendBtn = document.createElement('button');
   sendBtn.type = 'button';
-  sendBtn.className = 'agro-feedback-btn agro-feedback-btn-primary';
+  sendBtn.className = 'agro-feedback-btn agro-feedback-btn-primary agro-modal-canon__button agro-modal-canon__button--primary';
   sendBtn.textContent = 'Enviar';
 
   const retryBtn = document.createElement('button');
   retryBtn.type = 'button';
-  retryBtn.className = 'agro-feedback-btn agro-feedback-btn-secondary';
+  retryBtn.className = 'agro-feedback-btn agro-feedback-btn-secondary agro-modal-canon__button agro-modal-canon__button--secondary';
   retryBtn.textContent = 'Reintentar ahora';
 
   function refreshRetryButton() {
@@ -414,7 +416,7 @@ function createModal() {
 
   const historySummary = document.createElement('summary');
   historySummary.className = 'agro-feedback-history-summary';
-  historySummary.textContent = '📥 Mis feedback enviados';
+  historySummary.textContent = 'Mis feedback enviados';
 
   const historyBody = document.createElement('div');
   historyBody.className = 'agro-feedback-history-body';
@@ -428,7 +430,7 @@ function createModal() {
 
   const historyRefreshBtn = document.createElement('button');
   historyRefreshBtn.type = 'button';
-  historyRefreshBtn.className = 'agro-feedback-btn agro-feedback-btn-secondary';
+  historyRefreshBtn.className = 'agro-feedback-btn agro-feedback-btn-secondary agro-modal-canon__button agro-modal-canon__button--secondary';
   historyRefreshBtn.textContent = 'Actualizar';
 
   const historyStatus = document.createElement('div');

@@ -107,10 +107,10 @@ const TYPE_CLASS_BY_VALUE = Object.freeze({
 });
 
 const WIZARD_STEPS = Object.freeze([
-    { id: 1, eyebrow: 'Paso 1', title: '¿Qué pasó? 📝' },
-    { id: 2, eyebrow: 'Paso 2', title: '¿Cómo se clasifica? 📁' },
-    { id: 3, eyebrow: 'Paso 3', title: '¿Cuánto y cuándo? 💰' },
-    { id: 4, eyebrow: 'Paso 4', title: 'Confirmar ✅' }
+    { id: 1, eyebrow: 'Paso 1', title: '¿Qué pasó?' },
+    { id: 2, eyebrow: 'Paso 2', title: '¿Cómo se clasifica?' },
+    { id: 3, eyebrow: 'Paso 3', title: '¿Cuánto y cuándo?' },
+    { id: 4, eyebrow: 'Paso 4', title: 'Confirmar' }
 ]);
 
 const state = {
@@ -1269,8 +1269,8 @@ async function createCycleRecord(payload) {
     return {
         cycleId,
         message: payload.status === 'closed'
-            ? '✅ Cartera operativa creada y cerrada.'
-            : '✅ Cartera operativa creada.'
+            ? 'Cartera operativa creada y cerrada.'
+            : 'Cartera operativa creada.'
     };
 }
 
@@ -1321,7 +1321,7 @@ async function updateCycleRecord(cycleId, payload) {
 
     return {
         cycleId,
-        message: '💾 Cambios guardados en la cartera operativa.'
+        message: 'Cambios guardados en la cartera operativa.'
     };
 }
 
@@ -1397,7 +1397,7 @@ function renderShell() {
                     </div>
                 </div>
                 <div class="header-actions">
-                    <button type="button" class="btn btn-primary" data-operational-action="new-cycle">➕ Nueva cartera operativa</button>
+                    <button type="button" class="btn btn-primary" data-operational-action="new-cycle">Nueva cartera operativa</button>
                     <button type="button" class="btn" data-agro-view="period-cycles">📆 Ver períodos</button>
                     <button type="button" class="agro-operational-refresh-btn" data-operational-action="refresh" aria-label="Actualizar Cartera Operativa" title="Actualizar">
                         <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
@@ -1431,24 +1431,24 @@ function renderShell() {
                         <h3 class="agro-operational-list-title" id="agro-operational-list-title">🟡 Carteras operativas activas</h3>
                         <p class="agro-operational-list-copy" id="agro-operational-list-copy">No pagados, en seguimiento o compensándose con lectura operativa.</p>
                     </div>
-                    <button type="button" class="btn" data-operational-action="new-cycle">➕ Nueva cartera operativa</button>
+                    <button type="button" class="btn" data-operational-action="new-cycle">Nueva cartera operativa</button>
                 </div>
                 <div id="agro-operational-filters-host"></div>
                 <p class="agro-operational-list-section__status" id="agro-operational-list-status" aria-live="polite" aria-atomic="true">Cargando cartera operativa...</p>
                 <div class="agro-operational-list" id="agro-operational-list"></div>
             </section>
 
-            <div id="agro-operational-modal" class="modal-overlay agro-operational-modal${state.modalOpen ? ' active' : ''}" aria-hidden="${state.modalOpen ? 'false' : 'true'}">
-                <div class="modal-container agro-operational-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="agro-operational-form-title">
-                    <div class="modal-header agro-operational-modal__header">
+            <div id="agro-operational-modal" class="modal-overlay agro-operational-modal agro-modal-canon${state.modalOpen ? ' active' : ''}" aria-hidden="${state.modalOpen ? 'false' : 'true'}">
+                <div class="modal-container agro-operational-modal__dialog agro-modal-canon__dialog" role="dialog" aria-modal="true" aria-labelledby="agro-operational-form-title">
+                    <div class="modal-header agro-operational-modal__header agro-modal-canon__header">
                         <div class="agro-operational-modal__title-group">
-                            <p class="agro-operational-modal__eyebrow" id="agro-operational-form-eyebrow">➕ Creación guiada</p>
-                            <h3 class="modal-title agro-operational-modal__title" id="agro-operational-form-title">➕ Nueva cartera operativa</h3>
+                            <p class="agro-operational-modal__eyebrow" id="agro-operational-form-eyebrow">Creación guiada</p>
+                            <h3 class="modal-title agro-operational-modal__title" id="agro-operational-form-title">Nueva cartera operativa</h3>
                             <p class="agro-operational-modal__copy" id="agro-operational-form-copy">Describe, clasifica, registra y confirma sin cargar la vista principal.</p>
                         </div>
-                        <button type="button" class="modal-close agro-operational-modal__close" data-operational-action="cancel-form" aria-label="Cerrar modal">&times;</button>
+                        <button type="button" class="modal-close agro-operational-modal__close agro-modal-canon__close" data-operational-action="cancel-form" aria-label="Cerrar modal">&times;</button>
                     </div>
-                    <div class="modal-body agro-operational-modal__body">
+                    <div class="modal-body agro-operational-modal__body agro-modal-canon__body">
                         <div class="agro-operational-feedback agro-operational-feedback--modal" id="agro-operational-modal-feedback" data-tone="info"></div>
                         <div id="agro-operational-wizard-host"></div>
                     </div>
@@ -1521,7 +1521,7 @@ function closeComposerModal() {
 
 function buildCropOptionsMarkup(selectedValue = '') {
     const selected = normalizeId(selectedValue);
-    const options = ['<option value="">🌾 Sin asociar a cultivo</option>'];
+    const options = ['<option value="">Sin asociar a cultivo</option>'];
     getAvailableCrops().forEach((crop) => {
         const display = buildCropDisplay(crop);
         const isSelected = display.id === selected ? ' selected' : '';
@@ -1592,8 +1592,8 @@ function restoreWizardFocusState(snapshot) {
 function renderEditForm(focusSnapshot) {
     const values = state.form.values;
 
-    state.refs.formEyebrow.textContent = '✏️ Edición directa';
-    state.refs.formTitle.textContent = '✏️ Editar cartera operativa';
+    state.refs.formEyebrow.textContent = 'Edición directa';
+    state.refs.formTitle.textContent = 'Editar cartera operativa';
     state.refs.formCopy.textContent = 'Modifica los campos necesarios y guarda. Todos los cambios se aplican de una vez.';
 
     state.refs.wizardHost.innerHTML = `
@@ -1666,8 +1666,8 @@ function renderEditForm(focusSnapshot) {
             </div>
 
             <div class="agro-operational-form-actions">
-                <button type="button" class="btn agro-operational-form-actions__cancel" data-operational-action="cancel-form">❌ Cancelar</button>
-                <button type="submit" class="btn btn-primary">💾 Guardar cambios</button>
+                <button type="button" class="btn agro-modal-canon__button agro-modal-canon__button--secondary agro-operational-form-actions__cancel" data-operational-action="cancel-form">Cancelar</button>
+                <button type="submit" class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary">Guardar cambios</button>
             </div>
         </form>
     `;
@@ -1696,8 +1696,8 @@ function renderWizard() {
     const parsedQuantity = toNullableNumber(values.quantity, 'La cantidad');
     const effectiveStatus = readLabel(STATUS_OPTIONS, values.status, '🟡 No pagado');
 
-    state.refs.formEyebrow.textContent = `➕ Creación guiada · ${currentStepMeta.eyebrow}`;
-    state.refs.formTitle.textContent = '➕ Nueva cartera operativa';
+    state.refs.formEyebrow.textContent = `Creación guiada · ${currentStepMeta.eyebrow}`;
+    state.refs.formTitle.textContent = 'Nueva cartera operativa';
     state.refs.formCopy.textContent = 'Guíate paso a paso para crear el ciclo, registrar el movimiento inicial y decidir si se cierra hoy mismo.';
 
     state.refs.wizardHost.innerHTML = `
@@ -1723,7 +1723,7 @@ function renderWizard() {
                     <section class="agro-operational-step-panel${currentStep === 1 ? ' is-active' : ''}" data-step-panel="1"${currentStep === 1 ? '' : ' hidden'}>
                         <div class="agro-operational-step-panel__head">
                             <p class="agro-operational-step-panel__eyebrow">Paso 1</p>
-                            <h4 class="agro-operational-step-panel__title">¿Qué pasó? 📝</h4>
+                            <h4 class="agro-operational-step-panel__title">¿Qué pasó?</h4>
                             <p class="agro-operational-step-panel__copy">Ponle nombre claro al ciclo y deja la descripción principal si hace falta contexto.</p>
                         </div>
                         <div class="agro-operational-form-grid">
@@ -1741,7 +1741,7 @@ function renderWizard() {
                     <section class="agro-operational-step-panel${currentStep === 2 ? ' is-active' : ''}" data-step-panel="2"${currentStep === 2 ? '' : ' hidden'}>
                         <div class="agro-operational-step-panel__head">
                             <p class="agro-operational-step-panel__eyebrow">Paso 2</p>
-                            <h4 class="agro-operational-step-panel__title">¿Cómo se clasifica? 📁</h4>
+                            <h4 class="agro-operational-step-panel__title">¿Cómo se clasifica?</h4>
                             <p class="agro-operational-step-panel__copy">Define el tipo económico, la categoría y, si aplica, amárralo a un cultivo real del usuario.</p>
                         </div>
                         <div class="agro-operational-form-grid">
@@ -1767,9 +1767,9 @@ function renderWizard() {
                             <div class="input-group input-group--full">
                                 <label class="input-label">Estado inicial</label>
                                 ${values.economicType === 'loss'
-                ? '<p class="agro-operational-derived-status">🔴 Se registrará como perdido</p>'
+                ? '<p class="agro-operational-derived-status">Se registrará como perdido</p>'
                 : values.economicType === 'donation'
-                    ? '<p class="agro-operational-derived-status">🤝 Se registrará como cerrado (donación)</p>'
+                    ? '<p class="agro-operational-derived-status">Se registrará como cerrado (donación)</p>'
                     : `<select id="agro-operational-create-status" class="styled-input" data-operational-draft="status">
                                         ${buildSelectOptionsMarkup(CREATE_STATUS_OPTIONS, values.status)}
                                     </select>`
@@ -1782,7 +1782,7 @@ function renderWizard() {
                     <section class="agro-operational-step-panel${currentStep === 3 ? ' is-active' : ''}" data-step-panel="3"${currentStep === 3 ? '' : ' hidden'}>
                         <div class="agro-operational-step-panel__head">
                             <p class="agro-operational-step-panel__eyebrow">Paso 3</p>
-                            <h4 class="agro-operational-step-panel__title">¿Cuánto y cuándo? 💰</h4>
+                            <h4 class="agro-operational-step-panel__title">¿Cuánto y cuándo?</h4>
                             <p class="agro-operational-step-panel__copy">El monto puede quedar nulo. La fecha del movimiento inicial sí es obligatoria.</p>
                         </div>
                         <div class="agro-operational-inline-meta">
@@ -1823,7 +1823,7 @@ function renderWizard() {
                     <section class="agro-operational-step-panel${currentStep === 4 ? ' is-active' : ''}" data-step-panel="4"${currentStep === 4 ? '' : ' hidden'}>
                         <div class="agro-operational-step-panel__head">
                             <p class="agro-operational-step-panel__eyebrow">Paso 4</p>
-                            <h4 class="agro-operational-step-panel__title">Confirmar ✅</h4>
+                            <h4 class="agro-operational-step-panel__title">Confirmar</h4>
                             <p class="agro-operational-step-panel__copy">Revisa el resumen antes de guardar. Puedes volver atrás sin perder datos.</p>
                         </div>
                         <div class="agro-operational-confirm-grid">
@@ -1848,7 +1848,7 @@ function renderWizard() {
                             <strong class="agro-operational-confirm-item__value">${escapeHtml(formatAmountLabel(parsedAmount, values.currency))}</strong>
                         </article>
                         <article class="agro-operational-confirm-item">
-                            <span class="agro-operational-confirm-item__label">📊 Balance del ciclo</span>
+                            <span class="agro-operational-confirm-item__label">Balance del ciclo</span>
                             <strong class="agro-operational-confirm-item__value">${escapeHtml(parsedAmount == null ? EMPTY_BALANCE_LABEL : formatSignedCurrencyValue(direction === 'in' ? parsedAmount : -parsedAmount, values.currency))}</strong>
                         </article>
                         <article class="agro-operational-confirm-item">
@@ -1888,12 +1888,12 @@ function renderWizard() {
             </div>
 
             <div class="agro-operational-form-actions">
-                <button type="button" class="btn agro-operational-form-actions__cancel" data-operational-action="cancel-form">❌ Cancelar</button>
+                <button type="button" class="btn agro-modal-canon__button agro-modal-canon__button--secondary agro-operational-form-actions__cancel" data-operational-action="cancel-form">Cancelar</button>
                 <div class="agro-operational-form-actions__nav">
-                    ${currentStep > 1 ? '<button type="button" class="btn" data-operational-action="wizard-prev">⬅️ Atrás</button>' : ''}
+                    ${currentStep > 1 ? '<button type="button" class="btn agro-modal-canon__button agro-modal-canon__button--secondary" data-operational-action="wizard-prev">Atrás</button>' : ''}
                     ${currentStep < 4
-            ? '<button type="button" class="btn btn-primary" data-operational-action="wizard-next">➡️ Siguiente</button>'
-            : `<button type="submit" class="btn btn-primary">${isEdit ? '💾 Guardar cambios' : '💾 Guardar cartera operativa'}</button>`}
+            ? '<button type="button" class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary" data-operational-action="wizard-next">Siguiente</button>'
+            : `<button type="submit" class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary">${isEdit ? 'Guardar cambios' : 'Guardar cartera operativa'}</button>`}
                 </div>
             </div>
         </form>
@@ -1934,7 +1934,7 @@ function setControlsDisabled(disabled) {
 
 function resolveDraftCropLabel(cropId) {
     const normalizedId = normalizeId(cropId);
-    if (!normalizedId) return '🌾 Sin asociar a cultivo';
+    if (!normalizedId) return 'Sin asociar a cultivo';
     const match = getAvailableCrops().find((crop) => buildCropDisplay(crop).id === normalizedId);
     return match ? buildCropDisplay(match).label : 'Cultivo no valido.';
 }
@@ -2619,7 +2619,7 @@ function renderEmptyState(subview) {
             <p class="agro-operational-empty__title">${title}</p>
             <p class="agro-operational-empty__copy">${copy}</p>
             <div class="agro-operational-empty__cta">
-                <button type="button" class="btn btn-primary" data-operational-action="new-cycle">➕ Nueva cartera operativa</button>
+                <button type="button" class="btn btn-primary" data-operational-action="new-cycle">Nueva cartera operativa</button>
             </div>
         </div>
     `;

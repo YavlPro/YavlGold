@@ -590,9 +590,8 @@ body.agro-operational-modal-open {
   flex-wrap: wrap;
   margin-top: 1.15rem;
   padding: 1rem 1.5rem 1.2rem;
-  border-top: 1px solid color-mix(in srgb, var(--gold-4) 14%, rgba(255, 255, 255, 0.08));
-  background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0), color-mix(in srgb, var(--gold-4) 4%, rgba(255, 255, 255, 0.01)));
+  border-top: 1px solid var(--border-neutral);
+  background: var(--bg-2);
 }
 
 .agro-operational-form-actions .btn {
@@ -1359,11 +1358,10 @@ body.agro-operational-modal-open {
   color: var(--text-secondary);
   cursor: pointer;
   text-align: left;
-  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+  transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
 }
 
 .agro-operational-step:hover {
-  transform: translateY(-1px);
   border-color: var(--border-gold);
 }
 

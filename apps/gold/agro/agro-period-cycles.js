@@ -634,17 +634,17 @@ function renderCreateModal() {
     if (!state.formOpen) return '';
     const values = state.values || createDraftValues();
     return `
-        <div class="agro-period-cycles__modal" data-period-overlay>
-            <div class="agro-period-cycles__dialog" role="dialog" aria-modal="true" aria-labelledby="agro-period-cycle-form-title">
-                <div class="agro-period-cycles__dialog-head">
+        <div class="agro-period-cycles__modal agro-modal-canon" data-period-overlay>
+            <div class="agro-period-cycles__dialog agro-modal-canon__dialog" role="dialog" aria-modal="true" aria-labelledby="agro-period-cycle-form-title">
+                <div class="agro-period-cycles__dialog-head agro-modal-canon__header">
                     <div>
                         <p class="agro-period-cycles__dialog-eyebrow">Nuevo período</p>
                         <h3 class="agro-period-cycles__dialog-title" id="agro-period-cycle-form-title">Crear ciclo de período</h3>
                         <p class="agro-period-cycles__dialog-copy">Define el nombre visible y el mes calendario. La lectura operativa seguirá viniendo de la actividad real del período.</p>
                     </div>
-                    <button type="button" class="agro-period-cycles__dialog-close" data-period-action="cancel-form" aria-label="Cerrar modal">&times;</button>
+                    <button type="button" class="agro-period-cycles__dialog-close agro-modal-canon__close" data-period-action="cancel-form" aria-label="Cerrar modal">&times;</button>
                 </div>
-                <form class="agro-period-cycles__form" id="agro-period-cycle-form">
+                <form class="agro-period-cycles__form agro-modal-canon__body" id="agro-period-cycle-form">
                     <label class="agro-period-cycles__field">
                         <span class="agro-period-cycles__field-label">Nombre del ciclo</span>
                         <input type="text" class="styled-input" name="name" data-period-draft="name" value="${escapeAttr(values.name)}" placeholder="Ej. Abril Operativo 2026" maxlength="80" required>
@@ -653,9 +653,9 @@ function renderCreateModal() {
                         <span class="agro-period-cycles__field-label">Mes calendario</span>
                         <input type="month" class="styled-input" name="periodMonth" data-period-draft="periodMonth" value="${escapeAttr(values.periodMonth)}" required>
                     </label>
-                    <div class="agro-period-cycles__form-actions">
-                        <button type="button" class="btn" data-period-action="cancel-form">Cancelar</button>
-                        <button type="submit" class="btn btn-primary"${state.creating ? ' disabled' : ''}>${state.creating ? 'Guardando...' : 'Guardar ciclo'}</button>
+                    <div class="agro-period-cycles__form-actions agro-modal-canon__footer">
+                        <button type="button" class="btn agro-modal-canon__button agro-modal-canon__button--secondary" data-period-action="cancel-form">Cancelar</button>
+                        <button type="submit" class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary"${state.creating ? ' disabled' : ''}>${state.creating ? 'Guardando...' : 'Guardar ciclo'}</button>
                     </div>
                 </form>
             </div>

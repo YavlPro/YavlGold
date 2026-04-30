@@ -6,6 +6,37 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-17__2026-04-27.md`
 
 ---
 
+## 2026-04-30 — V3.1 Modales Pase 2: migración de modales restantes
+
+**Estado:** CERRADO
+
+### Diagnóstico
+
+El primer pase de modales creó la base `.agro-modal-canon*` y migró superficies seguras, pero el QA visual humano detectó modales restantes que todavía no hablan el idioma del modal madre “Configura tu asistente”. Este pase auditará y migrará los modales pendientes sin tocar documentación canónica ni datos.
+
+### Plan
+
+- Inventariar modales restantes.
+- Ubicar archivos dueños.
+- Reutilizar `.agro-modal-canon*`.
+- Reducir hardcodes, glow, gradientes y colores inconsistentes.
+- Migrar modales seguros.
+- Documentar pendientes si algún modal requiere pase posterior.
+- Validar con `git diff --check` y `pnpm build:gold`.
+
+### Resultado
+
+- Modales auditados: editor guiado de perfil, Nuevo Cultivo, Crear ciclo de período, Nuevo Cliente / wizard cliente, Ficha del Cliente, Ficha pública de cliente/agricultor, Nueva / Editar Cartera Operativa, Nueva tarea, Feedback del Agricultor, modal de presentación del dashboard, Ajustes del dashboard y Panel de Control Global.
+- Modales Agro migrados o alineados: Nuevo Cultivo, Crear ciclo de período, Nuevo Cliente / wizard cliente, Ficha del Cliente, Ficha pública, Nueva / Editar Cartera Operativa, Nueva tarea, confirmación de tarea y Feedback del Agricultor.
+- Editor guiado de perfil alineado visualmente: se retiraron gradientes, shimmer, glow fuerte, escala/translate decorativo y texto metálico animado.
+- Dashboard: Ajustes y modal de presentación recibieron overrides visuales sobrios sin tocar lógica; Panel de Control Global se alineó en estilo y copy visible sin tocar consultas ni datos.
+- No se tocó `apps/gold/agro/agro.js`.
+- No se tocó Supabase, migraciones, RLS, RPC, Storage, Vercel, workflows, credenciales, datos, queries ni cálculos.
+- No se tocó documentación canónica (`MANIFIESTO_AGRO.md`, `ADN-VISUAL-V10.0.md`, `FICHA_TECNICA.md`, `README.md`, `llms.txt`, `docs-agro.html`).
+- Validación: `node --check` en JS tocados PASS; `git diff --check` PASS; `pnpm build:gold` PASS con warning de engine local Node v25 vs esperado Node 20.x.
+
+---
+
 ## 2026-04-30 — V3.1 Modales: canon visual basado en Configura tu asistente
 
 **Estado:** CERRADO

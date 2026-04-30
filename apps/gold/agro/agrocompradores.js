@@ -501,10 +501,10 @@ function renderBuyerWizard(step) {
         <div class="buyer-wizard-footer">
             <p id="${BUYER_STATUS_ID}" class="agro-buyer-status" data-level="muted"></p>
             <div class="buyer-wizard-nav">
-                ${currentStep > 1 ? '<button type="button" class="btn" data-buyer-wizard-action="prev">← Anterior</button>' : ''}
-                ${currentStep < 4 ? '<button type="button" class="btn btn-primary" data-buyer-wizard-action="next">Siguiente →</button>' : ''}
-                ${currentStep === 4 ? '<button type="submit" class="btn btn-primary" id="btn-save-agro-buyer">Guardar cliente</button>' : ''}
-                <button type="button" class="btn" data-buyer-wizard-action="cancel">Cancelar</button>
+                ${currentStep > 1 ? '<button type="button" class="btn agro-modal-canon__button agro-modal-canon__button--secondary" data-buyer-wizard-action="prev">Anterior</button>' : ''}
+                ${currentStep < 4 ? '<button type="button" class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary" data-buyer-wizard-action="next">Siguiente</button>' : ''}
+                ${currentStep === 4 ? '<button type="submit" class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary" id="btn-save-agro-buyer">Guardar cliente</button>' : ''}
+                <button type="button" class="btn agro-modal-canon__button agro-modal-canon__button--secondary" data-buyer-wizard-action="cancel">Cancelar</button>
             </div>
         </div>
     `;

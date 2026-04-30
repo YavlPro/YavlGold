@@ -130,14 +130,14 @@ export const AdminManager = {
         modal.innerHTML = `
             <div class="admin-modal-content">
                 <div class="admin-header">
-                    <h2>👑 Panel de Control Global</h2>
+                    <h2>Panel de Control Global</h2>
                     <button class="admin-close" onclick="document.getElementById('admin-panel-modal').remove()">&times;</button>
                 </div>
 
                 <div class="admin-tabs">
-                    <button class="admin-tab active" data-tab="announcements">📢 Anuncios</button>
-                    <button class="admin-tab" data-tab="stats">📊 Stats</button>
-                    <button class="admin-tab" data-tab="feedback">💬 Feedback</button>
+                    <button class="admin-tab active" data-tab="announcements">Anuncios</button>
+                    <button class="admin-tab" data-tab="stats">Stats</button>
+                    <button class="admin-tab" data-tab="feedback">Feedback</button>
                 </div>
 
                 <div class="admin-tab-content active" id="tab-announcements">
@@ -156,10 +156,10 @@ export const AdminManager = {
                                 <div class="admin-form-group">
                                     <label>Tipo</label>
                                     <select id="ann-type">
-                                        <option value="info">ℹ️ Info (Azul)</option>
-                                        <option value="success">✅ Success (Dorado)</option>
-                                        <option value="warning">⚠️ Warning (Naranja)</option>
-                                        <option value="danger">🚨 Danger (Rojo)</option>
+                                        <option value="info">Info</option>
+                                        <option value="success">Success</option>
+                                        <option value="warning">Warning</option>
+                                        <option value="danger">Danger</option>
                                     </select>
                                 </div>
                                 <div class="admin-form-group">
@@ -207,7 +207,7 @@ export const AdminManager = {
 
                 <div class="admin-tab-content" id="tab-feedback">
                     <div class="admin-section">
-                        <h3>💬 Mensajes de Usuarios</h3>
+                        <h3>Mensajes de Usuarios</h3>
                         <div id="admin-feedback-list" class="admin-list">
                             <div class="admin-loading">Cargando...</div>
                         </div>
@@ -590,21 +590,20 @@ export const AdminManager = {
         style.textContent = `
             /* Admin Button */
             .btn-admin {
-                background: linear-gradient(135deg, #C8A752, #B8941A);
-                border: none;
-                border-radius: 50%;
+                background: var(--dorado-yavl, #C8A752);
+                border: 1px solid var(--dorado-yavl, #C8A752);
+                border-radius: 8px;
                 width: 40px;
                 height: 40px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 cursor: pointer;
-                transition: all 0.3s ease;
+                transition: opacity 150ms ease, background 150ms ease;
                 color: #000;
             }
             .btn-admin:hover {
-                transform: scale(1.1);
-                box-shadow: 0 4px 15px rgba(200, 167, 82, 0.4);
+                opacity: 0.9;
             }
 
             /* Modal */
@@ -615,49 +614,58 @@ export const AdminManager = {
                 right: 0;
                 bottom: 0;
                 background: rgba(0, 0, 0, 0.85);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 z-index: 10002;
-                animation: fadeIn 0.2s ease;
             }
             .admin-modal-content {
-                background: #0f0f0f;
-                border: 1px solid rgba(200, 167, 82, 0.3);
-                border-radius: 16px;
+                background: var(--negro-tarjeta, #0f0f0f);
+                border: 1px solid var(--dorado-yavl, #C8A752);
+                border-radius: 12px;
                 width: 95%;
                 max-width: 600px;
                 max-height: 85vh;
                 overflow: hidden;
                 display: flex;
                 flex-direction: column;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
             }
             .admin-header {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
                 padding: 16px 20px;
-                border-bottom: 1px solid rgba(200, 167, 82, 0.2);
-                background: rgba(200, 167, 82, 0.05);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                background: var(--negro-tarjeta, #0f0f0f);
             }
             .admin-header h2 {
                 margin: 0;
-                color: #C8A752;
+                color: var(--dorado-yavl, #C8A752);
                 font-family: 'Orbitron', sans-serif;
                 font-size: 1.1rem;
             }
             .admin-close {
-                background: none;
+                background: transparent;
                 border: none;
-                color: #C8A752;
+                border-radius: 8px;
+                color: rgba(255, 255, 255, 0.72);
                 font-size: 1.5rem;
                 cursor: pointer;
+                width: 44px;
+                height: 44px;
+            }
+            .admin-close:hover {
+                background: rgba(255, 255, 255, 0.06);
+                color: rgba(255, 255, 255, 0.94);
             }
 
             /* Tabs */
             .admin-tabs {
                 display: flex;
-                border-bottom: 1px solid rgba(200, 167, 82, 0.2);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             }
             .admin-tab {
                 flex: 1;
@@ -668,11 +676,11 @@ export const AdminManager = {
                 font-family: 'Rajdhani', sans-serif;
                 font-size: 0.9rem;
                 cursor: pointer;
-                transition: all 0.2s;
+                transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
             }
             .admin-tab.active {
-                color: #C8A752;
-                border-bottom: 2px solid #C8A752;
+                color: var(--dorado-yavl, #C8A752);
+                border-bottom: 2px solid var(--dorado-yavl, #C8A752);
             }
             .admin-tab-content {
                 display: none;
@@ -689,7 +697,7 @@ export const AdminManager = {
                 margin-bottom: 24px;
             }
             .admin-section h3 {
-                color: #C8A752;
+                color: var(--dorado-yavl, #C8A752);
                 font-family: 'Rajdhani', sans-serif;
                 font-size: 1rem;
                 margin: 0 0 12px 0;
@@ -710,8 +718,8 @@ export const AdminManager = {
             .admin-form-group select {
                 width: 100%;
                 padding: 10px 12px;
-                background: rgba(0, 0, 0, 0.3);
-                border: 1px solid rgba(200, 167, 82, 0.3);
+                background: rgba(255, 255, 255, 0.04);
+                border: 1px solid rgba(255, 255, 255, 0.1);
                 border-radius: 8px;
                 color: #fff;
                 font-family: 'Rajdhani', sans-serif;
@@ -758,7 +766,7 @@ export const AdminManager = {
                 transition: transform 0.2s;
             }
             .admin-switch input:checked + .slider {
-                background: #C8A752;
+                background: var(--dorado-yavl, #C8A752);
             }
             .admin-switch input:checked + .slider::after {
                 transform: translateX(18px);
@@ -772,8 +780,8 @@ export const AdminManager = {
             .btn-admin-submit {
                 width: 100%;
                 padding: 12px;
-                background: linear-gradient(135deg, #C8A752, #B8941A);
-                border: none;
+                background: var(--dorado-yavl, #C8A752);
+                border: 1px solid var(--dorado-yavl, #C8A752);
                 border-radius: 8px;
                 color: #000;
                 font-family: 'Rajdhani', sans-serif;
@@ -781,11 +789,10 @@ export const AdminManager = {
                 font-size: 1rem;
                 cursor: pointer;
                 margin-top: 12px;
-                transition: all 0.2s;
+                transition: opacity 150ms ease;
             }
             .btn-admin-submit:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 4px 15px rgba(200, 167, 82, 0.3);
+                opacity: 0.9;
             }
             .btn-admin-submit:disabled {
                 opacity: 0.6;
@@ -804,9 +811,9 @@ export const AdminManager = {
                 justify-content: space-between;
                 align-items: center;
                 padding: 10px 12px;
-                background: rgba(255, 255, 255, 0.05);
+                background: rgba(255, 255, 255, 0.03);
                 border-radius: 8px;
-                border-left: 3px solid transparent;
+                border: 1px solid rgba(255, 255, 255, 0.08);
             }
             .admin-list-item.active {
                 border-left-color: #4CAF50;
@@ -845,18 +852,18 @@ export const AdminManager = {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                transition: all 0.2s;
+                transition: opacity 150ms ease, background 150ms ease;
             }
             .btn-toggle {
                 background: rgba(200, 167, 82, 0.2);
-                color: #C8A752;
+                color: var(--dorado-yavl, #C8A752);
             }
             .btn-delete {
                 background: rgba(239, 83, 80, 0.2);
                 color: #EF5350;
             }
             .item-actions button:hover {
-                transform: scale(1.1);
+                opacity: 0.9;
             }
 
             /* Stats */
@@ -866,8 +873,8 @@ export const AdminManager = {
                 gap: 12px;
             }
             .stat-box {
-                background: rgba(200, 167, 82, 0.1);
-                border: 1px solid rgba(200, 167, 82, 0.2);
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid rgba(255, 255, 255, 0.08);
                 border-radius: 12px;
                 padding: 16px;
                 text-align: center;
@@ -876,7 +883,7 @@ export const AdminManager = {
                 display: block;
                 font-size: 1.8rem;
                 font-weight: 700;
-                color: #C8A752;
+                color: var(--dorado-yavl, #C8A752);
                 font-family: 'Orbitron', sans-serif;
             }
             .stat-box .stat-label {

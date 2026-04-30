@@ -39,48 +39,16 @@ function ensureStyles() {
         --pe-border-neutral: var(--v10-border-neutral, rgba(255,255,255,0.08));
         --pe-border-gold: var(--v10-border-gold, rgba(200,167,82,0.25));
         --pe-border-prestige: var(--v10-border-prestige, rgba(229,213,160,0.18));
-        --pe-shadow-gold-sm: var(--v10-shadow-gold-sm, 0 2px 10px rgba(200,167,82,0.15));
-        --pe-shadow-gold-md: var(--v10-shadow-gold-md, 0 5px 20px rgba(200,167,82,0.25));
-        --pe-shadow-gold-lg: var(--v10-shadow-gold-lg, 0 10px 40px rgba(200,167,82,0.35));
-        --pe-shadow-metallic: var(--v10-shadow-metallic, 0 4px 20px rgba(200,167,82,0.30), 0 0 40px rgba(200,167,82,0.08));
-        --pe-glass-bg: var(--v10-glass-bg, rgba(17, 17, 17, 0.85));
-        --pe-metallic-linear: linear-gradient(135deg, var(--pe-gold-2), var(--pe-gold-4), var(--pe-gold-5), var(--pe-gold-4));
-        --pe-metallic-text: linear-gradient(135deg, var(--pe-gold-5), var(--pe-gold-4), var(--pe-gold-3), var(--pe-gold-4), var(--pe-gold-5));
-        --pe-metallic-btn: linear-gradient(135deg, var(--pe-gold-3), var(--pe-gold-4) 40%, var(--pe-gold-5) 60%, var(--pe-gold-4));
-        --pe-metallic-border: linear-gradient(90deg, transparent, var(--pe-gold-4), transparent);
-        --pe-metallic-conic: conic-gradient(from 0deg, var(--pe-gold-2), var(--pe-gold-3), var(--pe-gold-4), var(--pe-gold-5), var(--pe-gold-4), var(--pe-gold-3), var(--pe-gold-2));
-      }
-
-      /* ── DNA V10 Keyframes ── */
-      @keyframes yg-pe-fadeIn {
-        from { opacity: 0; }
-        to   { opacity: 1; }
-      }
-
-      @keyframes yg-pe-slideUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to   { opacity: 1; transform: translateY(0); }
-      }
-
-      @keyframes yg-pe-scaleIn {
-        from { opacity: 0; transform: scale(0.96); }
-        to   { opacity: 1; transform: scale(1); }
-      }
-
-      @keyframes yg-pe-metallicShift {
-        0%   { background-position: 0% 50%; }
-        50%  { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-      }
-
-      @keyframes yg-pe-borderShimmer {
-        0%   { background-position: -200% 0; }
-        100% { background-position: 200% 0; }
-      }
-
-      @keyframes yg-pe-pulseGlow {
-        0%, 100% { box-shadow: 0 0 8px rgba(200,167,82,0.08); }
-        50%      { box-shadow: 0 0 22px rgba(200,167,82,0.22); }
+        --pe-shadow-gold-sm: var(--v10-shadow-gold-sm, 0 2px 10px rgba(0,0,0,0.18));
+        --pe-shadow-gold-md: var(--v10-shadow-gold-md, 0 8px 32px rgba(0,0,0,0.5));
+        --pe-shadow-gold-lg: var(--v10-shadow-gold-lg, 0 8px 32px rgba(0,0,0,0.5));
+        --pe-shadow-modal: var(--v10-shadow-modal, 0 8px 32px rgba(0,0,0,0.5));
+        --pe-glass-bg: var(--v10-glass-bg, var(--pe-bg-2));
+        --pe-accent-line: var(--pe-gold-4);
+        --pe-accent-text: var(--pe-text-primary);
+        --pe-accent-btn: var(--pe-gold-4);
+        --pe-accent-border: var(--pe-gold-4);
+        --pe-accent-surface: var(--pe-bg-3);
       }
 
       /* ── Lock ── */
@@ -98,13 +66,10 @@ function ensureStyles() {
         align-items: center;
         justify-content: center;
         overflow-y: auto;
-        background:
-          radial-gradient(circle at 15% 10%, rgba(200,167,82,0.12), transparent 32%),
-          radial-gradient(circle at 85% 90%, rgba(200,167,82,0.08), transparent 28%),
-          var(--pe-bg-0);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        animation: yg-pe-fadeIn 220ms ease both;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        animation: none;
       }
 
       /* ── Shell ── */
@@ -115,18 +80,16 @@ function ensureStyles() {
         grid-template-columns: minmax(280px, 330px) minmax(0, 1fr);
         gap: 18px;
         margin: auto 0;
-        animation: yg-pe-scaleIn 220ms ease both;
+        animation: none;
       }
 
       /* ── Panels (side + card) ── */
       .yg-profile-edit-side,
       .yg-profile-edit-card {
         border: 1px solid var(--pe-border-gold);
-        border-radius: var(--radius-xl, 24px);
-        background: var(--pe-glass-bg);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        box-shadow: var(--pe-shadow-gold-md);
+        border-radius: var(--radius-md, 12px);
+        background: var(--pe-bg-2);
+        box-shadow: var(--pe-shadow-modal);
         position: relative;
         overflow: hidden;
       }
@@ -138,10 +101,9 @@ function ensureStyles() {
         top: 0;
         left: 0;
         right: 0;
-        height: 2px;
-        background: var(--pe-metallic-border);
-        background-size: 200% 100%;
-        animation: yg-pe-borderShimmer 3s linear infinite;
+        height: 1px;
+        background: var(--pe-accent-border);
+        animation: none;
       }
 
       /* ── Side panel ── */
@@ -150,8 +112,7 @@ function ensureStyles() {
         display: flex;
         flex-direction: column;
         gap: 18px;
-        animation: yg-pe-slideUp 220ms ease both;
-        animation-delay: 60ms;
+        animation: none;
       }
 
       .yg-profile-edit-side::after {
@@ -161,7 +122,7 @@ function ensureStyles() {
         width: 200px;
         height: 200px;
         border-radius: 50%;
-        background: radial-gradient(circle, rgba(200,167,82,0.14), transparent 65%);
+        background: transparent;
         pointer-events: none;
       }
 
@@ -181,16 +142,13 @@ function ensureStyles() {
         text-transform: uppercase;
       }
 
-      /* ── Side heading (metallic text §3) ── */
+      /* ── Side heading ── */
       .yg-profile-edit-side h2 {
         margin: 0;
         font: 900 clamp(1.65rem, 3vw, 2.3rem)/1.08 'Orbitron', sans-serif;
-        background: var(--pe-metallic-text);
-        background-size: 200% auto;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        animation: yg-pe-metallicShift 6s ease-in-out infinite;
+        color: var(--pe-text-primary);
+        background: none;
+        animation: none;
       }
 
       .yg-profile-edit-side p {
@@ -224,10 +182,9 @@ function ensureStyles() {
       .yg-profile-edit-bar {
         height: 100%;
         border-radius: inherit;
-        background: var(--pe-metallic-linear);
-        background-size: 200% 100%;
+        background: var(--pe-gold-4);
         transition: width 200ms ease;
-        animation: yg-pe-metallicShift 3s ease-in-out infinite;
+        animation: none;
       }
 
       /* ── Step list ── */
@@ -246,15 +203,15 @@ function ensureStyles() {
         align-items: center;
         padding: 13px 15px;
         border-radius: var(--radius-lg, 16px);
-        border: 1px solid transparent;
+        border: 1px solid var(--pe-border-neutral);
         background: rgba(255,255,255,0.02);
-        transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+        transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
       }
 
       .yg-profile-edit-step.is-active {
         border-color: var(--pe-border-gold);
         background: rgba(200,167,82,0.08);
-        box-shadow: var(--pe-shadow-gold-sm);
+        box-shadow: none;
       }
 
       .yg-profile-edit-step.is-complete {
@@ -276,7 +233,7 @@ function ensureStyles() {
 
       .yg-profile-edit-step.is-active .yg-profile-edit-step-index,
       .yg-profile-edit-step.is-complete .yg-profile-edit-step-index {
-        background: var(--pe-metallic-conic);
+        background: var(--pe-gold-4);
         border-color: var(--pe-gold-4);
         color: var(--pe-bg-2);
       }
@@ -284,7 +241,7 @@ function ensureStyles() {
       .yg-profile-edit-step-title {
         display: block;
         margin-bottom: 3px;
-        color: var(--pe-gold-prestige);
+        color: var(--pe-text-primary);
         font: 700 1rem/1.12 'Rajdhani', sans-serif;
       }
 
@@ -299,8 +256,7 @@ function ensureStyles() {
         display: flex;
         flex-direction: column;
         min-height: 0;
-        animation: yg-pe-slideUp 220ms ease both;
-        animation-delay: 100ms;
+        animation: none;
       }
 
       .yg-profile-edit-card header {
@@ -318,12 +274,9 @@ function ensureStyles() {
       .yg-profile-edit-card h3 {
         margin: 0 0 10px;
         font: 900 clamp(1.4rem, 2.8vw, 1.95rem)/1.08 'Orbitron', sans-serif;
-        background: var(--pe-metallic-text);
-        background-size: 200% auto;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        animation: yg-pe-metallicShift 6s ease-in-out infinite;
+        color: var(--pe-text-primary);
+        background: none;
+        animation: none;
       }
 
       .yg-profile-edit-card p {
@@ -345,7 +298,7 @@ function ensureStyles() {
         min-height: 0;
         overflow: auto;
         padding-right: 4px;
-        animation: yg-pe-slideUp 200ms ease both;
+        animation: none;
       }
 
       .yg-profile-edit-stack {
@@ -368,12 +321,12 @@ function ensureStyles() {
       .yg-profile-edit-input,
       .yg-profile-edit-textarea {
         width: 100%;
-        border-radius: var(--radius-lg, 16px);
+        border-radius: var(--radius-sm, 8px);
         border: 1px solid var(--pe-border-neutral);
         background: var(--pe-bg-4);
         color: var(--pe-text-primary);
         font: 600 1rem/1.2 'Rajdhani', sans-serif;
-        transition: border-color 180ms ease, transform 160ms ease, background 180ms ease, box-shadow 180ms ease;
+        transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
       }
 
       .yg-profile-edit-input {
@@ -391,17 +344,16 @@ function ensureStyles() {
         outline: none;
         border-color: var(--pe-gold-4);
         background: var(--pe-bg-3);
-        transform: translateY(-1px);
-        box-shadow: 0 0 0 3px rgba(200,167,82,0.12), var(--pe-shadow-gold-sm);
+        box-shadow: 0 0 0 3px rgba(200,167,82,0.12);
       }
 
       /* ── Help box ── */
       .yg-profile-edit-help {
         padding: 14px 18px;
         border-radius: var(--radius-lg, 16px);
-        border: 1px solid var(--pe-border-prestige);
+        border: 1px solid var(--pe-border-neutral);
         background: rgba(200,167,82,0.05);
-        color: var(--pe-gold-prestige);
+        color: var(--pe-text-secondary);
         font: 700 0.94rem/1.48 'Rajdhani', sans-serif;
       }
 
@@ -418,26 +370,26 @@ function ensureStyles() {
         grid-template-columns: auto minmax(0, 1fr);
         gap: 16px;
         padding: 18px;
-        border-radius: var(--radius-xl, 24px);
-        border: 1px solid var(--pe-border-gold);
+        border-radius: var(--radius-md, 12px);
+        border: 1px solid var(--pe-border-neutral);
         background: rgba(200,167,82,0.04);
         transition: border-color 180ms ease, box-shadow 180ms ease;
       }
 
       .yg-profile-edit-avatar:hover {
-        border-color: rgba(200,167,82,0.40);
-        box-shadow: var(--pe-shadow-gold-sm);
+        border-color: var(--pe-border-gold);
+        box-shadow: none;
       }
 
       .yg-profile-edit-avatar-preview {
         width: 92px;
         height: 92px;
-        border-radius: var(--radius-xl, 24px);
-        border: 2px solid var(--pe-gold-3);
-        background: var(--pe-metallic-conic);
+        border-radius: var(--radius-md, 12px);
+        border: 1px solid var(--pe-border-gold);
+        background: var(--pe-accent-surface);
         display: grid;
         place-items: center;
-        color: var(--pe-bg-2);
+        color: var(--pe-gold-4);
         font: 700 1.8rem/1 'Orbitron', sans-serif;
         overflow: hidden;
         transition: border-color 180ms ease, box-shadow 180ms ease;
@@ -445,7 +397,7 @@ function ensureStyles() {
 
       .yg-profile-edit-avatar-preview:hover {
         border-color: var(--pe-gold-4);
-        box-shadow: var(--pe-shadow-gold-sm);
+        box-shadow: none;
       }
 
       .yg-profile-edit-avatar-preview img {
@@ -490,12 +442,12 @@ function ensureStyles() {
         padding: 14px 18px;
         border-radius: var(--radius-md, 12px);
         border: 1px solid var(--pe-border-neutral);
-        background: var(--pe-bg-4);
+        background: var(--pe-bg-3);
         transition: border-color 160ms ease, background 160ms ease;
       }
 
       .yg-profile-edit-summary-row:hover {
-        border-color: var(--pe-border-prestige);
+        border-color: var(--pe-border-gold);
         background: rgba(200,167,82,0.04);
       }
 
@@ -507,7 +459,7 @@ function ensureStyles() {
       }
 
       .yg-profile-edit-summary-value {
-        color: var(--pe-gold-prestige);
+        color: var(--pe-text-primary);
         text-align: right;
         font: 700 1rem/1.2 'Rajdhani', sans-serif;
       }
@@ -547,28 +499,26 @@ function ensureStyles() {
       /* ── Buttons ── */
       .yg-profile-edit-btn {
         border: 0;
-        border-radius: var(--radius-pill, 9999px);
+        border-radius: var(--radius-sm, 8px);
         padding: 13px 22px;
         cursor: pointer;
         font: 700 0.96rem/1 'Rajdhani', sans-serif;
         letter-spacing: 0.03em;
-        transition: transform 160ms ease, opacity 160ms ease, box-shadow 160ms ease, background 160ms ease;
+        transition: opacity 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease;
       }
 
       .yg-profile-edit-btn:hover,
       .yg-profile-edit-btn:focus-visible {
         outline: none;
-        transform: translateY(-1px);
       }
 
       .yg-profile-edit-btn:active {
-        transform: translateY(0);
+        opacity: 0.9;
       }
 
       .yg-profile-edit-btn:disabled {
         opacity: 0.55;
         cursor: wait;
-        transform: none;
       }
 
       .yg-profile-edit-btn-secondary {
@@ -597,17 +547,17 @@ function ensureStyles() {
       }
 
       .yg-profile-edit-btn-primary {
-        background: var(--pe-metallic-btn);
-        background-size: 200% 100%;
+        background: var(--pe-accent-btn);
         color: var(--pe-bg-2);
         font-weight: 900;
-        box-shadow: var(--pe-shadow-gold-sm);
-        animation: yg-pe-metallicShift 5s ease-in-out infinite;
+        box-shadow: none;
+        animation: none;
       }
 
       .yg-profile-edit-btn-primary:hover,
       .yg-profile-edit-btn-primary:focus-visible {
-        box-shadow: var(--pe-shadow-gold-md);
+        opacity: 0.9;
+        box-shadow: none;
       }
 
       /* ── Responsive ── */

@@ -909,7 +909,7 @@ function renderShell() {
                     </div>
                 </div>
                 <div class="header-actions agro-task-shell__actions">
-                    <button type="button" class="btn btn-primary" data-task-action="new-task">➕ Nueva tarea</button>
+                    <button type="button" class="btn btn-primary" data-task-action="new-task">Nueva tarea</button>
                     <button type="button" class="agro-task-refresh-btn" data-task-action="refresh" aria-label="Actualizar Ciclos de Tareas" title="Actualizar">
                         <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
                     </button>
@@ -940,7 +940,7 @@ function renderShell() {
                         <h3 class="agro-task-panel__title">Trabajo registrado del día a día</h3>
                         <p class="agro-task-panel__copy">Ordena el trabajo por estado, rango, cultivo, tipo o impacto sin mezclarlo con Cartera Viva ni Cartera Operativa.</p>
                     </div>
-                    <button type="button" class="btn" data-task-action="new-task">➕ Nueva tarea</button>
+                    <button type="button" class="btn" data-task-action="new-task">Nueva tarea</button>
                 </div>
                 <div id="agro-task-list-filters"></div>
                 <p id="agro-task-list-status" class="agro-task-list-status">Cargando tareas...</p>
@@ -959,34 +959,34 @@ function renderShell() {
                 <div id="agro-task-stats-body"></div>
             </section>
 
-            <div id="agro-task-modal" class="agro-task-modal" aria-hidden="true">
-                <div class="agro-task-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="agro-task-modal-title">
-                    <div class="agro-task-modal__header">
+            <div id="agro-task-modal" class="agro-task-modal agro-modal-canon" aria-hidden="true">
+                <div class="agro-task-modal__dialog agro-modal-canon__dialog" role="dialog" aria-modal="true" aria-labelledby="agro-task-modal-title">
+                    <div class="agro-task-modal__header agro-modal-canon__header">
                         <div>
                             <p id="agro-task-modal-eyebrow" class="agro-task-modal__eyebrow">Nueva tarea</p>
                             <h3 id="agro-task-modal-title" class="agro-task-modal__title">Registrar tarea</h3>
                             <p id="agro-task-modal-copy" class="agro-task-modal__copy">Describe el trabajo real ejecutado hoy y deja su impacto económico solo si aplica.</p>
                         </div>
-                        <button type="button" class="agro-task-modal__close" data-task-action="cancel-form" aria-label="Cerrar modal">&times;</button>
+                        <button type="button" class="agro-task-modal__close agro-modal-canon__close" data-task-action="cancel-form" aria-label="Cerrar modal">&times;</button>
                     </div>
-                    <div class="agro-task-modal__body">
+                    <div class="agro-task-modal__body agro-modal-canon__body">
                         <div id="agro-task-modal-feedback" class="agro-task-feedback agro-task-feedback--modal" data-tone="info" hidden></div>
                         <div id="agro-task-form-host"></div>
                     </div>
                 </div>
             </div>
 
-            <div id="agro-task-delete-modal" class="agro-task-modal agro-task-modal--confirm" aria-hidden="true">
-                <div class="agro-task-modal__dialog agro-task-modal__dialog--confirm" role="dialog" aria-modal="true" aria-labelledby="agro-task-delete-title">
-                    <div class="agro-task-modal__header">
+            <div id="agro-task-delete-modal" class="agro-task-modal agro-task-modal--confirm agro-modal-canon" aria-hidden="true">
+                <div class="agro-task-modal__dialog agro-task-modal__dialog--confirm agro-modal-canon__dialog" role="dialog" aria-modal="true" aria-labelledby="agro-task-delete-title">
+                    <div class="agro-task-modal__header agro-modal-canon__header">
                         <div>
                             <p class="agro-task-modal__eyebrow">Eliminar tarea</p>
                             <h3 id="agro-task-delete-title" class="agro-task-modal__title">¿Deseas eliminar esta tarea?</h3>
                             <p id="agro-task-delete-copy" class="agro-task-modal__copy">Esta acción ocultará la tarea del historial visible.</p>
                         </div>
-                        <button type="button" class="agro-task-modal__close" data-task-action="cancel-delete" aria-label="Cerrar confirmación">&times;</button>
+                        <button type="button" class="agro-task-modal__close agro-modal-canon__close" data-task-action="cancel-delete" aria-label="Cerrar confirmación">&times;</button>
                     </div>
-                    <div class="agro-task-modal__body">
+                    <div class="agro-task-modal__body agro-modal-canon__body">
                         <div id="agro-task-delete-host"></div>
                     </div>
                 </div>
@@ -1358,7 +1358,7 @@ function renderList() {
             <div class="agro-task-empty">
                 <h4>Registra la primera tarea del campo</h4>
                 <p>Este módulo sirve para dejar historia del trabajo real: qué se hizo, cuánto tomó y si dejó impacto económico.</p>
-                <button type="button" class="btn btn-primary" data-task-action="new-task">➕ Registrar primera tarea</button>
+                <button type="button" class="btn btn-primary" data-task-action="new-task">Registrar primera tarea</button>
             </div>
         `;
         return;
@@ -1489,8 +1489,8 @@ function buildFormMarkup() {
             </div>
 
             <div class="agro-task-form__actions">
-                <button type="button" class="btn" data-task-action="cancel-form">Cancelar</button>
-                <button type="submit" class="btn btn-primary"${state.saving || state.schemaMissing ? ' disabled' : ''}>${state.saving ? 'Guardando...' : (isEdit ? 'Guardar cambios' : 'Crear tarea')}</button>
+                <button type="button" class="btn agro-modal-canon__button agro-modal-canon__button--secondary" data-task-action="cancel-form">Cancelar</button>
+                <button type="submit" class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary"${state.saving || state.schemaMissing ? ' disabled' : ''}>${state.saving ? 'Guardando...' : (isEdit ? 'Guardar cambios' : 'Crear tarea')}</button>
             </div>
         </form>
     `;
@@ -1552,7 +1552,7 @@ function renderDeleteConfirm() {
         <div class="agro-task-delete-card">
             <p class="agro-task-delete-card__note">La eliminación es segura: se aplica soft-delete y la tarea puede auditarse por base de datos si hiciera falta.</p>
             <div class="agro-task-delete-card__actions">
-                <button type="button" class="btn" data-task-action="cancel-delete">No, cancelar</button>
+                <button type="button" class="btn agro-modal-canon__button agro-modal-canon__button--secondary" data-task-action="cancel-delete">No, cancelar</button>
                 <button type="button" id="agro-task-delete-confirm" class="btn btn-danger" data-task-action="confirm-delete"${state.saving ? ' disabled' : ''}>${state.saving ? 'Eliminando...' : 'Sí, eliminar'}</button>
             </div>
         </div>
@@ -1638,7 +1638,7 @@ async function updateTaskRecord(taskId, payload) {
         .is('deleted_at', null);
 
     if (error) throw error;
-    return '💾 Tarea actualizada.';
+    return 'Tarea actualizada.';
 }
 
 async function softDeleteTaskRecord(taskId) {
