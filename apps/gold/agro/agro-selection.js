@@ -1,6 +1,8 @@
 const ROW_SELECTOR = '.tx-card[data-row-selectable="1"]';
 const INTERACTIVE_SELECTOR = 'button, a, input, select, textarea, summary, [role="button"], [contenteditable="true"]';
 
+let factureroSelectionAbortController = null;
+
 function getSelectionStatusNode() {
     return document.getElementById('ops-selection-status');
 }
@@ -31,7 +33,17 @@ function markRowSelected(row, selected) {
     row.setAttribute('aria-pressed', selected ? 'true' : 'false');
 }
 
+export function cleanupFactureroSelection() {
+    if (!factureroSelectionAbortController) return;
+    factureroSelectionAbortController.abort();
+    factureroSelectionAbortController = null;
+}
+
 export function initFactureroSelection() {
+    cleanupFactureroSelection();
+
+    factureroSelectionAbortController = new AbortController();
+    const { signal } = factureroSelectionAbortController;
     let selectedRow = null;
 
     const clearSelection = () => {
@@ -66,7 +78,7 @@ export function initFactureroSelection() {
         }
 
         selectRow(row);
-    });
+    }, { signal });
 
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
@@ -80,11 +92,11 @@ export function initFactureroSelection() {
         if (event.target.closest(INTERACTIVE_SELECTOR) && event.target !== row) return;
         event.preventDefault();
         selectRow(row);
-    });
+    }, { signal });
 
-    window.addEventListener('agro:finance-tab:changed', clearSelection);
-    window.addEventListener('agro:crop:changed', clearSelection);
-    document.addEventListener('data-refresh', clearSelection);
+    window.addEventListener('agro:finance-tab:changed', clearSelection, { signal });
+    window.addEventListener('agro:crop:changed', clearSelection, { signal });
+    document.addEventListener('data-refresh', clearSelection, { signal });
 
     updateSelectionStatus(null);
 

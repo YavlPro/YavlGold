@@ -1491,7 +1491,7 @@ La deuda no apunta a un único bug crítico, sino a contratos operativos incompl
 
 ## 2026-04-28 — Documentacion canon hub/module Agro
 
-**Estado:** EN PROGRESO
+**Estado:** GREEN — implementado y validado con build
 
 ### Diagnostico
 
@@ -1590,3 +1590,41 @@ GREEN. Documentacion canonica actualizada sin tocar codigo ni ADN Visual.
 - No se hizo QA autenticada ni se tocaron datos reales.
 - No se toco Supabase, migraciones, RLS, Storage, Vercel, workflows ni credenciales.
 - No se hizo commit ni push.
+
+---
+
+## 2026-04-29 — V3.1 Bloque A: idempotencia facturero selection
+
+**Estado:** EN PROGRESO
+
+### Diagnóstico
+
+`initFactureroSelection()` registra listeners de selección del facturero. Se revisa si puede duplicarlos al reinicializar el módulo y se aplicará un guard idempotente/cleanup mínimo sin cambiar UX ni lógica de datos.
+
+### Plan
+
+- Revisar listeners actuales.
+- Agregar guard idempotente o `AbortController`.
+- Mantener comportamiento visual y funcional.
+- No tocar `agro.js`.
+- Validar con `git diff --check` y `pnpm build:gold`.
+
+### Cambios
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro-selection.js` | JS listeners | Se agrego `AbortController` de modulo y `cleanupFactureroSelection()`; `initFactureroSelection()` limpia listeners anteriores antes de registrar `click`, `keydown`, `agro:finance-tab:changed`, `agro:crop:changed` y `data-refresh` con `{ signal }`. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | docs | Sesion V3.1 Bloque A documentada. |
+
+### Validacion
+
+- `node --check apps/gold/agro/agro-selection.js`: PASS.
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS. Warning local no bloqueante: Node `v25.6.0` vs engine esperado `20.x`.
+
+### NO se hizo
+
+- No se cambio UX.
+- No se cambio logica de seleccion.
+- No se toco `apps/gold/agro/agro.js`.
+- No se toco Supabase, migraciones, RLS, RPC, Storage, Vercel, workflows ni credenciales.
