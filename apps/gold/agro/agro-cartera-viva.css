@@ -17,10 +17,7 @@
   padding: 0.5rem 0.58rem;
   border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 7%, transparent), transparent 24%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.015), transparent 56%),
-    var(--bg-0);
+  background: var(--bg-2);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
@@ -1733,11 +1730,9 @@
 .cartera-viva-summary-strip,
 .cartera-viva-detail__summary {
   border-color: var(--border-neutral);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 5%, transparent), transparent 20%),
-    var(--bg-0);
+  background: var(--bg-2);
   box-shadow:
-    var(--shadow-gold-xs),
+    0 12px 28px rgba(0, 0, 0, 0.24),
     inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
@@ -1750,7 +1745,7 @@
   inset: 0 0 auto;
   height: 1px;
   background: var(--metallic-border);
-  opacity: 0.78;
+  opacity: 0.34;
   pointer-events: none;
 }
 

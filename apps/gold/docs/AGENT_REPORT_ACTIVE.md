@@ -261,6 +261,59 @@ El toggle anterior era mobile-only (`display: none` en base, `display: flex` sol
 
 ---
 
+## 2026-04-30 — Fase 2 UX vistas profundas Mi Granja
+
+**Objetivo:** Pulir visual y funcionalmente las vistas profundas del hub Mi Granja para alinearlas con `docs-agro.html` y el ADN Visual V10.
+
+### Diagnostico
+
+- El hub principal ya tiene mejor semantica, pero las vistas profundas conservan superficies mas brillantes, gradientes y acentos semanticos fuertes que se alejan del tono sobrio de `docs-agro.html`.
+- `Comparar periodos` vive en `agro-period-cycles.js` como stub: no ofrece selector real ni matriz comparativa.
+- La lectura mobile de subtitulos, eyebrows y copies secundarios depende de reglas dispersas; falta centrar y subir contraste en las superficies internas.
+
+### Plan
+
+1. Confirmar duenos reales de vistas antes de editar.
+2. Ajustar CSS de ciclos y periodos hacia superficies dark/gold sobrias: menos brillo, bordes sutiles, contraste de texto secundario.
+3. Implementar selector real A/B en `Comparar periodos`, usando periodos activos y finalizados ya cargados por el modulo.
+4. Pulir mobile para headers, subtitles, eyebrows y empty states sin cambiar rutas ni datos.
+5. Ejecutar `git diff --check` y `pnpm build:gold`.
+
+### Archivos previstos
+
+| Archivo | Motivo |
+|---|---|
+| `apps/gold/agro/agrociclos.css` | Estilos de ciclos activos/finalizados/comparar y stats de ciclos. |
+| `apps/gold/agro/agro-period-cycles.js` | Selector real y matriz de comparacion de periodos. |
+| `apps/gold/agro/agro-period-cycles.css` | Estilos de periodos activos/finalizados/comparar/estadisticas. |
+| `apps/gold/agro/agro.css` | Pulido acotado de stats globales y lectura mobile compartida. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Registro operativo de la sesion. |
+
+### Duenos confirmados
+
+- Ciclos activos/finalizados/comparar: markup base en `index.html`, logica de comparar en `agro-cycles-workspace.js`, estilos en `agrociclos.css`.
+- Estadisticas de ciclos: markup base en `index.html`, datos existentes via `agro-stats.js`/bridges, estilos `gstats-*` en `agro.css`.
+- Periodos activos/finalizados/comparar/estadisticas: `agro-period-cycles.js` y `agro-period-cycles.css`.
+- Superficies hermanas revisables con ajuste menor: `agro.css`, `agro-operational-cycles.css`, `agro-task-cycles.css`, `agro-cartera-viva.css`, sin abrir refactor.
+
+### Riesgos
+
+- Riesgo bajo/medio de cascada CSS por especificidad entre `agro.css`, `agro-operations.css` y CSS modulares.
+- Riesgo bajo de que la comparacion de periodos sea limitada a metricas estructurales actuales, porque el modulo no conserva totales monetarios numericos por periodo.
+- No se tocara Supabase, migraciones, RLS, Storage, Vercel, workflows ni credenciales.
+
+### Cierre operativo
+
+- Se alinearon visualmente ciclos, periodos, estadisticas de ciclos y superficies hermanas acotadas hacia un lenguaje dark/gold mas sobrio.
+- `Comparar periodos` ahora tiene selector A/B real con periodos activos y finalizados, resumen por periodo y matriz comparativa.
+- Archivos tocados: `agro-period-cycles.js`, `agro-period-cycles.css`, `agrociclos.css`, `agro.css`, `index.html`, `agro-task-cycles.css`, `agro-operational-cycles.css`, `agro-cartera-viva.css` y este reporte.
+- No se toco `agro.js`.
+- No se tocaron Supabase, datos, migraciones, RLS, RPC, Storage, Vercel, workflows ni documentacion canonica.
+- Validacion por comandos: `git diff --check` PASS; `pnpm build:gold` PASS.
+- QA manual/browser no ejecutado por instruccion explicita del usuario en sesion.
+
+---
+
 ## 2026-04-27 — Integracion visual del toggle como handle del rail
 
 **Objetivo:** Corregir el aspecto visual del toggle del rail para que se perciba como un handle integrado al borde derecho del rail, no como un boton flotante desconectado.

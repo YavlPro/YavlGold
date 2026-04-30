@@ -6,6 +6,8 @@ const PERIOD_CYCLES_UPDATED_EVENT = 'agro:period-cycles:updated';
 const OPERATIONAL_PORTFOLIO_UPDATED_EVENT = 'agro:operational-portfolio-updated';
 const ACTIVE_OPERATIONAL_STATUS_VALUES = new Set(['open', 'in_progress', 'compensating']);
 const PERIOD_SUBVIEW_OPTIONS = Object.freeze(['activos', 'finalizados', 'comparar', 'estadisticas']);
+const PERIOD_COMPARE_PRIMARY_ID = 'agro-period-compare-a';
+const PERIOD_COMPARE_SECONDARY_ID = 'agro-period-compare-b';
 
 const state = {
     root: null,
@@ -20,6 +22,8 @@ const state = {
     editingCycleId: null,
     editingName: '',
     deletingCycleId: null,
+    comparePrimaryId: '',
+    compareSecondaryId: '',
     currentSubview: 'activos',
     cycles: [],
     summary: createEmptySummary(),
@@ -584,7 +588,7 @@ function renderModuleHeader() {
     return `
         <header class="module-header animate-in delay-3">
             <div class="module-title-group">
-                <div class="module-icon">🗓️</div>
+                <div class="module-icon"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i></div>
                 <div class="module-heading">
                     <p class="ops-module-eyebrow">Familia mensual</p>
                     <h2 class="module-title">${escapeHtml(meta.title)}</h2>
@@ -700,6 +704,164 @@ function buildSnapshotMeta(cycle) {
     ];
 }
 
+function ensureCompareSelection(cycles) {
+    const ids = (Array.isArray(cycles) ? cycles : []).map((cycle) => normalizeId(cycle?.id)).filter(Boolean);
+    if (!ids.length) {
+        state.comparePrimaryId = '';
+        state.compareSecondaryId = '';
+        return;
+    }
+
+    if (!ids.includes(state.comparePrimaryId)) {
+        state.comparePrimaryId = ids[0];
+    }
+
+    if (ids.length < 2) {
+        state.compareSecondaryId = state.comparePrimaryId;
+        return;
+    }
+
+    if (!ids.includes(state.compareSecondaryId) || state.compareSecondaryId === state.comparePrimaryId) {
+        state.compareSecondaryId = ids.find((id) => id !== state.comparePrimaryId) || ids[0];
+    }
+}
+
+function findCompareCycle(cycles, cycleId) {
+    const safeId = normalizeId(cycleId);
+    return (Array.isArray(cycles) ? cycles : []).find((cycle) => normalizeId(cycle?.id) === safeId) || null;
+}
+
+function buildCompareOptionLabel(cycle) {
+    const statusLabel = cycle?.status === 'finalized' ? 'Finalizado' : 'Activo';
+    const portfolioLabel = cycle?.portfolioStatus === 'open' ? 'Operativa abierta' : 'Operativa cerrada';
+    return `${cycle.name} - ${cycle.monthLabel} - ${statusLabel} - ${portfolioLabel}`;
+}
+
+function formatSignedCount(value, unit = '') {
+    const number = Number(value);
+    if (!Number.isFinite(number) || number === 0) return `0${unit}`;
+    return `${number > 0 ? '+' : ''}${Math.round(number)}${unit}`;
+}
+
+function buildCompareMetrics(leftCycle, rightCycle) {
+    const linkedLeft = Array.isArray(leftCycle?.linked) ? leftCycle.linked.length : 0;
+    const linkedRight = Array.isArray(rightCycle?.linked) ? rightCycle.linked.length : 0;
+    const unlinkedLeft = Array.isArray(leftCycle?.unlinked) ? leftCycle.unlinked.length : 0;
+    const unlinkedRight = Array.isArray(rightCycle?.unlinked) ? rightCycle.unlinked.length : 0;
+    return [
+        {
+            label: 'Progreso mensual',
+            left: `${Number(leftCycle?.progress?.percent || 0)}%`,
+            right: `${Number(rightCycle?.progress?.percent || 0)}%`,
+            delta: formatSignedCount(Number(leftCycle?.progress?.percent || 0) - Number(rightCycle?.progress?.percent || 0), ' pts'),
+            leftSub: leftCycle?.progress?.text || '',
+            rightSub: rightCycle?.progress?.text || ''
+        },
+        {
+            label: 'Movimientos',
+            left: String(leftCycle?.movementCount || 0),
+            right: String(rightCycle?.movementCount || 0),
+            delta: formatSignedCount(Number(leftCycle?.movementCount || 0) - Number(rightCycle?.movementCount || 0)),
+            leftSub: 'Actividad registrada',
+            rightSub: 'Actividad registrada'
+        },
+        {
+            label: 'Ciclos operativos',
+            left: String(leftCycle?.cycleCount || 0),
+            right: String(rightCycle?.cycleCount || 0),
+            delta: formatSignedCount(Number(leftCycle?.cycleCount || 0) - Number(rightCycle?.cycleCount || 0)),
+            leftSub: 'Carteras del período',
+            rightSub: 'Carteras del período'
+        },
+        {
+            label: 'Operativa abierta',
+            left: String(leftCycle?.activeCycleCount || 0),
+            right: String(rightCycle?.activeCycleCount || 0),
+            delta: formatSignedCount(Number(leftCycle?.activeCycleCount || 0) - Number(rightCycle?.activeCycleCount || 0)),
+            leftSub: leftCycle?.portfolioStatus === 'open' ? 'Mes con cartera viva' : 'Mes sin cartera viva',
+            rightSub: rightCycle?.portfolioStatus === 'open' ? 'Mes con cartera viva' : 'Mes sin cartera viva'
+        },
+        {
+            label: 'Vinculados a cultivo',
+            left: String(linkedLeft),
+            right: String(linkedRight),
+            delta: formatSignedCount(linkedLeft - linkedRight),
+            leftSub: 'Impactan cultivos',
+            rightSub: 'Impactan cultivos'
+        },
+        {
+            label: 'Generales del período',
+            left: String(unlinkedLeft),
+            right: String(unlinkedRight),
+            delta: formatSignedCount(unlinkedLeft - unlinkedRight),
+            leftSub: 'Sin cultivo asociado',
+            rightSub: 'Sin cultivo asociado'
+        },
+        {
+            label: 'Ingresos registrados',
+            left: String(leftCycle?.incomeCount || 0),
+            right: String(rightCycle?.incomeCount || 0),
+            delta: formatSignedCount(Number(leftCycle?.incomeCount || 0) - Number(rightCycle?.incomeCount || 0)),
+            leftSub: 'Movimientos tipo ingreso',
+            rightSub: 'Movimientos tipo ingreso'
+        },
+        {
+            label: 'Pérdidas registradas',
+            left: String(leftCycle?.lossCount || 0),
+            right: String(rightCycle?.lossCount || 0),
+            delta: formatSignedCount(Number(leftCycle?.lossCount || 0) - Number(rightCycle?.lossCount || 0)),
+            leftSub: 'Movimientos tipo pérdida',
+            rightSub: 'Movimientos tipo pérdida'
+        }
+    ];
+}
+
+function renderCompareSummaryCard(label, cycle) {
+    const statusLabel = cycle.status === 'finalized' ? 'Período finalizado' : 'Período activo';
+    const portfolioLabel = cycle.portfolioStatus === 'open' ? 'Operativa abierta' : 'Operativa cerrada';
+    return `
+        <article class="agro-period-compare__summary-card">
+            <p class="agro-period-compare__summary-eyebrow">${escapeHtml(label)}</p>
+            <h4 class="agro-period-compare__summary-title">${escapeHtml(cycle.name)}</h4>
+            <p class="agro-period-compare__summary-copy">${escapeHtml(cycle.monthLabel)} · ${escapeHtml(cycle.rangeLabel)}</p>
+            <div class="agro-period-compare__summary-pills">
+                <span class="agro-period-cycle-card__status is-${escapeAttr(cycle.status)}">${escapeHtml(statusLabel)}</span>
+                <span class="agro-period-cycle-card__portfolio is-${escapeAttr(cycle.portfolioStatus)}">${escapeHtml(portfolioLabel)}</span>
+            </div>
+            <div class="agro-period-compare__summary-meta">
+                <div>
+                    <span class="agro-period-cycle-card__summary-label">Movimientos</span>
+                    <strong class="agro-period-cycle-card__summary-value">${cycle.movementCount}</strong>
+                </div>
+                <div>
+                    <span class="agro-period-cycle-card__summary-label">Ciclos operativos</span>
+                    <strong class="agro-period-cycle-card__summary-value">${cycle.cycleCount}</strong>
+                </div>
+            </div>
+        </article>
+    `;
+}
+
+function renderCompareMetric(metric) {
+    return `
+        <article class="agro-period-compare__metric">
+            <div class="agro-period-compare__metric-label">${escapeHtml(metric.label)}</div>
+            <div class="agro-period-compare__metric-value">
+                <strong>${escapeHtml(metric.left)}</strong>
+                <span>${escapeHtml(metric.leftSub)}</span>
+            </div>
+            <div class="agro-period-compare__delta">
+                <span>A - B</span>
+                <strong>${escapeHtml(metric.delta)}</strong>
+            </div>
+            <div class="agro-period-compare__metric-value">
+                <strong>${escapeHtml(metric.right)}</strong>
+                <span>${escapeHtml(metric.rightSub)}</span>
+            </div>
+        </article>
+    `;
+}
+
 function renderGroupCard(title, copy, rows, tone) {
     return `
         <section class="agro-period-cycle-card__group is-${escapeAttr(tone)}">
@@ -722,7 +884,7 @@ function renderCycleCard(cycle) {
         <article class="agro-period-cycle-card" data-period-cycle-id="${escapeAttr(cycle.id)}">
             <header class="agro-period-cycle-card__head">
                 <div class="agro-period-cycle-card__crop-info">
-                    <span class="agro-period-cycle-card__icon">🗓️</span>
+                    <span class="agro-period-cycle-card__icon"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i></span>
                     <div class="agro-period-cycle-card__heading">
                         <h4 class="agro-period-cycle-card__title">${escapeHtml(cycle.name)}</h4>
                         <p class="agro-period-cycle-card__range">${escapeHtml(cycle.rangeLabel)}</p>
@@ -850,25 +1012,54 @@ function renderStatsSubview(meta) {
 }
 
 function renderCompareSubview(meta) {
-    const latestCycles = state.cycles.slice(0, 2);
-    if (!latestCycles.length) {
+    const compareCycles = Array.isArray(state.cycles) ? state.cycles : [];
+    if (compareCycles.length < 2) {
         return renderSubviewPlaceholder(
-            'Comparar períodos quedará disponible aquí.',
-            'La estructura de navegación ya quedó lista. En una pasada posterior se puede montar la comparación real sin mover el sidebar.',
+            compareCycles.length === 1 ? 'Solo hay un período disponible.' : 'Todavía no hay períodos para comparar.',
+            compareCycles.length === 1
+                ? 'Cuando exista un segundo período activo o finalizado, podrás ponerlos frente a frente.'
+                : 'Crea o registra actividad en períodos mensuales para activar el comparador.',
             meta.regionId
         );
     }
 
+    ensureCompareSelection(compareCycles);
+    const primary = findCompareCycle(compareCycles, state.comparePrimaryId) || compareCycles[0];
+    const secondary = findCompareCycle(compareCycles, state.compareSecondaryId) || compareCycles[1];
+
     return `
-        <section class="agro-period-cycles__stub-list" id="${escapeAttr(meta.regionId)}">
-            <article class="agro-period-cycles__stub-item">
-                <strong>Base de comparación preparada</strong>
-                <span>${escapeHtml(latestCycles.map((cycle) => cycle.monthLabel).join(' vs '))}</span>
-            </article>
-            <article class="agro-period-cycles__stub-item">
-                <strong>Próxima pasada</strong>
-                <span>Seleccionar períodos, contrastar progreso y leer cierres mensuales lado a lado.</span>
-            </article>
+        <section class="agro-period-compare" id="${escapeAttr(meta.regionId)}">
+            <header class="agro-period-compare__head">
+                <div>
+                    <p class="agro-period-family__overview-eyebrow">Comparación útil</p>
+                    <h3 class="agro-period-family__overview-title">Dos períodos frente a frente</h3>
+                    <p class="agro-period-family__overview-subtitle">Elige períodos activos o finalizados para contrastar actividad, avance y operación mensual.</p>
+                </div>
+            </header>
+
+            <div class="agro-period-compare__controls">
+                <label class="agro-period-compare__field" for="${PERIOD_COMPARE_PRIMARY_ID}">
+                    <span class="agro-period-cycles__field-label">Período A</span>
+                    <select id="${PERIOD_COMPARE_PRIMARY_ID}" class="styled-input agro-period-compare__select" data-period-compare="primary">
+                        ${compareCycles.map((cycle) => `<option value="${escapeAttr(cycle.id)}"${cycle.id === primary.id ? ' selected' : ''}>${escapeHtml(buildCompareOptionLabel(cycle))}</option>`).join('')}
+                    </select>
+                </label>
+                <label class="agro-period-compare__field" for="${PERIOD_COMPARE_SECONDARY_ID}">
+                    <span class="agro-period-cycles__field-label">Período B</span>
+                    <select id="${PERIOD_COMPARE_SECONDARY_ID}" class="styled-input agro-period-compare__select" data-period-compare="secondary">
+                        ${compareCycles.map((cycle) => `<option value="${escapeAttr(cycle.id)}"${cycle.id === secondary.id ? ' selected' : ''}>${escapeHtml(buildCompareOptionLabel(cycle))}</option>`).join('')}
+                    </select>
+                </label>
+            </div>
+
+            <div class="agro-period-compare__summary">
+                ${renderCompareSummaryCard('Período A', primary)}
+                ${renderCompareSummaryCard('Período B', secondary)}
+            </div>
+
+            <div class="agro-period-compare__matrix">
+                ${buildCompareMetrics(primary, secondary).map(renderCompareMetric).join('')}
+            </div>
         </section>
     `;
 }
@@ -1100,6 +1291,19 @@ function bindRootEvents() {
             const field = event.target?.dataset?.periodDraft;
             if (!field) return;
             setDraftValue(field, event.target.value);
+        });
+
+        state.root.addEventListener('change', (event) => {
+            const compareRole = event.target?.dataset?.periodCompare;
+            if (!compareRole) return;
+            const nextId = normalizeId(event.target.value);
+            if (compareRole === 'primary') {
+                state.comparePrimaryId = nextId;
+            }
+            if (compareRole === 'secondary') {
+                state.compareSecondaryId = nextId;
+            }
+            renderRoot();
         });
 
         state.root.addEventListener('submit', async (event) => {

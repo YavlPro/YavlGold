@@ -9236,6 +9236,27 @@ body[data-agro-shell-depth="module"] :is(.ops-module-eyebrow, .cartera-viva-view
   color: var(--gold-prestige, var(--gold-5));
 }
 
+body[data-agro-shell-depth="module"] :is(
+  .agro-cycle-overview__subtitle,
+  .agro-cycle-compare__copy,
+  .agro-cycle-compare__summary-copy,
+  .agro-cycle-compare__metric-sub,
+  .agro-period-family__overview-subtitle,
+  .agro-period-cycles__empty-copy,
+  .agro-period-cycle-card__range,
+  .agro-period-cycle-card__movement-meta,
+  .agro-period-cycle-card__group-copy,
+  .agro-task-panel__copy,
+  .agro-operational-panel__copy,
+  .agro-operational-list-copy,
+  .ops-rankings-subtitle,
+  .ops-ranking-meta,
+  .cartera-viva-view__note
+) {
+  color: var(--text-secondary);
+  opacity: 0.94;
+}
+
 body[data-agro-active-view="cartera-viva"] .agro-cartera-viva-region .agro-commercial-family,
 body[data-agro-active-view="operational"] .agro-operational-region .agro-commercial-family {
   display: none !important;
@@ -9288,6 +9309,28 @@ body[data-agro-active-view="rankings"] .finances-section.agro-ops-v10 .ops-step-
   .agro-mobile-hub__grid {
     gap: var(--space-2, 0.5rem);
   }
+
+  body[data-agro-shell-depth="module"] :is(
+    .module-heading,
+    .agro-cycle-overview__copy,
+    .agro-cycle-compare__head,
+    .agro-cycle-compare__empty,
+    .agro-period-family__overview-copy,
+    .agro-period-compare__head,
+    .agro-period-cycles__empty,
+    .agro-task-panel__head,
+    .agro-operational-panel__head,
+    .agro-operational-list-head,
+    .ops-rankings-header,
+    .cartera-viva-view__copy
+  ) {
+    text-align: center;
+  }
+
+  body[data-agro-shell-depth="module"] :is(.module-header, .header-actions) {
+    justify-content: center;
+  }
+
 }
 
 @media (max-width: 480px) {
@@ -11218,21 +11261,19 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
   align-items: center;
   gap: 0.85rem;
   padding: 0.9rem 1.1rem;
-  border: 1px solid rgba(200, 167, 82, 0.3);
-  border-radius: 16px;
-  background:
-    linear-gradient(135deg, rgba(200, 167, 82, 0.1) 0%, rgba(200, 167, 82, 0.03) 50%, rgba(10, 10, 10, 0.95) 100%);
-  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-lg);
+  background: var(--bg-2);
+  color: var(--text-primary);
   cursor: pointer;
   transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
   text-align: left;
 }
 
 .gstats-toggle-btn:hover {
-  border-color: rgba(200, 167, 82, 0.55);
-  box-shadow: 0 4px 24px rgba(200, 167, 82, 0.1), 0 0 40px rgba(200, 167, 82, 0.04);
-  background:
-    linear-gradient(135deg, rgba(200, 167, 82, 0.14) 0%, rgba(200, 167, 82, 0.04) 50%, rgba(10, 10, 10, 0.95) 100%);
+  border-color: color-mix(in srgb, var(--gold-4) 22%, rgba(255, 255, 255, 0.08));
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
+  background: var(--bg-2);
 }
 
 .gstats-toggle-icon {
@@ -11242,8 +11283,8 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
   width: 42px;
   height: 42px;
   border-radius: 12px;
-  background: linear-gradient(135deg, rgba(200, 167, 82, 0.2), rgba(200, 167, 82, 0.08));
-  color: #C8A752;
+  background: var(--bg-3);
+  color: var(--gold-4);
   font-size: 1.1rem;
   flex-shrink: 0;
 }
@@ -11260,14 +11301,15 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
   font-family: 'Orbitron', sans-serif;
   font-size: 0.88rem;
   letter-spacing: 1px;
-  color: #fff;
+  color: var(--text-primary);
   text-transform: uppercase;
 }
 
 .gstats-toggle-hint {
   font-family: 'Rajdhani', sans-serif;
   font-size: 0.74rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-secondary);
+  opacity: 0.92;
 }
 
 .gstats-toggle-chevron {
@@ -11285,9 +11327,9 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
 }
 
 .agro-global-stats-panel.is-expanded .gstats-toggle-btn {
-  border-color: rgba(200, 167, 82, 0.45);
+  border-color: color-mix(in srgb, var(--gold-4) 18%, rgba(255, 255, 255, 0.08));
   border-radius: 16px 16px 0 0;
-  border-bottom-color: rgba(200, 167, 82, 0.12);
+  border-bottom-color: rgba(255, 255, 255, 0.05);
 }
 
 .gstats-body {
@@ -11295,11 +11337,10 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
   flex-direction: column;
   gap: 1.2rem;
   padding: 1.2rem;
-  border: 1px solid rgba(200, 167, 82, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-top: none;
   border-radius: 0 0 16px 16px;
-  background:
-    linear-gradient(180deg, rgba(200, 167, 82, 0.04) 0%, rgba(10, 10, 10, 0.98) 100%);
+  background: var(--bg-2);
   animation: gstats-slide-in 220ms ease-out;
 }
 
@@ -11328,39 +11369,39 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
 }
 
 .gstats-crop-card {
-  border: 1px solid rgba(200, 167, 82, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 14px;
   padding: 0.85rem 0.7rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.3rem;
-  background:
-    linear-gradient(180deg, rgba(200, 167, 82, 0.06) 0%, rgba(10, 10, 10, 0.92) 100%);
+  background: var(--bg-3);
   transition: border-color 180ms ease, transform 180ms ease;
 }
 
 .gstats-crop-card:hover {
-  border-color: rgba(200, 167, 82, 0.4);
+  border-color: color-mix(in srgb, var(--gold-4) 20%, rgba(255, 255, 255, 0.08));
   transform: translateY(-2px);
 }
 
 .gstats-crop-icon {
   font-size: 1.3rem;
   line-height: 1;
+  color: var(--gold-4);
 }
 
 .gstats-crop-value {
   font-family: 'Orbitron', sans-serif;
   font-size: 1.5rem;
-  color: #fff;
+  color: var(--text-primary);
   line-height: 1;
 }
 
-.gstats-crop-card--active .gstats-crop-value { color: #4ade80; }
-.gstats-crop-card--done .gstats-crop-value   { color: #C8A752; }
-.gstats-crop-card--lost .gstats-crop-value   { color: #f87171; }
-.gstats-crop-card--total .gstats-crop-value  { color: #e8d48b; }
+.gstats-crop-card--active .gstats-crop-value { color: var(--gold-4); }
+.gstats-crop-card--done .gstats-crop-value   { color: var(--text-gold-prestige); }
+.gstats-crop-card--lost .gstats-crop-value   { color: color-mix(in srgb, var(--color-error) 68%, var(--text-secondary) 32%); }
+.gstats-crop-card--total .gstats-crop-value  { color: var(--gold-5); }
 
 .gstats-crop-label {
   font-family: 'Rajdhani', sans-serif;
@@ -11368,7 +11409,8 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--text-secondary);
+  opacity: 0.86;
 }
 
 /* Finance Section */
@@ -11384,7 +11426,7 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
   font-size: 0.78rem;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: #C8A752;
+  color: var(--gold-4);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -11413,8 +11455,8 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
 }
 
 .gstats-money-row:hover {
-  background: rgba(200, 167, 82, 0.04);
-  border-color: rgba(200, 167, 82, 0.15);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: color-mix(in srgb, var(--gold-4) 16%, rgba(255, 255, 255, 0.08));
 }
 
 .gstats-money-dot {
@@ -11422,21 +11464,21 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
-  background: rgba(200, 167, 82, 0.4);
+  background: color-mix(in srgb, var(--gold-4) 55%, var(--text-secondary) 45%);
 }
 
-.gstats-money-row--income  .gstats-money-dot { background: #4ade80; }
-.gstats-money-row--expense .gstats-money-dot { background: #f87171; }
-.gstats-money-row--pending .gstats-money-dot { background: #fbbf24; }
-.gstats-money-row--loss    .gstats-money-dot { background: #ef4444; }
-.gstats-money-row--cost    .gstats-money-dot { background: #fb923c; }
-.gstats-money-row--profit  .gstats-money-dot { background: #C8A752; }
+.gstats-money-row--income  .gstats-money-dot { background: color-mix(in srgb, var(--color-success) 64%, var(--text-secondary) 36%); }
+.gstats-money-row--expense .gstats-money-dot { background: color-mix(in srgb, var(--color-error) 54%, var(--text-secondary) 46%); }
+.gstats-money-row--pending .gstats-money-dot { background: color-mix(in srgb, var(--gold-4) 70%, var(--text-secondary) 30%); }
+.gstats-money-row--loss    .gstats-money-dot { background: color-mix(in srgb, var(--color-error) 64%, var(--text-secondary) 36%); }
+.gstats-money-row--cost    .gstats-money-dot { background: color-mix(in srgb, var(--gold-3) 70%, var(--text-secondary) 30%); }
+.gstats-money-row--profit  .gstats-money-dot { background: var(--gold-4); }
 
 .gstats-money-label {
   flex: 1;
   font-family: 'Rajdhani', sans-serif;
   font-size: 0.76rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary);
   min-width: 0;
 }
 
@@ -11444,15 +11486,15 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
   font-family: 'Rajdhani', sans-serif;
   font-size: 0.9rem;
   font-weight: 700;
-  color: #C8A752;
+  color: var(--gold-4);
   white-space: nowrap;
   letter-spacing: 0.3px;
 }
 
 .gstats-money-value--highlight {
   font-size: 1rem;
-  color: #e8d48b;
-  text-shadow: 0 0 10px rgba(200, 167, 82, 0.25);
+  color: var(--gold-5);
+  text-shadow: none;
 }
 
 /* Top Lists */
@@ -11463,11 +11505,10 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
 }
 
 .gstats-top-card {
-  border: 1px solid rgba(200, 167, 82, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 14px;
   padding: 0.85rem;
-  background:
-    linear-gradient(180deg, rgba(200, 167, 82, 0.04) 0%, rgba(10, 10, 10, 0.95) 100%);
+  background: var(--bg-3);
 }
 
 .gstats-top-title {
@@ -11476,7 +11517,7 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
   font-size: 0.7rem;
   letter-spacing: 0.8px;
   text-transform: uppercase;
-  color: #C8A752;
+  color: var(--gold-4);
   display: flex;
   align-items: center;
   gap: 0.45rem;
@@ -11506,23 +11547,21 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
   justify-content: space-between;
   gap: 0.5rem;
   padding: 0.5rem 0.6rem;
-  border: 1px solid rgba(200, 167, 82, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 10px;
-  background: rgba(15, 15, 15, 0.6);
+  background: var(--bg-2);
   transition: border-color 160ms ease, background 160ms ease;
 }
 
 .gstats-body .agro-profile-top-item:hover {
-  border-color: rgba(200, 167, 82, 0.25);
-  background: rgba(200, 167, 82, 0.03);
+  border-color: color-mix(in srgb, var(--gold-4) 16%, rgba(255, 255, 255, 0.08));
+  background: var(--bg-2);
 }
 
 .gstats-body .agro-profile-top-item:first-child {
-  border-color: rgba(200, 167, 82, 0.4);
-  background:
-    linear-gradient(135deg, rgba(200, 167, 82, 0.12) 0%, rgba(200, 167, 82, 0.03) 100%),
-    rgba(10, 10, 10, 0.9);
-  box-shadow: 0 2px 12px rgba(200, 167, 82, 0.06);
+  border-color: color-mix(in srgb, var(--gold-4) 22%, rgba(255, 255, 255, 0.08));
+  background: var(--bg-2);
+  box-shadow: none;
 }
 
 .gstats-body .agro-profile-top-item::before {
@@ -11530,13 +11569,13 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
   font-family: 'Orbitron', sans-serif;
   font-size: 0.7rem;
   font-weight: 700;
-  color: rgba(200, 167, 82, 0.6);
+  color: color-mix(in srgb, var(--gold-4) 72%, var(--text-secondary) 28%);
   min-width: 22px;
 }
 
 .gstats-body .agro-profile-top-item:first-child::before {
-  color: #C8A752;
-  text-shadow: 0 0 8px rgba(200, 167, 82, 0.3);
+  color: var(--gold-4);
+  text-shadow: none;
 }
 
 .gstats-body .agro-profile-top-name {
@@ -11544,7 +11583,7 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
   font-family: 'Rajdhani', sans-serif;
   font-size: 0.82rem;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text-primary);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -11562,7 +11601,7 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
   font-family: 'Rajdhani', sans-serif;
   font-size: 0.85rem;
   font-weight: 700;
-  color: #C8A752;
+  color: var(--gold-4);
 }
 
 .gstats-body .agro-profile-top-count {
@@ -11586,9 +11625,9 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
 }
 
 .gstats-export-btn {
-  border: 1px solid rgba(200, 167, 82, 0.4);
-  background: rgba(200, 167, 82, 0.1);
-  color: #C8A752;
+  border: 1px solid var(--border-gold);
+  background: color-mix(in srgb, var(--gold-4) 8%, transparent);
+  color: var(--gold-4);
   border-radius: 10px;
   padding: 0.5rem 0.85rem;
   font-family: 'Rajdhani', sans-serif;
@@ -11603,8 +11642,8 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
 }
 
 .gstats-export-btn:hover {
-  background: rgba(200, 167, 82, 0.2);
-  border-color: rgba(200, 167, 82, 0.7);
+  background: color-mix(in srgb, var(--gold-4) 12%, transparent);
+  border-color: color-mix(in srgb, var(--gold-4) 32%, rgba(255, 255, 255, 0.08));
 }
 
 .gstats-export-btn:disabled {
@@ -11613,15 +11652,15 @@ body.agro-profile-open[data-agro-active-view="perfil"] {
 }
 
 .gstats-export-btn--detail {
-  border-color: rgba(200, 167, 82, 0.22);
-  background: rgba(200, 167, 82, 0.05);
-  color: rgba(200, 167, 82, 0.78);
+  border-color: rgba(255, 255, 255, 0.06);
+  background: transparent;
+  color: var(--text-secondary);
 }
 
 .gstats-export-btn--detail:hover {
-  background: rgba(200, 167, 82, 0.14);
-  border-color: rgba(200, 167, 82, 0.5);
-  color: #C8A752;
+  background: color-mix(in srgb, var(--gold-4) 8%, transparent);
+  border-color: var(--border-gold);
+  color: var(--gold-4);
 }
 
 /* Responsive */

@@ -25,10 +25,8 @@ body.agro-operational-modal-open {
 .agro-operational-shell .module-header {
   margin-bottom: 0;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 5%, transparent), transparent 18%),
-    var(--bg-1);
-  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.28);
+  background: var(--bg-1);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
 }
 
 .agro-operational-shell .header-actions {
@@ -148,13 +146,10 @@ body.agro-operational-modal-open {
 .agro-operational-card {
   position: relative;
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border-gold);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 6%, transparent), transparent 20%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.018), transparent 60%),
-    var(--bg-3);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--bg-2);
   box-shadow:
-    0 16px 32px rgba(0, 0, 0, 0.28),
+    0 12px 28px rgba(0, 0, 0, 0.24),
     inset 0 1px 0 rgba(255, 255, 255, 0.02);
   overflow: hidden;
 }
@@ -183,8 +178,7 @@ body.agro-operational-modal-open {
   height: 1px;
   background: var(--metallic-border);
   background-size: 200% 100%;
-  opacity: 0.75;
-  animation: borderShimmer 4s linear infinite;
+  opacity: 0.34;
 }
 
 .agro-operational-panel {
