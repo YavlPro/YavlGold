@@ -7986,8 +7986,13 @@ body.agro-shell-rail-collapsed.agro-shell-ready .app-container {
 
 .agro-shell-header__right {
   flex: 1;
-  justify-content: space-between;
+  justify-content: flex-end;
   flex-wrap: wrap;
+}
+
+.agro-shell-header__utilities {
+  justify-content: flex-end;
+  margin-left: auto;
 }
 
 .agro-header-link {
@@ -9037,6 +9042,22 @@ body[data-agro-shell-depth="module"].agro-shell-ready .app-container {
   gap: var(--space-3, 0.75rem);
 }
 
+.agro-mobile-hub__section-title {
+  grid-column: 1 / -1;
+  margin: var(--space-2, 0.5rem) 0 0;
+  color: var(--gold-prestige, var(--gold-5));
+  font-family: var(--font-heading, 'Orbitron', sans-serif);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.agro-mobile-hub__section-title:first-child {
+  margin-top: 0;
+}
+
 .agro-mobile-hub__item,
 .agro-mobile-hub__item--link {
   display: grid;
@@ -9196,6 +9217,25 @@ body[data-agro-shell-depth="module"] :is(.ops-module-eyebrow, .cartera-viva-view
 body[data-agro-active-view="cartera-viva"] .agro-cartera-viva-region .agro-commercial-family,
 body[data-agro-active-view="operational"] .agro-operational-region .agro-commercial-family {
   display: none !important;
+}
+
+body[data-agro-active-view="rankings"] .finances-section.agro-ops-v10 .financial-operations-card {
+  display: block;
+}
+
+body[data-agro-active-view="rankings"] .finances-section.agro-ops-v10 .financial-operations-header,
+body[data-agro-active-view="rankings"] .finances-section.agro-ops-v10 .ops-step-block--viewer,
+body[data-agro-active-view="rankings"] .finances-section.agro-ops-v10 .financial-tab-panels {
+  display: none;
+}
+
+body[data-agro-active-view="rankings"] .finances-section.agro-ops-v10 .ops-context-steps {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+body[data-agro-active-view="rankings"] .finances-section.agro-ops-v10 .ops-step-block--selector {
+  min-height: auto;
 }
 
 @media (max-width: 768px) {

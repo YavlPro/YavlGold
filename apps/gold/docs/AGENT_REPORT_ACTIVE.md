@@ -1628,3 +1628,43 @@ GREEN. Documentacion canonica actualizada sin tocar codigo ni ADN Visual.
 - No se cambio logica de seleccion.
 - No se toco `apps/gold/agro/agro.js`.
 - No se toco Supabase, migraciones, RLS, RPC, Storage, Vercel, workflows ni credenciales.
+
+---
+
+## 2026-04-29 — Corrección semántica hub/module Agro
+
+**Estado:** GREEN
+
+### Diagnóstico
+
+El nuevo hub simplificó la navegación, pero produjo una regresión semántica: `Operación Comercial` aparece como módulo cuando debe tratarse como familia conceptual/económica. Los módulos reales son Cartera Viva, Cartera Operativa y Mi Carrito. También deben restaurarse accesos importantes como Ciclos finalizados, Estadísticas de ciclos y el selector de cultivo en Rankings.
+
+### Plan
+
+- Eliminar `Operación Comercial` como card/módulo clickeable del hub.
+- Reorganizar la puerta `Operación` con módulos reales.
+- Restaurar Ciclos activos/finalizados/estadísticas de ciclos.
+- Restaurar Ciclos de Período y subviews reales existentes.
+- Revisar Rankings y confirmar selector de cultivo.
+- Separar visualmente marca, usuario y notificaciones.
+- No tocar `agro.js` ni datos.
+
+### Cambios
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/index.html` | Hub markup | La puerta `Operación` elimina `Operación Comercial` como card clickeable y restaura accesos por secciones: Producción, Períodos, Finanzas, Trabajo y lectura. |
+| `apps/gold/agro/agro.css` | Shell CSS | Se agregan encabezados visuales sobrios para secciones del hub, se alinea el header para separar marca de usuario/notificaciones y se permite que Rankings muestre solo el selector de cultivo sin reabrir toda la superficie del facturero. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Docs | Diagnóstico, plan y cierre de la corrección semántica. |
+
+### Validación
+
+- `node --check apps/gold/agro/agro-shell.js`: PASS.
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS. Warning local no bloqueante: Node `v25.6.0` vs engine esperado `20.x`.
+
+### NO se hizo
+
+- No se tocó `apps/gold/agro/agro.js`.
+- No se tocó Supabase, migraciones, RLS, RPC, Storage, Vercel, workflows ni credenciales.
+- No se modificó lógica de datos, cartera, cultivos ni AgroRepo.
