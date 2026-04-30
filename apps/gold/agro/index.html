@@ -318,8 +318,8 @@
                         data-agro-mode-scope="tools">
                         <i class="fa-solid fa-chart-column agro-shell-link__icon" aria-hidden="true"></i>
                         <span class="agro-launcher__tile-copy">
-                            <span class="agro-shell-link__label">Estadísticas</span>
-                            <span class="agro-launcher__tile-desc">Rankings y lectura rápida de resultados.</span>
+                            <span class="agro-shell-link__label">Rankings de Clientes</span>
+                            <span class="agro-launcher__tile-desc">Clientes cobrados, pendientes y lectura por cultivo.</span>
                         </span>
                     </button>
                 </div>
@@ -373,17 +373,8 @@
                         data-agro-mode-scope="tools">
                         <i class="fa-solid fa-toolbox agro-shell-link__icon" aria-hidden="true"></i>
                         <span class="agro-launcher__tile-copy">
-                            <span class="agro-shell-link__label">Herramientas</span>
-                            <span class="agro-launcher__tile-desc">Utilidades y soporte operativo.</span>
-                        </span>
-                    </button>
-                    <button type="button" class="agro-shell-link agro-launcher__tile"
-                        data-agro-mode-scope="crop non_crop tools"
-                        onclick="document.querySelector('.agro-launcher__close')?.click(); window.setTimeout(function(){ document.querySelector('.agro-feedback-fab')?.click(); }, 0);">
-                        <i class="fa-solid fa-comment-dots agro-shell-link__icon" aria-hidden="true"></i>
-                        <span class="agro-launcher__tile-copy">
-                            <span class="agro-shell-link__label">Feedback</span>
-                            <span class="agro-launcher__tile-desc">Reportar bug o sugerir mejora.</span>
+                            <span class="agro-shell-link__label">Ayuda y soporte</span>
+                            <span class="agro-launcher__tile-desc">Documentación, soporte y privacidad.</span>
                         </span>
                     </button>
                     <a href="/" class="agro-launcher__tile agro-launcher__tile--link"
@@ -514,6 +505,10 @@
                     <h2 class="agro-mobile-hub__title">Inicio</h2>
                 </div>
                 <div class="agro-mobile-hub__grid">
+                    <button type="button" class="agro-mobile-hub__item" data-agro-view="perfil">
+                        <i class="fa-solid fa-circle-user" aria-hidden="true"></i>
+                        <span>Mi Perfil</span>
+                    </button>
                     <button type="button" class="agro-mobile-hub__item" data-agro-view="dashboard">
                         <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
                         <span>Dashboard Agro</span>
@@ -601,7 +596,7 @@
                     </button>
                     <button type="button" class="agro-mobile-hub__item" data-agro-view="rankings">
                         <i class="fa-solid fa-chart-column" aria-hidden="true"></i>
-                        <span>Rankings</span>
+                        <span>Rankings de Clientes</span>
                     </button>
                     <button type="button" class="agro-mobile-hub__item" data-agro-view="clima">
                         <i class="fa-solid fa-cloud-sun" aria-hidden="true"></i>
@@ -635,23 +630,20 @@
                     <h2 class="agro-mobile-hub__title">Menú</h2>
                 </div>
                 <div class="agro-mobile-hub__grid">
-                    <button type="button" class="agro-mobile-hub__item" data-agro-view="perfil">
-                        <i class="fa-solid fa-circle-user" aria-hidden="true"></i>
-                        <span>Perfil</span>
-                    </button>
                     <a href="/docs-agro" class="agro-mobile-hub__item agro-mobile-hub__item--link" target="_blank"
                         rel="noopener">
                         <i class="fa-solid fa-book" aria-hidden="true"></i>
                         <span>Documentación</span>
                     </a>
-                    <button type="button" class="agro-mobile-hub__item" data-agro-mobile-feedback>
-                        <i class="fa-solid fa-comment-dots" aria-hidden="true"></i>
-                        <span>Feedback</span>
-                    </button>
-                    <button type="button" class="agro-mobile-hub__item" data-agro-view="herramientas">
-                        <i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i>
-                        <span>Ajustes y soporte</span>
-                    </button>
+                    <a href="https://t.me/YavlPro" class="agro-mobile-hub__item agro-mobile-hub__item--link"
+                        target="_blank" rel="noopener">
+                        <i class="fa-solid fa-headset" aria-hidden="true"></i>
+                        <span>Soporte oficial</span>
+                    </a>
+                    <a href="/privacy.html" class="agro-mobile-hub__item agro-mobile-hub__item--link">
+                        <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                        <span>Privacidad</span>
+                    </a>
                 </div>
             </div>
         </section>
@@ -961,7 +953,7 @@
                         </button>
                         <button type="button" class="agro-guide-step" data-agro-view="herramientas">
                             <span class="agro-guide-step__index">5</span>
-                            <span class="agro-guide-step__text">Más herramientas</span>
+                            <span class="agro-guide-step__text">Ayuda y soporte</span>
                         </button>
                     </div>
                 </div>
@@ -1420,13 +1412,13 @@
                     <p class="ops-module-eyebrow">Finanzas Agro</p>
                     <h2 class="module-title ops-header-default">Operaciones</h2>
                     <h2 class="module-title ops-header-carrito">Mi Carrito</h2>
-                    <h2 class="module-title ops-header-rankings">Rankings de Operación</h2>
+                    <h2 class="module-title ops-header-rankings">Rankings de Clientes</h2>
                     <p class="module-subtitle ops-header-default">Movimientos, privacidad y vistas del facturero
                         en una sola mesa operativa.</p>
                     <p class="module-subtitle ops-header-carrito">Gestiona tu lista de compras agro.
                         Agrega insumos, revisa totales y exporta el pedido.</p>
-                    <p class="module-subtitle ops-header-rankings">Vista rápida de compras, pendientes
-                        e ingresos cobrados por cliente y cultivo.</p>
+                    <p class="module-subtitle ops-header-rankings">Vista rápida de clientes cobrados, pendientes y
+                        comportamiento por cultivo.</p>
                 </div>
             </div>
         </header>
@@ -1467,13 +1459,14 @@
                         <p class="ops-step-label">PASO 1 · Seleccionar cultivo</p>
                         <div class="ops-step-copy">
                             <p class="ops-step-title">Elegir contexto</p>
-                            <p class="ops-step-note">Vista general o un ciclo activo para enfocar el registro.</p>
+                            <p class="ops-step-note">Vista general, ciclo activo o ciclo cerrado para enfocar la
+                                lectura.</p>
                         </div>
                     </div>
                     <div class="ops-cultivos-panel" id="ops-cultivos-panel" hidden inert>
                         <div class="ops-cultivos-header">
                             <p class="ops-cultivos-title">Seleccionar cultivo</p>
-                            <p class="ops-cultivos-subtitle">Usa Vista General o filtra por un activo en producción.</p>
+                            <p class="ops-cultivos-subtitle">Usa Vista General o filtra por ciclo activo o cerrado.</p>
                         </div>
                         <div class="ops-cultivos-chip-row" id="ops-cultivos-active-row" role="group"
                             aria-label="Cultivos activos y vista general"></div>
@@ -1481,12 +1474,15 @@
                         <div class="ops-cultivos-finished" id="ops-cultivos-finished">
                             <div class="ops-cultivos-history-copy">
                                 <p class="ops-cultivos-history-title">Ciclos cerrados</p>
-                                <p class="ops-cultivos-history-subtitle" id="ops-cultivos-finished-note">Finalizados y
-                                    perdidos viven en Ciclos finalizados.</p>
+                                <p class="ops-cultivos-history-subtitle" id="ops-cultivos-finished-note">Selecciona un
+                                    ciclo cerrado para filtrar Rankings; el historial es acceso secundario.</p>
                             </div>
+                            <div class="ops-cultivos-chip-row ops-cultivos-finished-picker"
+                                id="ops-cultivos-finished-picker" role="group"
+                                aria-label="Ciclos finalizados como contexto de rankings"></div>
                             <button type="button" class="ops-cultivos-history-btn" id="ops-cultivos-history-btn"
                                 data-agro-view="ciclos" data-agro-subview="finalizados">
-                                <span>Abrir finalizados</span>
+                                <span>Ver historial</span>
                                 <span class="ops-cultivos-count" id="ops-cultivos-finished-count">0</span>
                             </button>
                         </div>
@@ -1750,9 +1746,9 @@
                     <div class="ops-rankings-panel" id="ops-rankings-panel">
                         <div class="ops-rankings-header">
                             <div>
-                                <h4 class="ops-rankings-title">Rankings de Operación</h4>
-                                <p class="ops-rankings-subtitle">Vista rápida de compras, pendientes e ingresos
-                                    cobrados.</p>
+                                <h4 class="ops-rankings-title">Rankings de Clientes</h4>
+                                <p class="ops-rankings-subtitle">Vista rápida de clientes cobrados, pendientes y
+                                    comportamiento por cultivo.</p>
                             </div>
                             <button type="button" class="ops-rankings-export-btn" id="ops-rankings-export-btn">
                                 <i class="fa-solid fa-file-export" aria-hidden="true"></i>
@@ -1834,9 +1830,9 @@
             <div class="agro-pagados-dedicated__hero">
                 <div class="agro-pagados-dedicated__copy">
                     <p class="agro-pagados-dedicated__eyebrow">Vista dedicada</p>
-                    <h3 class="agro-pagados-dedicated__title">Rankings de Operación</h3>
-                    <p class="agro-pagados-dedicated__subtitle">Vista r&aacute;pida de compras, pendientes e ingresos
-                        cobrados por cliente y cultivo.</p>
+                    <h3 class="agro-pagados-dedicated__title">Rankings de Clientes</h3>
+                    <p class="agro-pagados-dedicated__subtitle">Vista rápida de clientes cobrados, pendientes y
+                        comportamiento por cultivo.</p>
                 </div>
                 <div class="agro-privacy-strip">
                     <span class="agro-privacy-strip__label">Privacidad</span>
@@ -1857,58 +1853,43 @@
         <details class="yg-accordion" id="yg-acc-tools">
             <summary class="yg-accordion-summary" aria-controls="agro-tools-content" aria-expanded="false">
                 <span class="yg-accordion-icon">🧰</span>
-                <span class="yg-accordion-title">Herramientas</span>
+                <span class="yg-accordion-title">Ayuda y soporte</span>
                 <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
             </summary>
             <div class="yg-accordion-content" id="agro-tools-content">
                 <div class="agro-tools-grid" data-agro-tools-body>
-                    <article class="agro-tool-card" id="agro-tool-card-weather">
-                        <div class="agro-tool-card__icon-box">
-                            <i class="fa-solid fa-cloud-sun" aria-hidden="true"></i>
-                        </div>
-                        <p class="agro-tool-card__eyebrow">Clima</p>
-                        <h3 class="agro-tool-card__title">Pronóstico semanal</h3>
-                        <p class="agro-tool-card__copy">Humedad, temperatura y ventanas de trabajo antes de tomar
-                            decisiones en campo.</p>
-                        <button type="button" class="agro-tool-card__action" data-agro-view="clima">
-                            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Ver clima
-                        </button>
-                    </article>
-                    <article class="agro-tool-card">
-                        <div class="agro-tool-card__icon-box">
-                            <i class="fa-solid fa-robot" aria-hidden="true"></i>
-                        </div>
-                        <p class="agro-tool-card__eyebrow">Asistencia</p>
-                        <h3 class="agro-tool-card__title">Asistente IA</h3>
-                        <p class="agro-tool-card__copy">Resuelve dudas de campo, contexto de cultivo y complementa tu
-                            bitácora con IA.</p>
-                        <button type="button" class="agro-tool-card__action" data-agro-view="asistente">
-                            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Consultar
-                        </button>
-                    </article>
-                    <article class="agro-tool-card">
-                        <div class="agro-tool-card__icon-box">
-                            <i class="fa-solid fa-users" aria-hidden="true"></i>
-                        </div>
-                        <p class="agro-tool-card__eyebrow">Social</p>
-                        <h3 class="agro-tool-card__title">Panel Agro Social</h3>
-                        <p class="agro-tool-card__copy">Clientes, relaciones comerciales y contexto relacional en un
-                            solo lugar.</p>
-                        <button type="button" class="agro-tool-card__action" data-agro-action="social">
-                            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Ver social
-                        </button>
-                    </article>
                     <article class="agro-tool-card">
                         <div class="agro-tool-card__icon-box">
                             <i class="fa-solid fa-book" aria-hidden="true"></i>
                         </div>
-                        <p class="agro-tool-card__eyebrow">Bitácora</p>
-                        <h3 class="agro-tool-card__title">AgroRepo</h3>
-                        <p class="agro-tool-card__copy">Documenta hallazgos, notas y memoria operativa como registro
-                            oficial del módulo.</p>
-                        <button type="button" class="agro-tool-card__action" data-agro-view="agrorepo">
-                            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Abrir bitácora
-                        </button>
+                        <p class="agro-tool-card__eyebrow">Guía</p>
+                        <h3 class="agro-tool-card__title">Documentación Agro</h3>
+                        <p class="agro-tool-card__copy">Referencia oficial para entender el módulo y sus superficies.</p>
+                        <a class="agro-tool-card__action" href="/docs-agro" target="_blank" rel="noopener">
+                            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Abrir documentación
+                        </a>
+                    </article>
+                    <article class="agro-tool-card">
+                        <div class="agro-tool-card__icon-box">
+                            <i class="fa-solid fa-headset" aria-hidden="true"></i>
+                        </div>
+                        <p class="agro-tool-card__eyebrow">Contacto</p>
+                        <h3 class="agro-tool-card__title">Soporte oficial</h3>
+                        <p class="agro-tool-card__copy">Canal directo del proyecto para ayuda operativa y comunicación.</p>
+                        <a class="agro-tool-card__action" href="https://t.me/YavlPro" target="_blank" rel="noopener">
+                            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Abrir soporte
+                        </a>
+                    </article>
+                    <article class="agro-tool-card">
+                        <div class="agro-tool-card__icon-box">
+                            <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                        </div>
+                        <p class="agro-tool-card__eyebrow">Cuenta</p>
+                        <h3 class="agro-tool-card__title">Privacidad</h3>
+                        <p class="agro-tool-card__copy">Consulta las reglas de privacidad y tratamiento de información.</p>
+                        <a class="agro-tool-card__action" href="/privacy.html">
+                            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Ver privacidad
+                        </a>
                     </article>
                 </div>
             </div>

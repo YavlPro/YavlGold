@@ -1668,3 +1668,44 @@ El nuevo hub simplificó la navegación, pero produjo una regresión semántica:
 - No se tocó `apps/gold/agro/agro.js`.
 - No se tocó Supabase, migraciones, RLS, RPC, Storage, Vercel, workflows ni credenciales.
 - No se modificó lógica de datos, cartera, cultivos ni AgroRepo.
+
+---
+
+## 2026-04-29 — Corrección menú/rankings hub Agro
+
+**Estado:** GREEN
+
+### Diagnóstico
+
+El hub quedó visualmente limpio, pero persisten errores semánticos: Rankings aparece con nombre ambiguo, el selector de ciclos finalizados navega en vez de seleccionar contexto, Menú/Ajustes duplica módulos existentes, Feedback está duplicado y Perfil está mejor ubicado en Inicio.
+
+### Plan
+
+- Renombrar Rankings según su función real.
+- Corregir selección de ciclos finalizados en Rankings.
+- Limpiar Menú/Ajustes para no duplicar módulos.
+- Mantener Feedback solo como FAB flotante.
+- Mover Perfil a Inicio.
+- No tocar datos ni Supabase.
+
+### Cambios
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/index.html` | Hub/copy | `Mi Perfil` se movió a Inicio; Menú queda con Documentación, Soporte oficial y Privacidad; se retiró Feedback como card; Rankings pasa a `Rankings de Clientes`; Ayuda/soporte deja de duplicar Clima, Asistente, Social y AgroRepo. |
+| `apps/gold/agro/agro.css` | CSS contextual | El bloque de ciclos cerrados permite chips de selección en Rankings y mantiene el enlace a historial como secundario. |
+| `apps/gold/agro/agro-shell.js` | Shell JS | `perfil` vuelve al hub Inicio; `rankings` usa título `Rankings de Clientes`; se agrega picker de ciclos cerrados usando `window.__AGRO_CROPS_STATE` y `window.setSelectedCropId()` sin tocar `agro.js`. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Docs | Diagnóstico, plan y cierre de la corrección menú/rankings. |
+
+### Validación
+
+- `node --check apps/gold/agro/agro-shell.js`: PASS.
+- `node --check apps/gold/agro/agro-selection.js`: PASS.
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS. Warning local no bloqueante: Node `v25.6.0` vs engine esperado `20.x`.
+
+### NO se hizo
+
+- No se tocó `apps/gold/agro/agro.js`.
+- No se tocó Supabase, migraciones, RLS, RPC, Storage, Vercel, workflows ni credenciales.
+- No se cambió lógica financiera, cultivos, cartera ni AgroRepo.

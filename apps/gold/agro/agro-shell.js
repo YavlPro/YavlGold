@@ -7,6 +7,9 @@ const AGRO_MOBILE_RAIL_COLLAPSED_KEY = 'YG_AGRO_MOBILE_RAIL_COLLAPSED_V1';
 const AGRO_DEFAULT_VIEW = 'dashboard';
 const AGRO_DEFAULT_SHELL_MODE = 'all';
 const AGRO_DEFAULT_MOBILE_HUB = 'inicio';
+const AGRO_CROPS_READY_EVENT = 'AGRO_CROPS_READY';
+const AGRO_CROPS_STATE_KEY = '__AGRO_CROPS_STATE';
+const AGRO_GENERAL_CROP_ID = '__general__';
 
 const SHELL_ENTRY_SELECTOR = [
     '.agro-shell-link[data-agro-view]',
@@ -62,7 +65,7 @@ const VIEW_TO_MOBILE_HUB = Object.freeze({
     'task-cycles': 'operacion',
     agrorepo: 'memoria',
     asistente: 'memoria',
-    perfil: 'menu',
+    perfil: 'inicio',
     herramientas: 'menu'
 });
 
@@ -126,10 +129,10 @@ const VIEW_CONFIG = Object.freeze({
     'task-cycles': { region: 'task-cycles', label: 'Ciclos de Tareas', focusSelector: '#agro-task-cycles-root' },
     operaciones: { region: 'ops', label: 'Operación Comercial', resolveTab: resolveOperationsTab, dense: true },
     carrito: { region: 'ops', label: 'Mi Carrito', tab: 'carrito', focusSelector: '#agro-carrito-dedicated', dense: true },
-    rankings: { region: 'ops', label: 'Rankings', tab: 'rankings', focusSelector: '#agro-rankings-dedicated', dense: true },
+    rankings: { region: 'ops', label: 'Rankings de Clientes', tab: 'rankings', focusSelector: '#agro-rankings-dedicated', dense: true },
     'cartera-viva': { region: 'cartera-viva', label: 'Cartera Viva', focusSelector: '#agro-cartera-viva-root' },
     clima: { region: 'clima', label: 'Clima Agro', focusSelector: '[data-agro-shell-region="clima"]' },
-    herramientas: { region: 'herramientas', label: 'Herramientas', focusSelector: '#agro-tools-section' },
+    herramientas: { region: 'herramientas', label: 'Ayuda y soporte', focusSelector: '#agro-tools-section' },
     agrorepo: { region: 'agrorepo', label: 'AgroRepo', focusSelector: '#agro-repo-section', dense: true },
     asistente: { region: 'asistente', label: 'Asistente IA', focusSelector: '[data-agro-shell-region="asistente"]' }
 });
@@ -143,10 +146,10 @@ const SHELL_VIEW_KEYWORDS = Object.freeze({
     'task-cycles': Object.freeze(['tareas', 'trabajo diario', 'pendientes', 'agenda']),
     operaciones: Object.freeze(['operacion comercial', 'gastos', 'ingresos', 'fiados', 'perdidas']),
     carrito: Object.freeze(['carrito', 'insumos', 'compras', 'lista']),
-    rankings: Object.freeze(['ranking', 'rankings', 'estadisticas', 'top', 'comparacion']),
+    rankings: Object.freeze(['ranking', 'rankings', 'clientes', 'estadisticas', 'top', 'comparacion']),
     'cartera-viva': Object.freeze(['cartera viva', 'clientes', 'fiados', 'deudas', 'pendientes']),
     clima: Object.freeze(['clima', 'temperatura', 'lluvia', 'tiempo']),
-    herramientas: Object.freeze(['herramientas', 'utilidades', 'operativas']),
+    herramientas: Object.freeze(['ayuda', 'soporte', 'documentacion', 'privacidad', 'herramientas']),
     agrorepo: Object.freeze(['bitacora', 'agrorepo', 'memoria', 'notas', 'historial']),
     asistente: Object.freeze(['asistente', 'ia', 'ayuda', 'contexto'])
 });
@@ -166,6 +169,151 @@ function resolveOperationsTab() {
     const currentTab = String(document.querySelector('.financial-tab-btn.is-active')?.dataset?.tab || '').trim();
     if (CORE_OPERATIONS_TABS.has(currentTab)) return currentTab;
     return 'gastos';
+}
+
+function normalizeCropIdToken(value) {
+    if (value === undefined || value === null) return '';
+    return String(value).trim();
+}
+
+function readCropsSnapshot() {
+    if (typeof window === 'undefined') return null;
+    const snapshot = window[AGRO_CROPS_STATE_KEY];
+    return snapshot && typeof snapshot === 'object' ? snapshot : null;
+}
+
+function readSelectedCropId() {
+    if (typeof window === 'undefined') return '';
+    if (typeof window.getSelectedCropId === 'function') {
+        return normalizeCropIdToken(window.getSelectedCropId());
+    }
+    return normalizeCropIdToken(window.YG_AGRO_SELECTED_CROP_ID);
+}
+
+function getRenderedActiveCropIds() {
+    const activeRow = document.getElementById('ops-cultivos-active-row');
+    if (!activeRow) return null;
+    const chips = Array.from(activeRow.querySelectorAll('.ops-cultivo-chip[data-crop-id]'));
+    const hasGeneralChip = chips.some((chip) => normalizeCropIdToken(chip.dataset.cropId) === AGRO_GENERAL_CROP_ID);
+    if (!hasGeneralChip) return null;
+    const ids = new Set();
+    chips.forEach((chip) => {
+        const cropId = normalizeCropIdToken(chip.dataset.cropId);
+        if (cropId && cropId !== AGRO_GENERAL_CROP_ID) {
+            ids.add(cropId);
+        }
+    });
+    return ids;
+}
+
+function getCropChipLabel(crop) {
+    const icon = String(crop?.icon || '🌱').trim() || '🌱';
+    const name = String(crop?.name || crop?.nombre || 'Cultivo').trim() || 'Cultivo';
+    return `${icon} ${name}`.trim();
+}
+
+function getCropChipMeta(crop) {
+    const status = String(crop?.status_override || crop?.status || '').trim();
+    const endDate = String(crop?.end_date || crop?.fecha_fin || crop?.finished_at || crop?.closed_at || '').trim();
+    if (status) return status.replace(/[_-]+/g, ' ');
+    if (endDate) return 'Cerrado';
+    return 'Finalizado';
+}
+
+function createFinishedCropContextChip(crop, selectedId) {
+    const cropId = normalizeCropIdToken(crop?.id);
+    if (!cropId) return null;
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'ops-cultivo-chip ops-cultivo-chip--finished';
+    chip.dataset.agroFinishedCropContext = cropId;
+    chip.dataset.cropId = cropId;
+    chip.setAttribute('aria-pressed', cropId === selectedId ? 'true' : 'false');
+    if (cropId === selectedId) {
+        chip.classList.add('is-active');
+    }
+
+    const labelEl = document.createElement('span');
+    labelEl.className = 'ops-cultivo-chip-name';
+    labelEl.textContent = getCropChipLabel(crop);
+
+    const metaEl = document.createElement('span');
+    metaEl.className = 'ops-cultivo-chip-meta';
+    metaEl.textContent = getCropChipMeta(crop);
+
+    chip.append(labelEl, metaEl);
+    return chip;
+}
+
+function renderRankingsFinishedCyclePicker() {
+    const picker = document.getElementById('ops-cultivos-finished-picker');
+    if (!picker) return;
+
+    const activeIds = getRenderedActiveCropIds();
+    if (!activeIds) return;
+
+    const snapshot = readCropsSnapshot();
+    const crops = Array.isArray(snapshot?.crops) ? snapshot.crops : [];
+    const selectedId = readSelectedCropId();
+    const finishedCrops = crops.filter((crop) => {
+        const cropId = normalizeCropIdToken(crop?.id);
+        return cropId && !activeIds.has(cropId);
+    });
+
+    picker.textContent = '';
+    if (!finishedCrops.length) {
+        const empty = document.createElement('p');
+        empty.className = 'ops-cultivos-empty';
+        empty.textContent = 'No hay ciclos cerrados disponibles para filtrar.';
+        picker.appendChild(empty);
+        return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    finishedCrops.forEach((crop) => {
+        const chip = createFinishedCropContextChip(crop, selectedId);
+        if (chip) fragment.appendChild(chip);
+    });
+    picker.appendChild(fragment);
+}
+
+let rankingsFinishedCyclePickerFrame = 0;
+
+function scheduleRankingsFinishedCyclePickerRender() {
+    if (typeof window === 'undefined') return;
+    if (rankingsFinishedCyclePickerFrame) {
+        window.cancelAnimationFrame?.(rankingsFinishedCyclePickerFrame);
+    }
+    const run = () => {
+        rankingsFinishedCyclePickerFrame = 0;
+        renderRankingsFinishedCyclePicker();
+    };
+    if (typeof window.requestAnimationFrame === 'function') {
+        rankingsFinishedCyclePickerFrame = window.requestAnimationFrame(run);
+    } else {
+        window.setTimeout(run, 0);
+    }
+}
+
+function bindRankingsFinishedCyclePicker() {
+    document.addEventListener('click', (event) => {
+        const chip = event.target.closest('[data-agro-finished-crop-context]');
+        if (!chip) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const cropId = normalizeCropIdToken(chip.dataset.agroFinishedCropContext);
+        if (!cropId || typeof window.setSelectedCropId !== 'function') return;
+        const changed = window.setSelectedCropId(cropId);
+        if (!changed) {
+            window.dispatchEvent(new CustomEvent('agro:crop:changed', { detail: { cropId } }));
+        }
+        scheduleRankingsFinishedCyclePickerRender();
+    });
+
+    window.addEventListener(AGRO_CROPS_READY_EVENT, scheduleRankingsFinishedCyclePickerRender);
+    window.addEventListener('agro:crop:changed', scheduleRankingsFinishedCyclePickerRender);
+    window.addEventListener('agro:shell:view-changed', scheduleRankingsFinishedCyclePickerRender);
+    document.addEventListener('data-refresh', scheduleRankingsFinishedCyclePickerRender);
 }
 
 function normalizeViewToken(value) {
@@ -918,6 +1066,8 @@ export function initAgroShell() {
         entries: shellEntries,
         onActivate: activateShellEntry
     });
+
+    bindRankingsFinishedCyclePicker();
 
     toggle?.addEventListener('click', () => {
         if (sidebarOpen) {

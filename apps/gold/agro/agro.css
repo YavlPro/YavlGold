@@ -3393,7 +3393,8 @@ body.agro-social-open {
   background: rgba(255, 255, 255, 0.018);
   padding: 0.42rem 0.54rem;
   display: flex;
-  align-items: center;
+  align-items: stretch;
+  flex-direction: column;
   justify-content: space-between;
   gap: 0.5rem;
 }
@@ -3437,6 +3438,27 @@ body.agro-social-open {
   letter-spacing: 0.08em;
   color: rgba(255, 255, 255, 0.78);
   transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.ops-cultivos-finished-picker {
+  display: none;
+}
+
+body[data-agro-active-view="rankings"] .ops-cultivos-finished-picker {
+  display: flex;
+}
+
+.ops-cultivo-chip--finished {
+  border-style: dashed;
+  background: rgba(200, 167, 82, 0.04);
+}
+
+.ops-cultivos-finished .ops-cultivos-empty {
+  text-align: left;
+}
+
+.agro-tool-card__action {
+  text-decoration: none;
 }
 
 .ops-cultivos-history-btn:hover,
