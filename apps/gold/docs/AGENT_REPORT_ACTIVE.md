@@ -314,6 +314,59 @@ El toggle anterior era mobile-only (`display: none` en base, `display: flex` sol
 
 ---
 
+## 2026-04-30 — Cierre visual Trabajo Diario y Rankings de Clientes
+
+**Estado:** COMPLETADO
+
+### Diagnóstico
+
+El sistema hub/module de Mi Granja ya fue corregido semánticamente y pulido en ciclos, períodos y finanzas. Quedan pendientes Trabajo Diario y Rankings de Clientes para que todas las vistas profundas compartan el mismo idioma visual sobrio, dark/gold, alineado a docs-agro y al ADN Visual V10.
+
+### Plan
+
+- Auditar visualmente Trabajo Diario.
+- Auditar visualmente Rankings de Clientes.
+- Reducir acentos ruidosos o colores inconsistentes.
+- Mejorar contraste de subtítulos y textos secundarios.
+- Alinear cards, headers, botones, filtros y contenedores con el estilo de las demás vistas profundas.
+- No tocar documentación canónica.
+- No tocar agro.js.
+- Validar con git diff --check y pnpm build:gold.
+
+### Dueños confirmados
+
+- Trabajo Diario: `apps/gold/agro/agroTaskCycles.js` renderiza la vista; `apps/gold/agro/agro-task-cycles.css` gobierna el estilo. No se anticipa tocar JS.
+- Rankings de Clientes: `apps/gold/agro/index.html` contiene el markup; `apps/gold/agro/agro.js` contiene la lógica legacy de datos/RPC y no se tocará; `apps/gold/agro/agro-shell.js` contiene el picker de ciclos finalizados y no requiere cambio; `apps/gold/agro/agro.css` y `apps/gold/agro/agro-operations.css` gobiernan el estilo.
+
+### Riesgos
+
+- Riesgo bajo de cascada por convivencia entre `agro.css`, `agro-operations.css` y CSS modular.
+- Riesgo medio de tocar estilos de Rankings porque el panel se mueve entre tab interna y vista dedicada; el cambio debe ser CSS-only y acotado.
+- No se tocarán Supabase, migraciones, RLS, RPC, Storage, Vercel, workflows, credenciales ni documentación canónica.
+
+### Cambios
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro-task-cycles.css` | CSS Trabajo Diario | Se redujeron acentos brillantes, se reemplazaron colores hardcodeados de estados por tokens semánticos mezclados con texto, se suavizaron pills/cards/facts y se mejoró centrado mobile. |
+| `apps/gold/agro/agro.css` | CSS Rankings | Se apagaron gradientes/glows del panel de Rankings, cards, top items, filtros, privacy strip y selector de ciclos finalizados. Se reforzó contraste de subtítulos/meta y se centró mobile. |
+| `apps/gold/agro/index.html` | Markup acotado | Se reemplazó el emoji visible del tab Rankings y los emojis de privacidad de la vista dedicada Rankings por iconos Font Awesome ya canónicos. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Docs operativa | Paso 0 y cierre documentados. |
+
+### Validación
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS. Warning local no bloqueante: Node `v25.6.0` vs engine esperado `20.x`.
+
+### NO se hizo
+
+- No se tocó `apps/gold/agro/agro.js`.
+- No se tocó `apps/gold/agro/agro-shell.js`.
+- No se tocaron Supabase, datos, migraciones, RLS, RPC, Storage, Vercel, workflows ni credenciales.
+- No se tocó documentación canónica (`MANIFIESTO_AGRO.md`, `FICHA_TECNICA.md`, `README.md`, `llms.txt`).
+
+---
+
 ## 2026-04-27 — Integracion visual del toggle como handle del rail
 
 **Objetivo:** Corregir el aspecto visual del toggle del rail para que se perciba como un handle integrado al borde derecho del rail, no como un boton flotante desconectado.
