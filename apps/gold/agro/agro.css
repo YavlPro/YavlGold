@@ -205,6 +205,167 @@
   border-top: 1px solid rgba(255,255,255,0.1);
 }
 
+/* V3.1: modal canon base, derived from "Configura tu asistente" */
+.agro-modal-canon {
+  position: fixed;
+  inset: 0;
+  z-index: 10100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: opacity 180ms ease;
+}
+
+.agro-modal-canon__dialog {
+  position: relative;
+  width: min(520px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow: hidden auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-2);
+  border: 1px solid var(--gold-4);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.agro-modal-canon__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border-neutral);
+}
+
+.agro-modal-canon__body {
+  padding: 20px;
+}
+
+.agro-modal-canon__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--border-neutral);
+}
+
+.agro-modal-canon__close {
+  width: var(--a11y-touch-min, 44px);
+  min-width: var(--a11y-touch-min, 44px);
+  height: var(--a11y-touch-min, 44px);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 150ms ease, background 150ms ease;
+}
+
+.agro-modal-canon__close:hover {
+  color: var(--text-primary);
+  background: var(--bg-3);
+}
+
+.agro-modal-canon__button {
+  min-height: var(--a11y-touch-min, 44px);
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+
+.agro-modal-canon__button--primary {
+  background: var(--gold-4);
+  color: var(--bg-1);
+}
+
+.agro-modal-canon__button--primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.agro-modal-canon__button--secondary,
+.agro-modal-canon__button--ghost {
+  background: var(--bg-3);
+  border-color: var(--border-neutral);
+  color: var(--text-secondary);
+}
+
+.agro-modal-canon__button--secondary:hover,
+.agro-modal-canon__button--ghost:hover {
+  border-color: var(--gold-5);
+}
+
+.agro-modal-canon__option,
+.agro-modal-canon__chip {
+  border: 1px solid var(--border-neutral);
+  background: var(--bg-3);
+  color: var(--text-secondary);
+  transition: border-color 150ms ease, background 150ms ease, color 150ms ease;
+}
+
+.agro-modal-canon__option:hover,
+.agro-modal-canon__chip:hover {
+  border-color: var(--gold-5);
+}
+
+.agro-modal-canon__option.is-selected,
+.agro-modal-canon__chip.is-selected {
+  border-color: var(--gold-4);
+  background: color-mix(in srgb, var(--gold-4) 10%, transparent);
+  color: var(--text-primary);
+}
+
+.agro-modal-canon__close:focus-visible,
+.agro-modal-canon__button:focus-visible,
+.agro-modal-canon__option:focus-visible,
+.agro-modal-canon__chip:focus-visible {
+  outline: none;
+  box-shadow: var(--state-focus-ring);
+}
+
+@media (max-width: 480px) {
+  .agro-modal-canon {
+    padding: 0.75rem;
+  }
+
+  .agro-modal-canon__dialog {
+    width: 100%;
+    max-height: calc(100vh - 24px);
+    border-radius: var(--radius-sm);
+  }
+
+  .agro-modal-canon__body {
+    padding: 16px;
+  }
+
+  .agro-modal-canon__footer {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agro-modal-canon,
+  .agro-modal-canon__close,
+  .agro-modal-canon__button,
+  .agro-modal-canon__option,
+  .agro-modal-canon__chip {
+    transition: none;
+  }
+}
+
 .agro-confirm-dialog {
   position: fixed;
   inset: 0;
@@ -300,7 +461,7 @@
 
 .agro-confirm-dialog__message {
   margin: 0;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-family: var(--font-body);
   font-size: 0.88rem;
   line-height: 1.45;

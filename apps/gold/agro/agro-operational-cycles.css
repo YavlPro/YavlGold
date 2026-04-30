@@ -55,7 +55,6 @@ body.agro-operational-modal-open {
 
 .agro-operational-modal.active {
   display: flex;
-  animation: agroOperationalModalFadeIn 180ms ease;
 }
 
 .agro-operational-modal__dialog {
@@ -65,22 +64,17 @@ body.agro-operational-modal-open {
   max-width: min(720px, calc(100vw - 2rem));
   max-height: min(88vh, 860px);
   overflow: hidden;
-  border-radius: 24px;
-  border: 1px solid color-mix(in srgb, var(--gold-4) 24%, rgba(255, 255, 255, 0.08));
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 6%, transparent), transparent 18%),
-    var(--bg-0);
-  box-shadow:
-    0 25px 50px rgba(0, 0, 0, 0.5),
-    0 0 60px color-mix(in srgb, var(--gold-4) 8%, transparent);
-  animation: agroOperationalModalSlideUp 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gold-4);
+  background: var(--bg-2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
 .agro-operational-modal__header {
   align-items: flex-start;
   gap: 1rem;
-  padding: 1.35rem 1.5rem 1.1rem;
-  border-bottom-color: color-mix(in srgb, var(--gold-4) 14%, rgba(255, 255, 255, 0.08));
+  padding: 16px 20px 12px;
+  border-bottom-color: var(--border-neutral);
 }
 
 .agro-operational-modal__title-group {
@@ -93,8 +87,8 @@ body.agro-operational-modal-open {
   font-size: 0.66rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--gold-5);
-  opacity: 0.82;
+  color: var(--gold-4);
+  opacity: 1;
 }
 
 .agro-operational-modal__title {
@@ -110,28 +104,22 @@ body.agro-operational-modal-open {
 }
 
 .agro-operational-modal__close {
-  color: var(--gold-4);
+  color: var(--text-muted);
+}
+
+.agro-operational-modal__close:hover {
+  color: var(--text-primary);
+  background: var(--bg-3);
+}
+
+.agro-operational-modal__close:focus-visible {
+  outline: none;
+  box-shadow: var(--state-focus-ring);
 }
 
 .agro-operational-modal__body {
   padding: 0;
   overflow: auto;
-}
-
-@keyframes agroOperationalModalFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes agroOperationalModalSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(24px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
 }
 
 .agro-operational-layout {
@@ -1653,7 +1641,7 @@ body.agro-operational-modal-open {
   .agro-operational-modal__dialog {
     max-width: calc(100vw - 1rem);
     max-height: calc(100vh - 1rem);
-    border-radius: 22px;
+    border-radius: var(--radius-sm);
   }
 
   .agro-operational-modal__header,
@@ -1699,7 +1687,7 @@ body.agro-operational-modal-open {
   .agro-operational-modal__dialog {
     max-width: calc(100vw - 0.5rem);
     max-height: calc(100vh - 0.5rem);
-    border-radius: 18px;
+    border-radius: var(--radius-sm);
   }
 
   .agro-operational-stepper {

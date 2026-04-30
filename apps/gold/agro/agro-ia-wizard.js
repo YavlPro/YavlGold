@@ -57,7 +57,9 @@ let wizardState = {
     onboarding: null,
     profile: null,
     loaded: false,
-    saving: false
+    saving: false,
+    previousFocus: null,
+    escHandler: null
 };
 
 // ---------------------------------------------------------------------------
@@ -182,26 +184,26 @@ function renderStep2() {
 
 function renderWizardHTML() {
     return `
-    <div class="aiw-overlay" id="${WIZARD_OVERLAY_ID}">
-        <div class="aiw-modal">
-            <div class="aiw-header">
+    <div class="aiw-overlay agro-modal-canon" id="${WIZARD_OVERLAY_ID}" role="dialog" aria-modal="true" aria-labelledby="aiw-title" aria-describedby="aiw-body">
+        <div class="aiw-modal agro-modal-canon__dialog">
+            <div class="aiw-header agro-modal-canon__header">
                 <div class="aiw-header-left">
-                    <i class="fa-solid fa-wand-magic-sparkles aiw-header-icon"></i>
-                    <span class="aiw-header-title">Configura tu asistente</span>
+                    <i class="fa-solid fa-wand-magic-sparkles aiw-header-icon" aria-hidden="true"></i>
+                    <span class="aiw-header-title" id="aiw-title">Configura tu asistente</span>
                 </div>
-                <button type="button" class="aiw-close" id="aiw-close" aria-label="Cerrar">&times;</button>
+                <button type="button" class="aiw-close agro-modal-canon__close" id="aiw-close" aria-label="Cerrar">&times;</button>
             </div>
             <div class="aiw-progress">
                 <div class="aiw-progress-bar" id="aiw-progress-bar" style="width: 50%"></div>
             </div>
-            <div class="aiw-body" id="aiw-body">
+            <div class="aiw-body agro-modal-canon__body" id="aiw-body">
                 ${renderStep1()}
             </div>
-            <div class="aiw-footer">
-                <button type="button" class="aiw-btn aiw-btn--secondary" id="aiw-back" style="display:none">Atras</button>
+            <div class="aiw-footer agro-modal-canon__footer">
+                <button type="button" class="aiw-btn aiw-btn--secondary agro-modal-canon__button agro-modal-canon__button--secondary" id="aiw-back" style="display:none">Atras</button>
                 <div class="aiw-footer-spacer"></div>
-                <button type="button" class="aiw-btn aiw-btn--skip" id="aiw-skip">Omitir</button>
-                <button type="button" class="aiw-btn aiw-btn--primary" id="aiw-next">Siguiente</button>
+                <button type="button" class="aiw-btn aiw-btn--skip agro-modal-canon__button agro-modal-canon__button--ghost" id="aiw-skip">Omitir</button>
+                <button type="button" class="aiw-btn aiw-btn--primary agro-modal-canon__button agro-modal-canon__button--primary" id="aiw-next">Siguiente</button>
             </div>
         </div>
     </div>`;
@@ -303,9 +305,17 @@ async function saveAndClose() {
 
 function closeWizard() {
     const overlay = document.getElementById(WIZARD_OVERLAY_ID);
+    if (wizardState.escHandler) {
+        document.removeEventListener('keydown', wizardState.escHandler);
+        wizardState.escHandler = null;
+    }
     if (overlay) {
         overlay.classList.add('aiw-overlay--closing');
-        setTimeout(() => overlay.remove(), 200);
+        setTimeout(() => {
+            overlay.remove();
+            wizardState.previousFocus?.focus?.({ preventScroll: true });
+            wizardState.previousFocus = null;
+        }, 200);
     }
 }
 
@@ -557,6 +567,7 @@ export async function openIAWizard({ supabase, userId } = {}) {
     wizardState.userId = uid;
     wizardState.step = 1;
     wizardState.saving = false;
+    wizardState.previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
     // Load existing data
     const existing = await loadIAContextData(sb, uid);
@@ -587,15 +598,15 @@ export async function openIAWizard({ supabase, userId } = {}) {
     });
 
     // Close on Escape
-    const escHandler = (e) => {
+    wizardState.escHandler = (e) => {
         if (e.key === 'Escape') {
             closeWizard();
-            document.removeEventListener('keydown', escHandler);
         }
     };
-    document.addEventListener('keydown', escHandler);
+    document.addEventListener('keydown', wizardState.escHandler);
 
     bindStepInteractions();
+    requestAnimationFrame(() => document.getElementById('aiw-next')?.focus?.({ preventScroll: true }));
 }
 
 /**

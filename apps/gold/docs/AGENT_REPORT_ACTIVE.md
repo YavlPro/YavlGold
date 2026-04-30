@@ -6,6 +6,37 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-17__2026-04-27.md`
 
 ---
 
+## 2026-04-30 — V3.1 Modales: canon visual basado en Configura tu asistente
+
+**Estado:** CERRADO
+
+### Diagnóstico
+
+Antes de actualizar documentación canónica o preparar ADN Visual V11, se limpiará primero el producto vivo. El modal “Configura tu asistente” queda como pieza madre visual para todos los modales funcionales de Agro. Se revisarán hardcodes, colores inconsistentes, animaciones innecesarias y duplicación de estilos en modales/dialogs/wizards/overlays.
+
+### Plan
+
+- Inspeccionar el modal “Configura tu asistente”.
+- Auditar modales existentes de Agro.
+- Identificar hardcodes, estilos duplicados y animaciones no deseadas.
+- Crear o consolidar una base reusable de modal.
+- Migrar un primer grupo controlado de modales al canon.
+- No tocar documentación canónica.
+- No tocar Supabase ni datos.
+- Validar con git diff --check y pnpm build:gold.
+
+### Resultado
+
+- Base reusable `.agro-modal-canon*` creada en `apps/gold/agro/agro.css` a partir del modal “Configura tu asistente”.
+- Modal IA conservado como pieza madre y reforzado con clases base, ARIA, Escape cleanup y retorno de foco.
+- Prompt modal reusable migrado para consumir la base común y reducir CSS duplicado.
+- Modales de Trabajo Diario, Operación Comercial y Mi Carrito alineados en el primer grupo controlado.
+- Se neutralizaron glow dorado fuerte, gradientes de shell, slide/scale de apertura y hover translate en los modales tocados.
+- No se tocó documentación canónica, Supabase, datos ni `agro.js`.
+- Validación: `node --check` en JS tocados PASS; `git diff --check` PASS; `pnpm build:gold` PASS.
+
+---
+
 ## Propósito
 
 Este archivo es la única fuente activa de reportes de sesión para agentes IA dentro de YavlGold.

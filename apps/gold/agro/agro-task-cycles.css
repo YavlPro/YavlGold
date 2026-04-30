@@ -554,7 +554,7 @@ body.agro-task-cycles-modal-open {
   position: fixed;
   inset: 0;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
   padding: 1rem;
   overflow-y: auto;
   background: rgba(0, 0, 0, 0.84);
@@ -574,14 +574,10 @@ body.agro-task-cycles-modal-open {
   max-height: calc(100vh - 2rem);
   min-height: 0;
   overflow: hidden;
-  border-radius: 24px;
-  border: 1px solid color-mix(in srgb, var(--gold-4) 24%, rgba(255, 255, 255, 0.08));
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 6%, transparent), transparent 18%),
-    var(--bg-0);
-  box-shadow:
-    0 25px 50px rgba(0, 0, 0, 0.5),
-    0 0 60px color-mix(in srgb, var(--gold-4) 8%, transparent);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gold-4);
+  background: var(--bg-2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
 .agro-task-modal__dialog--confirm {
@@ -592,8 +588,8 @@ body.agro-task-cycles-modal-open {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1.3rem 1.4rem 1rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--gold-4) 14%, rgba(255, 255, 255, 0.08));
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border-neutral);
 }
 
 .agro-task-modal__eyebrow {
@@ -618,8 +614,27 @@ body.agro-task-cycles-modal-open {
 }
 
 .agro-task-modal__close {
-  color: var(--gold-4);
-  font-size: 1.9rem;
+  width: var(--a11y-touch-min, 44px);
+  min-width: var(--a11y-touch-min, 44px);
+  height: var(--a11y-touch-min, 44px);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 150ms ease, background 150ms ease;
+}
+
+.agro-task-modal__close:hover {
+  color: var(--text-primary);
+  background: var(--bg-3);
+}
+
+.agro-task-modal__close:focus-visible {
+  outline: none;
+  box-shadow: var(--state-focus-ring);
 }
 
 .agro-task-modal__body {
@@ -715,7 +730,7 @@ body.agro-task-cycles-modal-open {
 
   .agro-task-modal__dialog {
     max-height: calc(100vh - 1.5rem);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-sm);
   }
 
   .agro-task-panel__head,

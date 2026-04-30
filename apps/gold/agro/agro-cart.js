@@ -1112,20 +1112,24 @@ function renderCartCalculatorPanel() {
 
 function renderNewCartModal() {
     const overlay = document.createElement('div');
-    overlay.className = 'agro-cart-modal-overlay';
+    overlay.className = 'agro-cart-modal-overlay agro-modal-canon';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'agro-cart-new-title');
 
     const modal = document.createElement('div');
-    modal.className = 'agro-cart-modal';
+    modal.className = 'agro-cart-modal agro-modal-canon__dialog';
 
     const title = document.createElement('h3');
-    title.style.cssText = 'color: #fff; margin: 0 0 1rem;';
-    title.textContent = '🛒 Nuevo Carrito';
+    title.className = 'agro-cart-modal__title';
+    title.id = 'agro-cart-new-title';
+    title.textContent = 'Nuevo Carrito';
     modal.appendChild(title);
 
     const nameRow = document.createElement('div');
     nameRow.className = 'agro-cart-add-row';
     const nameLabel = document.createElement('label');
-    nameLabel.style.cssText = 'color: rgba(255,255,255,0.6); font-size: 0.8rem;';
+    nameLabel.className = 'agro-cart-modal__label';
     nameLabel.textContent = 'Nombre *';
     const nameInput = document.createElement('input');
     nameInput.type = 'text';
@@ -1139,7 +1143,7 @@ function renderNewCartModal() {
     const cropRow = document.createElement('div');
     cropRow.className = 'agro-cart-add-row';
     const cropLabel = document.createElement('label');
-    cropLabel.style.cssText = 'color: rgba(255,255,255,0.6); font-size: 0.8rem;';
+    cropLabel.className = 'agro-cart-modal__label';
     cropLabel.textContent = 'Cultivo';
     const cropSelect = document.createElement('select');
     cropSelect.className = 'agro-cart-input';
@@ -1164,7 +1168,7 @@ function renderNewCartModal() {
     const notesRow = document.createElement('div');
     notesRow.className = 'agro-cart-add-row';
     const notesLabel = document.createElement('label');
-    notesLabel.style.cssText = 'color: rgba(255,255,255,0.6); font-size: 0.8rem;';
+    notesLabel.className = 'agro-cart-modal__label';
     notesLabel.textContent = 'Notas (opcional)';
     const notesInput = document.createElement('input');
     notesInput.type = 'text';
@@ -1176,20 +1180,18 @@ function renderNewCartModal() {
     modal.appendChild(notesRow);
 
     const actions = document.createElement('div');
-    actions.style.cssText = 'display: flex; gap: 0.5rem; margin-top: 1rem;';
+    actions.className = 'agro-cart-modal__actions agro-cart-modal__actions--split';
 
     const cancelBtn = document.createElement('button');
     cancelBtn.type = 'button';
-    cancelBtn.className = 'agro-cart-btn-secondary';
+    cancelBtn.className = 'agro-cart-btn-secondary agro-modal-canon__button agro-modal-canon__button--secondary';
     cancelBtn.dataset.action = 'cancel-modal';
-    cancelBtn.style.flex = '1';
     cancelBtn.textContent = 'Cancelar';
 
     const confirmBtn = document.createElement('button');
     confirmBtn.type = 'button';
-    confirmBtn.className = 'agro-cart-btn-primary';
+    confirmBtn.className = 'agro-cart-btn-primary agro-modal-canon__button agro-modal-canon__button--primary';
     confirmBtn.dataset.action = 'confirm-create';
-    confirmBtn.style.flex = '1';
     confirmBtn.textContent = 'Crear carrito';
 
     actions.append(cancelBtn, confirmBtn);
@@ -1215,19 +1217,23 @@ function renderNewCartModal() {
 
 function renderEditItemModal(item) {
     const overlay = document.createElement('div');
-    overlay.className = 'agro-cart-modal-overlay';
+    overlay.className = 'agro-cart-modal-overlay agro-modal-canon';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'agro-cart-edit-title');
 
     const modal = document.createElement('div');
-    modal.className = 'agro-cart-modal';
+    modal.className = 'agro-cart-modal agro-modal-canon__dialog';
 
     const title = document.createElement('h3');
-    title.style.cssText = 'color: #fff; margin: 0 0 1rem;';
-    title.textContent = '✏️ Editar Item';
+    title.className = 'agro-cart-modal__title';
+    title.id = 'agro-cart-edit-title';
+    title.textContent = 'Editar item';
     modal.appendChild(title);
 
     const makeLabel = (text) => {
         const label = document.createElement('label');
-        label.style.cssText = 'color: rgba(255,255,255,0.6); font-size: 0.8rem;';
+        label.className = 'agro-cart-modal__label';
         label.textContent = text;
         return label;
     };
@@ -1300,18 +1306,16 @@ function renderEditItemModal(item) {
     modal.appendChild(currencyRow);
 
     const actions = document.createElement('div');
-    actions.style.cssText = 'display: flex; gap: 0.5rem; margin-top: 1rem;';
+    actions.className = 'agro-cart-modal__actions agro-cart-modal__actions--split';
     const cancelBtn = document.createElement('button');
     cancelBtn.type = 'button';
-    cancelBtn.className = 'agro-cart-btn-secondary';
+    cancelBtn.className = 'agro-cart-btn-secondary agro-modal-canon__button agro-modal-canon__button--secondary';
     cancelBtn.dataset.action = 'cancel-modal';
-    cancelBtn.style.flex = '1';
     cancelBtn.textContent = 'Cancelar';
     const saveBtn = document.createElement('button');
     saveBtn.type = 'button';
-    saveBtn.className = 'agro-cart-btn-primary';
+    saveBtn.className = 'agro-cart-btn-primary agro-modal-canon__button agro-modal-canon__button--primary';
     saveBtn.dataset.action = 'confirm-edit';
-    saveBtn.style.flex = '1';
     saveBtn.textContent = 'Guardar';
     actions.append(cancelBtn, saveBtn);
     modal.appendChild(actions);
@@ -1347,27 +1351,30 @@ function renderEditItemModal(item) {
 
 function renderPurchaseStateModal(item) {
     const overlay = document.createElement('div');
-    overlay.className = 'agro-cart-modal-overlay';
+    overlay.className = 'agro-cart-modal-overlay agro-modal-canon';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'agro-cart-purchase-state-title');
 
     const modal = document.createElement('div');
-    modal.className = 'agro-cart-modal agro-cart-modal--purchase-state';
+    modal.className = 'agro-cart-modal agro-cart-modal--purchase-state agro-modal-canon__dialog';
     modal.innerHTML = `
         <p class="agro-cart-modal__eyebrow">Operación Comercial</p>
-        <h3 class="agro-cart-modal__title">¿Cómo se registró esta compra?</h3>
+        <h3 class="agro-cart-modal__title" id="agro-cart-purchase-state-title">¿Cómo se registró esta compra?</h3>
         <p class="agro-cart-modal__copy">
             <strong>${escapeHtml(item?.name || 'Item')}</strong><br>
             Selecciona el estado real para enviar este item desde Mi Carrito hacia Operación Comercial.
         </p>
         <div class="agro-cart-modal__options">
             ${CART_OPERATION_REGISTRATION_OPTIONS.map((option) => `
-                <button type="button" class="agro-cart-modal__option" data-registration-option="${option.value}">
+                <button type="button" class="agro-cart-modal__option agro-modal-canon__option" data-registration-option="${option.value}">
                     <strong>${escapeHtml(option.label)}</strong>
                     <span>${escapeHtml(option.helper)}</span>
                 </button>
             `).join('')}
         </div>
         <div class="agro-cart-modal__actions">
-            <button type="button" class="agro-cart-btn-secondary" data-action="cancel-modal">Cancelar</button>
+            <button type="button" class="agro-cart-btn-secondary agro-modal-canon__button agro-modal-canon__button--secondary" data-action="cancel-modal">Cancelar</button>
         </div>
     `;
 
@@ -2124,35 +2131,41 @@ export function injectCartStyles() {
             justify-content: center;
             align-items: center;
             padding: 1rem;
-            animation: cartFadeIn 0.2s ease;
+            transition: opacity 180ms ease;
         }
-        @keyframes cartFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .agro-cart-modal {
-            background: #141414;
-            border: 1px solid rgba(200,167,82,0.2);
-            border-radius: 16px;
+            background: var(--bg-2);
+            border: 1px solid var(--gold-4);
+            border-radius: var(--radius-md);
             padding: 1.5rem;
             width: 100%;
             max-width: 400px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
         }
         .agro-cart-modal--purchase-state { max-width: 460px; }
+        .agro-cart-modal__label {
+            display: block;
+            margin-bottom: 0.35rem;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
         .agro-cart-modal__eyebrow {
             margin: 0 0 0.4rem;
-            color: var(--v10-gold-4, #C8A752);
+            color: var(--gold-4);
             font-size: 0.72rem;
             text-transform: uppercase;
             letter-spacing: 0.08em;
         }
         .agro-cart-modal__title {
             margin: 0 0 0.5rem;
-            color: #fff;
+            color: var(--text-primary);
             font-size: 1.2rem;
         }
         .agro-cart-modal__copy {
             margin: 0 0 1rem;
-            color: rgba(255,255,255,0.62);
+            color: var(--text-secondary);
             font-size: 0.84rem;
             line-height: 1.5;
         }
@@ -2163,14 +2176,10 @@ export function injectCartStyles() {
         .agro-cart-modal__option {
             width: 100%;
             padding: 0.8rem 0.9rem;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(255,255,255,0.03);
-            color: #fff;
+            border-radius: var(--radius-md);
             text-align: left;
             cursor: pointer;
             font-family: inherit;
-            transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
         }
         .agro-cart-modal__option strong {
             display: block;
@@ -2179,18 +2188,42 @@ export function injectCartStyles() {
         .agro-cart-modal__option span {
             display: block;
             margin-top: 0.3rem;
-            color: rgba(255,255,255,0.52);
+            color: var(--text-secondary);
             font-size: 0.78rem;
         }
         .agro-cart-modal__option:hover {
-            border-color: rgba(200,167,82,0.34);
-            background: rgba(200,167,82,0.08);
-            transform: translateY(-1px);
+            border-color: var(--gold-5);
+            background: color-mix(in srgb, var(--gold-4) 8%, transparent);
         }
         .agro-cart-modal__actions {
             display: flex;
             justify-content: flex-end;
+            gap: 0.5rem;
             margin-top: 1rem;
+        }
+        .agro-cart-modal__actions--split > .agro-cart-btn-primary,
+        .agro-cart-modal__actions--split > .agro-cart-btn-secondary {
+            flex: 1;
+        }
+        .agro-cart-modal .agro-cart-btn-primary {
+            background: var(--gold-4);
+            color: var(--bg-1);
+            border: 1px solid transparent;
+            transform: none;
+            filter: none;
+        }
+        .agro-cart-modal .agro-cart-btn-primary:hover {
+            opacity: 0.9;
+            transform: none;
+            filter: none;
+        }
+        .agro-cart-modal .agro-cart-btn-secondary {
+            background: var(--bg-3);
+            border-color: var(--border-neutral);
+            color: var(--text-secondary);
+        }
+        .agro-cart-modal .agro-cart-btn-secondary:hover {
+            border-color: var(--gold-5);
         }
 
         @media (max-width: 480px) {
@@ -2222,6 +2255,15 @@ export function injectCartStyles() {
             }
             .agro-cart-item-actions {
                 width: 100%;
+            }
+            .agro-cart-modal {
+                border-radius: var(--radius-sm);
+                padding: 1rem;
+            }
+            .agro-cart-modal__actions,
+            .agro-cart-modal__actions--split {
+                align-items: stretch;
+                flex-direction: column-reverse;
             }
         }
         @media (max-width: 820px) {
