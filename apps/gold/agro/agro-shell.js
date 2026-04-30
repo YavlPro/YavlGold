@@ -127,7 +127,7 @@ const VIEW_CONFIG = Object.freeze({
     'period-cycles': { region: 'period-cycles', label: 'Ciclos de período', focusSelector: '#agro-period-cycles-root' },
     operational: { region: 'operational', label: 'Cartera Operativa', focusSelector: '#agro-operational-root' },
     'task-cycles': { region: 'task-cycles', label: 'Ciclos de Tareas', focusSelector: '#agro-task-cycles-root' },
-    operaciones: { region: 'ops', label: 'Operación Comercial', resolveTab: resolveOperationsTab, dense: true },
+    operaciones: { region: 'ops', label: 'Mi Granja', resolveTab: resolveOperationsTab, dense: true },
     carrito: { region: 'ops', label: 'Mi Carrito', tab: 'carrito', focusSelector: '#agro-carrito-dedicated', dense: true },
     rankings: { region: 'ops', label: 'Rankings de Clientes', tab: 'rankings', focusSelector: '#agro-rankings-dedicated', dense: true },
     'cartera-viva': { region: 'cartera-viva', label: 'Cartera Viva', focusSelector: '#agro-cartera-viva-root' },

@@ -1595,7 +1595,7 @@ GREEN. Documentacion canonica actualizada sin tocar codigo ni ADN Visual.
 
 ## 2026-04-29 — V3.1 Bloque A: idempotencia facturero selection
 
-**Estado:** EN PROGRESO
+**Estado:** COMPLETADO
 
 ### Diagnóstico
 
@@ -1709,3 +1709,35 @@ El hub quedó visualmente limpio, pero persisten errores semánticos: Rankings a
 - No se tocó `apps/gold/agro/agro.js`.
 - No se tocó Supabase, migraciones, RLS, RPC, Storage, Vercel, workflows ni credenciales.
 - No se cambió lógica financiera, cultivos, cartera ni AgroRepo.
+
+---
+
+## 2026-04-30 — Ajuste semántico del hub: Operación → Granja
+
+**Estado:** COMPLETADO
+
+### Diagnóstico
+
+El hub funciona bien pero usa lenguaje operativo ("Operación", "Producción", "Finanzas"). Se ajustan las etiquetas visibles para hablar más cercano al concepto de finca/granja sin tocar estructura, lógica ni datos.
+
+### Plan
+
+- Renombrar tabs "Operación" → "Granja" (3 instancias en index.html).
+- Cambiar título del hub a "Mi Granja".
+- Renombrar secciones: "Producción" → "Ciclos de cultivos", "Períodos" → "Ciclos de períodos", "Finanzas" → "Mis finanzas".
+- Actualizar label visible en agro-shell.js.
+- No tocar claves internas JS ni datos.
+
+### Cambios
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/index.html` | Markup/copy | Tabs "Operación" → "Granja" (rail, hub tab, mobile tabbar). Título hub → "Mi Granja". Secciones → "Ciclos de cultivos", "Ciclos de períodos", "Mis finanzas". |
+| `apps/gold/agro/agro-shell.js` | Label visible | `operaciones.label` → "Mi Granja" (topbar contextual). |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Docs | Sesión documentada. |
+
+### Validación
+
+- `node --check apps/gold/agro/agro-shell.js`: PASS
+- `git diff --check`: PASS
+- `pnpm build:gold`: PASS (165 modules, check-llms OK, UTF-8 OK)
