@@ -145,8 +145,8 @@ function ensureStyles() {
       /* ── Side heading ── */
       .yg-profile-edit-side h2 {
         margin: 0;
-        font: 900 clamp(1.65rem, 3vw, 2.3rem)/1.08 'Orbitron', sans-serif;
-        color: var(--pe-text-primary);
+        font: 700 clamp(1.2rem, 2.2vw, 1.6rem)/1.15 'Orbitron', sans-serif;
+        color: var(--pe-gold-4, #C8A752);
         background: none;
         animation: none;
       }
@@ -241,8 +241,8 @@ function ensureStyles() {
       .yg-profile-edit-step-title {
         display: block;
         margin-bottom: 3px;
-        color: var(--pe-text-primary);
-        font: 700 1rem/1.12 'Rajdhani', sans-serif;
+        color: var(--pe-text-secondary);
+        font: 700 0.94rem/1.12 'Rajdhani', sans-serif;
       }
 
       .yg-profile-edit-step-desc {
@@ -273,8 +273,8 @@ function ensureStyles() {
 
       .yg-profile-edit-card h3 {
         margin: 0 0 10px;
-        font: 900 clamp(1.4rem, 2.8vw, 1.95rem)/1.08 'Orbitron', sans-serif;
-        color: var(--pe-text-primary);
+        font: 700 clamp(1.05rem, 2vw, 1.4rem)/1.15 'Orbitron', sans-serif;
+        color: var(--pe-gold-4, #C8A752);
         background: none;
         animation: none;
       }
@@ -579,11 +579,11 @@ function ensureStyles() {
         }
 
         .yg-profile-edit-side h2 {
-          font-size: clamp(1.4rem, 5vw, 1.9rem);
+          font-size: clamp(1.05rem, 3.5vw, 1.35rem);
         }
 
         .yg-profile-edit-card h3 {
-          font-size: clamp(1.25rem, 4.5vw, 1.7rem);
+          font-size: clamp(0.95rem, 3vw, 1.2rem);
         }
       }
 
@@ -655,11 +655,11 @@ function ensureStyles() {
         }
 
         .yg-profile-edit-side h2 {
-          font-size: 1.3rem;
+          font-size: 1.05rem;
         }
 
         .yg-profile-edit-card h3 {
-          font-size: 1.15rem;
+          font-size: 0.95rem;
         }
       }
 

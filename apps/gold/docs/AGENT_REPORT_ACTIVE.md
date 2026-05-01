@@ -6,6 +6,26 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-17__2026-04-27.md`
 
 ---
 
+## 2026-04-30 — QA visual final: dashboard chip, loader y editor guiado
+
+**Estado:** EN PROGRESO
+
+### Diagnóstico
+
+Después del pase de modales, QA visual humano detectó tres problemas pendientes: el botón `Dashboard` dentro de Agro quedó como link desnudo y no coincide con los chips del sistema; la transición Dashboard ↔ Agro muestra un loader/modal visualmente roto en vez del loader limpio con logo; y el editor guiado de perfil mantiene títulos blancos demasiado grandes que rompen el canon sobrio del modal `Configura tu asistente`.
+
+### Plan
+
+- Estilizar el botón `Dashboard` como chip sobrio del header Agro.
+- Reparar/restaurar el loader limpio de navegación entre Dashboard y Agro.
+- Bajar intensidad visual del editor guiado de perfil.
+- No tocar documentación canónica.
+- No tocar Supabase/datos.
+- No tocar `agro.js`.
+- Validar con `git diff --check` y `pnpm build:gold`.
+
+---
+
 ## 2026-04-30 — V3.1 Modales Pase 3: QA visual y bug Trabajo Diario
 
 **Estado:** CERRADO

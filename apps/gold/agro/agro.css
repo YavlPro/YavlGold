@@ -8287,17 +8287,17 @@ body.agro-shell-rail-collapsed.agro-shell-ready .app-container {
 }
 
 .agro-header-dashboard-link {
-  background: transparent;
-  border-color: var(--border-neutral);
-  color: var(--text-secondary);
-  padding: 0.45rem 0.85rem;
-  font-size: 0.8rem;
+  background: rgba(200, 167, 82, 0.06);
+  border-color: rgba(200, 167, 82, 0.2);
+  color: var(--gold-4, #C8A752);
+  padding: 0.4rem 0.8rem;
+  font-size: 0.82rem;
 }
 
 .agro-header-dashboard-link:hover,
 .agro-header-dashboard-link:focus-visible {
-  background: var(--bg-3);
-  border-color: var(--border-gold);
+  background: rgba(200, 167, 82, 0.12);
+  border-color: rgba(200, 167, 82, 0.35);
   color: var(--gold-4);
   transform: none;
 }

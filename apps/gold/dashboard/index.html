@@ -1610,6 +1610,92 @@
       transform: none;
       opacity: 0.9;
     }
+
+    /* ============================================ DASHBOARD SPLASH LOADER ============================================ */
+    .dash-splash {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--negro-puro, #0a0a0a);
+      transition: opacity 0.35s ease, visibility 0.35s ease;
+    }
+
+    body.dashboard-ready .dash-splash {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .dash-splash__inner {
+      display: grid;
+      gap: 0.6rem;
+      place-items: center;
+      padding: 2rem;
+    }
+
+    .dash-splash__logo {
+      width: 64px;
+      height: 64px;
+      object-fit: contain;
+      opacity: 0;
+      animation: dashSplashFadeIn 0.5s ease 0.1s forwards;
+    }
+
+    .dash-splash__title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--dorado-yavl, #C8A752);
+      letter-spacing: 0.06em;
+      opacity: 0;
+      animation: dashSplashFadeIn 0.4s ease 0.25s forwards;
+    }
+
+    .dash-splash__bar {
+      width: 120px;
+      height: 3px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.06);
+      overflow: hidden;
+      opacity: 0;
+      animation: dashSplashFadeIn 0.3s ease 0.4s forwards;
+    }
+
+    .dash-splash__progress {
+      height: 100%;
+      width: 40%;
+      border-radius: 2px;
+      background: var(--dorado-yavl, #C8A752);
+      animation: dashSplashSlide 1s ease-in-out infinite;
+    }
+
+    @keyframes dashSplashFadeIn {
+      to { opacity: 1; }
+    }
+
+    @keyframes dashSplashSlide {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(350%); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .dash-splash__logo,
+      .dash-splash__title,
+      .dash-splash__bar {
+        opacity: 1;
+        animation: none;
+      }
+      .dash-splash__progress {
+        animation: none;
+        width: 60%;
+      }
+      .dash-splash {
+        transition: none;
+      }
+    }
   </style>
   <link rel="stylesheet" href="/assets/css/dashboard-v1.css">
 
@@ -1618,6 +1704,13 @@
 </head>
 
 <body data-page-protected="true">
+  <div class="dash-splash" id="dash-splash" aria-label="Cargando Dashboard" role="status">
+    <div class="dash-splash__inner">
+      <img src="/assets/images/logo.webp" alt="YavlGold" width="64" height="64" class="dash-splash__logo" />
+      <p class="dash-splash__title">Cargando</p>
+      <div class="dash-splash__bar"><div class="dash-splash__progress"></div></div>
+    </div>
+  </div>
   <a href="#main-content" class="sr-only-focusable">Saltar al contenido principal</a>
   <!-- 🎆 FONDO DORADO -->
   <div class="pulso-vital"></div>
@@ -2880,6 +2973,12 @@
 
     function startDashboardPage() {
       initDashboard();
+      document.body.classList.add('dashboard-ready');
+      const splash = document.getElementById('dash-splash');
+      if (splash) {
+        splash.addEventListener('transitionend', () => splash.remove(), { once: true });
+        setTimeout(() => splash.remove(), 900);
+      }
     }
     window.addEventListener('auth:guard:passed', startDashboardPage, { once: true });
     if (window.YGDashboardAuthGuard?.hasPassed?.()) {
