@@ -6,9 +6,54 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-17__2026-04-27.md`
 
 ---
 
-## 2026-05-01 — Actualización documental post Mi Granja
+## 2026-05-01 — Auditoría y consolidación ADN Visual V11
 
 **Estado:** EN PROGRESO
+
+### Diagnóstico inicial
+
+El producto ya evolucionó visualmente hacia un estándar V11 durante los frentes recientes: hub `Mi Granja`, patrón hub/module, modales con canon del asistente IA, reducción de glows, mejor separación semántica y superficies más sobrias tipo documentación Agro. Falta auditar el estado real del repo, eliminar contradicciones del ADN Visual V10 y consolidar documentalmente el nuevo estándar V11.
+
+### Plan
+
+- Leer `AGENTS.md`, `ADN-VISUAL-V10.0.md`, `MANIFIESTO_AGRO.md`, `FICHA_TECNICA.md`, `docs-agro.html`, `llms.txt` y el reporte activo.
+- Auditar CSS/HTML visual del producto actual.
+- Inventariar hardcodes, glows, gradientes, sombras, animaciones y colores fuera de canon.
+- Consolidar ADN Visual V11 como documentación canónica.
+- No tocar lógica de negocio.
+- No tocar Supabase.
+- No crecer `agro.js`.
+- Validar con `git diff --check` y `pnpm build:gold`.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/docs/ADN-VISUAL-V11.0.md` | Creación | Canon visual V11 activo (549 líneas): paleta, sombras, tipografía, componentes, hub Mi Granja, modales, accesibilidad, gobernanza |
+| `AGENTS.md` | Actualización | §2 renombrado a V11, tokens V11, jerarquía canónica, anti-patrón V11, ley visual, schema |
+| `FICHA_TECNICA.md` | Actualización | Sistema de diseño apunta a V11 activo, V10 histórico |
+| `apps/gold/public/llms.txt` | Actualización | Política visual V11, referencias canónicas |
+| `apps/gold/docs/AGENT_CONTEXT_INDEX.md` | Actualización | Mapa central apunta a V11 como ley visual activa |
+| `README.md` | Actualización | Sistema de diseño apunta a V11 activo |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Cierre | Cierre de sección V11 |
+
+### Validación
+
+- `git diff --check`: sin conflictos de espacio.
+- `pnpm build:gold`: exitoso.
+- No se tocó código de producto, Supabase, migraciones, `agro.js`, auth, datos ni workflows.
+
+### Cierre
+
+Se consolidó `ADN-VISUAL-V11.0.md` como canon visual activo del proyecto, dejando `ADN-VISUAL-V10.0.md` como base histórica fundacional. Se actualizaron referencias canónicas en `AGENTS.md`, `FICHA_TECNICA.md`, `llms.txt`, `AGENT_CONTEXT_INDEX.md` y `README.md`. No se tocó código de producto, Supabase, migraciones, Vercel, workflows ni `agro.js`.
+
+**Estado:** COMPLETADO
+
+---
+
+## 2026-05-01 — Actualización documental post Mi Granja
+
+**Estado:** COMPLETADO
 
 ### Diagnóstico
 
@@ -28,8 +73,6 @@ El nuevo sistema UX de Agro ya consolidó el hub `Mi Granja`, la navegación `In
 ## 2026-05-01 — Consolidación puntual de cultivos y períodos en Mi Granja
 
 **Estado:** COMPLETADO
-
-**Estado:** EN PROGRESO
 
 ### Diagnóstico
 

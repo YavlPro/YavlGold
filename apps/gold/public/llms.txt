@@ -6,7 +6,8 @@ This file contains the current product, architecture and routing policy for `app
 
 ## 0. Canonical sources
 - `AGENTS.md` (repo root) — canonical agent instructions
-- `apps/gold/docs/ADN-VISUAL-V10.0.md` — immutable design system (V10.0)
+- `apps/gold/docs/ADN-VISUAL-V11.0.md` — active design system (V11.0 sober agricultural canon)
+- `apps/gold/docs/ADN-VISUAL-V10.0.md` — historical foundational reference (V10.0, no longer governing)
 - `apps/gold/docs/AGENT_REPORT_ACTIVE.md` — active operational report
 - `FICHA_TECNICA.md` (repo root) — full technical spec
 - Release policy: `V1` is the active visible product release; `V9.8` is historical only when explicitly labeled; `V10.0` refers to the visual DNA version, not the product release.
@@ -41,7 +42,7 @@ This file contains the current product, architecture and routing policy for `app
 - Landing auth entry uses `/index.html#login`
 - Unavailable modules should not behave like protected released products
 
-## 5. Visual policy (ADN Visual V10.0)
+## 5. Visual policy (ADN Visual V11.0)
 - Main background: `#0a0a0a`
 - Gold accent: `#C8A752` (`--gold-4`)
 - Headings: Orbitron

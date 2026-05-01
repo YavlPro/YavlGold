@@ -69,7 +69,7 @@ gold/
 
 - Instrucciones para agentes: `AGENTS.md`
 - Reporte activo: `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
-- Sistema de diseño: `apps/gold/docs/ADN-VISUAL-V10.0.md`
+- Sistema de diseño: `apps/gold/docs/ADN-VISUAL-V11.0.md` (canon activo), `apps/gold/docs/ADN-VISUAL-V10.0.md` (histórico)
 - Seguridad y reportes privados: `SECURITY.md`
 - Guia de contribucion: `CONTRIBUTING.md`
 - Release notes: `CHANGELOG.md`

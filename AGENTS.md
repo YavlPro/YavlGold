@@ -21,9 +21,10 @@ El script `agent-guard.mjs` bloquea React, Vue, Svelte, Angular, Next, Nuxt y As
 
 ---
 
-## §2 — ADN Visual V10.0 (referencia inmutable)
+## §2 — ADN Visual V11.0 (canon visual activo)
 
-El sistema de diseño completo vive en `apps/gold/docs/ADN-VISUAL-V10.0.md`. Es **inmutable y obligatorio**.
+El sistema de diseño activo vive en `apps/gold/docs/ADN-VISUAL-V11.0.md`. Es el canon visual vigente.
+`apps/gold/docs/ADN-VISUAL-V10.0.md` es referencia histórica fundacional y ya no rige.
 
 ### Reglas clave que NUNCA se violan
 
@@ -87,7 +88,7 @@ agro-cart.js         — carrito
 ### 3.4 — CSS
 
 - Estilos en archivos CSS separados (`agro.css`, `agro-dashboard.css`, etc.).
-- Usar tokens del ADN Visual V10 (`--gold-4`, `--bg-1`, `--v10-*`, etc.).
+- Usar tokens del ADN Visual V11 (`--gold-4`, `--bg-1`, etc.).
 - No inline styles masivos; preferir clases CSS.
 
 ---
@@ -100,7 +101,8 @@ agro-cart.js         — carrito
 | `apps/gold/docs/MANIFIESTO_AGRO.md` | Verdad semántica canónica del módulo Agro | Solo con autorización expresa |
 | `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Reporte operativo activo | Sí — cada sesión agrega sección |
 | `apps/gold/docs/AGENT_REPORT.md` | Histórico legacy | No — solo consulta |
-| `apps/gold/docs/ADN-VISUAL-V10.0.md` | Sistema de diseño inmutable | Solo con versionamiento formal |
+| `apps/gold/docs/ADN-VISUAL-V11.0.md` | Sistema de diseño canónico activo (V11) | Solo con versionamiento formal |
+| `apps/gold/docs/ADN-VISUAL-V10.0.md` | Referencia histórica fundacional (V10) | No — solo consulta |
 
 ### Jerarquía canónica obligatoria
 
@@ -217,7 +219,7 @@ Ejemplos:
 - No mezclar documentos archivados con documentos canónicos como:
   - `AGENTS.md`
   - `MANIFIESTO_AGRO.md`
-  - `ADN-VISUAL-V10.0.md`
+  - `ADN-VISUAL-V11.0.md`
   - `FICHA_TECNICA.md`
 
 #### Regla de conservación
@@ -510,7 +512,7 @@ Tocar lo menos posible para corregir lo necesario.
 No declarar "listo" algo que no fue probado.
 
 #### Respeto por el sistema existente
-No romper ADN Visual V10.
+No romper ADN Visual V11.
 No introducir React, Tailwind ni SPA.
 No crecer `agro.js` salvo integración mínima o bugfix quirúrgico justificado.
 
@@ -721,7 +723,7 @@ Cada archivo debe mantener una responsabilidad clara y un tamaño razonable para
 Los documentos canónicos:
 - `AGENTS.md`
 - `MANIFIESTO_AGRO.md`
-- `ADN-VISUAL-V10.0.md`
+- `ADN-VISUAL-V11.0.md`
 - `FICHA_TECNICA.md`
 
 no se gobiernan por un límite bruto de líneas, sino por:
@@ -789,7 +791,7 @@ Cuando un agente trabaje con documentación de YavlGold:
 5. Mantener la jerarquía documental clara:
 
 - **Ley operativa** → `AGENTS.md`
-- **Ley visual** → ADN Visual V10
+- **Ley visual** → ADN Visual V11
 - **Mapa central** → `AGENT_CONTEXT_INDEX.md`
 - **Estado vivo** → `AGENT_REPORT_ACTIVE.md`
 - **Memoria histórica** → `CRONICA-YAVLGOLD.md` y crónicas mensuales
@@ -825,7 +827,7 @@ La integración Obsidian ↔ YavlGold es correcta cuando:
 
 YavlGold ya opera con el patron LLM Wiki de forma organica. Este proyecto tiene:
 
-- **Schema**: AGENTS.md, ADN-VISUAL-V10.0.md, MANIFIESTO_AGRO.md, FICHA_TECNICA.md
+- **Schema**: AGENTS.md, ADN-VISUAL-V11.0.md, MANIFIESTO_AGRO.md, FICHA_TECNICA.md
 - **Wiki viva**: AGENT_REPORT_ACTIVE.md (crece por sesion, se rota cada 4000+ lineas)
 - **Mapa central**: AGENT_CONTEXT_INDEX.md (indice de documentos y su rol)
 - **Resumen operativo**: llms.txt (servido en produccion)
@@ -841,7 +843,7 @@ No se necesita un documento "LLM_WIKI_SCHEMA" nuevo. AGENTS.md ya es el schema m
 
 | Capa | Rol | Documento canonico |
 |---|---|---|
-| **Schema / Ley** | Define qué es legal y cómo opera el sistema | AGENTS.md (ley operativa), ADN-VISUAL-V10.0.md (ley visual), MANIFIESTO_AGRO.md (verdad semantica) |
+| **Schema / Ley** | Define qué es legal y cómo opera el sistema | AGENTS.md (ley operativa), ADN-VISUAL-V11.0.md (ley visual), MANIFIESTO_AGRO.md (verdad semantica) |
 | **Estructura** | Ficha tecnica del proyecto | FICHA_TECNICA.md |
 | **Wiki viva** | Memoria operativa acumulativa de sesiones de agentes | AGENT_REPORT_ACTIVE.md |
 | **Mapa central** | Indice y navegacion de la wiki | AGENT_CONTEXT_INDEX.md |
@@ -870,7 +872,7 @@ No se necesita un documento "LLM_WIKI_SCHEMA" nuevo. AGENTS.md ya es el schema m
 2. Consultar AGENT_CONTEXT_INDEX.md para ubicar el documento correcto
 3. Ir al documento correspondiente segun el tipo de pregunta:
    - Pregunta sobre reglas de agentes → AGENTS.md
-   - Pregunta sobre diseño visual → ADN-VISUAL-V10.0.md
+   - Pregunta sobre diseño visual → ADN-VISUAL-V11.0.md
    - Pregunta sobre Agro → MANIFIESTO_AGRO.md
    - Pregunta sobre estado operativo actual → AGENT_REPORT_ACTIVE.md
    - Pregunta sobre estructura tecnica → FICHA_TECNICA.md

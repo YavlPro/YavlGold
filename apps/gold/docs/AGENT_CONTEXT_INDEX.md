@@ -11,7 +11,7 @@ Actualizado: 2026-04-17.
 | Capa | Documento | Ubicacion | Qué hace |
 |---|---|---|---|
 | **Schema / Ley** | AGENTS.md | raiz | Instrucciones canónicas para agentes |
-| **Ley visual** | ADN-VISUAL-V10.0.md | docs/ | Sistema de diseño inmutable |
+| **Ley visual** | ADN-VISUAL-V11.0.md | docs/ | Sistema de diseño canónico activo (V11). V10 es referencia histórica fundacional |
 | **Verdad semantica** | MANIFIESTO_AGRO.md | docs/ | Qué es cada superficie de Agro |
 | **Estructura** | FICHA_TECNICA.md | raiz | Ficha técnica del proyecto |
 | **Wiki viva** | AGENT_REPORT_ACTIVE.md | docs/ | Estado operativo acumulativo |
@@ -26,7 +26,8 @@ Actualizado: 2026-04-17.
 - [AGENTS.md](../../AGENTS.md) — Ley operativa, schema maestro del proyecto
 - [AGENT_REPORT_ACTIVE.md](./AGENT_REPORT_ACTIVE.md) — Wiki viva actual
 - [MANIFIESTO_AGRO.md](./MANIFIESTO_AGRO.md) — Verdad semántica de Agro
-- [ADN-VISUAL-V10.0.md](./ADN-VISUAL-V10.0.md) — Sistema de diseño inmutable
+- [ADN-VISUAL-V11.0.md](./ADN-VISUAL-V11.0.md) — Sistema de diseño canónico activo (V11)
+- [ADN-VISUAL-V10.0.md](./ADN-VISUAL-V10.0.md) — Referencia histórica fundacional (V10, ya no rige)
 - [yavlgold-context.md](./yavlgold-context.md) — Contexto consolidado (8K lineas)
 - [FICHA_TECNICA.md](../../FICHA_TECNICA.md) — Ficha técnica estructural
 
@@ -45,7 +46,7 @@ Actualizado: 2026-04-17.
 2. Consultar este archivo para ubicar el documento correcto
 3. IR al documento según tipo de pregunta:
    - Reglas de agentes → AGENTS.md
-   - Diseño visual → ADN-VISUAL-V10.0.md
+   - Diseño visual → ADN-VISUAL-V11.0.md
    - Agro → MANIFIESTO_AGRO.md
    - Estado operativo → AGENT_REPORT_ACTIVE.md
    - Bitácora del mes actual → docs/ops/daily-log-YYYY-MM-DD.md

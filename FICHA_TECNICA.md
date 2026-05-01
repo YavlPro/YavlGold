@@ -5,7 +5,7 @@
 **Arquitectura:** Monorepo Turborepo
 **Release activo visible:** `V1`
 **Instrucciones para agentes:** `AGENTS.md` (raiz del repo)
-**Sistema de diseño:** `apps/gold/docs/ADN-VISUAL-V10.0.md` (inmutable)
+**Sistema de diseño:** `apps/gold/docs/ADN-VISUAL-V11.0.md` (canon activo)
 **LLMs context:** `apps/gold/public/llms.txt` (servido en produccion)
 
 ---
@@ -250,8 +250,9 @@ agro-wizard.js       — wizard de configuración
 - **Prohibido:** Azul/morado como acento principal
 
 ### Documento Canónico de ADN Visual
-- **Versión:** `V10.0 (Inmutable)`
-- **Ruta:** `apps/gold/docs/ADN-VISUAL-V10.0.md`
+- **Versión activa:** `V11.0 (Canon activo)`
+- **Ruta:** `apps/gold/docs/ADN-VISUAL-V11.0.md`
+- **Referencia histórica:** `apps/gold/docs/ADN-VISUAL-V10.0.md` (base fundacional, no rige)
 
 ### Tipografía
 - **Títulos:** Orbitron (futurista, tecnológica)
@@ -361,7 +362,7 @@ pnpm -C apps/gold build
 
 ### Archivos Clave
 - **Instrucciones agentes:** `AGENTS.md` (raíz)
-- **ADN Visual:** `apps/gold/docs/ADN-VISUAL-V10.0.md`
+- **ADN Visual:** `apps/gold/docs/ADN-VISUAL-V11.0.md`
 - **Reporte operativo:** `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
 - **LLMs context:** `apps/gold/public/llms.txt`
 - **Supabase Client:** `apps/gold/assets/js/config/supabase-config.js`
