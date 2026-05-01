@@ -6,6 +6,57 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-17__2026-04-27.md`
 
 ---
 
+## 2026-05-01 — Fix modal intruso post-splash Dashboard → Agro
+
+**Estado:** COMPLETADO
+
+### Diagnóstico
+
+QA humano confirmó que el splash Dashboard → Agro aparece correctamente, pero al finalizar la carga se abre un modal inesperado encima de Agro. Esto indica que el problema no está en el splash inicial sino en un flujo posterior de bootstrap/onboarding/modal legacy que se dispara automáticamente después de ocultar el loader.
+
+Diagnóstico técnico:
+- El modal intruso identificado es `#modal-new-crop.modal-overlay.hidden.agro-modal-canon`, con texto visible `Nuevo Cultivo`.
+- El archivo que lo crea es `apps/gold/agro/index.html`; el estilo que lo deja visible antes del ocultamiento dinámico vive en `apps/gold/agro/agro.css` por `.agro-modal-canon { display: flex; }`.
+- No lo abre una función de negocio: queda expuesto por estado inicial CSS cuando `#agro-modal-styles` todavía no existe o se pierde. Ese estilo dinámico se inyecta desde `agro.js`, pero la corrección se hace sin tocar `agro.js`.
+- Los legacy `#modal-lunar` (`Agenda Lunar 2026`) y `#modal-market` (`Referencias de mercado`) comparten la misma dependencia de la regla dinámica `.modal-overlay { display: none; }`, aunque el que compite visualmente con mayor prioridad es `#modal-new-crop`.
+- No se encontró auto-open en `agro-ia-wizard.js`, `agro-feedback.js`, `profileEditWizard.js`, `agroperfil.js` ni `agro-shell.js`.
+- La reproducción local con sesión UI falsa confirmó que, al retirar `#agro-modal-styles`, `#modal-new-crop` pasa de `display:none` a `display:flex` por `.agro-modal-canon`; `#modal-lunar` y `#modal-market` pasan a `display:block`.
+
+### Preguntas obligatorias
+
+- Id/clase: `#modal-new-crop.modal-overlay.hidden.agro-modal-canon`.
+- Texto visible: `Nuevo Cultivo`.
+- Archivo dueño del markup: `apps/gold/agro/index.html`.
+- Archivo dueño del estado visual: `apps/gold/agro/agro.css`; el ocultamiento dinámico venía de `agro.js`.
+- Función que lo abre legítimamente: `window.openCropModal()` / `openCropModal()`, pero no es la causa del intruso.
+- Disparador real: condición CSS inicial, no `DOMContentLoaded`, `setTimeout`, `localStorage`, `sessionStorage`, onboarding, perfil ni asistente.
+- Ocurre al entrar desde Dashboard y puede ocurrir también en recarga directa de `/agro/` si el CSS dinámico tarda/no está; no depende de la ruta anterior.
+- El modal sí debe abrirse, pero solo por acción explícita del usuario (`Nuevo cultivo`), nunca por estado inicial.
+
+### Plan
+
+- Identificar el modal exacto por id, clase, texto visible y archivo dueño.
+- Identificar qué función lo abre automáticamente.
+- Corregir la condición de apertura o el estado persistente que lo dispara.
+- No ocultar modales globalmente por CSS.
+- No tocar documentación canónica.
+- Validar con `git diff --check` y `pnpm build:gold`.
+
+### Corrección
+
+- Se agregó una regla CSS puntual para cerrar solo los estados iniciales `.hidden` de `#modal-new-crop`, `#modal-lunar` y `#modal-market`.
+- La regla de `#modal-new-crop` usa `:not(.active)` para no romper la apertura legítima por `openCropModal()`.
+- No se tocó `agro.js`, Supabase, auth modal ni documentación canónica.
+
+### Validación
+
+- Browser local: al retirar manualmente `#agro-modal-styles`, `#modal-new-crop`, `#modal-lunar` y `#modal-market` permanecen en `display:none`.
+- Browser local: `window.openCropModal()`, `window.openMarketHub()` y `window.openLunarCalendar()` siguen abriendo y cerrando sus modales legítimos.
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS con warning local no bloqueante de Node `v25.6.0` vs engine esperado `20.x`.
+
+---
+
 ## 2026-05-01 — P1/P2: Splash Dashboard-Agro y botón Dashboard
 
 **Estado:** COMPLETADO

@@ -220,6 +220,13 @@
   transition: opacity 180ms ease;
 }
 
+#modal-new-crop.modal-overlay.hidden:not(.active),
+#modal-lunar.modal-overlay.hidden,
+#modal-market.modal-overlay.hidden {
+  display: none;
+  pointer-events: none;
+}
+
 .agro-modal-canon__dialog {
   position: relative;
   width: min(520px, calc(100vw - 32px));
