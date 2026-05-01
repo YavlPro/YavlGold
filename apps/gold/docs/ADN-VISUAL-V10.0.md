@@ -1,13 +1,15 @@
-# 💎 ADN VISUAL INMUTABLE V10.0 💎
-# YavlGold — ADN Visual Inmutable
+# 💎 ADN VISUAL V10.0 — HISTÓRICO 💎
+# YavlGold — Base visual fundacional
 
-Documento completo del sistema de diseño. Referencia visual inmutable e inmutablemente oficial.
+Documento histórico del sistema visual V10.0. Referencia fundacional, no canon activo.
+
+> **Canon visual activo actual:** `apps/gold/docs/ADN-VISUAL-V11.0.md`
 
 ---
 
-## Inmutable V10.0
+## Histórico V10.0
 
-- Estado: `ACTIVO`
+- Estado: `HISTÓRICO / SOLO CONSULTA`
 - Release activo del producto: `V1`
 - Contexto historico de formalizacion: `V9.8`
 - Stack visual: `Vanilla JS + Vite MPA`
@@ -40,8 +42,8 @@ Documento completo del sistema de diseño. Referencia visual inmutable e inmutab
 | Proyecto | YavlGold |
 | Release visible actual | V1 |
 | Contexto historico de formalizacion | V9.8 |
-| DNA Version | V10.0 — Inmutable |
-| Estado | ACTIVO |
+| DNA Version | V10.0 — Histórico |
+| Estado | HISTÓRICO / SOLO CONSULTA |
 | Autor | Yerikson Varela |
 | Origen | Táchira, Venezuela 🇻🇪 |
 | Fecha | 2026-02-18 |
@@ -51,7 +53,7 @@ Documento completo del sistema de diseño. Referencia visual inmutable e inmutab
 
 ## 📋 §0 — Misión del Documento
 
-Este archivo define el DNA visual oficial e inmutable de YavlGold.
+Este archivo es el documento histórico del sistema visual V10.0 de YavlGold.
 
 - SÍ adopta ideas visuales del ZIP revisado (`metallic gold system`, tokens, gradients, motion language).
 - NO adopta su arquitectura React/Tailwind.
@@ -689,7 +691,7 @@ Motivo: preservar plataforma actual y performance del entorno objetivo.
 
 ## ⚖️ §14 — Gobernanza del DNA
 
-"Este documento es la referencia visual inmutable."
+"Este documento es la referencia visual histórica fundacional."
 
 Flujo obligatorio para cambios base:
 1. Definir primero aquí.

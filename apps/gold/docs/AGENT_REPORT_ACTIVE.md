@@ -2202,3 +2202,84 @@ La card dentro de "Ciclos de períodos" decía "Ciclos de período", lo que conf
 - `node --check apps/gold/agro/agro-shell.js`: PASS
 - `git diff --check`: PASS
 - `pnpm build:gold`: PASS (165 modules, check-llms OK, UTF-8 OK)
+
+---
+
+## 2026-05-01 — Corrección documental ADN Visual V10
+
+**Estado:** COMPLETADO
+
+### Objetivo
+
+Corregir la contradicción documental en ADN-VISUAL-V10.0.md, que se declaraba como canon activo e inmutable cuando en realidad fue reemplazado por V11.
+
+### Diagnóstico
+
+V10 se presentaba internamente como "ACTIVO" e "inmutablemente oficial", pero AGENTS.md y ADN-VISUAL-V11.0.md ya indicaban correctamente que V11 es el canon visual vigente y V10 es referencia histórica fundacional. Esto creaba contradicción en la jerarquía documental.
+
+### Cambios
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/docs/ADN-VISUAL-V10.0.md` | Corrección documental | Título: "INMUTABLE" → "HISTÓRICO". Estado: "ACTIVO" → "HISTÓRICO / SOLO CONSULTA". Agregada nota superior indicando canon activo actual es V11. Frase "referencia visual inmutable e inmutablemente oficial" → "referencia fundacional, no canon activo". |
+
+### Detalle de la corrección
+
+1. Título principal: `# 💎 ADN VISUAL INMUTABLE V10.0 💎` → `# 💎 ADN VISUAL V10.0 — HISTÓRICO 💎`
+2. Subtítulo: `# YavlGold — ADN Visual Inmutable` → `# YavlGold — Base visual fundacional`
+3. Descripción: `Documento completo del sistema de diseño. Referencia visual inmutable e inmutablemente oficial.` → `Documento histórico del sistema visual V10.0. Referencia fundacional, no canon activo.`
+4. Nota superior: Agregado `> **Canon visual activo actual:** apps/gold/docs/ADN-VISUAL-V11.0.md`
+5. Sección header: `## Inmutable V10.0` → `## Histórico V10.0`
+6. Estado: `- Estado: ACTIVO` → `- Estado: HISTÓRICO / SOLO CONSULTA`
+7. Tabla DNA: `DNA Version | V10.0 — Inmutable` → `DNA Version | V10.0 — Histórico`
+8. Tabla DNA: `Estado | ACTIVO` → `Estado | HISTÓRICO / SOLO CONSULTA`
+9. §0 Misión: `Este archivo define el DNA visual oficial e inmutable de YavlGold.` → `Este archivo es el documento histórico del sistema visual V10.0 de YavlGold.`
+10. §14 Gobernanza: `"Este documento es la referencia visual inmutable."` → `"Este documento es la referencia visual histórica fundacional."`
+
+### Validación
+
+- `git diff --check`: PASS
+- `pnpm build:gold`: PASS (167 modules, 10.02s, agent-guard OK, agent-report-check OK, check-llms OK, UTF-8 OK)
+
+### NO se hizo
+
+- NO se tocó ADN-VISUAL-V11.0.md
+- NO se tocó código
+- NO se tocó Supabase
+- NO se alteró contenido visual del producto
+
+---
+
+## 2026-05-01 — Corrección documental MANIFIESTO_AGRO (V10 → V11)
+
+**Estado:** COMPLETADO
+
+### Objetivo
+
+Corregir contradicción en MANIFIESTO_AGRO.md que referenciaba V10 como canónico cuando V11 es el canon visual activo.
+
+### Diagnóstico
+
+MANIFIESTO_AGRO.md tenía dos referencias a V10 como canónico:
+- Línea 8: Fuente canónica superior incluía `ADN-VISUAL-V10.0.md`
+- Línea 1181: Regla 5 indicaba "Cualquier cambio visual debe obedecer el ADN Visual V10"
+
+Esto contradecía AGENTS.md, FICHA_TECNICA.md, AGENT_CONTEXT_INDEX.md y llms.txt, que todos marcan V11 como canon activo.
+
+### Cambios
+
+| Archivo | Tipo | Cambios |
+|---|---|---|
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | Corrección documental | Línea 8: `ADN-VISUAL-V10.0.md` → `ADN-VISUAL-V11.0.md`. Línea 1181: "ADN Visual V10" → "ADN Visual V11". |
+
+### Validación
+
+- `git diff --check`: PASS
+- `pnpm build:gold`: PASS (167 modules, 4.02s, agent-guard OK, agent-report-check OK, check-llms OK, UTF-8 OK)
+
+### NO se hizo
+
+- NO se tocó ADN-VISUAL-V10.0.md
+- NO se tocó ADN-VISUAL-V11.0.md
+- NO se tocó código
+- NO se tocó Supabase

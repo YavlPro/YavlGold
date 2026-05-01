@@ -5,7 +5,7 @@
 > Estado: DOCUMENTO CANÓNICO ACTIVO
 > Fecha base: 2026-04-15 · Canonizado: 2026-04-17
 > Release visible: V1
-> Fuente canónica superior: `AGENTS.md` + `ADN-VISUAL-V10.0.md` + `FICHA_TECNICA.md`
+> Fuente canónica superior: `AGENTS.md` + `ADN-VISUAL-V11.0.md` + `FICHA_TECNICA.md`
 
 ---
 
@@ -39,10 +39,10 @@ Aquí se define:
 
 ## 1. Qué es YavlGold Agro
 
-**Definición corta**  
+**Definición corta**
 YavlGold Agro es una herramienta agrícola digital pensada para el trabajo real de campo. No es una aplicación teórica ni un panel vacío: es un sistema diseñado para registrar, entender y operar la realidad agrícola del usuario.
 
-**Definición amplia**  
+**Definición amplia**
 Agro reúne producción, operación comercial, contexto, clima, memoria y asistencia inteligente en una sola superficie de trabajo.
 
 Agro no es una app aislada ni un añadido sin relación. Es una parte del ecosistema YavlGold: toma el trabajo real del agricultor, lo ordena, lo conecta con memoria, contexto y lectura del negocio, y permite que la ayuda inteligente tenga algo concreto sobre qué trabajar.
@@ -127,7 +127,7 @@ Agro responde a una necesidad fundamental:
 
 ## 4. Taxonomía canónica de módulos
 
-> **Instrucción de edición:** completar cada módulo sin mezclarlo con otros.  
+> **Instrucción de edición:** completar cada módulo sin mezclarlo con otros.
 > Cada bloque debe responder: **qué es / qué no es / para qué sirve / cómo se usa / cómo se conecta**.
 
 ---
@@ -1178,7 +1178,7 @@ No hacer crecer `agro.js` con nuevas features; modularizar cuando corresponda.
 
 ### Regla 5
 
-Cualquier cambio visual debe obedecer el ADN Visual V10 y el canon de modales §19.
+Cualquier cambio visual debe obedecer el ADN Visual V11 y el canon de modales §19.
 
 ---
 
