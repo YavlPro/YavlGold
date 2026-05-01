@@ -6,6 +6,26 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-17__2026-04-27.md`
 
 ---
 
+## 2026-05-01 — Consolidación puntual de cultivos y períodos en Mi Granja
+
+**Estado:** EN PROGRESO
+
+### Diagnóstico
+
+El hub `Mi Granja` está visualmente estable, pero las entradas `Ciclos activos` / `Ciclos finalizados` y `Períodos activos` / `Períodos finalizados` pueden agruparse para mejorar comprensión. El alcance es estrictamente puntual: no se tocarán estadísticas, comparadores, finanzas, trabajo, rankings ni clima.
+
+### Plan
+
+- Cambiar `Ciclos activos` a `Mis cultivos`.
+- Integrar activos, finalizados y perdidos dentro de `Mis cultivos` con tabs internos.
+- Cambiar `Períodos activos` a `Calendario operativo`.
+- Integrar activos y finalizados dentro de `Calendario operativo` con tabs internos.
+- Mantener sin cambios estadísticas, comparadores, finanzas y trabajo.
+- No tocar `agro.js` ni datos.
+- Validar con `git diff --check` y `pnpm build:gold`.
+
+---
+
 ## 2026-05-01 — Pulido modal de autenticación
 
 **Estado:** COMPLETADO

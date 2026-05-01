@@ -219,7 +219,7 @@
                         <i class="fa-solid fa-wheat-awn agro-shell-link__icon" aria-hidden="true"></i>
                         <span class="agro-launcher__tile-copy">
                             <span class="agro-shell-link__label">Cultivos / Granja General</span>
-                            <span class="agro-launcher__tile-desc">Ciclos activos, períodos, comparación y estadísticas.</span>
+                            <span class="agro-launcher__tile-desc">Cultivos, calendario operativo, comparación y estadísticas.</span>
                         </span>
                     </button>
                     <div class="agro-shell-subnav">
@@ -227,13 +227,9 @@
                                 class="fa-solid fa-seedling agro-shell-link__icon"
                                 aria-hidden="true"></i><span>Ciclos de cultivos</span></span>
                         <button type="button" class="agro-shell-sublink" data-agro-view="ciclos"
-                            data-agro-subview="activos" data-agro-mode-scope="crop"><i class="fa-solid fa-leaf agro-shell-link__icon"
-                                aria-hidden="true"></i><span class="agro-shell-link__label">Ciclos
-                                activos</span></button>
-                        <button type="button" class="agro-shell-sublink" data-agro-view="ciclos"
-                            data-agro-subview="finalizados" data-agro-mode-scope="crop"><i class="fa-solid fa-flag-checkered agro-shell-link__icon"
-                                aria-hidden="true"></i><span class="agro-shell-link__label">Ciclos
-                                finalizados</span></button>
+                            data-agro-subview="mis-cultivos" data-agro-mode-scope="crop"><i class="fa-solid fa-leaf agro-shell-link__icon"
+                                aria-hidden="true"></i><span class="agro-shell-link__label">Mis
+                                cultivos</span></button>
                         <button type="button" class="agro-shell-sublink" data-agro-view="ciclos"
                             data-agro-subview="comparar" data-agro-mode-scope="crop"><i class="fa-solid fa-scale-balanced agro-shell-link__icon"
                                 aria-hidden="true"></i><span class="agro-shell-link__label">Comparar
@@ -244,15 +240,11 @@
                                 ciclos</span></button>
                         <span class="agro-shell-subgroup-label" data-agro-mode-scope="non_crop"><i
                                 class="fa-solid fa-calendar-days agro-shell-link__icon"
-                                aria-hidden="true"></i><span>Períodos activos</span></span>
+                                aria-hidden="true"></i><span>Ciclos de períodos</span></span>
                         <button type="button" class="agro-shell-sublink" data-agro-view="period-cycles"
-                            data-agro-subview="activos" data-agro-mode-scope="non_crop"><i class="fa-solid fa-calendar-day agro-shell-link__icon"
-                                aria-hidden="true"></i><span class="agro-shell-link__label">Períodos
-                                activos</span></button>
-                        <button type="button" class="agro-shell-sublink" data-agro-view="period-cycles"
-                            data-agro-subview="finalizados" data-agro-mode-scope="non_crop"><i class="fa-solid fa-calendar-check agro-shell-link__icon"
-                                aria-hidden="true"></i><span class="agro-shell-link__label">Períodos
-                                finalizados</span></button>
+                            data-agro-subview="calendario" data-agro-mode-scope="non_crop"><i class="fa-solid fa-calendar-day agro-shell-link__icon"
+                                aria-hidden="true"></i><span class="agro-shell-link__label">Calendario
+                                operativo</span></button>
                         <button type="button" class="agro-shell-sublink" data-agro-view="period-cycles"
                             data-agro-subview="comparar" data-agro-mode-scope="non_crop"><i
                                 class="fa-solid fa-arrows-left-right-to-line agro-shell-link__icon"
@@ -557,14 +549,9 @@
                 <div class="agro-mobile-hub__grid">
                     <p class="agro-mobile-hub__section-title">Ciclos de cultivos</p>
                     <button type="button" class="agro-mobile-hub__item" data-agro-view="ciclos"
-                        data-agro-subview="activos">
+                        data-agro-subview="mis-cultivos">
                         <i class="fa-solid fa-seedling" aria-hidden="true"></i>
-                        <span>Ciclos activos</span>
-                    </button>
-                    <button type="button" class="agro-mobile-hub__item" data-agro-view="ciclos"
-                        data-agro-subview="finalizados">
-                        <i class="fa-solid fa-flag-checkered" aria-hidden="true"></i>
-                        <span>Ciclos finalizados</span>
+                        <span>Mis cultivos</span>
                     </button>
                     <button type="button" class="agro-mobile-hub__item" data-agro-view="ciclos"
                         data-agro-subview="estadisticas">
@@ -579,14 +566,9 @@
 
                     <p class="agro-mobile-hub__section-title">Ciclos de períodos</p>
                     <button type="button" class="agro-mobile-hub__item" data-agro-view="period-cycles"
-                        data-agro-subview="activos">
+                        data-agro-subview="calendario">
                         <i class="fa-solid fa-calendar-day" aria-hidden="true"></i>
-                        <span>Períodos activos</span>
-                    </button>
-                    <button type="button" class="agro-mobile-hub__item" data-agro-view="period-cycles"
-                        data-agro-subview="finalizados">
-                        <i class="fa-solid fa-calendar-check" aria-hidden="true"></i>
-                        <span>Períodos finalizados</span>
+                        <span>Calendario operativo</span>
                     </button>
                     <button type="button" class="agro-mobile-hub__item" data-agro-view="period-cycles"
                         data-agro-subview="estadisticas">
@@ -1078,35 +1060,47 @@
                 <button type="button" class="btn-privacy-toggle" data-money-privacy-control="toggle"
                     aria-pressed="false">Ocultar montos</button>
             </div>
-            <div class="agro-cycle-subview" data-agro-cycle-subview="activos">
-                <div id="cyclesContainer" class="crops-grid"> <!-- Ciclos activos cargados dinámicamente --> </div>
-            </div>
-
-            <div class="agro-cycle-subview" data-agro-cycle-subview="finalizados" id="agro-cycles-finished-view">
-                <section class="agro-cycle-overview" aria-label="Resumen de cierres de ciclos">
-                    <div class="agro-cycle-overview__copy">
-                        <p class="agro-cycle-overview__eyebrow">Lectura de cierre</p>
-                        <h3 class="agro-cycle-overview__title">Cierres, pérdidas y trazabilidad</h3>
-                        <p class="agro-cycle-overview__subtitle">Esta vista concentra los ciclos cerrados, los perdidos
-                            y
-                            cualquier auditoría pendiente.</p>
+            <div class="agro-cycle-subview" data-agro-cycle-subview="mis-cultivos">
+                <div class="agro-internal-tabs" role="tablist" aria-label="Tabs de Mis cultivos">
+                    <button type="button" class="agro-internal-tab is-active" role="tab" data-agro-crop-tab="activos" aria-selected="true">Activos</button>
+                    <button type="button" class="agro-internal-tab" role="tab" data-agro-crop-tab="finalizados" aria-selected="false">Finalizados</button>
+                    <button type="button" class="agro-internal-tab" role="tab" data-agro-crop-tab="perdidos" aria-selected="false">Perdidos</button>
+                </div>
+                <div class="agro-internal-tab-content is-active" data-agro-crop-tab-content="activos">
+                    <div id="cyclesContainer" class="crops-grid"></div>
+                </div>
+                <div class="agro-internal-tab-content" data-agro-crop-tab-content="finalizados">
+                    <section class="agro-cycle-overview" aria-label="Resumen de cierres de ciclos">
+                        <div class="agro-cycle-overview__copy">
+                            <p class="agro-cycle-overview__eyebrow">Lectura de cierre</p>
+                            <h3 class="agro-cycle-overview__title">Cierres, pérdidas y trazabilidad</h3>
+                            <p class="agro-cycle-overview__subtitle">Esta vista concentra los ciclos cerrados, los perdidos
+                                y
+                                cualquier auditoría pendiente.</p>
+                        </div>
+                        <div class="agro-cycle-overview__grid">
+                            <article class="agro-cycle-overview__card">
+                                <span class="agro-cycle-overview__label">Finalizados</span>
+                                <strong class="agro-cycle-overview__value" id="agro-cycle-finished-count">0</strong>
+                            </article>
+                            <article class="agro-cycle-overview__card agro-cycle-overview__card--lost">
+                                <span class="agro-cycle-overview__label">Perdidos</span>
+                                <strong class="agro-cycle-overview__value" id="agro-cycle-lost-count">0</strong>
+                            </article>
+                            <article class="agro-cycle-overview__card">
+                                <span class="agro-cycle-overview__label">Auditoría</span>
+                                <strong class="agro-cycle-overview__value" id="agro-cycle-audit-count">0</strong>
+                            </article>
+                        </div>
+                    </section>
+                    <div id="agro-cycles-history-slot"></div>
+                </div>
+                <div class="agro-internal-tab-content" data-agro-crop-tab-content="perdidos">
+                    <div class="agro-cycle-perdidos-empty">
+                        <p class="agro-cycle-perdidos-empty__title">Ciclos perdidos</p>
+                        <p class="agro-cycle-perdidos-empty__copy">Los ciclos marcados como perdidos aparecerán aquí. Actualmente esta vista se alimenta de la misma fuente que los ciclos finalizados.</p>
                     </div>
-                    <div class="agro-cycle-overview__grid">
-                        <article class="agro-cycle-overview__card">
-                            <span class="agro-cycle-overview__label">Finalizados</span>
-                            <strong class="agro-cycle-overview__value" id="agro-cycle-finished-count">0</strong>
-                        </article>
-                        <article class="agro-cycle-overview__card agro-cycle-overview__card--lost">
-                            <span class="agro-cycle-overview__label">Perdidos</span>
-                            <strong class="agro-cycle-overview__value" id="agro-cycle-lost-count">0</strong>
-                        </article>
-                        <article class="agro-cycle-overview__card">
-                            <span class="agro-cycle-overview__label">Auditoría</span>
-                            <strong class="agro-cycle-overview__value" id="agro-cycle-audit-count">0</strong>
-                        </article>
-                    </div>
-                </section>
-                <div id="agro-cycles-history-slot"></div>
+                </div>
             </div>
 
             <div class="agro-cycle-subview" data-agro-cycle-subview="comparar">

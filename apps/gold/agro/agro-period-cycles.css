@@ -873,3 +873,50 @@ details[open] > .agro-period-cycle-card__groups-toggle::before {
     transition: none;
   }
 }
+
+/* Internal tabs for Calendario operativo */
+.agro-period-cycles .agro-internal-tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  padding: 0.25rem;
+  border: 1px solid color-mix(in srgb, var(--gold-4) 24%, var(--border-neutral));
+  border-radius: var(--radius-md, 12px);
+  background: transparent;
+}
+
+.agro-period-cycles .agro-internal-tab {
+  flex: 1;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 0.15rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: calc(var(--radius-md, 12px) - 2px);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.agro-period-cycles .agro-internal-tab:hover,
+.agro-period-cycles .agro-internal-tab:focus-visible {
+  border-color: var(--border-gold);
+  background: color-mix(in srgb, var(--gold-4) 8%, transparent);
+  color: var(--text-primary);
+}
+
+.agro-period-cycles .agro-internal-tab.is-active {
+  border-color: var(--border-gold);
+  background: color-mix(in srgb, var(--gold-4) 11%, transparent);
+  color: var(--text-primary);
+}
+
+.agro-period-cycles .agro-internal-tab:focus-visible {
+  outline: none;
+  box-shadow: var(--state-focus-ring, 0 0 0 2px var(--bg-1), 0 0 0 4px var(--gold-4));
+}

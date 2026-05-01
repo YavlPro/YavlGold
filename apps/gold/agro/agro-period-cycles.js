@@ -5,7 +5,7 @@ const PERIOD_CYCLE_TABLE = 'agro_period_cycles';
 const PERIOD_CYCLES_UPDATED_EVENT = 'agro:period-cycles:updated';
 const OPERATIONAL_PORTFOLIO_UPDATED_EVENT = 'agro:operational-portfolio-updated';
 const ACTIVE_OPERATIONAL_STATUS_VALUES = new Set(['open', 'in_progress', 'compensating']);
-const PERIOD_SUBVIEW_OPTIONS = Object.freeze(['activos', 'finalizados', 'comparar', 'estadisticas']);
+const PERIOD_SUBVIEW_OPTIONS = Object.freeze(['calendario', 'activos', 'finalizados', 'comparar', 'estadisticas']);
 const PERIOD_COMPARE_PRIMARY_ID = 'agro-period-compare-a';
 const PERIOD_COMPARE_SECONDARY_ID = 'agro-period-compare-b';
 
@@ -25,6 +25,7 @@ const state = {
     comparePrimaryId: '',
     compareSecondaryId: '',
     currentSubview: 'activos',
+    calendarioTab: 'activos',
     cycles: [],
     summary: createEmptySummary(),
     values: createDraftValues()
@@ -62,7 +63,7 @@ function normalizeToken(value) {
 
 function normalizePeriodSubview(value) {
     const token = normalizeToken(value);
-    return PERIOD_SUBVIEW_OPTIONS.includes(token) ? token : 'activos';
+    return PERIOD_SUBVIEW_OPTIONS.includes(token) ? token : 'calendario';
 }
 
 function todayLocalIso() {
@@ -492,6 +493,16 @@ function buildSummary(cycles) {
 }
 
 const PERIOD_SUBVIEW_META = Object.freeze({
+    calendario: Object.freeze({
+        title: 'Calendario operativo',
+        subtitle: 'Períodos activos y finalizados',
+        overviewEyebrow: 'Calendario operativo',
+        overviewTitle: 'Períodos en calendario',
+        overviewCopy: 'Meses activos y finalizados concentrados en una sola vista para seguimiento del calendario operativo.',
+        emptyTitle: 'No hay períodos visibles.',
+        emptyCopy: 'Cuando existan períodos activos o finalizados, aparecerán aquí.',
+        regionId: 'agro-period-cycles-calendario-view'
+    }),
     activos: Object.freeze({
         title: 'Períodos activos',
         subtitle: 'Meses calendario todavía en curso',
@@ -954,6 +965,12 @@ function renderCycleCard(cycle) {
 }
 
 function getCyclesForCurrentSubview() {
+    if (state.currentSubview === 'calendario') {
+        if (state.calendarioTab === 'finalizados') {
+            return state.cycles.filter((cycle) => cycle.status === 'finalized');
+        }
+        return state.cycles.filter((cycle) => cycle.status !== 'finalized');
+    }
     if (state.currentSubview === 'finalizados') {
         return state.cycles.filter((cycle) => cycle.status === 'finalized');
     }
@@ -1064,8 +1081,31 @@ function renderCompareSubview(meta) {
     `;
 }
 
+function renderCalendarioSubview() {
+    const activeTab = state.calendarioTab || 'activos';
+    const tabLabelActive = activeTab === 'finalizados' ? 'Finalizados' : 'Activos';
+    const cycles = getCyclesForCurrentSubview();
+    const contentHtml = !cycles.length
+        ? `<p class="agro-period-cycles__empty-copy">No hay períodos ${activeTab === 'finalizados' ? 'finalizados' : 'activos'} visibles.</p>`
+        : `<div class="agro-period-cycles__grid">${cycles.map((cycle) => renderCycleCard(cycle)).join('')}</div>`;
+
+    return `
+        <div class="agro-internal-tabs" role="tablist" aria-label="Tabs de Calendario operativo">
+            <button type="button" class="agro-internal-tab ${activeTab === 'activos' ? 'is-active' : ''}" role="tab" data-period-calendario-tab="activos" aria-selected="${activeTab === 'activos'}">Activos</button>
+            <button type="button" class="agro-internal-tab ${activeTab === 'finalizados' ? 'is-active' : ''}" role="tab" data-period-calendario-tab="finalizados" aria-selected="${activeTab === 'finalizados'}">Finalizados</button>
+        </div>
+        <div class="agro-internal-tab-content is-active" id="agro-period-cycles-calendario-content">
+            ${contentHtml}
+        </div>
+    `;
+}
+
 function renderSubviewContent() {
     const meta = getCurrentSubviewMeta();
+
+    if (state.currentSubview === 'calendario') {
+        return renderCalendarioSubview();
+    }
 
     if (state.currentSubview === 'comparar') {
         return renderCompareSubview(meta);
@@ -1232,6 +1272,14 @@ function bindRootEvents() {
         state.root.addEventListener('click', async (event) => {
             if (event.target?.matches?.('[data-period-overlay]')) {
                 resetForm();
+                renderRoot();
+                return;
+            }
+
+            const calendarioTab = event.target.closest('[data-period-calendario-tab]');
+            if (calendarioTab) {
+                const tabId = normalizeToken(calendarioTab.dataset.periodCalendarioTab);
+                state.calendarioTab = (tabId === 'finalizados') ? 'finalizados' : 'activos';
                 renderRoot();
                 return;
             }

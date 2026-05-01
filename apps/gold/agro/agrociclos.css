@@ -703,11 +703,85 @@
   display: none;
 }
 
-body[data-agro-active-view='ciclos'][data-agro-subview='activos'] .crops-section[data-agro-shell-region="cultivos"] [data-agro-cycle-subview='activos'],
-body[data-agro-active-view='ciclos'][data-agro-subview='finalizados'] .crops-section[data-agro-shell-region="cultivos"] [data-agro-cycle-subview='finalizados'],
+body[data-agro-active-view='ciclos'][data-agro-subview='mis-cultivos'] .crops-section[data-agro-shell-region="cultivos"] [data-agro-cycle-subview='mis-cultivos'],
 body[data-agro-active-view='ciclos'][data-agro-subview='comparar'] .crops-section[data-agro-shell-region="cultivos"] [data-agro-cycle-subview='comparar'],
 body[data-agro-active-view='ciclos'][data-agro-subview='estadisticas'] .crops-section[data-agro-shell-region="cultivos"] [data-agro-cycle-subview='estadisticas'] {
   display: block;
+}
+
+/* Internal tabs for Mis cultivos */
+.agro-internal-tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  padding: 0.25rem;
+  border: 1px solid color-mix(in srgb, var(--gold-4) 24%, var(--border-neutral));
+  border-radius: var(--radius-md, 12px);
+  background: transparent;
+}
+
+.agro-internal-tab {
+  flex: 1;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 0.15rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: calc(var(--radius-md, 12px) - 2px);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.agro-internal-tab:hover,
+.agro-internal-tab:focus-visible {
+  border-color: var(--border-gold);
+  background: color-mix(in srgb, var(--gold-4) 8%, transparent);
+  color: var(--text-primary);
+}
+
+.agro-internal-tab.is-active {
+  border-color: var(--border-gold);
+  background: color-mix(in srgb, var(--gold-4) 11%, transparent);
+  color: var(--text-primary);
+}
+
+.agro-internal-tab:focus-visible {
+  outline: none;
+  box-shadow: var(--state-focus-ring, 0 0 0 2px var(--bg-1), 0 0 0 4px var(--gold-4));
+}
+
+.agro-internal-tab-content {
+  display: none;
+}
+
+.agro-internal-tab-content.is-active {
+  display: block;
+}
+
+/* Perdidos empty state */
+.agro-cycle-perdidos-empty {
+  text-align: center;
+  padding: 2.5rem 1rem;
+}
+
+.agro-cycle-perdidos-empty__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.agro-cycle-perdidos-empty__copy {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  max-width: 28rem;
+  margin: 0 auto;
 }
 
 .agro-cycle-overview {
