@@ -6,7 +6,28 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-17__2026-04-27.md`
 
 ---
 
+## 2026-05-01 — Actualización documental post Mi Granja
+
+**Estado:** EN PROGRESO
+
+### Diagnóstico
+
+El nuevo sistema UX de Agro ya consolidó el hub `Mi Granja`, la navegación `Inicio · Granja · Memoria · Menú`, las superficies `Mis cultivos` y `Calendario operativo`, y la separación clara entre cultivos, períodos, finanzas, trabajo, memoria y menú. La documentación del proyecto debe actualizarse para reflejar el estado real del producto antes de abrir la auditoría visual y la futura reforma ADN Visual V11.
+
+### Plan
+
+- Revisar documentación canónica y pública relacionada con Agro.
+- Actualizar nombres, navegación y semántica del hub `Mi Granja`.
+- Alinear docs con `Mis cultivos`, `Calendario operativo`, `Rankings de Clientes`, `Memoria` y `Menú`.
+- No tocar `ADN-VISUAL-V10.0.md`.
+- No tocar código.
+- Validar con `git diff --check` y `pnpm build:gold`.
+
+---
+
 ## 2026-05-01 — Consolidación puntual de cultivos y períodos en Mi Granja
+
+**Estado:** COMPLETADO
 
 **Estado:** EN PROGRESO
 

@@ -93,14 +93,27 @@ El valor de Agro no está solo en registrar. Está en conectar lo que pasa en el
 
 * Mi Perfil
 * Dashboard Agro
-* Granja General *(agrupador de navegación — no es un módulo financiero)*
+* Mi Granja *(agrupador de navegación — no es un módulo financiero)*
   * Ciclos de cultivos
-  * Ciclos de período
+    * Mis cultivos (activos, finalizados, perdidos)
+    * Estadísticas de ciclos
+    * Comparar ciclos
+  * Ciclos de períodos
+    * Calendario operativo (activos, finalizados)
+    * Estadísticas de períodos
+    * Comparar períodos
+  * Mis finanzas
+    * Cartera Viva
+    * Cartera Operativa
+    * Mi Carrito
+  * Trabajo y lectura
+    * Trabajo Diario
+    * Rankings de Clientes
+    * Clima Agro
 * Operación comercial
 * Trabajo diario
-* Rankings
+* Rankings de Clientes
 * Clima Agro
-* Bitácora / AgroRepo
 * Asistente IA
 * Herramientas y acciones operativas
 
@@ -213,8 +226,10 @@ No es cartera operativa. No es historial administrativo abstracto. No es bitáco
 
 ### Subsuperficies
 
-* Ciclos activos — los que están sembrados y en producción
-* Ciclos finalizados — los que ya se cosecharon o vendieron completo
+* Mis cultivos — entrada única con tabs internas:
+  * Activos — los que están sembrados y en producción
+  * Finalizados — los que ya se cosecharon o vendieron completo
+  * Perdidos — los que se perdieron o dañaron
 * Comparar ciclos — elegir dos ciclos y verlos lado a lado
 * Estadísticas de ciclos — consolidado histórico de todos los ciclos
 
@@ -269,8 +284,9 @@ No es un ciclo de cultivo. No representa la vida biológica/productiva de una si
 
 ### Subsuperficies
 
-* Períodos activos — los períodos que están en curso
-* Períodos finalizados — los períodos ya cerrados
+* Calendario operativo — entrada única con tabs internas:
+  * Activos — los períodos que están en curso
+  * Finalizados — los períodos ya cerrados
 * Comparar períodos — elegir dos períodos y verlos lado a lado
 * Estadísticas de períodos — consolidado por período
 
@@ -420,11 +436,11 @@ No es la Cartera Viva (la sección destinada solo a llevar el saldo de quienes t
 ### Relación con cultivo y no cultivo
 
 * Puedes asociar cada movimiento a un ciclo de cultivo (para saber exactamente qué cultivo generó ese ingreso o gasto).
-* También puedes registrar movimientos generales (sin un cultivo específico), por ejemplo, los gastos de mantenimiento de la finca. Estos «movimientos generales» son financieros y pertenecen a Cartera Operativa; no se asocian al agrupador de navegación «Granja General».
+* También puedes registrar movimientos generales (sin un cultivo específico), por ejemplo, los gastos de mantenimiento de la finca. Estos «movimientos generales» son financieros y pertenecen a Cartera Operativa; no se asocian al hub de navegación «Mi Granja».
 
 ### Flujo de uso
 
-1. En la Operación Comercial, seleccionas primero el contexto: ¿es un movimiento general o pertenece a un cultivo específico?
+1. En la Operación Comercial, seleccionas primero el contexto: ¿es un movimiento general o pertenece a un cultivo específico? Desde el hub Mi Granja puedes acceder a Mis cultivos para ver tus ciclos o a Calendario operativo para tus períodos.
 2. Luego eliges el tipo de registro: gasto, ingreso, fiado, pérdida o donación.
 3. Registras el monto, fecha, concepto.
 4. El movimiento aparece en el historial y afecta las estadísticas.
@@ -822,13 +838,13 @@ El usuario quiere ir a "Ciclos de período" pero no recuerda dónde está. Usa l
 
 ## 5. Relaciones canónicas entre módulos
 
-### 5.0 Nota sobre «Granja General»
+### 5.0 Nota sobre «Mi Granja»
 
-En la navegación lateral, **Granja General** funciona como agrupador visual de las superficies productivas y temporales (§5.1 y §5.2). No es un módulo financiero. No compite con Operación Comercial ni reemplaza a Cartera Operativa.
+En la navegación principal, **Mi Granja** (puerta «Granja» en `Inicio · Granja · Memoria · Menú`) funciona como hub central donde el agricultor organiza cultivos, períodos, finanzas, trabajo, rankings y clima. No es un módulo financiero. No compite con Operación Comercial ni reemplaza a Cartera Operativa.
 
-Su único propósito es organizar el acceso a **Ciclos de Cultivo** y **Ciclos de Período** bajo un mismo padre de navegación.
+Su propósito es concentrar el acceso a **Ciclos de Cultivo** (via Mis cultivos), **Ciclos de Período** (via Calendario operativo), **Mis finanzas** y **Trabajo y lectura** bajo una sola puerta.
 
-**Los movimientos financieros no asociados a un cultivo específico** (gasolina, mantenimiento de infraestructura, etc.) se registran como «movimiento general» dentro de Cartera Operativa (§4.5.2). No pertenecen a Granja General. El nombre «Granja General» es de navegación; el término «movimiento general» es financiero y vive en Operación Comercial.
+**Los movimientos financieros no asociados a un cultivo específico** (gasolina, mantenimiento de infraestructura, etc.) se registran como «movimiento general» dentro de Cartera Operativa (§4.5.2). No pertenecen a Mi Granja. El término «movimiento general» es financiero y vive en Operación Comercial.
 
 ### 5.1 Lo productivo
 
@@ -887,7 +903,7 @@ Su único propósito es organizar el acceso a **Ciclos de Cultivo** y **Ciclos d
 **Escenario 1: Jornada matutina**
 1. Llegas a la finca y abres Agro en el móvil.
 2. Revisas el Dashboard: observas que está lloviendo y decides no regar hoy.
-3. Vas a "Ciclos activos" → seleccionas tu cultivo de tomate.
+3. Vas a "Mis cultivos" → seleccionas tu cultivo de tomate.
 4. Registras un gasto operativo en fungicida ($50).
 5. Dejas una nota en la Bitácora: "Aplicado fungicida de forma preventiva por exceso de humedad."
 6. Cierras la aplicación y comienzas el trabajo en campo.
@@ -1070,7 +1086,7 @@ La herramienta no sirve para consultas que no tengan respaldo en lo que ya regis
 ### 9.15 ¿Cuándo un registro va a un cultivo y cuándo queda como movimiento general?
 
 **Cargos a un cultivo**: Corresponden al gasto directamente relacionado con una siembra específica. Por ejemplo: abono para una hectárea de tomate.
-**Movimientos generales**: Un saco de cal para mantenimiento de infraestructura, gasolina para el vehículo de la finca o cualquier gasto que no pertenezca a un cultivo en particular. Estos se registran en Cartera Operativa (dentro de Operación Comercial) como movimiento general. No se asocian al agrupador de navegación «Granja General», que no es un módulo financiero.
+**Movimientos generales**: Un saco de cal para mantenimiento de infraestructura, gasolina para el vehículo de la finca o cualquier gasto que no pertenezca a un cultivo en particular. Estos se registran en Cartera Operativa (dentro de Operación Comercial) como movimiento general. No se asocian a Mi Granja, que no es un módulo financiero.
 
 ### 9.16 ¿Acaso los inventarios van a saturar el almacenamiento local de mis equipos?
 
@@ -1137,8 +1153,8 @@ Solo busca superficies, vistas y entradas navegables dentro del shell Agro. No b
 
 ### Caso 6
 
-* **Confusión**: "Granja General" es un módulo financiero donde se registran los gastos y ganancias generales de la finca.
-* **La realidad**: «Granja General» es un **agrupador de navegación** que agrupa Ciclos de Cultivo y Ciclos de Período en la barra lateral. No es un módulo financiero. Los «movimientos generales» (gastos no asociados a un cultivo específico) se registran en Cartera Operativa, dentro de Operación Comercial. Granja General no tiene libro de cuentas propio.
+* **Confusión**: "Mi Granja" es un módulo financiero donde se registran los gastos y ganancias generales de la finca.
+* **La realidad**: «Mi Granja» es el **hub central de navegación** accesible desde la puerta «Granja» en `Inicio · Granja · Memoria · Menú`. Agrupa Mis cultivos, Calendario operativo, Mis finanzas y Trabajo y lectura. No es un módulo financiero. Los «movimientos generales» (gastos no asociados a un cultivo específico) se registran en Cartera Operativa, dentro de Operación Comercial. Mi Granja no tiene libro de cuentas propio.
 
 ---
 

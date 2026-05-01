@@ -73,7 +73,7 @@ This file contains the current product, architecture and routing policy for `app
 - Share monolith functions via `window._agroXxx` bridge
 - Supabase tables use soft-delete (`deleted_at`) as standard pattern
 - Supported currencies: COP, USD, VES
-- Agro navigation: hub/module pattern with Inicio, Operacion, Memoria, Menu; deep modules use contextual Volver and hide global navigation
+- Agro navigation: hub/module pattern with Inicio, Granja, Memoria, Menu; Granja contains Mi Granja: Mis cultivos, Calendario operativo, estadisticas/comparadores, Mis finanzas (Cartera Viva, Cartera Operativa, Mi Carrito), Trabajo Diario, Rankings de Clientes, Clima Agro. Operacion Comercial no debe tratarse como modulo/card del hub. Deep modules use contextual Volver and hide global navigation.
 
 ## 9. Repo hygiene
 - `apps/gold/public/` is the **canonical live public** directory for the product
