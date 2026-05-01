@@ -6,6 +6,50 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-17__2026-04-27.md`
 
 ---
 
+## 2026-05-01 — P1/P2: Splash Dashboard-Agro y botón Dashboard
+
+**Estado:** COMPLETADO
+
+### Diagnóstico
+
+Se retoma el frente pendiente del 30 de abril: la transición visual entre Dashboard y Agro sigue sin quedar limpia, y el botón `Dashboard` dentro de Agro aún debe integrarse mejor al lenguaje visual del hub. Este bloque se limita a diagnosticar y corregir esos dos puntos, sin tocar documentación canónica, auth modal, Supabase ni `agro.js`.
+
+Diagnóstico técnico:
+- Dashboard tenía CSS de splash duplicado dentro de `index.html`.
+- Dashboard marcaba `dashboard-ready` sin esperar a `initDashboard()`, por lo que el splash podía apagarse mientras seguía visible el loader interno de módulos.
+- Agro no tenía splash duplicado, pero su splash vivía en `z-index: 9999`, por debajo de modales canon/legacy de la propia página.
+- El botón `Dashboard` en Agro usaba acento gold por defecto y no el patrón neutral de chip del hub.
+
+### Plan
+
+- Revisar el flujo `/dashboard → /agro/`.
+- Revisar el flujo `/agro/ → /dashboard`.
+- Identificar si el problema viene de CSS crítico, orden de scripts, clases body, timing de ready state, overlay duplicado o navegación.
+- Corregir el splash con el menor diff posible.
+- Ajustar el botón `Dashboard` para que coincida con los chips del hub.
+- Validar con `git diff --check` y `pnpm build:gold`.
+
+### Resultado
+
+- Se consolidó el splash del Dashboard en el CSS crítico temprano y se eliminó el bloque duplicado.
+- Dashboard y Agro usan splash oscuro con logo íntegro, texto breve, barra dorada fina y reduced motion.
+- Ambos splash suben a `z-index: 13000` para no competir con modales/overlays durante la transición.
+- Dashboard ahora espera `initDashboard()` antes de marcar `dashboard-ready`.
+- El botón `Dashboard` del header Agro quedó como chip neutral tipo hub: sin subrayado, fondo transparente por defecto, hover gold sutil y foco accesible.
+
+### Validación
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS con warning local no bloqueante de Node `v25.6.0` vs engine esperado `20.x`.
+
+### Alcance respetado
+
+- No se tocó `apps/gold/agro/agro.js`.
+- No se tocó Supabase, migraciones, RLS, RPC, Storage, Vercel, workflows ni credenciales.
+- No se tocó auth modal ni documentación canónica.
+
+---
+
 ## 2026-04-30 — QA visual final: dashboard chip, loader y editor guiado
 
 **Estado:** EN PROGRESO

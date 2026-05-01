@@ -17,7 +17,7 @@
     <link rel="icon" type="image/webp" href="../assets/images/logo.webp">
     <link rel="apple-touch-icon" href="../assets/images/logo.webp">
     <style>
-        .agro-splash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:var(--bg-1,#0a0a0a);transition:opacity .35s ease,visibility .35s ease}
+        .agro-splash{position:fixed;inset:0;z-index:13000;display:flex;align-items:center;justify-content:center;background:var(--bg-1,#0a0a0a);transition:opacity .35s ease,visibility .35s ease}
         body.agro-shell-ready .agro-splash{opacity:0;visibility:hidden;pointer-events:none}
         .agro-splash__inner{display:grid;gap:.6rem;place-items:center;padding:2rem}
         .agro-splash__logo{width:72px;height:72px;object-fit:contain;opacity:0;animation:agroSplashFadeIn .5s ease .1s forwards}
@@ -27,6 +27,11 @@
         .agro-splash__progress{height:100%;width:40%;border-radius:2px;background:var(--gold-4,#C8A752);animation:agroSplashSlide 1s ease-in-out infinite}
         @keyframes agroSplashFadeIn{to{opacity:1}}
         @keyframes agroSplashSlide{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+        @media (prefers-reduced-motion: reduce){
+            .agro-splash{transition:none}
+            .agro-splash__logo,.agro-splash__title,.agro-splash__subtitle,.agro-splash__bar{opacity:1;animation:none}
+            .agro-splash__progress{width:60%;animation:none}
+        }
         body:not(.agro-shell-ready) [data-agro-shell-region]{opacity:0;transition:opacity .3s ease}
         body.agro-shell-ready [data-agro-shell-region]{opacity:1}
     </style>
