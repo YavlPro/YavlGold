@@ -6,6 +6,46 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-17__2026-04-27.md`
 
 ---
 
+## 2026-05-01 — Pulido modal de autenticación
+
+**Estado:** COMPLETADO
+
+### Diagnóstico
+
+Tras estabilizar el splash Dashboard ↔ Agro y corregir el modal intruso post-splash, se revisará el modal público de autenticación. El objetivo es alinear Login, Registro y Recuperar contraseña al canon visual sobrio basado en “Configura tu asistente”, sin tocar lógica de autenticación, Supabase, hCaptcha, sesión ni redirects.
+
+### Plan
+
+- Ubicar archivos dueños del modal de autenticación.
+- Auditar estilos de Login, Registro y Recuperación.
+- Eliminar glow, shimmer, gradientes fuertes, títulos gritones y hover exagerado.
+- Mantener intactos IDs, eventos, validaciones y contratos JS.
+- Validar con `git diff --check` y `pnpm build:gold`.
+
+### Diagnóstico técnico
+
+- El dueño del markup del modal público es `apps/gold/index.html` (`#auth-modal`, tabs, formularios login/registro, hCaptcha y links).
+- El dueño visual efectivo es `apps/gold/assets/css/landing-v10.css`.
+- Recuperar contraseña se activa desde `apps/gold/assets/js/auth/authUI.js` con `#auth-dynamic-title` y `.back-to-login-link`, pero no hizo falta tocar JS porque el ajuste era visual y se resolvió con CSS específico.
+- Los problemas visibles venían de estilos heredados: sombra dorada grande, logo con halo, close con rotación, tabs con énfasis excesivo, botón con gradiente/translate/sombra y título dinámico dominante.
+
+### Corrección
+
+- Se limpió el contenedor auth a fondo oscuro, borde gold fino y sombra negra sobria.
+- Se retiraron glow del logo, rotación del botón cerrar, gradiente/shadow/translate del botón principal y énfasis excesivo de tabs.
+- Se normalizaron inputs, focus, placeholders, links de recuperación/volver y título dinámico de recuperación.
+- Se mantuvieron intactos IDs, names, hCaptcha, formularios, handlers, Supabase, redirects y sesión.
+
+### Validación
+
+- Browser local: `#login`, `#register` y recuperación (`AuthUI.toggleRecoveryMode(true)`) revisados en desktop `1366x768` y mobile `390x844`.
+- Consola local: solo warnings de hCaptcha por `localhost`; no asociados al cambio CSS.
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS con warning local no bloqueante de Node `v25.6.0` vs engine esperado `20.x`.
+- No se ejecutó `node --check` porque no se modificó JS.
+
+---
+
 ## 2026-05-01 — Fix modal intruso post-splash Dashboard → Agro
 
 **Estado:** COMPLETADO
