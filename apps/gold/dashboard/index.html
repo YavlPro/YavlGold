@@ -27,6 +27,18 @@
   <link rel="stylesheet" href="/assets/css/unificacion.css?v=9.3">
 
   <style>
+    .dash-splash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:var(--negro-puro,#0a0a0a);transition:opacity .35s ease,visibility .35s ease}
+    body.dashboard-ready .dash-splash{opacity:0;visibility:hidden;pointer-events:none}
+    .dash-splash__inner{display:grid;gap:.6rem;place-items:center;padding:2rem}
+    .dash-splash__logo{width:64px;height:64px;object-fit:contain;opacity:0;animation:dashSplashFadeIn .5s ease .1s forwards}
+    .dash-splash__title{font-family:'Orbitron',sans-serif;font-size:1rem;font-weight:700;color:var(--dorado-yavl,#C8A752);letter-spacing:.06em;opacity:0;animation:dashSplashFadeIn .4s ease .25s forwards}
+    .dash-splash__bar{width:120px;height:3px;border-radius:2px;background:rgba(255,255,255,.06);overflow:hidden;opacity:0;animation:dashSplashFadeIn .3s ease .4s forwards}
+    .dash-splash__progress{height:100%;width:40%;border-radius:2px;background:var(--dorado-yavl,#C8A752);animation:dashSplashSlide 1s ease-in-out infinite}
+    @keyframes dashSplashFadeIn{to{opacity:1}}
+    @keyframes dashSplashSlide{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+  </style>
+
+  <style>
     /* ============================================
            🎨 VARIABLES CSS - ADN VISUAL V10.0
         ============================================ */

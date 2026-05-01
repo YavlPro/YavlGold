@@ -15,7 +15,21 @@
     </script>
     <title>YavlGold - Agro V1</title>
     <link rel="icon" type="image/webp" href="../assets/images/logo.webp">
-    <link rel="apple-touch-icon" href="../assets/images/logo.webp"> <!-- Google Fonts -->
+    <link rel="apple-touch-icon" href="../assets/images/logo.webp">
+    <style>
+        .agro-splash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:var(--bg-1,#0a0a0a);transition:opacity .35s ease,visibility .35s ease}
+        body.agro-shell-ready .agro-splash{opacity:0;visibility:hidden;pointer-events:none}
+        .agro-splash__inner{display:grid;gap:.6rem;place-items:center;padding:2rem}
+        .agro-splash__logo{width:72px;height:72px;object-fit:contain;opacity:0;animation:agroSplashFadeIn .5s ease .1s forwards}
+        .agro-splash__title{font-family:'Orbitron',sans-serif;font-size:1.15rem;font-weight:700;color:var(--gold-4,#C8A752);letter-spacing:.06em;opacity:0;animation:agroSplashFadeIn .4s ease .25s forwards}
+        .agro-splash__subtitle{font-family:'Rajdhani',sans-serif;font-size:.88rem;color:var(--text-secondary,#a0a0a0);opacity:0;animation:agroSplashFadeIn .4s ease .35s forwards}
+        .agro-splash__bar{width:140px;height:3px;border-radius:2px;background:rgba(255,255,255,.06);overflow:hidden;margin-top:.3rem;opacity:0;animation:agroSplashFadeIn .3s ease .45s forwards}
+        .agro-splash__progress{height:100%;width:40%;border-radius:2px;background:var(--gold-4,#C8A752);animation:agroSplashSlide 1s ease-in-out infinite}
+        @keyframes agroSplashFadeIn{to{opacity:1}}
+        @keyframes agroSplashSlide{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+        body:not(.agro-shell-ready) [data-agro-shell-region]{opacity:0;transition:opacity .3s ease}
+        body.agro-shell-ready [data-agro-shell-region]{opacity:1}
+    </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
