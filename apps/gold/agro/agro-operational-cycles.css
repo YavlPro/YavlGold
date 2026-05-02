@@ -147,10 +147,8 @@ body.agro-operational-modal-open {
 
 .agro-operational-overview-panel.is-refreshing,
 .agro-operational-list-section.is-refreshing {
-  border-color: color-mix(in srgb, var(--gold-4) 34%, rgba(255, 255, 255, 0.08));
-  box-shadow:
-    0 18px 34px rgba(0, 0, 0, 0.28),
-    0 0 0 1px rgba(200, 167, 82, 0.06);
+  border-color: var(--border-neutral);
+  box-shadow: none;
 }
 
 .agro-operational-panel::before,
@@ -714,33 +712,12 @@ body.agro-operational-modal-open {
 
 .agro-operational-list-section__status.is-refreshing {
   color: var(--text-muted);
-  opacity: 0.94;
+  opacity: 0.62;
   transform: translateY(0);
 }
 
 .agro-operational-list-section__status.is-refreshing::before {
-  content: '';
-  display: inline-block;
-  width: 0.65rem;
-  height: 0.65rem;
-  margin-right: 0.4rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--gold-4) 36%, transparent);
-  opacity: 0.52;
-  transform-origin: center;
-  animation: agro-operational-refresh-pulse 180ms ease-in-out infinite alternate;
-}
-
-@keyframes agro-operational-refresh-pulse {
-  0% {
-    opacity: 0.28;
-    transform: scale(0.96);
-  }
-
-  100% {
-    opacity: 0.52;
-    transform: scale(1);
-  }
+  content: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1691,7 +1668,7 @@ body.agro-operational-modal-open {
 .agro-operational-list-section.is-refreshing .agro-operational-list,
 .agro-operational-overview-panel.is-refreshing .agro-operational-summary-grid,
 .agro-operational-list-section.is-refreshing .agro-operational-export-panel {
-  opacity: 0.84;
+  opacity: 0.98;
 }
 
 .agro-operational-export-preview__label {

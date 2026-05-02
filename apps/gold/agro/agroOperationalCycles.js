@@ -138,6 +138,7 @@ const state = {
     schemaMissing: false,
     cropDeletedAtSupported: true,
     lastCascadeCheck: null,
+    ui: createUiState(),
     form: createFormState()
 };
 
@@ -161,6 +162,12 @@ function createDatasetsState() {
     return {
         [SUBVIEW_ACTIVE]: createDatasetState(),
         [SUBVIEW_FINISHED]: createDatasetState()
+    };
+}
+
+function createUiState() {
+    return {
+        detailsOpen: new Map()
     };
 }
 
@@ -1536,6 +1543,52 @@ function buildSelectOptionsMarkup(options, selectedValue = '') {
     }).join('');
 }
 
+function normalizeDetailsKey(value) {
+    return String(value || '').trim();
+}
+
+function buildOverviewDetailsKey(subview = state.currentSubview) {
+    return `overview:${normalizeOperationalSubview(subview)}`;
+}
+
+function buildAdvancedFiltersDetailsKey(subview) {
+    return `filters:${normalizeOperationalSubview(subview)}`;
+}
+
+function buildCardDetailsKey(cycleId) {
+    return `cycle:${normalizeId(cycleId)}`;
+}
+
+function rememberDetailsOpenState(details) {
+    if (!(details instanceof HTMLDetailsElement)) return;
+    const key = normalizeDetailsKey(details.dataset?.operationalDetailsKey);
+    if (!key) return;
+    state.ui.detailsOpen.set(key, Boolean(details.open));
+}
+
+function captureOperationalDetailsState(root = state.root) {
+    if (!root) return;
+    root.querySelectorAll('details[data-operational-details-key]').forEach((details) => {
+        rememberDetailsOpenState(details);
+    });
+}
+
+function readDetailsOpenState(key, defaultOpen = false) {
+    const safeKey = normalizeDetailsKey(key);
+    if (safeKey && state.ui.detailsOpen.has(safeKey)) {
+        return state.ui.detailsOpen.get(safeKey) === true;
+    }
+    return Boolean(defaultOpen);
+}
+
+function renderDetailsOpenAttribute(key, defaultOpen = false) {
+    return readDetailsOpenState(key, defaultOpen) ? ' open' : '';
+}
+
+function handleRootToggle(event) {
+    rememberDetailsOpenState(event.target);
+}
+
 function captureWizardFocusState() {
     const activeElement = document.activeElement;
     if (!(activeElement instanceof HTMLElement)) return null;
@@ -2154,15 +2207,19 @@ function mergeSummaryBalanceText(leftSummary, rightSummary) {
     return formatMoneyBucket(balance, { signed: true, emptyText: EMPTY_BALANCE_LABEL });
 }
 
-function renderCompactOverview({ label, summary, familyLabel, balanceLabel = 'Balance', balanceHint = '' }) {
+function renderCompactOverview({ label, summary, familyLabel, balanceLabel = 'Balance', balanceHint = '', detailsKey = '' }) {
     const count = Number(summary?.count || 0);
     const movementCount = Number(summary?.movementCount || 0);
     const cycleWord = count === 1 ? 'ciclo' : 'ciclos';
     const movementWord = movementCount === 1 ? 'movimiento' : 'movimientos';
     const safeFamilyLabel = String(familyLabel || '').trim();
+    const safeDetailsKey = normalizeDetailsKey(detailsKey) || buildOverviewDetailsKey();
 
     return `
-        <details class="agro-operational-overview-details">
+        <details
+            class="agro-operational-overview-details"
+            data-operational-summary-details
+            data-operational-details-key="${escapeAttr(safeDetailsKey)}"${renderDetailsOpenAttribute(safeDetailsKey)}>
             <summary class="agro-operational-overview-summary">
                 <span class="agro-operational-overview-summary__label">${escapeHtml(label || 'Resumen de esta vista')}</span>
                 <span class="agro-operational-overview-summary__meta">
@@ -2192,11 +2249,15 @@ function renderCompactOverview({ label, summary, familyLabel, balanceLabel = 'Ba
     `;
 }
 
-function renderExportCompactOverview(activeSummary, finishedSummary, totalCount) {
+function renderExportCompactOverview(activeSummary, finishedSummary, totalCount, detailsKey = '') {
     const combinedBalance = mergeSummaryBalanceText(activeSummary, finishedSummary);
+    const safeDetailsKey = normalizeDetailsKey(detailsKey) || buildOverviewDetailsKey(SUBVIEW_EXPORT);
 
     return `
-        <details class="agro-operational-overview-details">
+        <details
+            class="agro-operational-overview-details"
+            data-operational-summary-details
+            data-operational-details-key="${escapeAttr(safeDetailsKey)}"${renderDetailsOpenAttribute(safeDetailsKey)}>
             <summary class="agro-operational-overview-summary">
                 <span class="agro-operational-overview-summary__label">Resumen de exportación</span>
                 <span class="agro-operational-overview-summary__meta">
@@ -2352,6 +2413,10 @@ function renderOverview() {
     state.refs.overviewCopy.textContent = meta.copy;
     state.refs.overviewSection?.classList.toggle('is-refreshing', isSoftRefreshing);
 
+    if (isSoftRefreshing) {
+        return;
+    }
+
     const shouldBlockInitialLoading = !state.loadedOnce && !state.schemaMissing;
 
     if (shouldBlockInitialLoading) {
@@ -2450,10 +2515,14 @@ function renderFilters(subview) {
     const dataset = getDataset(subview);
     const filters = dataset.filters;
     const hasActiveFilters = hasActiveAdvancedFilters(filters);
+    const detailsKey = buildAdvancedFiltersDetailsKey(subview);
 
     return `
         <section class="agro-operational-filter-bar">
-            <details class="agro-operational-filter-details"${hasActiveFilters ? ' open' : ''}>
+            <details
+                class="agro-operational-filter-details"
+                data-operational-advanced-filters
+                data-operational-details-key="${escapeAttr(detailsKey)}"${renderDetailsOpenAttribute(detailsKey, hasActiveFilters)}>
                 <summary class="agro-operational-filter-summary">
                     <span class="agro-operational-filter-summary__label">Filtros avanzados</span>
                     <span class="agro-operational-filter-summary__meta">${escapeHtml(renderAdvancedFilterMeta(filters))}</span>
@@ -2518,11 +2587,13 @@ function syncFiltersHost(subview) {
 
     const filterDetails = host.querySelector('.agro-operational-filter-details');
     const filterMeta = host.querySelector('.agro-operational-filter-summary__meta');
+    const filterDetailsKey = buildAdvancedFiltersDetailsKey(subview);
     if (filterMeta) {
         filterMeta.textContent = renderAdvancedFilterMeta(filters);
     }
-    if (filterDetails && hasActiveAdvancedFilters(filters)) {
-        filterDetails.open = true;
+    if (filterDetails instanceof HTMLDetailsElement) {
+        filterDetails.dataset.operationalDetailsKey = filterDetailsKey;
+        filterDetails.open = readDetailsOpenState(filterDetailsKey, hasActiveAdvancedFilters(filters));
     }
 }
 
@@ -2586,6 +2657,7 @@ function renderCycleCard(cycle) {
     const statusLabel = readLabel(STATUS_OPTIONS, cycle.status, '🟡 No pagado');
     const economicTypeLabel = readLabel(ECONOMIC_TYPE_OPTIONS, cycle.economic_type, 'Operación');
     const primaryAmount = formatAmountLabel(cycle.primaryMovement?.amount, cycle.primaryMovement?.currency);
+    const detailsKey = buildCardDetailsKey(cycle.id);
     const dates = cycle.closed_at
         ? `${formatDateLabel(cycle.opened_at)} · Cierre: ${formatDateLabel(cycle.closed_at)}`
         : `${formatDateLabel(cycle.opened_at)} · Sin cierre`;
@@ -2639,7 +2711,10 @@ function renderCycleCard(cycle) {
                 </div>
             </div>
 
-            <details class="agro-operational-card__details">
+            <details
+                class="agro-operational-card__details"
+                data-operational-card-details
+                data-operational-details-key="${escapeAttr(detailsKey)}"${renderDetailsOpenAttribute(detailsKey)}>
                 <summary>
                     <span>📜 Historial (${cycle.movementCount} movimiento${cycle.movementCount === 1 ? '' : 's'})</span>
                     <span>${escapeHtml(statusLabel)}</span>
@@ -2790,6 +2865,7 @@ function renderCurrentSubview() {
     state.refs.listCopy.textContent = meta.copy;
     state.refs.listSection?.classList.toggle('is-refreshing', isSoftRefreshing);
     state.refs.listStatus.classList.toggle('is-refreshing', isSoftRefreshing);
+    state.refs.listStatus.toggleAttribute('aria-busy', isSoftRefreshing);
 
     unmountAgroPeriodCycles();
     const shouldBlockInitialLoading = !state.loadedOnce && !state.schemaMissing;
@@ -2822,13 +2898,6 @@ function renderCurrentSubview() {
     }
 
     if (isSoftRefreshing) {
-        state.refs.listStatus.textContent = state.currentSubview === SUBVIEW_EXPORT
-            ? 'Actualizando vista de exportación...'
-            : state.currentSubview === SUBVIEW_DONATIONS
-                ? 'Actualizando donaciones...'
-                : state.currentSubview === SUBVIEW_LOSSES
-                    ? 'Actualizando pérdidas...'
-                    : 'Actualizando cartera operativa sin desmontar la vista...';
         return;
     }
 
@@ -2836,9 +2905,7 @@ function renderCurrentSubview() {
         const activeCount = state.datasets[SUBVIEW_ACTIVE].summary.count;
         const finishedCount = state.datasets[SUBVIEW_FINISHED].summary.count;
         clearFiltersHost();
-        state.refs.listStatus.textContent = isSoftRefreshing
-            ? 'Actualizando vista de exportación...'
-            : `Exportarás ${activeCount + finishedCount} ciclo${activeCount + finishedCount === 1 ? '' : 's'} respetando los filtros activos.`;
+        state.refs.listStatus.textContent = `Exportarás ${activeCount + finishedCount} ciclo${activeCount + finishedCount === 1 ? '' : 's'} respetando los filtros activos.`;
         state.refs.list.innerHTML = renderExportView();
         return;
     }
@@ -2846,9 +2913,7 @@ function renderCurrentSubview() {
     if (state.currentSubview === SUBVIEW_DONATIONS) {
         const donationCycles = filterCyclesByFamily(getCyclesForSubview(SUBVIEW_DONATIONS), state.familyFilter);
         clearFiltersHost();
-        state.refs.listStatus.textContent = isSoftRefreshing
-            ? 'Actualizando donaciones...'
-            : `${donationCycles.length} donación${donationCycles.length === 1 ? '' : 'es'} — ${getFamilyLabel(state.familyFilter)}`;
+        state.refs.listStatus.textContent = `${donationCycles.length} donación${donationCycles.length === 1 ? '' : 'es'} — ${getFamilyLabel(state.familyFilter)}`;
 
         if (donationCycles.length === 0) {
             state.refs.list.innerHTML = renderEmptyState(SUBVIEW_DONATIONS);
@@ -2868,9 +2933,7 @@ function renderCurrentSubview() {
     if (state.currentSubview === SUBVIEW_LOSSES) {
         const lossCycles = filterCyclesByFamily(getCyclesForSubview(SUBVIEW_LOSSES), state.familyFilter);
         clearFiltersHost();
-        state.refs.listStatus.textContent = isSoftRefreshing
-            ? 'Actualizando pérdidas...'
-            : `${lossCycles.length} pérdida${lossCycles.length === 1 ? '' : 's'} — ${getFamilyLabel(state.familyFilter)}`;
+        state.refs.listStatus.textContent = `${lossCycles.length} pérdida${lossCycles.length === 1 ? '' : 's'} — ${getFamilyLabel(state.familyFilter)}`;
 
         if (lossCycles.length === 0) {
             state.refs.list.innerHTML = renderEmptyState(SUBVIEW_LOSSES);
@@ -2890,9 +2953,7 @@ function renderCurrentSubview() {
     const dataset = getDataset(state.currentSubview);
     const familyCycles = filterCyclesByFamily(getCyclesForSubview(state.currentSubview), state.familyFilter);
     syncFiltersHost(state.currentSubview);
-    state.refs.listStatus.textContent = isSoftRefreshing
-        ? 'Actualizando cartera operativa sin desmontar la vista...'
-        : `${familyCycles.length} ciclo${familyCycles.length === 1 ? '' : 's'} visible${familyCycles.length === 1 ? '' : 's'} — ${getFamilyLabel(state.familyFilter)}`;
+    state.refs.listStatus.textContent = `${familyCycles.length} ciclo${familyCycles.length === 1 ? '' : 's'} visible${familyCycles.length === 1 ? '' : 's'} — ${getFamilyLabel(state.familyFilter)}`;
 
     if (familyCycles.length === 0) {
         state.refs.list.innerHTML = renderEmptyState(state.currentSubview);
@@ -3049,6 +3110,7 @@ async function refreshData(options = {}) {
         return;
     }
 
+    captureOperationalDetailsState();
     state.loading = true;
     state.schemaMissing = false;
     renderOverview();
@@ -3359,6 +3421,7 @@ function bindEvents() {
     state.root.addEventListener('change', (event) => {
         void handleRootChange(event);
     });
+    state.root.addEventListener('toggle', handleRootToggle, true);
 
     window.addEventListener(VIEW_CHANGED_EVENT, (event) => {
         state.currentView = normalizeToken(event?.detail?.view);

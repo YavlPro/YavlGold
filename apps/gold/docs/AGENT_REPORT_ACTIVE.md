@@ -6,6 +6,55 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-17__2026-04-27.md`
 
 ---
 
+## 2026-05-01 — Refresh suave Cartera Operativa
+
+**Estado:** COMPLETADO
+
+### Diagnóstico
+
+`refreshData()` en `apps/gold/agro/agroOperationalCycles.js` marca `state.loading = true` y vuelve a llamar `renderOverview()` / `renderCurrentSubview()`. El listado evita desmontarse durante refresh suave, pero `renderOverview()` reconstruye el HTML del resumen compacto y pierde el estado `open` del `<details>`. Los filtros avanzados se reutilizan en algunos casos, pero `syncFiltersHost()` puede reabrirlos cuando hay filtro activo aunque el usuario los haya cerrado. El mensaje `Actualizando cartera operativa sin desmontar la vista...` y los estilos `.is-refreshing` todavía generan una señal visual demasiado fuerte para un refresh normal.
+
+### Plan
+
+- Agregar microestado en memoria del módulo para recordar `<details>` abiertos/cerrados.
+- Añadir atributos `data-*` específicos a resumen, filtros avanzados e historial de card.
+- Restaurar estados `open` después de renders y respetar cierre manual aunque existan filtros activos.
+- Hacer el estado visual de refresh más silencioso, sin loader/pulso invasivo.
+- Validar con `node --check`, `git diff --check` y `pnpm build:gold`.
+
+### Archivos candidatos
+
+- `apps/gold/agro/agroOperationalCycles.js`
+- `apps/gold/agro/agro-operational-cycles.css`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Riesgo estimado
+
+Bajo-medio. El cambio toca render y estado visual en memoria, pero no modifica Supabase, contratos de datos ni acciones de negocio. La mitigación es preservar los handlers existentes y limitar la memoria a estado UI temporal.
+
+### Cambios realizados
+
+- `apps/gold/agro/agroOperationalCycles.js`: se agregó `state.ui.detailsOpen` como microestado en memoria para recordar apertura/cierre de `<details>` sin usar `localStorage`.
+- `apps/gold/agro/agroOperationalCycles.js`: se añadieron `data-operational-details-key`, `data-operational-summary-details`, `data-operational-advanced-filters` y `data-operational-card-details` para preservar `Resumen`, `Filtros avanzados` e historial de cards.
+- `apps/gold/agro/agroOperationalCycles.js`: `renderOverview()` deja de reconstruir el resumen durante refresh suave y `syncFiltersHost()` respeta si el usuario cerró filtros avanzados, incluso con filtros activos.
+- `apps/gold/agro/agroOperationalCycles.js`: el refresh suave ya no escribe mensajes largos de `Actualizando...` ni reemplaza el listado mientras `state.loading && state.loadedOnce`.
+- `apps/gold/agro/agro-operational-cycles.css`: se retiró el pulso visual y el glow del estado `.is-refreshing`; el indicador quedó discreto.
+
+### Validación
+
+- `node --check apps/gold/agro/agroOperationalCycles.js`: PASS.
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS con warning local no bloqueante de Node `v25.6.0` vs engine esperado `20.x`.
+- QA manual/browser: pendiente; se dejó para validación humana.
+
+### Alcance respetado
+
+- No se eliminaron filtros, cards, acciones, refresh, registros ni lógica de negocio.
+- No se tocaron Supabase, contratos de datos, `agro.js`, `MANIFIESTO_AGRO.md` ni `ADN-VISUAL-V11.0.md`.
+- El estado preservado es temporal y vive solo en memoria del módulo.
+
+---
+
 ## 2026-05-01 — Respiración visual Cartera Operativa
 
 **Estado:** COMPLETADO
