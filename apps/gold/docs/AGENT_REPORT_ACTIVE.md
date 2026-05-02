@@ -37,6 +37,7 @@ Bajo-medio. El cambio es de render visual y no toca Supabase, queries ni registr
 - `apps/gold/agro/index.html`: se removió el bloque estático `agro-cycle-overview` con `Lectura de cierre` y las métricas `Finalizados / Perdidos / Auditoría`.
 - `apps/gold/agro/agro.js`: `ensureCropCycleHistorySection()` ahora crea una sección directa para `Ciclos finalizados (N)` y conserva el grid real de cards sin `details`, `summary`, chevron ni wrapper de trazabilidad.
 - `apps/gold/agro/agro.js`: `renderCropCycleHistory()` conserva el render de ciclos finalizados reales y deja de pintar perdidos/auditoría dentro de la tab `Finalizados`.
+- `apps/gold/agro/agro.js`: se ocultó el heading `Ciclos finalizados (N)` (`finishedTitleEl.style.display = 'none'`) para igualar visualmente la tab Finalizados con Activos.
 
 ### Validación
 

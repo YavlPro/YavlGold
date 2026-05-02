@@ -11087,6 +11087,7 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
 
     if (finishedTitleEl) {
         finishedTitleEl.textContent = `Ciclos finalizados (${finishedCrops.length})`;
+        finishedTitleEl.style.display = 'none';
     }
     if (!finishedGridEl) return;
 
