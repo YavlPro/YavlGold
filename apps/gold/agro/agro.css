@@ -9453,6 +9453,12 @@ body[data-agro-shell-depth="module"].agro-shell-ready .app-container {
   -webkit-backdrop-filter: blur(12px);
 }
 
+body[data-agro-active-view="operational"] .agro-mobile-contextbar {
+  position: static;
+  z-index: auto;
+  margin-bottom: var(--space-5, 1.25rem);
+}
+
 body[data-agro-shell-depth="module"] .agro-mobile-contextbar {
   display: flex;
 }

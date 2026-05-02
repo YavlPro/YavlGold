@@ -6,6 +6,56 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-17__2026-04-27.md`
 
 ---
 
+## 2026-05-01 — Respiración visual Cartera Operativa
+
+**Estado:** COMPLETADO
+
+### Diagnóstico
+
+`Cartera Operativa` se renderiza en `apps/gold/agro/agroOperationalCycles.js`; el layout visual principal está en `apps/gold/agro/agro-operational-cycles.css`. La vista apila, antes de las cards reales, el header de módulo, privacidad, filtro de familia (`Asociados / No asociados / Todos`), filtro de subvista (`No pagados / Pagados / Donaciones / Pérdidas / Exportar`), panel resumen grande y filtros finos (`Período / Categoría / Tipo`). El header que puede tapar contenido al hacer scroll no pertenece al módulo sino a la `agro-mobile-contextbar` global en `apps/gold/agro/agro.css`; conviene corregir su impacto solo cuando `body[data-agro-active-view="operational"]` está activo.
+
+### Plan
+
+- Reordenar el panel resumen para que viva dentro de la sección de lista, debajo de filtros y antes de cards.
+- Convertir el resumen de cards grandes en una franja compacta con detalles expandibles.
+- Convertir `Período / Categoría / Tipo` en filtros avanzados colapsables, abiertos solo si hay filtro activo.
+- Bajar peso visual de botones, paneles y superficies desde `agro-operational-cycles.css`, sin eliminar controles ni handlers.
+- Añadir ajuste scoped para que la contextbar móvil no tape contenido en `Cartera Operativa`.
+- Validar con `git diff --check` y `pnpm build:gold`.
+
+### Archivos candidatos
+
+- `apps/gold/agro/agroOperationalCycles.js`
+- `apps/gold/agro/agro-operational-cycles.css`
+- `apps/gold/agro/agro.css`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Riesgo estimado
+
+Medio-bajo. El cambio toca jerarquía de render y CSS, pero no modifica Supabase, contratos de datos, creación/edición/exportación ni handlers. La mitigación es mantener los mismos `data-operational-action`, `data-operational-filter-*`, ids y refs.
+
+### Cambios realizados
+
+- `apps/gold/agro/agroOperationalCycles.js`: el resumen operativo se reubicó dentro de la sección de lista y ahora se renderiza como franja compacta con detalles expandibles; los filtros `Período / Categoría / Tipo` quedaron en `Filtros avanzados`, colapsados salvo que exista un filtro activo.
+- `apps/gold/agro/agroOperationalCycles.js`: se conservaron ids, refs, `data-operational-action` y `data-operational-filter-*`, por lo que no se removieron filtros, exportación, cards, acciones ni lógica de negocio.
+- `apps/gold/agro/agro-operational-cycles.css`: se bajó el peso visual de tabs, subfiltros, paneles, summary, lista y cards para alinear la vista con el lenguaje sobrio de `Ciclos de cultivo`.
+- `apps/gold/agro/agro.css`: se añadió un ajuste scoped para `body[data-agro-active-view="operational"] .agro-mobile-contextbar`, evitando que la barra contextual móvil quede flotando encima del contenido de Cartera Operativa.
+
+### Validación
+
+- `node --check apps/gold/agro/agroOperationalCycles.js`: PASS.
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS con warning local no bloqueante de Node `v25.6.0` vs engine esperado `20.x`.
+- QA manual/browser: pendiente; se dejó para validación humana según política operativa de uso quirúrgico de Codex.
+
+### Alcance respetado
+
+- No se eliminaron funciones, filtros, cards, acciones, registros ni lógica de datos.
+- No se tocaron Supabase, contratos de datos, migraciones, auth, landing, dashboard global, `MANIFIESTO_AGRO.md` ni `ADN-VISUAL-V11.0.md`.
+- Los filtros principales, filtros de estado, exportación y filtros finos siguen presentes y accesibles.
+
+---
+
 ## 2026-05-01 — Limpieza vista Mis cultivos Finalizados
 
 **Estado:** COMPLETADO

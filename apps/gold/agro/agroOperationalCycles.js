@@ -1413,17 +1413,6 @@ function renderShell() {
             <div class="agro-operational-family-toggle" id="agro-operational-family-toggle" role="group" aria-label="Familia de cartera operativa"></div>
             <div class="agro-operational-subview-switch" id="agro-operational-subview-switch" role="group" aria-label="Lecturas de cartera operativa"></div>
 
-            <section id="agro-operational-overview-panel" class="agro-operational-panel agro-operational-overview-panel">
-                <div class="agro-operational-panel__head">
-                    <div>
-                        <p class="agro-operational-panel__eyebrow" id="agro-operational-overview-eyebrow">🟡 Activos</p>
-                        <h3 class="agro-operational-panel__title" id="agro-operational-overview-title">Vista organizada por estado</h3>
-                        <p class="agro-operational-panel__copy" id="agro-operational-overview-copy">Cada subvista recalcula balance y conserva filtros compactos.</p>
-                    </div>
-                </div>
-                <div id="agro-operational-overview-body"></div>
-            </section>
-
             <section id="agro-operational-list-section" class="agro-operational-list-section">
                 <div class="agro-operational-list-head">
                     <div>
@@ -1434,6 +1423,16 @@ function renderShell() {
                     <button type="button" class="btn" data-operational-action="new-cycle">Nueva cartera operativa</button>
                 </div>
                 <div id="agro-operational-filters-host"></div>
+                <section id="agro-operational-overview-panel" class="agro-operational-panel agro-operational-overview-panel">
+                    <div class="agro-operational-panel__head">
+                        <div>
+                            <p class="agro-operational-panel__eyebrow" id="agro-operational-overview-eyebrow">🟡 Activos</p>
+                            <h3 class="agro-operational-panel__title" id="agro-operational-overview-title">Vista organizada por estado</h3>
+                            <p class="agro-operational-panel__copy" id="agro-operational-overview-copy">Cada subvista recalcula balance y conserva filtros compactos.</p>
+                        </div>
+                    </div>
+                    <div id="agro-operational-overview-body"></div>
+                </section>
                 <p class="agro-operational-list-section__status" id="agro-operational-list-status" aria-live="polite" aria-atomic="true">Cargando cartera operativa...</p>
                 <div class="agro-operational-list" id="agro-operational-list"></div>
             </section>
@@ -2129,6 +2128,21 @@ function renderFilterPills(filters) {
     `;
 }
 
+function hasActiveAdvancedFilters(filters = {}) {
+    return ['period', 'category', 'economicType'].some((key) => {
+        const value = normalizeToken(filters[key]);
+        return value && value !== 'all';
+    });
+}
+
+function renderAdvancedFilterMeta(filters = {}) {
+    return [
+        `Período: ${readLabel(PERIOD_OPTIONS, filters.period, 'Todo')}`,
+        `Categoría: ${readLabel(CATEGORY_FILTER_OPTIONS, filters.category, 'Todas')}`,
+        `Tipo: ${readLabel(TYPE_FILTER_OPTIONS, filters.economicType, 'Todos')}`
+    ].join(' · ');
+}
+
 function mergeSummaryBalanceText(leftSummary, rightSummary) {
     const incoming = createMoneyBucket();
     const outgoing = createMoneyBucket();
@@ -2138,6 +2152,83 @@ function mergeSummaryBalanceText(leftSummary, rightSummary) {
     mergeMoneyBuckets(outgoing, rightSummary.outgoing);
     const balance = subtractMoneyBuckets(incoming, outgoing);
     return formatMoneyBucket(balance, { signed: true, emptyText: EMPTY_BALANCE_LABEL });
+}
+
+function renderCompactOverview({ label, summary, familyLabel, balanceLabel = 'Balance', balanceHint = '' }) {
+    const count = Number(summary?.count || 0);
+    const movementCount = Number(summary?.movementCount || 0);
+    const cycleWord = count === 1 ? 'ciclo' : 'ciclos';
+    const movementWord = movementCount === 1 ? 'movimiento' : 'movimientos';
+    const safeFamilyLabel = String(familyLabel || '').trim();
+
+    return `
+        <details class="agro-operational-overview-details">
+            <summary class="agro-operational-overview-summary">
+                <span class="agro-operational-overview-summary__label">${escapeHtml(label || 'Resumen de esta vista')}</span>
+                <span class="agro-operational-overview-summary__meta">
+                    ${count} ${cycleWord} · ${movementCount} ${movementWord} · ${escapeHtml(balanceLabel)}:
+                    ${renderMoneyNode(summary?.balanceText)}
+                </span>
+                <span class="agro-operational-overview-summary__action">Ver detalles <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></span>
+            </summary>
+            <div class="agro-operational-summary-grid">
+                <article class="agro-operational-summary-card">
+                    <span class="agro-operational-summary-card__label">Ciclos visibles</span>
+                    <strong class="agro-operational-summary-card__value">${count}</strong>
+                    <p class="agro-operational-summary-card__hint">${escapeHtml(safeFamilyLabel || 'Registros visibles')} en esta subvista.</p>
+                </article>
+                <article class="agro-operational-summary-card">
+                    <span class="agro-operational-summary-card__label">Movimientos</span>
+                    <strong class="agro-operational-summary-card__value">${movementCount}</strong>
+                    <p class="agro-operational-summary-card__hint">Total de movimientos registrados.</p>
+                </article>
+                <article class="agro-operational-summary-card" data-tone="${escapeAttr(summary?.balanceTone)}">
+                    <span class="agro-operational-summary-card__label">${escapeHtml(balanceLabel)}</span>
+                    ${renderMoneyNode(summary?.balanceText, { tag: 'strong', className: 'agro-operational-summary-card__value' })}
+                    <p class="agro-operational-summary-card__hint">${balanceHint || `Recibí / Cobré: ${renderMoneyNode(summary?.incomingText)} · Pagué / Gasté: ${renderMoneyNode(summary?.outgoingText)}`}</p>
+                </article>
+            </div>
+        </details>
+    `;
+}
+
+function renderExportCompactOverview(activeSummary, finishedSummary, totalCount) {
+    const combinedBalance = mergeSummaryBalanceText(activeSummary, finishedSummary);
+
+    return `
+        <details class="agro-operational-overview-details">
+            <summary class="agro-operational-overview-summary">
+                <span class="agro-operational-overview-summary__label">Resumen de exportación</span>
+                <span class="agro-operational-overview-summary__meta">
+                    ${totalCount} ciclo${totalCount === 1 ? '' : 's'} · Balance combinado:
+                    ${renderMoneyNode(combinedBalance)}
+                </span>
+                <span class="agro-operational-overview-summary__action">Ver detalles <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></span>
+            </summary>
+            <div class="agro-operational-summary-grid">
+                <article class="agro-operational-summary-card">
+                    <span class="agro-operational-summary-card__label">Activos exportables</span>
+                    <strong class="agro-operational-summary-card__value">${activeSummary.count}</strong>
+                    <p class="agro-operational-summary-card__hint">${renderMoneyNode(activeSummary.balanceText)}</p>
+                </article>
+                <article class="agro-operational-summary-card">
+                    <span class="agro-operational-summary-card__label">Pagados / pérdidas</span>
+                    <strong class="agro-operational-summary-card__value">${finishedSummary.count}</strong>
+                    <p class="agro-operational-summary-card__hint">${renderMoneyNode(finishedSummary.balanceText)}</p>
+                </article>
+                <article class="agro-operational-summary-card">
+                    <span class="agro-operational-summary-card__label">Archivo</span>
+                    <strong class="agro-operational-summary-card__value">${totalCount}</strong>
+                    <p class="agro-operational-summary-card__hint">Saldrá como <code>${escapeHtml(buildExportFileName())}</code>.</p>
+                </article>
+                <article class="agro-operational-summary-card">
+                    <span class="agro-operational-summary-card__label">Balance combinado</span>
+                    ${renderMoneyNode(combinedBalance, { tag: 'strong', className: 'agro-operational-summary-card__value' })}
+                    <p class="agro-operational-summary-card__hint">Respeta filtros activos y finalizados por separado.</p>
+                </article>
+            </div>
+        </details>
+    `;
 }
 
 function buildTypeClass(economicType) {
@@ -2296,28 +2387,7 @@ function renderOverview() {
         const finishedSummary = state.datasets[SUBVIEW_FINISHED].summary;
         const totalCount = activeSummary.count + finishedSummary.count;
         state.refs.overviewBody.innerHTML = `
-            <div class="agro-operational-summary-grid">
-                <article class="agro-operational-summary-card">
-                    <span class="agro-operational-summary-card__label">🟡 Activos exportables</span>
-                    <strong class="agro-operational-summary-card__value">${activeSummary.count}</strong>
-                    <p class="agro-operational-summary-card__hint">${renderMoneyNode(activeSummary.balanceText)}</p>
-                </article>
-                <article class="agro-operational-summary-card">
-                    <span class="agro-operational-summary-card__label">✅ Pagados / pérdidas exportables</span>
-                    <strong class="agro-operational-summary-card__value">${finishedSummary.count}</strong>
-                    <p class="agro-operational-summary-card__hint">${renderMoneyNode(finishedSummary.balanceText)}</p>
-                </article>
-                <article class="agro-operational-summary-card">
-                    <span class="agro-operational-summary-card__label">📦 Total ciclos</span>
-                    <strong class="agro-operational-summary-card__value">${totalCount}</strong>
-                    <p class="agro-operational-summary-card__hint">El archivo saldrá como <code>${escapeHtml(buildExportFileName())}</code>.</p>
-                </article>
-                <article class="agro-operational-summary-card">
-                    <span class="agro-operational-summary-card__label">📊 Balance combinado</span>
-                    ${renderMoneyNode(mergeSummaryBalanceText(activeSummary, finishedSummary), { tag: 'strong', className: 'agro-operational-summary-card__value' })}
-                    <p class="agro-operational-summary-card__hint">Respeta filtros activos y finalizados por separado.</p>
-                </article>
-            </div>
+            ${renderExportCompactOverview(activeSummary, finishedSummary, totalCount)}
             <div class="agro-operational-overview-stack">
                 <div>
                     <p class="agro-operational-subtext">Filtros activos para exportar:</p>
@@ -2337,23 +2407,13 @@ function renderOverview() {
         const summary = createDatasetSummary(donationCycles);
         const familyLabel = getFamilyLabel(state.familyFilter);
         state.refs.overviewBody.innerHTML = `
-            <div class="agro-operational-summary-grid">
-                <article class="agro-operational-summary-card">
-                    <span class="agro-operational-summary-card__label">🤝 Donaciones</span>
-                    <strong class="agro-operational-summary-card__value">${summary.count}</strong>
-                    <p class="agro-operational-summary-card__hint">${escapeHtml(familyLabel)} — incluidas como gastos.</p>
-                </article>
-                <article class="agro-operational-summary-card">
-                    <span class="agro-operational-summary-card__label">📜 Movimientos</span>
-                    <strong class="agro-operational-summary-card__value">${summary.movementCount}</strong>
-                    <p class="agro-operational-summary-card__hint">Total de movimientos en donaciones.</p>
-                </article>
-                <article class="agro-operational-summary-card" data-tone="${escapeAttr(summary.balanceTone)}">
-                    <span class="agro-operational-summary-card__label">📊 Balance donaciones</span>
-                    ${renderMoneyNode(summary.balanceText, { tag: 'strong', className: 'agro-operational-summary-card__value' })}
-                    <p class="agro-operational-summary-card__hint">💰 Recibí: ${renderMoneyNode(summary.incomingText)} · 💸 Gasté: ${renderMoneyNode(summary.outgoingText)}</p>
-                </article>
-            </div>
+            ${renderCompactOverview({
+                label: 'Resumen de esta vista',
+                summary,
+                familyLabel: `${familyLabel} — donaciones incluidas como gastos`,
+                balanceLabel: 'Balance donaciones',
+                balanceHint: `Recibí: ${renderMoneyNode(summary.incomingText)} · Gasté: ${renderMoneyNode(summary.outgoingText)}`
+            })}
         `;
         return;
     }
@@ -2363,79 +2423,63 @@ function renderOverview() {
         const summary = createDatasetSummary(lossCycles);
         const familyLabel = getFamilyLabel(state.familyFilter);
         state.refs.overviewBody.innerHTML = `
-            <div class="agro-operational-summary-grid">
-                <article class="agro-operational-summary-card">
-                    <span class="agro-operational-summary-card__label">💔 Pérdidas</span>
-                    <strong class="agro-operational-summary-card__value">${summary.count}</strong>
-                    <p class="agro-operational-summary-card__hint">${escapeHtml(familyLabel)} — cancelaciones o pérdidas operativas.</p>
-                </article>
-                <article class="agro-operational-summary-card">
-                    <span class="agro-operational-summary-card__label">📜 Movimientos</span>
-                    <strong class="agro-operational-summary-card__value">${summary.movementCount}</strong>
-                    <p class="agro-operational-summary-card__hint">Total de movimientos en pérdidas.</p>
-                </article>
-                <article class="agro-operational-summary-card" data-tone="${escapeAttr(summary.balanceTone)}">
-                    <span class="agro-operational-summary-card__label">📊 Balance pérdidas</span>
-                    ${renderMoneyNode(summary.balanceText, { tag: 'strong', className: 'agro-operational-summary-card__value' })}
-                    <p class="agro-operational-summary-card__hint">💰 Recibí: ${renderMoneyNode(summary.incomingText)} · 💸 Gasté: ${renderMoneyNode(summary.outgoingText)}</p>
-                </article>
-            </div>
+            ${renderCompactOverview({
+                label: 'Resumen de esta vista',
+                summary,
+                familyLabel: `${familyLabel} — cancelaciones o pérdidas operativas`,
+                balanceLabel: 'Balance pérdidas',
+                balanceHint: `Recibí: ${renderMoneyNode(summary.incomingText)} · Gasté: ${renderMoneyNode(summary.outgoingText)}`
+            })}
         `;
         return;
     }
 
-    const dataset = getDataset(state.currentSubview);
     const familyCycles = filterCyclesByFamily(getCyclesForSubview(state.currentSubview), state.familyFilter);
     const summary = createDatasetSummary(familyCycles);
     const familyLabel = getFamilyLabel(state.familyFilter);
     state.refs.overviewBody.innerHTML = `
-        <div class="agro-operational-summary-grid">
-            <article class="agro-operational-summary-card">
-                <span class="agro-operational-summary-card__label">🗂️ Ciclos visibles</span>
-                <strong class="agro-operational-summary-card__value">${summary.count}</strong>
-                <p class="agro-operational-summary-card__hint">${escapeHtml(familyLabel)} en esta subvista.</p>
-            </article>
-            <article class="agro-operational-summary-card">
-                <span class="agro-operational-summary-card__label">📜 Movimientos</span>
-                <strong class="agro-operational-summary-card__value">${summary.movementCount}</strong>
-                <p class="agro-operational-summary-card__hint">Total de movimientos registrados.</p>
-            </article>
-            <article class="agro-operational-summary-card" data-tone="${escapeAttr(summary.balanceTone)}">
-                <span class="agro-operational-summary-card__label">📊 Balance</span>
-                ${renderMoneyNode(summary.balanceText, { tag: 'strong', className: 'agro-operational-summary-card__value' })}
-                <p class="agro-operational-summary-card__hint">💰 Recibí / Cobré: ${renderMoneyNode(summary.incomingText)} · 💸 Pagué / Gasté: ${renderMoneyNode(summary.outgoingText)}</p>
-            </article>
-        </div>
-        ${renderFilterPills(dataset.filters)}
+        ${renderCompactOverview({
+            label: 'Resumen de esta vista',
+            summary,
+            familyLabel
+        })}
     `;
 }
 
 function renderFilters(subview) {
     const dataset = getDataset(subview);
     const filters = dataset.filters;
+    const hasActiveFilters = hasActiveAdvancedFilters(filters);
 
     return `
         <section class="agro-operational-filter-bar">
-            <div class="agro-operational-filter-grid">
-                <label class="agro-operational-filter">
-                    <span class="agro-operational-filter__label">Período</span>
-                    <select class="styled-input" data-operational-filter-view="${subview}" data-operational-filter-key="period">
-                        ${buildSelectOptionsMarkup(PERIOD_OPTIONS, filters.period)}
-                    </select>
-                </label>
-                <label class="agro-operational-filter">
-                    <span class="agro-operational-filter__label">Categoría</span>
-                    <select class="styled-input" data-operational-filter-view="${subview}" data-operational-filter-key="category">
-                        ${buildSelectOptionsMarkup(CATEGORY_FILTER_OPTIONS, filters.category)}
-                    </select>
-                </label>
-                <label class="agro-operational-filter">
-                    <span class="agro-operational-filter__label">Tipo</span>
-                    <select class="styled-input" data-operational-filter-view="${subview}" data-operational-filter-key="economicType">
-                        ${buildSelectOptionsMarkup(TYPE_FILTER_OPTIONS, filters.economicType)}
-                    </select>
-                </label>
-            </div>
+            <details class="agro-operational-filter-details"${hasActiveFilters ? ' open' : ''}>
+                <summary class="agro-operational-filter-summary">
+                    <span class="agro-operational-filter-summary__label">Filtros avanzados</span>
+                    <span class="agro-operational-filter-summary__meta">${escapeHtml(renderAdvancedFilterMeta(filters))}</span>
+                    <span class="agro-operational-filter-summary__chevron"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></span>
+                </summary>
+                <div class="agro-operational-filter-grid">
+                    <label class="agro-operational-filter">
+                        <span class="agro-operational-filter__label">Período</span>
+                        <select class="styled-input" data-operational-filter-view="${subview}" data-operational-filter-key="period">
+                            ${buildSelectOptionsMarkup(PERIOD_OPTIONS, filters.period)}
+                        </select>
+                    </label>
+                    <label class="agro-operational-filter">
+                        <span class="agro-operational-filter__label">Categoría</span>
+                        <select class="styled-input" data-operational-filter-view="${subview}" data-operational-filter-key="category">
+                            ${buildSelectOptionsMarkup(CATEGORY_FILTER_OPTIONS, filters.category)}
+                        </select>
+                    </label>
+                    <label class="agro-operational-filter">
+                        <span class="agro-operational-filter__label">Tipo</span>
+                        <select class="styled-input" data-operational-filter-view="${subview}" data-operational-filter-key="economicType">
+                            ${buildSelectOptionsMarkup(TYPE_FILTER_OPTIONS, filters.economicType)}
+                        </select>
+                    </label>
+                </div>
+            </details>
         </section>
     `;
 }
@@ -2471,6 +2515,15 @@ function syncFiltersHost(subview) {
             select.value = nextValue;
         }
     });
+
+    const filterDetails = host.querySelector('.agro-operational-filter-details');
+    const filterMeta = host.querySelector('.agro-operational-filter-summary__meta');
+    if (filterMeta) {
+        filterMeta.textContent = renderAdvancedFilterMeta(filters);
+    }
+    if (filterDetails && hasActiveAdvancedFilters(filters)) {
+        filterDetails.open = true;
+    }
 }
 
 function buildStatusClass(status) {
