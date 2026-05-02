@@ -524,3 +524,46 @@ Archivo: [2026-03.md](./2026-03.md)
 
 *Fecha de extensión*: 2026-04-07
 *Generado por*: Historiador Forense de Git — Protocolo Append-Only v1.0
+
+---
+
+# ADDENDUM — Abril 2026 (Append-only)
+
+> *Esta sección extiende la cobertura de la crónica al mes de abril 2026.*
+
+## Resumen Ejecutivo — Abril 2026
+
+Los hechos que marcaron el cuarto mes de 2026:
+
+1. **Cartera Viva y Operación Comercial consolidadas** (Abr 2-14): Wizard de clientes, clasificación por familias, bridge contable del carrito, Rankings alineados a cartera consolidada.
+2. **Ciclos de tareas, operaciones y periodos** (Abr 4-12): Tres sistemas de ciclos funcionales con clasificación, tags, sincronización y comparación A/B.
+3. **Canon de modales V10.1** (Abr 14): Formalización visual, reemplazo de `prompt()`/`confirm()` nativos.
+4. **Supabase consolidado** (Abr 16-18): Duplicación de árboles diagnosticada y resuelta, canon en raíz, leyes de archivo y anti-monolito.
+5. **Ley de Separación de Superficies** (Abr 16): ADN Visual §20 — cada superficie tiene propósito único.
+6. **Shell Agro maduro** (Abr 17-18): Mode switch, favorites, search, asistente como workspace dedicado.
+7. **Superficies de confianza pública** (Abr 19-24): Landing agro, trust pages, docs públicas, status page, política OSS.
+8. **RLS/Storage staging smoke tests** (Abr 23-24): CI workflow, tabla aislada, verificación A/B documentada.
+9. **Hub/Module navigation** (Abr 26-30): Rail persistente, launcher, 4 puertas (Inicio, Granja, Memoria, Menú), separación desktop/mobile.
+10. **Seguridad P2 GREEN** (Abr 27): RLS modernizado, RPC grants, Storage limits, headers baseline, XSS corregido, QA cross-user validado.
+11. **ADN Visual V11 canonizado** (Cierre abr): Estética sobria agrícola, sin shimmer agresivo, oro funcional.
+12. **Daily logs formalizados** (Abr 25): Sistema §4.3 en AGENTS.md.
+
+---
+
+## Anexo H — Abril 2026
+
+Archivo: [2026-04.md](./2026-04.md)
+
+**Resumen**: Abril 2026 consolidó a YavlGold como sistema maduro. Con 273 commits en 28 días, el mes maduró Cartera Viva y Operación Comercial, creó tres sistemas de ciclos (tareas, operaciones, periodos), consolidó Supabase, implementó hub/module navigation, endureció la seguridad hasta GREEN, publicó superficies de confianza, y canonizó ADN Visual V11 como estética agrícola sobria.
+
+**Métricas verificadas**:
+- **273 commits** (`git rev-list --count --since="2026-04-01" --until="2026-04-30 23:59:59" HEAD`)
+- **28 días con actividad** de 30
+- **Día más activo**: Abr 8 (21 commits)
+- **0 PRs mergeados** (trabajo directo en main)
+- **Sistema de diseño**: ADN Visual V10.0 → V11.0
+
+---
+
+*Fecha de extensión*: 2026-05-01
+*Generado por*: Historiador Forense de Git — Protocolo Append-Only v1.0
