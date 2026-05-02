@@ -6,6 +6,53 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-17__2026-04-27.md`
 
 ---
 
+## 2026-05-01 — Limpieza vista Mis cultivos Finalizados
+
+**Estado:** COMPLETADO
+
+### Diagnóstico
+
+La vista `Mis cultivos > Finalizados` mezcla tres capas que no pertenecen a la tarea principal de la tab: un bloque editorial estático en `apps/gold/agro/index.html`, métricas intermedias en el mismo bloque (`agro-cycle-finished-count`, `agro-cycle-lost-count`, `agro-cycle-audit-count`) y un acordeón generado en `apps/gold/agro/agro.js` por `ensureCropCycleHistorySection()`. Las cards reales no nacen en esos bloques: se renderizan desde `renderCropCycleHistory()` hacia `#crops-cycle-history-grid` usando `renderCropCycleGroup()` / `renderFinishedCycles()`.
+
+### Plan
+
+- Remover del markup estático el bloque `agro-cycle-overview`.
+- Mantener el slot `#agro-cycles-history-slot` como host de la lista real.
+- Cambiar `ensureCropCycleHistorySection()` para crear una sección directa de ciclos finalizados, sin `details`, `summary`, flecha ni título `Ciclos finalizados y trazabilidad`.
+- Ajustar `renderCropCycleHistory()` para que la tab finalizados no dependa del grid perdido/auditoría dentro de ese wrapper.
+- Validar con `pnpm build:gold`.
+
+### Archivos candidatos
+
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro.js`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Riesgo estimado
+
+Bajo-medio. El cambio es de render visual y no toca Supabase, queries ni registros, pero `agro.js` es monolítico y la función también arma buckets de trazabilidad. La mitigación es conservar el grid de finalizados y no modificar `splitCropsByCycle`, `splitClosedCycleHistory`, clasificación ni construcción de cards.
+
+### Cambios realizados
+
+- `apps/gold/agro/index.html`: se removió el bloque estático `agro-cycle-overview` con `Lectura de cierre` y las métricas `Finalizados / Perdidos / Auditoría`.
+- `apps/gold/agro/agro.js`: `ensureCropCycleHistorySection()` ahora crea una sección directa para `Ciclos finalizados (N)` y conserva el grid real de cards sin `details`, `summary`, chevron ni wrapper de trazabilidad.
+- `apps/gold/agro/agro.js`: `renderCropCycleHistory()` conserva el render de ciclos finalizados reales y deja de pintar perdidos/auditoría dentro de la tab `Finalizados`.
+
+### Validación
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS con warning local no bloqueante de Node `v25.6.0` vs engine esperado `20.x`.
+- QA manual/browser: pendiente por decisión del usuario.
+
+### Alcance respetado
+
+- No se eliminaron ciclos ni registros.
+- No se tocaron Supabase, migraciones, auth, landing, dashboard global, `MANIFIESTO_AGRO.md` ni `ADN-VISUAL-V11.0.md`.
+- La tab `Activos` conserva su contenedor y render.
+- La tab `Perdidos` conserva su markup existente.
+
+---
+
 ## 2026-05-01 — Auditoría y consolidación ADN Visual V11
 
 **Estado:** EN PROGRESO

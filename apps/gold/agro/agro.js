@@ -8783,16 +8783,9 @@ const CROP_ACTIVE_STATUS_TOKENS = new Set([
 ]);
 
 const CROP_CYCLE_HISTORY_SECTION_ID = 'crops-cycle-history-accordion';
-const CROP_CYCLE_HISTORY_TITLE_ID = 'crops-cycle-history-title';
 const CROP_CYCLE_FINISHED_SECTION_ID = 'crops-cycle-finished-section';
 const CROP_CYCLE_FINISHED_TITLE_ID = 'crops-cycle-finished-title';
 const CROP_CYCLE_HISTORY_GRID_ID = 'crops-cycle-history-grid';
-const CROP_CYCLE_LOST_SECTION_ID = 'crops-cycle-lost-section';
-const CROP_CYCLE_LOST_TITLE_ID = 'crops-cycle-lost-title';
-const CROP_CYCLE_LOST_GRID_ID = 'crops-cycle-lost-grid';
-const CROP_CYCLE_AUDIT_SECTION_ID = 'crops-cycle-history-audit';
-const CROP_CYCLE_AUDIT_TITLE_ID = 'crops-cycle-history-audit-title';
-const CROP_CYCLE_AUDIT_GRID_ID = 'crops-cycle-history-audit-grid';
 
 function normalizeCropStatus(status) {
     const raw = String(status || '').toLowerCase().trim();
@@ -10880,181 +10873,40 @@ function createCycleHistoryGroupSection(config = {}) {
     return { section, title, grid };
 }
 
-function isFinishedCycleSubviewActive() {
-    const activeView = String(document.body?.dataset?.agroActiveView || '').trim();
-    const activeSubview = String(document.body?.dataset?.agroSubview || '').trim();
-    return activeView === 'ciclos' && activeSubview === 'finalizados';
-}
-
 function ensureCropCycleHistorySection() {
     const cropsSection = document.querySelector('.crops-section');
     if (!cropsSection) return null;
     const historyHost = document.getElementById('agro-cycles-history-slot') || cropsSection;
 
-    let details = document.getElementById(CROP_CYCLE_HISTORY_SECTION_ID);
-    if (!details) {
-        details = document.createElement('details');
-        details.id = CROP_CYCLE_HISTORY_SECTION_ID;
-        details.className = 'yg-accordion animate-in delay-4';
-        details.open = false;
+    let historySection = document.getElementById(CROP_CYCLE_HISTORY_SECTION_ID);
+    if (!historySection || historySection.tagName.toLowerCase() === 'details') {
+        const replacement = document.createElement('section');
+        replacement.id = CROP_CYCLE_HISTORY_SECTION_ID;
+        replacement.className = 'crop-history-direct animate-in delay-4';
 
-        const summary = document.createElement('summary');
-        summary.className = 'yg-accordion-summary';
+        const existingFinishedSection = historySection?.querySelector?.(`#${CROP_CYCLE_FINISHED_SECTION_ID}`);
+        if (existingFinishedSection) {
+            replacement.appendChild(existingFinishedSection);
+        }
 
-        const icon = document.createElement('span');
-        icon.className = 'yg-accordion-icon';
-        icon.replaceChildren();
-        const historyIcon = document.createElement('i');
-        historyIcon.className = 'fa-solid fa-clock-rotate-left';
-        icon.appendChild(historyIcon);
-
-        const title = document.createElement('span');
-        title.className = 'yg-accordion-title';
-        title.id = CROP_CYCLE_HISTORY_TITLE_ID;
-        title.textContent = 'Ciclos finalizados y trazabilidad (0)';
-
-        const chevron = document.createElement('span');
-        chevron.className = 'yg-accordion-chevron';
-        chevron.replaceChildren();
-        const historyChevronIcon = document.createElement('i');
-        historyChevronIcon.className = 'fa-solid fa-chevron-down';
-        chevron.appendChild(historyChevronIcon);
-
-        summary.append(icon, title, chevron);
-
-        const content = document.createElement('div');
-        content.className = 'yg-accordion-content';
-        content.id = `${CROP_CYCLE_HISTORY_SECTION_ID}-content`;
-
-        const finishedGroup = createCycleHistoryGroupSection({
-            sectionId: CROP_CYCLE_FINISHED_SECTION_ID,
-            titleId: CROP_CYCLE_FINISHED_TITLE_ID,
-            gridId: CROP_CYCLE_HISTORY_GRID_ID,
-            titleText: 'Ciclos finalizados (0)'
-        });
-        const lostGroup = createCycleHistoryGroupSection({
-            sectionId: CROP_CYCLE_LOST_SECTION_ID,
-            titleId: CROP_CYCLE_LOST_TITLE_ID,
-            gridId: CROP_CYCLE_LOST_GRID_ID,
-            titleText: 'Ciclos perdidos (0)',
-            titleClass: 'crop-history-group-title-lost'
-        });
-
-        const auditDetails = document.createElement('details');
-        auditDetails.id = CROP_CYCLE_AUDIT_SECTION_ID;
-        auditDetails.className = 'yg-accordion crop-history-audit';
-        auditDetails.open = false;
-
-        const auditSummary = document.createElement('summary');
-        auditSummary.className = 'yg-accordion-summary';
-
-        const auditIcon = document.createElement('span');
-        auditIcon.className = 'yg-accordion-icon';
-        auditIcon.replaceChildren();
-        const auditFlaskIcon = document.createElement('i');
-        auditFlaskIcon.className = 'fa-solid fa-flask-vial';
-        auditIcon.appendChild(auditFlaskIcon);
-
-        const auditTitle = document.createElement('span');
-        auditTitle.className = 'yg-accordion-title';
-        auditTitle.id = CROP_CYCLE_AUDIT_TITLE_ID;
-        auditTitle.textContent = '🧪 Auditoría (0)';
-
-        const auditChevron = document.createElement('span');
-        auditChevron.className = 'yg-accordion-chevron';
-        auditChevron.replaceChildren();
-        const auditChevronIcon = document.createElement('i');
-        auditChevronIcon.className = 'fa-solid fa-chevron-down';
-        auditChevron.appendChild(auditChevronIcon);
-
-        auditSummary.append(auditIcon, auditTitle, auditChevron);
-
-        const auditContent = document.createElement('div');
-        auditContent.className = 'yg-accordion-content';
-
-        const auditNote = document.createElement('p');
-        auditNote.className = 'crop-history-audit-note';
-        auditNote.textContent = 'Ciclos huérfanos detectados para trazabilidad. Exporta solo si corresponde.';
-
-        const auditGrid = document.createElement('div');
-        auditGrid.id = CROP_CYCLE_AUDIT_GRID_ID;
-        auditGrid.className = 'crops-grid';
-
-        auditContent.append(auditNote, auditGrid);
-        auditDetails.append(auditSummary, auditContent);
-
-        content.append(finishedGroup.section, lostGroup.section, auditDetails);
-        details.append(summary, content);
-        historyHost.appendChild(details);
+        if (historySection) {
+            historySection.replaceWith(replacement);
+        } else {
+            historyHost.appendChild(replacement);
+        }
+        historySection = replacement;
     }
 
-    if (details.parentElement !== historyHost) {
-        historyHost.appendChild(details);
+    if (historySection.parentElement !== historyHost) {
+        historyHost.appendChild(historySection);
     }
 
-    if (isFinishedCycleSubviewActive()) {
-        details.open = true;
-        const summary = details.querySelector('summary');
-        if (summary) summary.setAttribute('aria-expanded', 'true');
-    }
-
-    let contentEl = details.querySelector(`#${CROP_CYCLE_HISTORY_SECTION_ID}-content`) || details.querySelector('.yg-accordion-content');
-    if (!contentEl) {
-        contentEl = document.createElement('div');
-        contentEl.className = 'yg-accordion-content';
-        contentEl.id = `${CROP_CYCLE_HISTORY_SECTION_ID}-content`;
-        details.appendChild(contentEl);
-    }
-
-    let auditDetailsEl = document.getElementById(CROP_CYCLE_AUDIT_SECTION_ID);
-    if (!auditDetailsEl) {
-        auditDetailsEl = document.createElement('details');
-        auditDetailsEl.id = CROP_CYCLE_AUDIT_SECTION_ID;
-        auditDetailsEl.className = 'yg-accordion crop-history-audit';
-        auditDetailsEl.open = false;
-
-        const auditSummary = document.createElement('summary');
-        auditSummary.className = 'yg-accordion-summary';
-
-        const auditIcon = document.createElement('span');
-        auditIcon.className = 'yg-accordion-icon';
-        auditIcon.replaceChildren();
-        const auditFlaskIcon = document.createElement('i');
-        auditFlaskIcon.className = 'fa-solid fa-flask-vial';
-        auditIcon.appendChild(auditFlaskIcon);
-
-        const auditTitle = document.createElement('span');
-        auditTitle.className = 'yg-accordion-title';
-        auditTitle.id = CROP_CYCLE_AUDIT_TITLE_ID;
-        auditTitle.textContent = '🧪 Auditoría (0)';
-
-        const auditChevron = document.createElement('span');
-        auditChevron.className = 'yg-accordion-chevron';
-        auditChevron.replaceChildren();
-        const auditChevronIcon = document.createElement('i');
-        auditChevronIcon.className = 'fa-solid fa-chevron-down';
-        auditChevron.appendChild(auditChevronIcon);
-
-        auditSummary.append(auditIcon, auditTitle, auditChevron);
-
-        const auditContent = document.createElement('div');
-        auditContent.className = 'yg-accordion-content';
-
-        const auditNote = document.createElement('p');
-        auditNote.className = 'crop-history-audit-note';
-        auditNote.textContent = 'Ciclos huérfanos detectados para trazabilidad. Exporta solo si corresponde.';
-
-        const auditGrid = document.createElement('div');
-        auditGrid.id = CROP_CYCLE_AUDIT_GRID_ID;
-        auditGrid.className = 'crops-grid';
-
-        auditContent.append(auditNote, auditGrid);
-        auditDetailsEl.append(auditSummary, auditContent);
-        contentEl.appendChild(auditDetailsEl);
-    }
+    historySection.classList.remove('yg-accordion');
+    historySection.classList.add('crop-history-direct');
+    historySection.removeAttribute('open');
 
     let finishedSectionEl = document.getElementById(CROP_CYCLE_FINISHED_SECTION_ID);
-    if (!finishedSectionEl) {
+    if (!finishedSectionEl || !historySection.contains(finishedSectionEl)) {
         const legacyFinishedGridEl = document.getElementById(CROP_CYCLE_HISTORY_GRID_ID);
         const group = createCycleHistoryGroupSection({
             sectionId: CROP_CYCLE_FINISHED_SECTION_ID,
@@ -11067,40 +10919,16 @@ function ensureCropCycleHistorySection() {
             && !legacyFinishedGridEl.closest(`#${CROP_CYCLE_FINISHED_SECTION_ID}`)) {
             group.section.replaceChild(legacyFinishedGridEl, group.grid);
         }
-        contentEl.insertBefore(group.section, auditDetailsEl);
+        historySection.appendChild(group.section);
         finishedSectionEl = group.section;
     }
 
-    let lostSectionEl = document.getElementById(CROP_CYCLE_LOST_SECTION_ID);
-    if (!lostSectionEl) {
-        const group = createCycleHistoryGroupSection({
-            sectionId: CROP_CYCLE_LOST_SECTION_ID,
-            titleId: CROP_CYCLE_LOST_TITLE_ID,
-            gridId: CROP_CYCLE_LOST_GRID_ID,
-            titleText: 'Ciclos perdidos (0)',
-            titleClass: 'crop-history-group-title-lost'
-        });
-        contentEl.insertBefore(group.section, auditDetailsEl);
-        lostSectionEl = group.section;
-    }
-
-    const titleEl = document.getElementById(CROP_CYCLE_HISTORY_TITLE_ID);
     const finishedTitleEl = document.getElementById(CROP_CYCLE_FINISHED_TITLE_ID);
     const finishedGridEl = document.getElementById(CROP_CYCLE_HISTORY_GRID_ID);
-    const lostTitleEl = document.getElementById(CROP_CYCLE_LOST_TITLE_ID);
-    const lostGridEl = document.getElementById(CROP_CYCLE_LOST_GRID_ID);
-    const auditTitleEl = document.getElementById(CROP_CYCLE_AUDIT_TITLE_ID);
-    const auditGridEl = document.getElementById(CROP_CYCLE_AUDIT_GRID_ID);
     return {
-        details,
-        titleEl,
+        details: historySection,
         finishedTitleEl,
-        finishedGridEl,
-        lostTitleEl,
-        lostGridEl,
-        auditDetailsEl,
-        auditTitleEl,
-        auditGridEl
+        finishedGridEl
     };
 }
 
@@ -11250,37 +11078,22 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
 
     const closedCrops = Array.isArray(crops) ? crops : [];
     const { finished: finishedCrops, lost: lostCrops } = splitClosedCycleHistory(closedCrops);
-    const auditCrops = Array.isArray(orphanCrops) ? orphanCrops : [];
     const {
         details,
-        titleEl,
         finishedTitleEl,
-        finishedGridEl,
-        lostTitleEl,
-        lostGridEl,
-        auditDetailsEl,
-        auditTitleEl,
-        auditGridEl
+        finishedGridEl
     } = ui;
     details.style.display = 'block';
 
-    if (titleEl) {
-        titleEl.textContent = `Ciclos finalizados y trazabilidad (${closedCrops.length})`;
-    }
     if (finishedTitleEl) {
         finishedTitleEl.textContent = `Ciclos finalizados (${finishedCrops.length})`;
     }
-    if (lostTitleEl) {
-        lostTitleEl.textContent = `Ciclos perdidos (${lostCrops.length})`;
-    }
-    if (!finishedGridEl || !lostGridEl) return;
+    if (!finishedGridEl) return;
 
     const hasAnyClosedCycle = (finishedCrops.length + lostCrops.length) > 0;
     const finishedEmptyText = hasAnyClosedCycle
         ? 'Sin ciclos finalizados por ahora.'
-        : (auditCrops.length > 0
-            ? 'Sin ciclos válidos por ahora. Revisa la sección 🧪 Auditoría.'
-            : 'Sin ciclos cerrados por ahora.');
+        : 'Sin ciclos cerrados por ahora.';
 
     renderCropCycleGroup(finishedGridEl, finishedCrops, finishedEmptyText, {
         expenseTotalsByCrop,
@@ -11294,46 +11107,6 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
         globalTotalsByCropType,
         groupType: 'finished'
     });
-    renderCropCycleGroup(lostGridEl, lostCrops, 'Sin ciclos perdidos por ahora.', {
-        expenseTotalsByCrop,
-        directExpenseTotalsByCrop,
-        operationalExpenseTotalsByCrop,
-        operationalPendingTotalsByCrop,
-        incomeTotalsByCrop,
-        lossTotalsByCrop,
-        pendingTotalsByCrop,
-        missingRateCountsByCrop,
-        globalTotalsByCropType,
-        groupType: 'lost'
-    });
-
-    if (auditTitleEl) {
-        auditTitleEl.textContent = `🧪 Auditoría (${auditCrops.length})`;
-    }
-    if (!auditDetailsEl || !auditGridEl) return;
-
-    if (auditCrops.length === 0) {
-        auditDetailsEl.open = false;
-        auditDetailsEl.style.display = 'none';
-        auditGridEl.textContent = '';
-        return;
-    }
-
-    auditDetailsEl.style.display = 'block';
-    auditDetailsEl.open = false;
-    auditGridEl.textContent = '';
-    const auditFragment = document.createDocumentFragment();
-    auditCrops.forEach((crop, index) => {
-        auditFragment.appendChild(createCropCardElement(crop, (index % 6) + 1, {
-            isAuditCard: true,
-            expenseTotalsByCrop,
-            incomeTotalsByCrop,
-            lossTotalsByCrop,
-            pendingTotalsByCrop,
-            missingRateCountsByCrop
-        }));
-    });
-    auditGridEl.appendChild(auditFragment);
 }
 
 /**
