@@ -1435,9 +1435,8 @@
             <div class="modal-footer agro-modal-canon__footer">
                 <button type="button" class="btn-cancel agro-modal-canon__button agro-modal-canon__button--secondary"
                     onclick="window.closeCropModal()">Cancelar</button>
-                <button type="submit" id="btn-save-crop"
-                    class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary"
-                    onclick="window.saveCrop()">Guardar siembra</button>
+                <button type="submit" id="btn-save-crop" form="form-new-crop"
+                    class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary">Guardar siembra</button>
             </div>
         </div>
     </div>
@@ -2301,6 +2300,8 @@
         }
 
 
+        let cropSaveInFlight = false;
+
         window.saveCrop = async function () {
             // Selector robusto con ID fijo (candado definitivo)
             const btn = document.getElementById('btn-save-crop')
@@ -2314,6 +2315,8 @@
                 }
                 return;
             }
+            if (cropSaveInFlight || btn.disabled) return;
+            cropSaveInFlight = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
             btn.disabled = true;
 
@@ -2687,7 +2690,10 @@
                     console.error('[Agro] Crop save error:', e.message);
                 }
             }
-            finally { restoreCropSaveButton(btn); }
+            finally {
+                cropSaveInFlight = false;
+                restoreCropSaveButton(btn);
+            }
         };
 
     </script>

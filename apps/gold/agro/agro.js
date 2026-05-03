@@ -64,6 +64,9 @@ let cropsStatus = 'idle';
 let cropsLoadSeq = 0;
 let cropsLoadInFlight = false;
 let cropsLoadQueued = false;
+let cropsLoadQueuedPromise = null;
+let cropsLoadQueuedResolve = null;
+let cropsLoadQueuedReject = null;
 let cropsLastCount = 0;
 let cropsRefreshThrottleTimer = null;
 let cyclesRefreshInFlight = false;
@@ -11203,7 +11206,13 @@ export async function loadCrops() {
     if (cropsLoadInFlight) {
         cropsLoadQueued = true;
         logAgroDebug('[AGRO] loadCrops queued', { ts: new Date().toISOString(), seq: requestId });
-        return;
+        if (!cropsLoadQueuedPromise) {
+            cropsLoadQueuedPromise = new Promise((resolve, reject) => {
+                cropsLoadQueuedResolve = resolve;
+                cropsLoadQueuedReject = reject;
+            });
+        }
+        return cropsLoadQueuedPromise;
     }
 
     cropsLoadInFlight = true;
@@ -11503,7 +11512,15 @@ export async function loadCrops() {
         cropsLoadInFlight = false;
         if (cropsLoadQueued) {
             cropsLoadQueued = false;
-            loadCrops();
+            const queuedResolve = cropsLoadQueuedResolve;
+            const queuedReject = cropsLoadQueuedReject;
+            cropsLoadQueuedPromise = null;
+            cropsLoadQueuedResolve = null;
+            cropsLoadQueuedReject = null;
+            Promise.resolve(loadCrops()).then(
+                (value) => queuedResolve?.(value),
+                (error) => queuedReject?.(error)
+            );
         }
     }
 }

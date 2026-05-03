@@ -3732,3 +3732,174 @@ Estado: **GREEN técnico / PENDING QA manual** — implementación modular lista
 
 - No se ejecutó browser/QA manual por instrucción explícita del usuario.
 - Pendiente validar: hub, apertura de vista, crear externo, crear registrado, editar, tags, A-Z/Z-A, filtros y no regresión de Cartera Viva/Cartera Operativa/Mi Carrito/Mis cultivos.
+
+---
+
+## 2026-05-03 — Ajuste visual/semántico de Mis Clientes
+
+### Diagnóstico breve
+
+- La vista `Mis Clientes` ya funciona con la migración aplicada, pero renderiza un encabezado interno propio además del contexto superior del shell.
+- El título grande blanco de la izquierda sale del `h2.agro-clients-header__title` renderizado por `agro-clients.js`.
+- El título superior sale del shell Agro (`data-agro-mobile-context-title`) alimentado por `VIEW_CONFIG.clients.label`.
+- La separación de clientes usa `client_type`: `registered` = con cuenta YavlGold; `external` = cliente sin cuenta YavlGold.
+
+### Ajustes solicitados
+
+- Eliminar la duplicación visual del título en la vista de clientes.
+- Dejar el título principal visible en la barra superior, centrado y dorado.
+- Verificar/corregir que `No registrados` filtre solo `client_type = external`.
+- Mantener `Todos` y `Con cuenta YavlGold` con su semántica actual.
+
+### Archivos candidatos
+
+- `apps/gold/agro/agro-clients.js`
+- `apps/gold/agro/agro-clients.css`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Riesgos
+
+- Que el header interno quede vacío o desbalanceado al remover el título duplicado.
+- Que el ajuste de centrado afecte otros módulos si no se limita a `data-agro-active-view="clients"`.
+- Que un cambio innecesario en filtros altere búsqueda u orden.
+
+### DoD
+
+- No aparece el título blanco duplicado a la izquierda.
+- El título superior de `Mis Clientes` queda dorado y centrado visualmente.
+- `No registrados` representa `client_type = external`.
+- `Con cuenta YavlGold` representa `client_type = registered`.
+- `Todos` muestra ambos tipos.
+- Búsqueda y orden siguen funcionando.
+- No se toca Supabase, migraciones ni Cartera Viva.
+- `git diff --check` y `pnpm build:gold` pasan.
+
+### Resultado
+
+- Se eliminó el `h2.agro-clients-header__title` y el eyebrow interno de `agro-clients.js`; queda solo la descripción corta bajo la barra del shell.
+- Se agregó CSS específico para `body[data-agro-active-view="clients"]` que centra el título del contextbar y fuerza color `var(--gold-4)`.
+- No se modificó la lógica de filtros porque ya usa `normalizeClientType(client.client_type)`.
+- Prueba RED/GREEN mínima: el chequeo del `h2` duplicado falló antes del parche y pasó después.
+- Prueba de filtros con datos simulados: `external` devuelve no registrados, `registered` devuelve con cuenta, `all` devuelve ambos.
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS con `GOMAXPROCS=2`; warning no bloqueante por Node `v25.6.0` vs engine `20.x`.
+- QA browser autenticada: bloqueada en localhost por hCaptcha/Supabase (`captcha protection: request disallowed`); no se crearon datos QA.
+
+---
+
+## 2026-05-03 — Bug vivo: estado de cultivo no refresca tras edición
+
+Estado: **YELLOW** — bug persistente en edición de ciclos/cultivos activos.
+
+### Bug vivo confirmado
+
+- Flujo afectado: editar cultivo activo y cambiar estado de `Creciendo` a `En producción`.
+- Síntoma principal: aparece mensaje de éxito, pero la card queda en `Creciendo` o vuelve a ese estado.
+- Síntoma adicional: parpadeo raro en la zona de cards, compatible con doble render, cache vieja, carrera async o rehidratación desde estado anterior.
+
+### Frentes excluidos
+
+- No tocar Mis Clientes ni sus ajustes visuales.
+- No tocar popups informativos.
+- No tocar Cartera Viva salvo revisión estricta de no regresión por estado.
+- No tocar Cartera Operativa ni Mi Carrito.
+- No tocar Supabase migrations.
+- No hacer browser QA intensivo ni Playwright.
+
+### Archivos candidatos
+
+- `apps/gold/agro/index.html` — select, modal y submit `window.saveCrop()`.
+- `apps/gold/agro/agro.js` — estado real, cache `cropsCache`, `loadCrops()`, render de cards y eventos `AGRO_CROPS_READY`.
+- `apps/gold/agro/agrociclos.js` — render visual de card/badge.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md` — diagnóstico y cierre operativo.
+
+### Plan de diagnóstico
+
+1. Localizar mapeos/labels de estado y valores internos reales.
+2. Confirmar campo real persistido en Supabase.
+3. Confirmar valor del `<option>` `En producción`.
+4. Seguir el flujo `submit -> update payload -> returned row -> cache -> loadCrops -> render`.
+5. Buscar handlers duplicados de submit/click/listeners.
+6. Determinar si el parpadeo viene de doble `loadCrops()`, render desde cache vieja, render completo innecesario o evento duplicado.
+7. Aplicar fix mínimo solo después de causa raíz.
+
+### Riesgos
+
+- `agro.js` es monolito; tocar solo si la causa está en cache/render/wiring.
+- Un parche DOM ocultaría el fallo real y no es aceptable.
+- Finalizado/perdido, duración real y semilla kg dependen del mismo pipeline de cards.
+- Ya existen cambios recientes en creación/edición y guard comercial; no abrir nuevos frentes.
+
+### DoD
+
+- `Creciendo -> En producción` persiste como dato real.
+- El éxito solo aparece si el update confirma el estado solicitado.
+- La card se alimenta de la fila actualizada o de una recarga real, no de cache vieja.
+- El parpadeo queda eliminado o explicado con causa concreta y mitigación aplicada.
+- `Finalizado` y `Perdido` no se rompen.
+- `git diff --check` pasa.
+- `pnpm build:gold` pasa.
+- Búsqueda de duraciones hardcodeadas no introduce regresión.
+
+### Diagnóstico real antes de editar
+
+- Badge/labels de cards:
+  - `apps/gold/agro/agro.js` define `CROP_STATUS_UI` con `sembrado`, `creciendo`, `produccion`, `finalizado`, `lost`.
+  - `buildActiveCycleCardsData()` calcula `effectiveStatus = resolveCropStatus(crop, progress)` y pasa `estadoTexto = statusMeta.text`.
+  - `apps/gold/agro/agrociclos.js` renderiza el badge con `ciclo.estadoTexto`.
+- Campo real persistido: `agro_crops.status`.
+- Campos auxiliares existentes en el flujo: `status_mode` y `status_override`.
+- Valor interno de `En producción`: `produccion`.
+- `<option>` del select: `<option value="produccion">En producción</option>`.
+- Render espera `produccion` para mostrar `En producción`.
+- Payload actual de edición envía `status: normalizedEffectiveStatus`, `status_mode` y `status_override`.
+- El update usa `.update(updatePayload).eq('id', editId).eq('user_id', user.id).select('*').maybeSingle()`.
+- El código ya valida que la fila devuelta confirme `status` o `status_override` contra el estado solicitado antes de marcar éxito.
+- Cache/render:
+  - `loadCrops()` consulta Supabase, escribe cache namespaced, actualiza `cropsCache`, renderiza cards y emite `AGRO_CROPS_READY`.
+  - Si `loadCrops()` entra mientras `cropsLoadInFlight` está activo, solo marca `cropsLoadQueued = true` y retorna sin esperar el refresh encolado.
+  - En `finally`, la recarga encolada se dispara con `loadCrops()` sin `await` ni promesa expuesta al caller.
+- Causa probable del parpadeo:
+  - render completo de cards tras save;
+  - posible carrera con carga en curso;
+  - el caller cree que `await loadCrops()` terminó, pero en realidad solo encoló una recarga posterior.
+- Handler:
+  - el form tiene `onsubmit="event.preventDefault(); window.saveCrop();"`.
+  - el botón del footer tiene `onclick="window.saveCrop()"` y está fuera del `<form>`.
+  - Aunque el click normal no dispara el submit del form por estar fuera del form, hay dos rutas declarativas posibles hacia `window.saveCrop()` y no existe lock de reentrada.
+- Hipótesis verificadas:
+  - A: no aplica; `produccion` coincide en select, payload y render.
+  - B: no aplica; card lee el mismo estado resuelto desde `status/status_override`.
+  - C/D: aplica como causa de carrera; `loadCrops()` puede devolver antes de la recarga real.
+  - E: parcialmente mitigado ya; se valida fila devuelta, pero faltaba garantizar refresh real cuando hay cola.
+  - F/G: riesgo existente por rutas múltiples y ausencia de lock.
+  - H/I: parpadeo compatible con render completo y recarga encolada no esperada.
+
+### Cierre técnico
+
+- Se corrigió `loadCrops()` para que, si ya hay una carga en curso, devuelva una promesa que se resuelve solo después de ejecutar la recarga encolada real.
+- La recarga encolada ya no queda disparada en segundo plano sin informar al caller; ahora propaga resolución/error al `await loadCrops()` que inició durante `cropsLoadInFlight`.
+- Se eliminó la ruta directa `onclick="window.saveCrop()"` del botón del modal y se asoció el botón al form con `form="form-new-crop"`, dejando una sola ruta declarativa de submit.
+- Se agregó lock `cropSaveInFlight` en `window.saveCrop()` para evitar doble submit/reentrada durante el update, refresh y render posterior.
+- No se cambió el contrato de estados: `En producción` sigue siendo `produccion`.
+- No se tocaron Mis Clientes, popups, Cartera Viva, Cartera Operativa, Mi Carrito ni migraciones.
+
+### Verificación técnica
+
+- Prueba RED/GREEN estática:
+  - Antes del parche fallaba por `onclick` directo y `loadCrops()` encolado que retornaba antes del refresh real.
+  - Después del parche pasa.
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS.
+- Búsqueda de duraciones hardcodeadas:
+  - Solo aparece `90d: 90 días` en filtros/rankings, no como duración de ciclos.
+
+### QA pendiente
+
+- No se ejecutó QA manual ni browser testing por instrucción explícita del usuario.
+- Pendiente validar manualmente `Creciendo -> En producción`, persistencia tras refresh y reducción del parpadeo en la card.
+
+### Riesgos pendientes
+
+- El render de cards sigue siendo un repintado completo del grid; puede existir una animación visual normal de progreso, pero ya no debería pisarse el estado nuevo con una recarga vieja no esperada.
+- La prueba definitiva de persistencia requiere que el usuario valide en sesión autenticada contra Supabase.
