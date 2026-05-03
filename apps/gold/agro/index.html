@@ -2307,7 +2307,11 @@
                 || document.querySelector('#modal-new-crop .modal-footer button.btn-primary')
                 || document.querySelector('#form-new-crop button[type="submit"]');
             if (!btn) {
-                alert('⚠️ No se encontró el botón de Guardar. Refresca la página.');
+                if (window.YGUXMessages && typeof window.YGUXMessages.error === 'function') {
+                    window.YGUXMessages.error('No se encontró el botón de Guardar. Refresca la página.');
+                } else {
+                    console.error('[Agro] No se encontró el botón de Guardar.');
+                }
                 return;
             }
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
@@ -2339,12 +2343,13 @@
                 return text.includes('column') && text.includes(String(column).toLowerCase());
             };
 
-            // Helper: show validation error (reutiliza toast si existe, sino alert)
             const showValidationError = (msg) => {
-                if (typeof window.showEvidenceToast === 'function') {
-                    window.showEvidenceToast(msg, 'error');
+                if (window.YGUXMessages && typeof window.YGUXMessages.error === 'function') {
+                    window.YGUXMessages.error(msg);
+                } else if (typeof window.showToast === 'function') {
+                    window.showToast(msg, 'error');
                 } else {
-                    alert('⚠️ ' + msg);
+                    console.warn('[Agro] Validation error (no toast available):', msg);
                 }
             };
             const notifyOptionalCropColumnsFallback = () => {
@@ -2619,7 +2624,7 @@
                     } else if (window.showToast) {
                         window.showToast('Cultivo creado correctamente.', 'success');
                     } else {
-                        alert('Cultivo creado correctamente.');
+                        console.warn('[Agro] Crop created but no toast system available.');
                     }
                 }
 
@@ -2654,7 +2659,7 @@
                     } else if (window.showToast) {
                         window.showToast('Cambios guardados en el cultivo.', 'success');
                     } else {
-                        alert('Cambios guardados en el cultivo.');
+                        console.warn('[Agro] Crop saved but no toast system available.');
                     }
                 }
                 if (shouldPromptLostWizard && savedCropId && typeof window.launchAgroWizard === 'function') {
@@ -2673,7 +2678,15 @@
                     }, 120);
                 }
 
-            } catch (e) { alert(e.message); }
+            } catch (e) {
+                if (window.YGUXMessages && typeof window.YGUXMessages.error === 'function') {
+                    window.YGUXMessages.error(e.message || 'Error al guardar el cultivo.');
+                } else if (window.showToast) {
+                    window.showToast(e.message || 'Error al guardar el cultivo.', 'error');
+                } else {
+                    console.error('[Agro] Crop save error:', e.message);
+                }
+            }
             finally { restoreCropSaveButton(btn); }
         };
 

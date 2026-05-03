@@ -470,13 +470,15 @@ function canCreateLiveWalletRecordForCrop(crop) {
 }
 
 function showLiveWalletCropBlockMessage() {
-    if (typeof window !== 'undefined' && typeof window.showEvidenceToast === 'function') {
-        window.showEvidenceToast(CARTERA_VIVA_CROP_BLOCK_MESSAGE, 'warning');
+    if (typeof window !== 'undefined' && window.YGUXMessages && typeof window.YGUXMessages.warning === 'function') {
+        window.YGUXMessages.warning(CARTERA_VIVA_CROP_BLOCK_MESSAGE);
         return;
     }
-    if (typeof window !== 'undefined' && typeof window.alert === 'function') {
-        window.alert(CARTERA_VIVA_CROP_BLOCK_MESSAGE);
+    if (typeof window !== 'undefined' && window.showToast) {
+        window.showToast(CARTERA_VIVA_CROP_BLOCK_MESSAGE, 'warning');
+        return;
     }
+    console.warn('[CarteraViva] Crop block message (no toast available):', CARTERA_VIVA_CROP_BLOCK_MESSAGE);
 }
 
 function guardLiveWalletCropCreation() {

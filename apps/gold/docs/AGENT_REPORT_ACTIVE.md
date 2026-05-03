@@ -64,6 +64,76 @@ Auditar todos los popups informativos/no modales existentes en Agro para prepara
 
 ---
 
+## 2026-05-03 — Fase 1: notifyFacturero → YGUXMessages (eliminación de alert nativo)
+
+**Estado:** COMPLETADO
+
+### Diagnóstico recibido
+
+El diagnóstico de popups informativos reveló que `showEvidenceToast` se invocaba en ~9 lugares pero **no existía definición** en el codebase. Esto causaba que `notifyFacturero()` (con ~50 call sites) cayera siempre a `alert()` nativo, bloqueando la UI y rompiendo la estética dark/gold.
+
+### Causa raíz
+
+`function notifyFacturero(message, type = 'info')` en `agro.js:6818` ejecutaba `if (typeof showEvidenceToast === 'function') { showEvidenceToast(message, type); } else { alert(message); }`. Como `showEvidenceToast` nunca se definió ni se asignó a `window`, **todas las llamadas a notifyFacturero caían a `alert()` nativo** — bloqueante, sin estética ADN V11, sin accesibilidad.
+
+### Archivos modificados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/agro.js` | `notifyFacturero()` reescrita para usar `uxMessages` (import local). Eliminado fallback a `alert()`. |
+| `apps/gold/agro/agro.js` | 3 llamadas directas a `showEvidenceToast` reemplazadas por `uxMessages.warning()`. |
+| `apps/gold/agro/agro.js` | Bloque condicional `showEvidenceToast`/`alert` en dropUnits → reemplazado por `uxMessages.warning()`. |
+| `apps/gold/agro/agro.js` | 2 llamadas `showEvidenceToast('Error al eliminar pagado.')` → `uxMessages.warning()`. |
+| `apps/gold/agro/agro/index.html` | `showValidationError()` reescrita para usar `window.YGUXMessages.error()` con fallback a `window.showToast()` y `console.warn` (sin `alert()`). |
+| `apps/gold/agro/index.html` | Alert de "botón guardar no encontrado" → `YGUXMessages.error()` con fallback a `console.error`. |
+| `apps/gold/agro/index.html` | Alert fallback "Cultivo creado" → `console.warn` como último recurso. |
+| `apps/gold/agro/index.html` | Alert fallback "Cambios guardados" → `console.warn` como último recurso. |
+| `apps/gold/agro/index.html` | Catch block `alert(e.message)` → `YGUXMessages.error()` con fallback a `window.showToast()` y `console.error`. |
+| `apps/gold/agro/agro-cartera-viva-view.js` | `showLiveWalletCropBlockMessage()` reescrita: `window.YGUXMessages.warning()` → `window.showToast()` → `console.warn` (sin `alert()`). |
+
+### Qué API de YGUXMessages se usó
+
+- `uxMessages.show(payload, type)` — paso de objects (`uxMessages.copy.*`)
+- `uxMessages[type](string)` — para strings simple: `.success()`, `.error()`, `.warning()`, `.info()`
+- `window.YGUXMessages.error(msg)` / `.warning(msg)` / `.success(msg)` — desde index.html (sin import ES6)
+
+### Qué pasó con showEvidenceToast
+
+**Eliminado completamente.** Cero referencias restantes en el codebase. Todas las llamadas que usaban `showEvidenceToast` fueron reemplazadas por `uxMessages` (en agro.js) o `window.YGUXMessages` (en index.html y cartera-viva-view).
+
+### Cuántos alert() quedan y por qué no se tocaron
+
+Quedan **33 `alert()` en `agro.js`** y **0 en `index.html`**. No se tocaron porque:
+- Pertenecen a las Fases 2-3 (alerts en AgroLog, validación de cultivo, exportación, agenda, carrito, crop-report, stats).
+- Su migración requiere cirugía caso por caso, no un solo wrapper.
+- El scope de Fase 1 era exclusivamente `notifyFacturero()` y `showEvidenceToast`.
+- Los `confirm()` y `prompt()` destructivos/funcionales tampoco se tocaron (10 confirm + 4 prompt).
+
+### Validación
+
+- `git diff --check`: PASS (cero errores).
+- `pnpm build:gold`: PASS completo (Vite + agent-guard + check-llms + utf8).
+- `rg "showEvidenceToast"`: ZERO resultados (eliminación completa).
+- `notifyFacturero()` ya no contiene `alert()` ni referencia a `showEvidenceToast`.
+
+### QA manual pendiente para el usuario
+
+1. **Crear cultivo** → debe mostrar toast YGUXMessages, no alert nativo.
+2. **Editar cultivo** → debe mostrar toast de éxito, no alert nativo.
+3. **Crear registro en facturero** → notifyFacturero debe mostrar toast amigable.
+4. **Error de guardado** → debe mostrar toast de error, no alert nativo.
+5. **Confirmaciones destructivas** → deben seguir funcionando igual (confirm() nativo).
+6. **Bloqueo de cartera viva** (cultivo no en producción) → debe mostrar warning toast, no alert.
+
+### Comandos git sugeridos
+
+```bash
+git add apps/gold/agro/agro.js apps/gold/agro/index.html apps/gold/agro/agro-cartera-viva-view.js apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(agro): elimina alert() nativo en notifyFacturero y showEvidenceToast — Fase 1 popups"
+```
+
+---
+
 ### Resumen
 
 - **Total encontrados:** ~85 popups/mensajes informativos

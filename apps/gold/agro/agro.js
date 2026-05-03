@@ -1413,14 +1413,14 @@ function initBuyerProfileClickHandlers() {
         if (!rawName || rawName === BUYER_PRIVACY_MASK) return;
 
         if (readBuyerNamesHidden()) {
-            showEvidenceToast('Desactiva 👁 para abrir ficha del cliente.', 'warning');
+            uxMessages.warning('Desactiva 👁 para abrir ficha del cliente.');
             return;
         }
 
         event.preventDefault();
         openBuyerProfileByName(rawName).catch((error) => {
             console.error('[AGRO_BUYERS] open from click error:', error);
-            showEvidenceToast('No se pudo abrir la ficha del cliente.', 'warning');
+            uxMessages.warning('No se pudo abrir la ficha del cliente.');
         });
     });
 }
@@ -1435,7 +1435,7 @@ function bindAgroSocialOpenButton() {
         event.preventDefault();
         openSocialPanel(event.currentTarget).catch((error) => {
             console.error('[AGRO_SOCIAL] open panel error:', error);
-            showEvidenceToast('No se pudo abrir el panel Social.', 'warning');
+            uxMessages.warning('No se pudo abrir el panel Social.');
         });
     });
 }
@@ -6591,11 +6591,7 @@ async function saveEditModal() {
                     delete fallbackData.unit_type;
                     delete fallbackData.unit_qty;
                     delete fallbackData.quantity_kg;
-                    if (typeof showEvidenceToast === 'function') {
-                        showEvidenceToast('Aviso: columnas de presentacion/kg no disponibles, se guardo sin ellas.', 'warning');
-                    } else {
-                        alert('Aviso: columnas de presentacion/kg no disponibles, se guardo sin ellas.');
-                    }
+                    uxMessages.warning('Aviso: columnas de presentacion/kg no disponibles, se guardo sin ellas.');
                 }
                 if (dropBuyerIdentity) {
                     delete fallbackData.buyer_id;
@@ -6816,10 +6812,15 @@ async function handleMoveGeneralRecord(sourceTab, itemId) {
 }
 
 function notifyFacturero(message, type = 'info') {
-    if (typeof showEvidenceToast === 'function') {
-        showEvidenceToast(message, type);
+    const typeMap = { info: 'info', success: 'success', warning: 'warning', error: 'error' };
+    const normalizedType = typeMap[type] || 'info';
+
+    if (typeof message === 'object' && message !== null) {
+        uxMessages.show(message, normalizedType);
+    } else if (uxMessages && typeof uxMessages[normalizedType] === 'function') {
+        uxMessages[normalizedType](String(message));
     } else {
-        alert(typeof message === 'string' ? message : (message?.title || message?.message || ''));
+        uxMessages.show(String(message), normalizedType);
     }
 }
 
@@ -12116,11 +12117,11 @@ function renderIncomeItem(listEl, income, signedUrl) {
             if (!hardError) {
                 deleteSuccess = true;
             } else {
-                showEvidenceToast('Error al eliminar pagado.', 'warning');
+                uxMessages.warning('Error al eliminar pagado.');
                 console.error('[Agro] Income hard delete failed:', hardError.message);
             }
         } else {
-            showEvidenceToast('Error al eliminar pagado.', 'warning');
+            uxMessages.warning('Error al eliminar pagado.');
             console.error('[Agro] Income delete failed:', softError.message);
         }
 
