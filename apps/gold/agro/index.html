@@ -52,6 +52,7 @@
     <link rel="stylesheet" href="./agro-operational-cycles.css">
     <link rel="stylesheet" href="./agro-task-cycles.css">
     <link rel="stylesheet" href="./agro-cartera-viva.css">
+    <link rel="stylesheet" href="./agro-clients.css">
     <link rel="stylesheet" href="./tx-cards-v2.css">
     <link rel="stylesheet" href="./agro-index-critical.css">
 </head>
@@ -287,6 +288,11 @@
                             <i class="fa-solid fa-users agro-shell-link__icon" aria-hidden="true"></i><span
                                 class="agro-shell-link__label">Cartera Viva</span>
                         </button>
+                        <button type="button" class="agro-shell-sublink" data-agro-view="clients"
+                            data-agro-mode-scope="non_crop">
+                            <i class="fa-solid fa-address-book agro-shell-link__icon" aria-hidden="true"></i><span
+                                class="agro-shell-link__label">Mis Clientes</span>
+                        </button>
                         <button type="button" class="agro-shell-sublink" data-agro-view="operational"
                             data-agro-mode-scope="non_crop">
                             <i class="fa-solid fa-wallet agro-shell-link__icon" aria-hidden="true"></i><span
@@ -300,6 +306,14 @@
                         <span class="agro-launcher__tile-copy">
                             <span class="agro-shell-link__label">Cartera Viva</span>
                             <span class="agro-launcher__tile-desc">Seguimiento de clientes y fiados activos.</span>
+                        </span>
+                    </button>
+                    <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="clients"
+                        data-agro-mode-scope="non_crop">
+                        <i class="fa-solid fa-address-book agro-shell-link__icon" aria-hidden="true"></i>
+                        <span class="agro-launcher__tile-copy">
+                            <span class="agro-shell-link__label">Mis Clientes</span>
+                            <span class="agro-launcher__tile-desc">Libreta simple de clientes de la finca.</span>
                         </span>
                     </button>
                     <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="operational"
@@ -585,6 +599,10 @@
                     <button type="button" class="agro-mobile-hub__item" data-agro-view="cartera-viva">
                         <i class="fa-solid fa-users" aria-hidden="true"></i>
                         <span>Cartera Viva</span>
+                    </button>
+                    <button type="button" class="agro-mobile-hub__item" data-agro-view="clients">
+                        <i class="fa-solid fa-address-book" aria-hidden="true"></i>
+                        <span>Mis Clientes</span>
                     </button>
                     <button type="button" class="agro-mobile-hub__item" data-agro-view="operational">
                         <i class="fa-solid fa-wallet" aria-hidden="true"></i>
@@ -1026,6 +1044,12 @@
         <section class="agro-cartera-viva-region agro-ops-v10" data-agro-shell-region="cartera-viva" hidden inert>
             <div id="agro-cartera-viva-root" class="agro-cartera-viva-root">
                 <!-- agro-cartera-viva-view.js renders here when Cartera Viva view is active -->
+            </div>
+        </section>
+
+        <section class="agro-clients-region agro-ops-v10" data-agro-shell-region="clients" hidden inert>
+            <div id="agro-clients-root" class="agro-clients-root">
+                <!-- agro-clients.js renders here when Mis Clientes view is active -->
             </div>
         </section>
 
@@ -2184,13 +2208,96 @@
             btn.disabled = false;
         }
 
-        async function refreshCropsAfterSave(detail = {}) {
+        function normalizeCropStatusForSave(value) {
+            const token = String(value || '')
+                .trim()
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '');
+            if (!token) return '';
+            if (token === 'perdido' || token === 'perdida' || token === 'danado' || token === 'damaged' || token === 'lost') {
+                return 'lost';
+            }
+            if (token === 'finalizado' || token === 'cosechado' || token === 'finished' || token === 'harvested') {
+                return 'finalizado';
+            }
+            if (token === 'production' || token === 'in_production' || token === 'en_produccion' || token === 'ready') {
+                return 'produccion';
+            }
+            if (token === 'growing') return 'creciendo';
+            if (token === 'planted') return 'sembrado';
+            return token;
+        }
+
+        function cropRowConfirmsStatus(row, expectedStatus) {
+            const expected = normalizeCropStatusForSave(expectedStatus);
+            if (!row || !expected) return false;
+            const rowStatus = normalizeCropStatusForSave(row.status);
+            const rowOverride = normalizeCropStatusForSave(row.status_override);
+            return rowStatus === expected || rowOverride === expected;
+        }
+
+        function findCropInRuntimeSnapshot(cropId) {
+            const safeCropId = String(cropId || '').trim();
+            const crops = Array.isArray(window.__AGRO_CROPS_STATE?.crops)
+                ? window.__AGRO_CROPS_STATE.crops
+                : [];
+            return crops.find((crop) => String(crop?.id || '').trim() === safeCropId) || null;
+        }
+
+        function runtimeSnapshotConfirmsCropStatus(cropId, expectedStatus) {
+            return cropRowConfirmsStatus(findCropInRuntimeSnapshot(cropId), expectedStatus);
+        }
+
+        function waitForRuntimeCropStatus(cropId, expectedStatus, timeoutMs = 2500) {
+            if (runtimeSnapshotConfirmsCropStatus(cropId, expectedStatus)) {
+                return Promise.resolve(true);
+            }
+            if (typeof window.addEventListener !== 'function') {
+                return Promise.resolve(false);
+            }
+
+            return new Promise((resolve) => {
+                let settled = false;
+                const finish = (value) => {
+                    if (settled) return;
+                    settled = true;
+                    window.removeEventListener('AGRO_CROPS_READY', onReady);
+                    clearTimeout(timer);
+                    resolve(value);
+                };
+                const onReady = () => {
+                    if (runtimeSnapshotConfirmsCropStatus(cropId, expectedStatus)) {
+                        finish(true);
+                    }
+                };
+                const timer = setTimeout(() => finish(false), timeoutMs);
+                window.addEventListener('AGRO_CROPS_READY', onReady);
+            });
+        }
+
+        async function refreshCropsAfterSave(detail = {}, verifyStatus = null) {
             if (typeof window.loadCrops === 'function') {
                 await window.loadCrops();
             } else {
                 document.dispatchEvent(new CustomEvent('agro:crops:refresh', { detail }));
             }
             document.dispatchEvent(new CustomEvent('data-refresh'));
+
+            if (!verifyStatus?.cropId || !verifyStatus?.status) {
+                return true;
+            }
+
+            if (await waitForRuntimeCropStatus(verifyStatus.cropId, verifyStatus.status)) {
+                return true;
+            }
+
+            if (typeof window.loadCrops === 'function') {
+                await window.loadCrops();
+                return waitForRuntimeCropStatus(verifyStatus.cropId, verifyStatus.status, 1200);
+            }
+
+            return false;
         }
 
 
@@ -2378,7 +2485,7 @@
                 const editId = document.getElementById('crop-edit-id')?.value || '';
                 const statusValue = document.getElementById('crop-status')?.value || 'sembrado';
                 const statusMode = statusValue === 'auto' ? 'auto' : 'manual';
-                const statusOverride = statusMode === 'manual' ? statusValue : null;
+                const rawStatusOverride = statusMode === 'manual' ? statusValue : null;
                 const computeAutoStatus = () => {
                     if (!sowDate || !harvestDate) return 'creciendo';
                     const start = new Date(sowDate);
@@ -2394,12 +2501,14 @@
                     if (percent >= 25) return 'creciendo';
                     return 'sembrado';
                 };
-                const effectiveStatus = statusMode === 'auto' ? computeAutoStatus() : statusOverride;
-                const normalizedEffectiveStatus = normalizeCycleStatus(effectiveStatus);
+                const effectiveStatus = statusMode === 'auto' ? computeAutoStatus() : rawStatusOverride;
+                const normalizedEffectiveStatus = normalizeCropStatusForSave(effectiveStatus) || 'sembrado';
+                const statusOverride = statusMode === 'manual' ? normalizedEffectiveStatus : null;
                 const initialStatus = normalizeCycleStatus(document.getElementById('form-new-crop')?.dataset?.initialStatus || '');
                 const shouldPromptLostWizard = normalizedEffectiveStatus === 'lost' && initialStatus !== 'lost';
 
                 let insertedId = null;
+                let showEditSuccess = false;
 
                 if (editId) {
                     let updatePayload = {
@@ -2419,7 +2528,7 @@
                         actual_harvest_date: actualHarvestDate || null,
                         lost_at: lostAt || null,
                         closed_at: null,
-                        status: effectiveStatus,
+                        status: normalizedEffectiveStatus,
                         status_mode: statusMode,
                         status_override: statusOverride
                     };
@@ -2457,13 +2566,10 @@
                     if (!updatedCrop?.id) {
                         throw new Error('No se pudo actualizar el cultivo. Verifica la sesión e intenta nuevamente.');
                     }
-                    if (window.YGUXMessages?.success) {
-                        window.YGUXMessages.success(window.YGUXMessages.copy.cropSaved({ created: false }));
-                    } else if (window.showToast) {
-                        window.showToast('Cambios guardados en el cultivo.', 'success');
-                    } else {
-                        alert('Cambios guardados en el cultivo.');
+                    if (!cropRowConfirmsStatus(updatedCrop, normalizedEffectiveStatus)) {
+                        throw new Error('Supabase respondió la fila, pero no confirmó el estado actualizado del cultivo.');
                     }
+                    showEditSuccess = true;
                 } else {
                     let insertPayload = {
                         user_id: user.id,
@@ -2480,7 +2586,7 @@
                         seed_kg: seedKg,
                         start_date: sowDate,
                         expected_harvest_date: harvestDate || null,
-                        status: effectiveStatus,
+                        status: normalizedEffectiveStatus,
                         status_mode: statusMode,
                         status_override: statusOverride
                     };
@@ -2523,6 +2629,7 @@
                 const savedCropId = editId || insertedId || null;
                 const suggestedLossAmount = Number(investmentUsdEquiv) > 0 ? Number(investmentUsdEquiv) : '';
                 const safeCropName = String(name || '').trim() || 'Cultivo';
+                const isEditMode = Boolean(editId);
 
                 window.closeCropModal();
                 document.getElementById('form-new-crop').reset();
@@ -2534,7 +2641,22 @@
                 if (investmentCurrencySelect) investmentCurrencySelect.value = 'USD';
                 refreshCropInvestmentPrefix();
                 refreshCropInvestmentFxHint();
-                await refreshCropsAfterSave({ source: 'crop-modal', status: normalizedEffectiveStatus || 'unknown' });
+                const refreshConfirmed = await refreshCropsAfterSave(
+                    { source: 'crop-modal', status: normalizedEffectiveStatus || 'unknown' },
+                    isEditMode ? { cropId: savedCropId, status: normalizedEffectiveStatus } : null
+                );
+                if (isEditMode && !refreshConfirmed) {
+                    throw new Error('El cultivo se guardó, pero no se pudo confirmar el refresco de la card. Recarga la página para verificar.');
+                }
+                if (showEditSuccess) {
+                    if (window.YGUXMessages?.success) {
+                        window.YGUXMessages.success(window.YGUXMessages.copy.cropSaved({ created: false }));
+                    } else if (window.showToast) {
+                        window.showToast('Cambios guardados en el cultivo.', 'success');
+                    } else {
+                        alert('Cambios guardados en el cultivo.');
+                    }
+                }
                 if (shouldPromptLostWizard && savedCropId && typeof window.launchAgroWizard === 'function') {
                     setTimeout(() => {
                         window.launchAgroWizard('perdidas', {
@@ -2931,6 +3053,12 @@
                         mod.initAgroCarteraVivaView({ initialUserId: session.user?.id });
                     }
                 }).catch(err => console.warn('[AGRO] Cartera Viva view module load error:', err.message));
+
+                import('./agro-clients.js').then((mod) => {
+                    if (typeof mod.initAgroClients === 'function') {
+                        mod.initAgroClients({ initialUserId: session.user?.id });
+                    }
+                }).catch(err => console.warn('[AGRO] Clients module load error:', err.message));
 
                 import('./agroTaskCycles.js').then((mod) => {
                     if (typeof mod.initAgroTaskCycles === 'function') {

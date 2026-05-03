@@ -6,6 +6,279 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-17__2026-04-27.md`
 
 ---
 
+## 2026-05-03 — Diagnóstico: Popups informativos Agro
+
+**Estado:** DIAGNÓSTICO / SIN CAMBIOS DE UI
+
+### Objetivo
+
+Auditar todos los popups informativos/no modales existentes en Agro para preparar una futura unificación hacia un popup central pequeño, humano y amigable, inspirado en el modal "Configura tu asistente IA".
+
+### Alcance explícito
+
+- Solo diagnóstico. No se modifica UI, CSS, lógica ni Supabase.
+- No se implementa la unificación todavía.
+- No se tocan modales funcionales (crear/editar cultivo, Cartera Viva, asistente IA).
+- Se documenta cada popup/mensaje encontrado con clasificación completa.
+
+### Riesgos del diagnóstico
+
+- **Bajo**: es solo lectura y documentación.
+- Se identificaron zonas donde `alert()` nativo bloquea la UI y donde `showEvidenceToast` se usa sin estar definido (fallback a alert).
+
+### Archivos revisados
+
+- `apps/gold/agro/agro.js` (monolito principal)
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro-agenda.js`
+- `apps/gold/agro/agro-cart.js`
+- `apps/gold/agro/agro-cartera-viva-view.js`
+- `apps/gold/agro/agro-clients.js`
+- `apps/gold/agro/agrocompradores.js`
+- `apps/gold/agro/agro-crop-report.js`
+- `apps/gold/agro/agro-feedback.js`
+- `apps/gold/agro/agro-ia-wizard.js` (no encontrado en paths explorados)
+- `apps/gold/agro/agro-notifications.js`
+- `apps/gold/agro/agro-period-cycles.js`
+- `apps/gold/agro/agro-perfil.js` (agroperfil.js)
+- `apps/gold/agro/agro-repo-app.js`
+- `apps/gold/agro/agro-social.js` (agrosocial.js)
+- `apps/gold/agro/agro-stats.js`
+- `apps/gold/agro/agro-stats-report.js`
+- `apps/gold/agro/agroOperationalCycles.js`
+- `apps/gold/agro/agroTaskCycles.js`
+- `apps/gold/agro/agro.css`
+- `apps/gold/agro/agro-dashboard.css`
+- `apps/gold/assets/js/ui/uxMessages.js`
+- `apps/gold/assets/js/auth/authUI.js`
+- `apps/gold/assets/js/components/notifications.js`
+- `apps/gold/assets/js/components/feedbackManager.js`
+
+### DoD del diagnóstico
+
+- [x] No se modificó UI ni lógica.
+- [x] Inventario razonable de popups/mensajes encontrado.
+- [x] Modales funcionales separados de popups informativos.
+- [x] Plan futuro por lotes propuesto.
+- [x] `AGENT_REPORT_ACTIVE.md` actualizado con sección de diagnóstico.
+
+---
+
+### Resumen
+
+- **Total encontrados:** ~85 popups/mensajes informativos
+- **Alerts nativos (`alert()`):** ~28
+- **Confirms nativos (`confirm()`):** ~10
+- **Prompts nativos (`prompt()`):** ~4
+- **Toasts/snackbars custom:** ~38
+- **Mensajes inline (status bars):** ~5 sistemas
+- **Candidatos claros a popup central:** ~45
+- **No candidatos (destructivos/funcionales):** ~15 confirm/prompt
+- **No candidatos (status bars inline):** ~5 sistemas (distinta naturaleza)
+- **Sistemas de toast encontrados:** 7 diferentes
+
+### Sistemas de notificación encontrados
+
+| # | Sistema | Archivo definición | Tipo | Cobertura | Cohesión visual |
+|---|---|---|---|---|---|
+| 1 | `window.YGUXMessages` / `uxMessages.js` | `assets/js/ui/uxMessages.js` | Toast moderno centralizado | Auth, perfil, onboarding, cultivo CRUD | Alta (dark/gold, ADN V11) |
+| 2 | `notifyFacturero()` → `showEvidenceToast` → `alert()` | `agro.js:6818` | Wrapper con fallback a alert | Facturero (CRUD movimientos, transferencias, reversiones) | Baja (caída a alert nativo) |
+| 3 | `showAssistantToast()` | `agro.js:14383` | Toast simple en panel IA | Asistente IA (copiar, cola, límites, eliminar) | Media (solo dentro del panel) |
+| 4 | `showUndoDeleteToast()` | `agro.js:5978` | Toast con botón undo | Undo de eliminación en facturero | Media (custom HTML) |
+| 5 | `pushToast()` | `agro-repo-app.js:797` | Toast propio del repo | Repo app (archivos, carpetas, sync) | Media (solo repositorio) |
+| 6 | `NotificationsManager._showToast()` | `assets/js/components/notifications.js:358` | Toast administrativo | Admin (anuncios, feedback) | Baja (inline styles) |
+| 7 | `window.showToast` | alias de `uxMessages.show()` | Alias global | Periodos, cartera operativa, carrito | = YGUXMessages |
+
+**Observación crítica:** `showEvidenceToast` se invoca en 9 lugares pero **no tiene definición** en el codebase. Su patron es `typeof showEvidenceToast === 'function'`, cayendo siempre a `alert()` cuando no existe. Esto significa que **todas las ~50 llamadas a `notifyFacturero()` y las 7 llamadas directas a `showEvidenceToast`** producen `alert()` nativo en producción.
+
+### Inventario detallado
+
+#### LOTE A — Alert() nativos (candidatos ALTOS a migración)
+
+| Prioridad | Trigger | Archivo:Línea | Texto/propósito | Bloquea | Migrar | Riesgo |
+|---|---|---|---|---|---|---|
+| Alta | Cultivo creado | `index.html:2621` | `alert('Cultivo creado correctamente.')` fallback | Sí | Sí | Bajo |
+| Alta | Cultivo editado | `index.html:2656` | `alert('Cambios guardados en el cultivo.')` fallback | Sí | Sí | Bajo |
+| Alta | Error genérico catch | `index.html:2675` | `alert(e.message)` | Sí | Sí | Bajo |
+| Alta | Botón Guardar no encontrado | `index.html:2310` | `alert('⚠️ No se encontró el botón de Guardar.')` | Sí | Sí | Bajo |
+| Alta | Validación cultivo | `index.html:2347` | `alert('⚠️ ' + msg)` fallback | Sí | Sí | Bajo |
+| Alta | notifyFacturero fallback | `agro.js:6822` | `alert(message)` — ~50 call sites | Sí | Sí | Medio (volumen) |
+| Alta | Sesión expirada | `agro.js:5922` | `alert('Sesión expirada. Recarga la página.')` | Sí | Sí | Bajo |
+| Alta | Error eliminar | `agro.js:5974` | `alert('Error al eliminar:...')` | Sí | Sí | Bajo |
+| Alta | Registro no encontrado | `agro.js:6110` | `alert('No se encontró el registro.')` | Sí | Sí | Bajo |
+| Alta | Error datos incompletos | `agro.js:6366` | `alert('Error: datos incompletos.')` | Sí | Sí | Bajo |
+| Alta | Sesión expirada (guardado) | `agro.js:6373` | `alert('Sesión expirada.')` | Sí | Sí | Bajo |
+| Alta | Validación fecha | `agro.js:6409` | `alert(dateCheck.error)` | Sí | Sí | Bajo |
+| Alta | Error guardar movimiento | `agro.js:6624` | `alert('Error al guardar:...')` | Sí | Sí | Bajo |
+| Alta | Registro original no encontrado | `agro.js:6661` | `alert('No se encontró el registro original.')` | Sí | Sí | Bajo |
+| Alta | Monto inválido | `agro.js:6680` | `alert('Monto invalido. Operacion cancelada.')` | Sí | Sí | Bajo |
+| Alta | Error duplicar | `agro.js:6710` | `alert('Error al duplicar:...')` | Sí | Sajo | Bajo |
+| Alta | No pudo convertir | `agro.js:6508` | `alert('No se pudo convertir la edición en devolución parcial...')` | Sí | Sí | Bajo |
+| Alta | Ciclo huérfano | `agro.js:8369` | `alert('No se pudo identificar el ciclo huérfano.')` | Sí | Sí | Bajo |
+| Alta | Error exportar | `agro.js:5642` | `alert('Error al exportar:...')` | Sí | Sí | Bajo |
+| Alta | Error cargar datos | `agro.js:5487` | `alert('Error cargando datos.')` | Sí | Sí | Bajo |
+| Alta | Error exportar estadísticas | `agro-stats-report.js:854` | `alert('Error al exportar estadísticas:...')` | Sí | Sí | Bajo |
+| Alta | Sesión no válida | `agro-stats-report.js:734` | `alert('Sesión no válida.')` | Sí | Sí | Bajo |
+| Alta | Error crear actividad | `agro-agenda.js:192` | `alert('Error al crear actividad:...')` | Sí | Sí | Bajo |
+| Alta | Error eliminar actividad | `agro-agenda.js:250` | `alert('Error al eliminar:...')` | Sí | Sí | Bajo |
+| Alta | Validación agenda | `agro-agenda.js:1369-1371` | `alert('Selecciona un tipo...')` / `alert('El título es obligatorio.')` / `alert('La fecha es obligatoria.')` | Sí | Sí | Bajo |
+| Alta | Error crear carrito | `agro-cart.js:225` | `alert('Error al crear carrito:...')` | Sí | Sí | Bajo |
+| Alta | Error eliminar carrito | `agro-cart.js:243` | `alert('Error al eliminar:...')` | Sí | Sí | Bajo |
+| Alta | Error agregar item | `agro-cart.js:307` | `alert('Error al agregar item:...')` | Sí | Sí | Bajo |
+| Alta | Validación carrito | `agro-cart.js:585` / `1208` / `1343` / `1476` / `1477` | `alert(message)` / `alert('El nombre es obligatorio.')` / `alert('El precio debe ser mayor a 0.')` | Sí | Sí | Bajo |
+| Alta | Error exportar informe | `agro-crop-report.js:926` | `alert('Error al exportar informe:...')` | Sí | Sí | Bajo |
+| Alta | Cultivo no seleccionado | `agro-crop-report.js:672` | `alert('No se seleccionó un cultivo.')` | Sí | Sí | Bajo |
+| Alta | Sesión no válida (reporte) | `agro-crop-report.js:677` | `alert('Sesión no válida.')` | Sí | Sí | Bajo |
+| Alta | Cartera viva bloqueo | `agro-cartera-viva-view.js:478` | `window.alert(CARTERA_VIVA_CROP_BLOCK_MESSAGE)` fallback | Sí | Sí | Bajo |
+| Alta | Error cargar agenda | `agro.js:13735` | `alert('Error al cargar la agenda:...')` | Sí | Sí | Bajo |
+| Alta | Error sesión (pagados) | `agro.js:12089` | `alert('Debes iniciar sesion para eliminar pagados.')` | Sí | Sí | Bajo |
+| Alta | Error rango fechas | `agro-stats.js:297` | `alert('Rango de fechas inválido.')` | Sí | Sí | Bajo |
+| Media | Error actualizar carrito | `agro-cart.js:330` | `alert('Error al actualizar:...')` | Sí | Sí | Bajo |
+| Media | Error eliminar item carrito | `agro-cart.js:343` | `alert('Error al eliminar:...')` | Sí | Sí | Bajo |
+| Media | No se encontró cultivo | `agro.js:16123` | `alert('Error: No se encontró el cultivo')` | Sí | Sí | Bajo |
+| Media | Nombre cultivo obligatorio | `agro.js:16258` | `alert('Por favor ingresa el nombre del cultivo')` | Sí | Sí | Bajo |
+| Media | Área obligatoria | `agro.js:16263` | `alert('Por favor ingresa el área en hectáreas')` | Sí | Sí | Bajo |
+| Media | Fecha siembra obligatoria | `agro.js:16268` | `alert('Por favor selecciona la fecha de siembra')` | Sí | Sí | Bajo |
+| Media | Error guardar cultivo | `agro.js:16329` | `alert('Error al guardar el cultivo:...')` | Sí | Sí | Bajo |
+| Media | Exportación no disponible | `agro.js:5405` | `alert('La exportación no está disponible para esta vista.')` | Sí | Sí | Bajo |
+| Media | No se pudo completar exportación | `agro.js:8450` | `alert('No se pudo completar la exportación...')` | Sí | Sí | Bajo |
+| Media | Error eliminado pagado | `agro.js:12083` | `alert('No se pudo identificar el pagado.')` | Sí | Sí | Bajo |
+| Baja | Columnas presentación | `agro.js:6597` | `alert('Aviso: columnas de presentacion/kg...')` | Sí | Sí | Bajo |
+
+#### LOTE B — Confirm() nativos (algunos candidatos, algunos NO)
+
+| Prioridad | Trigger | Archivo:Línea | Texto/propósito | Bloquea | Migrar | Riesgo |
+|---|---|---|---|---|---|---|
+| **NO** | Eliminar cultivo | `agro.js:16369` | `confirm('⚠️ ¿Estás seguro...?')` destructivo | Sí | **No** (destructivo) | Alto |
+| **NO** | Eliminar actividad | `agro-agenda.js:242` | `confirm('¿Eliminar esta actividad?')` destructivo | Sí | **No** (destructivo) | Alto |
+| **NO** | Eliminar carrito | `agro-cart.js:230` | `confirm('¿Eliminar este carrito...?')` destructivo | Sí | **No** (destructivo) | Alto |
+| **NO** | Eliminar item carrito | `agro-cart.js:335` | `confirm('¿Eliminar este item?')` destructivo | Sí | **No** (destructivo) | Alto |
+| **NO** | Eliminar conversación IA | `agro.js:14220` / `15279` | `confirm('¿Eliminar esta conversacion?')` destructivo | Sí | **No** (destructivo) | Alto |
+| **NO** | Eliminar pagado | `agro.js:12080` | `window.confirm('¿Eliminar pagado?')` destructivo | Sí | **No** (destructivo) | Alto |
+| **NO** | Eliminar ciclo huérfano | `agroOperationalCycles.js:1345` | `window.confirm()` destructivo | Sí | **No** (destructivo) | Alto |
+| **NO** | Eliminar anuncio admin | `adminManager.js:389` | `confirm('¿Estás seguro de eliminar...?')` destructivo | Sí | **No** | Alto |
+| **NO** | Eliminar feedback admin | `adminManager.js:527` | `confirm('¿Eliminar este feedback?')` destructivo | Sí | **No** | Alto |
+| **NO** | Cerrar sesión | `authUI.js:638` | `confirm('¿Estás seguro de cerrar sesión?')` | Sí | **No** (destructivo) | Medio |
+| **NO** | Eliminar cliente | `agro-clients.js:806` | `window.confirm()` destructivo | Sí | **No** | Alto |
+| **NO** | Confirmar devolución parcial | `agro.js:6514` | `confirm('Detectamos reducción... ¿Continuar?')` destructivo | Sí | **No** (destructivo con contexto) | Alto |
+| **NO** | Eliminar ciclo período | `agro-period-cycles.js:1325` | `confirm('¿Eliminar el ciclo...?')` destructivo | Sí | **No** | Alto |
+| **NO** | Confirmar exportación ciclo | `agro-crop-report.js:706` | `window.confirm()` con detalle | Sí | **No** | Medio |
+| Alta | Confirm wizard IA | `agro-wizard.js:106` | `window.confirm()` para wizard de IA | Sí | **Duda** (contextual) | Medio |
+| Alta | Confirmar comprador | `agrocompradores.js:248` | `window.confirm()` para eliminar | Sí | **No** (destructivo) | Alto |
+
+#### LOTE C — Prompt() nativos (NO candidatos a popup informativo)
+
+| Prioridad | Trigger | Archivo:Línea | Texto/propósito | Migrar | Riesgo |
+|---|---|---|---|---|---|
+| **NO** | Nombrar cartera operativa | `agro-cartera-viva-view.js:1509` | `window.prompt('Nombre de la cartera operativa')` | No | Alto |
+| **NO** | Renombrar ciclo | `agro-period-cycles.js:1309` | `prompt('Nuevo nombre del ciclo:')` | No | Alto |
+| **NO** | ID cultivo destino (mover) | `agro.js:6645` | `prompt('ID del cultivo destino...')` | No | Alto |
+| **NO** | Monto copia | `agro.js:6676` | `prompt('Monto para la copia...')` | No | Alto |
+| **NO** | ID cultivo destino (mover registro) | `agro.js:6729` | `prompt('ID del cultivo destino para mover...')` | No | Alto |
+
+#### LOTE D — Toasts/snackbars custom (candidatos a centralizar)
+
+| Prioridad | Sistema | Archivo:Línea | Texto/propósito | Migrar | Riesgo |
+|---|---|---|---|---|---|
+| Alta | notifyFacturero → showEvidenceToast/YGUXMessages | `agro.js:6818-6822` | ~50 mensajes de éxito/error/warning del facturero | Sí | Medio |
+| Alta | showAssistantToast | `agro.js:14383` | 'Copiado', 'No se pudo copiar', 'En cola', 'Límite IA', 'Conversación eliminada', 'Exportación descargada' | Sí | Bajo |
+| Alta | window.showToast (alias YGUXMessages) | `uxMessages.js:490` | 'Cultivo creado correctamente.', 'Cambios guardados en el cultivo.', periodos, cartera operativa | Ya centralizado | Bajo |
+| Alta | YGUXMessages.copy | `uxMessages.js:308-462` | welcomeBack, registerSuccess, logoutSuccess, cropSaved, movementCreated/Updated/Deleted/Duplicated/Moved, transferCompleted, revertCompleted, etc. | Ya centralizado | Bajo |
+| Media | pushToast (repo app) | `agro-repo-app.js:797` | Carpeta creada, Archivo creado, Renombrado, Eliminado, Copiado, Pegado, etc. | Sí (futuro) | Bajo |
+| Media | NotificationsManager._showToast | `notifications.js:358` | Toasts admin (inline styles, no ADN V11) | Sí (futuro) | Medio |
+| Media | authUI.showToast | `authUI.js:671` | Mensajes auth (ya usa YGUXMessages) | Ya centralizado | Bajo |
+| Media | feedbackManager._showToast | `feedbackManager.js:186` | 'Feedback enviado', 'Escribe un mensaje...', etc. | Ya centralizado | Bajo |
+
+#### LOTE E — Status bars inline (NO son popups pero informativos)
+
+| Prioridad | Sistema | Archivo:Línea | Naturaleza | Migrar | Riesgo |
+|---|---|---|---|---|---|
+| Media | setPageFeedback (clients) | `agro-clients.js:192` | Status bar dentro de la vista de clientes | Duda (naturaleza diferente) | Bajo |
+| Media | setPageFeedback (tasks) | `agroTaskCycles.js:597` | Status bar dentro de la vista de tareas | Duda (naturaleza diferente) | Bajo |
+| Media | setBuyerStatus | `agrocompradores.js:93` | Status bar dentro de la ficha de comprador | Duda (naturaleza diferente) | Bajo |
+| Media | setProfileStatus | `agroperfil.js:150` | Status bar dentro del perfil | Duda (naturaleza diferente) | Bajo |
+| Media | setGlobalStatsStatus | `agroperfil.js:157` | Status bar del resumen global | Duda (naturaleza diferente) | Bajo |
+| Media | setStatus (social) | `agrosocial.js:39` | Status bar del panel social | Duda (naturaleza diferente) | Bajo |
+| Media | setDetailExportState | `agro-cartera-viva-view.js:2848` | Status bar de exportación en cartera viva | Duda (naturaleza diferente) | Bajo |
+| Media | showValidationError | `index.html:2343` | Helper que usa toast o alert según disponibilidad | Sí | Bajo |
+
+#### LOTE F — showUndoDeleteToast (especial)
+
+| Prioridad | Trigger | Archivo:Línea | Naturaleza | Migrar | Riesgo |
+|---|---|---|---|---|---|
+| Alta | Undo delete facturero | `agro.js:5978` | Toast persistente con botón "Deshacer" (HTML custom) | Parcialmente (preservar botón undo) | Medio |
+
+#### LOTE G — Otros mensajes informativos inline (NO popups, solo documentación)
+
+| Prioridad | Sistema | Archivo | Naturaleza |
+|---|---|---|---|
+| Info | notify() period cycles | `agro-period-cycles.js:117` | Delega a window.showToast |
+| Info | notify() operational cycles | `agroOperationalCycles.js:883` | Delega a window.showToast |
+| Info | cart showToast | `agro-cart.js:581` | Delega a window.showToast |
+| Info | YGUXMessages flash queue | `uxMessages.js:277-294` | Sistema de flash para redirecciones (login → dashboard) |
+
+### Hallazgos importantes
+
+1. **`showEvidenceToast` NO está definido** en ningún archivo del repo. Se invoca en ~9 lugares con `typeof showEvidenceToast === 'function'` pero la función no existe, por lo que **siempre cae al fallback `alert()`**. Esto es el problema más visible y de mayor impacto: ~50+ mensajes del facturero (notifyFacturero) y 7+ llamadas directas producen alerts nativos bloqueantes.
+
+2. **7 sistemas de toast/notificación diferentes** coexisten sin cohesión visual: YGUXMessages, notifyFacturero→alert, showAssistantToast, showUndoDeleteToast, pushToast(repo), NotificationsManager._showToast, status bars. Solo YGUXMessages sigue ADN V11.
+
+3. **~28 `alert()` nativos** bloquean la UI, rompen la estética dark/gold y no siguen el ADN Visual V11.
+
+4. **~10 `confirm()` nativos** son en su mayoría destructivos (eliminar cultivo, carrito, actividad, sesión) y **no deben migrarse al popup central informativo** sino a un futuro componente de confirmación con diseño ADN V11.
+
+5. **4 `prompt()` nativos** son funcionales (inyectar datos) y tampoco son candidatos al popup informativo.
+
+6. **`notifyFacturero()`** es el wrapper más congestionado: conecta 50+ call sites del facturero a un sistema que siempre cae a `alert()`.
+
+7. **`showValidationError()`** en `index.html:2343` ya intenta usar `showEvidenceToast` pero cae a `alert()`.
+
+8. Los sistemas de **status bar inline** (`setPageFeedback`, `setBuyerStatus`, `setProfileStatus`, `setStatus`, `setDetailExportState`) son FUNCIONALMENTE DIFERENTES: son labels de estado embebidos en la vista, no popups flotantes. Su migración es opcional/distinta.
+
+### Respuestas a las 7 preguntas
+
+1. **¿Cuántos popups/mensajes informativos existen?** ~85 mensajes informativos sumando alerts, toasts, status messages y confirm/confirm. De estos, ~45 son claramente popups informativos.
+
+2. **¿Cuántos son candidatos claros a un popup central?** ~45: los ~28 `alert()` informativos más los ~7 `showAssistantToast` más los ~10 `notifyFacturero` que son mensajes de éxito/aviso (no preguntas destructivas).
+
+3. **¿Hay `alert()` nativos?** Sí, ~28 en producción. La mayoría caen por el `showEvidenceToast` indefinido.
+
+4. **¿Hay `confirm()` que deban mantenerse separados por ser destructivos?** Sí, ~10 `confirm()` son confirmaciones destructivas (eliminar cultivo, eliminar carrito, cerrar sesión, etc.) y NO deben migrarse al popup informativo. Necesitan su propio componente de confirmación con estética ADN V11.
+
+5. **¿Qué archivos concentran más mensajes?**
+   - `agro.js`: ~55 mensajes (alerts + notifyFacturero + showAssistantToast + showUndoDeleteToast)
+   - `index.html`: ~5 mensajes (validación, cultivo creado/editado)
+   - `agro-cart.js`: ~11 mensajes
+   - `agro-agenda.js`: ~5 mensajes
+   - `agro-period-cycles.js`: ~5 mensajes
+   - `agrocompradores.js`: ~15 status messages
+
+6. **¿Cuál sería el primer lote seguro para migrar?**
+   - **Lote 1 (máximo impacto, mínimo riesgo):** Reemplazar `notifyFacturero()` para que use `YGUXMessages` en vez de `alert()`. Esto elimina ~50 alerts de un solo cambio.
+   - **Lote 2:** Reemplazar los `alert()` en index.html (cultivo creado, editado, errores de validación) por `YGUXMessages`.
+   - **Lote 3:** Reemplazar `showAssistantToast()` por `YGUXMessages`.
+   - **Lote 4:** Reemplazar `showValidationError()` para que use `YGUXMessages` sin fallback a `alert()`.
+   - **Lote 5:** Migrar `pushToast()` de repo-app y `NotificationsManager._showToast()` a `YGUXMessages`.
+
+7. **¿Qué NO se debe tocar en la implementación futura?**
+   - Los ~10 `confirm()` destructivos (necesitan un componente de confirmación propio, no un popup informativo).
+   - Los 4 `prompt()` funcionales (inyectan datos, no informativos).
+   - Las status bars inline (`setPageFeedback`, `setBuyerStatus`, `setProfileStatus`, `setStatus`, `setDetailExportState`) — son naturaleza diferente.
+   - `showUndoDeleteToast` — tiene botón funcional "Deshacer", necesita tratamiento especial.
+   - El modal "Configura tu asistente IA" — solo es referencia visual, no se modifica.
+   - Los modales de crear/editar cultivo, Cartera Viva, formularios.
+
+### Recomendación de implementación futura
+
+1. **Crear componente `agro-info-popup`** basado en `YGUXMessages` (que ya sigue ADN V11 con dark/gold, borde dorado, centrado, tipografía Rajdhani/Orbitron).
+2. **Reemplazar `showEvidenceToast`** por `YGUXMessages.show()` o un wrapper que centralice todo.
+3. **Reescribir `notifyFacturero()`** para delegar a `YGUXMessages` en vez de `alert()`.
+4. **Mantener los `confirm()` destructivos** hasta tener un componente `agro-confirm-popup` con estética ADN V11.
+5. **No reemplazar modales funcionales** (crear/editar cultivo, Cartera Viva, asistente IA).
+6. **Empezar por éxito/errores de crear/editar/guardar** — son los más frecuentes y visibles.
+
+---
+
 ## 2026-05-01 — Refresh suave Cartera Operativa
 
 **Estado:** COMPLETADO
@@ -3110,3 +3383,230 @@ Estado: **GREEN técnico / PENDING QA manual** — build y checks pasan; queda p
 
 - No se ejecutó browser/QA manual por instrucción explícita del usuario.
 - Casos pendientes: edición `Creciendo -> En producción`, persistencia tras refresh, crear limpio, editar separado, bloqueo/permiso de Cartera Viva por estado y no regresión de duración real/semilla kg.
+
+---
+
+## 2026-05-03 — Bug vivo único: edición de estado de cultivo
+
+### Scope
+
+Estado: **YELLOW** — se cierra el frente de modal crear/editar y guard comercial de Cartera Viva. El único bug vivo es edición de cultivo `Creciendo -> En producción`: aparece éxito, pero la card queda en `Creciendo` o no persiste/refresca correctamente.
+
+### Diagnóstico planificado
+
+- Confirmar el campo real de persistencia del estado en `agro_crops`.
+- Confirmar valores internos reales para estados de cultivo.
+- Confirmar valor del `<option>` de “En producción”.
+- Confirmar qué valor espera el renderer de cards para mostrar `En producción`.
+- Confirmar payload exacto del update de edición.
+- Confirmar contrato de `.update(...).select('*').maybeSingle()`.
+- Verificar si `loadCrops()` consulta Supabase o sirve cache viejo.
+- Verificar si el render usa `status`, `status_override`, `status_mode` u otro campo.
+- Verificar si el submit puede leer un valor viejo por selector/estado contaminado.
+
+### Archivos candidatos
+
+- `apps/gold/agro/index.html` — submit real `window.saveCrop()`.
+- `apps/gold/agro/agro.js` — modal de edición, `loadCrops()`, normalización y render de estado.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md` — bitácora de diagnóstico/cierre.
+
+### Riesgos
+
+- `agro.js` es monolito: solo se permite bugfix/wiring quirúrgico.
+- No tocar Cartera Viva, Cartera Operativa, Mi Carrito ni migraciones.
+- No parchear DOM: la corrección debe persistir en DB o fallar sin éxito falso.
+- No romper `finalizado`/`lost` ni estados previos.
+
+### DoD
+
+- Editar cultivo de `Creciendo` a `En producción` hace que la card muestre `En producción` después de actualizar.
+- El valor persiste al recargar.
+- El éxito solo aparece si la fila devuelta confirma el estado nuevo.
+- `git diff --check` pasa.
+- `pnpm build:gold` pasa.
+- QA manual del flujo principal documentada como ejecutada o, si no hay credenciales/sesión disponible, explícitamente pendiente.
+
+### Diagnóstico real antes de editar
+
+- Campo real de estado: `public.agro_crops.status`.
+- No existen campos alternos operativos `state`, `crop_status` ni `growth_status` para este flujo.
+- Columnas auxiliares existentes: `status_mode` y `status_override`.
+- Constraint canónica: `status in ('sembrado', 'creciendo', 'produccion', 'finalizado', 'lost')`.
+- Valor del `<option>` “En producción”: `produccion`.
+- Valor esperado por el render de card para mostrar “En producción”: `produccion`.
+- Mapper de card: `resolveCropStatus(crop, progress)` prioriza `status_mode === 'manual'`, luego `status_override`, luego `status`.
+- Payload actual de edición manda:
+  - `status: effectiveStatus`;
+  - `status_mode: statusMode`;
+  - `status_override: statusOverride`.
+- Para `En producción`, `effectiveStatus = 'produccion'`, `statusMode = 'manual'`, `statusOverride = 'produccion'`.
+- `.update(...).select('*').maybeSingle()` ya devuelve fila, pero el código solo verifica `updatedCrop?.id`.
+- Riesgo confirmado: el éxito puede mostrarse sin comprobar que `updatedCrop.status`/`updatedCrop.status_override` confirmen `produccion`.
+- `window.loadCrops()` consulta Supabase y solo cae a cache si falla, pero si hay una carga en curso retorna temprano y deja refresh en cola; el `await` del caller no garantiza que esa cola haya re-renderizado la card.
+
+---
+
+## 2026-05-03 — Mis Clientes Agro V1
+
+### Paso 0 obligatorio
+
+Estado: **YELLOW** — feature nueva modular en diagnóstico; no se ejecutará QA manual/browser porque el usuario lo reservó explícitamente.
+
+#### Diagnóstico inicial
+
+- El hub visible “Mi Granja” vive en `apps/gold/agro/index.html`, dentro de `data-agro-mobile-panel="operacion"`.
+- Las cards actuales de “Mis finanzas” se renderizan como botones `data-agro-view` para:
+  - `cartera-viva`;
+  - `operational`;
+  - `carrito`.
+- Las rutas/shell views profundas se gobiernan en `apps/gold/agro/agro-shell.js` con `VIEW_CONFIG`, `VIEW_TO_MOBILE_HUB`, keywords y `data-agro-shell-region`.
+- Los módulos profundos existentes se cargan dinámicamente desde el bootstrap de `apps/gold/agro/index.html`.
+- Cartera Viva ya usa `public.agro_buyers` como tabla canónica de compradores/clientes de cartera, con RLS owner-only y `linked_user_id` opcional.
+- Existe `public.agro_public_profiles`, pero su policy solo permite perfiles propios o perfiles marcados públicos. No se debe crear búsqueda global de usuarios.
+
+#### Superficies que se tocarán
+
+- Hub “Mi Granja” para agregar entrada visible `Mis Clientes`.
+- Shell profundo de Agro para registrar la vista nueva.
+- Nueva superficie dedicada de clientes.
+- Supabase root canónico para migración nueva, si se confirma tabla separada.
+- Reporte activo para bitácora de sesión.
+
+#### Archivos candidatos
+
+- `apps/gold/agro/index.html` — link CSS, card del hub, región root, import dinámico del módulo.
+- `apps/gold/agro/agro-shell.js` — registro de vista `clients`.
+- `apps/gold/agro/agro-clients.js` — módulo nuevo.
+- `apps/gold/agro/agro-clients.css` — estilos nuevos.
+- `supabase/migrations/<timestamp>_create_agro_clients.sql` — tabla separada owner-only.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md` — cierre operativo.
+
+#### Plan breve
+
+1. Confirmar si conviene tabla nueva o reutilización de `agro_buyers`.
+2. Ejecutar una verificación RED mínima para el nuevo módulo sin agregar test permanente.
+3. Crear migración `agro_clients` con RLS owner-only, soft delete y `client_type`.
+4. Crear módulo `agro-clients.js` con listado, filtros, orden, crear, editar y soft delete.
+5. Crear `agro-clients.css` usando tokens ADN V11.
+6. Registrar entrada del hub y región profunda sin tocar Cartera Viva.
+7. Registrar vista en `agro-shell.js`.
+8. Ejecutar `git diff --check`, `pnpm build:gold` y `supabase db push --dry-run` solo si el entorno lo permite con seguridad.
+
+#### Riesgos
+
+- Reutilizar `agro_buyers` mezclaría “Mis Clientes” con clientes de Cartera Viva y su historial financiero.
+- Una tabla nueva evita contaminación semántica, pero crea una futura reconciliación si se quiere conectar clientes con cartera.
+- `agro-shell.js` es navegación central: cambios mínimos y declarativos.
+- `index.html` ya está modificado por una sesión previa; se preservarán esos cambios.
+- No se consultarán perfiles globales ni se expondrán usuarios YavlGold.
+
+#### DoD
+
+- Card `Mis Clientes` visible en “Mis finanzas”, entre `Cartera Viva` y `Cartera Operativa`.
+- Vista dedicada abre con botón Volver provisto por el shell móvil cuando aplica.
+- Crear, editar, listar, filtrar y ordenar clientes.
+- Separación visible `Con cuenta YavlGold` / `No registrado`.
+- Sin estadísticas, KPIs, deuda, rankings ni historial de cartera.
+- Cartera Viva, Cartera Operativa y Mi Carrito no se reescriben.
+- `git diff --check` pasa.
+- `pnpm build:gold` pasa.
+
+---
+
+## 2026-05-03 — Cierre técnico: bug edición estado de cultivo
+
+Estado: **YELLOW técnico** — corrección aplicada y build OK; QA manual autenticada queda pendiente porque el login local activó hCaptcha invisible y no se debe resolver ni rodear CAPTCHA.
+
+### Causa raíz confirmada
+
+- El campo real es `agro_crops.status`; el token interno de “En producción” es `produccion`.
+- El render de card usa `resolveCropStatus(crop, progress)`, que respeta `status_mode === 'manual'`, `status_override` y luego `status`.
+- El update ya enviaba `status`, `status_mode` y `status_override`, pero mostraba éxito apenas `maybeSingle()` devolvía una fila con `id`.
+- No verificaba que la fila devuelta confirmara `status/status_override = produccion`.
+- Después del update llamaba `window.loadCrops()`, pero si existía carga en curso podía retornar temprano y dejar el refresco real en cola; el caller no verificaba que el snapshot/render ya tuviera el estado nuevo.
+
+### Cambio aplicado
+
+- `apps/gold/agro/index.html`:
+  - normaliza el estado antes de persistir;
+  - manda `status: normalizedEffectiveStatus`;
+  - manda `status_override` normalizado en modo manual;
+  - valida que la fila de Supabase confirme el estado esperado antes de marcar éxito;
+  - retrasa el mensaje de éxito de edición hasta después de confirmar refresh local;
+  - espera `AGRO_CROPS_READY` y verifica `window.__AGRO_CROPS_STATE.crops` para confirmar el estado nuevo de la card/snapshot.
+
+### Validación
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS.
+- QA browser local: bloqueada en login por hCaptcha invisible. No se intentó resolver ni rodear CAPTCHA.
+
+### Pendiente
+
+- QA manual del usuario con sesión real:
+  - editar `Creciendo -> En producción`;
+  - confirmar card `En producción` sin recarga;
+  - refrescar y confirmar persistencia.
+
+### Resultado
+
+Estado: **GREEN técnico / PENDING QA manual** — implementación modular lista y build verificado; QA funcional queda para validación manual del usuario.
+
+#### Decisión de modelo de datos
+
+- No se reutilizó `agro_buyers` porque está acoplada a Cartera Viva y cartera/fiados.
+- Se creó tabla separada `public.agro_clients` para que “Mis Clientes” sea libreta de contactos independiente.
+- `client_type` separa `registered` y `external`.
+- `linked_profile_id` queda preparado, pero el MVP no consulta ni lista perfiles globales.
+- RLS owner-only: cada usuario solo ve/modifica sus propios clientes.
+
+#### Implementado
+
+- Entrada `Mis Clientes` en hub “Mi Granja”, sección “Mis finanzas”, entre `Cartera Viva` y `Cartera Operativa`.
+- Vista profunda `clients` registrada en `agro-shell.js`.
+- Módulo nuevo `agro-clients.js` con:
+  - listar clientes;
+  - crear cliente;
+  - editar cliente;
+  - soft-delete;
+  - filtro `Todos` / `Con cuenta YavlGold` / `No registrados`;
+  - orden `A-Z`, `Z-A`, `Recientes`;
+  - búsqueda local por nombre/contacto/tag.
+- CSS separado `agro-clients.css` con tokens ADN V11 y sin hex hardcodeados.
+- Migración `20260503153000_create_agro_clients.sql`.
+
+#### No tocado
+
+- No se reescribió Cartera Viva.
+- No se modificó Cartera Operativa.
+- No se modificó Mi Carrito.
+- No se agregó búsqueda global de usuarios YavlGold.
+- No se migraron datos desde Cartera Viva.
+- No se modificó `MANIFIESTO_AGRO.md`.
+
+#### Checks
+
+- RED mínimo: import de `agro-clients.js` falló antes de crear el módulo, como se esperaba.
+- GREEN mínimo: helpers puros de tipo, tags y orden alfanumérico pasan.
+- `git diff --check`: PASS.
+- Revisión trailing whitespace en archivos nuevos: PASS.
+- Búsqueda de hex hardcodeado en archivos nuevos: PASS.
+- `pnpm build:gold`: PASS.
+  - `agent-guard`: OK.
+  - `agent-report-check`: OK.
+  - `vite build`: OK, 169 módulos transformados.
+  - `check-llms`: OK.
+  - `check-dist-utf8`: OK.
+  - Warning conocido: Node local `v25.6.0` vs engine `20.x`.
+
+#### Supabase
+
+- Ref local confirmado: `gerzlzprkarikblqxpjt`.
+- `SUPABASE_DB_PASSWORD`: no disponible en entorno local.
+- `supabase db push --dry-run`: intentado, pero terminó por timeout a los 120s sin salida útil.
+- No se aplicó migración remota.
+
+#### QA manual pendiente
+
+- No se ejecutó browser/QA manual por instrucción explícita del usuario.
+- Pendiente validar: hub, apertura de vista, crear externo, crear registrado, editar, tags, A-Z/Z-A, filtros y no regresión de Cartera Viva/Cartera Operativa/Mi Carrito/Mis cultivos.
