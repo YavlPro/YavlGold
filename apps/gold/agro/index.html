@@ -1073,10 +1073,7 @@
                     <div id="agro-cycles-history-slot"></div>
                 </div>
                 <div class="agro-internal-tab-content" data-agro-crop-tab-content="perdidos">
-                    <div class="agro-cycle-perdidos-empty">
-                        <p class="agro-cycle-perdidos-empty__title">Ciclos perdidos</p>
-                        <p class="agro-cycle-perdidos-empty__copy">Los ciclos marcados como perdidos aparecerán aquí. Actualmente esta vista se alimenta de la misma fuente que los ciclos finalizados.</p>
-                    </div>
+                    <div id="agro-cycles-lost-slot"></div>
                 </div>
             </div>
 
@@ -1369,12 +1366,34 @@
                 </div>
                 <div class="input-row">
                     <div class="input-group">
+                        <label class="input-label" for="crop-seed-kg">Semilla usada (kg)</label>
+                        <input type="number" id="crop-seed-kg" class="styled-input agro-modal-input--compact"
+                            placeholder="Ej: 12.5" step="any" min="0">
+                    </div>
+                    <div class="input-group">
+                        <!-- spacer para mantener grid balanceado -->
+                    </div>
+                </div>
+                <div class="input-row">
+                    <div class="input-group">
                         <label class="input-label" for="crop-start-date">Fecha de Siembra *</label>
                         <input type="date" id="crop-start-date" class="styled-input agro-modal-input--compact" required>
                     </div>
                     <div class="input-group">
                         <label class="input-label" for="crop-harvest-date">Cosecha Esperada</label>
                         <input type="date" id="crop-harvest-date" class="styled-input agro-modal-input--compact">
+                    </div>
+                </div>
+                <div id="crop-closure-fields" style="display:none;">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label class="input-label" for="crop-actual-harvest-date">Fecha real de cosecha</label>
+                            <input type="date" id="crop-actual-harvest-date" class="styled-input agro-modal-input--compact">
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label" for="crop-lost-date">Fecha de p&eacute;rdida</label>
+                            <input type="date" id="crop-lost-date" class="styled-input agro-modal-input--compact">
+                        </div>
                     </div>
                 </div>
                 <div class="input-group agro-modal-field-block">
@@ -2233,7 +2252,11 @@
                 'investment_usd_equiv',
                 'investment_fx_usd_cop',
                 'investment_fx_usd_ves',
-                'investment_fx_at'
+                'investment_fx_at',
+                'seed_kg',
+                'actual_harvest_date',
+                'lost_at',
+                'closed_at'
             ];
             const hasOptionalColumnError = (error) => {
                 return OPTIONAL_CROP_COLUMNS.some((column) => isMissingColumnError(error, column));
@@ -2267,8 +2290,14 @@
                 const investmentAmount = Number.parseFloat(document.getElementById('crop-investment').value || '0') || 0;
                 const investmentCurrencyRaw = String(document.getElementById('crop-investment-currency')?.value || 'USD').toUpperCase();
                 const investmentCurrency = ['USD', 'COP', 'VES'].includes(investmentCurrencyRaw) ? investmentCurrencyRaw : 'USD';
+                const seedKgRaw = document.getElementById('crop-seed-kg')?.value?.trim();
+                const seedKg = seedKgRaw && Number.isFinite(Number(seedKgRaw)) && Number(seedKgRaw) > 0
+                    ? Number(Number(seedKgRaw).toFixed(6))
+                    : null;
                 const sowDate = document.getElementById('crop-start-date').value;
                 let harvestDate = document.getElementById('crop-harvest-date').value;
+                const actualHarvestDate = document.getElementById('crop-actual-harvest-date')?.value || null;
+                const lostAt = document.getElementById('crop-lost-date')?.value || null;
                 const templateSelect = document.getElementById('crop-template');
                 const templateOption = templateSelect?.selectedOptions?.[0];
                 const templateDuration = templateOption?.dataset?.duration
@@ -2366,8 +2395,12 @@
                         investment_fx_usd_cop: fxUsdCop,
                         investment_fx_usd_ves: fxUsdVes,
                         investment_fx_at: investmentFxAt,
+                        seed_kg: seedKg,
                         start_date: sowDate,
                         expected_harvest_date: harvestDate || null,
+                        actual_harvest_date: actualHarvestDate || null,
+                        lost_at: lostAt || null,
+                        closed_at: null,
                         status: effectiveStatus,
                         status_mode: statusMode,
                         status_override: statusOverride
@@ -2415,6 +2448,7 @@
                         investment_fx_usd_cop: fxUsdCop,
                         investment_fx_usd_ves: fxUsdVes,
                         investment_fx_at: investmentFxAt,
+                        seed_kg: seedKg,
                         start_date: sowDate,
                         expected_harvest_date: harvestDate || null,
                         status: effectiveStatus,

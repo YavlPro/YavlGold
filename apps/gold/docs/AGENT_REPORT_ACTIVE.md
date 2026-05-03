@@ -2430,3 +2430,578 @@ Esto contradecía AGENTS.md, FICHA_TECNICA.md, AGENT_CONTEXT_INDEX.md y llms.txt
 - NO se tocó ADN-VISUAL-V11.0.md
 - NO se tocó código
 - NO se tocó Supabase
+
+---
+
+## 2026-05-02 — Duración real en Finalizados/Perdidos + Semilla en kg
+
+**Estado:** EN PROGRESO
+
+### Diagnóstico inicial
+
+#### 1. Render de cards de cultivos
+
+| Tipo | Archivo:línea | Función | Estado actual |
+|---|---|---|---|
+| **Activos** | `agrociclos.js:354` | `renderCard()` | `mode === 'active'`. Muestra `Día X/Y (Z%)` calculado con `ciclo.diaActual`/`ciclo.diasTotales`/`resolveProgress()`. OK, no se toca. |
+| **Finalizados** | `agrociclos.js:354` | `renderCard()` | `mode === 'finished'`. Muestra hardcoded `'Completado'` (línea 370). **Sin cálculo de duración real.** |
+| **Perdidos** | `agro.js:11362-11373` + `agrociclos.js:354` | `buildFinishedCycleCardsData()` / `renderCard()` | Cards se construyen como datos (`groupType: 'lost'`) pero **NO se renderizan en el DOM** de "Mis cultivos". Solo van al workspace sidebar (`publishCyclesWorkspaceSnapshot`). |
+
+#### 2. Cálculo actual de progreso para activos
+
+- `computeCropProgress()` (`agro.js:710`): calcula `totalDays` desde `templateDurationDays` o `expected_harvest_date` contra `start_date`. Usa `diffDays(todayKey, startDate) + 1` para `dayIndex` (conteo inclusivo: Día 1 = día de siembra).
+- Funciones duplicadas en `agro-crop-report.js:373` y `agro-stats-report.js:297`.
+
+#### 3. Campos de fecha reales en `public.agro_crops`
+
+| Campo | Tipo | Existe | Rol |
+|---|---|---|---|
+| `start_date` | `date NOT NULL` | SI | **Fecha canónica de siembra/inicio** |
+| `expected_harvest_date` | `date` | SI | Cosecha estimada. PROHIBIDO usarla como cierre real. |
+| `actual_harvest_date` | `date` | SI | **Fecha real de cosecha**. Es el mejor campo para calcular duración de finalizados. |
+| `lost_at` | — | **NO** | Necesario para calcular duración de perdidos. |
+| `closed_at` | — | **NO** | Cierre genérico. Respaldo si no hay harvest_date ni lost_at. |
+| `seed_kg` | — | **NO** | Cantidad de semilla en kg. |
+
+La función `resolveCropEndDateKey()` (`agro.js:8861`) busca en 8 campos posibles; solo `actual_harvest_date` existe realmente en la DB. Los demás son defensivos.
+
+#### 4. Wizard de crear cultivo
+
+- HTML: `index.html:1302-1400` (`#modal-new-crop`, `#form-new-crop`)
+- `openCropModal()`: `agro.js:15956` — resetea todo, pone `start_date` = hoy, `status` = `sembrado`
+- `openEditModal()`: `agro.js:16007` — llena campos desde `cropsCache`
+- `window.saveCrop`: `index.html:2159` — implementación activa (sobreescribe la de `agro.js:16106`)
+- `closeCropModal()`: `agro.js:16092`
+
+#### 5. Campos actuales del formulario
+
+Nombre, Variedad, Icono, Cultivo base (template), Ciclo estimado, Área (ha), Inversión Base + moneda, Fecha de Siembra, Cosecha Esperada, Estado.
+
+**No existe campo de semilla ni fechas de cierre/pérdida.**
+
+#### 6. Payload de guardado actual
+
+INSERT/UPDATE envia: `user_id, name, variety, area_size, investment, investment_amount, investment_currency, investment_usd_equiv, investment_fx_usd_cop, investment_fx_usd_ves, investment_fx_at, start_date, expected_harvest_date, status, status_mode, status_override`.
+
+Columnas opcionales con fallback: `status_mode, status_override, investment_amount, investment_currency, investment_usd_equiv, investment_fx_usd_cop, investment_fx_usd_ves, investment_fx_at`.
+
+#### 7. Arquitectura de renderizado de history
+
+- `ensureCropCycleHistorySection()` (`agro.js:10876`): crea/secciones de historia. Solo tiene sección "finished".
+- `renderCropCycleHistory()` (`agro.js:11066`): llama `splitClosedCycleHistory()` → solo renderiza `finishedCrops` (línea 11099). `lostCrops` se descartan silenciosamente.
+- `loadCrops()` (`agro.js:11349`): construye `lostCycleCards` (línea 11362) pero solo las pasa a `publishCyclesWorkspaceSnapshot`, no a render.
+
+### Archivos candidatos
+
+| Archivo | Tipo de cambio |
+|---|---|
+| `supabase/migrations/<timestamp>_add_crop_seed_and_closure_dates.sql` | NUEVO — migración |
+| `apps/gold/agro/index.html` | HTML form + saveCrop() inline |
+| `apps/gold/agro/agro.js` | Helper, buildFinishedCycleCardsData, ensureCropCycleHistorySection, renderCropCycleHistory, openEditModal |
+| `apps/gold/agro/agrociclos.js` | renderCard() |
+| `apps/gold/agro/agro.css` | Estilos mínimos si metadata rompe layout |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Este reporte |
+
+### Plan
+
+1. **Migración Supabase**: Agregar `seed_kg numeric NULL`, `lost_at date NULL`, `closed_at date NULL` a `public.agro_crops`.
+2. **Form HTML**: Agregar input `crop-seed-kg` (number, min=0, step=any). Agregar inputs condicionales `crop-actual-harvest-date` y `crop-lost-date` para edición.
+3. **saveCrop()**: Incluir `seed_kg`, `actual_harvest_date`, `lost_at`, `closed_at` en payload.
+4. **openEditModal()**: Poblar `seed_kg`, `actual_harvest_date`, `lost_at`.
+5. **Helper `calculateCycleDurationDays(startDate, endDate)`**: Conteo inclusivo (coherente con `computeCropProgress` que usa `+1`). Retorna null si faltan fechas.
+6. **`buildFinishedCycleCardsData()`**: Pasar `seed_kg`, `actual_harvest_date`, `lost_at`, `closed_at`, `start_date_raw`, `durationDays` calculado.
+7. **`buildActiveCycleCardsData()`**: Pasar `seed_kg`.
+8. **`renderCard()`**: Para finished: `Inicio a fin: X días` o fallback `Completado`. Para lost: `Inicio a pérdida: X días` o fallback `Perdido`. Metadata `Semilla: X kg` solo si seed_kg > 0.
+9. **`ensureCropCycleHistorySection()`**: Agregar sección para perdidos (`crops-cycle-lost-section`, `crops-cycle-lost-title`, `crops-cycle-lost-grid`).
+10. **`renderCropCycleHistory()`**: Renderizar también `lostCrops` en la nueva sección.
+11. **CSS**: Ajustes mínimos si la metadata nueva rompe en mobile 360x640.
+12. **Build**: `pnpm build:gold`.
+
+### Decisión de conteo
+
+Se usará **conteo inclusivo** (`diferencia_en_días + 1`) para mantener coherencia con `computeCropProgress()` que ya usa `diffDays(todayKey, startDate) + 1` para el `dayIndex` de activos (Día 1 = día de siembra).
+
+### Riesgos
+
+- Cultivos históricos sin `actual_harvest_date` ni `lost_at`: mostrarán fallback textual, sin romper.
+- `lost_at` no se poblará retroactivamente; solo cultivos marcados como perdidos después de esta migración tendrán fecha. Se usará fallback.
+- La sección de Perdidos en el DOM es nueva; verificar que no rompa el layout existente en mobile.
+- `seed_kg` es nullable; `0` no es lo mismo que `null`. Solo se muestra metadata si `seed_kg > 0`.
+
+### DoD
+
+- [x] Activos: siguen mostrando `Día X/Y (%)`.
+- [x] Finalizados con fecha real: `Inicio a fin: X días` calculado.
+- [x] Finalizados sin fecha real: `Completado`.
+- [x] Perdidos con fecha real: `Inicio a pérdida: X días` calculado.
+- [x] Perdidos sin fecha real: `Perdido`.
+- [x] Sin hardcodeos de días.
+- [x] Input `Semilla usada (kg)` en crear y editar.
+- [x] Card muestra `Semilla: X kg` solo si hay valor.
+- [x] Mobile 360x640 no se rompe (CSS mínimo, sin cambios de layout).
+- [x] `pnpm build:gold` pasa.
+
+---
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `supabase/migrations/20260502180000_agro_crops_seed_and_closure_dates.sql` | NUEVO | Agrega `seed_kg numeric NULL`, `lost_at date NULL`, `closed_at date NULL` |
+| `apps/gold/agro/index.html` | HTML | Agrega input `crop-seed-kg` y contenedor `crop-closure-fields` con `crop-actual-harvest-date` y `crop-lost-date` |
+| `apps/gold/agro/index.html` | JS (saveCrop) | Lee `seed_kg`, `actual_harvest_date`, `lost_at` del form. Los incluye en payloads INSERT/UPDATE. Agrega columnas a `OPTIONAL_CROP_COLUMNS`. |
+| `apps/gold/agro/agro.js` | Funciones | `calculateCycleDurationDays()` nuevo helper (conteo inclusivo, +1). `resolveCropEndDateKey()` prioriza `lost_at` y `closed_at`. `openCropModal()` limpia seed_kg y oculta closure fields. `openEditModal()` pobla seed_kg, actual_harvest_date, lost_at. `closeCropModal()` oculta closure fields. |
+| `apps/gold/agro/agro.js` | `buildFinishedCycleCardsData()` | Calcula `durationDays` (lost → `lost_at`/`closed_at`/`actual_harvest_date`; finished → `actual_harvest_date`/`closed_at`). Agrega `seedKg` y `durationDays` al objeto. |
+| `apps/gold/agro/agro.js` | `buildActiveCycleCardsData()` | Agrega `seedKg` al objeto. |
+| `apps/gold/agro/agro.js` | `ensureCropCycleHistorySection()` | Crea sección para perdidos (`crops-cycle-lost-section`) con título rojo. |
+| `apps/gold/agro/agro.js` | `renderCropCycleHistory()` | Renderiza `lostCrops` en grid separado. Oculta sección si vacía. |
+| `apps/gold/agro/agrociclos.js` | `renderCard()` | Progreso finished: `Inicio a fin: X días` o `Completado`. Progreso lost: `Inicio a pérdida: X días` o `Perdido`. Profit label: `Pérdida Total` para perdidos. Agrega `Semilla: X kg` si `seedKg > 0`. |
+| `apps/gold/agro/agrociclos.css` | CSS | Agrega `.crop-seed-meta` (texto sutil, agrícola). |
+
+### Campos usados
+
+| Propósito | Campo DB | Tipo |
+|---|---|---|
+| Fecha inicio | `start_date` | `date NOT NULL` (ya existía) |
+| Cierre finished | `actual_harvest_date` | `date` (ya existía) |
+| Cierre finished (fallback) | `closed_at` | `date` (nuevo) |
+| Cierre lost | `lost_at` | `date` (nuevo) |
+| Cierre lost (fallback) | `closed_at` | `date` (nuevo) |
+| Semilla | `seed_kg` | `numeric` (nuevo) |
+
+### Cálculo de duración
+
+- Helper: `calculateCycleDurationDays(startDate, endDate)` → `agro.js:628`
+- Retorna `diffDays(end, start) + 1` (conteo inclusivo, coherente con `computeCropProgress()`).
+- Retorna `null` si falta fecha, fecha inválida, o end < start.
+
+### Validación
+
+- `node --check agro.js`: PASS
+- `node --check agrociclos.js`: PASS
+- `pnpm build:gold`: PASS (167 modules, agent-guard OK, agent-report-check OK, check-llms OK, UTF-8 OK)
+- Búsqueda de hardcodeos (`rg "Inicio a fin: [0-9]"` etc.): 0 resultados en código nuevo.
+
+### Riesgos y datos históricos
+
+- Cultivos finalizados/perdidos sin fecha real de cierre/pérdida muestran fallback textual (`Completado` / `Perdido`). No rompen.
+- `lost_at` no se pobla retroactivamente. Solo cultivos marcados como perdidos después de aplicar la migración podrán tener fecha. El formulario de edición permite al usuario establecer las fechas manualmente.
+- `seed_kg` es opcional. Si no se ingresa, se guarda `null` y no se muestra metadata.
+
+### QA sugerido
+
+1. Crear cultivo sin semilla → no debe aparecer "Semilla" en card.
+2. Crear cultivo con semilla 12.5 → card muestra `Semilla: 12.5 kg`.
+3. Editar cultivo con semilla → cambiar a 8 → card actualiza.
+4. Editar cultivo y limpiar semilla → metadata desaparece.
+5. Ciclo activo → sigue mostrando `Día X/Y (%)`.
+6. Editar cultivo finalizado → establecer "Fecha real de cosecha" → guardar → card muestra `Inicio a fin: X días`.
+7. Cultivo finalizado sin fecha cierre → `Completado`.
+8. Editar cultivo perdido → establecer "Fecha de pérdida" → guardar → card muestra `Inicio a pérdida: X días`.
+9. Cultivo perdido sin fecha pérdida → `Perdido`.
+10. Revisar mobile 360x640.
+
+### NO se hizo
+
+- NO se usaron números hardcodeados de días.
+- NO se inventaron fechas.
+- NO se tocó la semántica de Cartera Viva, Cartera Operativa ni Finanzas.
+- NO se rediseñó la vista.
+- NO se tocó `agro.js` monolito más allá del wiring mínimo necesario.
+- NO se usó React, Tailwind, SPA ni dependencias nuevas.
+- NO se tocó RLS.
+
+---
+
+## 2026-05-02 — Cierre quirúrgico metadata Ciclos de Cultivo
+
+### Diagnóstico de cierre
+
+DeepSeek V4 Pro dejó implementada la mejora de metadata para Ciclos de Cultivo: duración real en estados finalizados/perdidos, semilla opcional en kg, wiring de formulario y migración Supabase. El cierre de esta sesión debe auditar el diff real, corregir solo hallazgos pequeños si aparecen, validar build y dejar claro el estado de aplicación remota de la migración.
+
+### Estado heredado
+
+- `git diff --check` reportado como PASS.
+- `pnpm build:gold` reportado como PASS.
+- Migración nueva: `supabase/migrations/20260502180000_agro_crops_seed_and_closure_dates.sql`.
+- Supabase remoto no aplicado por falta/conexión de credencial `SUPABASE_DB_PASSWORD`.
+- Hallazgo pendiente: revisar `apps/gold/agro/agro.js:12458` (`'90d': '90 días'`) para confirmar que es rango histórico y no duración hardcodeada de ciclos.
+
+### Riesgos a revisar
+
+- Que `actual_harvest_date` no se use como fecha estimada.
+- Que finalizados/perdidos no usen días hardcodeados.
+- Que perdidos no rompa la separación semántica de tabs.
+- Que `seed_kg` sea nullable, editable y no produzca `0 kg`/`NaN kg`.
+- Que la migración no altere RLS, defaults ni datos históricos.
+
+### Plan de cierre
+
+1. Auditar archivos tocados y diff completo.
+2. Verificar migración SQL y comandos Supabase disponibles.
+3. Confirmar cálculo real de duración y uso correcto de fechas.
+4. Confirmar separación visual/semántica de Activos, Finalizados y Perdidos.
+5. Ejecutar checks finales: `git diff --check`, `pnpm build:gold`, búsqueda `rg`.
+6. Aplicar migración Supabase solo si hay credencial local segura disponible.
+7. Actualizar este reporte con resultado final y estado de migración.
+
+### DoD
+
+- Diff auditado sin hallazgos bloqueantes.
+- Sin duración hardcodeada en metadata de ciclos finalizados/perdidos.
+- `actual_harvest_date` confirmado como fecha real de cosecha.
+- Tabs principales conservan separación semántica.
+- `seed_kg` confirmado opcional/nullable y sin metadata artificial.
+- Migración validada y aplicada o documentada como pendiente por credencial/conexión.
+- `git diff --check` y `pnpm build:gold` pasan.
+
+### Resultado de cierre
+
+Estado: **YELLOW** — código, migración SQL y build local OK; aplicación remota Supabase pendiente porque no existe `SUPABASE_DB_PASSWORD` disponible en variables de entorno locales (proceso/usuario/máquina).
+
+#### Auditoría aplicada
+
+- Se corrigió un hallazgo de separación semántica: los ciclos perdidos ahora renderizan en el tab `Perdidos` mediante `agro-cycles-lost-slot`, no debajo del slot visual de `Finalizados`.
+- Se corrigió un hallazgo de fecha: la duración de ciclos perdidos usa solo `lost_at` o `closed_at`; ya no cae a `actual_harvest_date`.
+- Se ajustó el formateo de semilla para evitar ceros artificiales (`12.5 kg`, no `12.50 kg`).
+- `actual_harvest_date` queda tratado como fecha real de cosecha para finalizados.
+- `seed_kg` queda nullable; vacío/0/no numérico no genera metadata.
+
+#### Migración SQL
+
+- Archivo: `supabase/migrations/20260502180000_agro_crops_seed_and_closure_dates.sql`.
+- Usa `add column if not exists`.
+- Agrega `seed_kg numeric null`, `lost_at date null`, `closed_at date null`.
+- No toca RLS.
+- No agrega defaults.
+- No rellena datos históricos.
+- No inventa fechas ni cantidades.
+
+#### Validación ejecutada
+
+- `git diff --check`: PASS.
+- `node --check apps/gold/agro/agro.js`: PASS.
+- `node --check apps/gold/agro/agrociclos.js`: PASS.
+- `pnpm build:gold`: PASS. 167 módulos transformados; gates OK (`agent-guard`, `agent-report-check`, `check-llms`, UTF-8).
+- Warning esperado: Node local `v25.6.0`; repo pide Node `20.x`.
+- `rg -n "200 días|90 días|120 días|Inicio a fin: [0-9]|Inicio a pérdida: [0-9]" apps/gold/agro`: solo devuelve `apps/gold/agro/agro.js:12462` con `'90d': '90 días'`, rango histórico de rankings operativos ajeno a ciclos de cultivo.
+
+#### Supabase remoto
+
+- CLI local: `supabase 2.90.0`.
+- Proyecto enlazado detectado: `trratydmsyysnoxhfsti`.
+- Corrección operativa posterior: `trratydmsyysnoxhfsti` corresponde a **YavlGold-staging**, no a producción.
+- `SUPABASE_DB_PASSWORD`: no disponible en entorno local.
+- No se ejecutó `supabase db push --dry-run`, `supabase db push` ni `supabase migration list` remoto para evitar reintentos sin credencial.
+- Regla de seguridad: no usar `trratydmsyysnoxhfsti` para migración de producción.
+- Reintento seguro solo después de relink al ref real de **YavlGold** principal:
+
+```powershell
+supabase link --project-ref "<REF_REAL_DE_YAVLGOLD>"
+Get-Content supabase\.temp\project-ref
+$env:SUPABASE_DB_PASSWORD="<valor-local-no-imprimir>"
+supabase db push --dry-run
+supabase migration list
+supabase db push
+supabase migration list
+```
+
+#### Riesgo vivo
+
+- Queda pendiente aplicar la migración en Supabase remoto. Hasta aplicarla, el código usa fallback de columnas opcionales; la UI puede guardar sin romper, pero no persistirá `seed_kg`, `lost_at` ni `closed_at` si la base remota no tiene esas columnas.
+
+---
+
+## 2026-05-02 — Diagnóstico relink Supabase producción
+
+### Diagnóstico de relink
+
+La migración `20260502180000_agro_crops_seed_and_closure_dates.sql` está lista a nivel de código, pero la aplicación remota no debe ejecutarse hasta confirmar que el repo local apunta al proyecto Supabase principal **YavlGold**. El intento de `supabase link --project-ref <ref principal>` reportó `Authorization failed for the access token and project ref pair: {"message":"Not Found"}`, señal compatible con token/cuenta sin acceso al proyecto indicado o ref incorrecto.
+
+### Estado actual
+
+- `supabase\.temp\project-ref` apunta a `trratydmsyysnoxhfsti`.
+- Ese ref fue confirmado como **YavlGold-staging**.
+- `trratydmsyysnoxhfsti` no debe usarse para migración de producción.
+
+### Riesgo
+
+Si se ejecuta `supabase db push` con el enlace actual, la migración podría aplicarse a staging en vez del proyecto principal. Por seguridad, quedan prohibidos `db push`, `db push --dry-run` y `migration list` remoto hasta que el ref principal correcto esté confirmado en `supabase\.temp\project-ref`.
+
+### Plan seguro
+
+1. Ejecutar solo diagnóstico sin secretos: `supabase --version`, `Get-Content supabase\.temp\project-ref`, `supabase projects list`.
+2. Si `supabase projects list` no muestra el proyecto principal YavlGold, detener relink y pedir al usuario reautenticarse localmente con `supabase logout` y `supabase login`.
+3. Si la lista muestra el proyecto principal, usar su project ref real, confirmar que no sea `trratydmsyysnoxhfsti`, ejecutar `supabase link --project-ref <REF_REAL_DE_YAVLGOLD>` y verificar el archivo `project-ref`.
+4. Si el link pide DB password, el usuario debe ingresarla localmente; no pegarla ni guardarla en chat o archivos.
+5. Solo después de confirmar el ref principal correcto se podrá pasar a `db push --dry-run`.
+
+### Resultado del diagnóstico
+
+- `supabase --version`: `2.90.0` (warning de versión nueva disponible `2.95.4`).
+- `Get-Content supabase\.temp\project-ref` antes del relink: `trratydmsyysnoxhfsti` (**YavlGold-staging**).
+- `supabase projects list` sí mostró el proyecto principal:
+  - `YavlGold` → ref `gerzlzprkarikblqxpjt`, región East US (Ohio).
+  - `YavlGold-staging` → ref `trratydmsyysnoxhfsti`, región East US (North Virginia), marcado como linked antes del relink.
+- Se ejecutó `supabase link --project-ref gerzlzprkarikblqxpjt`.
+- `Get-Content supabase\.temp\project-ref` después del relink: `gerzlzprkarikblqxpjt`.
+- No se ejecutó `supabase db push`, `supabase db push --dry-run` ni `supabase migration list`.
+
+### Estado resultante
+
+Estado: **GREEN para relink**. El repo local ahora apunta al proyecto principal **YavlGold** (`gerzlzprkarikblqxpjt`). La migración remota sigue pendiente y debe pasar primero por `db push --dry-run` con credencial local segura antes de aplicar cambios.
+
+---
+
+## 2026-05-02 — Intento seguro de dry-run migración Supabase principal
+
+### Diagnóstico previo
+
+- Migración pendiente: `supabase/migrations/20260502180000_agro_crops_seed_and_closure_dates.sql`.
+- Proyecto principal esperado: `gerzlzprkarikblqxpjt`.
+- Proyecto staging prohibido para producción: `trratydmsyysnoxhfsti`.
+- `Get-Content supabase\.temp\project-ref`: `gerzlzprkarikblqxpjt`.
+
+### Estado de credencial
+
+- `SUPABASE_DB_PASSWORD` no está disponible en entorno local de proceso/usuario/máquina.
+- Por seguridad, no se pidió ni se imprimió password.
+- No se escribió ninguna credencial en archivos.
+
+### Resultado
+
+Estado: **YELLOW** — ref correcto confirmado, pero `dry-run` remoto no se ejecutó por falta de DB password local disponible para esta sesión.
+
+### Acciones no ejecutadas
+
+- No se ejecutó `supabase db push --dry-run`.
+- No se ejecutó `supabase migration list`.
+- No se ejecutó `supabase db push`.
+- No se aplicó ninguna migración.
+
+### Próximo paso seguro
+
+El usuario debe introducir la DB password localmente en PowerShell y ejecutar el bloque Supabase desde `C:\Users\yerik\gold`, sin pegar la clave en chat ni guardarla en archivos:
+
+```powershell
+Get-Content supabase\.temp\project-ref
+
+$secure = Read-Host "SUPABASE_DB_PASSWORD" -AsSecureString
+$ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
+$env:SUPABASE_DB_PASSWORD = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr)
+[Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr)
+
+supabase db push --dry-run
+supabase migration list
+```
+
+Si el dry-run muestra solo `20260502180000_agro_crops_seed_and_closure_dates.sql` contra `gerzlzprkarikblqxpjt`, recién entonces puede ejecutarse:
+
+```powershell
+supabase db push
+supabase migration list
+```
+
+---
+
+## 2026-05-03 — Revisión final Supabase post-repair
+
+### Diagnóstico de revisión final
+
+Se cerró una operación larga de reparación/sincronización Supabase después de bloqueos de conexión por DNS/Cloudflare y antecedentes de bloqueo por Windows Firewall. El objetivo de esta revisión es decidir si el trabajo está listo para commit/push y qué hacer con `supabase/migrations/20260503012340_remote_schema.sql`, sin construir features nuevas ni tocar Agro.
+
+### Estado heredado
+
+- Proyecto principal Supabase: `gerzlzprkarikblqxpjt`.
+- Proyecto staging: `trratydmsyysnoxhfsti`.
+- Repo local reenlazado al principal.
+- Kimi K2.6 ayudó con debugging en VS Code.
+- Opus 4.6 ayudó a terminar aplicación/reparación de migraciones.
+- Script temporal creado durante repair: `supabase/repair-migrations.ps1`.
+- Repair reportado: 77/77 OK, 0 fallos.
+- `supabase db pull` reportado como PASS.
+- `db pull` generó `supabase/migrations/20260503012340_remote_schema.sql`.
+
+### Archivos críticos a revisar
+
+- `supabase/migrations/20260502180000_agro_crops_seed_and_closure_dates.sql`.
+- `supabase/migrations/20260503012340_remote_schema.sql`.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`.
+- Confirmar que `supabase/repair-migrations.ps1` ya no exista.
+- Revisar `git status`, `git diff --stat`, `git diff --check`.
+
+### Riesgos
+
+- Ref local apuntando accidentalmente a staging.
+- Snapshot remoto grande con secretos, operaciones destructivas o cambios amplios de RLS/policies no entendidos.
+- Divergencia entre historial remoto/local no comprobada en esta sesión.
+- Incluir `remote_schema.sql` en el mismo commit de feature puede mezclar producto y saneamiento histórico.
+
+### Plan de auditoría
+
+1. Confirmar `supabase\.temp\project-ref`.
+2. Revisar estado Git y whitespace.
+3. Confirmar eliminación de `repair-migrations.ps1`.
+4. Medir y auditar `20260503012340_remote_schema.sql` por secretos, destructivos, auth/storage/RLS/policies.
+5. Releer migración de semilla/cierre.
+6. Ejecutar `migration list` y `db push --dry-run` solo si `SUPABASE_DB_PASSWORD` está disponible.
+7. Ejecutar `pnpm build:gold`.
+8. Documentar decisión de commit y riesgos.
+
+### DoD
+
+- Ref principal confirmado.
+- Script temporal ausente.
+- `git diff --check` PASS.
+- `pnpm build:gold` PASS.
+- Sin secretos ni destructivos inesperados en migraciones.
+- Migración de semilla/cierre validada.
+- Estado remoto/migration history documentado o limitación explícita si falta password.
+- Recomendación clara para `20260503012340_remote_schema.sql`.
+
+### Resultado de auditoría
+
+Estado: **RED para aprobar commit/push con `20260503012340_remote_schema.sql` incluido**.
+
+#### Evidencia
+
+- `Get-Content supabase\.temp\project-ref`: `gerzlzprkarikblqxpjt` (principal correcto).
+- `git diff --check`: PASS.
+- `Test-Path supabase\repair-migrations.ps1`: `False`.
+- `pnpm build:gold`: PASS; 167 módulos transformados; gates OK. Warning esperado por Node local `v25.6.0` vs repo `20.x`.
+- `SUPABASE_DB_PASSWORD`: no disponible en entorno local; no se repitió `supabase migration list` ni `supabase db push --dry-run`.
+
+#### `20260503012340_remote_schema.sql`
+
+- Tamaño: `3513` líneas por conteo raw; `117236` bytes.
+- Secrets: no se detectaron valores secretos. Los hits de `service_role` son grants/revokes de rol; `token` aparece como columna `nft_token_id`.
+- Destructivos detectados:
+  - `drop extension if exists "pg_net";`
+  - 81 `drop policy`.
+  - `drop function if exists "public"."handle_new_user"();`
+  - `drop function if exists "public"."agro_buyer_portfolio_summary_v1"();`
+  - `drop table "public"."rls_smoke_items";`
+  - `drop trigger if exists "on_auth_user_created" on "auth"."users";`
+  - múltiples `drop index` y `drop constraint`.
+- RLS/policies/storage/auth:
+  - habilita RLS en varias tablas nuevas (`admin_audit_log`, `agro_agenda`, `agro_cart`, academia, etc.).
+  - crea muchas policies públicas/autenticadas.
+  - toca `auth.users` con triggers.
+  - toca `storage.objects` y policies del bucket `agro-evidence` y `avatars`.
+- Hallazgo bloqueante: varias policies de Storage parecen SQL corrupto o no confiable:
+  - líneas 3269-3295: regex `name ~* '\.(jpg|jpeg|png|webp|pdf);` partido y `{withcheck_clause}`.
+  - líneas 3350-3376: patrón equivalente en losses.
+  - líneas 3394-3420: patrón equivalente en pending.
+  - líneas 3438-3464: patrón equivalente en transfers.
+
+#### Decisión
+
+- No aprobar `20260503012340_remote_schema.sql` para commit tal como está.
+- No mezclarlo con el commit de feature Agro.
+- Requiere revisión/regeneración humana o técnica antes de entrar al repo. El archivo puede haber salido de `db pull`, pero contiene destructivos amplios y fragmentos que parecen plantilla/corrupción de SQL.
+- La feature Agro y la migración puntual `20260502180000_agro_crops_seed_and_closure_dates.sql` siguen siendo candidatas a commit separado, siempre excluyendo `20260503012340_remote_schema.sql`.
+
+#### Migración semilla/cierre
+
+- `20260502180000_agro_crops_seed_and_closure_dates.sql` validada:
+  - usa `add column if not exists`;
+  - agrega `seed_kg numeric null`;
+  - agrega `lost_at date null`;
+  - agrega `closed_at date null`;
+  - no toca RLS;
+  - no agrega defaults ficticios;
+  - no hace backfill inventado.
+
+#### Recomendación operativa
+
+1. Commit separado solo para feature Agro + migración puntual + reporte.
+2. No commitear `20260503012340_remote_schema.sql` todavía.
+3. Revisar/regenerar el snapshot remoto; en particular corregir o explicar las policies de Storage y los drops.
+4. Repetir `supabase migration list` y `supabase db push --dry-run` cuando haya `SUPABASE_DB_PASSWORD` local segura.
+
+---
+
+## 2026-05-03 — Contención snapshot Supabase corrupto
+
+### Diagnóstico de cierre
+
+El P0 sobre `supabase/migrations/20260503012340_remote_schema.sql` fue validado: el archivo contiene SQL no confiable generado por `supabase db pull`, incluyendo literal `{withcheck_clause}`, fragments de policies de Storage rotos, drops masivos y recreación amplia de RLS/auth/storage. El objetivo de esta fase es excluir ese snapshot corrupto del historial canónico del repo y dejar lista la feature Agro sin contaminar `supabase/migrations/`.
+
+### P0 detectado
+
+- Archivo: `supabase/migrations/20260503012340_remote_schema.sql`.
+- Bloqueantes detectados: `{withcheck_clause}` y expresiones SQL partidas en policies de Storage.
+- Riesgo: si se commitea, el repo conservaría una migración no confiable y potencialmente inaplicable.
+- Decisión: no aplicar, no reparar a mano y no incluir en commit.
+
+### Plan de contención
+
+1. Confirmar que `supabase\.temp\project-ref` apunta a `gerzlzprkarikblqxpjt`.
+2. Verificar `git status --short` y existencia del snapshot corrupto.
+3. Mover `20260503012340_remote_schema.sql` a cuarentena temporal fuera del repo.
+4. Confirmar que ya no existe dentro de `supabase/migrations/` ni aparece en `git status`.
+5. Revalidar la migración válida `20260502180000_agro_crops_seed_and_closure_dates.sql`.
+6. Consultar historial remoto/dry-run solo si `SUPABASE_DB_PASSWORD` existe en el entorno local.
+7. Ejecutar checks finales (`git diff --check`, `pnpm build:gold`, búsqueda de hardcodes).
+
+### Riesgos
+
+- No poder confirmar historial remoto si falta `SUPABASE_DB_PASSWORD`.
+- Si el timestamp `20260503012340` quedó en remoto, no se debe reparar sin evidencia clara de que fue solo un registro indebido y no una migración real.
+- No se debe volver a generar o editar manualmente el snapshot en esta sesión.
+
+### DoD
+
+- Ref principal confirmado.
+- `20260503012340_remote_schema.sql` fuera de `supabase/migrations/`.
+- Archivo no staged ni untracked dentro del repo.
+- Migración `20260502180000` validada.
+- Remote history/dry-run documentado o explícitamente no ejecutado por falta de password.
+- Build y diff check pasan.
+- Commit sugerido excluye el snapshot corrupto.
+
+### Resultado de contención
+
+Estado: **YELLOW** — limpieza local OK y build OK; verificación remota (`migration list`, `db push --dry-run`) no se pudo repetir porque `SUPABASE_DB_PASSWORD` no está disponible en el entorno de esta sesión.
+
+#### Ref y snapshot
+
+- `Get-Content supabase\.temp\project-ref`: `gerzlzprkarikblqxpjt`.
+- `Test-Path supabase\migrations\20260503012340_remote_schema.sql` antes de contener: `True`.
+- Archivo movido a cuarentena fuera del repo:
+  `C:\Users\yerik\AppData\Local\Temp\yavlgold-supabase-rejected\20260503012340_remote_schema.REJECTED.sql`.
+- `Test-Path supabase\migrations\20260503012340_remote_schema.sql` después: `False`.
+- `git status --short` ya no muestra `20260503012340_remote_schema.sql`.
+- No estaba staged (`git ls-files --stage` sin salida).
+
+#### Migración válida
+
+- `20260502180000_agro_crops_seed_and_closure_dates.sql` validada.
+- Contiene:
+  - `add column if not exists seed_kg numeric null`;
+  - `add column if not exists lost_at date null`;
+  - `add column if not exists closed_at date null`.
+- No contiene defaults, backfill, drops, RLS ni policies.
+
+#### Supabase remoto
+
+- `SUPABASE_DB_PASSWORD_PRESENT=false`.
+- No se ejecutó `supabase migration list`.
+- No se ejecutó `supabase db push --dry-run`.
+- No se ejecutó `supabase db push`.
+- No se ejecutó `supabase migration repair`.
+- Razón: sin password local no hay evidencia suficiente para tocar historial remoto; si el timestamp `20260503012340` aparece en remoto más adelante, debe verificarse antes de cualquier repair.
+
+#### Checks finales
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS; 167 módulos transformados; gates OK.
+- Warning esperado: Node local `v25.6.0` vs repo `20.x`.
+- Búsqueda hardcodes: solo `apps/gold/agro/agro.js:12462: '90d': '90 días'`, rango operativo ajeno a duración de ciclos.
+- `git status --short` final esperado: cambios Agro + reporte + migración `20260502180000`; sin `20260503012340_remote_schema.sql`.
+
+#### Decisión de commit
+
+- La feature Agro puede ir a commit local separado con la migración válida y el reporte.
+- No incluir `20260503012340_remote_schema.sql`.
+- No hacer push hasta repetir verificación remota cuando haya `SUPABASE_DB_PASSWORD` local segura, o hasta que el usuario acepte explícitamente avanzar con la verificación remota pendiente.

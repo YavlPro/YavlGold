@@ -623,6 +623,16 @@ function diffDays(endStr, startStr) {
     return Math.floor((endUtc - startUtc) / 86400000);
 }
 
+function calculateCycleDurationDays(startDate, endDate) {
+    if (!startDate || !endDate) return null;
+    const startKey = normalizeCycleDateKey(startDate);
+    const endKey = normalizeCycleDateKey(endDate);
+    if (!startKey || !endKey) return null;
+    const days = diffDays(endKey, startKey);
+    if (days === null || days < 0) return null;
+    return days + 1;
+}
+
 function clampNumber(value, min, max) {
     return Math.min(Math.max(value, min), max);
 }
@@ -8786,6 +8796,10 @@ const CROP_CYCLE_HISTORY_SECTION_ID = 'crops-cycle-history-accordion';
 const CROP_CYCLE_FINISHED_SECTION_ID = 'crops-cycle-finished-section';
 const CROP_CYCLE_FINISHED_TITLE_ID = 'crops-cycle-finished-title';
 const CROP_CYCLE_HISTORY_GRID_ID = 'crops-cycle-history-grid';
+const CROP_CYCLE_LOST_SLOT_ID = 'agro-cycles-lost-slot';
+const CROP_CYCLE_LOST_SECTION_ID = 'crops-cycle-lost-section';
+const CROP_CYCLE_LOST_TITLE_ID = 'crops-cycle-lost-title';
+const CROP_CYCLE_LOST_GRID_ID = 'crops-cycle-lost-grid';
 
 function normalizeCropStatus(status) {
     const raw = String(status || '').toLowerCase().trim();
@@ -8861,13 +8875,14 @@ function normalizeCycleDateKey(value) {
 function resolveCropEndDateKey(crop) {
     const fields = [
         'actual_harvest_date',
+        'lost_at',
+        'closed_at',
         'fecha_cosecha',
         'harvest_date',
         'end_date',
         'fecha_fin',
         'finish_date',
-        'completed_at',
-        'closed_at'
+        'completed_at'
     ];
     for (const field of fields) {
         const key = normalizeCycleDateKey(crop?.[field]);
@@ -10535,6 +10550,9 @@ function buildActiveCycleCardsData(crops, options = {}) {
             ? `${cotizacionBase} · ${missingRateCount} movimiento${missingRateCount === 1 ? '' : 's'} sin tasa/moneda.`
             : cotizacionBase;
 
+        const seedKg = Number(crop?.seed_kg);
+        const seedKgValue = Number.isFinite(seedKg) && seedKg > 0 ? seedKg : null;
+
         return {
             id: crop?.id !== undefined && crop?.id !== null ? String(crop.id) : '',
             nombre: displayCrop.name || 'Cultivo',
@@ -10548,6 +10566,8 @@ function buildActiveCycleCardsData(crops, options = {}) {
             diaActual: progress.ok ? Number(progress.dayIndex || 0) : 0,
             diasTotales: progress.ok ? Number(progress.totalDays || 0) : 0,
             porcentaje: progress.ok ? normalizeProgress(progress.percent) : 0,
+            durationDays: null,
+            seedKg: seedKgValue,
             inversionUSD: totalInvestment,
             rentabilidad: net,
             potencialNeto: potential,
@@ -10650,6 +10670,14 @@ function buildFinishedCycleCardsData(crops, options = {}) {
             ? Number(progress.totalDays || 0)
             : (Number(crop?.cycle_days) || 0);
 
+        const endDateForDuration = groupType === 'lost'
+            ? (crop?.lost_at || crop?.closed_at || null)
+            : (crop?.actual_harvest_date || crop?.closed_at || null);
+        const durationDays = calculateCycleDurationDays(crop?.start_date, endDateForDuration);
+
+        const seedKg = Number(crop?.seed_kg);
+        const seedKgValue = Number.isFinite(seedKg) && seedKg > 0 ? seedKg : null;
+
         return {
             id: crop?.id !== undefined && crop?.id !== null ? String(crop.id) : '',
             nombre: displayCrop.name || 'Cultivo',
@@ -10663,6 +10691,8 @@ function buildFinishedCycleCardsData(crops, options = {}) {
             diaActual: totalDays > 0 ? totalDays : 0,
             diasTotales: totalDays > 0 ? totalDays : 0,
             porcentaje: 100,
+            durationDays,
+            seedKg: seedKgValue,
             inversionUSD: totalInvestment,
             rentabilidad: finalNet,
             potencialNeto: finalNet,
@@ -10877,6 +10907,7 @@ function ensureCropCycleHistorySection() {
     const cropsSection = document.querySelector('.crops-section');
     if (!cropsSection) return null;
     const historyHost = document.getElementById('agro-cycles-history-slot') || cropsSection;
+    const lostHost = document.getElementById(CROP_CYCLE_LOST_SLOT_ID) || historyHost;
 
     let historySection = document.getElementById(CROP_CYCLE_HISTORY_SECTION_ID);
     if (!historySection || historySection.tagName.toLowerCase() === 'details') {
@@ -10925,10 +10956,30 @@ function ensureCropCycleHistorySection() {
 
     const finishedTitleEl = document.getElementById(CROP_CYCLE_FINISHED_TITLE_ID);
     const finishedGridEl = document.getElementById(CROP_CYCLE_HISTORY_GRID_ID);
+
+    let lostSectionEl = document.getElementById(CROP_CYCLE_LOST_SECTION_ID);
+    if (!lostSectionEl) {
+        const lostGroup = createCycleHistoryGroupSection({
+            sectionId: CROP_CYCLE_LOST_SECTION_ID,
+            titleId: CROP_CYCLE_LOST_TITLE_ID,
+            gridId: CROP_CYCLE_LOST_GRID_ID,
+            titleText: 'Ciclos perdidos (0)',
+            titleClass: 'crop-history-group-title-lost'
+        });
+        lostHost.appendChild(lostGroup.section);
+        lostSectionEl = lostGroup.section;
+    } else if (!lostHost.contains(lostSectionEl) || lostSectionEl.parentElement !== lostHost) {
+        lostHost.appendChild(lostSectionEl);
+    }
+
+    const lostTitleEl = document.getElementById(CROP_CYCLE_LOST_TITLE_ID);
+    const lostGridEl = document.getElementById(CROP_CYCLE_LOST_GRID_ID);
     return {
         details: historySection,
         finishedTitleEl,
-        finishedGridEl
+        finishedGridEl,
+        lostTitleEl,
+        lostGridEl
     };
 }
 
@@ -11081,7 +11132,9 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
     const {
         details,
         finishedTitleEl,
-        finishedGridEl
+        finishedGridEl,
+        lostTitleEl,
+        lostGridEl
     } = ui;
     details.style.display = 'block';
 
@@ -11089,25 +11142,53 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
         finishedTitleEl.textContent = `Ciclos finalizados (${finishedCrops.length})`;
         finishedTitleEl.style.display = 'none';
     }
-    if (!finishedGridEl) return;
+    if (lostTitleEl) {
+        lostTitleEl.textContent = `Ciclos perdidos (${lostCrops.length})`;
+        lostTitleEl.style.display = '';
+    }
+    if (lostGridEl) {
+        lostGridEl.style.display = '';
+    }
+    const lostSectionEl = document.getElementById(CROP_CYCLE_LOST_SECTION_ID);
+    if (lostSectionEl) {
+        lostSectionEl.style.display = '';
+    }
 
     const hasAnyClosedCycle = (finishedCrops.length + lostCrops.length) > 0;
     const finishedEmptyText = hasAnyClosedCycle
         ? 'Sin ciclos finalizados por ahora.'
         : 'Sin ciclos cerrados por ahora.';
+    const lostEmptyText = 'Sin ciclos perdidos por ahora.';
 
-    renderCropCycleGroup(finishedGridEl, finishedCrops, finishedEmptyText, {
-        expenseTotalsByCrop,
-        directExpenseTotalsByCrop,
-        operationalExpenseTotalsByCrop,
-        operationalPendingTotalsByCrop,
-        incomeTotalsByCrop,
-        lossTotalsByCrop,
-        pendingTotalsByCrop,
-        missingRateCountsByCrop,
-        globalTotalsByCropType,
-        groupType: 'finished'
-    });
+    if (finishedGridEl) {
+        renderCropCycleGroup(finishedGridEl, finishedCrops, finishedEmptyText, {
+            expenseTotalsByCrop,
+            directExpenseTotalsByCrop,
+            operationalExpenseTotalsByCrop,
+            operationalPendingTotalsByCrop,
+            incomeTotalsByCrop,
+            lossTotalsByCrop,
+            pendingTotalsByCrop,
+            missingRateCountsByCrop,
+            globalTotalsByCropType,
+            groupType: 'finished'
+        });
+    }
+
+    if (lostGridEl) {
+        renderCropCycleGroup(lostGridEl, lostCrops, lostEmptyText, {
+            expenseTotalsByCrop,
+            directExpenseTotalsByCrop,
+            operationalExpenseTotalsByCrop,
+            operationalPendingTotalsByCrop,
+            incomeTotalsByCrop,
+            lossTotalsByCrop,
+            pendingTotalsByCrop,
+            missingRateCountsByCrop,
+            globalTotalsByCropType,
+            groupType: 'lost'
+        });
+    }
 }
 
 /**
@@ -15965,6 +16046,14 @@ export function openCropModal() {
     if (cropForm?.dataset) cropForm.dataset.initialStatus = '';
     const editInput = document.getElementById('crop-edit-id');
     if (editInput) editInput.value = '';
+    const seedKgInput = document.getElementById('crop-seed-kg');
+    if (seedKgInput) seedKgInput.value = '';
+    const closureFields = document.getElementById('crop-closure-fields');
+    if (closureFields) closureFields.style.display = 'none';
+    const actualHarvestInput = document.getElementById('crop-actual-harvest-date');
+    if (actualHarvestInput) actualHarvestInput.value = '';
+    const lostAtInput = document.getElementById('crop-lost-date');
+    if (lostAtInput) lostAtInput.value = '';
     const statusSelect = document.getElementById('crop-status');
     if (statusSelect) statusSelect.value = 'sembrado';
     const investmentInput = document.getElementById('crop-investment');
@@ -16041,6 +16130,19 @@ export function openEditModal(id) {
     }
     document.getElementById('crop-start-date').value = crop.start_date || '';
     document.getElementById('crop-harvest-date').value = crop.expected_harvest_date || '';
+    const seedKgInput = document.getElementById('crop-seed-kg');
+    if (seedKgInput) {
+        const seedVal = Number(crop.seed_kg);
+        seedKgInput.value = Number.isFinite(seedVal) && seedVal > 0 ? String(seedVal) : '';
+    }
+    const closureFields = document.getElementById('crop-closure-fields');
+    if (closureFields) {
+        closureFields.style.display = 'block';
+        const actualHarvestInput = document.getElementById('crop-actual-harvest-date');
+        if (actualHarvestInput) actualHarvestInput.value = crop.actual_harvest_date || '';
+        const lostAtInput = document.getElementById('crop-lost-date');
+        if (lostAtInput) lostAtInput.value = crop.lost_at || '';
+    }
     const statusSelect = document.getElementById('crop-status');
     if (statusSelect) {
         const mode = String(crop.status_mode || '').toLowerCase().trim();
@@ -16096,6 +16198,8 @@ export function closeCropModal() {
     }
     const editInput = document.getElementById('crop-edit-id');
     if (editInput) editInput.value = '';
+    const closureFields = document.getElementById('crop-closure-fields');
+    if (closureFields) closureFields.style.display = 'none';
     const cropForm = document.getElementById('form-new-crop');
     if (cropForm?.dataset) cropForm.dataset.initialStatus = '';
 }

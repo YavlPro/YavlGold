@@ -275,6 +275,15 @@
   font-weight: 700;
 }
 
+.agro-cycles .crop-seed-meta {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 500;
+}
+
 .agro-cycles .progress-track {
   height: 8px;
   border-radius: var(--radius-pill);
@@ -878,7 +887,8 @@ body[data-agro-active-view='ciclos'][data-agro-subview='estadisticas'] .crops-se
   color: color-mix(in srgb, var(--color-error) 68%, var(--text-secondary) 32%);
 }
 
-#agro-cycles-history-slot {
+#agro-cycles-history-slot,
+#agro-cycles-lost-slot {
   display: flex;
   flex-direction: column;
   gap: 1rem;

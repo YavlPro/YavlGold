@@ -363,15 +363,28 @@ function renderCard(ciclo, index = 0) {
   const potencialText = formatSignedUsd(ciclo?.potencialNeto);
   const inversionText = formatUsdCompact(ciclo?.inversionUSD);
   const trendIcon = esPositivo ? '↗' : '↘';
-  const profitLabel = mode === 'finished' ? 'Rentabilidad Final' : 'Potencial Neto';
+  const profitLabel = mode === 'finished'
+    ? (ciclo?.estado === 'perdido' ? 'Pérdida Total' : 'Rentabilidad Final')
+    : 'Potencial Neto';
   const currencyToggleMarkup = buildCurrencyToggleMarkup();
   const badges = resolveAllPortfolioBadges(ciclo);
+  const isLost = ciclo?.estado === 'perdido';
   const progressText = mode === 'finished'
-    ? 'Completado'
+    ? (Number.isFinite(ciclo?.durationDays) && ciclo?.durationDays > 0
+        ? `Inicio a ${isLost ? 'pérdida' : 'fin'}: ${ciclo.durationDays} días`
+        : (isLost ? 'Perdido' : 'Completado'))
     : `Día ${toNumber(ciclo?.diaActual, 0)}/${toNumber(ciclo?.diasTotales, 0)} (${porcentaje}%)`;
   const progressClass = mode === 'finished' ? 'progress-track progress-complete' : 'progress-track';
   const dataId = String(ciclo?.id || '').trim();
   const orphanData = ciclo?.isAuditCard ? ' data-crop-orphan="1"' : '';
+
+  const seedKg = Number(ciclo?.seedKg);
+  const seedKgText = Number.isFinite(seedKg)
+    ? (Number.isInteger(seedKg) ? String(seedKg) : String(Number(seedKg.toFixed(6))))
+    : '';
+  const seedMeta = Number.isFinite(seedKg) && seedKg > 0
+    ? `<span class="crop-seed-meta">Semilla: ${seedKgText} kg</span>`
+    : '';
 
   const desglose = ciclo?.desglose || {};
   const desgloseBase = String(desglose.base || 'N/D');
@@ -474,6 +487,7 @@ function renderCard(ciclo, index = 0) {
             <span class="progress-dot"></span>
           </div>
         </div>
+        ${seedMeta}
       </div>
 
       <div class="data-grid">
