@@ -8745,7 +8745,7 @@ if (typeof window !== 'undefined') {
 const CROP_STATUS_UI = {
     sembrado: { class: 'status-attention', text: 'Sembrado' },
     creciendo: { class: 'status-growing', text: 'Creciendo' },
-    produccion: { class: 'status-ready', text: 'En produccion' },
+    produccion: { class: 'status-ready', text: 'En producción' },
     finalizado: { class: 'status-finished', text: 'Finalizado' },
     lost: { class: 'status-lost', text: 'Perdido' }
 };
@@ -16034,6 +16034,31 @@ function injectModalStyles() {
 /**
  * Abre el modal para NUEVO cultivo (limpia todo)
  */
+function getCropModalNode() {
+    return document.getElementById('modal-new-crop');
+}
+
+function getCropModalForm() {
+    return document.getElementById('form-new-crop');
+}
+
+function getCropModalSaveButton() {
+    return document.getElementById('btn-save-crop');
+}
+
+function setCropModalMode(mode) {
+    const normalizedMode = mode === 'edit' ? 'edit' : 'create';
+    const modal = getCropModalNode();
+    const form = getCropModalForm();
+    const modalTitle = document.getElementById('new-crop-modal-title');
+    const saveBtn = getCropModalSaveButton();
+
+    if (modal?.dataset) modal.dataset.cropModalMode = normalizedMode;
+    if (form?.dataset) form.dataset.cropModalMode = normalizedMode;
+    if (modalTitle) modalTitle.textContent = normalizedMode === 'edit' ? 'Editar Cultivo' : 'Nuevo Cultivo';
+    if (saveBtn) saveBtn.textContent = normalizedMode === 'edit' ? 'Actualizar' : 'Guardar siembra';
+}
+
 export function openCropModal() {
     injectModalStyles();
 
@@ -16041,7 +16066,7 @@ export function openCropModal() {
     currentEditId = null;
 
     // Limpiar formulario
-    const cropForm = document.getElementById('form-new-crop');
+    const cropForm = getCropModalForm();
     cropForm?.reset();
     if (cropForm?.dataset) cropForm.dataset.initialStatus = '';
     const editInput = document.getElementById('crop-edit-id');
@@ -16068,14 +16093,9 @@ export function openCropModal() {
         investmentFxMeta.textContent = 'Cotización al guardar: se tomará la tasa vigente del Facturero.';
     }
 
-    // Actualizar UI del modal para modo "Nuevo"
-    const modalTitle = document.querySelector('.modal-title');
-    if (modalTitle) modalTitle.textContent = '🌱 Nuevo Cultivo';
+    setCropModalMode('create');
 
-    const saveBtn = document.querySelector('.modal-footer .btn-primary');
-    if (saveBtn) saveBtn.textContent = '🌾 Guardar Siembra';
-
-    const modal = document.getElementById('modal-new-crop');
+    const modal = getCropModalNode();
     if (modal) {
         modal.classList.add('active');
         // Set default date to today
@@ -16153,7 +16173,7 @@ export function openEditModal(id) {
             statusSelect.value = manualStatus || normalizeCropStatus(crop.status);
         }
     }
-    const cropForm = document.getElementById('form-new-crop');
+    const cropForm = getCropModalForm();
     if (cropForm?.dataset) {
         cropForm.dataset.initialStatus = resolveManualCropStatus(crop) || normalizeCropStatus(crop.status);
     }
@@ -16165,15 +16185,10 @@ export function openEditModal(id) {
         updateTemplateCycleDisplay(null);
     }
 
-    // Actualizar UI del modal para modo "Editar"
-    const modalTitle = document.querySelector('.modal-title');
-    if (modalTitle) modalTitle.textContent = '✏️ Editar Cultivo';
-
-    const saveBtn = document.querySelector('.modal-footer .btn-primary');
-    if (saveBtn) saveBtn.textContent = '💾 Actualizar';
+    setCropModalMode('edit');
 
     // Mostrar modal
-    const modal = document.getElementById('modal-new-crop');
+    const modal = getCropModalNode();
     if (modal) {
         modal.classList.add('active');
         setTimeout(() => {
@@ -16192,7 +16207,8 @@ window.openEditModal = openEditModal;
  * Cierra el modal de nuevo cultivo
  */
 export function closeCropModal() {
-    const modal = document.getElementById('modal-new-crop');
+    currentEditId = null;
+    const modal = getCropModalNode();
     if (modal) {
         modal.classList.remove('active');
     }
@@ -16200,8 +16216,9 @@ export function closeCropModal() {
     if (editInput) editInput.value = '';
     const closureFields = document.getElementById('crop-closure-fields');
     if (closureFields) closureFields.style.display = 'none';
-    const cropForm = document.getElementById('form-new-crop');
+    const cropForm = getCropModalForm();
     if (cropForm?.dataset) cropForm.dataset.initialStatus = '';
+    setCropModalMode('create');
 }
 
 /**

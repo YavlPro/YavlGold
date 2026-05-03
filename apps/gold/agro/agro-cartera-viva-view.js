@@ -26,6 +26,8 @@ const CARTERA_VIVA_CATEGORY_KEY = 'YG_AGRO_CARTERA_VIVA_CATEGORY_V1';
 const CARTERA_VIVA_SEARCH_KEY = 'YG_AGRO_CARTERA_VIVA_SEARCH_V1';
 const CARTERA_VIVA_UNIT_FAMILY_KEY = 'YG_AGRO_CARTERA_VIVA_UNIT_FAMILY_V1';
 const CARTERA_VIVA_GENERAL_CROP_ID = '__general__';
+const CARTERA_VIVA_CROP_BLOCK_MESSAGE = 'Este cultivo aún no está en producción. Para registrar ventas o fiados en Cartera Viva, cambia el estado a En producción, Finalizado o Perdido.';
+const CARTERA_VIVA_ALLOWED_CROP_STATUSES = new Set(['produccion', 'finalizado', 'lost']);
 
 const CATEGORY_META = Object.freeze({
     'sin-registro': Object.freeze({
@@ -396,6 +398,93 @@ function getSelectedCropShortLabel() {
     const selectedCrop = getSelectedCrop();
     if (!selectedCrop) return 'este cultivo';
     return resolveCropDisplay(selectedCrop).shortLabel || 'este cultivo';
+}
+
+function normalizeLiveWalletCropStatus(value) {
+    const token = String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim()
+        .replace(/[\s-]+/g, '_');
+    if (!token) return '';
+    if (token === 'ready' || token === 'production' || token === 'in_production' || token === 'en_produccion') return 'produccion';
+    if (token === 'finished' || token === 'completed' || token === 'complete' || token === 'harvested' || token === 'cosechado') return 'finalizado';
+    if (token === 'lost' || token === 'loss' || token === 'perdido' || token === 'perdida' || token === 'danado' || token === 'damaged') return 'lost';
+    if (token === 'growing') return 'creciendo';
+    if (token === 'planted') return 'sembrado';
+    return token;
+}
+
+function normalizeLiveWalletDateKey(value) {
+    const match = String(value || '').trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return match ? `${match[1]}-${match[2]}-${match[3]}` : '';
+}
+
+function diffLiveWalletDays(endKey, startKey) {
+    const start = normalizeLiveWalletDateKey(startKey);
+    const end = normalizeLiveWalletDateKey(endKey);
+    if (!start || !end) return null;
+    const startDate = new Date(`${start}T00:00:00`);
+    const endDate = new Date(`${end}T00:00:00`);
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return null;
+    return Math.floor((endDate.getTime() - startDate.getTime()) / 86400000);
+}
+
+function computeLiveWalletAutoCropStatus(crop) {
+    if (normalizeLiveWalletDateKey(crop?.lost_at)) return 'lost';
+    if (normalizeLiveWalletDateKey(crop?.actual_harvest_date) || normalizeLiveWalletDateKey(crop?.closed_at)) return 'finalizado';
+
+    const startKey = normalizeLiveWalletDateKey(crop?.start_date);
+    const harvestKey = normalizeLiveWalletDateKey(crop?.expected_harvest_date);
+    const totalDays = diffLiveWalletDays(harvestKey, startKey);
+    if (totalDays === null || totalDays <= 0) {
+        return normalizeLiveWalletCropStatus(crop?.status);
+    }
+
+    const today = new Date();
+    const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const elapsedDays = diffLiveWalletDays(todayKey, startKey);
+    const percent = Math.round((Math.min(Math.max(Number(elapsedDays || 0), 0), totalDays) / totalDays) * 100);
+    if (percent >= 100) return 'finalizado';
+    if (percent >= 70) return 'produccion';
+    if (percent >= 25) return 'creciendo';
+    return 'sembrado';
+}
+
+function resolveLiveWalletCropStatus(crop) {
+    const storedStatus = normalizeLiveWalletCropStatus(crop?.status);
+    if (storedStatus === 'finalizado' || storedStatus === 'lost') return storedStatus;
+
+    const overrideStatus = normalizeLiveWalletCropStatus(crop?.status_override);
+    if (overrideStatus) return overrideStatus;
+
+    const mode = String(crop?.status_mode || '').trim().toLowerCase();
+    if (mode === 'auto') return computeLiveWalletAutoCropStatus(crop);
+    return storedStatus;
+}
+
+function canCreateLiveWalletRecordForCrop(crop) {
+    if (!crop) return false;
+    return CARTERA_VIVA_ALLOWED_CROP_STATUSES.has(resolveLiveWalletCropStatus(crop));
+}
+
+function showLiveWalletCropBlockMessage() {
+    if (typeof window !== 'undefined' && typeof window.showEvidenceToast === 'function') {
+        window.showEvidenceToast(CARTERA_VIVA_CROP_BLOCK_MESSAGE, 'warning');
+        return;
+    }
+    if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+        window.alert(CARTERA_VIVA_CROP_BLOCK_MESSAGE);
+    }
+}
+
+function guardLiveWalletCropCreation() {
+    const selectedCropId = getSelectedCropId();
+    if (!selectedCropId) return true;
+    if (canCreateLiveWalletRecordForCrop(getSelectedCrop())) return true;
+    showLiveWalletCropBlockMessage();
+    return false;
 }
 
 function normalizeOperationalCurrency(value) {
@@ -1387,6 +1476,7 @@ function getCarteraVivaActionContext() {
 
 function openRecordFromCarteraContext() {
     if (typeof window === 'undefined' || typeof window.launchAgroWizard !== 'function') return false;
+    if (!guardLiveWalletCropCreation()) return false;
     const context = getCarteraVivaActionContext();
     if (typeof window.setSelectedCropId === 'function') {
         window.setSelectedCropId(context.cropId || null);
@@ -2846,6 +2936,7 @@ function bindListViewEvents(root) {
         }
 
         if (target.closest('[data-cartera-new-client]')) {
+            if (!guardLiveWalletCropCreation()) return;
             openNewBuyerProfile('');
             return;
         }
@@ -2953,6 +3044,7 @@ function openClientRecordWizard(tabName, buyerRow) {
     const safeTab = String(tabName || '').trim().toLowerCase();
     if (!['pendientes', 'ingresos', 'perdidas'].includes(safeTab)) return false;
     if (typeof window === 'undefined' || typeof window.launchAgroWizard !== 'function') return false;
+    if (!guardLiveWalletCropCreation()) return false;
 
     const cropId = getSelectedCropId();
     if (typeof window.setSelectedCropId === 'function') {

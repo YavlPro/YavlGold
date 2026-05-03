@@ -3005,3 +3005,108 @@ Estado: **YELLOW** — limpieza local OK y build OK; verificación remota (`migr
 - La feature Agro puede ir a commit local separado con la migración válida y el reporte.
 - No incluir `20260503012340_remote_schema.sql`.
 - No hacer push hasta repetir verificación remota cuando haya `SUPABASE_DB_PASSWORD` local segura, o hasta que el usuario acepte explícitamente avanzar con la verificación remota pendiente.
+
+---
+
+## 2026-05-03 — Bugfix Mis cultivos + Cartera Viva
+
+### Diagnóstico inicial
+
+Estado: **YELLOW** — bugs reproducidos por evidencia visual del usuario e inferidos en código; no se ejecutará QA manual/browser intensivo en esta sesión porque el usuario lo reservó para validación humana.
+
+#### Bugs inferidos
+
+- Bug 1: edición de estado de cultivo activo muestra éxito, pero la card puede seguir con estado anterior. El submit real vive en `apps/gold/agro/index.html` como `window.saveCrop`; la apertura/precarga de edición vive en `apps/gold/agro/agro.js` (`openEditModal`). La card se reconstruye desde `loadCrops()` y `buildActiveCycleCardsData()`, usando `resolveCropStatus()`.
+- Bug 2: Cartera Viva abre creación de cliente/registro sin validar etapa comercial del cultivo seleccionado. Entradas candidatas:
+  - `openNewBuyerProfile('')` desde `apps/gold/agro/agro-cartera-viva-view.js`;
+  - `openClientRecordWizard()` desde detalle de cliente;
+  - `openRecordFromCarteraContext()` expuesto como puente global.
+- Bug 3: el modal de edición usa el mismo DOM que creación, pero `openCropModal()`/`openEditModal()` cambian título y botón con selectores globales (`.modal-title`, `.modal-footer .btn-primary`). Eso permite que edición conserve `Nuevo Cultivo` aunque el botón diga `Actualizar`.
+
+#### Estados reales confirmados
+
+- Select del modal: `auto`, `sembrado`, `creciendo`, `produccion`, `finalizado`, `lost`.
+- Render activo:
+  - `sembrado` -> `Sembrado`
+  - `creciendo` -> `Creciendo`
+  - `produccion` -> `En produccion`
+  - `finalizado` -> `Finalizado`
+  - `lost` -> `Perdido`
+- Aliases legacy existentes: `growing -> creciendo`, `ready -> produccion`, `harvested -> finalizado`, `perdido/perdida/damaged/loss -> lost`.
+
+### Archivos candidatos
+
+- `apps/gold/agro/index.html` — submit real de crear/editar cultivo.
+- `apps/gold/agro/agro.js` — apertura de modal, cache `cropsCache`, render/reload de cards.
+- `apps/gold/agro/agro-cartera-viva-view.js` — acciones de Cartera Viva para crear cliente/registro.
+- `apps/gold/agro/agrocompradores.js` — modal de cliente, solo si hace falta bloquear desde la capa de cliente.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md` — bitácora operativa.
+
+### Riesgos
+
+- `agro.js` es monolito: tocar solo wiring/bugfix mínimo.
+- `index.html` contiene el submit real de cultivo; duplicar lógica con `saveCrop()` exportado en `agro.js` aumentaría riesgo.
+- Cartera Viva comparte navegación con Cartera Operativa; el guard debe vivir solo en Cartera Viva y no bloquear Cartera Operativa ni Mi Carrito.
+- La regla de estado debe usar los tokens existentes; no se crearán estados nuevos.
+
+### Plan de cambios
+
+1. Separar modo visual/funcional del modal de cultivo usando helpers mínimos y selectores por ID dentro de `#modal-new-crop`.
+2. Corregir guardado de edición para que el update devuelva filas actualizadas, no muestre éxito si no hubo fila afectada y actualice el cache/snapshot local antes del refresh.
+3. Mantener creación limpia: título `Nuevo Cultivo`, botón `Guardar siembra`, form reseteado y `crop-edit-id` vacío.
+4. Agregar helper de Cartera Viva para validar si el cultivo seleccionado permite nuevos registros comerciales: permitir `produccion`, `finalizado`, `lost`; bloquear `sembrado`, `creciendo`, vacío o desconocido.
+5. Aplicar el guard solo en acciones de Cartera Viva que crean cliente/registro asociado al cultivo seleccionado.
+6. Ejecutar `git diff --check`, `pnpm build:gold` y búsqueda de duraciones hardcodeadas indicada por el usuario.
+
+### DoD de esta sesión
+
+- Editar `Creciendo -> En producción` guarda `status/status_mode/status_override` correctos y refresca card/cache.
+- El éxito de edición solo aparece si Supabase no falla y devuelve una fila actualizada.
+- Modal crear mantiene `Nuevo Cultivo` / `Guardar siembra`.
+- Modal editar muestra `Editar Cultivo` / `Actualizar`.
+- Cartera Viva bloquea creación comercial con cultivo `sembrado`/`creciendo`/desconocido y permite `produccion`/`finalizado`/`lost`.
+- No se toca Cartera Operativa/Mi Carrito salvo lectura contextual necesaria.
+- `pnpm build:gold` pasa.
+
+### Resultado
+
+Estado: **GREEN técnico / PENDING QA manual** — build y checks pasan; queda pendiente la validación manual en producción/local por parte del usuario según instrucción explícita.
+
+#### Cambios aplicados
+
+- `apps/gold/agro/agro.js`
+  - `openCropModal()` y `openEditModal()` ya no usan selectores globales de modal.
+  - Se agregó modo explícito `create/edit` para el modal compartido de cultivo.
+  - Crear fuerza `Nuevo Cultivo` / `Guardar siembra`.
+  - Editar fuerza `Editar Cultivo` / `Actualizar`.
+  - Cerrar limpia `currentEditId`, `crop-edit-id` y vuelve el modal a modo create.
+  - Badge `produccion` ahora muestra `En producción`.
+- `apps/gold/agro/index.html`
+  - `window.saveCrop()` en modo edición usa `.update(...).select('*').maybeSingle()`.
+  - Si Supabase no devuelve fila actualizada, no muestra éxito y lanza error.
+  - Tras guardar, llama `window.loadCrops()` cuando está disponible y dispara `data-refresh`.
+  - El botón de submit se restaura según `crop-edit-id`, evitando contaminación entre crear/editar.
+- `apps/gold/agro/agro-cartera-viva-view.js`
+  - Se agregó `canCreateLiveWalletRecordForCrop(crop)`.
+  - Permitidos para creación comercial desde Cartera Viva: `produccion`, `finalizado`, `lost` y aliases equivalentes.
+  - Bloqueados: `sembrado`, `creciendo`, vacío/desconocido y estados previos.
+  - El guard se aplica a `Nuevo cliente`, `openRecordFromCarteraContext()` y `openClientRecordWizard()`.
+  - No se modificó Cartera Operativa ni Mi Carrito.
+
+#### Checks
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS.
+  - `agent-guard`: OK.
+  - `agent-report-check`: OK.
+  - `vite build`: OK, 167 módulos transformados.
+  - `check-llms`: OK.
+  - `check-dist-utf8`: OK.
+  - Warning conocido: Node local `v25.6.0` vs engine `20.x`.
+- `rg -n "200 días|90 días|120 días|Inicio a fin: [0-9]|Inicio a pérdida: [0-9]" apps/gold/agro`:
+  - solo `apps/gold/agro/agro.js:12462: '90d': '90 días'`, filtro de rankings ajeno a duración de ciclos.
+
+#### QA manual pendiente
+
+- No se ejecutó browser/QA manual por instrucción explícita del usuario.
+- Casos pendientes: edición `Creciendo -> En producción`, persistencia tras refresh, crear limpio, editar separado, bloqueo/permiso de Cartera Viva por estado y no regresión de duración real/semilla kg.

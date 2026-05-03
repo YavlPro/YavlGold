@@ -1413,7 +1413,7 @@
                     onclick="window.closeCropModal()">Cancelar</button>
                 <button type="submit" id="btn-save-crop"
                     class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary"
-                    onclick="window.saveCrop()">Guardar Siembra</button>
+                    onclick="window.saveCrop()">Guardar siembra</button>
             </div>
         </div>
     </div>
@@ -2174,6 +2174,25 @@
 
         bindCropInvestmentCurrencyUi();
 
+        function getCropFormMode() {
+            return document.getElementById('crop-edit-id')?.value ? 'edit' : 'create';
+        }
+
+        function restoreCropSaveButton(btn) {
+            if (!btn) return;
+            btn.textContent = getCropFormMode() === 'edit' ? 'Actualizar' : 'Guardar siembra';
+            btn.disabled = false;
+        }
+
+        async function refreshCropsAfterSave(detail = {}) {
+            if (typeof window.loadCrops === 'function') {
+                await window.loadCrops();
+            } else {
+                document.dispatchEvent(new CustomEvent('agro:crops:refresh', { detail }));
+            }
+            document.dispatchEvent(new CustomEvent('data-refresh'));
+        }
+
 
         window.saveCrop = async function () {
             // Selector robusto con ID fijo (candado definitivo)
@@ -2184,7 +2203,6 @@
                 alert('⚠️ No se encontró el botón de Guardar. Refresca la página.');
                 return;
             }
-            const originalText = btn.innerHTML;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
             btn.disabled = true;
 
@@ -2406,20 +2424,28 @@
                         status_override: statusOverride
                     };
                     let usedFallbackColumns = false;
-                    let { error: updateError } = await supabase
+                    let updateResult = await supabase
                         .from('agro_crops')
                         .update(updatePayload)
                         .eq('id', editId)
-                        .eq('user_id', user.id);
+                        .eq('user_id', user.id)
+                        .select('*')
+                        .maybeSingle();
+                    let updateError = updateResult.error;
+                    let updatedCrop = updateResult.data;
 
                     if (updateError && hasOptionalColumnError(updateError)) {
                         stripOptionalColumns(updatePayload);
                         usedFallbackColumns = true;
-                        updateError = (await supabase
+                        updateResult = await supabase
                             .from('agro_crops')
                             .update(updatePayload)
                             .eq('id', editId)
-                            .eq('user_id', user.id)).error;
+                            .eq('user_id', user.id)
+                            .select('*')
+                            .maybeSingle();
+                        updateError = updateResult.error;
+                        updatedCrop = updateResult.data;
                         if (updateError) throw updateError;
                     }
 
@@ -2428,6 +2454,9 @@
                     }
 
                     if (updateError) throw updateError;
+                    if (!updatedCrop?.id) {
+                        throw new Error('No se pudo actualizar el cultivo. Verifica la sesión e intenta nuevamente.');
+                    }
                     if (window.YGUXMessages?.success) {
                         window.YGUXMessages.success(window.YGUXMessages.copy.cropSaved({ created: false }));
                     } else if (window.showToast) {
@@ -2505,10 +2534,7 @@
                 if (investmentCurrencySelect) investmentCurrencySelect.value = 'USD';
                 refreshCropInvestmentPrefix();
                 refreshCropInvestmentFxHint();
-                document.dispatchEvent(new CustomEvent('agro:crops:refresh', {
-                    detail: { source: 'crop-modal', status: normalizedEffectiveStatus || 'unknown' }
-                }));
-                document.dispatchEvent(new CustomEvent('data-refresh'));
+                await refreshCropsAfterSave({ source: 'crop-modal', status: normalizedEffectiveStatus || 'unknown' });
                 if (shouldPromptLostWizard && savedCropId && typeof window.launchAgroWizard === 'function') {
                     setTimeout(() => {
                         window.launchAgroWizard('perdidas', {
@@ -2526,7 +2552,7 @@
                 }
 
             } catch (e) { alert(e.message); }
-            finally { btn.innerHTML = originalText; btn.disabled = false; }
+            finally { restoreCropSaveButton(btn); }
         };
 
     </script>
