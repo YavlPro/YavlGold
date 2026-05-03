@@ -531,8 +531,6 @@ function renderModule() {
         <section class="agro-clients-shell" aria-label="Mis Clientes">
             <header class="agro-clients-header">
                 <div class="agro-clients-header__titleblock">
-                    <p class="agro-clients-header__eyebrow">Base de clientes</p>
-                    <h2 class="agro-clients-header__title">Mis Clientes</h2>
                     <p class="agro-clients-header__copy">Base de datos de clientes de tu finca.</p>
                 </div>
                 <div class="agro-clients-header__actions">
