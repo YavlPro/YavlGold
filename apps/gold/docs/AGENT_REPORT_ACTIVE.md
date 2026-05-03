@@ -3903,3 +3903,44 @@ Estado: **YELLOW** — bug persistente en edición de ciclos/cultivos activos.
 
 - El render de cards sigue siendo un repintado completo del grid; puede existir una animación visual normal de progreso, pero ya no debería pisarse el estado nuevo con una recarga vieja no esperada.
 - La prueba definitiva de persistencia requiere que el usuario valide en sesión autenticada contra Supabase.
+
+---
+
+## 2026-05-03 — Fix resistente: estado explícito pisado por cálculo automático en resolveCropStatus
+
+### Bug resistente confirmado
+
+Al editar un cultivo de `Creciendo` a `En producción`, el sistema muestra éxito, pero la card vuelve a mostrar `Creciendo`.
+
+### Hallazgo principal (Opus 4.6)
+
+- El valor interno de `En producción` es `produccion`.
+- La función clave es `resolveCropStatus(crop, progress)` en `apps/gold/agro/agro.js` línea 8848.
+- Cuando `status_mode === 'auto'`, la línea 8856 ejecuta `return computeAutoCropStatus(crop, progress)` ANTES de verificar `crop.status`.
+- Si el progreso del cultivo está por debajo del umbral de producción, `computeAutoCropStatus` devuelve `creciendo`, pisando el estado explícito guardado en `crop.status`.
+- Campos relacionados: `status`, `status_mode`, `status_override`.
+
+### Plan de fix mínimo
+
+Modificar `resolveCropStatus()` para que la prioridad sea:
+
+1. Si `status_mode === 'manual'`, usar estado manual válido.
+2. Si `status_override` tiene valor válido, usarlo.
+3. Si `status` tiene valor válido, usarlo.
+4. Solo si no hay estado explícito válido, usar `computeAutoCropStatus(crop, progress)`.
+
+Cambios: eliminar la línea `if (mode === 'auto') return computeAutoCropStatus(crop, progress);` y reordenar para que `crop.status` se evalúe antes del fallback automático.
+
+### Riesgos
+
+- Crops que antes dependían exclusivamente de auto-compensación por progreso ahora respetarán su `status` guardado. Esto es el comportamiento deseado, pero podría revelar estados obsoletos en crops antiguos que quedaron con `status` explícito pero sin `status_mode`.
+- El cambio no afecta el flujo de guardado (`saveCrop`), solo la resolución en lectura.
+
+### DoD (Definition of Done)
+
+- `resolveCropStatus()` prioriza estado explícito sobre cálculo automático.
+- Si `crop.status` trae `produccion`, la card debe mostrar `En producción`.
+- `computeAutoCropStatus()` solo se usa cuando no existe estado explícito válido.
+- `pnpm build:gold` pasa sin errores.
+- `git diff --check` pasa sin errores.
+- No se tocaron Mis Clientes, Cartera Viva, popups, migraciones ni duraciones.

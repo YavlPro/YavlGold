@@ -8853,7 +8853,6 @@ function resolveCropStatus(crop, progress) {
     }
     const override = readCropStatusToken(crop?.status_override);
     if (override) return override;
-    if (mode === 'auto') return computeAutoCropStatus(crop, progress);
     const status = readCropStatusToken(crop?.status);
     if (status) return status;
     return computeAutoCropStatus(crop, progress);
@@ -8908,9 +8907,8 @@ function resolveCropProgressPercent(crop, progress) {
 }
 
 function hasExplicitActiveCycleStatus(crop) {
-    const mode = String(crop?.status_mode || '').toLowerCase().trim();
     const explicitRaw = crop?.status_override || crop?.status;
-    if (mode === 'auto' || !String(explicitRaw || '').trim()) {
+    if (!String(explicitRaw || '').trim()) {
         return false;
     }
 
@@ -16242,6 +16240,8 @@ export function closeCropModal() {
 /**
  * Guarda el nuevo cultivo en Supabase
  */
+// Legacy: the active saveCrop is window.saveCrop in index.html (with date validation).
+// This export is kept for module compatibility but is NOT the active flow.
 export async function saveCrop() {
     // Recoger valores del formulario
     const name = document.getElementById('crop-name')?.value?.trim();
