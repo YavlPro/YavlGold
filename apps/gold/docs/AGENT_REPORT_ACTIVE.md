@@ -3548,6 +3548,58 @@ Estado: **YELLOW técnico** — corrección aplicada y build OK; QA manual auten
   - confirmar card `En producción` sin recarga;
   - refrescar y confirmar persistencia.
 
+---
+
+## 2026-05-03 — Hotfix build Vercel: assets Mis Clientes
+
+Estado: **YELLOW** — build remoto roto por referencias a `agro-clients.js` / `agro-clients.css`.
+
+### Diagnóstico inicial
+
+- Vercel reporta que `./agro-clients.css` no existe en build time.
+- Vercel reporta que no puede resolver `./agro-clients.js` desde `agro/index.html`.
+- Hipótesis primaria: los archivos existen localmente pero quedaron sin agregar al commit/push.
+- Hipótesis secundaria: mismatch de ruta, nombre o mayúsculas/minúsculas entre `index.html` y los archivos reales.
+
+### Plan quirúrgico
+
+1. Ejecutar diagnóstico de `git status`, `git ls-files`, `Test-Path` y `rg`.
+2. Confirmar si los archivos están untracked, ausentes o con nombre distinto.
+3. Si existen y están untracked, dejar evidencia y preparar el mínimo cambio de tracking.
+4. No tocar Cartera Viva, Supabase, migraciones ni lógica de edición de estados.
+5. Validar con `git diff --check` y `pnpm build:gold`.
+
+### DoD
+
+- `apps/gold/agro/agro-clients.js` existe.
+- `apps/gold/agro/agro-clients.css` existe.
+- Los imports/referencias en `index.html` coinciden exactamente con esos nombres.
+- `git diff --check` pasa.
+- `pnpm build:gold` pasa sin error de resolución de `agro-clients`.
+- Entrega final indica si los archivos quedaron trackeados/staged o qué comando exacto falta ejecutar.
+
+### Diagnóstico real
+
+- `git status --short`: solo `AGENT_REPORT_ACTIVE.md` modificado por esta sesión.
+- `git ls-files apps/gold/agro/agro-clients.js apps/gold/agro/agro-clients.css`: ambos archivos aparecen trackeados.
+- `Test-Path`: ambos archivos existen localmente.
+- `git ls-tree -r HEAD`: ambos archivos existen dentro del `HEAD` local.
+- Último commit que los agrega: `2405143 feat(agro): add clients directory`.
+- Commit anterior afectado en el log remoto: `fix(agro): corregir edición de cultivos y guard de Cartera Viva`, donde `index.html` referenciaba los assets pero el árbol desplegado no los tenía.
+- No hay mismatch de ruta ni case: `index.html` usa `./agro-clients.css` y `import('./agro-clients.js')`, coincidiendo con los archivos reales.
+
+### Validación técnica
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS; Vite transformó `169 modules` e incluyó `assets/agro-clients-*.js`.
+- Warning no bloqueante: Node actual `v25.6.0` contra engine esperado `20.x`.
+
+### Cierre
+
+- No se tocaron Cartera Viva, Cartera Operativa, Mi Carrito, Supabase ni migraciones.
+- No hubo cambios de código necesarios en esta sesión: el estado actual del repo ya contiene los assets requeridos.
+- Para apagar Vercel si quedó anclado al commit fallido, redeployar/pushear el `HEAD` que contiene `2405143` o un commit nuevo con el reporte si se quiere dejar trazabilidad.
+
 ### Resultado
 
 Estado: **GREEN técnico / PENDING QA manual** — implementación modular lista y build verificado; QA funcional queda para validación manual del usuario.
