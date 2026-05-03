@@ -3943,4 +3943,59 @@ Cambios: eliminar la línea `if (mode === 'auto') return computeAutoCropStatus(c
 - `computeAutoCropStatus()` solo se usa cuando no existe estado explícito válido.
 - `pnpm build:gold` pasa sin errores.
 - `git diff --check` pasa sin errores.
-- No se tocaron Mis Clientes, Cartera Viva, popups, migraciones ni duraciones.
+- No se tocaron Mis Clientes, Cartera Viva, popups, ni duraciones.
+
+---
+
+## 2026-05-03 — Diagnóstico schema: columnas status_mode/status_override y migración de garantía
+
+### Log real del navegador
+
+Al intentar `Creciendo → En producción`, Supabase REST responde 400 y aparece:
+`[AGRO][CROPS] Optional agro_crops columns missing; saved using legacy fallback.`
+
+### Diagnóstico
+
+- El frontend envía `status_mode` y `status_override` en el payload del update/insert.
+- PostgREST rechaza esas columnas con error 400.
+- El código cae a `stripOptionalColumns()` que elimina `status_mode`, `status_override`, `investment_*`, `seed_kg`, `lost_at`, `closed_at` del payload y reintenta.
+- Sin `status_mode` y `status_override`, el estado manual persiste solo en `status` (que es genérico), y al leerlo, `resolveCropStatus()` con `mode === 'auto'` (valor por defecto cuando no hay status_mode) podía pisarlo con el cálculo automático.
+- La migración `20260417104335_agro_crops_roi_baseline.sql` ya incluía `ADD COLUMN IF NOT EXISTS status_mode` y `status_override`.
+- También la migración de reparación `20260224195900_agro_crops_order_repair.sql` las incluía en el `CREATE TABLE`.
+
+### Dos posibles causas
+
+**Caso A:** Las migraciones no se aplicaron al remoto (`gerzlzprkarikblqxpjt.supabase.co`). En ese caso las columnas no existen y la migración de garantía las crea.
+
+**Caso B:** Las columnas existen pero PostgREST tiene schema cache stale. La migración incluye `NOTIFY pgrst, 'reload schema'` para cubrir ambos casos.
+
+### Acción tomada
+
+Creada migración idempotente de garantía:
+- `supabase/migrations/20260503194603_agro_crops_ensure_status_override_columns.sql`
+- `ADD COLUMN IF NOT EXISTS status_mode text null`
+- `ADD COLUMN IF NOT EXISTS status_override text null`
+- `COMMENT ON COLUMN` para documentación
+- `NOTIFY pgrst, 'reload schema'` para forzar refresco de cache
+
+### Flujo legacy fallback analizado
+
+En `apps/gold/agro/index.html`:
+- `window.saveCrop()` (línea 2305) es el flujo activo del modal, con validación de fechas.
+- `export saveCrop()` en `agro.js` (línea 16245) está deshabilitado (`// window.saveCrop = saveCrop; // DISABLED`).
+- El fallback `stripOptionalColumns()` elimina todas las columnas opcionales, no solo las faltantes.
+- Se agregó comentario en `agro.js` documentando que la versión exportada NO es el flujo activo.
+
+### Riesgos
+
+- La migración es idempotente (`IF NOT EXISTS`), segura de aplicar incluso si las columnas ya existen.
+- `NOTIFY pgrst, 'reload schema'` es no destructivo y forzará el refresco de cache sin reiniciar servicios.
+- Si el problema era solo cache stale, esta migración lo resuelve.
+- Si las columnas faltaban, esta migración las crea.
+
+### DoD
+
+- Migración idempotente creada y lista para aplicar en remoto.
+- Build pasa sin errores.
+- No se tocaron Mis Clientes, Cartera Viva, popups, ni duraciones.
+- QA manual pendiente: usuario debe aplicar migración y verificar que el log `Optional columns missing` desaparece.
