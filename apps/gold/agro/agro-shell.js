@@ -59,6 +59,7 @@ const VIEW_TO_MOBILE_HUB = Object.freeze({
     operational: 'operacion',
     operaciones: 'operacion',
     carrito: 'operacion',
+    clients: 'operacion',
     rankings: 'operacion',
     'cartera-viva': 'operacion',
     clima: 'operacion',
@@ -78,6 +79,8 @@ const ACTION_TO_MOBILE_CONTEXT = Object.freeze({
 const VIEW_ALIASES = Object.freeze({
     cultivos: Object.freeze({ view: 'ciclos', subview: 'mis-cultivos' }),
     'historial-comercial': Object.freeze({ view: 'cartera-viva', subview: '' }),
+    clientes: Object.freeze({ view: 'clients', subview: '' }),
+    'mis-clientes': Object.freeze({ view: 'clients', subview: '' }),
     carrito: Object.freeze({ view: 'carrito', subview: 'summary' }),
     'operational-periods': Object.freeze({ view: 'period-cycles', subview: '' }),
     'period-cycles-active': Object.freeze({ view: 'period-cycles', subview: 'calendario' }),
@@ -102,7 +105,7 @@ const LEGACY_VIEW_REDIRECTS = Object.freeze({
 
 const NAV_PARENT_GROUPS = Object.freeze({
     'historial-comercial': Object.freeze({
-        views: Object.freeze(['cartera-viva', 'operational']),
+        views: Object.freeze(['cartera-viva', 'clients', 'operational']),
         defaultView: 'cartera-viva'
     }),
     'granja-general': Object.freeze({
@@ -126,6 +129,7 @@ const VIEW_CONFIG = Object.freeze({
     ciclos: { region: 'cultivos', label: 'Ciclos de cultivos', focusSelector: '#agro-cycles-finished-view' },
     'period-cycles': { region: 'period-cycles', label: 'Calendario operativo', focusSelector: '#agro-period-cycles-root' },
     operational: { region: 'operational', label: 'Cartera Operativa', focusSelector: '#agro-operational-root' },
+    clients: { region: 'clients', label: 'Mis Clientes', focusSelector: '#agro-clients-root' },
     'task-cycles': { region: 'task-cycles', label: 'Ciclos de Tareas', focusSelector: '#agro-task-cycles-root' },
     operaciones: { region: 'ops', label: 'Mi Granja', resolveTab: resolveOperationsTab, dense: true },
     carrito: { region: 'ops', label: 'Mi Carrito', tab: 'carrito', focusSelector: '#agro-carrito-dedicated', dense: true },
@@ -143,6 +147,7 @@ const SHELL_VIEW_KEYWORDS = Object.freeze({
     ciclos: Object.freeze(['cultivo', 'cultivos', 'siembra', 'cosecha', 'rendimiento', 'produccion']),
     'period-cycles': Object.freeze(['periodo', 'periodos', 'mes', 'mensual', 'cierre']),
     operational: Object.freeze(['cartera', 'operativa', 'facturero', 'movimiento', 'abono', 'pago']),
+    clients: Object.freeze(['clientes', 'mis clientes', 'contactos', 'libreta', 'directorio', 'registrados', 'no registrados', 'yavlgold']),
     'task-cycles': Object.freeze(['tareas', 'trabajo diario', 'pendientes', 'agenda']),
     operaciones: Object.freeze(['operacion comercial', 'gastos', 'ingresos', 'fiados', 'perdidas']),
     carrito: Object.freeze(['carrito', 'insumos', 'compras', 'lista']),
