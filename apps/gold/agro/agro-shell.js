@@ -2,6 +2,7 @@ import { initAgroShellFavorites } from './agro-shell-favorites.js';
 import { initAgroShellSearch } from './agro-shell-search.js';
 
 const AGRO_ACTIVE_VIEW_KEY = 'YG_AGRO_ACTIVE_VIEW_V1';
+const AGRO_ACTIVE_SUBVIEW_KEY = 'YG_AGRO_ACTIVE_VIEW_SUB_V1';
 const AGRO_RAIL_EXPANDED_KEY = 'YG_AGRO_RAIL_EXPANDED_V1';
 const AGRO_MOBILE_RAIL_COLLAPSED_KEY = 'YG_AGRO_MOBILE_RAIL_COLLAPSED_V1';
 const AGRO_DEFAULT_VIEW = 'dashboard';
@@ -503,6 +504,52 @@ function writeStoredView(view) {
     }
 }
 
+function readStoredView() {
+    try { return localStorage.getItem(AGRO_ACTIVE_VIEW_KEY) || ''; } catch (_err) { return ''; }
+}
+
+function readStoredSubview() {
+    try { return localStorage.getItem(AGRO_ACTIVE_SUBVIEW_KEY) || ''; } catch (_err) { return ''; }
+}
+
+function writeStoredSubview(subview) {
+    try { localStorage.setItem(AGRO_ACTIVE_SUBVIEW_KEY, subview || ''); } catch (_err) { /* Ignore storage errors. */ }
+}
+
+function resolveInitialView() {
+    try {
+        const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+        const hashView = hash.get('view');
+        if (hashView) {
+            const normalized = normalizeView(hashView);
+            if (Object.prototype.hasOwnProperty.call(VIEW_CONFIG, normalized)) {
+                return { view: normalized, subview: hash.get('subview') || '' };
+            }
+        }
+    } catch (_err) { /* ignore */ }
+
+    const storedView = readStoredView();
+    if (storedView && Object.prototype.hasOwnProperty.call(VIEW_CONFIG, storedView)) {
+        return { view: storedView, subview: readStoredSubview() };
+    }
+
+    return { view: AGRO_DEFAULT_VIEW, subview: '' };
+}
+
+function writeViewToHash(view, subview) {
+    try {
+        const url = new URL(window.location.href);
+        if (view === AGRO_DEFAULT_VIEW && !subview) {
+            url.hash = '';
+        } else {
+            url.hash = subview
+                ? `view=${encodeURIComponent(view)}&subview=${encodeURIComponent(subview)}`
+                : `view=${encodeURIComponent(view)}`;
+        }
+        history.replaceState(null, '', url);
+    } catch (_err) { /* ignore */ }
+}
+
 function readRailExpanded() {
     try {
         return localStorage.getItem(AGRO_RAIL_EXPANDED_KEY) === '1';
@@ -728,9 +775,9 @@ export function initAgroShell() {
     if (!sidebar || !backdrop) return null;
 
     const launcherClose = sidebar.querySelector('.agro-launcher__close');
-    const bootViewToken = AGRO_DEFAULT_VIEW;
-    let activeView = normalizeBootView(bootViewToken);
-    let activeSubview = normalizeSubview(activeView, resolveViewAlias(bootViewToken)?.subview);
+    const initial = resolveInitialView();
+    let activeView = initial.view;
+    let activeSubview = normalizeSubview(activeView, initial.subview || resolveViewAlias(initial.view)?.subview);
     let sidebarOpen = false;
     let railExpanded = readRailExpanded();
     let ignoreToggleHitClose = false;
@@ -1007,6 +1054,8 @@ export function initAgroShell() {
         activeSubview = normalizeSubview(view, options.subview || aliasSubview);
         expandedNavParent = resolveNavParentForView(view) || expandedNavParent;
         writeStoredView(view);
+        writeStoredSubview(activeSubview);
+        writeViewToHash(view, activeSubview);
         syncRegions(config.region);
         syncViewButtons();
         applyViewEffects(view, options);
@@ -1251,7 +1300,13 @@ export function initAgroShell() {
     syncRailExpanded();
     syncMobileHub();
     setActiveView(activeView, { scroll: false, syncTab: true, subview: activeSubview, preserveDepth: true });
-    setShellDepth('hub');
+    if (initial.view === AGRO_DEFAULT_VIEW) {
+        setShellDepth('hub');
+    } else {
+        const initialConfig = VIEW_CONFIG[initial.view];
+        setMobileHub(VIEW_TO_MOBILE_HUB[initial.view] || activeMobileHub);
+        setShellDepth('module', { title: initialConfig?.label || 'Módulo' });
+    }
     document.body.classList.add('agro-shell-ready');
     const splash = document.getElementById('agro-splash');
     if (splash) {

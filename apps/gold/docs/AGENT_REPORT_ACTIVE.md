@@ -4029,3 +4029,120 @@ En `apps/gold/agro/index.html`:
 - Build pasa sin errores.
 - No se tocaron Mis Clientes, Cartera Viva, popups, ni duraciones.
 - QA manual pendiente: usuario debe aplicar migración y verificar que el log `Optional columns missing` desaparece.
+
+---
+
+## 2026-05-03 — Fix: Shell no conserva vista activa al refrescar
+
+**Estado:** EN PROGRESO
+
+### Bug confirmado
+
+Al refrescar la página (F5) estando en un módulo profundo de Agro (Mis cultivos, Cartera Viva, Cartera Operativa, Mi Carrito, Mis Clientes, Calendario operativo, etc.), la app vuelve siempre a Inicio (dashboard) en vez de conservar la vista donde estaba el usuario.
+
+### Causa raíz
+
+En `apps/gold/agro/agro-shell.js`, línea 731:
+```js
+const bootViewToken = AGRO_DEFAULT_VIEW; // siempre 'dashboard'
+```
+
+El bootstrap NUNCA lee una vista previamente guardada. Existe `writeStoredView(view)` que escribe en localStorage (`YG_AGRO_ACTIVE_VIEW_V1`), pero no existe `readStoredView()` ni se lee del hash de URL al iniciar. El shell siempre arranca en `dashboard`.
+
+### Alcance
+
+- Shell/navegación de Agro (`agro-shell.js`)
+- No se tocan: Supabase, migraciones, lógica financiera, popups, Mis Clientes internamente, Cartera Viva internamente
+
+### Archivos candidatos
+
+- `apps/gold/agro/agro-shell.js` (principal, único archivo modificado)
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md` (progreso)
+
+### Implementación realizada
+
+**Archivo modificado:** `apps/gold/agro/agro-shell.js`
+
+**6 cambios quirúrgicos:**
+
+1. **Constante nueva** — `AGRO_ACTIVE_SUBVIEW_KEY = 'YG_AGRO_ACTIVE_VIEW_SUB_V1'` para persistir subvista en localStorage.
+
+2. **5 funciones nuevas** después de `writeStoredView()`:
+   - `readStoredView()` — lee vista guardada en localStorage
+   - `readStoredSubview()` — lee subvista guardada en localStorage
+   - `writeStoredSubview(subview)` — guarda subvista en localStorage
+   - `resolveInitialView()` — prioridad: URL hash → localStorage → default (`dashboard`). Valida contra `VIEW_CONFIG`.
+   - `writeViewToHash(view, subview)` — escribe `#view=ciclos&subview=mis-cultivos` (o `#view=ciclos`) via `history.replaceState`. Limpia hash en Inicio.
+
+3. **Boot corregido** — Cambio de:
+   ```js
+   const bootViewToken = AGRO_DEFAULT_VIEW;
+   let activeView = normalizeBootView(bootViewToken);
+   let activeSubview = normalizeSubview(activeView, resolveViewAlias(bootViewToken)?.subview);
+   ```
+   A:
+   ```js
+   const initial = resolveInitialView();
+   let activeView = initial.view;
+   let activeSubview = normalizeSubview(activeView, initial.subview || resolveViewAlias(initial.view)?.subview);
+   ```
+
+4. **Escritura al navegar** — En `setActiveView()`, se agregaron:
+   ```js
+   writeStoredSubview(activeSubview);
+   writeViewToHash(view, activeSubview);
+   ```
+
+5. **Profundidad de shell al boot** — Cambio de:
+   ```js
+   setShellDepth('hub');
+   ```
+   A: Si la vista restaurada no es `dashboard`, se configura `shellDepth = 'module'` con el hub mobile y título correctos. Si es `dashboard`, sigue en `'hub'`.
+
+6. **Ningún router paralelo** — Se usa `history.replaceState` (no `pushState`), lo que mantiene la URL actualizable sin crear entradas de historial. No se convierte en SPA.
+
+### Fuente de verdad para restaurar vista
+
+1. **URL hash** (`#view=ciclos&subview=mis-cultivos`) — prioridad máxima
+2. **localStorage** (`YG_AGRO_ACTIVE_VIEW_V1` + `YG_AGRO_ACTIVE_VIEW_SUB_V1`) — fallback
+3. **Default** (`dashboard`) — si no hay nada válido
+
+### Validación de vista guardada
+
+`resolveInitialView()` usa `Object.prototype.hasOwnProperty.call(VIEW_CONFIG, normalized)` para verificar que la vista restaurada exista en `VIEW_CONFIG`. Si no existe, cae a `dashboard`.
+
+### Cómo se evita caer a Inicio al refrescar
+
+- Al navegar: `setActiveView()` escribe en localStorage + URL hash
+- Al iniciar: `resolveInitialView()` lee hash → localStorage → default
+- Si la vista guardada no es válida, cae de forma segura a `dashboard`
+
+### Resultado de validación
+
+- `git diff --check`: sin errores
+- `pnpm build:gold`: pasa limpio (7.11s, sin warnings)
+
+### QA manual pendiente para el usuario
+
+1. Entrar a Agro.
+2. Abrir **Mis cultivos**. Presionar F5. Confirmar que sigue en Mis cultivos.
+3. Abrir **Cartera Viva**. Presionar F5. Confirmar que sigue en Cartera Viva.
+4. Abrir **Cartera Operativa**. Presionar F5. Confirmar que sigue en Cartera Operativa.
+5. Abrir **Mi Carrito**. Presionar F5. Confirmar que sigue en Mi Carrito.
+6. Abrir **Mis Clientes**. Presionar F5. Confirmar que sigue en Mis Clientes.
+7. Abrir **Calendario operativo**. Presionar F5. Confirmar que sigue en Calendario operativo.
+8. Probar botón Volver. Confirmar que no queda una vista falsa guardada.
+9. Probar navegación mobile (tabs inferiores).
+
+### Riesgos pendientes
+
+- Subviews internas (e.g., tab dentro de Mis cultivos) se persisten a nivel de subvista principal. Subtabs granulares pueden no restaurarse en el nivel más fino — esto es aceptable para esta corrección y puede mejorar iterativamente.
+- No se usa `pushState` (solo `replaceState`), lo que significa que el historial del navegador no se llena con vistas de Agro. Esto es intencional (MPA, no SPA).
+
+### Comandos git sugeridos (sin ejecutar)
+
+```bash
+git add apps/gold/agro/agro-shell.js apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(agro): preserve active module on refresh"
+git push
+```
