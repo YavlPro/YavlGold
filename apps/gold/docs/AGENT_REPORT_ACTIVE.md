@@ -4146,3 +4146,94 @@ git add apps/gold/agro/agro-shell.js apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "fix(agro): preserve active module on refresh"
 git push
 ```
+
+---
+
+## 2026-05-03 — Fix: Mis Clientes muestra clientes de Cartera Viva en "No registrados"
+
+**Estado:** EN PROGRESO
+
+### Bug confirmado
+
+La pestaña "No registrados" de Mis Clientes aparece vacía aunque Cartera Viva ya tiene compradores/clientes reales. Mis Clientes solo lee `agro_clients`, ignorando completamente `agro_buyers` (la fuente de Cartera Viva).
+
+### Causa raíz
+
+- Mis Clientes (`agro-clients.js`) consulta exclusivamente `agro_clients` (línea 5, 596-606).
+- Cartera Viva usa `agro_buyers` como su tabla de compradores (validado en `agrocompradores.js` y `agro-cartera-viva-view.js`).
+- `agro_buyers` tiene campos de contacto: `display_name`, `phone`, `whatsapp`, `notes`, `linked_user_id`.
+- Mis Clientes no realiza ninguna consulta a `agro_buyers`, por lo que los clientes externos que ya existen en Cartera Viva simplemente no aparecen.
+
+### Fuente real de clientes de Cartera Viva
+
+Tabla: `agro_buyers` con campos `id`, `user_id`, `display_name`, `group_key`, `canonical_name`, `status`, `phone`, `whatsapp`, `instagram`, `facebook`, `notes`, `linked_user_id`, `created_at`, `updated_at`. Filtrado por `status = 'active'`.
+
+### Archivos tocados
+
+- `apps/gold/agro/agro-clients.js` — lógica de merge, fetch de buyers, rendering
+- `apps/gold/agro/agro-clients.css` — estilos para badge "Cartera Viva" y card derivada
+
+### Cómo se combina `agro_clients` con clientes de Cartera Viva
+
+1. `refreshData()` ahora ejecuta `Promise.all([fetchClients(userId), fetchBuyersAsClients(userId)])`.
+2. `fetchBuyersAsClients()` consulta `agro_buyers` con: `id, display_name, phone, whatsapp, notes, linked_user_id` filtrando `status = 'active'`.
+3. `mapBuyerToDerivedClient()` convierte cada buyer en un objeto compatible con clientes, añadiendo `_source: 'cartera-viva'` y `_buyerId`.
+4. Buyers con `linked_user_id` se marcan como `client_type: 'registered'`; sin `linked_user_id` como `client_type: 'external-cartera'`.
+5. `mergeClientsWithBuyers()` mezcla ambas listas, deduplicando por nombre canónico (`canonicalizeClientName`). Clientes de `agro_clients` tienen prioridad sobre derivados.
+
+### Cómo se evita duplicado
+
+Deduplicación por nombre canónico normalizado. Si un cliente en `agro_clients` tiene el mismo nombre que un buyer, el cliente de `agro_clients` se queda y el derivado se descarta.
+
+### Qué significa ahora "No registrados"
+
+- Clientes externos creados manualmente en Mis Clientes (`client_type: 'external'`).
+- Clientes de Cartera Viva sin cuenta YavlGold (`client_type: 'external-cartera'`), mostrados con badge secundario "Cartera Viva".
+- Ambos grupos aparecen en el filtro "No registrados".
+
+### Qué NO se mezcló con Cartera Viva
+
+- No se muestran saldos, deudas, KPIs, rankings ni estadísticas.
+- No se muestran totales comprados ni historial.
+- No se modifica Cartera Viva.
+- No se escriben datos en `agro_buyers`.
+- Clientes derivados son de solo lectura en Mis Clientes (no se pueden editar/eliminar desde aquí).
+
+### Conducta de clientes derivados
+
+- Card con borde visual izquierdo sutil (`agro-clients-card--derived`).
+- Badge "Cartera Viva" secundario junto al badge de tipo.
+- Sin botones de editar/eliminar — al intentar editar o eliminar, se muestra mensaje informativo que redirige a Cartera Viva.
+- No se persiste nada en `agro_buyers`.
+- Filtro "Con cuenta YavlGold" no muestra clientes externos (ni derivados ni manuales).
+- Filtro "Todos" muestra todos sin duplicados.
+
+### Resultado de validación
+
+- `git diff --check`: sin errores
+- `pnpm build:gold`: pasa limpio
+
+### QA manual pendiente para el usuario
+
+1. Abrir Agro → Mis Clientes.
+2. Filtro "No registrados" — confirmar que aparecen clientes de Cartera Viva.
+3. Confirmar que no aparecen saldos/deudas/KPIs.
+4. Confirmar que los clientes derivados tienen badge "Cartera Viva" y sin botones editar/eliminar.
+5. Crear un cliente externo nuevo en Mis Clientes — debe aparecer en "No registrados".
+6. Cambiar a "Todos" — confirmar que no hay duplicados evidentes.
+7. Cambiar a "Con cuenta YavlGold" — confirmar que no muestra clientes externos.
+8. Abrir Cartera Viva y confirmar que sigue funcionando igual.
+
+### Riesgos pendientes
+
+- La consulta a `agro_buyers` es una llamada adicional en cada `refreshData()`. Es paralela (`Promise.all`) pero agrega latencia si la tabla es grande.
+- La deduplicación es por nombre canónico. Si un buyer y un cliente tienen el mismo nombre normalizado pero son entidades diferentes, se eliminaría el derivado. Esto es aceptable porque Mis Clientes es la fuente de verdad para contactos.
+- Clientes derivados NO tienen campo `email` ni `location` porque `agro_buyers` no los tiene.
+
+### Comandos git sugeridos (sin ejecutar)
+
+```bash
+git add apps/gold/agro/agro-clients.js apps/gold/agro/agro-clients.css apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(agro): surface cartera viva clients in clients directory"
+git push
+```

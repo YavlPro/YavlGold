@@ -3,7 +3,17 @@ const VIEW_NAME = 'clients';
 const VIEW_CHANGED_EVENT = 'agro:shell:view-changed';
 const CLIENTS_CHANGED_EVENT = 'agro:clients:changed';
 const CLIENTS_TABLE = 'agro_clients';
+const BUYERS_TABLE = 'agro_buyers';
 const CLIENTS_SCHEMA_MISSING_COPY = 'Aplica la migración de Mis Clientes para habilitar esta libreta.';
+
+const BUYER_CLIENT_SELECT = [
+    'id',
+    'display_name',
+    'phone',
+    'whatsapp',
+    'notes',
+    'linked_user_id'
+].join(',');
 
 const CLIENT_SELECT = [
     'id',
@@ -42,6 +52,11 @@ const TYPE_META = Object.freeze({
     external: Object.freeze({
         label: 'No registrado en YavlGold',
         badgeClass: 'agro-clients-badge--external'
+    }),
+    'external-cartera': Object.freeze({
+        label: 'No registrado en YavlGold',
+        badgeClass: 'agro-clients-badge--external',
+        sourceLabel: 'Cartera Viva'
     })
 });
 
@@ -100,12 +115,21 @@ function normalizeToken(value) {
 }
 
 export function normalizeClientType(value) {
-    return normalizeToken(value) === 'registered' ? 'registered' : 'external';
+    const token = normalizeToken(value);
+    if (token === 'registered') return 'registered';
+    if (token === 'external-cartera') return 'external-cartera';
+    return 'external';
 }
 
 function normalizeFilter(value) {
     const type = normalizeClientType(value);
     return normalizeToken(value) === 'all' ? 'all' : type;
+}
+
+function filterGroupForType(clientType) {
+    const t = normalizeClientType(clientType);
+    if (t === 'registered') return 'registered';
+    return 'external';
 }
 
 function normalizeSort(value) {
@@ -135,6 +159,90 @@ export function parseClientTags(value) {
 
 function formatTagsInput(tags) {
     return parseClientTags(tags).join(', ');
+}
+
+function buildBuyerDerivedKey(buyer) {
+    const name = canonicalizeClientName(buyer?.display_name || '');
+    const phone = normalizeToken(buyer?.phone || '');
+    const whatsapp = normalizeToken(buyer?.whatsapp || '');
+    return [name, phone, whatsapp].filter(Boolean).join('|');
+}
+
+function mapBuyerToDerivedClient(buyer) {
+    const hasLinkedAccount = Boolean(buyer?.linked_user_id);
+    return {
+        id: `buyer:${normalizeId(buyer.id)}`,
+        _source: 'cartera-viva',
+        _buyerId: normalizeId(buyer.id),
+        client_type: hasLinkedAccount ? 'registered' : 'external-cartera',
+        display_name: buyer.display_name || '',
+        phone: buyer.phone || '',
+        whatsapp: buyer.whatsapp || '',
+        email: '',
+        location: '',
+        notes: buyer.notes || '',
+        tags: [],
+        created_at: buyer.created_at || '',
+        updated_at: buyer.updated_at || '',
+        deleted_at: null
+    };
+}
+
+function mergeClientsWithBuyers(clients, buyers) {
+    const seenKeys = new Set();
+    const seenIds = new Set();
+    const merged = [];
+    const clientTypeOrder = { registered: 0, 'external-cartera': 1, external: 1 };
+
+    for (const client of clients) {
+        if (client?.deleted_at) continue;
+        const id = normalizeId(client.id);
+        if (seenIds.has(id)) continue;
+        seenIds.add(id);
+        const key = canonicalizeClientName(client.display_name || '');
+        if (key) seenKeys.add(key);
+        merged.push(client);
+    }
+
+    for (const buyer of buyers) {
+        const derived = mapBuyerToDerivedClient(buyer);
+        const buyerId = derived.id;
+        if (seenIds.has(buyerId)) continue;
+        const key = canonicalizeClientName(derived.display_name || '');
+        if (key && seenKeys.has(key)) continue;
+        seenIds.add(buyerId);
+        if (key) seenKeys.add(key);
+        merged.push(derived);
+    }
+
+    merged.sort((a, b) => {
+        const typeA = clientTypeOrder[normalizeClientType(a.client_type)] ?? 1;
+        const typeB = clientTypeOrder[normalizeClientType(b.client_type)] ?? 1;
+        if (typeA !== typeB) return typeA - typeB;
+        return collator.compare(a.display_name || '', b.display_name || '');
+    });
+
+    return merged;
+}
+
+async function fetchBuyersAsClients(userId) {
+    try {
+        const supabase = await getSupabaseClient();
+        const { data, error } = await supabase
+            .from(BUYERS_TABLE)
+            .select(BUYER_CLIENT_SELECT)
+            .eq('user_id', userId)
+            .eq('status', 'active')
+            .order('display_name', { ascending: true });
+
+        if (error) {
+            console.warn('[AgroClients] buyer fetch failed, continuing without Cartera Viva data:', error?.message || error);
+            return [];
+        }
+        return Array.isArray(data) ? data : [];
+    } catch (_err) {
+        return [];
+    }
 }
 
 function toNullableText(value) {
@@ -260,7 +368,10 @@ export function filterAndSortClients(clients = [], options = {}) {
     const search = String(options.search || '');
     const visible = (Array.isArray(clients) ? clients : [])
         .filter((client) => !client?.deleted_at)
-        .filter((client) => filter === 'all' || normalizeClientType(client.client_type) === filter)
+        .filter((client) => {
+            if (filter === 'all') return true;
+            return filterGroupForType(client.client_type) === filter;
+        })
         .filter((client) => clientMatchesSearch(client, search));
 
     visible.sort((a, b) => {
@@ -349,21 +460,31 @@ function renderTags(tags) {
 
 function renderClientCard(client) {
     const typeMeta = getTypeMeta(client.client_type);
-    return `
-        <article class="agro-clients-card" data-client-id="${escapeAttr(client.id)}">
-            <div class="agro-clients-card__head">
-                <div class="agro-clients-card__identity">
-                    <h3 class="agro-clients-card__name">${escapeHtml(client.display_name || 'Cliente sin nombre')}</h3>
-                    <span class="agro-clients-badge ${escapeAttr(typeMeta.badgeClass)}">${escapeHtml(typeMeta.label)}</span>
-                </div>
-                <div class="agro-clients-card__actions">
+    const isDerived = client._source === 'cartera-viva';
+    const sourceBadge = typeMeta.sourceLabel
+        ? `<span class="agro-clients-badge agro-clients-badge--source">${escapeHtml(typeMeta.sourceLabel)}</span>`
+        : '';
+    const actionsHtml = isDerived
+        ? ''
+        : `<div class="agro-clients-card__actions">
                     <button type="button" class="agro-clients-icon-btn" data-client-action="edit" data-client-id="${escapeAttr(client.id)}" title="Editar cliente" aria-label="Editar ${escapeAttr(client.display_name)}">
                         <i class="fa-solid fa-pen" aria-hidden="true"></i>
                     </button>
                     <button type="button" class="agro-clients-icon-btn agro-clients-icon-btn--danger" data-client-action="delete" data-client-id="${escapeAttr(client.id)}" title="Eliminar cliente" aria-label="Eliminar ${escapeAttr(client.display_name)}">
                         <i class="fa-solid fa-trash" aria-hidden="true"></i>
                     </button>
+                </div>`;
+    return `
+        <article class="agro-clients-card${isDerived ? ' agro-clients-card--derived' : ''}" data-client-id="${escapeAttr(client.id)}">
+            <div class="agro-clients-card__head">
+                <div class="agro-clients-card__identity">
+                    <h3 class="agro-clients-card__name">${escapeHtml(client.display_name || 'Cliente sin nombre')}</h3>
+                    <div class="agro-clients-card__badges">
+                        <span class="agro-clients-badge ${escapeAttr(typeMeta.badgeClass)}">${escapeHtml(typeMeta.label)}</span>
+                        ${sourceBadge}
+                    </div>
                 </div>
+                ${actionsHtml}
             </div>
             ${renderContactLine(client)}
             ${renderTags(client.tags)}
@@ -618,7 +739,11 @@ async function refreshData(options = {}) {
     try {
         const userId = await ensureUserId(options.initialUserId);
         state.schemaMissing = false;
-        state.clients = await fetchClients(userId);
+        const [clients, buyers] = await Promise.all([
+            fetchClients(userId),
+            fetchBuyersAsClients(userId)
+        ]);
+        state.clients = mergeClientsWithBuyers(clients, buyers);
         state.loadedOnce = true;
         setPageFeedback('', 'info');
         renderFilterButtons();
@@ -827,6 +952,11 @@ function updateDraft(field, value) {
         : String(value || '');
 }
 
+function isDerivedClient(clientOrId) {
+    const id = typeof clientOrId === 'string' ? clientOrId : clientOrId?.id;
+    return String(id || '').startsWith('buyer:');
+}
+
 async function handleRootClick(event) {
     const button = event.target.closest('[data-client-action]');
     if (!button || !state.root?.contains(button)) return;
@@ -847,10 +977,18 @@ async function handleRootClick(event) {
         return;
     }
     if (action === 'edit') {
+        if (isDerivedClient(button.dataset.clientId)) {
+            setPageFeedback('Este contacto viene de Cartera Viva. Edítalo desde allí.', 'info');
+            return;
+        }
         openEditModal(button.dataset.clientId);
         return;
     }
     if (action === 'delete') {
+        if (isDerivedClient(button.dataset.clientId)) {
+            setPageFeedback('Este contacto viene de Cartera Viva. Elimínalo desde allí.', 'info');
+            return;
+        }
         await handleDelete(button.dataset.clientId);
         return;
     }
@@ -941,5 +1079,8 @@ export const __test = {
     canonicalizeClientName,
     filterAndSortClients,
     normalizeClientType,
+    filterGroupForType,
+    mergeClientsWithBuyers,
+    mapBuyerToDerivedClient,
     parseClientTags
 };

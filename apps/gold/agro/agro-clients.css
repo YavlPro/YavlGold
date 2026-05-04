@@ -272,6 +272,29 @@ body[data-agro-active-view="clients"][data-agro-shell-depth="module"] .agro-mobi
   background: color-mix(in srgb, var(--text-primary) 4%, transparent);
 }
 
+.agro-clients-badge--source {
+  border-color: color-mix(in srgb, var(--gold-4) 20%, var(--border-neutral));
+  background: color-mix(in srgb, var(--gold-4) 6%, transparent);
+  color: var(--gold-5);
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+}
+
+.agro-clients-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.agro-clients-card--derived {
+  border-left: 3px solid color-mix(in srgb, var(--gold-4) 35%, transparent);
+}
+
+.agro-clients-card--derived .agro-clients-card__name {
+  opacity: 0.92;
+}
+
 .agro-clients-card__contact {
   display: flex;
   flex-direction: column;
