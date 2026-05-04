@@ -16245,8 +16245,10 @@ export async function saveCrop() {
     const name = document.getElementById('crop-name')?.value?.trim();
     const variety = document.getElementById('crop-variety')?.value?.trim() || null;
     const icon = document.getElementById('crop-icon')?.value?.trim() || '🌱';
-    const area = parseFloat(document.getElementById('crop-area')?.value) || 0;
-    const investment = parseFloat(document.getElementById('crop-investment')?.value) || 0;
+    const areaRaw = String(document.getElementById('crop-area')?.value || '').replace(',', '.').trim();
+    const area = parseFloat(areaRaw) || 0;
+    const investmentRaw = String(document.getElementById('crop-investment')?.value || '').replace(',', '.').trim();
+    const investment = parseFloat(investmentRaw) || 0;
     const startDate = document.getElementById('crop-start-date')?.value || null;
     const harvestDate = document.getElementById('crop-harvest-date')?.value || null;
     const statusValue = document.getElementById('crop-status')?.value || 'sembrado';

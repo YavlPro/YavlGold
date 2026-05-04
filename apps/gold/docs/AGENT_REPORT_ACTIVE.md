@@ -6,6 +6,65 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-17__2026-04-27.md`
 
 ---
 
+## 2026-05-03 — Fix: inputs decimales en modal de cultivo (step mismatch)
+
+**Estado:** COMPLETADO
+
+### Bug detectado
+
+En el modal "Editar Cultivo", al intentar guardar con Área (hectáreas) = `0,5`, Chrome mostraba validación nativa:
+
+> "Introduce un valor válido. Los dos valores válidos más aproximados son 0,41 y 0,51."
+
+### Causa raíz
+
+El input `crop-area` tenía `step="0.1" min="0.01"`. Esto genera una secuencia que empieza en 0.01 y avanza de 0.1: 0.01, 0.11, 0.21, 0.31, 0.41, 0.51... El valor 0.5 no pertenece a esa secuencia, por lo que el navegador lo rechaza.
+
+### Archivos tocados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/index.html` | `crop-area`: `step="0.1" min="0.01"` → `step="any" min="0" inputmode="decimal"`. Normalización coma→punto en parseo de `area` e `investmentAmount`. |
+| `apps/gold/agro/agro.js` | Normalización coma→punto en parseo de `area` e `investment` en la función de edición de cultivo. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Esta sección. |
+
+### Qué inputs tenían step/min incompatible
+
+| Input | Antes | Después |
+|---|---|---|
+| `crop-area` (hectáreas) | `step="0.1" min="0.01"` | `step="any" min="0" inputmode="decimal"` |
+| `crop-investment` | `step="0.01" min="0"` (correcto, sin cambios) | sin cambios |
+| `crop-seed-kg` | `step="any" min="0"` (ya correcto) | sin cambios |
+
+### Normalización coma→punto
+
+Se añadió `.replace(',', '.')` en el parseo de `area` e `investmentAmount`/`investment` en ambos flujos (crear en `index.html` y editar en `agro.js`) para que valores locales como `0,5` se interpreten como `0.5`.
+
+### Validación
+
+- `git diff --check`: PASS
+- `pnpm build:gold`: PASS
+
+### QA manual pendiente
+
+1. Crear cultivo con Área = `0.5` → debe guardar sin error nativo.
+2. Crear cultivo con Área = `0,5` → debe guardar correctamente (normaliza coma).
+3. Editar cultivo con Área = `0.5` → debe actualizar sin error.
+4. Editar cultivo con Área = `2.5` → debe funcionar.
+5. Semilla kg con valor `12.5` → debe funcionar (ya tenía `step="any"`).
+6. Inversión con decimales → debe funcionar (ya tenía `step="0.01"`).
+7. Área vacía → debe seguir fallando validación obligatoria.
+8. Área negativa → debe seguir siendo rechazada (`min="0"`).
+
+### Comandos git sugeridos
+
+```bash
+git add apps/gold/agro/index.html apps/gold/agro/agro.js apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(agro): allow decimal crop area inputs with step=any and comma normalization"
+```
+
+---
+
 ## 2026-05-03 — Fase 2: Popup informativo compacto central (consolidación YGUXMessages)
 
 **Estado:** COMPLETADO
