@@ -1416,14 +1416,14 @@ function initBuyerProfileClickHandlers() {
         if (!rawName || rawName === BUYER_PRIVACY_MASK) return;
 
         if (readBuyerNamesHidden()) {
-            uxMessages.warning('Desactiva 👁 para abrir ficha del cliente.');
+            uxMessages.show({ type: 'warning', title: 'Desactiva \uD83D\uDC41 para abrir ficha del cliente.', popup: true });
             return;
         }
 
         event.preventDefault();
         openBuyerProfileByName(rawName).catch((error) => {
             console.error('[AGRO_BUYERS] open from click error:', error);
-            uxMessages.warning('No se pudo abrir la ficha del cliente.');
+            uxMessages.show({ type: 'warning', title: 'No se pudo abrir la ficha del cliente.', popup: true });
         });
     });
 }
@@ -1438,7 +1438,7 @@ function bindAgroSocialOpenButton() {
         event.preventDefault();
         openSocialPanel(event.currentTarget).catch((error) => {
             console.error('[AGRO_SOCIAL] open panel error:', error);
-            uxMessages.warning('No se pudo abrir el panel Social.');
+            uxMessages.show({ type: 'warning', title: 'No se pudo abrir el panel Social.', popup: true });
         });
     });
 }
@@ -6594,7 +6594,7 @@ async function saveEditModal() {
                     delete fallbackData.unit_type;
                     delete fallbackData.unit_qty;
                     delete fallbackData.quantity_kg;
-                    uxMessages.warning('Aviso: columnas de presentacion/kg no disponibles, se guardo sin ellas.');
+                    uxMessages.show({ type: 'warning', title: 'Aviso: columnas de presentacion/kg no disponibles, se guardo sin ellas.', popup: true });
                 }
                 if (dropBuyerIdentity) {
                     delete fallbackData.buyer_id;
@@ -6819,11 +6819,9 @@ function notifyFacturero(message, type = 'info') {
     const normalizedType = typeMap[type] || 'info';
 
     if (typeof message === 'object' && message !== null) {
-        uxMessages.show(message, normalizedType);
-    } else if (uxMessages && typeof uxMessages[normalizedType] === 'function') {
-        uxMessages[normalizedType](String(message));
+        uxMessages.show({ ...message, popup: true }, normalizedType);
     } else {
-        uxMessages.show(String(message), normalizedType);
+        uxMessages.show({ type: normalizedType, title: String(message), popup: true });
     }
 }
 
@@ -12132,11 +12130,11 @@ function renderIncomeItem(listEl, income, signedUrl) {
             if (!hardError) {
                 deleteSuccess = true;
             } else {
-                uxMessages.warning('Error al eliminar pagado.');
+                uxMessages.show({ type: 'error', title: 'Error al eliminar pagado.', popup: true });
                 console.error('[Agro] Income hard delete failed:', hardError.message);
             }
         } else {
-            uxMessages.warning('Error al eliminar pagado.');
+            uxMessages.show({ type: 'error', title: 'Error al eliminar pagado.', popup: true });
             console.error('[Agro] Income delete failed:', softError.message);
         }
 

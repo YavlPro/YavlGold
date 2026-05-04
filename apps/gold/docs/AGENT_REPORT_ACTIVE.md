@@ -6,6 +6,125 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-17__2026-04-27.md`
 
 ---
 
+## 2026-05-03 — Fase 2: Popup informativo compacto central (consolidación YGUXMessages)
+
+**Estado:** COMPLETADO
+
+### Diagnóstico
+
+Basado en la auditoría de popups de Fase 1:
+- `YGUXMessages` ya era el sistema de toasts más alineado con ADN V11 (dark/gold, tipografía, animación).
+- El sistema existía como toast en esquina superior derecha (`position: fixed; top: 20px; right: 20px`).
+- Faltaba: modo centrado, botón de cierre, iconos semánticos, rol accesible.
+
+### Objetivo
+
+Extender `YGUXMessages` con modo popup centrado compacto. Consolidar `notifyFacturero` y `showEvidenceToast` a través del popup central. No crear un octavo sistema paralelo.
+
+### Archivos modificados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/assets/js/ui/uxMessages.js` | Extendido con modo popup centrado: `popup: true` en payload, `renderPopup()`, `removePopup()`, `ensurePopupLayer()`, CSS de `.yg-ux-popup`, `api.popup()`, `api.closePopup()`, iconos Font Awesome por tipo, botón X, cierre con Escape, `role="alert"`/`role="status"`, `prefers-reduced-motion`. |
+| `apps/gold/agro/agro.js` | `notifyFacturero()` ahora usa `popup: true` en llamadas a `uxMessages.show()`. Las 5 llamadas directas previas (`showEvidenceToast` → `uxMessages.warning()`) cambiadas a `uxMessages.show({ type, title, popup: true })`. Las 2 llamadas "Error al eliminar pagado" usan `type: 'error'` + popup. |
+| `apps/gold/agro/index.html` | `showValidationError()` usa `YGUXMessages.popup()` como primera opción. Cultivo creado/editado usa `YGUXMessages.popup()` como primera opción. Error en catch usa `popup`. Botón Guardar no encontrado usa `popup`. |
+| `apps/gold/agro/agro-cartera-viva-view.js` | `showLiveWalletCropBlockMessage()` usa `YGUXMessages.popup()` como primera opción. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Documentación de esta sesión. |
+
+### Cómo luce/comporta el popup compacto
+
+- **Posición**: centrado en pantalla (`fixed; inset: 0; align-items: center; justify-content: center`)
+- **Tamaño**: `min(320px, calc(100vw - 32px))` × `min(380px, calc(100vw - 32px))`
+- **Estilo**: fondo dark con gradiente, borde fino dorado (`rgba(200, 167, 82, 0.2)`), `border-left` con acento por tipo, sombra oscura, `backdrop-filter: blur(18px)`, `border-radius: 14px`
+- **Eyebrow**: icono Font Awesome + label en mayúsculas con Orbitron
+- **Iconos por tipo**: success (`fa-circle-check`), info (`fa-circle-info`), warning (`fa-triangle-exclamation`), error (`fa-circle-xmark`)
+- **Botón X**: cierre manual, accesible, con `:focus-visible`
+- **Cierre**: auto-dismiss por duración + botón X + tecla Escape
+- **Animación**: `opacity + scale(0.95→1)` en 160ms, respeta `prefers-reduced-motion`
+- **Accesibilidad**: `role="alert"` para errores, `role="status"` para el resto, `aria-label="Cerrar"` en botón X
+- **No bloquea**: no atrapa focus, no tiene overlay oscuro, no es modal
+- **Un solo popup a la vez**: nuevo popup reemplaza el anterior
+
+### Mensajes migrados al popup central
+
+| Antes | Ahora | Tipo |
+|---|---|---|
+| `notifyFacturero(message, type)` → `alert()` | `uxMessages.show({ type, title: message, popup: true })` | facturero todas |
+| `showEvidenceToast('...')` → fallaba a `alert()` | `uxMessages.show({ type: 'warning'/'error', title: '...', popup: true })` | 5 sitios directos |
+| `showValidationError(msg)` → alert fallback | `YGUXMessages.popup({ type: 'error', title: msg })` | validación cultivo |
+| Cultivo creado → alert fallback | `YGUXMessages.popup(copy.cropSaved)` | crear cultivo |
+| Cultivo editado → alert fallback | `YGUXMessages.popup(copy.cropSaved)` | editar cultivo |
+| Catch error cultivo → alert | `YGUXMessages.popup({ type: 'error', ... })` | error guardado |
+| Botón guardar no encontrado → alert | `YGUXMessages.popup({ type: 'error', ... })` | error crítico |
+| Cartera Viva bloqueo cultivo → alert | `YGUXMessages.popup({ type: 'warning', ... })` | bloqueo cultivo |
+
+### Qué NO se tocó
+
+- `confirm()` destructivos (10 en total): eliminación de cultivo, carrito, actividad, sesión, etc.
+- `prompt()` funcionales (4): nombrar cartera, renombrar ciclo, ID cultivo destino, monto copia
+- `alert()` restantes en `agro.js` (~28 directos fuera de notifyFacturero)
+- `alert()` en `agro-agenda.js`, `agro-cart.js`, `agro-crop-report.js`, `agro-stats.js`, `agro-stats-report.js`
+- Modales funcionales (crear/editar cultivo, Cartera Viva, asistente IA)
+- Status bars inline (`setPageFeedback`, `setBuyerStatus`, `setProfileStatus`, etc.)
+- `showAssistantToast` (solo opera dentro del panel IA)
+- `showUndoDeleteToast` (tiene botón "Deshacer" funcional)
+- `pushToast` del repo app
+- `NotificationsManager._showToast` del admin
+
+### Qué pasó con showEvidenceToast
+
+**Eliminado completamente en Fase 1.** Cero referencias. No se creó wrapper. Todas las invocaciones usan ahora `uxMessages` directamente con `popup: true`.
+
+### Cuántos alert() quedan y por qué
+
+- **~28 en `agro.js`**: fuera del scope del facturero. Pertenecen a AgroLog, validación de cultivo, exportación, eliminación directa, agenda, etc. Migración caso por caso en Fase 3.
+- **~5 en `agro-agenda.js`**: validación de actividad y errores. Fase 3.
+- **~10 en `agro-cart.js`**: validación y errores de carrito. Fase 3.
+- **~3 en `agro-crop-report.js`**: validación y errores de reporte. Fase 3.
+- **~2 en `agro-stats-report.js`**: errores de exportación. Fase 3.
+- **1 en `agro-stats.js`**: rango de fechas inválido. Fase 3.
+- **0 en `index.html`**: todos eliminados en Fases 1-2. 
+
+No se migraron estos porque el scope era el primer lote (notifyFacturero + showEvidenceToast + cultivo creado/editado).
+
+### Validación
+
+- `git diff --check`: PASS (cero errores)
+- `pnpm build:gold`: PASS (Vite + agent-guard + check-llms + UTF-8)
+- `rg "showEvidenceToast"`: ZERO resultados
+- `notifyFacturero()`: usa `uxMessages.show()` con `popup: true`, sin `alert()` en flujo normal
+
+### QA manual pendiente para el usuario
+
+1. **Crear cultivo**: debe aparecer popup compacto centrado con tipo `success`, título "Cultivo creado correctamente", auto-dismiss ~3.4s.
+2. **Editar cultivo**: popup "Cambios guardados en el cultivo."
+3. **Crear registro en facturero**: popup compacto con tipo según operación.
+4. **Error de guardado**: popup compacto con tipo `error`, acento rojo, icono X.
+5. **Validación de fecha**: popup de error al intentar guardar cultivo con fecha futura.
+6. **Bloqueo cartera viva** (cultivo no en producción): popup warning con acento amarillo.
+7. **Confirmaciones destructivas**: deben seguir funcionando igual (confirm() nativo).
+8. **Mobile**: popup centrado sin desbordar, botón X visible.
+9. **Desktop**: popup compacto y sobrio.
+10. **Escape**: debe cerrar popup activo.
+11. **Prefers-reduced-motion**: popup sin animación de scale, solo opacity.
+
+### Riesgos pendientes
+
+- Los ~28 `alert()` restantes en `agro.js` siguen usando alert nativo. Fase 3 los migrará.
+- Los `confirm()` destructivos necesitan un componente de confirmación propio (no popup informativo).
+- Los status bars inline (`setPageFeedback`, etc.) son naturaleza diferente y no se migraron.
+- `showAssistantToast` y `showUndoDeleteToast` son componentes especializados que no se tocaron.
+- El popup central no debe usarse para mensajes que requieran decisión del usuario.
+
+### Comandos git sugeridos (sin ejecutar)
+
+```bash
+git add apps/gold/assets/js/ui/uxMessages.js apps/gold/agro/agro.js apps/gold/agro/index.html apps/gold/agro/agro-cartera-viva-view.js apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "feat(agro): popup informativo compacto central — Fase 2 consolidación YGUXMessages"
+```
+
+---
+
 ## 2026-05-03 — Fix: Bug Resistente de Estado de Cultivos (QA Forense)
 
 **Estado:** CERRADO

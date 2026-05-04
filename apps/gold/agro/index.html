@@ -2308,7 +2308,9 @@
                 || document.querySelector('#modal-new-crop .modal-footer button.btn-primary')
                 || document.querySelector('#form-new-crop button[type="submit"]');
             if (!btn) {
-                if (window.YGUXMessages && typeof window.YGUXMessages.error === 'function') {
+                if (window.YGUXMessages && typeof window.YGUXMessages.popup === 'function') {
+                    window.YGUXMessages.popup({ type: 'error', title: 'No se encontró el botón de Guardar. Refresca la página.' });
+                } else if (window.YGUXMessages && typeof window.YGUXMessages.error === 'function') {
                     window.YGUXMessages.error('No se encontró el botón de Guardar. Refresca la página.');
                 } else {
                     console.error('[Agro] No se encontró el botón de Guardar.');
@@ -2347,7 +2349,9 @@
             };
 
             const showValidationError = (msg) => {
-                if (window.YGUXMessages && typeof window.YGUXMessages.error === 'function') {
+                if (window.YGUXMessages && typeof window.YGUXMessages.popup === 'function') {
+                    window.YGUXMessages.popup({ type: 'error', title: msg });
+                } else if (window.YGUXMessages && typeof window.YGUXMessages.error === 'function') {
                     window.YGUXMessages.error(msg);
                 } else if (typeof window.showToast === 'function') {
                     window.showToast(msg, 'error');
@@ -2622,7 +2626,9 @@
 
                     if (insertError) throw insertError;
                     insertedId = Array.isArray(insertRows) ? insertRows[0]?.id : insertRows?.id;
-                    if (window.YGUXMessages?.success) {
+                    if (window.YGUXMessages?.popup) {
+                        window.YGUXMessages.popup({ ...window.YGUXMessages.copy.cropSaved({ created: true }), popup: true });
+                    } else if (window.YGUXMessages?.success) {
                         window.YGUXMessages.success(window.YGUXMessages.copy.cropSaved({ created: true }));
                     } else if (window.showToast) {
                         window.showToast('Cultivo creado correctamente.', 'success');
@@ -2657,7 +2663,9 @@
                     throw new Error('El cultivo se guardó, pero no se pudo confirmar el refresco de la card. Recarga la página para verificar.');
                 }
                 if (showEditSuccess) {
-                    if (window.YGUXMessages?.success) {
+                    if (window.YGUXMessages?.popup) {
+                        window.YGUXMessages.popup({ ...window.YGUXMessages.copy.cropSaved({ created: false }), popup: true });
+                    } else if (window.YGUXMessages?.success) {
                         window.YGUXMessages.success(window.YGUXMessages.copy.cropSaved({ created: false }));
                     } else if (window.showToast) {
                         window.showToast('Cambios guardados en el cultivo.', 'success');
@@ -2682,7 +2690,9 @@
                 }
 
             } catch (e) {
-                if (window.YGUXMessages && typeof window.YGUXMessages.error === 'function') {
+                if (window.YGUXMessages && typeof window.YGUXMessages.popup === 'function') {
+                    window.YGUXMessages.popup({ type: 'error', title: e.message || 'Error al guardar el cultivo.' });
+                } else if (window.YGUXMessages && typeof window.YGUXMessages.error === 'function') {
                     window.YGUXMessages.error(e.message || 'Error al guardar el cultivo.');
                 } else if (window.showToast) {
                     window.showToast(e.message || 'Error al guardar el cultivo.', 'error');

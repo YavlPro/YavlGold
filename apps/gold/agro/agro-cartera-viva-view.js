@@ -470,6 +470,10 @@ function canCreateLiveWalletRecordForCrop(crop) {
 }
 
 function showLiveWalletCropBlockMessage() {
+    if (typeof window !== 'undefined' && window.YGUXMessages && typeof window.YGUXMessages.popup === 'function') {
+        window.YGUXMessages.popup({ type: 'warning', title: CARTERA_VIVA_CROP_BLOCK_MESSAGE });
+        return;
+    }
     if (typeof window !== 'undefined' && window.YGUXMessages && typeof window.YGUXMessages.warning === 'function') {
         window.YGUXMessages.warning(CARTERA_VIVA_CROP_BLOCK_MESSAGE);
         return;

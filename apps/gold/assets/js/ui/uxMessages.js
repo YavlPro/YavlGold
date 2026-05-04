@@ -1,17 +1,20 @@
 const UX_STYLE_ID = 'yg-ux-messages-style';
 const UX_LAYER_ID = 'yg-ux-messages-layer';
+const UX_POPUP_LAYER_ID = 'yg-ux-popup-layer';
 const UX_FLASH_KEY = 'YG_UX_FLASH_V1';
 
 let didConsumeFlash = false;
+let activePopup = null;
+let activePopupTimer = null;
 
 const TYPE_META = {
-  success: { accent: '#4ade80', label: 'Listo', duration: 3400 },
-  info: { accent: '#C8A752', label: 'Información', duration: 3600 },
-  warning: { accent: '#f59e0b', label: 'Aviso', duration: 4200 },
-  error: { accent: '#ef4444', label: 'Atención', duration: 5000 },
-  redirect: { accent: '#C8A752', label: 'Continuamos', duration: 3800 },
-  welcome: { accent: '#C8A752', label: 'Bienvenido', duration: 3600 },
-  farewell: { accent: '#C8A752', label: 'Hasta pronto', duration: 3800 }
+  success: { accent: '#4ade80', label: 'Listo', duration: 3400, icon: 'fa-solid fa-circle-check' },
+  info: { accent: '#C8A752', label: 'Información', duration: 3600, icon: 'fa-solid fa-circle-info' },
+  warning: { accent: '#f59e0b', label: 'Aviso', duration: 4200, icon: 'fa-solid fa-triangle-exclamation' },
+  error: { accent: '#ef4444', label: 'Atención', duration: 5000, icon: 'fa-solid fa-circle-xmark' },
+  redirect: { accent: '#C8A752', label: 'Continuamos', duration: 3800, icon: 'fa-solid fa-circle-arrow-right' },
+  welcome: { accent: '#C8A752', label: 'Bienvenido', duration: 3600, icon: 'fa-solid fa-hand-sparkles' },
+  farewell: { accent: '#C8A752', label: 'Hasta pronto', duration: 3800, icon: 'fa-solid fa-hand' }
 };
 
 function normalizeType(type) {
@@ -37,7 +40,8 @@ function buildPayload(input, fallbackType = 'info') {
       type: normalizeType(fallbackType),
       title: pickText(input),
       message: '',
-      duration: TYPE_META[normalizeType(fallbackType)].duration
+      duration: TYPE_META[normalizeType(fallbackType)].duration,
+      popup: false
     };
   }
 
@@ -55,7 +59,8 @@ function buildPayload(input, fallbackType = 'info') {
     duration,
     id: input?.id ? String(input.id) : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
     label: pickText(input?.label || ''),
-    persistent: input?.persistent === true
+    persistent: input?.persistent === true,
+    popup: input?.popup === true
   };
 }
 
@@ -190,6 +195,124 @@ function ensureStyles() {
         transform: none;
       }
     }
+
+    #${UX_POPUP_LAYER_ID} {
+      position: fixed;
+      inset: 0;
+      z-index: 12060;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .yg-ux-popup {
+      --yg-ux-accent: #C8A752;
+      position: relative;
+      min-width: min(320px, calc(100vw - 32px));
+      max-width: min(380px, calc(100vw - 32px));
+      padding: 20px 44px 20px 20px;
+      border-radius: 14px;
+      border: 1px solid rgba(200, 167, 82, 0.2);
+      border-left: 3px solid var(--yg-ux-accent);
+      background: linear-gradient(180deg, rgba(18, 18, 18, 0.98) 0%, rgba(10, 10, 10, 0.96) 100%);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 20px rgba(200, 167, 82, 0.06);
+      color: var(--gg-text-main, #E2E8F0);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      pointer-events: auto;
+      opacity: 0;
+      transform: translate3d(0, 0, 0) scale(0.95);
+      transition: opacity 160ms ease, transform 160ms ease;
+      font-family: var(--font-body, 'Rajdhani', sans-serif);
+    }
+
+    .yg-ux-popup.is-visible {
+      opacity: 1;
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+
+    .yg-ux-popup.is-hiding {
+      opacity: 0;
+      transform: translate3d(0, 0, 0) scale(0.95);
+    }
+
+    .yg-ux-popup__close {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      background: none;
+      border: none;
+      color: rgba(226, 232, 240, 0.35);
+      font-size: 16px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 6px;
+      transition: color 120ms ease, background 120ms ease;
+    }
+
+    .yg-ux-popup__close:hover {
+      color: rgba(226, 232, 240, 0.8);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .yg-ux-popup__close:focus-visible {
+      outline: 2px solid var(--yg-ux-accent);
+      outline-offset: 2px;
+    }
+
+    .yg-ux-popup__eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 4px;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--yg-ux-accent);
+      font-family: var(--font-heading, 'Orbitron', sans-serif);
+      font-weight: 700;
+    }
+
+    .yg-ux-popup__icon {
+      font-size: 0.78rem;
+      flex-shrink: 0;
+    }
+
+    .yg-ux-popup__title {
+      margin: 0;
+      font-size: 1rem;
+      line-height: 1.3;
+      color: var(--gg-text-title, #FFFFFF);
+      font-weight: 700;
+    }
+
+    .yg-ux-popup__message {
+      margin: 4px 0 0;
+      color: rgba(226, 232, 240, 0.82);
+      font-size: 0.88rem;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 640px) {
+      .yg-ux-popup {
+        min-width: calc(100vw - 32px);
+        max-width: calc(100vw - 32px);
+        padding: 16px 36px 16px 16px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .yg-ux-popup {
+        transition: opacity 120ms ease;
+        transform: none;
+      }
+      .yg-ux-popup.is-visible,
+      .yg-ux-popup.is-hiding {
+        transform: none;
+      }
+    }
   `;
 
   document.head.appendChild(style);
@@ -210,6 +333,101 @@ function removeToast(toast) {
   if (!toast) return;
   toast.classList.add('is-hiding');
   setTimeout(() => toast.remove(), 190);
+}
+
+function ensurePopupLayer() {
+  if (typeof document === 'undefined') return null;
+  let layer = document.getElementById(UX_POPUP_LAYER_ID);
+  if (layer) return layer;
+
+  layer = document.createElement('div');
+  layer.id = UX_POPUP_LAYER_ID;
+  layer.setAttribute('aria-live', 'polite');
+  document.body.appendChild(layer);
+  return layer;
+}
+
+function removePopup() {
+  if (!activePopup) return;
+  const el = activePopup;
+  activePopup = null;
+  if (activePopupTimer) { clearTimeout(activePopupTimer); activePopupTimer = null; }
+  el.classList.add('is-hiding');
+  setTimeout(() => el.remove(), 170);
+}
+
+function handlePopupKeydown(e) {
+  if (e.key === 'Escape' && activePopup) {
+    removePopup();
+    document.removeEventListener('keydown', handlePopupKeydown);
+  }
+}
+
+function renderPopup(payload) {
+  if (typeof document === 'undefined') return null;
+  ensureStyles();
+  const layer = ensurePopupLayer();
+  if (!layer) return null;
+
+  if (activePopup) removePopup();
+
+  const meta = TYPE_META[payload.type] || TYPE_META.info;
+  const popup = document.createElement('div');
+  popup.className = 'yg-ux-popup';
+  popup.style.setProperty('--yg-ux-accent', meta.accent);
+  popup.dataset.type = payload.type;
+  popup.dataset.popupId = payload.id;
+  popup.setAttribute('role', payload.type === 'error' ? 'alert' : 'status');
+
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'yg-ux-popup__close';
+  closeBtn.setAttribute('type', 'button');
+  closeBtn.setAttribute('aria-label', 'Cerrar');
+  closeBtn.textContent = '\u00d7';
+  closeBtn.addEventListener('click', () => {
+    removePopup();
+    document.removeEventListener('keydown', handlePopupKeydown);
+  });
+
+  const eyebrow = document.createElement('div');
+  eyebrow.className = 'yg-ux-popup__eyebrow';
+  if (meta.icon) {
+    const icon = document.createElement('i');
+    icon.className = `yg-ux-popup__icon ${meta.icon}`;
+    icon.setAttribute('aria-hidden', 'true');
+    eyebrow.appendChild(icon);
+  }
+  eyebrow.appendChild(document.createTextNode(payload.label || meta.label));
+
+  const title = document.createElement('p');
+  title.className = 'yg-ux-popup__title';
+  title.textContent = payload.title || meta.label;
+
+  popup.appendChild(closeBtn);
+  popup.appendChild(eyebrow);
+  popup.appendChild(title);
+
+  if (payload.message) {
+    const message = document.createElement('p');
+    message.className = 'yg-ux-popup__message';
+    message.textContent = payload.message;
+    popup.appendChild(message);
+  }
+
+  layer.appendChild(popup);
+  requestAnimationFrame(() => popup.classList.add('is-visible'));
+
+  document.addEventListener('keydown', handlePopupKeydown);
+
+  activePopup = popup;
+  if (!payload.persistent) {
+    activePopupTimer = setTimeout(() => {
+      removePopup();
+      document.removeEventListener('keydown', handlePopupKeydown);
+    }, payload.duration);
+  }
+
+  return popup;
 }
 
 function renderToast(payload) {
@@ -298,11 +516,12 @@ function show(input, fallbackType = 'info') {
   if (typeof document === 'undefined') return null;
 
   if (!document.body) {
-    window.addEventListener('DOMContentLoaded', () => renderToast(payload), { once: true });
+    const render = payload.popup ? renderPopup : renderToast;
+    window.addEventListener('DOMContentLoaded', () => render(payload), { once: true });
     return payload;
   }
 
-  return renderToast(payload);
+  return payload.popup ? renderPopup(payload) : renderToast(payload);
 }
 
 const copy = {
@@ -482,6 +701,8 @@ const api = {
   redirect(input) { return show(typeof input === 'string' ? { type: 'redirect', title: input } : { ...input, type: 'redirect' }); },
   welcome(input) { return show(typeof input === 'string' ? { type: 'welcome', title: input } : { ...input, type: 'welcome' }); },
   farewell(input) { return show(typeof input === 'string' ? { type: 'farewell', title: input } : { ...input, type: 'farewell' }); },
+  popup(input) { const p = typeof input === 'string' ? { title: input } : { ...input }; p.popup = true; return show(p); },
+  closePopup() { if (activePopup) { removePopup(); document.removeEventListener('keydown', handlePopupKeydown); } },
   copy
 };
 
