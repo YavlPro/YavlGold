@@ -6,6 +6,36 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-17__2026-04-27.md`
 
 ---
 
+## 2026-05-03 — Fix: Bug Resistente de Estado de Cultivos (QA Forense)
+
+**Estado:** CERRADO
+
+### Diagnóstico
+
+QA humano reportó un bug resistente donde cultivos cambiados manualmente a estado "En producción" volvían a mostrarse como "Creciendo" en la UI (cards) después de refrescar, a pesar de que el proceso de guardado reportaba éxito. Una auditoría de código determinó que la función `resolveCropStatus()` dependía de las columnas opcionales `status_mode` y `status_override` para priorizar el estado manual sobre el cálculo automático por fechas. 
+
+El log de red confirmó la causa raíz real:
+`[AGRO][CROPS] Optional agro_crops columns missing; saved using legacy fallback.`
+
+### Causa raíz
+
+La tabla `agro_crops` en producción carecía de 8 columnas opcionales que el frontend (`index.html` línea ~2305) intentaba enviar en el `PATCH`, incluyendo `seed_kg`, `lost_at`, `closed_at`, y varias de `investment_*`. Al fallar la petición con `400 Bad Request`, el frontend activaba el fallback `stripOptionalColumns` que eliminaba **todas** las columnas opcionales del payload, incluyendo `status_mode` y `status_override` que **sí** existían. Al recargar la vista sin estas columnas, el sistema caía en un cálculo automático (`computeAutoCropStatus`) que basaba el estado únicamente en fechas, forzando a "Creciendo" a los cultivos con <70% de progreso.
+
+### Corrección
+
+1. Se ejecutó una auditoría SQL en el proyecto `gerzlzprkarikblqxpjt` para confirmar qué columnas faltaban.
+2. Se aplicó una migración directa mediante `ALTER TABLE public.agro_crops` para agregar las siguientes 8 columnas faltantes: `seed_kg`, `lost_at`, `closed_at`, `investment_amount`, `investment_currency`, `investment_usd_equiv`, `investment_fx_usd_cop`, `investment_fx_usd_ves`, `investment_fx_at`.
+3. Se recargó el caché de esquema de PostgREST ejecutando `NOTIFY pgrst, 'reload schema';`.
+4. El código del frontend no se modificó porque la lógica de `resolveCropStatus` ya es correcta.
+
+### Validación
+
+- Las columnas ahora existen y el API acepta el payload completo.
+- El log `Optional agro_crops columns missing; saved using legacy fallback.` ya no debe aparecer en consola.
+- QA manual/browser requerido por el usuario para validar persistencia final (Cambiar `Creciendo` → `En producción` → `Guardar`).
+
+---
+
 ## 2026-05-03 — Diagnóstico: Popups informativos Agro
 
 **Estado:** DIAGNÓSTICO / SIN CAMBIOS DE UI
