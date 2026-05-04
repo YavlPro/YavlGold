@@ -150,6 +150,7 @@ Regla estricta:
 agro.js              — monolito principal (facturero, CRUD, historial)
 agro-agenda.js       — agenda agrícola
 agro-cart.js         — carrito de insumos
+agro-clients.js      — Mis Clientes: directorio de contactos (clientes manuales + buyers derivados de Cartera Viva)
 agro-clima.js        — integración meteorológica
 agro-crop-report.js  — reportes por cultivo
 agro-exchange.js     — tasas de cambio
@@ -172,6 +173,7 @@ agro-wizard.js       — wizard de configuración
 - `agro.css` — estilos principales + papelera + undo toast
 - `agro-dashboard.css` — dashboard
 - `agro-operations.css` — operaciones financieras
+- `agro-clients.css` — Mis Clientes
 
 **LocalStorage Keys:**
 - `YG_MANUAL_LOCATION`
@@ -218,6 +220,9 @@ agro-wizard.js       — wizard de configuración
 #### Agro — Cultivos
 - `agro_crops` - Cultivos activos
 - `agro_crop_cycles` - Ciclos productivos
+
+#### Agro — Clientes
+- `agro_clients` - Contactos manuales del agricultor (soft-delete con `deleted_at`, RLS owner-only, campo `client_type`)
 
 #### Contenido y Módulos
 - `modules` - Definición de módulos

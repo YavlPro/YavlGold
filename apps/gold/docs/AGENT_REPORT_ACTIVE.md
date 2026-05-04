@@ -6,6 +6,36 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-17__2026-04-27.md`
 
 ---
 
+## 2026-05-03 — Actualización canónica de documentación Agro
+
+**Estado:** COMPLETADO
+
+### Diagnóstico
+
+La documentación canónica de Agro (`MANIFIESTO_AGRO.md`) no refleja las novedades reales implementadas en V1: Mis Clientes, estados manuales de cultivo, navegación shell persistente, popups informativos compactos, inputs decimales, semilla kg opcional y duración real de ciclos.
+
+### Autorización explícita
+
+El usuario autorizó explícitamente actualizar `MANIFIESTO_AGRO.md` en esta sesión.
+
+### Archivos tocados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Esta sección |
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | Secciones agregadas/actualizadas: Mis Clientes, estados de cultivo, navegación shell, popups, semilla/duración real, malentendidos resueltos |
+| `apps/gold/public/llms.txt` | Notas sobre Mis Clientes, estados manuales, shell persistente |
+
+### DoD
+
+- [x] No se mezcló Mis Clientes con Cartera Viva.
+- [x] No se prometieron estadísticas/deuda dentro de Mis Clientes.
+- [x] No se tocó código funcional.
+- [x] `MANIFIESTO_AGRO.md` modificado con autorización explícita registrada.
+- [x] `llms.txt` actualizado con notas semánticas relevantes.
+
+---
+
 ## 2026-05-03 — Fix: inputs decimales en modal de cultivo (step mismatch)
 
 **Estado:** COMPLETADO

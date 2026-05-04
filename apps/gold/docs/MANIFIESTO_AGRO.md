@@ -106,6 +106,7 @@ El valor de Agro no está solo en registrar. Está en conectar lo que pasa en el
     * Cartera Viva
     * Cartera Operativa
     * Mi Carrito
+    * Mis Clientes
   * Trabajo y lectura
     * Trabajo Diario
     * Rankings de Clientes
@@ -233,13 +234,25 @@ No es cartera operativa. No es historial administrativo abstracto. No es bitáco
 * Comparar ciclos — elegir dos ciclos y verlos lado a lado
 * Estadísticas de ciclos — consolidado histórico de todos los ciclos
 
+### Estados manuales de cultivo
+
+Los estados de un ciclo de cultivo (activo, finalizado, perdido) son controlados manualmente por el agricultor. No existen transiciones automáticas basadas en fechas o condiciones del sistema. El agricultor decide cuándo un cultivo pasa de activo a finalizado o perdido, reflejando la realidad del campo.
+
+Los estados manuales existen porque en la agricultura real las fechas estimadas no siempre se cumplen y las decisiones dependen del criterio del agricultor, no de una condición automática del sistema.
+
 ### Cómo se usa
 
 1. **Crear cultivo**: Botón "+ Nuevo Cultivo" → nombre, variedad, área, inversión, fecha de siembra, fecha de cosecha esperada.
 2. **Abrir ciclo**: Click en la card del cultivo → ves el detalle, estado, evolución.
-3. **Registrar movimientos**: Desde el ciclo registras gastos, ingresos, fiados, pérdidas.
-4. **Consultar métricas**: En la vista de estadísticas ves total invertido, total recuperado, ganancia/pérdida neta.
-5. **Comparar resultados**: En "Comparar ciclos" eliges dos ciclos del mismo cultivo para ver diferencias.
+3. **Cambiar estado manualmente**: El agricultor puede cambiar el estado de su cultivo manualmente (activo, finalizado, perdido) cuando lo considere pertinente, sin depender de condiciones automáticas.
+4. **Registrar movimientos**: Desde el ciclo registras gastos, ingresos, fiados, pérdidas.
+5. **Consultar métricas**: En la vista de estadísticas ves total invertido, total recuperado, ganancia/pérdida neta.
+6. **Comparar resultados**: En "Comparar ciclos" eliges dos ciclos del mismo cultivo para ver diferencias.
+
+### Campos opcionales y semántica real
+
+* **Semilla (kg)**: Campo opcional. Permite registrar la cantidad de semilla utilizada en la siembra. No es obligatorio; el agricultor Puede omitirlo si no tiene el dato.
+* **Duración real del ciclo**: La duración del ciclo refleja el tiempo real de vida del cultivo, no solo la fecha de cosecha esperada. Cuando un ciclo se finaliza o se pierde, su duración real se calcula desde la fecha de siembra hasta la fecha de cierre, no hasta la fecha estimada.
 
 ### Relación con otros módulos
 
@@ -320,6 +333,7 @@ No es el registro de crecimiento de un cultivo ni tu lista de tareas. Es, concre
 * Cartera Viva — quién te debe dinero (clientes con fiados)
 * Cartera Operativa — el libro de gastos e ingresos general
 * Mi Carrito — lista de compras de insumos
+* Mis Clientes — libreta de contactos (ver §4.5.4)
 
 ### Misión
 
@@ -489,6 +503,47 @@ No es un gasto real. No es Cartera Operativa. Es una **lista de intención de co
 
 * Es una herramienta de planificación que alimenta la Cartera Operativa.
 * Los ítems del carrito NO son gastos hasta que los registras como tales.
+
+---
+
+## 4.5.4 Mis Clientes
+
+### Qué es
+
+La libreta de contactos del agricultor dentro de Agro. Es un directorio personal donde se registran, organizan y consultan los clientes — tanto los que ya tienen fiados en Cartera Viva como los que son contactos externos sin historial financiero.
+
+### Qué no es
+
+No es un duplicado de Cartera Viva. No maneja saldos, deudas ni movimientos financieros. No es un módulo de estadísticas ni un facturero. Mis Clientes es la fuente de verdad para contactos; Cartera Viva es la fuente de verdad para deudas.
+
+### Para qué sirve
+
+* Tener un directorio centralizado de todos los clientes.
+* Ver rápidamente quién existe como contacto, independientemente de si tiene deuda.
+* Organizar clientes por tipo: los que provienen de Cartera Viva (derivados, solo lectura) y los externos creados manualmente.
+* Buscar, filtrar y ordenar contactos por nombre, tipo o fecha.
+
+### Cómo funciona la relación con Cartera Viva
+
+Mis Clientes combina dos fuentes:
+
+1. **Clientes de agro_clients**: creados manualmente por el agricultor. Se pueden editar y eliminar.
+2. **Buyers de Cartera Viva (agro_buyers)**: derivados automáticamente. Aparecen como contactos de solo lectura con un badge visual que indica su origen. No se pueden editar ni eliminar desde Mis Clientes.
+
+La deduplicación es por nombre canónico normalizado. Si un cliente en `agro_clients` tiene el mismo nombre que un buyer, el cliente manual tiene prioridad y el derivado se descarta.
+
+### Flujo de uso
+
+1. Abres Mis Clientes desde Mis finanzas en Mi Granja.
+2. Ves la lista completa con tabs: Todos, En Cartera Viva (derivados), No registrados (solo externos).
+3. Creas un cliente externo nuevo con nombre, teléfono y tipo.
+4. Si un contacto viene de Cartera Viva, lo ves con badge y no puedes modificarlo desde aquí.
+
+### Relación con otros módulos
+
+* Se conecta con Cartera Viva (buyers derivados).
+* No se conecta con Cartera Operativa ni con estadísticas financieras.
+* Es una vista de contactos, no un registro contable.
 
 ---
 
@@ -816,7 +871,7 @@ El patrón hub/module organiza Agro en dos estados de experiencia:
 #### Puertas principales del hub
 
 - **Inicio:** entrada rápida, dashboard, nuevo registro y nuevo cultivo.
-- **Operación:** cultivos, operación comercial, Cartera Viva, Cartera Operativa, Mi Carrito, Trabajo Diario, Rankings y Clima Agro.
+- **Operación:** cultivos, operación comercial, Cartera Viva, Cartera Operativa, Mi Carrito, Mis Clientes, Trabajo Diario, Rankings y Clima Agro.
 - **Memoria:** AgroRepo y Asistente IA.
 - **Menú:** perfil, documentación, feedback, ajustes y soporte.
 
@@ -826,6 +881,10 @@ Al entrar a un módulo profundo, la navegación global desaparece. La vista debe
 
 Esto reduce ruido visual y evita que la navegación compita con la tarea principal.
 
+#### Persistencia de navegación
+
+La navegación del shell persiste entre recargas de página. Al presionar F5 estando en un módulo profundo (Mis Clientes, Cartera Viva, Calendario operativo, etc.), la aplicación restaura la vista donde estaba el usuario en vez de volver siempre al Dashboard. La ruta activa se conserva en sesión y se restaura automáticamente tras una recarga.
+
 ### Ejemplo de uso de favoritas y búsqueda
 
 **Escenario: acceso rápido en un día lleno**
@@ -833,6 +892,41 @@ El agricultor tiene favoritos marcados: Rankings, Cartera Viva y Clima. Estos ap
 
 **Escenario: ubicación de una superficie sin conocer la navegación**
 El usuario quiere ir a "Ciclos de período" pero no recuerda dónde está. Usa la búsqueda compacta, escribe "per", ve el resultado y llega sin recorrer todo el sidebar.
+
+---
+
+### 4.11.5 Popups informativos compactos
+
+#### Qué es
+
+Un sistema de mensajes emergentes compactos dentro de Agro que reemplaza los `alert()` nativos del navegador con popups centrados y estilizados. No es un sistema de notificaciones push ni un buzón de mensajes. Esfeedback visual puntual para confirmaciones, errores y avisos operativos.
+
+#### Qué no es
+
+* **No es un sistema de notificaciones.** No hay bandeja de entrada ni historial.
+* **No es un modal de formulario.** Los popups no contienen inputs ni formularios.
+* **No reemplaza `confirm()` destructivo.** Las confirmaciones de acciones destructivas (eliminar, borrar) siguen usando `confirm()` nativo por seguridad.
+
+#### Para qué sirve
+
+* Mostrar confirmaciones de acción (cultivo creado, registro guardado).
+* Mostrar errores de validación (campos vacíos, datos inválidos).
+* Mostrar avisos operativos (operación completada, sin permisos).
+* Reemplazar `alert()` nativo por un diálogo estilizado que respeta el ADN Visual V11.
+
+#### Cómo funciona
+
+El sistema se extiende desde `YGUXMessages` (el sistema de toasts existente) usando la propiedad `popup: true`:
+
+* `popup: true` renderiza un diálogo centrado en vez de un toast lateral.
+* Solo puede haber un popup abierto a la vez.
+* Se cierra con Escape o con el botón de cierre.
+* Usa `role="alert"` para errores y `role="status"` para el resto.
+* Respeta `prefers-reduced-motion`.
+
+#### Regla canónica
+
+Todo `alert()` nativo en Agro debe migrarse progresivamente a popups compactos via `uxMessages.show({ popup: true })`. Las confirmaciones destructivas (`confirm()`) y los prompts funcionales (`prompt()`) permanecen nativos por ahora.
 
 ---
 
@@ -862,6 +956,7 @@ Su propósito es concentrar el acceso a **Ciclos de Cultivo** (via Mis cultivos)
 * Cartera Viva
 * Cartera Operativa
 * Mi Carrito
+* Mis Clientes
 
 ### 5.4 Lo cotidiano
 
@@ -1120,6 +1215,26 @@ Permiten al usuario marcar superficies que consulta con frecuencia para acceder 
 
 Solo busca superficies, vistas y entradas navegables dentro del shell Agro. No busca clientes, facturas, notas de AgroRepo ni ningún registro de la base de datos. El usuario escribe un término corto, ve una lista de resultados relacionados y al elegir va directo a la superficie o vista. El término se limpia al cerrar. Es una herramienta de localización, no un buscador del sistema completo.
 
+### 9.24 ¿Mis Clientes y Cartera Viva son lo mismo?
+
+No. Mis Clientes es la libreta de contactos: quién existe, cómo se llama, cómo contactarlo. Cartera Viva es el seguimiento de deudas: quién te debe y cuánto. Un cliente puede estar en Mis Clientes sin tener deuda en Cartera Viva. Los buyers de Cartera Viva aparecen en Mis Clientes como contactos derivados de solo lectura, pero Mis Clientes no maneja saldos ni movimientos financieros.
+
+### 9.25 ¿Los estados de cultivo cambian solos?
+
+No. Los estados de un cultivo (activo, finalizado, perdido) son controlados manualmente por el agricultor. No hay transiciones automáticas basadas en fechas o condiciones. Si la cosecha esperada era en marzo pero el agricultor sigue vendiendo en abril, él decide cuándo finalizar el ciclo. El sistema respeta esa decisión.
+
+### 9.26 ¿Para qué sirve la semilla en kg en un cultivo?
+
+Es un campo opcional para registrar la cantidad de semilla utilizada en la siembra. No es obligatorio. Si el agricultor no tiene el dato, puede omitirlo sin que afecte el funcionamiento del ciclo.
+
+### 9.27 ¿Qué pasa si recargo la página estando en un módulo profundo?
+
+La navegación del shell persiste entre recargas. Al presionar F5 estando en Mis Clientes, Cartera Viva, Calendario operativo o cualquier otro módulo profundo, la aplicación restaura la vista donde estaba el usuario en vez de volver siempre al Dashboard. La ruta activa se conserva en sesión.
+
+### 9.28 ¿Qué son los popups informativos compactos?
+
+Son mensajes emergentes estilizados que reemplazan los `alert()` nativos del navegador dentro de Agro. Confirman acciones (cultivo creado, registro guardado), muestran errores de validación o dan avisos operativos. No son notificaciones push ni bandeja de entrada. Solo muestran un mensaje puntual y se cierran. Las confirmaciones destructivas (eliminar, borrar) siguen usando el diálogo nativo por seguridad.
+
 ---
 
 ## 10. Malentendidos históricos ya resueltos
@@ -1155,6 +1270,16 @@ Solo busca superficies, vistas y entradas navegables dentro del shell Agro. No b
 
 * **Confusión**: "Mi Granja" es un módulo financiero donde se registran los gastos y ganancias generales de la finca.
 * **La realidad**: «Mi Granja» es el **hub central de navegación** accesible desde la puerta «Granja» en `Inicio · Granja · Memoria · Menú`. Agrupa Mis cultivos, Calendario operativo, Mis finanzas y Trabajo y lectura. No es un módulo financiero. Los «movimientos generales» (gastos no asociados a un cultivo específico) se registran en Cartera Operativa, dentro de Operación Comercial. Mi Granja no tiene libro de cuentas propio.
+
+### Caso 7
+
+* **Confusión**: "Mis Clientes es la misma cosa que Cartera Viva, solo que en otra pantalla."
+* **La realidad**: Mis Clientes es una **libreta de contactos**. No maneja saldos, deudas ni movimientos financieros. Cartera Viva es el seguimiento de **quién te debe dinero y cuánto**. Un cliente puede existir en Mis Clientes sin tener deuda en Cartera Viva, y un buyer de Cartera Viva aparece como contacto derivado de solo lectura. Mis Clientes es la fuente de verdad para contactos; Cartera Viva es la fuente de verdad para deudas.
+
+### Caso 8
+
+* **Confusión**: "Los estados de un cultivo son automáticos: si pasa la fecha de cosecha, el cultivo se finaliza solo."
+* **La realidad**: Los estados de un cultivo (activo, finalizado, perdido) son **control manual del agricultor**. No existen transiciones automáticas. El agricultor decide cuándo un cultivo pasa a finalizado o perdido, porque en el campo real las fechas estimadas no siempre se cumplen y la decisión depende del criterio del agricultor, no de una condición automática del sistema.
 
 ---
 

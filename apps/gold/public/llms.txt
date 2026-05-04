@@ -13,7 +13,7 @@ This file contains the current product, architecture and routing policy for `app
 - Release policy: `V1` is the active visible product release; `V9.8` is historical only when explicitly labeled; `V10.0` refers to the visual DNA version, not the product release.
 
 ## 1. Product catalog
-- `Agro` is the only released module in `V1` (facturero, crops, dashboard, stats, cart, planning, trash).
+- `Agro` is the only released module in `V1` (facturero, crops, clients, dashboard, stats, cart, planning, trash).
 - `Academia`, `Social`, `Tecnologia` and `Crypto` are placeholder routes showing "no disponible". They are not active products and should not be presented as such.
 - `Herramientas` and `Suite` are legacy aliases that redirect to placeholder routes, not official modules.
 
@@ -74,7 +74,12 @@ This file contains the current product, architecture and routing policy for `app
 - Share monolith functions via `window._agroXxx` bridge
 - Supabase tables use soft-delete (`deleted_at`) as standard pattern
 - Supported currencies: COP, USD, VES
-- Agro navigation: hub/module pattern with Inicio, Granja, Memoria, Menu; Granja contains Mi Granja: Mis cultivos, Calendario operativo, estadisticas/comparadores, Mis finanzas (Cartera Viva, Cartera Operativa, Mi Carrito), Trabajo Diario, Rankings de Clientes, Clima Agro. Operacion Comercial no debe tratarse como modulo/card del hub. Deep modules use contextual Volver and hide global navigation.
+- Agro navigation: hub/module pattern with Inicio, Granja, Memoria, Menu; Granja contains Mi Granja: Mis cultivos, Calendario operativo, estadisticas/comparadores, Mis finanzas (Cartera Viva, Cartera Operativa, Mi Carrito, Mis Clientes), Trabajo Diario, Rankings de Clientes, Clima Agro. Operacion Comercial no debe tratarse como modulo/card del hub. Deep modules use contextual Volver and hide global navigation. Shell navigation persists across F5 refresh.
+- Mis Clientes: contact directory combining `agro_clients` (manual, editable) with `agro_buyers` (derived from Cartera Viva, read-only). Deduplication by canonical name. Mis Clientes does NOT handle debts, balances or financial data — that is Cartera Viva's domain.
+- Crop states are manual: active, finalizado, perdido. No automatic transitions. The farmer decides when to change state.
+- Seed kg: optional field for crop creation. Not required.
+- Crop real duration: calculated from sowing date to actual close date, not estimated harvest date.
+- Popup system: `YGUXMessages` extended with `popup: true` for compact centered popups replacing `alert()`. Destructive `confirm()` and functional `prompt()` remain native. Phase 2 complete.
 
 ## 9. Repo hygiene
 - `apps/gold/public/` is the **canonical live public** directory for the product
