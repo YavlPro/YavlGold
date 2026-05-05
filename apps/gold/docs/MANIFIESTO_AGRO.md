@@ -359,7 +359,7 @@ El canon actual del proyecto reconoce COP, USD y VES como monedas soportadas. Si
 
 ### Qué es
 
-La cartera de clientes que te deben dinero. Es un seguimiento específico de **fiados pendientes** — gente que te compró y aún no te ha pagado.
+La cartera de clientes con crédito. Sigue el ciclo completo del fiado: desde que se otorga (pendiente) hasta que se cierra (pagado, pérdida o donación). No es solo «lo que te deben» — es el historial vivo de cada crédito otorgado a clientes.
 
 ### Qué no es
 
@@ -1131,7 +1131,7 @@ Un archivo `.md` se abre en cualquier editor de texto, en cualquier equipo, sin 
 
 ### 9.8 ¿Qué diferencia hay entre Cartera Viva y Cartera Operativa?
 
-* **Cartera Viva**: Solo fiados (dinero que te deben). Específicamente para crédito a clientes.
+* **Cartera Viva**: El seguimiento completo del crédito a clientes. Incluye fiados pendientes, cobros recibidos, pérdidas asumidas y donaciones. No es solo lo que te deben hoy — es el ciclo de vida entero de cada crédito otorgado.
 * **Cartera Operativa**: Todo movimiento financiero (gastos de finca, compras, cobros, las deudas que luego irán a la cartera viva y ventas perdidas). Es el libro mayor.
 
 ### 9.9 ¿Cómo separo la idea de Ciclo de Cultivo frente al Ciclo de Período?
