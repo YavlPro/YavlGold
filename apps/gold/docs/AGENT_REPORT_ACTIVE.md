@@ -909,3 +909,127 @@ Funcional sin backend pendiente. La vinculacion real requiere RPC/migration (Fas
 4. Abrir "Unificar clientes" → nombres visibles en combobox y chips
 5. Cerrar modal → buscar cliente sigue funcionando
 6. Abrir/cerrar modal multiples veces → sin listener leak
+
+---
+
+## 2026-05-06 — Incidente: campana Agro con notificaciones masivas
+
+### Estado inicial: YELLOW/RED
+
+Sintoma reportado: la campana de Agro genera notificaciones masivas y repetidas de datos pasados o vencidos, afectando la confianza del producto.
+
+### Hipotesis iniciales
+
+1. `initAgroNotifications()` puede ejecutarse mas de una vez durante la sesion.
+2. Puede haber intervalos o listeners globales sin cleanup.
+3. Las notificaciones pueden carecer de deduplicacion estable por tipo, entidad y fecha.
+4. Datos vencidos o historicos pueden recalcularse como alertas nuevas en cada carga.
+5. Eventos de refresh como cambios de cliente, cartera, agenda o shell pueden disparar rebuild masivo.
+6. El estado leido/visto/descartado puede no persistirse de forma suficiente.
+
+### Archivos a inspeccionar
+
+- `apps/gold/agro/agro-notifications.js`
+- `apps/gold/agro/agro.js`
+- `apps/gold/agro/agro-shell.js`
+- `apps/gold/agro/agro-agenda.js`
+- `apps/gold/agro/agro-cartera-viva-view.js`
+- `apps/gold/agro/agro-cartera-viva-client-merge.js`
+- `apps/gold/agro/index.html`
+
+### Plan de diagnostico
+
+1. Ubicar inicializacion real de la campana y cuantas rutas pueden llamarla.
+2. Revisar intervalos, timeouts, listeners globales y limpieza.
+3. Mapear fuentes que generan notificaciones.
+4. Revisar criterios de vigencia, expiracion, lectura y descarte.
+5. Confirmar si hay deduplicacion estable o si se recalculan alertas historicas.
+6. Proponer fix minimo o kill switch temporal solo con evidencia.
+
+### Riesgo
+
+Alto para confianza de producto. No se debe parchear a ciegas ni redisenar UI; primero se requiere causa raiz con evidencia.
+
+### Diagnostico tecnico
+
+Hallazgo principal: la fuente activa de ruido no parece ser doble inicializacion de la campana, sino generacion masiva desde historiales del Facturero.
+
+Evidencia:
+
+- `index.html` importa `agro-notifications.js` y llama `notificationsModule.initNotifications()` desde el bootstrap protegido.
+- `agro-notifications.js` tiene guard `notificationsReady`; si ya esta inicializado, `initNotifications()` retorna sin volver a enlazar.
+- Los listeners principales de UI (`notif-btn`, `mark-read-btn`, click de documento) se enlazan con handlers guardados y `teardownEventListeners()` remueve bindings anteriores.
+- No hay `setInterval` dentro de `agro-notifications.js`; solo `setTimeout` puntual para retry de observer, flash del badge y espera de sesion.
+- `FACTURERO_ONLY` esta activo, por lo que la capa de cultivos/clima/IA queda apagada en runtime normal.
+- `agro.js` llama `syncFactureroNotifications(tabName, filteredItems)` cada vez que refresca historiales de `pendientes`, `perdidas`, `transferencias`, `gastos` e `ingresos`.
+- `initFactureroHistories()` refresca todos los historiales al iniciar Agro.
+- `refreshFactureroForSelectedCrop()` vuelve a refrescar todos los historiales al cambiar contexto/cultivo.
+
+Causa raiz probable:
+
+1. `pendientes` crea una notificacion por cada fila cargada, hasta el limite de historial, sin ventana temporal ni corte por antiguedad. Si existen fiados viejos aun activos, vuelven a entrar como alertas vivas.
+2. `transferencias` crea notificacion por cada fila si no existe en storage, sin filtro temporal. Esto puede revivir donaciones/transferencias antiguas como novedades.
+3. `gastos` e `ingresos` filtran por reciente o monto grande; el criterio `monto >= 100` no tiene limite temporal, por lo que movimientos viejos de monto alto pueden reaparecer.
+4. El estado leido se guarda en `localStorage`, no en backend. En otro navegador, tras limpieza de storage o en una sesion nueva, filas historicas vuelven a verse como nuevas.
+5. `pendientes:summary` puede reabrirse si cambia el conteo o cantidad de vencidos; esto es razonable para resumen, pero agrava ruido si se mezcla con cientos de items individuales.
+
+Fuentes descartadas o secundarias:
+
+- Agenda no aparece conectada directamente a la campana.
+- Cartera Viva escucha eventos y refresca vistas, pero no emite notificaciones de campana directamente.
+- `agro:client:changed` no parece generar spam de campana por si mismo.
+- Cultivos/clima tienen codigo de alertas viejas, pero esta apagado por `FACTURERO_ONLY`.
+
+Fix minimo recomendado:
+
+1. Mantener el guard de inicializacion existente.
+2. En `syncFactureroNotifications()`, limitar alertas activas a datos accionables:
+   - `pendientes`: notificar solo vencidos o por vencer dentro de una ventana razonable; no crear item por cada fiado historico.
+   - `transferencias`: aplicar ventana reciente, igual que perdidas.
+   - `gastos`/`ingresos`: si se conserva umbral de monto grande, combinarlo con ventana temporal o moverlo a historial, no alerta viva.
+3. Separar "historial del facturero" de "alerta activa": el historial no debe poblar masivamente la campana.
+4. Mantener deduplicacion por `facturero:<tab>:<rowId>`, pero agregar criterio temporal/accionable antes del upsert.
+
+Kill switch temporal recomendado solo si el spam es critico antes del fix:
+
+- Desactivar temporalmente las notificaciones individuales del Facturero y dejar solo resumen de `pendientes`, manteniendo la campana visible.
+- No borrar datos ni historial.
+
+### Fix aplicado
+
+Archivo tocado:
+
+- `apps/gold/agro/agro-notifications.js`
+
+Reglas temporales aplicadas:
+
+- Ventana general reciente: 3 dias.
+- Pendientes proximos: 7 dias hacia adelante.
+- Pendientes vencidos individuales: maximo 30 dias hacia atras; vencidos mas viejos quedan cubiertos por resumen, no por item individual.
+- Pendientes sin fecha: solo item individual si tienen `created_at` reciente dentro de 3 dias.
+- Transferencias: solo recientes dentro de 3 dias.
+- Perdidas: conservan ventana reciente de 7 dias.
+- Gastos e ingresos: el monto grande ya no basta por si solo; deben estar dentro de la ventana reciente de 3 dias.
+
+Cambios funcionales:
+
+- `syncFactureroNotifications('pendientes')` ya no conserva ni crea una notificacion activa por cada fila historica.
+- Se limita a maximo 5 alertas individuales accionables de pendientes.
+- Se mantiene una notificacion resumen `facturero:pendientes:summary` para evitar spam.
+- El resumen no se reabre ni flashea en cada refresh si conteos/metadatos no cambiaron.
+- Se agrego parseo local de fechas `YYYY-MM-DD` para reducir errores por zona horaria.
+- Las claves estables `facturero:<tab>:<rowId>` se mantienen.
+
+QA tecnico:
+
+- `git diff --check`: PASS
+- `pnpm build:gold`: PASS
+  - Nota: pnpm reporto warning de engine por Node `v25.6.0` vs esperado `20.x`, pero el build termino correctamente.
+
+Estado final: GREEN tecnico / pendiente QA online en produccion.
+
+Commit sugerido:
+
+```bash
+fix(agro): prevent stale facturero notifications
+```

@@ -68,8 +68,15 @@ const FACTURERO_LABELS = {
 };
 // Facturero → Notificaciones (anti-ruido pero visible)
 // V9.6.5: Relajado para mostrar entradas relevantes sin ser "humo"
-const FACTURERO_RECENT_DAYS = 7;      // Antes: 2 (muy estricto)
+const FACTURERO_NOTIFICATION_WINDOWS = Object.freeze({
+    recentDays: 3,
+    upcomingDueDays: 7,
+    stalePendingDays: 30,
+    lossRecentDays: 7
+});
+const FACTURERO_RECENT_DAYS = FACTURERO_NOTIFICATION_WINDOWS.recentDays;
 const FACTURERO_LARGE_AMOUNT = 100;   // Antes: 500 (muy alto)
+const FACTURERO_MAX_PENDING_ITEM_ALERTS = 5;
 
 const ALERTS_SESSION_MAX_ATTEMPTS = 8;
 const ALERTS_SESSION_BASE_DELAY = 200;
@@ -450,6 +457,7 @@ function setupCropsReadyListener() {
 // ============================================
 
 export async function initNotifications() {
+    if (notificationsReady) return;
     if (AGRO_DEBUG) {
         console.log('[AGRO] V9.6.4: 🔔 Inicializando Centro de Alertas...');
     }
@@ -818,6 +826,8 @@ async function generateSystemNotifications(reason = 'manual', snapshotOverride =
     if (effectiveCount === 0) {
         purgeTransientNotifications();
     } else {
+        notifications = notifications.filter(n => !n?.id?.startsWith('sys:'));
+        readNotifications = readNotifications.filter(n => !n?.id?.startsWith('sys:'));
         if (cropsForAlerts.length > 0) {
             cropsForAlerts.forEach(checkCropAlerts);
         }
@@ -1076,9 +1086,18 @@ function isKnownNotificationId(id) {
         || getNotificationIndexById(readNotifications, id) >= 0;
 }
 
+function computeNotificationId(type, title, message) {
+    const raw = `${type}::${title}::${(message || '').slice(0, 80)}`;
+    let hash = 0;
+    for (let i = 0; i < raw.length; i++) {
+        hash = ((hash << 5) - hash + raw.charCodeAt(i)) | 0;
+    }
+    return `sys:${type}:${Math.abs(hash).toString(36)}`;
+}
+
 function addNotification(type, title, message, icon) {
     if (isLegacySystemReady({ title, message })) return;
-    const id = `legacy:${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+    const id = computeNotificationId(type, title, message);
     upsertAgroNotification({
         id,
         type,
@@ -1167,7 +1186,7 @@ function setupAuthRefresh() {
             renderNotifications();
         }
         if (!session?.user) return;
-        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') {
+        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
             refreshSystemNotifications(`auth:${event.toLowerCase()}`);
         }
     });
@@ -1262,6 +1281,59 @@ function isWithinDays(date, days) {
     return diffMs <= days * 24 * 60 * 60 * 1000;
 }
 
+function parseNotificationDate(value) {
+    if (!value) return null;
+    if (value instanceof Date) return coerceDate(value, null);
+    const raw = String(value || '').trim();
+    const dateOnly = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (dateOnly) {
+        const year = Number(dateOnly[1]);
+        const month = Number(dateOnly[2]);
+        const day = Number(dateOnly[3]);
+        const date = new Date(year, month - 1, day);
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
+    return coerceDate(raw, null);
+}
+
+function startOfLocalDay(date = new Date()) {
+    const dateObj = coerceDate(date, new Date());
+    return new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+}
+
+function daysBetweenNow(date) {
+    const dateObj = parseNotificationDate(date);
+    if (!dateObj) return null;
+    const startOfToday = startOfLocalDay();
+    const startOfDate = startOfLocalDay(dateObj);
+    return Math.round((startOfDate - startOfToday) / 86400000);
+}
+
+function isRecentNotificationDate(date, days = FACTURERO_NOTIFICATION_WINDOWS.recentDays) {
+    return isWithinDays(date, days);
+}
+
+function isUpcomingDueDate(date, days = FACTURERO_NOTIFICATION_WINDOWS.upcomingDueDays) {
+    const diffDays = daysBetweenNow(date);
+    return Number.isFinite(diffDays) && diffDays >= 0 && diffDays <= days;
+}
+
+function isStaleHistoricalDate(date, days = FACTURERO_NOTIFICATION_WINDOWS.stalePendingDays) {
+    const diffDays = daysBetweenNow(date);
+    return Number.isFinite(diffDays) && diffDays < -Math.abs(days);
+}
+
+function isActionablePendingDate(dueDate, fallbackDate = null) {
+    const dueDiff = daysBetweenNow(dueDate);
+    if (Number.isFinite(dueDiff)) {
+        if (dueDiff < 0) {
+            return !isStaleHistoricalDate(dueDate, FACTURERO_NOTIFICATION_WINDOWS.stalePendingDays);
+        }
+        return isUpcomingDueDate(dueDate, FACTURERO_NOTIFICATION_WINDOWS.upcomingDueDays);
+    }
+    return isRecentNotificationDate(fallbackDate, FACTURERO_NOTIFICATION_WINDOWS.recentDays);
+}
+
 function formatDayCount(days) {
     const abs = Math.abs(days);
     return `${abs} ${abs === 1 ? 'día' : 'días'}`;
@@ -1354,23 +1426,37 @@ export function syncFactureroNotifications(tabName, items) {
     if (tabName === 'pendientes') {
         const keepIds = new Set();
         let overdueCount = 0;
+        let upcomingCount = 0;
+        let recentUndatedCount = 0;
+        let actionableCount = 0;
+        let individualAlertCount = 0;
 
         rows.forEach((item) => {
             const rowId = normalizeNotificationId(item?.id);
             if (!rowId) return;
 
             const notifId = `facturero:pendientes:${rowId}`;
-            keepIds.add(notifId);
-
             const client = getPendingClient(item);
             const amountValue = getAmountField(item);
             const amount = formatCurrency(amountValue);
             const unit = getUnitSummary(item);
-            const dueDate = coerceDate(item?.fecha, null);
+            const dueDate = parseNotificationDate(item?.fecha);
+            const rowTimestamp = parseNotificationDate(item?.created_at || item?.fecha);
             const overdue = isPastDue(dueDate);
+            const upcoming = isUpcomingDueDate(dueDate);
+            const recentUndated = !dueDate && isRecentNotificationDate(rowTimestamp);
+            const actionable = isActionablePendingDate(dueDate, rowTimestamp);
             const statusLabel = computeDueStatus(dueDate) || (overdue ? 'Vencido' : '');
             if (overdue) overdueCount += 1;
-            const rowTimestamp = coerceDate(item?.created_at || item?.fecha, new Date());
+            if (upcoming && !overdue) upcomingCount += 1;
+            if (recentUndated) recentUndatedCount += 1;
+            if (!actionable) return;
+
+            actionableCount += 1;
+            if (individualAlertCount >= FACTURERO_MAX_PENDING_ITEM_ALERTS) return;
+            individualAlertCount += 1;
+            keepIds.add(notifId);
+            if (isKnownNotificationId(notifId)) return;
 
             const title = `${buildFactureroChip('pendientes', false)}`;
             const subtitle = `Cliente: ${client}`;
@@ -1384,7 +1470,7 @@ export function syncFactureroNotifications(tabName, items) {
                 message: subtitle,
                 metaLine,
                 icon: 'fa-hourglass-half',
-                timestamp: rowTimestamp,
+                timestamp: rowTimestamp || new Date(),
                 origin: 'facturero',
                 entity: 'pendientes',
                 sourceLabel: FACTURERO_SOURCE_LABEL,
@@ -1398,25 +1484,43 @@ export function syncFactureroNotifications(tabName, items) {
             keepIds.add(summaryId);
             const prev = getNotificationById(summaryId);
             const countChanged = prev?.meta?.count !== rows.length
-                || prev?.meta?.overdue !== overdueCount;
+                || prev?.meta?.overdue !== overdueCount
+                || prev?.meta?.actionable !== actionableCount
+                || prev?.meta?.upcoming !== upcomingCount
+                || prev?.meta?.recentUndated !== recentUndatedCount;
 
             const title = `${buildFactureroChip('pendientes', true)} (${rows.length})`;
-            const subtitle = overdueCount > 0 ? `${overdueCount} vencidos` : 'Sin vencidos';
+            const summaryParts = [];
+            if (overdueCount > 0) summaryParts.push(`${overdueCount} vencidos`);
+            if (upcomingCount > 0) summaryParts.push(`${upcomingCount} próximos`);
+            if (recentUndatedCount > 0) summaryParts.push(`${recentUndatedCount} recientes sin fecha`);
+            const subtitle = summaryParts.length > 0
+                ? summaryParts.join(' • ')
+                : `${rows.length} pendientes activos`;
 
-            changed = upsertAgroNotification({
-                id: summaryId,
-                type: overdueCount > 0 ? 'danger' : 'warning',
-                title,
-                subtitle,
-                message: subtitle,
-                icon: 'fa-hourglass-half',
-                timestamp: new Date(),
-                origin: 'facturero',
-                entity: 'pendientes',
-                sourceLabel: FACTURERO_SOURCE_LABEL,
-                deepLink: buildDeepLink('pendientes', null),
-                meta: { count: rows.length, overdue: overdueCount }
-            }, { silent: true, reopenIfRead: countChanged }) || changed;
+            if (!prev || countChanged) {
+                changed = upsertAgroNotification({
+                    id: summaryId,
+                    type: overdueCount > 0 ? 'danger' : 'warning',
+                    title,
+                    subtitle,
+                    message: subtitle,
+                    icon: 'fa-hourglass-half',
+                    timestamp: new Date(),
+                    origin: 'facturero',
+                    entity: 'pendientes',
+                    sourceLabel: FACTURERO_SOURCE_LABEL,
+                    deepLink: buildDeepLink('pendientes', null),
+                    meta: {
+                        count: rows.length,
+                        overdue: overdueCount,
+                        actionable: actionableCount,
+                        upcoming: upcomingCount,
+                        recentUndated: recentUndatedCount,
+                        individualLimit: FACTURERO_MAX_PENDING_ITEM_ALERTS
+                    }
+                }, { silent: true, reopenIfRead: countChanged }) || changed;
+            }
         } else {
             changed = removeNotificationById(summaryId, { silent: true }) || changed;
         }
@@ -1432,8 +1536,8 @@ export function syncFactureroNotifications(tabName, items) {
             const notifId = `facturero:perdidas:${rowId}`;
             if (isKnownNotificationId(notifId)) return;
 
-            const rowDate = coerceDate(item?.fecha || item?.created_at, null);
-            if (rowDate && !isWithinDays(rowDate, 7)) return;
+            const rowDate = parseNotificationDate(item?.fecha || item?.created_at);
+            if (!isRecentNotificationDate(rowDate, FACTURERO_NOTIFICATION_WINDOWS.lossRecentDays)) return;
 
             const cause = getLossCause(item);
             const concept = getLossConcept(item);
@@ -1470,7 +1574,8 @@ export function syncFactureroNotifications(tabName, items) {
             const notifId = `facturero:transferencias:${rowId}`;
             if (isKnownNotificationId(notifId)) return;
 
-            const rowDate = coerceDate(item?.fecha || item?.created_at, null);
+            const rowDate = parseNotificationDate(item?.fecha || item?.created_at);
+            if (!isRecentNotificationDate(rowDate, FACTURERO_RECENT_DAYS)) return;
             const dest = getTransferDest(item);
             const amount = formatCurrency(getAmountField(item));
             const unit = getUnitSummary(item);
@@ -1505,11 +1610,11 @@ export function syncFactureroNotifications(tabName, items) {
             const notifId = `facturero:gastos:${rowId}`;
             if (isKnownNotificationId(notifId)) return;
 
-            const rowDate = coerceDate(item?.date || item?.fecha || item?.created_at, null);
+            const rowDate = parseNotificationDate(item?.date || item?.fecha || item?.created_at);
             const amountValue = getAmountField(item);
-            const isRecent = rowDate ? isWithinDays(rowDate, FACTURERO_RECENT_DAYS) : false;
+            const isRecent = isRecentNotificationDate(rowDate, FACTURERO_RECENT_DAYS);
             const isLarge = amountValue >= FACTURERO_LARGE_AMOUNT;
-            if (!isRecent && !isLarge) return;
+            if (!isRecent) return;
 
             const concept = getExpenseConcept(item);
             const amount = formatCurrency(amountValue);
@@ -1532,7 +1637,7 @@ export function syncFactureroNotifications(tabName, items) {
                 entity: 'gastos',
                 sourceLabel: FACTURERO_SOURCE_LABEL,
                 deepLink: buildDeepLink('gastos', rowId),
-                meta: { tab: 'gastos', rowId }
+                meta: { tab: 'gastos', rowId, large: isLarge }
             }, { silent: true }) || changed;
         });
     }
@@ -1545,11 +1650,11 @@ export function syncFactureroNotifications(tabName, items) {
             const notifId = `facturero:ingresos:${rowId}`;
             if (isKnownNotificationId(notifId)) return;
 
-            const rowDate = coerceDate(item?.fecha || item?.date || item?.created_at, null);
+            const rowDate = parseNotificationDate(item?.fecha || item?.date || item?.created_at);
             const amountValue = getAmountField(item);
-            const isRecent = rowDate ? isWithinDays(rowDate, FACTURERO_RECENT_DAYS) : false;
+            const isRecent = isRecentNotificationDate(rowDate, FACTURERO_RECENT_DAYS);
             const isLarge = amountValue >= FACTURERO_LARGE_AMOUNT;
-            if (!isRecent && !isLarge) return;
+            if (!isRecent) return;
 
             const concept = getIncomeConcept(item);
             const amount = formatCurrency(amountValue);
@@ -1572,7 +1677,7 @@ export function syncFactureroNotifications(tabName, items) {
                 entity: 'ingresos',
                 sourceLabel: FACTURERO_SOURCE_LABEL,
                 deepLink: buildDeepLink('ingresos', rowId),
-                meta: { tab: 'ingresos', rowId }
+                meta: { tab: 'ingresos', rowId, large: isLarge }
             }, { silent: true }) || changed;
         });
     }
