@@ -464,7 +464,7 @@
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: var(--radius-md, 8px);
-  color: var(--text-primary, #ffffff);
+  color: var(--text-primary, #ffffff) !important;
   font-family: var(--font-body, 'Rajdhani', sans-serif);
   font-size: 1rem;
   font-weight: 600;
@@ -472,7 +472,11 @@
   cursor: pointer;
   transition: border-color 180ms ease;
   position: relative;
-  -webkit-text-fill-color: currentColor;
+  -webkit-text-fill-color: currentColor !important;
+  background-clip: border-box !important;
+  background-image: none !important;
+  text-shadow: none !important;
+  opacity: 1 !important;
 }
 
 .cartera-viva-merge__combo-trigger::after {
@@ -513,25 +517,31 @@
   padding: 0.5rem 1rem;
   border: none;
   background: transparent;
-  color: var(--text-primary, #ffffff);
+  color: var(--text-primary, #ffffff) !important;
   font-family: var(--font-body, 'Rajdhani', sans-serif);
   font-size: 0.92rem;
   font-weight: 600;
   text-align: left;
   cursor: pointer;
   transition: background 150ms ease, color 150ms ease;
-  -webkit-text-fill-color: currentColor;
+  -webkit-text-fill-color: currentColor !important;
+  background-clip: border-box !important;
+  background-image: none !important;
+  text-shadow: none !important;
+  opacity: 1 !important;
 }
 
 .cartera-viva-merge__combo-option:hover,
 .cartera-viva-merge__combo-option:focus-visible {
   background: rgba(200, 167, 82, 0.12);
-  color: var(--gold-4, #C8A752);
+  color: var(--gold-4, #C8A752) !important;
+  -webkit-text-fill-color: currentColor !important;
 }
 
 .cartera-viva-merge__combo-option.is-selected {
-  color: var(--gold-4, #C8A752);
+  color: var(--gold-4, #C8A752) !important;
   font-weight: 700;
+  -webkit-text-fill-color: currentColor !important;
 }
 
 .cartera-viva-merge__origin-chips {
@@ -546,13 +556,17 @@
   border-radius: var(--radius-pill, 999px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.04);
-  color: var(--text-secondary, rgba(255, 255, 255, 0.72));
+  color: var(--text-secondary, rgba(255, 255, 255, 0.72)) !important;
   font-family: var(--font-body, 'Rajdhani', sans-serif);
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
   transition: border-color 180ms ease, color 180ms ease, background 180ms ease;
-  -webkit-text-fill-color: currentColor;
+  -webkit-text-fill-color: currentColor !important;
+  background-clip: border-box !important;
+  background-image: none !important;
+  text-shadow: none !important;
+  opacity: 1 !important;
 }
 
 .cartera-viva-merge__origin-chip:hover {
@@ -562,7 +576,8 @@
 .cartera-viva-merge__origin-chip.is-selected {
   border-color: rgba(200, 167, 82, 0.5);
   background: rgba(200, 167, 82, 0.15);
-  color: var(--gold-4, #C8A752);
+  color: var(--gold-4, #C8A752) !important;
+  -webkit-text-fill-color: currentColor !important;
 }
 
 .cartera-viva-merge__actions {
