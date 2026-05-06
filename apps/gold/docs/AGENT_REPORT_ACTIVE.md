@@ -748,3 +748,49 @@ Sí. Al confirmar la fusión, cada buyer origen se archiva vía `status = 'archi
 ```
 feat(agro): add safe cartera viva client merge modal
 ```
+
+---
+
+## 2026-05-06 — Fix: client names invisible in merge modal combobox
+
+### Problema
+
+Los nombres de clientes no se veían dentro del dropdown/listbox del modal "Unificar clientes". La lista se abría pero el texto era invisible.
+
+### Causa
+
+Los botones/opciones del combobox usaban `font: inherit` que heredaba propiedades de tipografía ajustadas con efectos metálicos (`background-clip: text`, `-webkit-text-fill-color: transparent`) desde contenedores padres. Aunque esos efectos aplicaban a selectores específicos (`.agro-shell-sidebar__title`, etc.), la herencia de `font: inherit` en botones sin color explícito resultaba en texto invisible sobre fondo oscuro.
+
+### Solución aplicada
+
+Se agregaron propiedades defensivas a todos los elementos de texto del modal y del combobox:
+
+1. `font-family: var(--font-body, 'Rajdhani', sans-serif)` explícito en vez de `font: inherit`
+2. `font-weight: 600` explícito
+3. `color: var(--text-primary, #ffffff)` en vez de `color: var(--text-secondary)` para opciones del combo
+4. `-webkit-text-fill-color: currentColor` en combobox trigger, opciones y chips
+5. `background: var(--bg-3, #111113)` en dialog (mejor contraste que `var(--card-bg)`)
+6. Mismo fix preventivo aplicado al combobox de Phase 1.1 (`#modal-edit-facturero`)
+
+### Archivos modificados
+
+| Archivo | Cambio |
+|---|---|
+| `agro.css` | `.cartera-viva-merge__dialog`: color, font-family, -webkit-text-fill-color |
+| `agro.css` | `.cartera-viva-merge__combo-trigger`: color, font-family, font-weight, -webkit-text-fill-color |
+| `agro.css` | `.cartera-viva-merge__combo-option`: color, font-family, font-weight, -webkit-text-fill-color |
+| `agro.css` | `.cartera-viva-merge__origin-chip`: font-family, -webkit-text-fill-color |
+| `agro.css` | `.cartera-viva-merge__close`: -webkit-text-fill-color |
+| `agro.css` | `#modal-edit-facturero .client-assignment-combobox__trigger`: color, font-family, font-weight, -webkit-text-fill-color |
+| `agro.css` | `#modal-edit-facturero .client-assignment-combobox__option`: color, font-family, font-weight, -webkit-text-fill-color |
+
+### Validación
+
+- `git diff --check`: PASS
+- `pnpm build:gold`: PASS (4.07s)
+
+### Commit sugerido
+
+```
+fix(agro): restore client name visibility in merge modal
+```
