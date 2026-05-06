@@ -53,6 +53,7 @@
     <link rel="stylesheet" href="./agro-task-cycles.css">
     <link rel="stylesheet" href="./agro-cartera-viva.css">
     <link rel="stylesheet" href="./agro-clients.css">
+    <link rel="stylesheet" href="./agro-reports-center.css">
     <link rel="stylesheet" href="./tx-cards-v2.css">
     <link rel="stylesheet" href="./agro-index-critical.css">
 </head>
@@ -329,7 +330,7 @@
 
             <section class="agro-shell-sidebar__group agro-launcher__section">
                 <p class="agro-shell-sidebar__label"><i class="fa-solid fa-list-check agro-shell-sidebar__label-icon"
-                        aria-hidden="true"></i><span>Trabajo diario</span></p>
+                        aria-hidden="true"></i><span>Trabajo y lectura</span></p>
                 <div class="agro-launcher__tiles">
                     <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="task-cycles"
                         data-agro-mode-scope="crop non_crop">
@@ -345,6 +346,14 @@
                         <span class="agro-launcher__tile-copy">
                             <span class="agro-shell-link__label">Rankings de Clientes</span>
                             <span class="agro-launcher__tile-desc">Clientes cobrados, pendientes y lectura por cultivo.</span>
+                        </span>
+                    </button>
+                    <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="reportes"
+                        data-agro-mode-scope="crop non_crop tools">
+                        <i class="fa-solid fa-folder-open agro-shell-link__icon" aria-hidden="true"></i>
+                        <span class="agro-launcher__tile-copy">
+                            <span class="agro-shell-link__label">Centro de Reportes</span>
+                            <span class="agro-launcher__tile-desc">Exporta reportes en Markdown por categoría.</span>
                         </span>
                     </button>
                 </div>
@@ -621,6 +630,10 @@
                     <button type="button" class="agro-mobile-hub__item" data-agro-view="rankings">
                         <i class="fa-solid fa-chart-column" aria-hidden="true"></i>
                         <span>Rankings de Clientes</span>
+                    </button>
+                    <button type="button" class="agro-mobile-hub__item" data-agro-view="reportes">
+                        <i class="fa-solid fa-folder-open" aria-hidden="true"></i>
+                        <span>Centro de Reportes</span>
                     </button>
                     <button type="button" class="agro-mobile-hub__item" data-agro-view="clima">
                         <i class="fa-solid fa-cloud-sun" aria-hidden="true"></i>
@@ -1055,6 +1068,12 @@
 
         <section class="agro-task-cycles-region agro-ops-v10" data-agro-shell-region="task-cycles" hidden inert>
             <div id="agro-task-cycles-root"></div>
+        </section>
+
+        <section class="agro-reports-center-region agro-ops-v10" data-agro-shell-region="reports-center" hidden inert>
+            <div id="agro-reports-center-root" class="agro-reports-center-root">
+                <!-- agro-reports-center.js renders here when Centro de Reportes view is active -->
+            </div>
         </section>
 
         <section class="agro-period-cycles-region agro-ops-v10" data-agro-shell-region="period-cycles" hidden inert>
@@ -3097,6 +3116,12 @@
                         mod.initAgroTaskCycles({ initialUserId: session.user?.id });
                     }
                 }).catch(err => console.warn('[AGRO] Task cycles module load error:', err.message));
+
+                import('./agro-reports-center.js').then((mod) => {
+                    if (typeof mod.initAgroReportsCenter === 'function') {
+                        mod.initAgroReportsCenter({ initialUserId: session.user?.id });
+                    }
+                }).catch(err => console.warn('[AGRO] Reports center module load error:', err.message));
 
                 // Expose unified stats globally for inline scripts
                 window.refreshAgroStats = async function () {

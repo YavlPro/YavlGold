@@ -111,6 +111,7 @@ El valor de Agro no está solo en registrar. Está en conectar lo que pasa en el
     * Trabajo Diario
     * Rankings de Clientes
     * Clima Agro
+    * Centro de Reportes
 * Operación comercial
 * Trabajo diario
 * Rankings de Clientes
@@ -649,6 +650,29 @@ No es un módulo decorativo ni un widget aislado sin conexión al trabajo real. 
 ### Relación con las decisiones del agricultor
 
 El clima afecta tu trabajo diariamente: evitas siembras si hay probabilidad de granizo, no aplicas químicos en terrenos húmedos para no perder eficacia, adelantas podas. El clima no está ahí como un dato curioso, sino operativo.
+
+---
+
+## Centro de Reportes
+
+### Qué es
+
+El Centro de Reportes es la superficie donde Agro reúne los reportes exportables en Markdown, organizados por categoría. Sirve para encontrar y descargar memoria operativa sin tener que entrar módulo por módulo.
+
+### Qué no es
+
+No reemplaza los reportes existentes dentro de cada módulo. No borra ni mueve exportaciones actuales. No es una estadística nueva ni una segunda cartera; es un centro de acceso y organización de reportes.
+
+### Para qué sirve
+
+* Exportar reportes de cultivos, ciclos, cartera, clientes, carrito, trabajo y estadísticas.
+* Mantener los reportes ordenados por categoría.
+* Facilitar la creación de memoria operativa en `.md`.
+* Ahorrar tiempo al agricultor cuando necesita revisar o compartir información.
+
+### Cómo se conecta
+
+Lee o reutiliza reportes existentes de Agro. Cada módulo puede conservar su propio botón de exportación, pero el Centro de Reportes ofrece una entrada común para encontrarlos todos.
 
 ---
 

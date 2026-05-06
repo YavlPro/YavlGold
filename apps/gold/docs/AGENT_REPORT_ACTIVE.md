@@ -125,3 +125,83 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-27__2026-05-05.md`
 - `git diff --check`: PASS.
 - `pnpm build:gold`: PASS.
 - QA visual/manual queda para el usuario por instrucción expresa.
+
+---
+
+## 2026-05-05 — Diagnóstico y plan: Centro de Reportes
+
+**Estado:** COMPLETADO EN CÓDIGO / QA MANUAL PENDIENTE POR USUARIO
+
+### Diagnóstico
+
+- `apps/gold/agro/agro-shell.js` registra vistas profundas mediante `VIEW_CONFIG`, alias, keywords y asignación de hub móvil. El nuevo módulo debe entrar como vista `reportes` con región propia.
+- El hub Mi Granja vive en `apps/gold/agro/index.html`; la sección desktop relevante aparece como `Trabajo diario` y el hub móvil ya usa el título `Trabajo y lectura`.
+- Hay exportadores Markdown reales y reutilizables para `agro-crop-report.js` (`exportCropReport(cropId)`) y `agro-stats-report.js` (`exportStatsReport()`).
+- `agro.js` expone `window.exportAgroLog`, pero no se tocará para este módulo. El Centro puede invocarlo si ya existe.
+- `agroOperationalCycles.js` expone `window.YGAgroOperationalCycles.downloadMarkdown`, pero depende del estado interno del módulo. Se puede conectar como wrapper pequeño sin duplicar lógica.
+- `agro-cart.js` tiene `exportCartMD(cartId)` privado; no hay API pública segura para exportar desde el centro sin tocar su contrato, por lo que Mi Carrito queda pendiente de conectar en este MVP.
+- Cartera Viva, Mis Clientes, Rankings y AgroRepo tienen exportes o datos en flujos locales, pero no una API central estable para exportación general desde un índice. No se inventará persistencia ni datos.
+
+### Plan quirúrgico
+
+1. Crear `apps/gold/agro/agro-reports-center.js` como módulo independiente con catálogo de reportes por categoría.
+2. Crear `apps/gold/agro/agro-reports-center.css` con estilos ADN V11 sobrios, responsive y accesibles.
+3. Registrar vista `reportes` en `agro-shell.js` sin tocar `agro.js`.
+4. Añadir la tarjeta `Centro de Reportes` en Mi Granja / Trabajo y lectura dentro de `index.html`, más entrada móvil y región dedicada.
+5. Importar e inicializar el módulo desde el bootstrap de `index.html`.
+6. Conectar solo exportes seguros: cultivo seleccionado, estadísticas globales, informe global de Agro y Cartera Operativa si su API global está disponible.
+7. Dejar el resto como `Pendiente de conectar` o `Próximamente`, con botón deshabilitado.
+8. Agregar sección breve en `MANIFIESTO_AGRO.md` porque el usuario autorizó documentar este módulo real.
+9. Ejecutar `git diff --check` y `pnpm build:gold`. QA manual/browser queda pendiente para el usuario.
+
+### DoD esperado
+
+- `Centro de Reportes` aparece en el hub.
+- `/agro#view=reportes` abre una vista dedicada con botón `Volver`.
+- Las categorías mínimas aparecen ordenadas.
+- Los reportes no conectados no prometen exportación falsa.
+- No se eliminan ni mueven reportes existentes.
+- No se toca Supabase, migraciones ni `agro.js`.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/agro-reports-center.js` | Nuevo módulo del Centro de Reportes con catálogo por categorías, estados y wrappers de exportación seguros. |
+| `apps/gold/agro/agro-reports-center.css` | Estilos dedicados ADN V11 para vista, cards, estados, botones y responsive mobile. |
+| `apps/gold/agro/agro-shell.js` | Registrada la vista `reportes`, alias, keywords y hub móvil. |
+| `apps/gold/agro/index.html` | Agregada tarjeta en `Trabajo y lectura`, entrada móvil, región dedicada, stylesheet y bootstrap del módulo. |
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | Añadida sección humana sobre qué es, qué no es y cómo se conecta Centro de Reportes. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Registrado diagnóstico, plan y cierre de la sesión. |
+
+### Reportes conectados
+
+- Reporte de cultivo seleccionado: reutiliza `exportCropReport(cropId)`.
+- Informe estadístico global: reutiliza `exportStatsReport()`.
+- Informe global de Agro: reutiliza `window.exportAgroGlobalMd` si está cargado.
+- Reporte de Cartera Operativa: reutiliza `window.YGAgroOperationalCycles.downloadMarkdown` si está cargado.
+
+### Reportes pendientes
+
+- Cartera Viva: requiere API central para exportar sin estar dentro del detalle de cliente.
+- Mi Carrito: el exporte existe dentro del módulo, pero la función actual es privada.
+- Mis Clientes: todavía no expone exportación Markdown propia.
+- Rankings de Clientes: conserva su exporte actual, pero no hay wrapper público central.
+- Trabajo Diario, AgroRepo y estadísticas de períodos: pendientes de exportador público estable.
+
+### Validación
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS.
+- Nota: build mostró advertencia no bloqueante de engine (`node` esperado 20.x; entorno actual `v25.6.0`).
+
+### QA manual
+
+- No ejecutada por instrucción previa del usuario.
+- Pendiente para el usuario: abrir `/agro#view=reportes`, revisar desktop/mobile y probar exportes conectados.
+
+### Notas de alcance
+
+- No se eliminó ni movió ningún reporte existente.
+- No se tocó Supabase ni migraciones.
+- No se tocó `apps/gold/agro/agro.js`.

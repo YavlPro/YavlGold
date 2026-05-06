@@ -62,6 +62,7 @@ const VIEW_TO_MOBILE_HUB = Object.freeze({
     carrito: 'operacion',
     clients: 'operacion',
     rankings: 'operacion',
+    reportes: 'operacion',
     'cartera-viva': 'operacion',
     clima: 'operacion',
     'task-cycles': 'operacion',
@@ -93,7 +94,10 @@ const VIEW_ALIASES = Object.freeze({
     'operational-finished': Object.freeze({ view: 'operational', subview: 'finished' }),
     'operational-donations': Object.freeze({ view: 'operational', subview: 'donations' }),
     'operational-losses': Object.freeze({ view: 'operational', subview: 'losses' }),
-    'operational-export': Object.freeze({ view: 'operational', subview: 'export' })
+    'operational-export': Object.freeze({ view: 'operational', subview: 'export' }),
+    'centro-reportes': Object.freeze({ view: 'reportes', subview: '' }),
+    'reports-center': Object.freeze({ view: 'reportes', subview: '' }),
+    'reportes-md': Object.freeze({ view: 'reportes', subview: '' })
 });
 
 const LEGACY_VIEW_REDIRECTS = Object.freeze({
@@ -135,6 +139,7 @@ const VIEW_CONFIG = Object.freeze({
     operaciones: { region: 'ops', label: 'Mi Granja', resolveTab: resolveOperationsTab, dense: true },
     carrito: { region: 'ops', label: 'Mi Carrito', tab: 'carrito', focusSelector: '#agro-carrito-dedicated', dense: true },
     rankings: { region: 'ops', label: 'Rankings de Clientes', tab: 'rankings', focusSelector: '#agro-rankings-dedicated', dense: true },
+    reportes: { region: 'reports-center', label: 'Centro de Reportes', focusSelector: '#agro-reports-center-root' },
     'cartera-viva': { region: 'cartera-viva', label: 'Cartera Viva', focusSelector: '#agro-cartera-viva-root' },
     clima: { region: 'clima', label: 'Clima Agro', focusSelector: '[data-agro-shell-region="clima"]' },
     herramientas: { region: 'herramientas', label: 'Ayuda y soporte', focusSelector: '#agro-tools-section' },
@@ -153,6 +158,7 @@ const SHELL_VIEW_KEYWORDS = Object.freeze({
     operaciones: Object.freeze(['operacion comercial', 'gastos', 'ingresos', 'fiados', 'perdidas']),
     carrito: Object.freeze(['carrito', 'insumos', 'compras', 'lista']),
     rankings: Object.freeze(['ranking', 'rankings', 'clientes', 'estadisticas', 'top', 'comparacion']),
+    reportes: Object.freeze(['reportes', 'markdown', 'exportar', 'exportes', 'informes', 'md', 'centro']),
     'cartera-viva': Object.freeze(['cartera viva', 'clientes', 'fiados', 'deudas', 'pendientes']),
     clima: Object.freeze(['clima', 'temperatura', 'lluvia', 'tiempo']),
     herramientas: Object.freeze(['ayuda', 'soporte', 'documentacion', 'privacidad', 'herramientas']),
