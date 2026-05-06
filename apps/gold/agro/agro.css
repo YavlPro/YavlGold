@@ -162,6 +162,15 @@
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
+  -webkit-text-fill-color: currentColor;
+  background-clip: border-box;
+}
+
+#modal-edit-facturero .modal-content *,
+#modal-edit-facturero .modal-content *::before,
+#modal-edit-facturero .modal-content *::after {
+  -webkit-text-fill-color: currentColor;
+  background-clip: border-box;
 }
 
 #modal-edit-facturero .modal-content h3 {
@@ -372,6 +381,14 @@
   color: var(--text-primary, #ffffff);
   font-family: var(--font-body, 'Rajdhani', sans-serif);
   -webkit-text-fill-color: currentColor;
+  background-clip: border-box;
+}
+
+.cartera-viva-merge__dialog *,
+.cartera-viva-merge__dialog *::before,
+.cartera-viva-merge__dialog *::after {
+  -webkit-text-fill-color: currentColor;
+  background-clip: border-box;
 }
 
 .cartera-viva-merge__header {

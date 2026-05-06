@@ -794,3 +794,33 @@ Se agregaron propiedades defensivas a todos los elementos de texto del modal y d
 ```
 fix(agro): restore client name visibility in merge modal
 ```
+
+---
+
+## 2026-05-06 — Fix agresivo: override de background-clip y text-fill en modales
+
+### Problema
+
+Los fixes previos de color explícito y `-webkit-text-fill-color: currentColor` por elemento no resolvieron completamente la invisibilidad de nombres en el combobox del modal "Unificar clientes".
+
+### Causa raíz
+
+Los estilos metálicos legacy del ADN Visual (`.agro-shell-sidebar__title`, `.cartera-viva-view__title`, etc.) usan `background-clip: text` + `-webkit-text-fill-color: transparent` dentro de bloques `@supports`. Aunque sus selectores son específicos, la cascada CSS dentro de los modales (que viven en `document.body`) puede heredar estos efectos de forma inesperada a través de `font: inherit` en botones.
+
+### Solución aplicada
+
+Override agresivo a nivel contenedor del modal, usando `*` selector para garantizar que ningún hijo herede efectos metálicos:
+
+1. `.cartera-viva-merge__dialog` + `.cartera-viva-merge__dialog *` + `::before`/`::after`: forzado de `-webkit-text-fill-color: currentColor` y `background-clip: border-box`.
+2. `#modal-edit-facturero .modal-content` + mismo `*` override: misma defensa para el editor de reasignación de Fase 1.1.
+
+Esto elimina cualquier herencia de `background-clip: text` o `-webkit-text-fill-color: transparent` dentro de los modales, independientemente de dónde aparezcan en el DOM.
+
+### Archivos modificados
+
+- `apps/gold/agro/agro.css`: override `*` en ambos modales
+
+### Validación
+
+- `git diff --check`: PASS
+- `pnpm build:gold`: PASS (3.77s)
