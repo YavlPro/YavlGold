@@ -18,7 +18,6 @@ import {
     openBuyerProfileById,
     openNewBuyerProfile
 } from './agrocompradores.js';
-import { mergeCarteraVivaBuyers } from './agro-cartera-viva-client-tools.js';
 import { getPendingTransferToken } from './agro-unit-totals.js';
 
 const CARTERA_VIVA_VIEW = 'cartera-viva';
@@ -93,14 +92,6 @@ let externalRefreshTimer = 0;
 let cropScopedSummaryMap = new Map();
 let operationalProgressMap = new Map();
 let operationalProgressFamilyMap = new Map();
-let mergeMode = false;
-let mergeSelectedBuyerIds = new Set();
-let mergeModalOpen = false;
-let mergeTargetBuyerId = '';
-let mergeFinalName = '';
-let mergeBusy = false;
-let mergeMessage = '';
-let mergeTone = 'info';
 
 function readStoredCategory() {
     try {
@@ -209,7 +200,6 @@ async function fetchBuyerDirectorySummaryRows() {
     const { data, error } = await supabase
         .from('agro_buyers')
         .select('id,display_name,group_key,canonical_name,status,created_at,updated_at')
-        .eq('status', 'active')
         .order('updated_at', { ascending: false });
 
     if (error) throw error;
@@ -2309,20 +2299,11 @@ function renderPortfolioCard(row) {
     ].filter(Boolean).length;
     const safeScope = activeStateCount > 1 ? 'todos' : escapeHtml(category);
     const safeEntryKey = escapeHtml(row?.__portfolioEntryKey || '');
-    const rawBuyerId = String(row?.buyer_id || '').trim();
-    const isMergeSelected = rawBuyerId && mergeSelectedBuyerIds.has(rawBuyerId);
-    const mergeControl = mergeMode && rawBuyerId
-        ? `<label class="cartera-viva-card__merge-check">
-                <input type="checkbox" data-cartera-merge-select="${escapeHtml(rawBuyerId)}" ${isMergeSelected ? 'checked' : ''}>
-                <span>Seleccionar</span>
-            </label>`
-        : '';
 
     return `
         <article
-            class="cartera-viva-card cartera-viva-card--${category}${row?.requires_review ? ' is-review' : ''}${isMergeSelected ? ' is-merge-selected' : ''}"
+            class="cartera-viva-card cartera-viva-card--${category}${row?.requires_review ? ' is-review' : ''}"
             data-portfolio-entry-key="${safeEntryKey}">
-            ${mergeControl}
             <header class="cartera-viva-card__head">
                 <div class="cartera-viva-card__identity">
                     ${renderBuyerNameNode(row?.display_name, {
@@ -2418,118 +2399,6 @@ function getSelectedBuyerRow() {
     return sourceRows.find((row) => String(row?.buyer_id || '') === selectedBuyerId) || null;
 }
 
-function getMergeSelectedRows() {
-    const ids = mergeSelectedBuyerIds instanceof Set ? mergeSelectedBuyerIds : new Set();
-    return summaryRows.filter((row) => ids.has(String(row?.buyer_id || '').trim()));
-}
-
-function clearMergeState(options = {}) {
-    mergeMode = false;
-    mergeSelectedBuyerIds = new Set();
-    mergeModalOpen = false;
-    mergeTargetBuyerId = '';
-    mergeFinalName = '';
-    mergeBusy = false;
-    mergeMessage = '';
-    mergeTone = 'info';
-    if (options.render !== false) renderView();
-}
-
-function setMergeMessage(message = '', tone = 'info') {
-    mergeMessage = String(message || '').trim();
-    mergeTone = String(tone || 'info');
-}
-
-function buildMergeSummary(rows) {
-    const safeRows = Array.isArray(rows) ? rows : [];
-    return safeRows.reduce((summary, row) => {
-        summary.records += Number(row?.record_count || 0)
-            || Number(row?.movement_count || 0)
-            || Number(row?.review_required_count || 0)
-            || 0;
-        summary.pending += Number(row?.pending_total || 0);
-        summary.paid += Number(row?.paid_total || 0);
-        summary.loss += Number(row?.loss_total || 0);
-        summary.donations += Number(row?.donation_total || 0);
-        summary.review += getReviewTotal(row);
-        return summary;
-    }, {
-        records: 0,
-        pending: 0,
-        paid: 0,
-        loss: 0,
-        donations: 0,
-        review: 0
-    });
-}
-
-function renderMergePanel() {
-    if (!mergeModalOpen) return '';
-
-    const selectedRows = getMergeSelectedRows();
-    const targetId = mergeTargetBuyerId || String(selectedRows[0]?.buyer_id || '').trim();
-    const targetRow = selectedRows.find((row) => String(row?.buyer_id || '').trim() === targetId) || selectedRows[0] || null;
-    const finalName = mergeFinalName || String(targetRow?.display_name || '').trim();
-    const summary = buildMergeSummary(selectedRows);
-
-    return `
-        <div class="cartera-viva-merge-modal" data-cartera-merge-modal aria-hidden="false">
-            <div class="cartera-viva-merge-modal__backdrop" data-cartera-merge-cancel></div>
-            <section class="cartera-viva-merge-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="cartera-viva-merge-title">
-                <header class="cartera-viva-merge-modal__head">
-                    <div>
-                        <p class="cartera-viva-view__eyebrow">Cartera Viva</p>
-                        <h3 id="cartera-viva-merge-title">Fusionar clientes</h3>
-                        <p>Unifica clientes duplicados sin borrar movimientos.</p>
-                    </div>
-                    <button type="button" class="cartera-viva-merge-modal__close" data-cartera-merge-cancel aria-label="Cerrar">×</button>
-                </header>
-
-                <div class="cartera-viva-merge-modal__body">
-                    <label class="cartera-viva-merge-field">
-                        <span>Cliente destino</span>
-                        <select class="styled-input" data-cartera-merge-target>
-                            ${selectedRows.map((row) => {
-                                const id = String(row?.buyer_id || '').trim();
-                                return `<option value="${escapeHtml(id)}"${id === targetId ? ' selected' : ''}>${escapeHtml(row?.display_name || 'Cliente')}</option>`;
-                            }).join('')}
-                        </select>
-                    </label>
-
-                    <label class="cartera-viva-merge-field">
-                        <span>Nombre final</span>
-                        <input type="text" class="styled-input" data-cartera-merge-name maxlength="120" value="${escapeHtml(finalName)}" placeholder="Nombre final del cliente">
-                    </label>
-
-                    <div class="cartera-viva-merge-summary" aria-label="Resumen de fusión">
-                        <article><span>Pendiente</span><strong>${formatMoney(summary.pending)}</strong></article>
-                        <article><span>Cobrado</span><strong>${formatMoney(summary.paid)}</strong></article>
-                        <article><span>Pérdidas</span><strong>${formatMoney(summary.loss)}</strong></article>
-                        <article><span>Registros</span><strong>${formatCount(summary.records || selectedRows.length)}</strong></article>
-                    </div>
-
-                    <div class="cartera-viva-merge-list">
-                        <p>Clientes origen</p>
-                        <ul>
-                            ${selectedRows.map((row) => `<li>${escapeHtml(row?.display_name || 'Cliente sin nombre')}</li>`).join('')}
-                        </ul>
-                    </div>
-
-                    <p class="cartera-viva-merge-warning">No se borrará historial; solo se unificará bajo un mismo cliente.</p>
-                    ${mergeMessage ? `<p class="cartera-viva-merge-message" data-tone="${escapeHtml(mergeTone)}">${escapeHtml(mergeMessage)}</p>` : ''}
-                </div>
-
-                <footer class="cartera-viva-merge-modal__actions">
-                    <button type="button" class="cartera-viva-refresh cartera-viva-refresh--secondary" data-cartera-merge-cancel>Cancelar</button>
-                    <button type="button" class="cartera-viva-refresh" data-cartera-merge-confirm ${mergeBusy || selectedRows.length < 2 ? 'disabled' : ''}>
-                        ${mergeBusy ? 'Fusionando…' : 'Fusionar'}
-                    </button>
-                </footer>
-            </section>
-        </div>
-    `;
-}
-
 function getListViewState() {
     const selectedCropId = getSelectedCropId();
     const cropScopedRows = getCropScopedRows(summaryRows);
@@ -2610,9 +2479,6 @@ function renderListViewMarkup(state) {
         <section
             class="cartera-viva-view${state.isSoftRefreshing ? ' is-refreshing' : ''}"
             data-cartera-list-view
-            data-cartera-merge-mode="${mergeMode ? '1' : '0'}"
-            data-cartera-merge-open="${mergeModalOpen ? '1' : '0'}"
-            data-cartera-merge-count="${mergeSelectedBuyerIds.size}"
             aria-label="Cartera de clientes"
             aria-busy="${loading ? 'true' : 'false'}">
             <header class="cartera-viva-view__header">
@@ -2631,12 +2497,6 @@ function renderListViewMarkup(state) {
                         <button type="button" class="cartera-viva-refresh cartera-viva-refresh--secondary" data-cartera-existing-client>
                             Cliente existente
                         </button>
-                    </div>
-                    <div class="cartera-viva-action-pair" aria-label="Fusionar clientes">
-                        <button type="button" class="cartera-viva-refresh cartera-viva-refresh--secondary" data-cartera-merge-toggle>
-                            ${mergeMode ? 'Cancelar selección' : 'Fusionar clientes'}
-                        </button>
-                        ${mergeMode ? `<button type="button" class="cartera-viva-refresh" data-cartera-merge-open ${mergeSelectedBuyerIds.size < 2 ? 'disabled' : ''}>Fusionar (${formatCount(mergeSelectedBuyerIds.size)})</button>` : ''}
                     </div>
                     <button type="button" class="cartera-viva-refresh" data-cartera-refresh ${loading ? 'disabled' : ''}>
                         ${loading ? 'Actualizando…' : 'Actualizar'}
@@ -2662,7 +2522,6 @@ function renderListViewMarkup(state) {
             <div class="cartera-viva-view__body" data-cartera-view-body>
                 ${renderListBody(state)}
             </div>
-            ${renderMergePanel()}
         </section>
     `;
 }
@@ -2733,9 +2592,6 @@ function patchListView(root, state) {
     if (!viewNode) return;
 
     viewNode.className = `cartera-viva-view${state.isSoftRefreshing ? ' is-refreshing' : ''}`;
-    viewNode.dataset.carteraMergeMode = mergeMode ? '1' : '0';
-    viewNode.dataset.carteraMergeOpen = mergeModalOpen ? '1' : '0';
-    viewNode.dataset.carteraMergeCount = String(mergeSelectedBuyerIds.size);
     viewNode.setAttribute('aria-busy', loading ? 'true' : 'false');
 
     const refreshButton = viewNode.querySelector('[data-cartera-refresh]');
@@ -2784,15 +2640,6 @@ function renderListView(root) {
     const hasShell = root.querySelector('[data-cartera-list-view]');
 
     if (!hasShell) {
-        root.innerHTML = renderListViewMarkup(state);
-        return;
-    }
-
-    if (
-        hasShell.dataset.carteraMergeMode !== (mergeMode ? '1' : '0')
-        || hasShell.dataset.carteraMergeOpen !== (mergeModalOpen ? '1' : '0')
-        || hasShell.dataset.carteraMergeCount !== String(mergeSelectedBuyerIds.size)
-    ) {
         root.innerHTML = renderListViewMarkup(state);
         return;
     }
@@ -3042,62 +2889,6 @@ async function exportBuyerDetail() {
     }
 }
 
-async function confirmMergeSelectedBuyers() {
-    if (mergeBusy) return;
-
-    const selectedRows = getMergeSelectedRows();
-    if (selectedRows.length < 2) {
-        setMergeMessage('Selecciona dos o más clientes para fusionar.', 'warn');
-        renderView();
-        return;
-    }
-
-    const targetId = String(mergeTargetBuyerId || selectedRows[0]?.buyer_id || '').trim();
-    const targetRow = selectedRows.find((row) => String(row?.buyer_id || '').trim() === targetId) || selectedRows[0] || null;
-    const finalName = String(mergeFinalName || targetRow?.display_name || '').trim();
-    if (!targetId || !finalName) {
-        setMergeMessage('Elige el cliente destino y el nombre final.', 'warn');
-        renderView();
-        return;
-    }
-
-    mergeBusy = true;
-    setMergeMessage('', 'info');
-    renderView();
-
-    try {
-        const { data, error } = await supabase.auth.getUser();
-        if (error) throw error;
-        const userId = String(data?.user?.id || '').trim();
-        if (!userId) throw new Error('Sesión expirada.');
-
-        const result = await mergeCarteraVivaBuyers({
-            supabase,
-            userId,
-            selectedRows,
-            targetBuyerId: targetId,
-            finalName
-        });
-
-        document.dispatchEvent(new CustomEvent('agro:client:changed', {
-            detail: {
-                clientId: result.targetBuyerId,
-                groupKey: result.targetGroupKey,
-                openDetail: false,
-                merged: true
-            }
-        }));
-
-        clearMergeState({ render: false });
-        await loadSummary();
-    } catch (error) {
-        console.error('[CarteraViva] merge failed:', error);
-        mergeBusy = false;
-        setMergeMessage(error?.message || 'No se pudo fusionar los clientes.', 'error');
-        renderView();
-    }
-}
-
 function bindListViewEvents(root) {
     if (root.dataset.carteraListEventsBound === '1') return;
     root.dataset.carteraListEventsBound = '1';
@@ -3105,10 +2896,6 @@ function bindListViewEvents(root) {
     root.addEventListener('input', (event) => {
         const target = event.target;
         if (!(target instanceof HTMLInputElement)) return;
-        if (target.matches('[data-cartera-merge-name]')) {
-            mergeFinalName = String(target.value || '').trim();
-            return;
-        }
         if (!target.matches('[data-cartera-search]')) return;
         if (!root.querySelector('[data-cartera-list-view]')) return;
 
@@ -3117,73 +2904,10 @@ function bindListViewEvents(root) {
         renderView();
     });
 
-    root.addEventListener('change', (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLElement)) return;
-
-        if (target.matches('[data-cartera-merge-select]')) {
-            const buyerId = String(target.getAttribute('data-cartera-merge-select') || '').trim();
-            if (!buyerId) return;
-            if (target.checked) {
-                mergeSelectedBuyerIds.add(buyerId);
-            } else {
-                mergeSelectedBuyerIds.delete(buyerId);
-            }
-            renderView();
-            return;
-        }
-
-        if (target.matches('[data-cartera-merge-target]')) {
-            mergeTargetBuyerId = String(target.value || '').trim();
-            const targetRow = getMergeSelectedRows().find((row) => String(row?.buyer_id || '').trim() === mergeTargetBuyerId) || null;
-            mergeFinalName = String(targetRow?.display_name || mergeFinalName || '').trim();
-            renderView();
-        }
-    });
-
     root.addEventListener('click', (event) => {
         const target = event.target;
         if (!(target instanceof Element)) return;
         if (!root.querySelector('[data-cartera-list-view]')) return;
-
-        if (target.closest('[data-cartera-merge-toggle]')) {
-            if (mergeMode) {
-                clearMergeState();
-                return;
-            }
-            mergeMode = true;
-            mergeSelectedBuyerIds = new Set();
-            setMergeMessage('', 'info');
-            renderView();
-            return;
-        }
-
-        if (target.closest('[data-cartera-merge-open]')) {
-            if (mergeSelectedBuyerIds.size < 2) {
-                setMergeMessage('Selecciona dos o más clientes para fusionar.', 'warn');
-                renderView();
-                return;
-            }
-            const selectedRows = getMergeSelectedRows();
-            mergeTargetBuyerId = mergeTargetBuyerId || String(selectedRows[0]?.buyer_id || '').trim();
-            mergeFinalName = mergeFinalName || String(selectedRows[0]?.display_name || '').trim();
-            mergeModalOpen = true;
-            setMergeMessage('', 'info');
-            renderView();
-            return;
-        }
-
-        if (target.closest('[data-cartera-merge-cancel]')) {
-            mergeModalOpen = false;
-            setMergeMessage('', 'info');
-            renderView();
-            return;
-        }
-
-        if (target.closest('[data-cartera-merge-confirm]')) {
-            confirmMergeSelectedBuyers();
-            return;
-        }
 
         const categoryButton = target.closest('[data-cartera-category]');
         if (categoryButton) {

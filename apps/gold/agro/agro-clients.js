@@ -580,7 +580,7 @@ function buildFormMarkup() {
             </label>
 
             <label class="agro-clients-field">
-                <span>Correo de contacto</span>
+                <span>Email</span>
                 <input type="email" class="styled-input" data-client-draft="email" maxlength="180" value="${escapeAttr(values.email)}" placeholder="correo@ejemplo.com">
             </label>
 

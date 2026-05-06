@@ -439,105 +439,34 @@ Usar `ROADMAP_VISION_YAVLGOLD.md` como filtro antes de proponer superficies gran
 
 ---
 
-## 2026-05-06 — Diagnóstico y plan: reorganización de clientes en Cartera Viva
+## 2026-05-06 — Incidente online: revert de fusión/asignación en Cartera Viva
 
-Estado: EN CURSO
+Estado: YELLOW — producción restaurada por revert; QA online pendiente
 
 ### Diagnóstico
 
-- Cartera Viva agrupa clientes desde `public.agro_buyers` y desde las columnas `buyer_id`, `buyer_group_key` y `buyer_match_status` presentes en los movimientos.
-- Los movimientos que alimentan Cartera Viva son:
-  - `agro_pending` para fiados;
-  - `agro_income` para pagados/cobros;
-  - `agro_losses` para pérdidas.
-- `apps/gold/agro/agro-cartera-viva-view.js` renderiza la lista, el detalle y los botones de cliente. El detalle usa `apps/gold/agro/agro-cartera-viva-detail.js`.
-- El modal actual de edición de registros vive como markup en `apps/gold/agro/index.html` (`#modal-edit-facturero`) y se abre/guarda desde `apps/gold/agro/agro.js` (`openFactureroEditModal()` y `saveEditModal()`).
-- Ya existe identidad canónica por buyer (`agro_buyers.id`) pero también hay fallback por nombre normalizado (`buyer_group_key`) para registros legacy.
-- Mis Clientes (`agro-clients.js`) es libreta de contactos separada. Lee `agro_clients` y buyers derivados de Cartera Viva, pero no debe volverse fuente de deuda.
-- La vinculación real por correo a cuenta YavlGold no puede verificarse de forma segura desde el frontend actual: `auth.users.email` no está disponible por RLS/cliente anon y no existe RPC/Edge Function local para resolver email -> user id. Por tanto, no se debe guardar correo escrito en `linked_user_id`.
+- El usuario reportó que en online `/agro#view=cartera-viva` la vista cargaba, pero tags, filtros y botones no respondían después de `16ab27a feat(agro): add cartera viva client reassignment and merge tools`.
+- La rama ya tenía además `8196185 fix(agro): wire client assignment into legacy facturero editor`, encima de `16ab27a`.
+- No había un diff local pendiente que permitiera separar el fallo sin tocar producción; ambos commits estaban en `main`/`origin/main`.
+- La investigación rápida no encontró una causa pequeña y demostrable en handlers o CSS antes de comprometer más cambios.
 
-### Plan
+### Decisión
 
-1. Crear helper modular para el selector de cliente del modal de edición, sin crecer `agro.js` más allá de wiring.
-2. Insertar en el modal un bloque `Cliente` con switch `Cliente existente` / `Nuevo cliente`.
-3. Al guardar:
-   - si es cliente existente, reasignar el movimiento al buyer elegido;
-   - si es cliente nuevo, crear/reutilizar buyer por nombre y reasignar el movimiento;
-   - conservar monto, estado, fecha, tipo y demás datos financieros.
-4. Agregar modo selección en Cartera Viva para fusionar 2+ clientes.
-5. Implementar modal `Fusionar clientes` con nombre destino, resumen de registros y advertencia de no borrado.
-6. Al confirmar fusión, actualizar `agro_pending`, `agro_income` y `agro_losses` para apuntar al buyer destino y archivar los buyers origen sin borrar movimientos.
-7. Hacer estricta la vinculación de cuenta YavlGold: separar copy de contacto vs cuenta vinculada y bloquear falsa vinculación por email hasta que exista RPC/Edge Function.
-8. Ejecutar `pnpm build:gold`.
+- Se priorizó recuperar Cartera Viva funcional sobre conservar la mejora rota.
+- Se revirtió primero `8196185`, porque dependía del helper agregado por `16ab27a`.
+- Luego se revirtió `16ab27a`, retirando temporalmente la fusión/asignación de clientes y el helper `agro-cartera-viva-client-tools.js`.
 
-### Archivos a tocar
+### Commits de recuperación
 
-- `apps/gold/agro/agro-cartera-viva-client-tools.js` (nuevo helper modular)
-- `apps/gold/agro/agro.js` (wiring mínimo del modal de edición)
-- `apps/gold/agro/index.html` (contenedor del bloque Cliente y copy de vinculación)
-- `apps/gold/agro/agro-cartera-viva-view.js` (modo selección/fusión)
-- `apps/gold/agro/agro-cartera-viva.css` (estilos sobrios)
-- `apps/gold/agro/agrocompradores.js` (vinculación estricta sin falso email)
-- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
-- `apps/gold/docs/ops/daily-log-2026-05-06.md`
+- `790d607 Revert "fix(agro): wire client assignment into legacy facturero editor"`
+- `6b0d15e Revert "feat(agro): add cartera viva client reassignment and merge tools"`
 
-### Riesgos
+### Validación esperada
 
-- Reasignar solo nombre sin `buyer_id` dejaría duplicados en Cartera Viva; por eso se actualiza identidad (`buyer_id` + `buyer_group_key`).
-- Renombrar/fusionar buyers puede chocar con índices únicos por `group_key`/`canonical_name`; la fusión debe neutralizar los buyers origen antes de renombrar destino si hace falta.
-- La verificación de correo no debe improvisarse consultando datos no disponibles. Si no hay backend seguro, se deja bloqueado y documentado.
-- No se debe tocar `MANIFIESTO_AGRO.md` sin autorización expresa, aunque el cambio sea semánticamente relevante.
+- `pnpm build:gold`.
+- Push a producción/preview.
+- QA online: confirmar que tags, filtros, cards, detalle y botones de Cartera Viva vuelven a responder.
 
-### QA manual esperado
+### Riesgo pendiente
 
-1. Editar un fiado y moverlo a cliente existente.
-2. Editar un fiado y moverlo a cliente nuevo.
-3. Confirmar que el cliente anterior deja de agrupar ese registro.
-4. Confirmar que el cliente destino muestra el registro.
-5. Fusionar clientes duplicados, por ejemplo `Yony` + `Yony chupeto`.
-6. Confirmar que montos, estados y fechas no cambian.
-7. Intentar vincular correo inexistente y confirmar que no se guarda como cuenta YavlGold.
-8. Guardar cliente sin vinculación.
-9. Revisar mobile 360-480px.
-10. Ejecutar `pnpm build:gold`.
-
-### Cambios realizados
-
-| Archivo | Cambio |
-|---|---|
-| `apps/gold/agro/agro-cartera-viva-client-tools.js` | Nuevo helper modular para resolver cliente en edición de movimientos y fusionar buyers sin borrar movimientos. |
-| `apps/gold/agro/agro.js` | Wiring mínimo: el modal de edición carga el bloque Cliente y al guardar aplica `buyer_id`, `buyer_group_key` y `buyer_match_status` resueltos por el helper. |
-| `apps/gold/agro/index.html` | Agregado contenedor `#edit-client-assignment`; copy de cuenta vinculada cambiado para no aceptar correo falso como vínculo real. |
-| `apps/gold/agro/agro-cartera-viva-view.js` | Agregado modo selección, modal `Fusionar clientes`, confirmación y refresco de Cartera Viva. |
-| `apps/gold/agro/agro-cartera-viva.css` | Estilos ADN V11 sobrios para selector de cliente, selección de cards y modal de fusión. |
-| `apps/gold/agro/agrocompradores.js` | La vinculación de cuenta YavlGold queda estricta: conserva vínculo verificado existente, pero no pide ni guarda correo no verificado. |
-| `apps/gold/agro/agro-clients.js` | `Email` se renombró a `Correo de contacto` en Mis Clientes para separar contacto manual de cuenta vinculada. |
-| `apps/gold/docs/ops/daily-log-2026-05-06.md` | Actualizado log diario operativo. |
-
-### Decisiones técnicas
-
-- Reasignar cliente en edición de movimiento actualiza identidad de Cartera Viva (`buyer_id` + `buyer_group_key`) y el nombre humano del movimiento. No altera monto, fecha, moneda, estado ni tipo.
-- En `transferencias`/donación el editor permite cambiar destinatario, pero no fuerza `buyer_id` porque esa tabla no alimenta Cartera Viva en el contrato actual.
-- Fusionar clientes reasigna registros de `agro_pending`, `agro_income` y `agro_losses` al buyer destino. Los buyers origen se archivan y se neutraliza su `group_key`/`canonical_name` para evitar conflictos de índices únicos. No se borran movimientos.
-- La vinculación por correo queda bloqueada sin falsa persistencia porque no existe lookup seguro frontend para `auth.users.email`. Si se requiere, debe implementarse RPC/Edge Function owner-safe antes de habilitar el campo.
-
-### Validación
-
-- `git diff --check`: PASS.
-- `pnpm build:gold`: PASS.
-- `agent-guard`: OK.
-- `agent-report-check`: OK.
-- `vite build`: OK (172 módulos).
-- `check-llms`: OK.
-- `check-dist-utf8`: OK.
-- Warning no bloqueante: engine mismatch por Node `v25.6.0` vs `20.x`.
-
-### QA manual pendiente
-
-- No se ejecutó browser QA intensivo desde Codex por política operativa de créditos.
-- Pendiente probar con cuenta QA o usuario real:
-  1. editar fiado a cliente existente;
-  2. editar fiado a cliente nuevo;
-  3. fusionar duplicados reales;
-  4. verificar que montos/fechas/estados no cambian;
-  5. revisar mobile 360-480px.
+- La mejora de fusión/asignación queda retirada. Para reintentar, debe reimplementarse en rama/commit nuevo con QA online posterior al push y rollback preparado.
