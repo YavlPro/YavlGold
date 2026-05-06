@@ -2000,14 +2000,6 @@ function renderToolbarControls() {
                 <div data-cartera-crop-picker-slot>
                     ${renderCropSelector()}
                 </div>
-                <div class="cartera-viva-action-pair" aria-label="Acciones de clientes">
-                    <button type="button" class="cartera-viva-quick-action" data-cartera-new-client>
-                        Nuevo cliente
-                    </button>
-                    <button type="button" class="cartera-viva-quick-action cartera-viva-quick-action--secondary" data-cartera-existing-client>
-                        Cliente existente
-                    </button>
-                </div>
             </div>
             ${renderPrivacyStrip()}
         </div>
@@ -2360,7 +2352,7 @@ function renderPortfolioCard(row) {
                     type="button"
                     class="cartera-viva-quick-action cartera-viva-quick-action--danger"
                     data-cartera-delete-client="${safeBuyerId}">
-                    Eliminar cliente canónico
+                    Eliminar cliente
                 </button>
             </div>
         </article>
@@ -2374,20 +2366,12 @@ function renderPortfolioCards(filteredRows) {
 function renderEmptyState(config = {}) {
     const title = escapeHtml(config.title || 'Sin datos para mostrar');
     const copy = escapeHtml(config.copy || 'Cartera Viva todavia no tiene una lectura disponible para esta vista.');
-    const action = config.action === 'new-client'
-        ? `
-            <button type="button" class="cartera-viva-empty__action" data-cartera-new-client>
-                Nuevo cliente
-            </button>
-        `
-        : '';
 
     return `
         <div class="cartera-viva-empty">
             <div class="cartera-viva-empty__icon" aria-hidden="true">🧾</div>
             <h3 class="cartera-viva-empty__title">${title}</h3>
             <p class="cartera-viva-empty__copy">${copy}</p>
-            ${action}
         </div>
     `;
 }
@@ -2448,8 +2432,7 @@ function getListViewState() {
         bodyMode = 'empty';
         bodyContent = renderEmptyState({
             title: 'Todavía no hay clientes en Cartera Viva',
-            copy: 'Crea tu primer cliente para empezar a registrar su historial desde aquí.',
-            action: 'new-client'
+            copy: 'Crea tu primer cliente para empezar a registrar su historial desde aquí.'
         });
     } else if (filteredRows.length <= 0) {
         bodyMode = 'empty';
@@ -2505,7 +2488,7 @@ function renderListViewMarkup(state) {
                         <p class="cartera-viva-view__eyebrow">Cartera Viva</p>
                         <h2 class="cartera-viva-view__title">Cartera de clientes</h2>
                         <p class="cartera-viva-view__subtitle">Primero vive el cliente; luego sus movimientos.</p>
-                </div>
+                    </div>
                 <div class="cartera-viva-view__actions">
                     <div class="cartera-viva-action-pair" aria-label="Acciones de clientes">
                         <button type="button" class="cartera-viva-refresh" data-cartera-new-client>

@@ -99,3 +99,29 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-27__2026-05-05.md`
 - No se tocó `apps/gold/agro/agro.js`.
 - No se modificó `MANIFIESTO_AGRO.md`.
 - No se guarda correo/nombre/finca en `linked_user_id`; si el valor no es UUID válido, se muestra `Cliente registrado no encontrado`.
+
+---
+
+## 2026-05-05 — Limpieza visual: acciones de cliente en Cartera Viva
+
+**Estado:** COMPLETADO EN CÓDIGO / QA MANUAL PENDIENTE POR USUARIO
+
+### Diagnóstico
+
+- La separación previa dejó dos grupos visibles `Nuevo cliente` / `Cliente existente`.
+- El grupo superior vive en `renderListViewMarkup()` junto a `Actualizar`.
+- El grupo duplicado inferior vivía en `renderToolbarControls()`, antes de la franja de privacidad.
+- El copy `Eliminar cliente canónico` vivía en el botón de borrado de cada card dentro de `renderPortfolioCard()`.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/agro-cartera-viva-view.js` | Eliminado el grupo inferior duplicado de acciones; retirado el CTA latente del empty state; cambiado `Eliminar cliente canónico` por `Eliminar cliente`. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Registrada esta limpieza. |
+
+### Validación
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS.
+- QA visual/manual queda para el usuario por instrucción expresa.
