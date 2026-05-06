@@ -15,7 +15,6 @@ import { initAgroCalculadora } from './agrocalculadora.js';
 import { initClimaWeeklyEmbed } from './agroclima-layout.js';
 import { formatCurrencyDisplay, SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, hasOverride, clearOverride } from './agro-exchange.js';
 import { ensureBuyerIdentityLink, isBuyerIdentityRelevantTab } from './agro-buyer-identity.js';
-import { resolveFactureroClientAssignment, setupFactureroClientAssignment } from './agro-cartera-viva-client-tools.js';
 import { initCiclos, renderFinishedCycles } from './agrociclos.js';
 import { initAgroShell } from './agro-shell.js';
 import { initFactureroSelection } from './agro-selection.js';
@@ -6116,7 +6115,7 @@ async function editFactureroItem(tabName, itemId) {
         }
 
         // Open edit modal
-        openFactureroEditModal(tabName, item, config, user.id);
+        openFactureroEditModal(tabName, item, config);
 
     } catch (err) {
         console.error(`[AGRO] V9.5.1: Edit fetch error:`, err.message);
@@ -6124,7 +6123,7 @@ async function editFactureroItem(tabName, itemId) {
     }
 }
 
-function openFactureroEditModal(tabName, item, config, userId = '') {
+function openFactureroEditModal(tabName, item, config) {
     const modal = document.getElementById('modal-edit-facturero');
     if (!modal) {
         console.warn('[AGRO] V9.5.1: Edit modal not found');
@@ -6158,16 +6157,6 @@ function openFactureroEditModal(tabName, item, config, userId = '') {
         whoGroup.style.display = 'none';
         whoInput.value = '';
     }
-
-    setupFactureroClientAssignment({
-        supabase,
-        userId,
-        tabName,
-        item,
-        currentName: whoData.who || ''
-    }).catch((error) => {
-        console.warn('[AGRO] Client assignment block unavailable:', error?.message || error);
-    });
 
     // Populate crop selector
     const cropSelect = document.getElementById('edit-crop-id');
@@ -6402,8 +6391,19 @@ async function saveEditModal() {
         }
 
         const conceptValue = document.getElementById('edit-concepto')?.value?.trim() || '';
-        let whoValue = document.getElementById('edit-who-input')?.value?.trim() || '';
+        const whoValue = document.getElementById('edit-who-input')?.value?.trim() || '';
         const whoMeta = WHO_FIELD_META[tabName];
+
+        let conceptForSave = conceptValue;
+        if (tabName === 'ingresos') {
+            conceptForSave = buildConceptWithWho(tabName, conceptValue, whoValue);
+        }
+        if (tabName === 'gastos') {
+            const unitTypeUi = document.getElementById('edit-unit_type')?.value || '';
+            const unitQtyUi = document.getElementById('edit-unit_qty')?.value || '';
+            const quantityKgUi = document.getElementById('edit-quantity_kg')?.value || '';
+            conceptForSave = buildExpenseConceptWithUnitMeta(conceptValue, unitTypeUi, unitQtyUi, quantityKgUi);
+        }
 
         // V9.6.6: Validate date before update
         const editDateValue = document.getElementById('edit-fecha')?.value;
@@ -6428,29 +6428,6 @@ async function saveEditModal() {
             return;
         }
 
-        const clientAssignment = await resolveFactureroClientAssignment({
-            supabase,
-            userId: user.id,
-            tabName,
-            currentWhoValue: whoValue
-        });
-        if (clientAssignment?.whoValue) {
-            whoValue = clientAssignment.whoValue;
-            const whoInput = document.getElementById('edit-who-input');
-            if (whoInput) whoInput.value = whoValue;
-        }
-
-        let conceptForSave = conceptValue;
-        if (tabName === 'ingresos') {
-            conceptForSave = buildConceptWithWho(tabName, conceptValue, whoValue);
-        }
-        if (tabName === 'gastos') {
-            const unitTypeUi = document.getElementById('edit-unit_type')?.value || '';
-            const unitQtyUi = document.getElementById('edit-unit_qty')?.value || '';
-            const quantityKgUi = document.getElementById('edit-quantity_kg')?.value || '';
-            conceptForSave = buildExpenseConceptWithUnitMeta(conceptValue, unitTypeUi, unitQtyUi, quantityKgUi);
-        }
-
         const updateData = {
             [config.conceptField]: conceptForSave,
             [config.amountField]: editedMonto,
@@ -6468,9 +6445,6 @@ async function saveEditModal() {
 
         if (whoMeta?.field) {
             updateData[whoMeta.field] = whoValue || null;
-        }
-        if (clientAssignment?.buyerPayload) {
-            Object.assign(updateData, clientAssignment.buyerPayload);
         }
 
         // Add extra fields
