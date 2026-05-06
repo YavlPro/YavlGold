@@ -135,6 +135,7 @@ Regla estricta:
 - Facturero financiero: gastos, ingresos (pagados), fiados, pérdidas, donaciones, otros
 - Gestión de cultivos con ciclos productivos
 - Dashboard agrícola con clima en tiempo real
+- Centro de Reportes para exportar reportes Markdown por categoría
 - Rankings y estadísticas financieras
 - Carrito de compras con lista de insumos
 - Planificación y agenda agrícola
@@ -150,6 +151,7 @@ Regla estricta:
 agro.js              — monolito principal (facturero, CRUD, historial)
 agro-agenda.js       — agenda agrícola
 agro-cart.js         — carrito de insumos
+agro-cartera-viva-view.js — Cartera Viva: vista de clientes, estados, wizard de compradores y flujos separados Nuevo cliente / Cliente existente
 agro-clients.js      — Mis Clientes: directorio de contactos (clientes manuales + buyers derivados de Cartera Viva)
 agro-clima.js        — integración meteorológica
 agro-crop-report.js  — reportes por cultivo
@@ -160,8 +162,9 @@ agro-market.js       — inteligencia de mercado
 agro-notifications.js — notificaciones
 agro-planning.js     — planificación
 agro-privacy.js      — privacidad de datos
+agro-reports-center.js — Centro de Reportes: centraliza exportaciones Markdown por categoría y genera reportes honestos cuando una fuente no está cargada
 agro-selection.js    — selección de cultivos
-agro-shell.js        — shell UI de Agro: gestiona navegación hub/module con puertas Inicio · Granja · Memoria · Menú, hub central Mi Granja con Mis cultivos y Calendario operativo, barra inferior mobile, topbar contextual con Volver en módulos profundos, launcher/favoritos/búsqueda compacta cuando aplican, y entrada inicial al Dashboard Agro
+agro-shell.js        — shell UI de Agro: gestiona navegación hub/module con puertas Inicio · Granja · Memoria · Menú con persistencia por hash, hub central Mi Granja con Mis cultivos y Calendario operativo, barra inferior mobile, topbar contextual con Volver en módulos profundos, launcher/favoritos/búsqueda compacta cuando aplican, y entrada inicial al Dashboard Agro
 agro-stats.js        — estadísticas financieras
 agro-stats-report.js — reportes estadísticos
 agro-trash.js        — papelera de eliminados
@@ -171,9 +174,11 @@ agro-wizard.js       — wizard de configuración
 
 **Archivos CSS:**
 - `agro.css` — estilos principales + papelera + undo toast
+- `agro-cartera-viva.css` — Cartera Viva: vista, cards, estados, acciones separadas y responsive mobile
 - `agro-dashboard.css` — dashboard
 - `agro-operations.css` — operaciones financieras
 - `agro-clients.css` — Mis Clientes
+- `agro-reports-center.css` — Centro de Reportes: vista, cards, estados, botones y responsive mobile
 
 **LocalStorage Keys:**
 - `YG_MANUAL_LOCATION`

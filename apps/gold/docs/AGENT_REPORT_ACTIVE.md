@@ -279,7 +279,46 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-27__2026-05-05.md`
 
 ---
 
-## 2026-05-05 — Diagnóstico y plan: persistencia de puertas del shell
+## 2026-05-05 — Documentación: alinear manifiesto, ficha técnica y contexto con los cinco commits del día
+
+**Estado:** COMPLETADO
+
+### Diagnóstico
+
+- Se aplicaron cinco commits sobre Cartera Viva (separación de flujos, limpieza de acciones), Centro de Reportes (nuevo módulo, pulido de exportes) y persistencia del shell (rutas canónicas de puertas).
+- La documentación canónica (`MANIFIESTO_AGRO.md`, `FICHA_TECNICA.md`, `llms.txt`) debía alinearse con el comportamiento real ya implementado en código.
+- `MANIFIESTO_AGRO.md` tenía una sección inicial de Centro de Reportes sin numeración canónica ni regla de honestidad documental. Cartera Viva no documentaba la separación de flujos ni la regla de lenguaje humano. La persistencia de navegación no mencionaba las rutas canónicas por hash.
+- `FICHA_TECNICA.md` no listaba `agro-cartera-viva-view.js`, `agro-reports-center.js` ni sus CSS correspondientes. La descripción de `agro-shell.js` no mencionaba la persistencia por hash.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | §4.5.1: actualizado flujo de uso con CTAs separados Nuevo cliente / Cliente existente; agregada Regla de lenguaje humano. §4.8.1: numerado, expandido con regla de honestidad documental y reportes conectados. §4.11.3: actualizada persistencia de navegación con rutas canónicas por hash. |
+| `FICHA_TECNICA.md` | Agregados `agro-cartera-viva-view.js`, `agro-reports-center.js` y CSS correspondientes en listas de módulos. Agregado Centro de Reportes en funcionalidades. Actualizada descripción de `agro-shell.js`. |
+| `apps/gold/public/llms.txt` | Agregadas menciones de Centro de Reportes, separación de flujos en Cartera Viva, y persistencia de puertas del shell con rutas canónicas. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Registrada esta sesión documental. |
+
+### Documentos revisados sin cambios
+
+- `ADN-VISUAL-V11.0.md` — no aplica; sin regla visual nueva.
+- `AGENTS.md` — no aplica; sin regla operativa canónica nueva.
+- `docs-agro.html` — no existe en el árbol activo.
+- `AGENT_CONTEXT_INDEX.md` — revisado; estructura de capa documental sigue vigente sin cambios necesarios.
+
+### Validación
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS.
+- Búsqueda de `UUID`, `user_id público` y `cliente canónico` en documentos editados: cero ocurrencias como instrucción de UI para usuario final.
+- `Centro de Reportes` aparece en manifiesto, ficha técnica y llms.txt.
+
+### Notas de alcance
+
+- No se tocó `apps/gold/agro/agro.js`.
+- No se tocó Supabase ni migraciones.
+- No se modificó `ADN-VISUAL-V11.0.md` ni `AGENTS.md`.
+- Cambios exclusivamente documentales.
 
 **Estado:** COMPLETADO EN CÓDIGO / QA MANUAL PENDIENTE POR USUARIO
 

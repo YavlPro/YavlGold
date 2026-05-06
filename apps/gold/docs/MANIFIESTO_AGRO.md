@@ -388,9 +388,18 @@ Los movimientos en Cartera Viva pueden asociarse a un cultivo específico. Cuand
 
 1. Abres Cartera Viva.
 2. Ves la lista de clientes con fiados o deudas pendientes.
-3. Al hacer clic en un cliente, ves su detalle: total fiado, total pagado y saldo pendiente.
-4. Desde el detalle puedes: registrar un nuevo fiado, registrar un cobro o registrar una pérdida.
-5. También puedes editar los datos del cliente (nombre, teléfono, redes).
+3. Para agregar un cliente:
+   - **Nuevo cliente** crea un cliente desde cero con nombre, finca, contacto y datos reales.
+   - **Cliente existente** selecciona o vincula un cliente ya registrado o conocido.
+4. Al hacer clic en un cliente, ves su detalle: total fiado, total pagado y saldo pendiente.
+5. Desde el detalle puedes: registrar un nuevo fiado, registrar un cobro o registrar una pérdida.
+6. También puedes editar los datos del cliente (nombre, teléfono, redes) o eliminarlo con `Eliminar cliente`.
+
+### Regla de lenguaje humano en Cartera Viva
+
+Cartera Viva no debe exponer identificadores técnicos como UUID o `user_id` en la interfaz visible. Si el sistema necesita vincular un cliente registrado, debe pedir datos humanos como nombre, finca, correo o contacto, y resolver internamente el identificador cuando exista soporte real.
+
+Los botones de acción deben usar lenguaje humano reconocible: `Nuevo cliente`, `Cliente existente`, `Actualizar`, `Eliminar cliente`. No deben aparecer términos como `cliente canónico`, `user_id público` ni `UUID` en la UI.
 
 ### Transferencia de historial entre estados
 
@@ -653,7 +662,7 @@ El clima afecta tu trabajo diariamente: evitas siembras si hay probabilidad de g
 
 ---
 
-## Centro de Reportes
+## 4.8.1 Centro de Reportes
 
 ### Qué es
 
@@ -661,18 +670,30 @@ El Centro de Reportes es la superficie donde Agro reúne los reportes exportable
 
 ### Qué no es
 
-No reemplaza los reportes existentes dentro de cada módulo. No borra ni mueve exportaciones actuales. No es una estadística nueva ni una segunda cartera; es un centro de acceso y organización de reportes.
+No reemplaza los reportes existentes dentro de cada módulo. No borra ni mueve exportaciones actuales. No es una estadística nueva ni una segunda cartera. No es un facturero ni un módulo de registro de datos. Es un centro de acceso y generación de reportes.
 
 ### Para qué sirve
 
-* Exportar reportes de cultivos, ciclos, cartera, clientes, carrito, trabajo y estadísticas.
+* Exportar reportes de cultivos, ciclos, cartera, clientes, carrito, trabajo, memoria y estadísticas.
 * Mantener los reportes ordenados por categoría.
-* Facilitar la creación de memoria operativa en `.md`.
-* Ahorrar tiempo al agricultor cuando necesita revisar o compartir información.
+* Generar archivos `.md` útiles para archivo, revisión, soporte, memoria operativa o IA.
+* Ahorrar tiempo al agricultor cuando necesita compartir o revisar información.
+
+### Regla de honestidad documental
+
+Si una fuente de datos no está cargada o no existe una API pública estable, el Centro de Reportes genera un Markdown honesto indicando estado, observaciones y próximo dato necesario. No inventa números ni promete información que no pudo leer.
 
 ### Cómo se conecta
 
-Lee o reutiliza reportes existentes de Agro. Cada módulo puede conservar su propio botón de exportación, pero el Centro de Reportes ofrece una entrada común para encontrarlos todos.
+Lee o reutiliza exportadores existentes de Agro cuando están disponibles. Cada módulo conserva sus propios botones de exportación, pero el Centro de Reportes ofrece una entrada común para encontrarlos todos.
+
+### Reportes conectados
+
+* Reporte de cultivo seleccionado (reutiliza `exportCropReport`).
+* Informe estadístico global (reutiliza `exportStatsReport`).
+* Informe global de Agro (reutiliza exportador global si está cargado).
+* Reporte de Cartera Operativa (reutiliza exportador de ciclos operativos si está cargado).
+* Reportes honestos para Mi Carrito, Rankings, AgroRepo y otras fuentes cuando no exista API pública estable desde el centro.
 
 ---
 
@@ -907,7 +928,7 @@ Esto reduce ruido visual y evita que la navegación compita con la tarea princip
 
 #### Persistencia de navegación
 
-La navegación del shell persiste entre recargas de página. Al presionar F5 estando en un módulo profundo (Mis Clientes, Cartera Viva, Calendario operativo, etc.), la aplicación restaura la vista donde estaba el usuario en vez de volver siempre al Dashboard. La ruta activa se conserva en sesión y se restaura automáticamente tras una recarga.
+Las puertas principales del shell (`Inicio`, `Granja`, `Memoria`, `Menú`) tienen rutas canónicas propias mediante hash: `#view=inicio`, `#view=granja`, `#view=memoria`, `#view=menu`. La URL refleja siempre la puerta o módulo visible, de modo que al refrescar la página (F5) el usuario permanece en el mismo lugar. Las rutas profundas como `#view=reportes`, `#view=cartera-viva` o `#view=ciclos&subview=mis-cultivos` también se preservan. La UI visible y la URL ya no quedan desincronizadas.
 
 ### Ejemplo de uso de favoritas y búsqueda
 
