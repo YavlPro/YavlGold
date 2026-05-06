@@ -50,10 +50,10 @@ function getOrCreateModal() {
 
 function renderDestinationCombobox(buyers, selectedId) {
     const selected = selectedId ? buyers.find((b) => b.id === selectedId) : null;
-    const triggerLabel = selected ? selected.display_name : 'Selecciona el cliente destino';
+    const triggerLabel = selected ? selected.displayName : 'Selecciona el cliente destino';
     const optionsHtml = buyers.map((b) => {
         const sel = b.id === selectedId ? ' is-selected' : '';
-        return `<button type="button" role="option" class="cartera-viva-merge__combo-option${sel}" data-merge-dest-option data-value="${escapeAttr(b.id)}" data-display-name="${escapeAttr(b.display_name)}" data-group-key="${escapeAttr(b.groupKey)}">${escapeHtml(b.display_name)}</button>`;
+        return `<button type="button" role="option" class="cartera-viva-merge__combo-option${sel}" data-merge-dest-option data-value="${escapeAttr(b.id)}" data-display-name="${escapeAttr(b.displayName)}" data-group-key="${escapeAttr(b.groupKey)}">${escapeHtml(b.displayName)}</button>`;
     }).join('');
     return `<div class="cartera-viva-merge__combobox" data-merge-dest-combobox data-merge-selected-id="${escapeAttr(selectedId || '')}" data-merge-selected-display-name="${escapeAttr(selected?.display_name || '')}" data-merge-selected-group-key="${escapeAttr(selected?.groupKey || '')}"><button type="button" class="cartera-viva-merge__combo-trigger" data-merge-dest-trigger>${escapeHtml(triggerLabel)}</button><div class="cartera-viva-merge__combo-list" role="listbox" data-merge-dest-list hidden>${optionsHtml}</div></div>`;
 }
@@ -62,7 +62,7 @@ function renderOriginChips(buyers, selectedIds) {
     const idSet = new Set(selectedIds);
     const chipsHtml = buyers.map((b) => {
         const selected = idSet.has(b.id) ? ' is-selected' : '';
-        return `<button type="button" class="cartera-viva-merge__origin-chip${selected}" data-merge-origin-chip data-merge-origin-id="${escapeAttr(b.id)}" data-merge-origin-display-name="${escapeAttr(b.display_name)}" aria-pressed="${idSet.has(b.id)}">${escapeHtml(b.display_name)}</button>`;
+        return `<button type="button" class="cartera-viva-merge__origin-chip${selected}" data-merge-origin-chip data-merge-origin-id="${escapeAttr(b.id)}" data-merge-origin-display-name="${escapeAttr(b.displayName)}" aria-pressed="${idSet.has(b.id)}">${escapeHtml(b.displayName)}</button>`;
     }).join('');
     return chipsHtml;
 }
@@ -72,7 +72,7 @@ function renderModalContent({ buyers = [], destBuyerId = '', originBuyerIds = []
     const destCombobox = renderDestinationCombobox(filteredBuyers, destBuyerId);
     const originChips = renderOriginChips(filteredBuyers, originBuyerIds);
 
-    const destLabel = destBuyerId ? (filteredBuyers.find((b) => b.id === destBuyerId)?.display_name || '') : '';
+    const destLabel = destBuyerId ? (filteredBuyers.find((b) => b.id === destBuyerId)?.displayName || '') : '';
     const originBuyers = filteredBuyers.filter((b) => originBuyerIds.includes(b.id));
 
     if (step === 'confirm' && summary) {
@@ -105,7 +105,7 @@ function renderModalContent({ buyers = [], destBuyerId = '', originBuyerIds = []
 }
 
 function renderConfirmStep({ summary, destLabel, originBuyers, merging, error }) {
-    const originItemsHtml = originBuyers.map((b) => `<li>${escapeHtml(b.display_name)}</li>`).join('');
+    const originItemsHtml = originBuyers.map((b) => `<li>${escapeHtml(b.displayName)}</li>`).join('');
     return `
         <div class="cartera-viva-merge__dialog" role="dialog" aria-labelledby="merge-title" aria-modal="true">
             <div class="cartera-viva-merge__header">
