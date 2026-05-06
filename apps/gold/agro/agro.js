@@ -8,6 +8,7 @@ import { syncFactureroNotifications } from './agro-notifications.js';
 import './agro.css';
 import { openAgroWizard, ensureAgroWizardStyles } from './agro-wizard.js';
 import { exportCropReport, resolveCropExistenceMap } from './agro-crop-report.js';
+import { renderCropArchiveTrash } from './agro-crop-archive.js';
 import { initAgroPerfil } from './agroperfil.js';
 import { initAgroCompradores, openBuyerProfileByName } from './agrocompradores.js';
 import { initAgroSocial, openSocialPanel } from './agrosocial.js';
@@ -60,6 +61,7 @@ import {
 // ============================================================
 let currentEditId = null; // ID del cultivo en edición (null = nuevo)
 let cropsCache = [];      // Cache local de cultivos para edición
+let allCropsCache = [];   // Cache completa para resolver nombres historicos
 let currentAgroUserId = '';
 let cropsStatus = 'idle';
 let cropsLoadSeq = 0;
@@ -774,12 +776,23 @@ async function populateCropDropdowns() {
         const userId = normalizeCropId(user?.id);
         if (!userId) return;
 
-        const { data: crops, error } = await supabase
+        let { data: crops, error } = await supabase
             .from('agro_crops')
-            .select('id, name, variety, icon')
+            .select('id, name, variety, icon, archived_at')
             .eq('user_id', userId)
             .is('deleted_at', null)
             .order('name');
+
+        if (error && isArchiveColumnMissing(error)) {
+            const retry = await supabase
+                .from('agro_crops')
+                .select('id, name, variety, icon')
+                .eq('user_id', userId)
+                .is('deleted_at', null)
+                .order('name');
+            crops = retry.data;
+            error = retry.error;
+        }
 
         if (error) {
             console.warn('[AGRO] Error fetching crops for dropdowns:', error.message);
@@ -808,7 +821,7 @@ async function populateCropDropdowns() {
             }
 
             // Add crop options
-            (crops || []).forEach(crop => {
+            (crops || []).filter((crop) => !crop?.archived_at).forEach(crop => {
                 const displayCrop = getCropDisplayParts(crop);
                 const option = document.createElement('option');
                 option.value = crop.id;
@@ -8444,16 +8457,30 @@ function setupCropActionListeners() {
     document.__agroCropActionsBound = true;
 
     document.addEventListener('click', (e) => {
+        const archiveBtn = e.target.closest('.btn-archive-crop');
+        if (archiveBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const cropId = archiveBtn.dataset.id || archiveBtn.closest('.crop-card')?.dataset.cropId;
+            console.info('[AGRO] Crop archive click', { cropId });
+            if (cropId) {
+                window.archiveCrop?.(cropId);
+            } else {
+                console.warn('[AGRO] Crop archive missing id');
+            }
+            return;
+        }
+
         const deleteBtn = e.target.closest('.btn-delete-crop');
         if (deleteBtn) {
             e.preventDefault();
             e.stopPropagation();
             const cropId = deleteBtn.dataset.id || deleteBtn.closest('.crop-card')?.dataset.cropId;
-            console.info('[AGRO] Crop delete click', { cropId });
+            console.info('[AGRO] Crop trash click', { cropId });
             if (cropId) {
                 window.deleteCrop?.(cropId);
             } else {
-                console.warn('[AGRO] Crop delete missing id');
+                console.warn('[AGRO] Crop trash missing id');
             }
             return;
         }
@@ -8971,6 +8998,28 @@ function splitCropsByCycle(crops) {
     });
 
     return { active, finished };
+}
+
+function isCropDeleted(crop) {
+    return !!crop?.deleted_at;
+}
+
+function isCropArchived(crop) {
+    return !!crop?.archived_at && !isCropDeleted(crop);
+}
+
+function splitCropsByArchiveState(crops) {
+    const rows = Array.isArray(crops) ? crops : [];
+    return rows.reduce((acc, crop) => {
+        if (isCropDeleted(crop)) {
+            acc.deleted.push(crop);
+        } else if (isCropArchived(crop)) {
+            acc.archived.push(crop);
+        } else {
+            acc.visible.push(crop);
+        }
+        return acc;
+    }, { visible: [], archived: [], deleted: [] });
 }
 
 function getCropStatusMeta(status) {
@@ -10245,9 +10294,10 @@ function normalizeProgress(value) {
 function resolveCropNameFromCache(cropId) {
     const normalizedId = normalizeCropId(cropId);
     if (!normalizedId) return '';
-    const match = Array.isArray(cropsCache)
-        ? cropsCache.find((crop) => normalizeCropId(crop?.id) === normalizedId)
-        : null;
+    const allRows = Array.isArray(allCropsCache) ? allCropsCache : [];
+    const visibleRows = Array.isArray(cropsCache) ? cropsCache : [];
+    const match = [...allRows, ...visibleRows]
+        .find((crop) => normalizeCropId(crop?.id) === normalizedId);
     return String(match?.name || '').trim();
 }
 
@@ -10343,15 +10393,25 @@ function createCropCardElement(crop, index, options = {}) {
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn-delete-crop';
     deleteBtn.type = 'button';
-    deleteBtn.title = 'Eliminar Cultivo';
+    deleteBtn.title = 'Mover a papelera';
     deleteBtn.replaceChildren();
     const trashIcon = document.createElement('i');
     trashIcon.className = 'fa-solid fa-trash';
     deleteBtn.appendChild(trashIcon);
 
+    const archiveBtn = document.createElement('button');
+    archiveBtn.className = 'btn-archive-crop';
+    archiveBtn.type = 'button';
+    archiveBtn.title = 'Archivar cultivo';
+    archiveBtn.replaceChildren();
+    const archiveIcon = document.createElement('i');
+    archiveIcon.className = 'fa-solid fa-box-archive';
+    archiveBtn.appendChild(archiveIcon);
+
     if (crop?.id !== undefined && crop?.id !== null) {
         const cropId = String(crop.id);
         editBtn.dataset.id = cropId;
+        archiveBtn.dataset.id = cropId;
         deleteBtn.dataset.id = cropId;
     }
 
@@ -10370,13 +10430,16 @@ function createCropCardElement(crop, index, options = {}) {
         reportBtn.dataset.cropOrphan = '1';
     }
 
-    actions.append(reportBtn, editBtn, deleteBtn);
+    actions.append(reportBtn, editBtn, archiveBtn, deleteBtn);
     if (isAuditCard) {
         editBtn.disabled = true;
+        archiveBtn.disabled = true;
         deleteBtn.disabled = true;
         editBtn.title = 'No disponible para ciclos huérfanos';
+        archiveBtn.title = 'No disponible para ciclos huérfanos';
         deleteBtn.title = 'No disponible para ciclos huérfanos';
         editBtn.classList.add('crop-action-disabled');
+        archiveBtn.classList.add('crop-action-disabled');
         deleteBtn.classList.add('crop-action-disabled');
     }
 
@@ -11297,6 +11360,12 @@ export async function loadCrops() {
 
         if (!isLatest) return;
 
+        const {
+            visible: visibleCrops,
+            archived: archivedCrops,
+            deleted: deletedCrops
+        } = splitCropsByArchiveState(crops);
+
         let expenseTotalsByCrop = new Map();
         let directExpenseTotalsByCrop = new Map();
         let operationalExpenseTotalsByCrop = new Map();
@@ -11307,8 +11376,8 @@ export async function loadCrops() {
         let unitTotalsByCrop = new Map();
         let missingRateCountsByCrop = new Map();
         let pendingGeneralTotalUsd = null;
-        if (source === 'supabase' && currentUserId && crops.length > 0) {
-            const allCropIds = crops.map((crop) => crop?.id);
+        if (source === 'supabase' && currentUserId && visibleCrops.length > 0) {
+            const allCropIds = visibleCrops.map((crop) => crop?.id);
             const totalsOptions = { missingRateCountsByCrop };
             const [
                 expenseTotals,
@@ -11377,10 +11446,11 @@ export async function loadCrops() {
         }
 
         // Actualizar Estadísticas siempre (aunque esté vacío)
-        updateStats(crops);
+        updateStats(visibleCrops);
         clearCropsLoading(cropsGrid);
 
-        if (crops.length === 0) {
+        if (visibleCrops.length === 0) {
+            allCropsCache = crops;
             cropsCache = [];
             syncLazyCropConsumers(cropsCache);
             logAgroDebug('[AGRO] renderCrops START', { ts: new Date().toISOString(), seq: requestId, count: 0 });
@@ -11395,11 +11465,27 @@ export async function loadCrops() {
                 pendingTotalsByCrop,
                 missingRateCountsByCrop
             });
+            renderCropArchiveTrash(document.getElementById('agro-crop-archive-root'), {
+                archivedCrops,
+                deletedCrops,
+                callbacks: {
+                    details: exportCropReport,
+                    restore: restoreCrop,
+                    trash: (cropId) => moveCropToTrash(cropId, { fromArchive: true })
+                }
+            });
             publishCyclesWorkspaceSnapshot(createEmptyCyclesWorkspaceSnapshot());
             logAgroDebug('[AGRO] renderCrops END', { ts: new Date().toISOString(), seq: requestId, count: 0 });
             const hadSelection = !!selectedCropId;
             setSelectedCropId(null, { silent: true });
-            const snapshot = setCropsStatus('ready', { count: 0, requestId, crops: [], userId: currentUserId });
+            const snapshot = setCropsStatus('ready', {
+                count: 0,
+                requestId,
+                crops: [],
+                userId: currentUserId,
+                archivedCount: archivedCrops.length,
+                deletedCount: deletedCrops.length
+            });
             refreshAvailableCropSelectors();
             if (hadSelection) {
                 dispatchCropChanged();
@@ -11411,14 +11497,15 @@ export async function loadCrops() {
         }
 
         // Guardar en cache para edición
-        cropsCache = crops;
+        allCropsCache = crops;
+        cropsCache = visibleCrops;
         syncLazyCropConsumers(cropsCache);
         const previousSelectedCropId = selectedCropId;
-        syncSelectedCropFromList(crops, { silent: true });
+        syncSelectedCropFromList(visibleCrops, { silent: true });
         const selectedCropChangedAfterFetch = previousSelectedCropId !== selectedCropId;
         refreshAvailableCropSelectors();
-        const { active: activeCrops, finished: finishedCrops } = splitCropsByCycle(crops);
-        const globalTotalsByCropType = buildCycleGlobalTotalsByCropType(crops, {
+        const { active: activeCrops, finished: finishedCrops } = splitCropsByCycle(visibleCrops);
+        const globalTotalsByCropType = buildCycleGlobalTotalsByCropType(visibleCrops, {
             expenseTotalsByCrop,
             incomeTotalsByCrop,
             lossTotalsByCrop,
@@ -11431,7 +11518,7 @@ export async function loadCrops() {
         if (requestId !== cropsLoadSeq) return;
 
         // Renderizar cultivos
-        logAgroDebug('[AGRO] renderCrops START', { ts: new Date().toISOString(), seq: requestId, count: crops.length });
+        logAgroDebug('[AGRO] renderCrops START', { ts: new Date().toISOString(), seq: requestId, count: visibleCrops.length });
         cropsGrid.textContent = '';
         if (!cropsGrid.id) {
             cropsGrid.id = 'cyclesContainer';
@@ -11490,12 +11577,21 @@ export async function loadCrops() {
             missingRateCountsByCrop,
             globalTotalsByCropType
         });
+        renderCropArchiveTrash(document.getElementById('agro-crop-archive-root'), {
+            archivedCrops,
+            deletedCrops,
+            callbacks: {
+                details: exportCropReport,
+                restore: restoreCrop,
+                trash: (cropId) => moveCropToTrash(cropId, { fromArchive: true })
+            }
+        });
         publishCyclesWorkspaceSnapshot(buildCyclesWorkspaceSnapshot({
             active: activeCycleCards,
             finished: finishedCycleCards,
             lost: lostCycleCards,
             auditCount: orphanFinishedCrops.length,
-            total: crops.length
+            total: visibleCrops.length
         }));
         if (selectedCropChangedAfterFetch) {
             dispatchCropChanged();
@@ -11503,17 +11599,26 @@ export async function loadCrops() {
         logAgroDebug('[AGRO] renderCrops END', {
             ts: new Date().toISOString(),
             seq: requestId,
-            total: crops.length,
+            total: visibleCrops.length,
             active: activeCrops.length,
             finished: visibleFinishedCrops.length,
+            archived: archivedCrops.length,
+            deleted: deletedCrops.length,
             auditOrphans: orphanFinishedCrops.length
         });
-        const snapshot = setCropsStatus('ready', { count: crops.length, requestId, crops, userId: currentUserId });
+        const snapshot = setCropsStatus('ready', {
+            count: visibleCrops.length,
+            requestId,
+            crops: visibleCrops,
+            userId: currentUserId,
+            archivedCount: archivedCrops.length,
+            deletedCount: deletedCrops.length
+        });
         dispatchCropsReady(snapshot);
         updateOpsMovementSummaryUI();
         scheduleOpsMovementSummaryRefresh();
 
-        console.info(`[AGRO] V1: active cycles ${activeCrops.length}, finished cycles ${visibleFinishedCrops.length}, audit cycles ${orphanFinishedCrops.length} (total ${crops.length})`);
+        console.info(`[AGRO] V1: active cycles ${activeCrops.length}, finished cycles ${visibleFinishedCrops.length}, archived ${archivedCrops.length}, trash ${deletedCrops.length}, audit cycles ${orphanFinishedCrops.length} (visible ${visibleCrops.length})`);
 
         // Animar progress bars
         setTimeout(() => {
@@ -16398,44 +16503,133 @@ if (typeof document !== 'undefined') {
 }
 
 // ============================================================
-// ELIMINAR CULTIVO
+// ARCHIVO Y PAPELERA DE CULTIVOS
 // ============================================================
 
-/**
- * Elimina un cultivo de Supabase con confirmación
- */
-async function deleteCrop(id) {
-    if (!confirm('⚠️ ¿Estás seguro de que quieres eliminar este cultivo?\n\nEsta acción no se puede deshacer.')) {
+function findCropInAnyCache(id) {
+    const normalizedId = normalizeCropId(id);
+    if (!normalizedId) return null;
+    const rows = [
+        ...(Array.isArray(allCropsCache) ? allCropsCache : []),
+        ...(Array.isArray(cropsCache) ? cropsCache : [])
+    ];
+    return rows.find((crop) => normalizeCropId(crop?.id) === normalizedId) || null;
+}
+
+function getCropConfirmName(id) {
+    const crop = findCropInAnyCache(id);
+    const display = crop ? getCropDisplayParts(crop) : null;
+    return String(display?.name || crop?.name || 'este cultivo').trim();
+}
+
+function isArchiveColumnMissing(error) {
+    return isMissingColumnError(error, 'archived_at');
+}
+
+async function updateCropLifecycle(id, payload, options = {}) {
+    const cropId = normalizeCropId(id);
+    if (!cropId) throw new Error('Cultivo no válido.');
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = normalizeCropId(userData?.user?.id);
+    setCurrentAgroUserId(userId);
+    if (!userId) throw new Error('Sesión expirada.');
+
+    let { error } = await supabase
+        .from('agro_crops')
+        .update(payload)
+        .match({ id: cropId, user_id: userId });
+    if (error
+        && options.retryWithoutArchivedAt
+        && Object.prototype.hasOwnProperty.call(payload, 'archived_at')
+        && isArchiveColumnMissing(error)) {
+        const fallbackPayload = { ...payload };
+        delete fallbackPayload.archived_at;
+        const retry = await supabase
+            .from('agro_crops')
+            .update(fallbackPayload)
+            .match({ id: cropId, user_id: userId });
+        error = retry.error;
+    }
+    if (error) throw error;
+}
+
+async function archiveCrop(id) {
+    const cropName = getCropConfirmName(id);
+    if (!confirm(`Archivar "${cropName}"?\n\nEl cultivo saldrá de Activos/Finalizados/Perdidos, pero clientes y movimientos comerciales se conservan.`)) {
         return;
     }
 
     try {
-        const { data: userData } = await supabase.auth.getUser();
-        const userId = normalizeCropId(userData?.user?.id);
-        setCurrentAgroUserId(userId);
-
-        if (userId) {
-            // Eliminar de Supabase
-            const { error } = await supabase
-                .from('agro_crops')
-                .delete()
-                .match({ id, user_id: userId });
-            if (error) throw error;
-        } else {
-            throw new Error('Sesión expirada.');
-        }
-
-        console.log('[Agro] 🗑️ Cultivo eliminado:', id);
-        await loadCrops(); // Actualiza UI y gráficas
-
+        await updateCropLifecycle(id, {
+            archived_at: new Date().toISOString(),
+            deleted_at: null
+        });
+        console.log('[Agro] Cultivo archivado:', id);
+        await loadCrops();
     } catch (err) {
-        console.error('[Agro] Error eliminando cultivo:', err);
-        alert('Error al eliminar: ' + (err.message || 'Error desconocido'));
+        console.error('[Agro] Error archivando cultivo:', err);
+        if (isArchiveColumnMissing(err)) {
+            alert('Archivo de cultivos requiere aplicar la migración archived_at en Supabase.');
+            return;
+        }
+        alert('Error al archivar: ' + (err.message || 'Error desconocido'));
     }
 }
 
-// Exponer deleteCrop al scope global
-window.deleteCrop = deleteCrop;
+async function moveCropToTrash(id, options = {}) {
+    const cropName = getCropConfirmName(id);
+    const fromArchive = !!options.fromArchive;
+    const message = fromArchive
+        ? `Mover "${cropName}" de Archivo a Papelera?\n\nNo se borran clientes ni movimientos comerciales. Podrás restaurarlo desde Eliminados.`
+        : `Mover "${cropName}" a Papelera?\n\nNo se borran clientes ni movimientos comerciales. Podrás restaurarlo desde Archivo y Papelera.`;
+    if (!confirm(message)) {
+        return;
+    }
+
+    try {
+        await updateCropLifecycle(id, {
+            deleted_at: new Date().toISOString(),
+            archived_at: null
+        }, { retryWithoutArchivedAt: true });
+        console.log('[Agro] Cultivo movido a papelera:', id);
+        await loadCrops();
+    } catch (err) {
+        console.error('[Agro] Error moviendo cultivo a papelera:', err);
+        if (isArchiveColumnMissing(err)) {
+            alert('La papelera de cultivos requiere aplicar la migración archived_at en Supabase.');
+            return;
+        }
+        alert('Error al mover a papelera: ' + (err.message || 'Error desconocido'));
+    }
+}
+
+async function restoreCrop(id) {
+    const cropName = getCropConfirmName(id);
+    if (!confirm(`Restaurar "${cropName}"?\n\nEl cultivo volverá a su vista según su estado real.`)) {
+        return;
+    }
+
+    try {
+        await updateCropLifecycle(id, {
+            archived_at: null,
+            deleted_at: null
+        }, { retryWithoutArchivedAt: true });
+        console.log('[Agro] Cultivo restaurado:', id);
+        await loadCrops();
+    } catch (err) {
+        console.error('[Agro] Error restaurando cultivo:', err);
+        if (isArchiveColumnMissing(err)) {
+            alert('Restaurar cultivos archivados requiere aplicar la migración archived_at en Supabase.');
+            return;
+        }
+        alert('Error al restaurar: ' + (err.message || 'Error desconocido'));
+    }
+}
+
+// Mantener compatibilidad con botones legacy: eliminar ahora significa mover a papelera.
+window.archiveCrop = archiveCrop;
+window.deleteCrop = moveCropToTrash;
+window.restoreCrop = restoreCrop;
 
 // Inyectar CSS para botón de eliminar
 (function injectDeleteButtonStyles() {
@@ -16452,6 +16646,21 @@ window.deleteCrop = deleteCrop;
             border-radius: 50%;
             color: #f87171;
             font-size: 1rem;
+            line-height: 1;
+            cursor: pointer;
+            opacity: 1;
+            transition: all 180ms ease;
+            z-index: 10;
+            touch-action: manipulation;
+        }
+        .btn-archive-crop {
+            width: 32px;
+            height: 32px;
+            background: rgba(200, 167, 82, 0.1);
+            border: 1px solid rgba(200, 167, 82, 0.3);
+            border-radius: 50%;
+            color: #d6bf7a;
+            font-size: 0.9rem;
             line-height: 1;
             cursor: pointer;
             opacity: 1;
@@ -16496,6 +16705,11 @@ window.deleteCrop = deleteCrop;
             background: #C8A752;
             transform: scale(1.1);
         }
+        .btn-archive-crop:hover {
+            background: #C8A752;
+            color: #0a0a0a;
+            transform: scale(1.1);
+        }
         .btn-report-crop {
             width: 28px;
             height: 28px;
@@ -16525,6 +16739,7 @@ window.deleteCrop = deleteCrop;
                 opacity: 1;
             }
             .btn-edit-crop,
+            .btn-archive-crop,
             .btn-delete-crop,
             .btn-report-crop {
                 width: 34px;

@@ -1033,3 +1033,169 @@ Commit sugerido:
 ```bash
 fix(agro): prevent stale facturero notifications
 ```
+
+---
+
+## 2026-05-06 — Frente: Archivo y Papelera de Cultivos
+
+### Estado inicial: YELLOW
+
+Necesidad reportada: agregar una superficie segura dentro de `Mis cultivos` para separar cultivos activos/finalizados/perdidos de cultivos archivados o enviados a papelera, sin perder historia comercial.
+
+Regla de oro del frente:
+
+> El cultivo puede salir de la vista. La historia comercial no debe desaparecer.
+
+### Hipotesis iniciales
+
+1. `agro_crops` podria tener `deleted_at` como soft-delete, pero no necesariamente `archived_at`.
+2. Puede existir ya un modulo `agro-trash.js`, pero podria no cubrir cultivos o no estar integrado en `Mis cultivos`.
+3. Los movimientos del Facturero probablemente tienen `crop_id`; eliminar fisicamente un cultivo podria romper contexto visual si no se preserva nombre historico o FK segura.
+4. Si existen FK con `ON DELETE CASCADE` desde movimientos a cultivos, el borrado permanente no debe implementarse.
+5. Si no existe columna `archived_at`, la opcion segura puede requerir migracion minima.
+6. La implementacion, si procede, debe ser modular y evitar crecer `agro.js` salvo wiring minimo.
+
+### Diagnostico a realizar
+
+1. Identificar si la eliminacion actual de cultivos usa hard-delete o soft-delete.
+2. Verificar columnas reales usadas por `agro_crops`: `status`, `deleted_at`, `archived_at`, `lost_at`, `closed_at`.
+3. Revisar migraciones Supabase para FKs desde facturero hacia `agro_crops`.
+4. Confirmar si movimientos financieros conservan `crop_id` y si filtran por cultivo eliminado.
+5. Revisar si Cartera Viva depende de joins a cultivos activos o si conserva movimientos aunque el cultivo desaparezca.
+6. Definir si se puede implementar archivo/papelera con frontend + migracion minima, o si queda pendiente backend.
+
+### Archivos a inspeccionar
+
+- `apps/gold/agro/agro.js`
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro.css`
+- `apps/gold/agro/agro-trash.js`
+- `apps/gold/agro/agro-crop-report.js`
+- `apps/gold/agro/agro-cartera-viva-view.js`
+- `apps/gold/agro/agro-shell.js`
+- `supabase/migrations/*.sql`
+- `FICHA_TECNICA.md`
+- `apps/gold/docs/MANIFIESTO_AGRO.md`
+- `apps/gold/docs/ADN-VISUAL-V11.0.md`
+
+### Riesgos
+
+- Perder movimientos reales por cascade o hard-delete mal protegido.
+- Ocultar de Cartera Viva deudas asociadas a cultivos eliminados.
+- Reabrir `agro.js` con una feature grande y aumentar deuda del monolito.
+- Prometer restauracion si produccion no tiene columnas necesarias.
+- Introducir una vista visualmente nueva que rompa la semantica de `Mis cultivos`.
+
+### Plan por fases
+
+1. Fase 0: diagnostico de flujo actual, columnas, queries y migraciones.
+2. Fase 1: si existe soporte seguro, agregar archivado/restauracion con `archived_at`; si no existe, crear migracion minima.
+3. Fase 2: usar `deleted_at` para papelera/restauracion si ya existe; si no existe, crear migracion minima.
+4. Fase 3: evaluar borrado permanente solo si no hay riesgo de cascade; si hay duda, dejar pendiente.
+5. QA tecnica: `git diff --check` y `pnpm build:gold`.
+
+### QA online esperado
+
+1. Entrar a Agro y abrir `Mis cultivos`.
+2. Confirmar que Activos/Finalizados/Perdidos siguen funcionando.
+3. Archivar un cultivo QA seguro y verlo en `Archivo y Papelera > Archivados`.
+4. Restaurarlo y confirmar que vuelve a su vista correcta.
+5. Mover un cultivo QA seguro a papelera y verlo en `Archivo y Papelera > Eliminados`.
+6. Restaurarlo desde papelera.
+7. Confirmar que clientes y movimientos de Facturero/Cartera Viva siguen existiendo.
+8. Confirmar que montos, fechas, estados y notas no cambiaron.
+9. Probar borrado permanente solo si se implementa y solo con cultivo QA seguro.
+
+### Diagnostico Fase 0
+
+Estado: YELLOW.
+
+Evidencia principal:
+
+- `apps/gold/agro/agro.js` usa hard-delete en `deleteCrop(id)`: `supabase.from('agro_crops').delete().match({ id, user_id })`.
+- `supabase/migrations/20260224195900_agro_crops_order_repair.sql` ya define `agro_crops.deleted_at`.
+- No existe `archived_at` en migraciones ni runtime actual; requiere migracion minima antes de usar archivo en produccion.
+- `apps/gold/agro/agro-trash.js` es papelera de registros del Facturero, no papelera de cultivos.
+- `agro_pending`, `agro_income`, `agro_losses`, `agro_expenses` y `agro_transfers` tienen `crop_id uuid references public.agro_crops(id) on delete set null`.
+- No se encontro `ON DELETE CASCADE` desde movimientos comerciales hacia `agro_crops`; el cascade visto en `agro_crops.user_id` depende de `auth.users`, no de cultivos hacia movimientos.
+- Cartera Viva consulta movimientos por sus tablas (`agro_pending`, `agro_income`, `agro_losses`) y filtra por `deleted_at` propio del movimiento; no debe perder movimientos por ocultar un cultivo.
+
+Respuestas:
+
+1. Eliminar cultivo hoy es hard-delete desde frontend, no soft-delete.
+2. No existe papelera actual para cultivos; la papelera existente es de Facturero.
+3. Existe `deleted_at` y `status`; no existe `archived_at`.
+4. Los movimientos financieros tienen `crop_id`.
+5. No se encontro FK `ON DELETE CASCADE` desde movimientos hacia cultivos.
+6. Si se borra fisicamente un cultivo, las FK de movimientos hacen `SET NULL`.
+7. El borrado actual no deberia borrar movimientos, pero si puede destruir contexto visual del cultivo.
+8. El borrado de cultivo no deberia borrar clientes/buyers por el flujo revisado.
+9. Cartera Viva conserva movimientos por tabla; el riesgo es perder/ocultar contexto de cultivo, no borrar deuda.
+10. Restaurar con soft-delete recuperaria la relacion visual porque la fila y el `crop_id` se conservan.
+11. Hace falta migracion para `archived_at`.
+12. Opcion segura: migracion minima `archived_at`, cambiar eliminacion a soft-delete con `deleted_at`, vista local de archivo/papelera, sin borrado permanente por ahora.
+
+Decision de implementacion:
+
+- Implementar archivo y papelera con soft-delete.
+- No implementar borrado permanente en esta fase: aunque no hay cascade a movimientos, el hard-delete haria `SET NULL` y podria perder contexto historico de cultivo.
+- Mantener clientes y movimientos intactos.
+
+### Implementacion aplicada
+
+Estado final: YELLOW tecnico.
+
+Cambios:
+
+- Se agrego `apps/gold/agro/agro-crop-archive.js` como modulo dedicado para renderizar `Archivo y Papelera` dentro de `Mis cultivos`.
+- Se agrego la pestaña `Archivo y Papelera` en `apps/gold/agro/index.html`.
+- Se agregaron estilos sobrios en `apps/gold/agro/agro.css`, reutilizando cards/tabs existentes.
+- Se cambio el flujo legacy de `deleteCrop` en `apps/gold/agro/agro.js`: ahora elimina visualmente con soft-delete (`deleted_at`), no con `.delete()`.
+- Se agrego accion `Archivar` con `archived_at`.
+- Se agrego accion `Restaurar`, limpiando `archived_at` y `deleted_at`.
+- `Mis cultivos` ahora separa en memoria `visible`, `archived` y `deleted`; Activos/Finalizados/Perdidos usan solo cultivos visibles.
+- `cropsCache` queda para cultivos visibles; `allCropsCache` conserva todos para resolver nombres historicos cuando haya referencias.
+- Los dropdowns de cultivos filtran archivados si `archived_at` ya existe; si la columna no existe, usan fallback sin romper.
+- Se agrego migracion minima `supabase/migrations/20260506180000_agro_crops_archive_trash.sql` con `archived_at`.
+
+No implementado:
+
+- Borrado permanente. Motivo: no hay cascade a movimientos, pero el hard-delete de la ficha haria `ON DELETE SET NULL` en movimientos y podria perder contexto historico de cultivo. Queda pendiente de un backend mas explicito si se quiere conservar snapshot/nombre historico antes del borrado definitivo.
+
+Proteccion de historia comercial:
+
+- No se tocaron tablas de clientes/buyers.
+- No se tocaron movimientos de Facturero/Cartera Viva.
+- Mover a papelera solo actualiza `agro_crops.deleted_at`.
+- Archivar solo actualiza `agro_crops.archived_at`.
+- Restaurar solo limpia `archived_at`/`deleted_at`.
+
+Verificacion local:
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS.
+- Build con warning conocido de engine local: repo espera Node `20.x`; entorno actual reporta Node `v25.6.0`.
+
+Verificacion Supabase:
+
+- `supabase/.temp/project-ref`: `gerzlzprkarikblqxpjt`.
+- `supabase --version`: `2.95.4`.
+- `supabase migration list`: timeout tras 60s; no se pudo confirmar estado remoto desde esta sesion.
+- No se ejecuto `supabase db push` real.
+
+QA online esperado:
+
+1. Aplicar/verificar migracion `archived_at` en Supabase antes de validar archivo en produccion.
+2. Entrar a Agro > Mis cultivos.
+3. Confirmar que Activos/Finalizados/Perdidos siguen sin cultivos archivados o en papelera.
+4. Archivar un cultivo QA seguro y verlo en `Archivo y Papelera > Archivados`.
+5. Restaurarlo y confirmar que vuelve a su vista real.
+6. Mover un cultivo QA seguro a papelera y verlo en `Archivo y Papelera > Eliminados`.
+7. Restaurarlo desde papelera.
+8. Confirmar que clientes, fiados, ingresos, perdidas, transferencias, gastos, montos, fechas, estados y notas siguen intactos.
+
+Commit sugerido:
+
+```bash
+feat(agro): add safe crop archive and trash lifecycle
+```

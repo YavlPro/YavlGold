@@ -67,6 +67,7 @@
 }
 
 .btn-edit-crop,
+.btn-archive-crop,
 .btn-delete-crop {
   width: 32px;
   height: 32px;
@@ -88,6 +89,16 @@
 
 .btn-edit-crop:hover {
   background: rgba(200, 167, 82, 0.2);
+  border-color: var(--gold-4, #c8a752);
+}
+
+.btn-archive-crop {
+  border-color: rgba(200, 167, 82, 0.32);
+  color: var(--gold-3, #d6bf7a);
+}
+
+.btn-archive-crop:hover {
+  background: rgba(200, 167, 82, 0.16);
   border-color: var(--gold-4, #c8a752);
 }
 
@@ -5496,6 +5507,114 @@ body[data-agro-active-view="rankings"] .ops-cultivos-finished-picker {
   color: rgba(255, 255, 255, 0.58);
   font-size: 0.82rem;
   padding: 0.9rem 1.25rem 0.2rem;
+}
+
+.agro-crop-archive-root {
+  display: grid;
+  gap: 1rem;
+}
+
+.agro-crop-archive-tabs {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.25rem;
+  border: 1px solid color-mix(in srgb, var(--gold-4) 20%, var(--border-neutral));
+  border-radius: var(--radius-md, 12px);
+}
+
+.agro-crop-archive-grid {
+  margin-top: 0;
+}
+
+.agro-crop-archive-card {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.agro-crop-archive-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.agro-crop-archive-card__title {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.agro-crop-archive-card__title h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.agro-crop-archive-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.crop-archive-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 34px;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--border-neutral);
+  border-radius: var(--radius-sm, 8px);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.crop-archive-action:hover,
+.crop-archive-action:focus-visible {
+  border-color: var(--border-gold);
+  background: color-mix(in srgb, var(--gold-4) 9%, transparent);
+  color: var(--text-primary);
+}
+
+.crop-archive-action.is-primary {
+  border-color: color-mix(in srgb, var(--gold-4) 50%, transparent);
+  color: var(--gold-4);
+}
+
+.crop-archive-action.is-danger {
+  border-color: rgba(239, 68, 68, 0.42);
+  color: var(--color-error, #ef4444);
+}
+
+.agro-crop-archive-empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  padding: 2rem 1rem;
+  border: 1px dashed color-mix(in srgb, var(--gold-4) 22%, var(--border-neutral));
+  border-radius: var(--radius-md, 12px);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.agro-crop-archive-empty p {
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .agro-internal-tabs {
+    flex-wrap: wrap;
+  }
+
+  .agro-internal-tab {
+    min-width: calc(50% - 0.35rem);
+    white-space: normal;
+    line-height: 1.15;
+  }
 }
 
 @keyframes slideDown {
