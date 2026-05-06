@@ -2799,10 +2799,10 @@
                             placeholder="Preferencias, acuerdos o recordatorios del cliente"></textarea>
                     </label>
                     <label class="agro-buyer-field">
-                        <span>Vincular cliente registrado (opcional)</span>
-                        <small class="agro-buyer-field__help">Usa el correo, nombre visible o finca del cliente si ya tiene perfil registrado. Si no se reconoce el perfil, no se guarda el vínculo.</small>
-                        <input type="text" id="agro-buyer-linked_user_id" class="styled-input" maxlength="80"
-                            placeholder="Ej: pedro@email.com, Pedro Pérez o Finca El Porvenir">
+                        <span>Cuenta YavlGold vinculada</span>
+                        <small class="agro-buyer-field__help">Solo se vincula una cuenta verificada. La verificación por correo requiere backend seguro; mientras tanto puedes guardar sin vincular.</small>
+                        <input type="hidden" id="agro-buyer-linked_user_id">
+                        <input type="email" class="styled-input" placeholder="Correo de cuenta YavlGold" disabled>
                     </label>
                 </fieldset>
 
@@ -3174,6 +3174,8 @@
                     <label class="input-label" id="edit-who-label" for="edit-who-input">Detalle</label>
                     <input type="text" id="edit-who-input" class="styled-input">
                 </div>
+
+                <div id="edit-client-assignment" hidden></div>
 
                 <div class="input-group">
                     <label class="input-label" for="edit-monto">Monto</label>

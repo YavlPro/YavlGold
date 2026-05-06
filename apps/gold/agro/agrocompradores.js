@@ -678,11 +678,10 @@ function renderWizardStepPanel(step, d) {
                         placeholder="Preferencias, acuerdos o recordatorios del cliente">${escapeHtml(d.notes)}</textarea>
                 </label>
                 <label class="agro-buyer-field">
-                    <span>Vincular cliente registrado (opcional)</span>
-                    <small class="agro-buyer-field__help">Usa el correo, nombre visible o finca del cliente si ya tiene perfil registrado. Si no se reconoce el perfil, no se guarda el vínculo.</small>
-                    <input type="text" id="buyer-wizard-linked_user_id" class="styled-input" maxlength="80"
-                        placeholder="Ej: pedro@email.com, Pedro Pérez o Finca El Porvenir"
-                        value="${escapeHtml(d.linked_user_id)}">
+                    <span>Cuenta YavlGold vinculada</span>
+                    <small class="agro-buyer-field__help">La cuenta solo se vincula si fue verificada. La verificación por correo requiere backend seguro; puedes guardar sin vincular.</small>
+                    <input type="hidden" id="buyer-wizard-linked_user_id" value="${escapeHtml(d.linked_user_id)}">
+                    <input type="email" class="styled-input" placeholder="Correo de cuenta YavlGold" disabled>
                 </label>
             </div>`;
     }
@@ -692,8 +691,6 @@ function renderWizardStepPanel(step, d) {
         const hasPhone = d.phone || d.whatsapp;
         const hasSocial = d.instagram || d.facebook;
         const hasNotes = d.notes;
-        const hasLinked = d.linked_user_id;
-
         return `
             <div class="buyer-wizard-panel">
                 <div class="buyer-wizard-panel__head">
@@ -725,6 +722,10 @@ function renderWizardStepPanel(step, d) {
                     <div class="buyer-wizard-review-item${hasNotes ? '' : ' buyer-wizard-review-item--full'}">
                         <div class="buyer-wizard-review-item__label">Notas</div>
                         <div class="buyer-wizard-review-item__value">${escapeHtml(d.notes) || '<span class="buyer-wizard-review-item__value--empty">Sin notas</span>'}</div>
+                    </div>
+                    <div class="buyer-wizard-review-item">
+                        <div class="buyer-wizard-review-item__label">Cuenta YavlGold vinculada</div>
+                        <div class="buyer-wizard-review-item__value">${d.linked_user_id ? 'Vinculada y verificada' : '<span class="buyer-wizard-review-item__value--empty">Sin vinculación</span>'}</div>
                     </div>
                 </div>
             </div>`;
