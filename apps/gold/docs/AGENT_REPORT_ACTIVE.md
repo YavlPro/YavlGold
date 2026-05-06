@@ -816,3 +816,47 @@ Diagnosticar y corregir el bug visual donde las letras eran invisibles en el com
 
 ### QA sugerido
 - Abrir Cartera Viva → selector de unificar clientes → verificar que los nombres se ven correctamente en el combobox destino, los chips de duplicados, y el paso de confirmación.
+
+---
+
+## 2026-05-06 — Hotfix: listener leak en modal merge + defensas CSS para input de búsqueda y gradientes
+
+### Objetivo
+Restaurar escritura y filtrado de la barra "Buscar cliente" en Cartera Viva. Prevenir texto invisible por reglas CSS agresivas sin `@supports`.
+
+### Diagnostico
+
+1. **Listener leak JS (merge modal)**: `bindModalEvents` agregaba listeners `click` y `keydown` al modal cada vez que se abria, pero `closeModal` solo removia el listener `document` keydown. Los listeners anonimos se acumulaban, sin mecanismo de limpieza.
+
+2. **CSS sin `@supports`**: 4 reglas de gradiente de texto (`-webkit-text-fill-color: transparent`) no estaban protegidas con `@supports`, aplicando `transparent` incondicionalmente. Si un navegador no soporta `background-clip: text`, el texto quedaba invisible.
+
+3. **Regla defensiva debil**: `.cartera-viva-merge__dialog *` tenia `-webkit-text-fill-color: currentColor` y `background-clip: border-box` sin `!important`, vulnerable a reglas con mayor especificidad.
+
+4. **Input de búsqueda sin defensa**: `.cartera-viva-search__input` no tenia `-webkit-text-fill-color`, `caret-color`, ni `user-select: text` explicitos.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agro-cartera-viva-client-merge.js` | bugfix | Extraer click handler a funcion nombrada `handleModalClick`; guardar referencias en `_modalClickHandler` / `_modalKeydownHandler`; limpiar ambos en `closeModal`; evitar duplicados en `bindModalEvents` con `removeEventListener` previo |
+| `agro.css` | fix CSS | `.cartera-viva-merge__dialog` → agregar `!important` a `color`, `-webkit-text-fill-color`, `background-clip` |
+| `agro.css` | fix CSS | `.cartera-viva-merge__dialog *` → agregar `!important` y `color: inherit` |
+| `agro.css` | fix CSS | `body[data-agro-shell-depth="module"] :is(.module-title, .agro-dash-title, .cartera-viva-view__title)` → envolver gradiente en `@supports` |
+| `agro.css` | fix CSS | `.agro-mobile-hub__title` → envolver gradiente en `@supports` |
+| `agro.css` | fix CSS | `.asistente-dedicado .ast-welcome-title` → envolver gradiente en `@supports` |
+| `agro.css` | fix CSS | `#agro-widget-root .arw-logo-text h1` → envolver gradiente en `@supports` |
+| `agro-cartera-viva.css` | fix CSS | `.cartera-viva-search__input` → agregar `-webkit-text-fill-color: currentColor !important`, `background-clip: border-box !important`, `pointer-events: auto`, `user-select: text`, `caret-color: var(--gold-4)` |
+
+### Build
+- `pnpm build:gold`: PASS
+
+### QA tecnico
+- `git diff --check`: sin errores
+
+### QA online esperado
+1. Escribir en "Buscar cliente" → texto visible, filtra clientes
+2. Borrar busqueda → clientes se restauran
+3. Tags/filtros siguen funcionando
+4. Abrir "Unificar clientes" → nombres visibles en combobox y chips
+5. Cerrar modal → buscar cliente sigue funcionando
+6. Abrir/cerrar modal multiples veces → sin listener leak

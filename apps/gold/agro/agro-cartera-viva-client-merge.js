@@ -212,6 +212,9 @@ function renderCurrentState() {
     modal.innerHTML = renderModalContent(mergeState);
 }
 
+let _modalClickHandler = null;
+let _modalKeydownHandler = null;
+
 function closeModal() {
     const modal = document.getElementById(MODAL_ID);
     if (!modal) return;
@@ -219,109 +222,124 @@ function closeModal() {
     modal.innerHTML = '';
     resetMergeState();
     document.removeEventListener('keydown', handleEscKey);
+    if (_modalClickHandler) {
+        modal.removeEventListener('click', _modalClickHandler);
+        _modalClickHandler = null;
+    }
+    if (_modalKeydownHandler) {
+        modal.removeEventListener('keydown', _modalKeydownHandler);
+        _modalKeydownHandler = null;
+    }
 }
 
 function handleEscKey(event) {
+    if (!document.getElementById(MODAL_ID)?.hidden === false) return;
     if (event.key === 'Escape') closeModal();
 }
 
-function bindModalEvents(modal, supabase, userId) {
-    modal.addEventListener('click', (event) => {
-        const target = event.target;
-        if (!(target instanceof Element)) return;
+function handleModalClick(modal, supabase, userId, event) {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
 
-        if (target.closest('[data-merge-close]') || target.classList.contains('cartera-viva-merge-overlay')) {
-            closeModal();
-            return;
-        }
+    if (target.closest('[data-merge-close]') || target.classList.contains('cartera-viva-merge-overlay')) {
+        closeModal();
+        return;
+    }
 
-        if (target.closest('[data-merge-cancel]')) {
-            closeModal();
-            return;
-        }
+    if (target.closest('[data-merge-cancel]')) {
+        closeModal();
+        return;
+    }
 
-        if (target.closest('[data-merge-back]')) {
-            mergeState.step = 'select';
-            mergeState.error = '';
-            renderCurrentState();
-            return;
-        }
+    if (target.closest('[data-merge-back]')) {
+        mergeState.step = 'select';
+        mergeState.error = '';
+        renderCurrentState();
+        return;
+    }
 
-        const destTrigger = target.closest('[data-merge-dest-trigger]');
-        if (destTrigger) {
-            const combobox = destTrigger.closest('[data-merge-dest-combobox]');
-            const list = combobox?.querySelector('[data-merge-dest-list]');
-            if (list) {
-                modal.querySelectorAll('[data-merge-dest-list]').forEach((l) => {
-                    if (l !== list) l.hidden = true;
-                });
-                list.hidden = !list.hidden;
-            }
-            return;
-        }
-
-        const destOption = target.closest('[data-merge-dest-option]');
-        if (destOption) {
-            const combobox = destOption.closest('[data-merge-dest-combobox]');
-            if (!combobox) return;
-            combobox.querySelectorAll('[data-merge-dest-option]').forEach((opt) => {
-                opt.classList.toggle('is-selected', opt === destOption);
+    const destTrigger = target.closest('[data-merge-dest-trigger]');
+    if (destTrigger) {
+        const combobox = destTrigger.closest('[data-merge-dest-combobox]');
+        const list = combobox?.querySelector('[data-merge-dest-list]');
+        if (list) {
+            modal.querySelectorAll('[data-merge-dest-list]').forEach((l) => {
+                if (l !== list) l.hidden = true;
             });
-            const value = destOption.dataset.value || '';
-            const displayName = destOption.dataset.displayName || '';
-            const groupKey = destOption.dataset.groupKey || '';
-            combobox.dataset.mergeSelectedId = value;
-            combobox.dataset.mergeSelectedDisplayName = displayName;
-            combobox.dataset.mergeSelectedGroupKey = groupKey;
-            const trig = combobox.querySelector('[data-merge-dest-trigger]');
-            if (trig) trig.textContent = displayName;
-            const lst = combobox.querySelector('[data-merge-dest-list]');
-            if (lst) lst.hidden = true;
-            mergeState.destBuyerId = value;
-            mergeState.error = '';
-            mergeState.originBuyerIds = mergeState.originBuyerIds.filter((id) => id !== value);
+            list.hidden = !list.hidden;
+        }
+        return;
+    }
+
+    const destOption = target.closest('[data-merge-dest-option]');
+    if (destOption) {
+        const combobox = destOption.closest('[data-merge-dest-combobox]');
+        if (!combobox) return;
+        combobox.querySelectorAll('[data-merge-dest-option]').forEach((opt) => {
+            opt.classList.toggle('is-selected', opt === destOption);
+        });
+        const value = destOption.dataset.value || '';
+        const displayName = destOption.dataset.displayName || '';
+        const groupKey = destOption.dataset.groupKey || '';
+        combobox.dataset.mergeSelectedId = value;
+        combobox.dataset.mergeSelectedDisplayName = displayName;
+        combobox.dataset.mergeSelectedGroupKey = groupKey;
+        const trig = combobox.querySelector('[data-merge-dest-trigger]');
+        if (trig) trig.textContent = displayName;
+        const lst = combobox.querySelector('[data-merge-dest-list]');
+        if (lst) lst.hidden = true;
+        mergeState.destBuyerId = value;
+        mergeState.error = '';
+        mergeState.originBuyerIds = mergeState.originBuyerIds.filter((id) => id !== value);
+        renderCurrentState();
+        return;
+    }
+
+    const originChip = target.closest('[data-merge-origin-chip]');
+    if (originChip) {
+        const chipId = originChip.dataset.mergeOriginId;
+        if (!chipId) return;
+        if (chipId === mergeState.destBuyerId) return;
+        const idx = mergeState.originBuyerIds.indexOf(chipId);
+        if (idx >= 0) {
+            mergeState.originBuyerIds.splice(idx, 1);
+        } else {
+            mergeState.originBuyerIds.push(chipId);
+        }
+        mergeState.error = '';
+        renderCurrentState();
+        return;
+    }
+
+    if (target.closest('[data-merge-next]')) {
+        if (!mergeState.destBuyerId || mergeState.originBuyerIds.length === 0) {
+            mergeState.error = 'Selecciona un cliente destino y al menos un duplicado.';
             renderCurrentState();
             return;
         }
+        void proceedToConfirm(modal, supabase, userId);
+        return;
+    }
 
-        const originChip = target.closest('[data-merge-origin-chip]');
-        if (originChip) {
-            const chipId = originChip.dataset.mergeOriginId;
-            if (!chipId) return;
-            if (chipId === mergeState.destBuyerId) return;
-            const idx = mergeState.originBuyerIds.indexOf(chipId);
-            if (idx >= 0) {
-                mergeState.originBuyerIds.splice(idx, 1);
-            } else {
-                mergeState.originBuyerIds.push(chipId);
-            }
-            mergeState.error = '';
-            renderCurrentState();
-            return;
-        }
+    if (target.closest('[data-merge-confirm]')) {
+        void proceedWithMerge(modal, supabase, userId);
+        return;
+    }
 
-        if (target.closest('[data-merge-next]')) {
-            if (!mergeState.destBuyerId || mergeState.originBuyerIds.length === 0) {
-                mergeState.error = 'Selecciona un cliente destino y al menos un duplicado.';
-                renderCurrentState();
-                return;
-            }
-            void proceedToConfirm(modal, supabase, userId);
-            return;
-        }
+    const openList = modal.querySelector('[data-merge-dest-list]:not([hidden])');
+    if (openList && !openList.contains(target)) {
+        openList.hidden = true;
+    }
+}
 
-        if (target.closest('[data-merge-confirm]')) {
-            void proceedWithMerge(modal, supabase, userId);
-            return;
-        }
+function bindModalEvents(modal, supabase, userId) {
+    if (_modalClickHandler) modal.removeEventListener('click', _modalClickHandler);
+    _modalClickHandler = (event) => handleModalClick(modal, supabase, userId, event);
+    modal.addEventListener('click', _modalClickHandler);
 
-        const openList = modal.querySelector('[data-merge-dest-list]:not([hidden])');
-        if (openList && !openList.contains(target)) {
-            openList.hidden = true;
-        }
-    });
-
+    modal.removeEventListener('keydown', handleEscKey);
     modal.addEventListener('keydown', handleEscKey);
+    _modalKeydownHandler = handleEscKey;
 }
 
 async function proceedToConfirm(modal, supabase, userId) {

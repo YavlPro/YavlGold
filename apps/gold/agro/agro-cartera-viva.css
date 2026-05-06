@@ -284,6 +284,11 @@
   color: var(--text-primary);
   font: inherit;
   font-size: 0.88rem;
+  -webkit-text-fill-color: currentColor !important;
+  background-clip: border-box !important;
+  pointer-events: auto;
+  user-select: text;
+  caret-color: var(--gold-4, #C8A752);
 }
 
 .cartera-viva-search__input::-webkit-search-cancel-button {
