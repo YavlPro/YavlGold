@@ -470,3 +470,82 @@ Estado: YELLOW — producción restaurada por revert; QA online pendiente
 ### Riesgo pendiente
 
 - La mejora de fusión/asignación queda retirada. Para reintentar, debe reimplementarse en rama/commit nuevo con QA online posterior al push y rollback preparado.
+
+---
+
+## 2026-05-06 — Fase 1: reasignación de cliente en editor de movimiento
+
+Estado: COMPLETADO EN CÓDIGO / QA ONLINE PENDIENTE POR USUARIO
+
+### Diagnóstico
+
+- El editor de movimientos del facturero se abre en `editFactureroItem()` y renderiza el modal en `openFactureroEditModal()`, dentro de `apps/gold/agro/agro.js`.
+- El guardado vive en `saveEditModal()` y actualiza solo la fila actual por `id` + `user_id`.
+- Cartera Viva se alimenta de `agro_pending`, `agro_income` y `agro_losses` mediante `buyer_id`, `buyer_group_key`, `buyer_match_status` y campos legibles heredados.
+- `pendientes` usa `cliente` como campo visible de cliente.
+- `ingresos` no tiene campo `cliente` dedicado en el editor; el cliente se deriva del concepto con `buildConceptWithWho()`.
+- `perdidas` usa `causa`, y solo entra a identidad de comprador cuando corresponde al flujo de Cartera Viva.
+- `transferencias` usa `destino`; no alimenta Cartera Viva ni debe crear identidad de comprador en esta fase.
+- La función existente `enrichBuyerIdentityPayload()` ya crea/encuentra identidad en `agro_buyers` para `pendientes`, `ingresos` y `perdidas`; conviene reutilizarla en vez de duplicar semántica.
+
+### Plan Fase 1
+
+1. Crear `apps/gold/agro/agro-cartera-viva-client-assignment.js` como helper mínimo del modal.
+2. Agregar `#edit-client-assignment` dentro del modal de edición en `index.html`.
+3. Importar el helper en `agro.js`.
+4. En apertura de modal, montar la UI solo dentro del contenedor del modal.
+5. En guardado, resolver la selección antes de construir `conceptForSave` y `updateData`.
+6. No tocar `agro-cartera-viva-view.js`, tags, filtros, cards, detalle ni listeners globales.
+
+### Archivos a tocar
+
+- `apps/gold/agro/agro-cartera-viva-client-assignment.js`
+- `apps/gold/agro/agro.js`
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro-cartera-viva.css` solo si hace falta estilo mínimo scoped al modal
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Riesgos
+
+- Reintroducir lógica fuera del modal y volver a bloquear clicks de Cartera Viva.
+- Cambiar accidentalmente monto, fecha, tipo, estado o cultivo del movimiento.
+- Crear vínculo YavlGold falso por correo. Esta fase no implementa verificación de cuenta.
+- Romper tablas legacy sin columnas `buyer_id`; se mantiene fallback existente de columnas faltantes.
+
+### QA online esperado
+
+- En online, antes de abrir el modal, tags/filtros/cards/detalle siguen respondiendo.
+- Editar movimiento permite elegir `Cliente existente` o `Nuevo cliente`.
+- Guardar reasigna solo el movimiento editado.
+- Monto, fecha, estado, tipo y cultivo se conservan salvo edición manual explícita del usuario.
+- No aparece texto, atributos ni modo selección de fusión.
+
+### Cambios realizados
+
+- `apps/gold/agro/agro-cartera-viva-client-assignment.js`: helper mínimo del modal; monta UI local, lista `agro_buyers`, resuelve cliente existente o nombre nuevo y no agrega listeners globales.
+- `apps/gold/agro/agro.js`: wiring quirúrgico del editor; pasa `user.id` al abrir, monta el helper y resuelve el cliente antes de construir `updateData`.
+- `apps/gold/agro/index.html`: agregado el contenedor neutro `#edit-client-assignment` dentro del modal de edición.
+- `apps/gold/agro/agro.css`: estilos scoped a `#modal-edit-facturero` para el bloque Cliente.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`: registrada Fase 1, riesgos, QA y cierre.
+
+### Campos actualizados por tab
+
+- `pendientes`: actualiza `cliente`; `enrichBuyerIdentityPayload()` mantiene/crea `buyer_id`, `buyer_group_key` y `buyer_match_status`.
+- `ingresos`: actualiza el cliente embebido en `concepto` mediante `buildConceptWithWho()`; también mantiene/crea identidad de comprador.
+- `perdidas`: actualiza `causa`; la identidad de comprador aplica solo bajo la regla existente de Cartera Viva.
+- `transferencias`: actualiza `destino`; no crea identidad de comprador porque no alimenta Cartera Viva.
+
+### Validación
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS.
+- Advertencia no bloqueante: engine esperado `node 20.x`; entorno actual `v25.6.0`.
+- Búsqueda estática: no se reintrodujeron términos, atributos ni funciones de fusión en `apps/gold/agro`.
+- `apps/gold/agro/agro-cartera-viva-view.js`: sin cambios.
+
+### Fuera de alcance confirmado
+
+- No se implementó fusión.
+- No se agregó modo selección.
+- No se agregaron checkboxes o botones nuevos en cards/lista.
+- No se tocaron tags, filtros, cards ni handlers de la vista principal de Cartera Viva.

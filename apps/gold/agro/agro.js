@@ -15,6 +15,7 @@ import { initAgroCalculadora } from './agrocalculadora.js';
 import { initClimaWeeklyEmbed } from './agroclima-layout.js';
 import { formatCurrencyDisplay, SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, hasOverride, clearOverride } from './agro-exchange.js';
 import { ensureBuyerIdentityLink, isBuyerIdentityRelevantTab } from './agro-buyer-identity.js';
+import { resolveClientAssignmentEditor, setupClientAssignmentEditor } from './agro-cartera-viva-client-assignment.js';
 import { initCiclos, renderFinishedCycles } from './agrociclos.js';
 import { initAgroShell } from './agro-shell.js';
 import { initFactureroSelection } from './agro-selection.js';
@@ -6115,7 +6116,7 @@ async function editFactureroItem(tabName, itemId) {
         }
 
         // Open edit modal
-        openFactureroEditModal(tabName, item, config);
+        openFactureroEditModal(tabName, item, config, user.id);
 
     } catch (err) {
         console.error(`[AGRO] V9.5.1: Edit fetch error:`, err.message);
@@ -6123,7 +6124,7 @@ async function editFactureroItem(tabName, itemId) {
     }
 }
 
-function openFactureroEditModal(tabName, item, config) {
+function openFactureroEditModal(tabName, item, config, userId = '') {
     const modal = document.getElementById('modal-edit-facturero');
     if (!modal) {
         console.warn('[AGRO] V9.5.1: Edit modal not found');
@@ -6157,6 +6158,14 @@ function openFactureroEditModal(tabName, item, config) {
         whoGroup.style.display = 'none';
         whoInput.value = '';
     }
+
+    void setupClientAssignmentEditor({
+        supabase,
+        userId,
+        tabName,
+        item,
+        currentName: whoData.who || ''
+    });
 
     // Populate crop selector
     const cropSelect = document.getElementById('edit-crop-id');
@@ -6391,8 +6400,17 @@ async function saveEditModal() {
         }
 
         const conceptValue = document.getElementById('edit-concepto')?.value?.trim() || '';
-        const whoValue = document.getElementById('edit-who-input')?.value?.trim() || '';
+        let whoValue = document.getElementById('edit-who-input')?.value?.trim() || '';
         const whoMeta = WHO_FIELD_META[tabName];
+        const clientAssignment = await resolveClientAssignmentEditor({
+            tabName,
+            currentName: whoValue
+        });
+        if (typeof clientAssignment?.whoValue === 'string') {
+            whoValue = clientAssignment.whoValue;
+            const whoInput = document.getElementById('edit-who-input');
+            if (whoInput) whoInput.value = whoValue;
+        }
 
         let conceptForSave = conceptValue;
         if (tabName === 'ingresos') {
@@ -6568,6 +6586,9 @@ async function saveEditModal() {
             cause: updateData.causa,
             originTable: currentOriginTable
         });
+        if (clientAssignment?.buyerPayload) {
+            Object.assign(finalUpdateData, clientAssignment.buyerPayload);
+        }
 
         let { error } = await supabase
             .from(config.table)
