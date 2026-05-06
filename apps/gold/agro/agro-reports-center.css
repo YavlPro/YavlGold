@@ -1,5 +1,5 @@
 .agro-reports-center-region {
-  margin-block: 2rem;
+  margin-block: 1rem 2rem;
 }
 
 .agro-reports-center-root {
@@ -8,20 +8,10 @@
 
 .agro-reports-center {
   display: grid;
-  gap: var(--gap-section);
+  gap: 1.25rem;
   width: 100%;
 }
 
-.agro-reports-hero {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--gap-card);
-  padding-block: 0.9rem;
-  border-bottom: 1px solid var(--border-neutral);
-}
-
-.agro-reports-back,
 .agro-report-card__action {
   appearance: none;
   display: inline-flex;
@@ -38,26 +28,6 @@
   transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease, opacity 160ms ease;
 }
 
-.agro-reports-back {
-  padding: 0 0.9rem;
-  background: color-mix(in srgb, var(--gold-4) 9%, transparent);
-  color: var(--gold-4);
-}
-
-.agro-reports-back:hover {
-  transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--gold-4) 48%, var(--border-neutral));
-  background: color-mix(in srgb, var(--gold-4) 13%, transparent);
-  color: var(--gold-5);
-}
-
-.agro-reports-hero__copy {
-  display: grid;
-  gap: 0.28rem;
-  min-width: 0;
-}
-
-.agro-reports-hero__eyebrow,
 .agro-reports-category__eyebrow {
   margin: 0;
   font-family: 'Orbitron', sans-serif;
@@ -68,15 +38,16 @@
   color: var(--gold-4);
 }
 
-.agro-reports-hero__title {
-  margin: 0;
-  font-family: 'Orbitron', sans-serif;
-  font-size: var(--type-page-title);
-  line-height: 1.1;
-  color: var(--text-primary);
+.agro-reports-overview {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--gap-card);
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-neutral);
 }
 
-.agro-reports-hero__subtitle,
+.agro-reports-overview__note,
 .agro-reports-category__copy,
 .agro-report-card__copy {
   margin: 0;
@@ -277,13 +248,9 @@
 }
 
 @media (max-width: 900px) {
-  .agro-reports-hero {
+  .agro-reports-overview {
     grid-template-columns: minmax(0, 1fr);
     align-items: start;
-  }
-
-  .agro-reports-back {
-    width: fit-content;
   }
 
   .agro-reports-summary {
@@ -308,10 +275,6 @@
     margin-block: 1rem;
   }
 
-  .agro-reports-hero {
-    gap: 0.8rem;
-  }
-
   .agro-report-card {
     grid-template-columns: minmax(0, 1fr);
     align-items: stretch;
@@ -326,12 +289,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .agro-reports-back,
   .agro-report-card__action {
     transition: none;
   }
 
-  .agro-reports-back:hover,
   .agro-report-card__action:hover:not(:disabled) {
     transform: none;
   }

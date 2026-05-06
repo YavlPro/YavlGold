@@ -205,3 +205,74 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-27__2026-05-05.md`
 - No se eliminó ni movió ningún reporte existente.
 - No se tocó Supabase ni migraciones.
 - No se tocó `apps/gold/agro/agro.js`.
+
+---
+
+## 2026-05-05 — Diagnóstico y plan: pulir Centro de Reportes
+
+**Estado:** COMPLETADO EN CÓDIGO / QA MANUAL PENDIENTE POR USUARIO
+
+### Diagnóstico
+
+- El bloque redundante vive en `apps/gold/agro/agro-reports-center.js`, dentro de `render()`, como header local `.agro-reports-hero`.
+- La barra contextual superior del shell ya muestra `Volver` + `Centro de Reportes`; por eso el botón local `Volver`, el eyebrow `Trabajo y lectura`, el H1 y el subtítulo duplican jerarquía.
+- La lista de reportes está definida en `REPORT_CATEGORIES`; los estados `pending` y `soon` deshabilitan acciones y producen botones `No disponible`.
+- Hay fuentes accesibles por bridge/API para algunos reportes: `_agroCyclesWorkspace`, `_agroBuyerPortfolioState`, `YGAgroOperationalCycles`, `YGAgroTaskCycles`, `_agroRepoContext`, `window.refreshAgroStats`, `exportCropReport()` y `exportStatsReport()`.
+- Algunas fuentes siguen sin API completa desde el centro (`Mi Carrito`, Rankings sin tocar `agro.js`, parte de AgroRepo si no se abrió). Esos reportes pueden exportar un `.md` honesto con estado y próximo dato necesario.
+
+### Plan quirúrgico
+
+1. Eliminar el header local redundante y dejar solo una franja compacta de resumen bajo la topbar contextual.
+2. Convertir todos los reportes en acciones exportables `Exportar MD`.
+3. Agregar helpers internos para descargar `.md`, formatear fecha, normalizar texto y construir tablas Markdown.
+4. Reutilizar exportadores existentes cuando estén disponibles.
+5. Para fuentes sin datos o sin bridge disponible, exportar Markdown honesto con `Sin datos cargados` o `Fuente no disponible en esta sesión`.
+6. Ajustar CSS para spacing superior limpio, cards accesibles y mobile sin overflow.
+7. Ejecutar `git diff --check` y `pnpm build:gold`; QA visual/manual queda pendiente para el usuario.
+
+### DoD esperado
+
+- No aparece el bloque local con `Trabajo y lectura`, H1 duplicado, subtítulo ni segundo `Volver`.
+- Todas las cards muestran acción `Exportar MD`.
+- Cada click genera una salida Markdown real u honesta.
+- No se toca `apps/gold/agro/agro.js`, Supabase ni migraciones.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/agro-reports-center.js` | Eliminado el header local duplicado; agregados helpers Markdown; convertidos todos los reportes a acciones `Exportar MD`; conectadas fuentes reales cuando existen y fallbacks honestos cuando no hay datos expuestos. |
+| `apps/gold/agro/agro-reports-center.css` | Retirados estilos del hero/botón local duplicado; agregado resumen compacto y spacing limpio bajo la barra contextual del shell. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Registrado diagnóstico, plan y cierre de esta limpieza. |
+
+### Reportes habilitados
+
+- Cultivos y ciclos: cultivo seleccionado, ciclo finalizado/perdido y comparativo de ciclos.
+- Operación Comercial: Cartera Viva, Cartera Operativa y Mi Carrito.
+- Clientes: Mis Clientes y rankings de clientes.
+- Trabajo y memoria: Trabajo Diario y AgroRepo.
+- Estadísticas: estadísticas globales, informe global, períodos y financiero detallado.
+
+### Exportación honesta sin datos
+
+- Mi Carrito queda con Markdown honesto cuando no exista entrada central estable desde el centro.
+- Rankings exporta lo visible si el panel está cargado; si no, descarga estado honesto.
+- AgroRepo exporta índice cuando la memoria local está cargada; si no, descarga estado honesto.
+- Cualquier fuente no cargada descarga `.md` con estado, observaciones y próximo dato necesario, sin datos inventados.
+
+### Validación
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS.
+- Nota: build mostró advertencia no bloqueante de engine (`node` esperado 20.x; entorno actual `v25.6.0`).
+
+### QA manual
+
+- No ejecutada por instrucción expresa del usuario.
+- Pendiente para el usuario: abrir `/agro#view=reportes`, validar limpieza visual y probar descargas `.md`.
+
+### Notas de alcance
+
+- No se tocó `apps/gold/agro/agro.js`.
+- No se tocó Supabase.
+- No se tocaron migraciones.
