@@ -276,3 +276,62 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-27__2026-05-05.md`
 - No se tocó `apps/gold/agro/agro.js`.
 - No se tocó Supabase.
 - No se tocaron migraciones.
+
+---
+
+## 2026-05-05 — Diagnóstico y plan: persistencia de puertas del shell
+
+**Estado:** COMPLETADO EN CÓDIGO / QA MANUAL PENDIENTE POR USUARIO
+
+### Diagnóstico
+
+- `apps/gold/agro/agro-shell.js` ya sincroniza módulos profundos con URL mediante `setActiveView()` y `writeViewToHash()`.
+- Las puertas principales del hub (`Inicio`, `Granja`, `Memoria`, `Menú`) usan `data-agro-mobile-tab` y solo ejecutan `setMobileHub()` + `setShellDepth('hub')`.
+- Ese flujo cambia la UI visible, pero no reemplaza el hash anterior. Por eso puede quedar `#view=reportes` mientras el usuario está visualmente en `Mi Granja`.
+- Al refrescar, `resolveInitialView()` prioriza el hash y restaura el módulo profundo anterior.
+- El fix seguro vive en el shell: crear rutas canónicas de hub y usarlas solo en clicks de puertas y botón `Volver` al hub.
+
+### Plan quirúrgico
+
+1. Definir rutas canónicas para puertas: `#view=inicio`, `#view=granja`, `#view=memoria`, `#view=menu`.
+2. Hacer que `resolveInitialView()` reconozca esas rutas como estado de hub, sin tratarlas como módulos profundos.
+3. Agregar un helper de navegación de puerta que actualice hub activo, profundidad, hash y persistencia.
+4. Usar ese helper en clicks de puertas principales y en el botón `Volver` desde módulo a hub.
+5. Mantener intactas rutas profundas existentes como `#view=reportes`, `#view=cartera-viva` y `#view=ciclos&subview=mis-cultivos`.
+6. Ejecutar `git diff --check` y `pnpm build:gold`; QA manual queda pendiente para el usuario.
+
+### DoD esperado
+
+- El estado visual del hub coincide con la URL.
+- Volver desde un módulo profundo a Granja deja de conservar el hash profundo anterior.
+- No se toca `apps/gold/agro/agro.js`, Supabase ni migraciones.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/agro-shell.js` | Agregadas rutas canónicas de puertas (`inicio`, `granja`, `memoria`, `menu`), persistencia de puerta en localStorage, lectura de hash de hub al cargar y helper `setShellGate()` para sincronizar UI + URL. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Registrado diagnóstico, plan y cierre de la corrección. |
+
+### Rutas preservadas
+
+- `#view=reportes` sigue entrando al Centro de Reportes como módulo profundo.
+- `#view=cartera-viva` sigue entrando a Cartera Viva.
+- `#view=ciclos&subview=mis-cultivos` sigue respetando subvista de ciclos.
+
+### Validación
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS.
+- Nota: build mostró advertencia no bloqueante de engine (`node` esperado 20.x; entorno actual `v25.6.0`).
+
+### QA manual
+
+- No ejecutada por instrucción previa del usuario.
+- Pendiente para el usuario: probar refresh en `Inicio`, `Granja`, `Memoria`, `Menú` y una ruta profunda.
+
+### Notas de alcance
+
+- No se tocó `apps/gold/agro/agro.js`.
+- No se tocó Supabase.
+- No se tocaron migraciones.

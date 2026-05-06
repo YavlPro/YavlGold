@@ -3,6 +3,7 @@ import { initAgroShellSearch } from './agro-shell-search.js';
 
 const AGRO_ACTIVE_VIEW_KEY = 'YG_AGRO_ACTIVE_VIEW_V1';
 const AGRO_ACTIVE_SUBVIEW_KEY = 'YG_AGRO_ACTIVE_VIEW_SUB_V1';
+const AGRO_ACTIVE_SHELL_GATE_KEY = 'YG_AGRO_ACTIVE_SHELL_GATE_V1';
 const AGRO_RAIL_EXPANDED_KEY = 'YG_AGRO_RAIL_EXPANDED_V1';
 const AGRO_MOBILE_RAIL_COLLAPSED_KEY = 'YG_AGRO_MOBILE_RAIL_COLLAPSED_V1';
 const AGRO_DEFAULT_VIEW = 'dashboard';
@@ -52,6 +53,21 @@ const CORE_OPERATIONS_TABS = new Set([
 ]);
 
 const MOBILE_HUBS = new Set(['inicio', 'operacion', 'memoria', 'menu']);
+
+const MOBILE_HUB_TO_GATE_VIEW = Object.freeze({
+    inicio: 'inicio',
+    operacion: 'granja',
+    memoria: 'memoria',
+    menu: 'menu'
+});
+
+const SHELL_GATE_ROUTES = Object.freeze({
+    inicio: Object.freeze({ hashView: 'inicio', hub: 'inicio' }),
+    granja: Object.freeze({ hashView: 'granja', hub: 'operacion' }),
+    operacion: Object.freeze({ hashView: 'granja', hub: 'operacion' }),
+    memoria: Object.freeze({ hashView: 'memoria', hub: 'memoria' }),
+    menu: Object.freeze({ hashView: 'menu', hub: 'menu' })
+});
 
 const VIEW_TO_MOBILE_HUB = Object.freeze({
     dashboard: 'inicio',
@@ -342,6 +358,18 @@ function normalizeMobileHub(value) {
     return MOBILE_HUBS.has(token) ? token : AGRO_DEFAULT_MOBILE_HUB;
 }
 
+function resolveShellGateRoute(value) {
+    const token = normalizeViewToken(value);
+    if (Object.prototype.hasOwnProperty.call(SHELL_GATE_ROUTES, token)) {
+        return SHELL_GATE_ROUTES[token];
+    }
+    if (MOBILE_HUBS.has(token)) {
+        const gateView = MOBILE_HUB_TO_GATE_VIEW[token];
+        return SHELL_GATE_ROUTES[gateView] || null;
+    }
+    return null;
+}
+
 function parseShellModeScopes(value) {
     return String(value || '')
         .split(/[\s,|]+/)
@@ -522,17 +550,64 @@ function writeStoredSubview(subview) {
     try { localStorage.setItem(AGRO_ACTIVE_SUBVIEW_KEY, subview || ''); } catch (_err) { /* Ignore storage errors. */ }
 }
 
+function writeStoredShellGate(value) {
+    const route = resolveShellGateRoute(value);
+    if (!route) return;
+    try {
+        localStorage.setItem(AGRO_ACTIVE_SHELL_GATE_KEY, route.hashView);
+    } catch (_err) {
+        // Ignore storage errors.
+    }
+}
+
+function readStoredShellGate() {
+    try {
+        return resolveShellGateRoute(localStorage.getItem(AGRO_ACTIVE_SHELL_GATE_KEY) || '');
+    } catch (_err) {
+        return null;
+    }
+}
+
+function clearStoredShellGate() {
+    try {
+        localStorage.removeItem(AGRO_ACTIVE_SHELL_GATE_KEY);
+    } catch (_err) {
+        // Ignore storage errors.
+    }
+}
+
 function resolveInitialView() {
     try {
         const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
         const hashView = hash.get('view');
         if (hashView) {
+            const shellGate = resolveShellGateRoute(hashView);
+            if (shellGate) {
+                return {
+                    view: AGRO_DEFAULT_VIEW,
+                    subview: '',
+                    shellGate: shellGate.hashView,
+                    mobileHub: shellGate.hub,
+                    shellDepth: 'hub'
+                };
+            }
             const normalized = normalizeView(hashView);
             if (Object.prototype.hasOwnProperty.call(VIEW_CONFIG, normalized)) {
                 return { view: normalized, subview: hash.get('subview') || '' };
             }
         }
     } catch (_err) { /* ignore */ }
+
+    const storedShellGate = readStoredShellGate();
+    if (storedShellGate) {
+        return {
+            view: AGRO_DEFAULT_VIEW,
+            subview: '',
+            shellGate: storedShellGate.hashView,
+            mobileHub: storedShellGate.hub,
+            shellDepth: 'hub'
+        };
+    }
 
     const storedView = readStoredView();
     if (storedView && Object.prototype.hasOwnProperty.call(VIEW_CONFIG, storedView)) {
@@ -552,6 +627,16 @@ function writeViewToHash(view, subview) {
                 ? `view=${encodeURIComponent(view)}&subview=${encodeURIComponent(subview)}`
                 : `view=${encodeURIComponent(view)}`;
         }
+        history.replaceState(null, '', url);
+    } catch (_err) { /* ignore */ }
+}
+
+function writeShellGateToHash(value) {
+    const route = resolveShellGateRoute(value);
+    if (!route) return;
+    try {
+        const url = new URL(window.location.href);
+        url.hash = `view=${encodeURIComponent(route.hashView)}`;
         history.replaceState(null, '', url);
     } catch (_err) { /* ignore */ }
 }
@@ -788,8 +873,8 @@ export function initAgroShell() {
     let railExpanded = readRailExpanded();
     let ignoreToggleHitClose = false;
     let expandedNavParent = resolveNavParentForView(activeView);
-    let activeMobileHub = normalizeMobileHub(document.body?.dataset?.agroMobileHub || AGRO_DEFAULT_MOBILE_HUB);
-    let shellDepth = document.body?.dataset?.agroShellDepth === 'module' ? 'module' : 'hub';
+    let activeMobileHub = normalizeMobileHub(initial.mobileHub || document.body?.dataset?.agroMobileHub || AGRO_DEFAULT_MOBILE_HUB);
+    let shellDepth = initial.shellDepth || (document.body?.dataset?.agroShellDepth === 'module' ? 'module' : 'hub');
     let shellContextTitle = '';
 
     const topLevelRegions = Array.from(document.querySelectorAll('[data-agro-shell-region]'));
@@ -884,6 +969,37 @@ export function initAgroShell() {
         if (options.focus === true && shellDepth === 'hub') {
             focusTarget(`[data-agro-mobile-panel="${activeMobileHub}"]`, { scroll: true });
         }
+    };
+
+    const setShellGate = (nextGate, options = {}) => {
+        const route = resolveShellGateRoute(nextGate);
+        if (!route) return false;
+
+        if (activeView !== AGRO_DEFAULT_VIEW || activeSubview) {
+            setActiveView(AGRO_DEFAULT_VIEW, {
+                scroll: false,
+                syncTab: true,
+                subview: '',
+                preserveDepth: true,
+                preserveGate: true,
+                syncHash: false
+            });
+        }
+        setMobileHub(route.hub, { focus: options.focus === true });
+        setShellDepth('hub', { focus: options.focus === true });
+        writeStoredShellGate(route.hashView);
+        writeStoredSubview('');
+        writeShellGateToHash(route.hashView);
+        if (document.body) {
+            document.body.dataset.agroShellGate = route.hashView;
+        }
+        window.dispatchEvent(new CustomEvent('agro:shell:gate-changed', {
+            detail: {
+                view: route.hashView,
+                hub: route.hub
+            }
+        }));
+        return true;
     };
 
     const resolveSourceHub = (node, fallbackView = '') => {
@@ -1059,9 +1175,17 @@ export function initAgroShell() {
         activeView = view;
         activeSubview = normalizeSubview(view, options.subview || aliasSubview);
         expandedNavParent = resolveNavParentForView(view) || expandedNavParent;
+        if (options.preserveGate !== true) {
+            clearStoredShellGate();
+            if (document.body) {
+                delete document.body.dataset.agroShellGate;
+            }
+        }
         writeStoredView(view);
         writeStoredSubview(activeSubview);
-        writeViewToHash(view, activeSubview);
+        if (options.syncHash !== false) {
+            writeViewToHash(view, activeSubview);
+        }
         syncRegions(config.region);
         syncViewButtons();
         applyViewEffects(view, options);
@@ -1198,8 +1322,7 @@ export function initAgroShell() {
         if (mobileHubTab) {
             event.preventDefault();
             event.stopPropagation();
-            setMobileHub(mobileHubTab.dataset.agroMobileTab, { focus: true });
-            setShellDepth('hub');
+            setShellGate(mobileHubTab.dataset.agroMobileTab, { focus: true });
             closeSidebar();
             return;
         }
@@ -1208,7 +1331,7 @@ export function initAgroShell() {
         if (mobileBackButton) {
             event.preventDefault();
             event.stopPropagation();
-            setShellDepth('hub', { focus: true });
+            setShellGate(activeMobileHub, { focus: true });
             closeSidebar();
             return;
         }
@@ -1235,8 +1358,7 @@ export function initAgroShell() {
         if (mobileFeedbackButton) {
             event.preventDefault();
             event.stopPropagation();
-            setMobileHub('menu');
-            setShellDepth('hub');
+            setShellGate('menu');
             closeSidebar();
             window.setTimeout(() => {
                 document.querySelector('.agro-feedback-fab')?.click();
@@ -1290,6 +1412,13 @@ export function initAgroShell() {
 
     window.addEventListener('agro:shell:set-view', (event) => {
         const nextView = event.detail?.view;
+        const shellGate = resolveShellGateRoute(nextView);
+        if (shellGate) {
+            setShellGate(shellGate.hashView, {
+                focus: event.detail?.scroll !== false
+            });
+            return;
+        }
         setActiveView(nextView, {
             scroll: event.detail?.scroll !== false,
             subview: event.detail?.subview
@@ -1305,8 +1434,18 @@ export function initAgroShell() {
     closeSidebar();
     syncRailExpanded();
     syncMobileHub();
-    setActiveView(activeView, { scroll: false, syncTab: true, subview: activeSubview, preserveDepth: true });
-    if (initial.view === AGRO_DEFAULT_VIEW) {
+    const initialIsShellGate = Boolean(initial.shellGate);
+    setActiveView(activeView, {
+        scroll: false,
+        syncTab: true,
+        subview: activeSubview,
+        preserveDepth: true,
+        preserveGate: initialIsShellGate,
+        syncHash: !initialIsShellGate
+    });
+    if (initialIsShellGate) {
+        setShellGate(initial.shellGate);
+    } else if (initial.view === AGRO_DEFAULT_VIEW) {
         setShellDepth('hub');
     } else {
         const initialConfig = VIEW_CONFIG[initial.view];
