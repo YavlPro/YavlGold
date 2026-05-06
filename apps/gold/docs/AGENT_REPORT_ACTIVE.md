@@ -787,87 +787,32 @@ Se agregaron propiedades defensivas a todos los elementos de texto del modal y d
 ### Validación
 
 - `git diff --check`: PASS
-- `pnpm build:gold`: PASS (4.07s)
-
-### Commit sugerido
-
-```
-fix(agro): restore client name visibility in merge modal
-```
+- `pnpm build:gold`: PASS
 
 ---
 
-## 2026-05-06 — Fix agresivo: override de background-clip y text-fill en modales
+## 2026-05-06 — Fix: texto invisible en selector de clientes del modal unificar
 
-### Problema
-
-Los fixes previos de color explícito y `-webkit-text-fill-color: currentColor` por elemento no resolvieron completamente la invisibilidad de nombres en el combobox del modal "Unificar clientes".
-
-### Causa raíz
-
-Los estilos metálicos legacy del ADN Visual (`.agro-shell-sidebar__title`, `.cartera-viva-view__title`, etc.) usan `background-clip: text` + `-webkit-text-fill-color: transparent` dentro de bloques `@supports`. Aunque sus selectores son específicos, la cascada CSS dentro de los modales (que viven en `document.body`) puede heredar estos efectos de forma inesperada a través de `font: inherit` en botones.
-
-### Solución aplicada
-
-Override agresivo a nivel contenedor del modal, usando `*` selector para garantizar que ningún hijo herede efectos metálicos:
-
-1. `.cartera-viva-merge__dialog` + `.cartera-viva-merge__dialog *` + `::before`/`::after`: forzado de `-webkit-text-fill-color: currentColor` y `background-clip: border-box`.
-2. `#modal-edit-facturero .modal-content` + mismo `*` override: misma defensa para el editor de reasignación de Fase 1.1.
-
-Esto elimina cualquier herencia de `background-clip: text` o `-webkit-text-fill-color: transparent` dentro de los modales, independientemente de dónde aparezcan en el DOM.
-
-### Archivos modificados
-
-- `apps/gold/agro/agro.css`: override `*` en ambos modales
-
-### Validación
-
-- `git diff --check`: PASS
-- `pnpm build:gold`: PASS (3.77s)
-
----
-
-## 2026-05-06 — Fix quirúrgico: texto invisible en opciones del combobox "Unificar clientes"
-
-### Problema
-
-El modal "Unificar clientes" abre, el dropdown se despliega, pero los nombres de clientes dentro de las opciones del combobox siguen siendo invisibles. El fix anterior de defensa a nivel contenedor (`*` selector) fue parcial: protegió el diálogo general pero no bastó para las opciones individuales del combobox.
+### Objetivo
+Diagnosticar y corregir el bug visual donde las letras eran invisibles en el combobox de clientes y chips de duplicados del modal de unificar clientes en Cartera Viva.
 
 ### Diagnóstico
+- **Causa raíz**: Incompatibilidad de nombres de propiedad JS.
+- `renderBuyerOption()` (línea 32) retorna objetos con propiedades en **camelCase**: `{ id, displayName, groupKey }`.
+- `renderDestinationCombobox()`, `renderOriginChips()` y `renderModalContent()` referenciaban **snake_case**: `b.display_name`, `selected.display_name`.
+- Resultado: `escapeHtml(undefined)` → `""` → texto vacío en el DOM → letras invisibles.
 
-- Inspección de `agro-cartera-viva-client-merge.js`: las opciones son `<button type="button" role="option" class="cartera-viva-merge__combo-option">`.
-- Inspección de `agro.css` y todo el árbol CSS: no se encontró un selector malicioso directo que aplique `background-clip: text` + `color: transparent` a `.cartera-viva-merge__combo-option`.
-- Hipótesis raíz: la defensa con `*` en `.cartera-viva-merge__dialog *` tiene especificidad baja (0,1,0). Existe CSS inline masivo en `index.html` (~1,144L) y posiblemente hojas dinámicas no indexadas fácilmente. Algún selector con mayor especificidad (ej. con pseudo-clase o herencia de `button` interactivo) aplica `background-clip: text` + `-webkit-text-fill-color: transparent` + `color: transparent`, pisando la defensa anterior.
-- Las opciones son los únicos elementos afectados porque heredan o reciben un tratamiento decorativo metálico que el trigger (misma etiqueta `button`) no recibe, posiblemente por estar fuera de la lista desplegable o por no coincidir con el selector agresivo.
+### Cambios realizados
 
-### Solución aplicada
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro-cartera-viva-client-merge.js` | bugfix | 5 reemplazos de `display_name` → `displayName` en plantillas de renderizado |
 
-Refuerzo defensivo quirúrgico en los nodos exactos de texto del merge modal, usando `!important` en las propiedades críticas de visibilidad:
+### Commit
+- `9a13593` fix(agro): correct display_name→displayName property mismatch in merge modal
 
-1. `.cartera-viva-merge__combo-option`:
-   - `color: var(--text-primary, #ffffff) !important;`
-   - `-webkit-text-fill-color: currentColor !important;`
-   - `background-clip: border-box !important;`
-   - `background-image: none !important;`
-   - `text-shadow: none !important;`
-   - `opacity: 1 !important;`
-
-2. Estados `:hover`, `:focus-visible`, `.is-selected` del combo-option:
-   - `color: var(--gold-4, #C8A752) !important;`
-   - `-webkit-text-fill-color: currentColor !important;`
-
-3. `.cartera-viva-merge__combo-trigger` (protección preventiva):
-   - Mismo refuerzo de color y text-fill-color con `!important`.
-
-4. `.cartera-viva-merge__origin-chip` y `.is-selected`:
-   - Mismo refuerzo para evitar que los chips de clientes origen también se vuelvan invisibles.
-
-### Archivos modificados
-
-- `apps/gold/agro/agro.css`: refuerzo defensivo con `!important` en `.cartera-viva-merge__combo-option`, `.cartera-viva-merge__combo-trigger`, `.cartera-viva-merge__origin-chip`.
-- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`: registro de sesión.
-
-### Validación
-
-- `git diff --check`: PASS
+### Build
 - `pnpm build:gold`: PASS
+
+### QA sugerido
+- Abrir Cartera Viva → selector de unificar clientes → verificar que los nombres se ven correctamente en el combobox destino, los chips de duplicados, y el paso de confirmación.
