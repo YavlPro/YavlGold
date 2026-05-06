@@ -640,13 +640,13 @@ function renderWizardStepPanel(step, d) {
                     <label class="agro-buyer-field">
                         <span>Nombre visible</span>
                         <input type="text" id="buyer-wizard-display_name" class="styled-input" maxlength="120"
-                            placeholder="Ej: Finca El Porvenir" required value="${escapeHtml(d.display_name)}">
+                            placeholder="Ej: Pedro Suárez" required value="${escapeHtml(d.display_name)}">
                     </label>
                 ` : `
                     <label class="agro-buyer-field">
                         <span>Buscar cliente</span>
                         <input type="search" id="buyer-wizard-existing-search" class="styled-input" maxlength="120"
-                            placeholder="Ej: Pedro Pérez, Finca El Porvenir o teléfono"
+                            placeholder="Ej: Pedro Suárez o teléfono"
                             value="${escapeHtml(state.wizardBuyerSearch)}">
                     </label>
                     <label class="agro-buyer-field">
