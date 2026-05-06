@@ -19,6 +19,7 @@ import {
     openNewBuyerProfile
 } from './agrocompradores.js';
 import { getPendingTransferToken } from './agro-unit-totals.js';
+import { openCarteraVivaClientMergeModal } from './agro-cartera-viva-client-merge.js';
 
 const CARTERA_VIVA_VIEW = 'cartera-viva';
 const CARTERA_VIVA_ROOT_ID = 'agro-cartera-viva-root';
@@ -2497,6 +2498,9 @@ function renderListViewMarkup(state) {
                         <button type="button" class="cartera-viva-refresh cartera-viva-refresh--secondary" data-cartera-existing-client>
                             Cliente existente
                         </button>
+                        <button type="button" class="cartera-viva-refresh cartera-viva-refresh--secondary" data-cartera-unify-clients>
+                            Unificar clientes
+                        </button>
                     </div>
                     <button type="button" class="cartera-viva-refresh" data-cartera-refresh ${loading ? 'disabled' : ''}>
                         ${loading ? 'Actualizando…' : 'Actualizar'}
@@ -2943,6 +2947,15 @@ function bindListViewEvents(root) {
         if (target.closest('[data-cartera-existing-client]')) {
             if (!guardLiveWalletCropCreation()) return;
             openNewBuyerProfile('', { mode: 'existing' });
+            return;
+        }
+
+        if (target.closest('[data-cartera-unify-clients]')) {
+            void (async () => {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user?.id) return;
+                openCarteraVivaClientMergeModal({ supabase, userId: user.id });
+            })();
             return;
         }
 

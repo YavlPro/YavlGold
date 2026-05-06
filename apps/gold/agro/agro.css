@@ -340,6 +340,295 @@
   border-top: 1px solid rgba(255,255,255,0.1);
 }
 
+.cartera-viva-merge-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  padding: 1rem;
+}
+
+.cartera-viva-merge-overlay[hidden] {
+  display: none !important;
+}
+
+.cartera-viva-merge__dialog {
+  background: var(--card-bg, #1a1a1a);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius-lg, 16px);
+  padding: 2rem;
+  max-width: 520px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.cartera-viva-merge__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.cartera-viva-merge__title {
+  color: var(--gold-4, #C8A752);
+  margin: 0;
+  font-family: var(--font-heading, 'Orbitron', sans-serif);
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.cartera-viva-merge__close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted, rgba(255, 255, 255, 0.55));
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+  transition: color 180ms ease;
+}
+
+.cartera-viva-merge__close:hover {
+  color: #fff;
+}
+
+.cartera-viva-merge__description {
+  color: var(--text-secondary, rgba(255, 255, 255, 0.72));
+  font-size: 0.88rem;
+  margin: 0 0 1.25rem;
+  line-height: 1.45;
+}
+
+.cartera-viva-merge__section {
+  margin-bottom: 1.25rem;
+}
+
+.cartera-viva-merge__label {
+  display: block;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.72));
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.cartera-viva-merge__hint {
+  color: var(--text-muted, rgba(255, 255, 255, 0.55));
+  font-size: 0.78rem;
+  margin: 0 0 0.5rem;
+  line-height: 1.35;
+}
+
+.cartera-viva-merge__error {
+  color: #ef4444;
+  font-size: 0.85rem;
+  margin: 0 0 1rem;
+}
+
+.cartera-viva-merge__combobox {
+  position: relative;
+}
+
+.cartera-viva-merge__combo-trigger {
+  width: 100%;
+  padding: 0.75rem 2.5rem 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-md, 8px);
+  color: #fff;
+  font: inherit;
+  font-size: 1rem;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 180ms ease;
+  position: relative;
+}
+
+.cartera-viva-merge__combo-trigger::after {
+  content: '';
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid var(--gold-4, #C8A752);
+  pointer-events: none;
+}
+
+.cartera-viva-merge__combo-trigger:hover,
+.cartera-viva-merge__combo-trigger:focus-visible {
+  border-color: rgba(200, 167, 82, 0.5);
+  outline: none;
+}
+
+.cartera-viva-merge__combo-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--bg-2, #141414);
+  border: 1px solid rgba(200, 167, 82, 0.25);
+  border-radius: var(--radius-md, 8px);
+  z-index: 10;
+  padding: 4px 0;
+}
+
+.cartera-viva-merge__combo-option {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.72));
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.cartera-viva-merge__combo-option:hover,
+.cartera-viva-merge__combo-option:focus-visible {
+  background: rgba(200, 167, 82, 0.12);
+  color: var(--gold-4, #C8A752);
+}
+
+.cartera-viva-merge__combo-option.is-selected {
+  color: var(--gold-4, #C8A752);
+  font-weight: 700;
+}
+
+.cartera-viva-merge__origin-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.cartera-viva-merge__origin-chip {
+  appearance: none;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-pill, 999px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.72));
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 180ms ease, color 180ms ease, background 180ms ease;
+}
+
+.cartera-viva-merge__origin-chip:hover {
+  border-color: rgba(200, 167, 82, 0.3);
+}
+
+.cartera-viva-merge__origin-chip.is-selected {
+  border-color: rgba(200, 167, 82, 0.5);
+  background: rgba(200, 167, 82, 0.15);
+  color: var(--gold-4, #C8A752);
+}
+
+.cartera-viva-merge__actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cartera-viva-merge__btn {
+  padding: 0.65rem 1.25rem;
+  border-radius: var(--radius-md, 8px);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 180ms ease, border-color 180ms ease, opacity 180ms ease;
+}
+
+.cartera-viva-merge__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cartera-viva-merge__btn--secondary {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.72));
+}
+
+.cartera-viva-merge__btn--secondary:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.cartera-viva-merge__btn--primary {
+  background: rgba(200, 167, 82, 0.15);
+  border: 1px solid rgba(200, 167, 82, 0.4);
+  color: var(--gold-4, #C8A752);
+}
+
+.cartera-viva-merge__btn--primary:hover:not(:disabled) {
+  background: rgba(200, 167, 82, 0.25);
+}
+
+.cartera-viva-merge__summary {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md, 8px);
+}
+
+.cartera-viva-merge__summary-row {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.cartera-viva-merge__summary-label {
+  color: var(--text-muted, rgba(255, 255, 255, 0.55));
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.cartera-viva-merge__summary-value {
+  color: var(--gold-4, #C8A752);
+  font-weight: 700;
+}
+
+.cartera-viva-merge__summary-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.cartera-viva-merge__summary-list li {
+  padding: 0.25rem 0.6rem;
+  background: rgba(200, 167, 82, 0.1);
+  border-radius: var(--radius-pill, 999px);
+  font-size: 0.8rem;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.72));
+}
+
+.cartera-viva-merge__warning {
+  color: var(--text-muted, rgba(255, 255, 255, 0.55));
+  font-size: 0.8rem;
+  margin: 0 0 0.5rem;
+  line-height: 1.4;
+}
+
 /* V3.1: modal canon base, derived from "Configura tu asistente" */
 .agro-modal-canon {
   position: fixed;

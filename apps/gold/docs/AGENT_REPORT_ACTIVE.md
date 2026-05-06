@@ -603,3 +603,148 @@ Corregir dos bugs visuales y de estado en el bloque "Cliente" del modal de edici
 ```
 fix(agro): polish client reassignment editor states
 ```
+
+---
+
+## 2026-05-06 — Fase 2: Unificar clientes duplicados (plan)
+
+### Objetivo
+
+Implementar fusión/unificación de clientes duplicados en Cartera Viva vía modal dedicado, sin modo selección sobre cards.
+
+### Diagnóstico
+
+- Cartera Viva agrupa clientes por `buyer_group_key` / `canonical_name` (normalizados vía `normalizeBuyerGroupKey`).
+- Tablas que alimentan la vista: `agro_pending`, `agro_income`, `agro_losses` — todas con campos `buyer_id` y `buyer_group_key`.
+- `agro_buyers` es el directorio canónico: `id`, `user_id`, `display_name`, `group_key`, `canonical_name`, `status`.
+- Soft-delete en buyers: `status = 'archived'` (`.neq('status', 'archived')`).
+- Buyers duplicados = registros distintos en `agro_buyers` con nombres que el usuario identifica como el mismo cliente.
+- La vista se refresca vía `loadSummary()` + `scheduleExternalPortfolioRefresh()` (debounce 350ms).
+- También se puede emitir `agro:client:changed` para que `handleClientChanged` refresque.
+
+### Plan Fase 2
+
+1. **Crear módulo** `agro-cartera-viva-client-merge.js`:
+   - Exporta `initCarteraVivaClientMerge()` y `openCarteraVivaClientMergeModal()`.
+   - Modal propio con combobox destino + chips de origen múltiples.
+   - Confirmación con resumen antes de ejecutar.
+   - Al confirmar: actualiza `buyer_id` y `buyer_group_key` en `agro_pending`, `agro_income`, `agro_losses`; archiva buyers origen vía `status = 'archived'`.
+   - Al terminar: emite `agro:client:changed` y dispara `data-refresh` para refrescar la vista.
+
+2. **Wire en `agro-cartera-viva-view.js`**:
+   - Agregar botón `Unificar clientes` en el action pair del header.
+   - Agregar handler click para abrir modal.
+   - No interceptar clicks de cards/tags/filtros.
+
+3. **Import en `index.html`** junto al resto de módulos dinámicos.
+
+4. **CSS en `agro.css`**: estilos del modal y chips con tokens ADN V11.
+
+### Archivos a tocar
+
+| Archivo | Cambio |
+|---|---|
+| `agro-cartera-viva-client-merge.js` | NUEVO — módulo completo |
+| `agro-cartera-viva-view.js` | Wiring: botón + handler click |
+| `agro.css` | Estilos del modal de fusión |
+| `index.html` | Import dinámico del módulo |
+| `AGENT_REPORT_ACTIVE.md` | Este reporte |
+
+### Riesgos
+
+- **Actualización masiva**: actualizar `buyer_id` y `buyer_group_key` en múltiples tablas requiere queries Supabase con filtro `buyer_id IN (origen_ids)`. Si la tabla grande, puede ser lento.
+- **Archivar buyers**: safe vía `status = 'archived'` pero solo si los registros ya fueron reasignados.
+- **No romper clicks de Cartera Viva**: el modal es overlay local; cerrado = cero interceptación. Sin listeners globales permanentes.
+
+### QA online esperado
+
+1. Tags/filtros funcionan antes y después de fusión.
+2. Cards abren detalle antes y después.
+3. Botón "Unificar clientes" abre modal.
+4. Elegir destino y orígenes funciona sin crash.
+5. Confirmar reasigna movimientos al destino.
+6. Buyer origen se archiva.
+7. Cancelar no cambia nada.
+8. ESC cierra el modal.
+9. No aparece modo selección en cards.
+
+### Nota explícita
+
+No se usará modo selección sobre cards. Todo dentro del modal.
+
+---
+
+## 2026-05-06 — Fase 2: Unificar clientes duplicados (implementación)
+
+### Objetivo
+
+Implementar fusión/unificación de clientes duplicados en Cartera Viva vía modal dedicado, sin modo selección sobre cards.
+
+### Diagnóstico
+
+- **Tablas afectadas**: `agro_pending`, `agro_income`, `agro_losses` (campos `buyer_id`, `buyer_group_key`), `agro_buyers` (campo `status` = `'archived'`).
+- **Agrupamiento**: `normalizeBuyerGroupKey()` normaliza nombres (sin acentos, minúsculas, espacios colapsados).
+- **Buyer destino**: se usa `buyer_id` y `group_key`/`canonical_name` del buyer seleccionado como destino.
+- **Refresco**: se emite `agro:client:changed` con `openDetail: true` para que la vista refresque automáticamente.
+
+### Archivos modificados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agro-cartera-viva-client-merge.js` | NUEVO | Módulo completo de fusión: carga buyers, modal con combobox destino + chips origen, resumen, ejecución |
+| `agro-cartera-viva-view.js` | Wiring | Import de `openCarteraVivaClientMergeModal`; botón `Unificar clientes` en action pair; handler click con `supabase.auth.getUser()` |
+| `agro.css` | CSS | Estilos del modal de fusión: overlay, dialog, combobox, chips, summary, botones — todo con tokens ADN V11 |
+
+### Cómo se montó la acción "Unificar clientes"
+
+- Botón `data-cartera-unify-clients` dentro del `.cartera-viva-action-pair` existente.
+- Handler en el click delegado de la vista: obtiene userId vía `supabase.auth.getUser()`, llama a `openCarteraVivaClientMergeModal({ supabase, userId })`.
+
+### Qué tablas/campos actualiza
+
+Al confirmar la fusión:
+
+1. **`agro_pending`**: `buyer_id` → destino, `buyer_group_key` → destino — registros donde `buyer_id` IN (origen_ids) y `deleted_at IS NULL`.
+2. **`agro_income`**: mismos campos, mismas condiciones.
+3. **`agro_losses`**: mismos campos, mismas condiciones.
+4. **`agro_buyers`**: `status` = `'archived'` para cada buyer origen — soft-delete.
+
+Montos, monedas, fechas, estados, cultivos, notas — no se modifican.
+
+### Cómo se evita romper clicks de Cartera Viva
+
+- Modal es overlay propio con `z-index: 10001`.
+- Modal cerrado = `hidden` + `display: none !important`.
+- No hay overlay global permanente.
+- No hay listeners sobre `document` que intercepten clicks de la vista.
+- El listener de click es scoped al modal, no al documento.
+- ESC cierra el modal vía `keydown`.
+- Click fuera del dialog (en overlay) cierra el modal.
+
+### Si se archivaron buyers duplicados
+
+Sí. Al confirmar la fusión, cada buyer origen se archiva vía `status = 'archived'` en `agro_buyers`. Los buyers archivados desaparecen del selector de cliente existente (que filtra `.neq('status', 'archived')`).
+
+### Validación
+
+- `git diff --check`: PASS (sin errores).
+- `pnpm build:gold`: PASS (5.91s, sin errores).
+- No se tocó `agro-cartera-viva-view.js` más allá del wiring mínimo (import + botón + handler).
+- No se tocó `agro.js`.
+- No se tocó `agro-clients.js`.
+- No se tocó `agrocompradores.js`.
+
+### Fuera de alcance confirmado
+
+- No se implementó modo selección sobre cards.
+- No se agregaron checkboxes en cards.
+- No se interceptaron clicks de tags/filtros.
+- No se usó `stopPropagation`/`preventDefault` fuera del modal.
+- No se agregó overlay global permanente.
+- No se tocó edición de nombre final (declarado para fase 2.1 si se desea).
+
+### Commit sugerido
+
+```
+feat(agro): add safe cartera viva client merge modal
+```
