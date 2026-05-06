@@ -2000,9 +2000,14 @@ function renderToolbarControls() {
                 <div data-cartera-crop-picker-slot>
                     ${renderCropSelector()}
                 </div>
-                <button type="button" class="cartera-viva-quick-action" data-cartera-new-client>
-                    Nuevo cliente
-                </button>
+                <div class="cartera-viva-action-pair" aria-label="Acciones de clientes">
+                    <button type="button" class="cartera-viva-quick-action" data-cartera-new-client>
+                        Nuevo cliente
+                    </button>
+                    <button type="button" class="cartera-viva-quick-action cartera-viva-quick-action--secondary" data-cartera-existing-client>
+                        Cliente existente
+                    </button>
+                </div>
             </div>
             ${renderPrivacyStrip()}
         </div>
@@ -2500,11 +2505,16 @@ function renderListViewMarkup(state) {
                         <p class="cartera-viva-view__eyebrow">Cartera Viva</p>
                         <h2 class="cartera-viva-view__title">Cartera de clientes</h2>
                         <p class="cartera-viva-view__subtitle">Primero vive el cliente; luego sus movimientos.</p>
-                    </div>
+                </div>
                 <div class="cartera-viva-view__actions">
-                    <button type="button" class="cartera-viva-refresh" data-cartera-new-client>
-                        Nuevo cliente
-                    </button>
+                    <div class="cartera-viva-action-pair" aria-label="Acciones de clientes">
+                        <button type="button" class="cartera-viva-refresh" data-cartera-new-client>
+                            Nuevo cliente
+                        </button>
+                        <button type="button" class="cartera-viva-refresh cartera-viva-refresh--secondary" data-cartera-existing-client>
+                            Cliente existente
+                        </button>
+                    </div>
                     <button type="button" class="cartera-viva-refresh" data-cartera-refresh ${loading ? 'disabled' : ''}>
                         ${loading ? 'Actualizando…' : 'Actualizar'}
                     </button>
@@ -2943,7 +2953,13 @@ function bindListViewEvents(root) {
 
         if (target.closest('[data-cartera-new-client]')) {
             if (!guardLiveWalletCropCreation()) return;
-            openNewBuyerProfile('');
+            openNewBuyerProfile('', { mode: 'new' });
+            return;
+        }
+
+        if (target.closest('[data-cartera-existing-client]')) {
+            if (!guardLiveWalletCropCreation()) return;
+            openNewBuyerProfile('', { mode: 'existing' });
             return;
         }
 

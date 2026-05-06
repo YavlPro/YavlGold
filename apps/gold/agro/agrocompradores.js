@@ -76,6 +76,7 @@ const state = {
     wizardDraft: null,
     wizardIdentityMode: 'new',
     wizardSelectedBuyerId: '',
+    wizardBuyerSearch: '',
     wizardBuyerOptions: []
 };
 
@@ -294,7 +295,7 @@ function syncOpenPublicButton() {
     button.disabled = !hasLinked;
     button.title = hasLinked
         ? 'Abrir perfil público vinculado'
-        : 'Cliente no vinculado a un user_id público';
+        : 'Cliente no vinculado a perfil público';
 }
 
 function syncLifecycleButtons() {
@@ -438,6 +439,83 @@ async function loadActiveBuyerOptions() {
     return Array.isArray(data) ? data : [];
 }
 
+function getWizardTitle() {
+    return state.wizardIdentityMode === 'existing'
+        ? 'Cliente existente'
+        : 'Nuevo cliente';
+}
+
+function getWizardEyebrow(step) {
+    const prefix = state.wizardIdentityMode === 'existing'
+        ? 'Selección guiada'
+        : 'Creación guiada';
+    return `${prefix} · Paso ${step}`;
+}
+
+function getBuyerOptionLabel(buyer = {}) {
+    const name = String(buyer?.display_name || '').trim() || 'Cliente sin nombre';
+    const contact = [
+        buyer?.phone,
+        buyer?.whatsapp,
+        buyer?.instagram,
+        buyer?.facebook
+    ]
+        .map((value) => String(value || '').trim())
+        .find(Boolean);
+    return contact ? `${name} · ${contact}` : name;
+}
+
+function getBuyerSearchText(buyer = {}) {
+    return [
+        buyer?.display_name,
+        buyer?.canonical_name,
+        buyer?.group_key,
+        buyer?.phone,
+        buyer?.whatsapp,
+        buyer?.instagram,
+        buyer?.facebook,
+        buyer?.notes
+    ]
+        .map((value) => String(value || '').trim().toLowerCase())
+        .filter(Boolean)
+        .join(' ');
+}
+
+function getFilteredWizardBuyerOptions() {
+    const buyers = Array.isArray(state.wizardBuyerOptions) ? state.wizardBuyerOptions : [];
+    const query = String(state.wizardBuyerSearch || '').trim().toLowerCase();
+    if (!query) return buyers;
+    return buyers.filter((buyer) => getBuyerSearchText(buyer).includes(query));
+}
+
+function renderExistingBuyerOptions(buyers = [], selectedId = '') {
+    if (!Array.isArray(state.wizardBuyerOptions) || state.wizardBuyerOptions.length <= 0) {
+        return '<option value="">No hay clientes existentes</option>';
+    }
+    if (!buyers.length) {
+        return '<option value="">Cliente registrado no encontrado</option>';
+    }
+    return [
+        '<option value="">-- Elige un cliente --</option>',
+        buyers.map((buyer) => {
+            const id = String(buyer?.id || '').trim();
+            return `<option value="${escapeHtml(id)}"${id === selectedId ? ' selected' : ''}>${escapeHtml(getBuyerOptionLabel(buyer))}</option>`;
+        }).join('')
+    ].join('');
+}
+
+function syncExistingBuyerSelectOptions() {
+    const select = document.getElementById('buyer-wizard-existing-buyer');
+    if (!select) return;
+    const buyers = getFilteredWizardBuyerOptions();
+    const visibleIds = new Set(buyers.map((buyer) => String(buyer?.id || '').trim()).filter(Boolean));
+    if (state.wizardSelectedBuyerId && !visibleIds.has(state.wizardSelectedBuyerId)) {
+        state.wizardSelectedBuyerId = '';
+    }
+    select.innerHTML = renderExistingBuyerOptions(buyers, state.wizardSelectedBuyerId);
+    select.disabled = buyers.length <= 0;
+}
+
 function readWizardField(name) {
     const input = document.getElementById(`buyer-wizard-${name}`);
     if (!input) return '';
@@ -471,8 +549,8 @@ function renderBuyerWizard(step) {
 
     const eyebrow = document.getElementById(BUYER_EYEBROW_ID);
     const title = document.getElementById(BUYER_TITLE_ID);
-    if (eyebrow) eyebrow.textContent = `Creación guiada · Paso ${currentStep}`;
-    if (title) title.textContent = 'Nuevo cliente';
+    if (eyebrow) eyebrow.textContent = getWizardEyebrow(currentStep);
+    if (title) title.textContent = getWizardTitle();
 
     const form = document.getElementById(BUYER_FORM_ID);
     if (!form) return;
@@ -516,7 +594,7 @@ function renderBuyerWizard(step) {
 function renderWizardStepPanel(step, d) {
     if (step === 1) {
         const isNew = state.wizardIdentityMode !== 'existing';
-        const buyers = state.wizardBuyerOptions || [];
+        const buyers = getFilteredWizardBuyerOptions();
         const selectedId = state.wizardSelectedBuyerId || '';
 
         return `
@@ -524,13 +602,9 @@ function renderWizardStepPanel(step, d) {
                 <div class="buyer-wizard-panel__head">
                     <p class="buyer-wizard-panel__eyebrow">Paso 1</p>
                     <h4 class="buyer-wizard-panel__title">¿Quién es el cliente?</h4>
-                    <p class="buyer-wizard-panel__copy">Crea uno nuevo o elige un cliente canónico ya registrado.</p>
-                </div>
-                <div class="buyer-wizard-identity-toggle">
-                    <button type="button" class="buyer-wizard-identity-btn${isNew ? ' is-active' : ''}"
-                        data-buyer-identity-mode="new">Cliente nuevo</button>
-                    <button type="button" class="buyer-wizard-identity-btn${!isNew ? ' is-active' : ''}"
-                        data-buyer-identity-mode="existing">Cliente existente</button>
+                    <p class="buyer-wizard-panel__copy">${isNew
+            ? 'Crea un cliente desde cero para llevar su seguimiento en Cartera Viva.'
+            : 'Elige un cliente existente de Cartera Viva usando nombre, finca, teléfono o redes disponibles.'}</p>
                 </div>
                 ${isNew ? `
                     <label class="agro-buyer-field">
@@ -540,10 +614,15 @@ function renderWizardStepPanel(step, d) {
                     </label>
                 ` : `
                     <label class="agro-buyer-field">
+                        <span>Buscar cliente</span>
+                        <input type="search" id="buyer-wizard-existing-search" class="styled-input" maxlength="120"
+                            placeholder="Ej: Pedro Pérez, Finca El Porvenir o teléfono"
+                            value="${escapeHtml(state.wizardBuyerSearch)}">
+                    </label>
+                    <label class="agro-buyer-field">
                         <span>Seleccionar cliente</span>
-                        <select id="buyer-wizard-existing-buyer" class="styled-input">
-                            <option value="">-- Elige un cliente --</option>
-                            ${buyers.map((b) => `<option value="${escapeHtml(b.id)}"${b.id === selectedId ? ' selected' : ''}>${escapeHtml(b.display_name)}</option>`).join('')}
+                        <select id="buyer-wizard-existing-buyer" class="styled-input"${buyers.length <= 0 ? ' disabled' : ''}>
+                            ${renderExistingBuyerOptions(buyers, selectedId)}
                         </select>
                     </label>
                 `}
@@ -599,9 +678,10 @@ function renderWizardStepPanel(step, d) {
                         placeholder="Preferencias, acuerdos o recordatorios del cliente">${escapeHtml(d.notes)}</textarea>
                 </label>
                 <label class="agro-buyer-field">
-                    <span>Vincular user_id público (opcional)</span>
+                    <span>Vincular cliente registrado (opcional)</span>
+                    <small class="agro-buyer-field__help">Usa el correo, nombre visible o finca del cliente si ya tiene perfil registrado. Si no se reconoce el perfil, no se guarda el vínculo.</small>
                     <input type="text" id="buyer-wizard-linked_user_id" class="styled-input" maxlength="80"
-                        placeholder="UUID del usuario para abrir su perfil público"
+                        placeholder="Ej: pedro@email.com, Pedro Pérez o Finca El Porvenir"
                         value="${escapeHtml(d.linked_user_id)}">
                 </label>
             </div>`;
@@ -774,6 +854,7 @@ function teardownBuyerWizard() {
     state.wizardDraft = null;
     state.wizardIdentityMode = 'new';
     state.wizardSelectedBuyerId = '';
+    state.wizardBuyerSearch = '';
 }
 
 async function loadBuyerByGroupKey(userId, groupKey) {
@@ -1046,7 +1127,7 @@ async function handleBuyerSave(event) {
         let linkedUserId = normalizeUuid(state.currentLinkedUserId);
         if (rawLinkedUserId) {
             if (!isValidUuid(rawLinkedUserId)) {
-                throw new Error('El user_id vinculado no tiene formato UUID válido.');
+                throw new Error('Cliente registrado no encontrado.');
             }
             linkedUserId = normalizeUuid(rawLinkedUserId);
         }
@@ -1122,7 +1203,10 @@ async function handleBuyerSave(event) {
             return;
         }
         const message = String(error?.message || '').trim();
-        if (message.toLowerCase().includes('uuid')) {
+        const lowerMessage = message.toLowerCase();
+        if (lowerMessage.includes('cliente registrado no encontrado')) {
+            setBuyerStatus(message, 'warn');
+        } else if (lowerMessage.includes('uuid')) {
             setBuyerStatus(message, 'warn');
         } else {
             setBuyerStatus(message || 'No se pudo guardar el cliente.', 'error');
@@ -1343,6 +1427,14 @@ function bindBuyerModalEvents() {
             state.wizardSelectedBuyerId = String(select.value || '').trim();
         }
     });
+
+    modal.addEventListener('input', (event) => {
+        if (state.mode !== 'create' || !state.wizardDraft) return;
+        const searchInput = event.target.closest('#buyer-wizard-existing-search');
+        if (!searchInput) return;
+        state.wizardBuyerSearch = String(searchInput.value || '').trim();
+        syncExistingBuyerSelectOptions();
+    });
 }
 
 function bindBuyerDeleteConfirmEvents() {
@@ -1363,7 +1455,7 @@ function bindBuyerDeleteConfirmEvents() {
     });
 }
 
-async function openBuyerProfileInternal({ buyerId = '', displayName = '', groupKey = '', mode = 'edit', focusAction = '' } = {}) {
+async function openBuyerProfileInternal({ buyerId = '', displayName = '', groupKey = '', mode = 'edit', wizardMode = 'new', focusAction = '' } = {}) {
     const user = await resolveSessionUser();
     if (!user?.id) {
         throw new Error('Sesión no disponible.');
@@ -1402,13 +1494,16 @@ async function openBuyerProfileInternal({ buyerId = '', displayName = '', groupK
 
         // New client — launch wizard
         state.wizardDraft = createWizardDraft({ display_name: state.currentDisplayName });
-        state.wizardIdentityMode = 'new';
+        state.wizardIdentityMode = wizardMode === 'existing' ? 'existing' : 'new';
         state.wizardSelectedBuyerId = '';
+        state.wizardBuyerSearch = '';
         state.wizardBuyerOptions = await loadActiveBuyerOptions();
         openBuyerModal();
         renderBuyerWizard(1);
         requestAnimationFrame(() => {
-            const input = document.getElementById('buyer-wizard-display_name');
+            const input = state.wizardIdentityMode === 'existing'
+                ? document.getElementById('buyer-wizard-existing-search') || document.getElementById('buyer-wizard-existing-buyer')
+                : document.getElementById('buyer-wizard-display_name');
             if (input) input.focus();
         });
         return;
@@ -1483,9 +1578,11 @@ export async function openBuyerProfileById(buyerId, fallbackDisplayName = '', op
 }
 
 export async function openNewBuyerProfile(initialDisplayName = '', options = {}) {
+    const wizardMode = options?.mode === 'existing' ? 'existing' : 'new';
     await openBuyerProfileInternal({
         displayName: String(initialDisplayName || '').trim(),
         mode: 'create',
+        wizardMode,
         focusAction: options?.focusAction || ''
     });
     return true;

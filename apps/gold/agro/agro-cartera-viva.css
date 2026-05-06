@@ -215,6 +215,14 @@
   justify-content: space-between;
 }
 
+.cartera-viva-action-pair {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
 .cartera-viva-toolbar,
 .cartera-viva-crop-picker {
   display: grid;
@@ -342,6 +350,20 @@
   color: var(--gold-4);
   border-color: rgba(200, 167, 82, 0.24);
   background: rgba(200, 167, 82, 0.1);
+}
+
+.cartera-viva-quick-action--secondary,
+.cartera-viva-refresh--secondary {
+  color: var(--text-secondary);
+  border-color: var(--border-neutral);
+  background: var(--bg-0);
+}
+
+.cartera-viva-quick-action--secondary:hover,
+.cartera-viva-refresh--secondary:hover {
+  color: var(--gold-4);
+  border-color: rgba(200, 167, 82, 0.24);
+  background: rgba(200, 167, 82, 0.08);
 }
 
 .cartera-viva-quick-action--danger {
@@ -2030,6 +2052,10 @@
     align-items: end;
   }
 
+  .cartera-viva-toolbar__row .cartera-viva-action-pair {
+    justify-content: flex-end;
+  }
+
   .cartera-viva-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2051,6 +2077,11 @@
   }
 
   .cartera-viva-detail__toolbar-actions {
+    justify-content: flex-start;
+  }
+
+  .cartera-viva-view__actions,
+  .cartera-viva-action-pair {
     justify-content: flex-start;
   }
 
@@ -2135,6 +2166,14 @@
   .cartera-viva-crop-chip,
   .cartera-viva-quick-action {
     font-size: 0.72rem;
+  }
+
+  .cartera-viva-action-pair {
+    width: 100%;
+  }
+
+  .cartera-viva-action-pair > button {
+    flex: 1 1 10rem;
   }
 
   .cartera-viva-card__metrics,

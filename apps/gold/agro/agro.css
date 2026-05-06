@@ -1684,6 +1684,12 @@ body.agro-buyer-open {
   color: var(--text-muted, #94A3B8);
 }
 
+#modal-agro-buyer .agro-buyer-field__help {
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
 #modal-agro-buyer .agro-buyer-field textarea.styled-input {
   min-height: 3.6rem;
   resize: vertical;
