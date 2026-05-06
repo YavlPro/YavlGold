@@ -850,6 +850,55 @@ Restaurar escritura y filtrado de la barra "Buscar cliente" en Cartera Viva. Pre
 ### Build
 - `pnpm build:gold`: PASS
 
+---
+
+## 2026-05-06 — Fase 3: Vinculación YavlGold real, estricta y opcional
+
+### Diagnóstico
+
+**No existe backend/RPC seguro para verificación de cuentas.** (Caso B)
+
+Hallazgos clave:
+1. `agro_buyers.linked_user_id` es `uuid` nullable **sin FK** a `auth.users(id)`. No hay constraint que valide que el UUID exista.
+2. El wizard mostraba un input de texto libre con placeholder `"Ej: pedro@email.com, Pedro Pérez o Finca El Porvenir"`, pero `isValidUuid()` rechaza todo lo que no sea UUID. **UX roto**: el placeholder pedia email/nombre, la validación exibia UUID.
+3. No existe RPC, Edge Function ni mecanismo para resolver email → UUID. `auth.users` no es consultable desde frontend por RLS.
+4. `agro_clients.linked_profile_id` si tiene FK a `auth.users(id)`, pero es tabla distinta y no se usa en Cartera Viva.
+5. Cartera Viva no muestra ni usa `linked_user_id` en ninguna vista.
+
+### Decisión: Caso B — bloqueo honesto
+
+No se inventa vinculación falsa. Se elimina el input engañoso y se reemplaza con UI honesta:
+
+- Si el cliente ya tiene `linked_user_id` (UUID válido): muestra "Vinculada y verificada" con botón "Quitar vinculo".
+- Si no tiene: muestra "Sin vinculacion" + texto claro: "La cuenta YavlGold solo puede vinculase con verificacion segura."
+- No se permite escritura manual de UUID ni email en el campo.
+
+### Pendiente para Fase 3A (requiere backend)
+
+- Crear RPC `resolve_yavlgold_account_for_client_link(email text)` en Supabase
+- Migration para agregar FK constraint a `agro_buyers.linked_user_id`
+- Busqueda por email con typeahead en UI
+- Flujo completo "Verificar cuenta → Vincular"
+
+### Archivos modificados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agrocompradores.js` | fix JS | Eliminar input manual `linked_user_id`; reemplazar con `renderLinkedUserDisplay()` que muestra estado honesto |
+| `agrocompradores.js` | fix JS | `handleBuyerSave` usa `state.currentLinkedUserId` validado como UUID, no input libre |
+| `agrocompradores.js` | fix JS | `syncWizardDraftFromDOM` sincroniza `linked_user_id` desde state, no desde DOM |
+| `agrocompradores.js` | fix JS | `bindEditFormButtonEvents` conecta boton "Quitar vinculo" dinamicamente |
+| `agrocompradores.js` | fix JS | Wizard paso 3: reemplaza input engañoso con display condicional (verificado/sin vinculacion) |
+| `index.html` | fix HTML | Reemplaza input `linked_user_id` con div display `agro-buyer-linked-display` |
+| `agro.css` | fix CSS | Agregar estilos `.agro-buyer-linked-status`, `.agro-buyer-linked-unlink-btn` (modal y wizard) |
+
+### Build
+- `pnpm build:gold`: PASS
+
+### Estado final: YELLOW
+
+Funcional sin backend pendiente. La vinculacion real requiere RPC/migration (Fase 3A). El frontend bloquea honestamente la vinculacion falsa y muestra estado claro.
+
 ### QA tecnico
 - `git diff --check`: sin errores
 

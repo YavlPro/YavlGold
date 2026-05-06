@@ -287,6 +287,35 @@ function emitClientChanged(detail = {}) {
     }));
 }
 
+function renderLinkedUserDisplay() {
+    const container = document.getElementById('agro-buyer-linked-display');
+    if (!container) return;
+    const linked = normalizeUuid(state.currentLinkedUserId);
+    if (linked && isValidUuid(linked)) {
+        container.innerHTML = `
+            <div class="agro-buyer-linked-status agro-buyer-linked-status--verified">
+                <span class="agro-buyer-linked-status__dot"></span>
+                Vinculada y verificada
+            </div>
+            <small class="agro-buyer-field__help">Este cliente tiene una cuenta YavlGold vinculada.</small>
+            <button type="button" id="agro-buyer-linked-unlink" class="agro-buyer-linked-unlink-btn">Quitar vinculo</button>`;
+        const unlinkBtn = document.getElementById('agro-buyer-linked-unlink');
+        if (unlinkBtn) {
+            unlinkBtn.addEventListener('click', () => {
+                state.currentLinkedUserId = '';
+                renderLinkedUserDisplay();
+                syncOpenPublicButton();
+            });
+        }
+    } else {
+        container.innerHTML = `
+            <div class="agro-buyer-linked-status agro-buyer-linked-status--none">
+                Sin vinculacion
+            </div>
+            <small class="agro-buyer-field__help">La cuenta YavlGold solo puede vincularse con verificacion segura. Puedes guardar este cliente sin vincular.</small>`;
+    }
+}
+
 function syncOpenPublicButton() {
     const button = document.getElementById(BUYER_OPEN_PUBLIC_BUTTON_ID);
     if (!button) return;
@@ -388,10 +417,7 @@ function fillBuyerForm(buyer = {}) {
     state.currentStatus = normalizeClientStatus(buyer?.status || state.currentStatus);
     state.currentLinkedUserId = normalizeUuid(buyer?.linked_user_id || state.currentLinkedUserId || '');
 
-    const linkedInput = document.getElementById('agro-buyer-linked_user_id');
-    if (linkedInput) {
-        linkedInput.value = state.currentLinkedUserId;
-    }
+    renderLinkedUserDisplay();
 
     syncBuyerHeading();
     syncOpenPublicButton();
@@ -531,8 +557,12 @@ function syncWizardDraftFromDOM() {
     if (!state.wizardDraft) return;
     const fieldNames = Object.keys(state.wizardDraft);
     fieldNames.forEach((name) => {
+        if (name === 'linked_user_id') {
+            state.wizardDraft[name] = state.currentLinkedUserId || '';
+            return;
+        }
         const input = document.getElementById(`buyer-wizard-${name}`);
-        if (!input) return; // preserve draft value for fields not rendered in current step
+        if (!input) return;
         state.wizardDraft[name] = String(input.value || '').trim();
     });
 }
@@ -677,13 +707,23 @@ function renderWizardStepPanel(step, d) {
                     <textarea id="buyer-wizard-notes" class="styled-input" rows="3" maxlength="800"
                         placeholder="Preferencias, acuerdos o recordatorios del cliente">${escapeHtml(d.notes)}</textarea>
                 </label>
-                <label class="agro-buyer-field">
-                    <span>Vincular cliente registrado (opcional)</span>
-                    <small class="agro-buyer-field__help">Usa el correo, nombre visible o finca del cliente si ya tiene perfil registrado. Si no se reconoce el perfil, no se guarda el vínculo.</small>
-                    <input type="text" id="buyer-wizard-linked_user_id" class="styled-input" maxlength="80"
-                        placeholder="Ej: pedro@email.com, Pedro Pérez o Finca El Porvenir"
-                        value="${escapeHtml(d.linked_user_id)}">
-                </label>
+                ${d.linked_user_id && isValidUuid(d.linked_user_id)
+                    ? `<div class="agro-buyer-field agro-buyer-field--linked-verified">
+                        <span>Cuenta YavlGold vinculada</span>
+                        <div class="agro-buyer-linked-status agro-buyer-linked-status--verified">
+                            <span class="agro-buyer-linked-status__dot"></span>
+                            Vinculada y verificada
+                        </div>
+                        <small class="agro-buyer-field__help">Este cliente ya tiene una cuenta YavlGold vinculada. Puedes guardar sin cambios.</small>
+                       </div>`
+                    : `<div class="agro-buyer-field">
+                        <span>Cuenta YavlGold vinculada</span>
+                        <div class="agro-buyer-linked-status agro-buyer-linked-status--none">
+                            Sin vinculacion
+                        </div>
+                        <small class="agro-buyer-field__help">La cuenta YavlGold solo puede vincularse con verificacion segura. Puedes guardar este cliente sin vincular.</small>
+                       </div>`
+                }
             </div>`;
     }
 
@@ -1123,14 +1163,9 @@ async function handleBuyerSave(event) {
             return;
         }
 
-        const rawLinkedUserId = String(formData?.linked_user_id || '').trim();
-        let linkedUserId = normalizeUuid(state.currentLinkedUserId);
-        if (rawLinkedUserId) {
-            if (!isValidUuid(rawLinkedUserId)) {
-                throw new Error('Cliente registrado no encontrado.');
-            }
-            linkedUserId = normalizeUuid(rawLinkedUserId);
-        }
+        const linkedUserId = state.currentLinkedUserId && isValidUuid(state.currentLinkedUserId)
+            ? normalizeUuid(state.currentLinkedUserId)
+            : null;
 
         const payload = {
             display_name: displayName,
@@ -1376,11 +1411,11 @@ function bindEditFormButtonEvents() {
     document.getElementById(BUYER_ARCHIVE_BUTTON_ID)?.addEventListener('click', handleBuyerArchive);
     document.getElementById(BUYER_DELETE_BUTTON_ID)?.addEventListener('click', handleBuyerDelete);
 
-    const linkedInput = document.getElementById('agro-buyer-linked_user_id');
-    if (linkedInput) {
-        linkedInput.addEventListener('input', () => {
-            const raw = String(linkedInput.value || '').trim();
-            state.currentLinkedUserId = raw ? normalizeUuid(raw) : '';
+    const unlinkBtn = document.getElementById('agro-buyer-linked-unlink');
+    if (unlinkBtn) {
+        unlinkBtn.addEventListener('click', () => {
+            state.currentLinkedUserId = '';
+            renderLinkedUserDisplay();
             syncOpenPublicButton();
         });
     }
