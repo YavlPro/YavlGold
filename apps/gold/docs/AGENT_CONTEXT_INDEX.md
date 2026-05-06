@@ -2,7 +2,7 @@
 
 Mapa central de navegación documental de YavlGold.
 Este archivo es el punto de entrada para cualquier agente que necesite entender el sistema.
-Actualizado: 2026-04-17.
+Actualizado: 2026-05-06.
 
 ---
 
@@ -13,6 +13,7 @@ Actualizado: 2026-04-17.
 | **Schema / Ley** | AGENTS.md | raiz | Instrucciones canónicas para agentes |
 | **Ley visual** | ADN-VISUAL-V11.0.md | docs/ | Sistema de diseño canónico activo (V11). V10 es referencia histórica fundacional |
 | **Verdad semantica** | MANIFIESTO_AGRO.md | docs/ | Qué es cada superficie de Agro |
+| **Vision estrategica** | ROADMAP_VISION_YAVLGOLD.md | docs/ | Roadmap conceptual del producto: Agro V1 como base y primitives futuras sin implementar módulos prematuros |
 | **Estructura** | FICHA_TECNICA.md | raiz | Ficha técnica del proyecto |
 | **Wiki viva** | AGENT_REPORT_ACTIVE.md | docs/ | Estado operativo acumulativo |
 | **Bitácora mensual** | daily-log-YYYY-MM-DD.md | docs/ops/ | Handoff operativo temporal entre agentes |
@@ -26,6 +27,7 @@ Actualizado: 2026-04-17.
 - [AGENTS.md](../../AGENTS.md) — Ley operativa, schema maestro del proyecto
 - [AGENT_REPORT_ACTIVE.md](./AGENT_REPORT_ACTIVE.md) — Wiki viva actual
 - [MANIFIESTO_AGRO.md](./MANIFIESTO_AGRO.md) — Verdad semántica de Agro
+- [ROADMAP_VISION_YAVLGOLD.md](./ROADMAP_VISION_YAVLGOLD.md) — Visión estratégica: Agro V1 como wedge fundacional y primitives reutilizables futuras
 - [ADN-VISUAL-V11.0.md](./ADN-VISUAL-V11.0.md) — Sistema de diseño canónico activo (V11)
 - [ADN-VISUAL-V10.0.md](./ADN-VISUAL-V10.0.md) — Referencia histórica fundacional (V10, ya no rige)
 - [yavlgold-context.md](./yavlgold-context.md) — Contexto consolidado (8K lineas)
@@ -48,6 +50,7 @@ Actualizado: 2026-04-17.
    - Reglas de agentes → AGENTS.md
    - Diseño visual → ADN-VISUAL-V11.0.md
    - Agro → MANIFIESTO_AGRO.md
+   - Visión estratégica del producto → ROADMAP_VISION_YAVLGOLD.md
    - Estado operativo → AGENT_REPORT_ACTIVE.md
    - Bitácora del mes actual → docs/ops/daily-log-YYYY-MM-DD.md
    - Estructura técnica → FICHA_TECNICA.md

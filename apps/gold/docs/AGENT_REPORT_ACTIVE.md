@@ -374,3 +374,65 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-27__2026-05-05.md`
 - No se tocó `apps/gold/agro/agro.js`.
 - No se tocó Supabase.
 - No se tocaron migraciones.
+
+---
+
+## 2026-05-06 — Roadmap Vision YavlGold
+
+Estado: GREEN
+
+### Diagnóstico
+
+YavlGold V1 debe quedar documentado como Agro activo actual, sin confundir la visión futura de una capa personal/universal con una feature existente. El repo ya tiene `AGENTS.md` como ley operativa, `MANIFIESTO_AGRO.md` como verdad semántica de Agro, `FICHA_TECNICA.md` como estructura técnica y `ADN-VISUAL-V11.0.md` como canon visual. Falta un documento estratégico específico que conecte Agro como vertical fundacional con primitives reutilizables futuras sin autorizar rutas, módulos ni UI nuevas.
+
+### Plan
+
+1. Crear `apps/gold/docs/ROADMAP_VISION_YAVLGOLD.md` como documento canónico estratégico.
+2. Registrar el documento en `AGENTS.md` con una línea mínima de descubribilidad.
+3. Registrar el documento en `apps/gold/docs/AGENT_CONTEXT_INDEX.md` como capa de visión estratégica.
+4. Mantener `MANIFIESTO_AGRO.md`, `FICHA_TECNICA.md`, `ADN-VISUAL-V11.0.md`, runtime Agro, Supabase y navegación sin cambios.
+5. Ejecutar `pnpm build:gold` y cerrar esta sección con resultado.
+
+### Archivos que se tocarán
+
+- `apps/gold/docs/ROADMAP_VISION_YAVLGOLD.md`
+- `AGENTS.md`
+- `apps/gold/docs/AGENT_CONTEXT_INDEX.md`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Riesgos
+
+- Confundir visión futura con estado implementado.
+- Convertir el documento en lista de features.
+- Duplicar o contradecir el manifiesto semántico de Agro.
+- Abrir alcance hacia UI, rutas, módulos o Supabase.
+
+### Validación prevista
+
+- Revisión estática del contenido para asegurar que no promete módulo personal implementado.
+- `pnpm build:gold`.
+
+### Cambios por archivo
+
+- `apps/gold/docs/ROADMAP_VISION_YAVLGOLD.md`: creado como documento canónico estratégico para fijar Agro V1 como producto activo, explicar Agro como wedge fundacional, definir primitives reutilizables futuras y prohibir implementación prematura de un módulo personal.
+- `AGENTS.md`: agregada referencia mínima al nuevo roadmap en la tabla documental y en la jerarquía canónica, aclarando que no autoriza módulos, rutas ni UI.
+- `apps/gold/docs/AGENT_CONTEXT_INDEX.md`: registrado el roadmap como capa de visión estratégica y punto de consulta para agentes.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`: registrada la sesión con diagnóstico, plan, riesgos, cambios y validación.
+- `apps/gold/docs/ops/daily-log-2026-05-06.md`: creado log diario operativo mínimo conforme al sistema de bitácora diaria.
+
+### Documentos revisados sin cambios
+
+- `apps/gold/docs/MANIFIESTO_AGRO.md`: no se modificó porque no hubo cambio funcional real en Agro.
+- `FICHA_TECNICA.md`: no se modificó porque el cambio no altera estructura técnica, módulos ni stack.
+- `apps/gold/docs/ADN-VISUAL-V11.0.md`: no se modificó porque no hubo cambio visual.
+
+### Validación
+
+- Revisión estática: el roadmap declara `Módulo personal: Visión futura, no implementado`, indica que la capa no existe todavía, prohíbe implementarla ahora y prohíbe rutas como `/personal`, `/yavl-personal` o `/estado-actual`.
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS.
+- Nota: build mostró advertencia no bloqueante de engine (`node` esperado 20.x; entorno actual `v25.6.0`).
+
+### Próximo paso recomendado
+
+Usar `ROADMAP_VISION_YAVLGOLD.md` como filtro antes de proponer superficies grandes o refactors semánticos de Agro; no construir YavlGold Personal sin autorización expresa.
