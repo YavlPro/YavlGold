@@ -549,3 +549,57 @@ Estado: COMPLETADO EN CÓDIGO / QA ONLINE PENDIENTE POR USUARIO
 - No se agregó modo selección.
 - No se agregaron checkboxes o botones nuevos en cards/lista.
 - No se tocaron tags, filtros, cards ni handlers de la vista principal de Cartera Viva.
+
+---
+
+## 2026-05-06 — Polish client assignment editor (Fase 1.1)
+
+### Objetivo
+
+Corregir dos bugs visuales y de estado en el bloque "Cliente" del modal de edición de facturero:
+1. Dropdown nativo `<select>` se abre con fondo blanco (pintado por el SO/navegador), rompiendo ADN Visual V11.
+2. En modo "Nuevo cliente", el selector de cliente existente sigue visible porque `display: grid` sobreescribe el atributo `hidden`.
+
+### Diagnóstico
+
+- **Bug 1**: `<select>` nativo en Chrome/Windows renderiza el menú desplegado con estilos del sistema operativo (fondo blanco, sin control CSS).
+- **Bug 2**: Regla CSS `.client-assignment-editor__panel { display: grid }` sobreescribe `hidden`, haciendo visible el panel de "Cliente existente" en modo "Nuevo cliente".
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agro-cartera-viva-client-assignment.js` | JS | Reemplazado `<select>` nativo por combobox custom con `role="listbox"` y `role="option"` |
+| `agro-cartera-viva-client-assignment.js` | JS | Agregada función `renderCombobox()` con trigger button, lista dropdown y data attributes |
+| `agro-cartera-viva-client-assignment.js` | JS | `bindHostEvents`: click en trigger abre/cierra lista; click en option selecciona y cierra; click fuera cierra; ESC cierra |
+| `agro-cartera-viva-client-assignment.js` | JS | `syncMode`: cierra lista desplegada al cambiar de modo |
+| `agro-cartera-viva-client-assignment.js` | JS | `resolveClientAssignmentEditor`: lee selección del combobox vía `data-*` en vez de `<select>.options` |
+| `agro.css` | CSS | Regla `.client-assignment-editor__panel[hidden] { display: none !important }` |
+| `agro.css` | CSS | Estilos combobox: trigger, lista, opciones, hover, focus, selected — todo con tokens ADN V11 |
+
+### Comportamiento corregido
+
+- `Cliente existente`: combobox dark/gold, sin dropdown blanco nativo.
+- `Nuevo cliente`: panel de existentes completamente oculto; solo input de nuevo nombre visible.
+- Al cambiar de modo, se cierra cualquier lista desplegada.
+- ESC cierra la lista.
+- Guardar no cambia monto, fecha, estado, tipo ni cultivo.
+
+### Validación
+
+- `git diff --check`: PASS (sin errores).
+- `pnpm build:gold`: PASS (4.90s, sin errores).
+- No se tocó `agro-cartera-viva-view.js`.
+
+### Fuera de alcance confirmado
+
+- No se implementó fusión.
+- No se agregó modo selección.
+- No se reintrodujeron `Fusionar clientes`, `data-cartera-merge`, `mergeCarteraVivaBuyers`.
+- No se tocaron tags, filtros, cards ni handlers de la vista principal.
+
+### Commit sugerido
+
+```
+fix(agro): polish client reassignment editor states
+```
