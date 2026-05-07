@@ -151,6 +151,8 @@ Regla estricta:
 agro.js              — monolito principal (facturero, CRUD, historial)
 agro-agenda.js       — agenda agrícola
 agro-cart.js         — carrito de insumos
+agro-cartera-viva-client-assignment.js — reasignación segura de cliente dentro del editor de movimientos, sin borrar historial
+agro-cartera-viva-client-merge.js — modal seguro para unificar clientes duplicados moviendo movimientos al cliente destino
 agro-cartera-viva-view.js — Cartera Viva: vista de clientes, estados, wizard de compradores y flujos separados Nuevo cliente / Cliente existente
 agro-clients.js      — Mis Clientes: directorio de contactos (clientes manuales + buyers derivados de Cartera Viva)
 agro-clima.js        — integración meteorológica

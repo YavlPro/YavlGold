@@ -1180,22 +1180,80 @@ Verificacion Supabase:
 
 - `supabase/.temp/project-ref`: `gerzlzprkarikblqxpjt`.
 - `supabase --version`: `2.95.4`.
-- `supabase migration list`: timeout tras 60s; no se pudo confirmar estado remoto desde esta sesion.
-- No se ejecuto `supabase db push` real.
+- Estado remoto posterior confirmado por usuario: `archived_at` ya existe en remoto, cache PostgREST refrescado e historial de migraciones alineado.
+- La migracion local incluye `notify pgrst, 'reload schema'`.
+- Pendiente operativo: merge a `main`, push y QA online.
 
 QA online esperado:
 
-1. Aplicar/verificar migracion `archived_at` en Supabase antes de validar archivo en produccion.
-2. Entrar a Agro > Mis cultivos.
-3. Confirmar que Activos/Finalizados/Perdidos siguen sin cultivos archivados o en papelera.
-4. Archivar un cultivo QA seguro y verlo en `Archivo y Papelera > Archivados`.
-5. Restaurarlo y confirmar que vuelve a su vista real.
-6. Mover un cultivo QA seguro a papelera y verlo en `Archivo y Papelera > Eliminados`.
-7. Restaurarlo desde papelera.
-8. Confirmar que clientes, fiados, ingresos, perdidas, transferencias, gastos, montos, fechas, estados y notas siguen intactos.
+1. Entrar a Agro > Mis cultivos.
+2. Confirmar que Activos/Finalizados/Perdidos siguen sin cultivos archivados o en papelera.
+3. Archivar un cultivo QA seguro y verlo en `Archivo y Papelera > Archivados`.
+4. Restaurarlo y confirmar que vuelve a su vista real.
+5. Mover un cultivo QA seguro a papelera y verlo en `Archivo y Papelera > Eliminados`.
+6. Restaurarlo desde papelera.
+7. Confirmar que clientes, fiados, ingresos, perdidas, transferencias, gastos, montos, fechas, estados y notas siguen intactos.
 
 Commit sugerido:
 
 ```bash
 feat(agro): add safe crop archive and trash lifecycle
+```
+
+---
+
+## 2026-05-06 — Cierre documental del dia: Cartera Viva, notificaciones y WIP Archivo/Papelera
+
+Estado: YELLOW.
+
+### Resumen operativo
+
+La jornada cerró con Cartera Viva recuperada tras rollback del primer intento de reasignación/fusión, reimplementación por fases, saneamiento del ruido masivo de notificaciones del Facturero y un WIP local de Archivo/Papelera de cultivos guardado sin push.
+
+### Cartera Viva
+
+- Se documentó el rollback inicial del intento que bloqueó la vista online.
+- Fase 1: quedó activa la reasignación de cliente desde el editor de movimientos del Facturero.
+- Fase 2: quedó activo el modal seguro para unificar clientes duplicados, moviendo movimientos al cliente destino y archivando buyers origen cuando corresponde.
+- Se corrigieron estados visuales del editor, texto invisible en modal merge, mismatch `display_name`/`displayName`, input de búsqueda de Cartera Viva y leak de listeners del modal.
+- Fase 3: se retiró la vinculación falsa por correo/manual y se dejó una UI honesta: correo de contacto ≠ Cuenta YavlGold vinculada; la vinculación solo puede mostrarse si existe verificación real.
+
+### Notificaciones
+
+- Se aplicó el fix `fix(agro): prevent stale facturero notifications`.
+- La campana ya no debe reconstruir alertas activas desde historial viejo del Facturero sin ventana temporal.
+- `pendientes` conserva resumen accionable y limita alertas individuales; transferencias/gastos/ingresos se filtran por ventana reciente.
+- QA online sigue pendiente para confirmar que no vuelve el ruido masivo en producción.
+
+### WIP local no pusheado
+
+- Rama local: `wip/agro-crop-archive-trash`.
+- Commit local: `08243ae wip(agro): add crop archive and trash lifecycle`.
+- Commit local adicional: `96304fc fix(agro): add NOTIFY pgrst reload schema to archive_trash migration`.
+- Estado: no push.
+- Migracion remota: `archived_at` confirmado por usuario; cache PostgREST refrescado e historial de migraciones alineado.
+- Pendiente: merge/push y QA online antes de documentarlo como funcional final en Manifiesto/Ficha.
+
+### Documentos actualizados
+
+- `apps/gold/docs/ops/daily-log-2026-05-06.md`: cierre breve del día con estado YELLOW.
+- `apps/gold/docs/MANIFIESTO_AGRO.md`: semántica humana de reasignación, fusión segura y vinculación YavlGold verificada en Cartera Viva.
+- `FICHA_TECNICA.md`: módulos activos `agro-cartera-viva-client-assignment.js` y `agro-cartera-viva-client-merge.js`.
+
+### No actualizado
+
+- `ROADMAP_VISION_YAVLGOLD.md`: no aplica; el documento estratégico ya quedó creado y no requería corrección puntual.
+- `apps/gold/public/llms.txt`: no aplica; no hubo una regla pública nueva que necesite reflejarse hoy.
+- Archivo/Papelera de cultivos no se agregó a Manifiesto/Ficha como funcional final porque sigue en WIP local sin migración aplicada ni push.
+
+### Validación de esta sección
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS.
+- Nota: warning conocido de engine local por Node `v25.6.0` vs esperado `20.x`; el build terminó correctamente.
+
+Commit sugerido:
+
+```bash
+docs(agro): close may 6 cartera viva and notifications log
 ```

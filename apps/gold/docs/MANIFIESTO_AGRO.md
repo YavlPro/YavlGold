@@ -395,6 +395,18 @@ Los movimientos en Cartera Viva pueden asociarse a un cultivo específico. Cuand
 5. Desde el detalle puedes: registrar un nuevo fiado, registrar un cobro o registrar una pérdida.
 6. También puedes editar los datos del cliente (nombre, teléfono, redes) o eliminarlo con `Eliminar cliente`.
 
+### Corrección segura de clientes
+
+Cartera Viva permite corregir la asignación de cliente de un movimiento cuando fue registrado bajo el cliente equivocado. Esa corrección debe mover el movimiento al cliente correcto sin borrar el historial comercial ni alterar montos, fechas, estados o notas reales.
+
+Cartera Viva también permite unificar clientes duplicados cuando representan a la misma persona o comprador. La unificación debe mover los movimientos al cliente destino y conservar la memoria del negocio; no debe usarse como borrado encubierto ni como forma de maquillar deudas.
+
+### Contacto y cuenta YavlGold vinculada
+
+Correo de contacto y Cuenta YavlGold vinculada son conceptos distintos. Un correo puede servir para contactar al cliente, pero no prueba por sí solo que exista una cuenta YavlGold vinculada.
+
+Una Cuenta YavlGold vinculada no puede escribirse manualmente ni fingirse. Solo debe mostrarse como vinculada cuando exista verificación segura. Guardar un cliente sin vinculación YavlGold es válido y no debe bloquear el trabajo comercial del agricultor.
+
 ### Regla de lenguaje humano en Cartera Viva
 
 Cartera Viva no debe exponer identificadores técnicos como UUID o `user_id` en la interfaz visible. Si el sistema necesita vincular un cliente registrado, debe pedir datos humanos como nombre, finca, correo o contacto, y resolver internamente el identificador cuando exista soporte real.
