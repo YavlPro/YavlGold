@@ -1499,6 +1499,70 @@ QA online detecto dos incoherencias semanticas:
 
 ---
 
+## 2026-05-07 — fix(agro): restringir Centro de Reportes a exportadores reales
+
+Estado inicial: YELLOW.
+
+### Diagnostico inicial
+
+QA online detecto que algunos Markdown descargados desde Centro de Reportes no parecen venir de exportadores originales del modulo fuente, sino de fallbacks o constructores genericos del propio centro.
+
+Riesgo de producto:
+- Un reporte visible puede aparentar datos reales aunque solo tenga memoria parcial, plantillas vacias, UUIDs sin contexto o totales cero no confiables.
+- Esto rompe la regla de confianza: Centro de Reportes no debe inventar reportes.
+
+### Plan
+
+1. Auditar cada tarjeta de `agro-reports-center.js` contra exportadores reales existentes.
+2. Clasificar cada reporte como mantener visible u ocultar.
+3. Mantener visible solo lo que llame a un exportador original/callable del modulo fuente.
+4. Desactivar reportes que dependan de fallback generico o Markdown sustituto.
+5. Validar con `git diff --check` y `pnpm build:gold`.
+
+### Archivos a revisar
+
+- `apps/gold/agro/agro-reports-center.js`
+- `apps/gold/agro/agro-reports-center.css`
+- `apps/gold/agro/agro-crop-report.js`
+- `apps/gold/agro/agro-stats-report.js`
+- `apps/gold/agro/agrorepo.js`
+- `apps/gold/agro/agro-cart.js`
+- `apps/gold/agro/agroOperationalCycles.js`
+- `apps/gold/agro/agro-cartera-viva-view.js`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Riesgo
+
+- Riesgo bajo si solo se ocultan reportes no confiables.
+- Riesgo medio si se cambia wiring de exportadores vivos; evitar salvo evidencia clara.
+- No tocar datos, clientes, movimientos, Supabase ni migraciones.
+
+### QA esperado
+
+1. Centro de Reportes muestra solo reportes respaldados por exportadores reales.
+2. No se exportan Markdown sustitutos con tablas vacias, UUIDs sin contexto o totales simulados.
+3. Categorias vacias se ocultan.
+4. Si no queda nada real disponible, se muestra estado vacio honesto.
+
+### Resultado
+
+- Auditoria aplicada:
+  - `Reporte de cultivo seleccionado`: mantener visible solo con cultivo seleccionado; usa `agro-crop-report.js::exportCropReport()`.
+  - `Reporte de ciclo finalizado o perdido`: ocultar; generaba Markdown sustituto desde memoria de cultivos y podia exportar UUIDs sin contexto.
+  - `Resumen comparativo de ciclos`: ocultar; generaba resumen propio del centro, no exportador original.
+  - `Reporte de Cartera Viva`: ocultar; generaba resumen parcial desde `_agroBuyerPortfolioState`, no exportador real de detalle.
+  - `Reporte de Cartera Operativa`: mantener visible solo si `YGAgroOperationalCycles.downloadMarkdown()` existe y hay ciclos visibles.
+  - `Mi Carrito`, `Mis Clientes`, `Rankings`, `Trabajo Diario`, `AgroRepo`, `Periodos`, `Financiero detallado`: ocultar; no hay puente publico confiable a exportador original desde el centro.
+- `Informe estadistico global`: mantener visible cuando el resumen global real indica datos; llama `agro-stats-report.js::exportStatsReport()`.
+- `Informe global de Agro`: mantener visible cuando `window.exportAgroGlobalMd` esta disponible.
+- `EXPORT_ACTIONS` quedo restringido a exportadores reales/originales.
+- Fallbacks genericos quedaron desregistrados de la UI ejecutable.
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS (con warning existente de Node engine: repo espera Node 20.x y el entorno uso v25.6.0).
+- Estado final: GREEN tecnico, pendiente QA online del usuario.
+
+---
+
 ## 2026-05-07 — fix(agro): mostrar solo reportes disponibles
 
 Estado inicial: YELLOW.

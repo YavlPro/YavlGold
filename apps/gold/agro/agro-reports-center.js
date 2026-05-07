@@ -20,7 +20,7 @@ const REPORT_CATEGORIES = Object.freeze([
             {
                 id: 'crop-selected',
                 name: 'Reporte de cultivo seleccionado',
-                description: 'Exporta el informe Markdown del ciclo seleccionado o deja constancia si no hay cultivo activo.',
+                description: 'Exporta el informe Markdown real del ciclo seleccionado.',
                 status: 'available',
                 action: 'export-selected-crop'
             },
@@ -55,7 +55,7 @@ const REPORT_CATEGORIES = Object.freeze([
             {
                 id: 'cartera-operativa',
                 name: 'Reporte de Cartera Operativa',
-                description: 'Usa el exportador Markdown del módulo o genera una salida honesta si no está cargado.',
+                description: 'Usa el exportador Markdown original del módulo cuando hay ciclos visibles.',
                 status: 'available',
                 action: 'export-operational-wallet'
             },
@@ -125,7 +125,7 @@ const REPORT_CATEGORIES = Object.freeze([
             {
                 id: 'perfil-global',
                 name: 'Informe global de Agro',
-                description: 'Usa el informe Markdown global del perfil o documenta si no está cargado.',
+                description: 'Usa el informe Markdown global original del perfil.',
                 status: 'available',
                 action: 'export-profile-global'
             },
@@ -321,39 +321,29 @@ function resolveCropReportStatus(kind) {
 }
 
 function resolveCarteraVivaStatus() {
-    const carteraState = typeof window !== 'undefined'
-        ? window._agroBuyerPortfolioState?.getState?.()
-        : null;
-    if (!carteraState || typeof carteraState !== 'object') return 'unloaded';
-    return carteraState.known ? 'available' : 'empty';
+    return 'unavailable';
 }
 
 function resolveOperationalStatus() {
     const api = typeof window !== 'undefined' ? window.YGAgroOperationalCycles : null;
-    return typeof api?.downloadMarkdown === 'function' ? 'available' : 'unloaded';
+    if (typeof api?.downloadMarkdown !== 'function') return 'unloaded';
+    const snapshot = typeof api.getSnapshot === 'function' ? api.getSnapshot() : null;
+    if (!snapshot || typeof snapshot !== 'object') return 'unloaded';
+    const activeCount = Number(snapshot.datasets?.active?.summary?.count || 0);
+    const finishedCount = Number(snapshot.datasets?.finished?.summary?.count || 0);
+    return activeCount + finishedCount > 0 ? 'available' : 'empty';
 }
 
 function resolveRankingsStatus() {
-    const rows = [
-        ...readListText('#ops-rankings-top-clients .ops-ranking-item, #ops-rankings-top-clients li'),
-        ...readListText('#ops-rankings-pending-clients .ops-ranking-item, #ops-rankings-pending-clients li'),
-        ...readListText('#ops-rankings-top-crops .ops-ranking-item, #ops-rankings-top-crops li')
-    ];
-    return rows.length ? 'available' : 'unloaded';
+    return 'unavailable';
 }
 
 function resolveTaskCyclesStatus() {
-    const api = typeof window !== 'undefined' ? window.YGAgroTaskCycles : null;
-    const snapshot = typeof api?.getSnapshot === 'function' ? api.getSnapshot() : null;
-    if (!snapshot) return 'unloaded';
-    return Array.isArray(snapshot.tasks) && snapshot.tasks.length > 0 ? 'available' : 'empty';
+    return 'unavailable';
 }
 
 function resolveAgroRepoStatus() {
-    const context = typeof window !== 'undefined' ? window._agroRepoContext : null;
-    if (!context) return 'unloaded';
-    const entries = Array.isArray(context.recent_entries) ? context.recent_entries : [];
-    return entries.length ? 'available' : 'empty';
+    return 'unavailable';
 }
 
 function resolveGlobalStatsStatus() {
@@ -373,9 +363,8 @@ function resolveReportStatus(report) {
         case 'export-selected-crop':
             return resolveCropReportStatus('selected');
         case 'export-closed-cycles':
-            return resolveCropReportStatus('closed');
         case 'export-cycle-comparison':
-            return resolveCropReportStatus('comparison');
+            return 'unavailable';
         case 'export-cartera-viva':
             return resolveCarteraVivaStatus();
         case 'export-operational-wallet':
@@ -391,11 +380,11 @@ function resolveReportStatus(report) {
         case 'export-agrorepo':
             return resolveAgroRepoStatus();
         case 'export-global-stats':
-        case 'export-financial-detail':
             return resolveGlobalStatsStatus();
         case 'export-profile-global':
             return resolveProfileGlobalStatus();
         case 'export-period-stats':
+        case 'export-financial-detail':
             return 'unloaded';
         default:
             return report?.action ? 'unloaded' : 'unavailable';
@@ -901,19 +890,9 @@ async function exportFinancialDetail(report, category) {
 
 const EXPORT_ACTIONS = Object.freeze({
     'export-selected-crop': exportSelectedCrop,
-    'export-closed-cycles': exportClosedCycles,
-    'export-cycle-comparison': exportCycleComparison,
-    'export-cartera-viva': exportCarteraViva,
     'export-operational-wallet': exportOperationalWallet,
-    'export-cart': exportCart,
-    'export-clients': exportClients,
-    'export-rankings': exportRankings,
-    'export-task-cycles': exportTaskCycles,
-    'export-agrorepo': exportAgroRepo,
     'export-global-stats': exportGlobalStats,
-    'export-profile-global': exportProfileGlobal,
-    'export-period-stats': exportPeriodStats,
-    'export-financial-detail': exportFinancialDetail
+    'export-profile-global': exportProfileGlobal
 });
 
 async function runReportExport(reportId) {
