@@ -1496,3 +1496,51 @@ QA online detecto dos incoherencias semanticas:
 - `git diff --check`: PASS.
 - `pnpm build:gold`: PASS (con warning existente de Node engine: repo espera Node 20.x y el entorno uso v25.6.0).
 - Estado final: GREEN tecnico, pendiente QA online del usuario.
+
+---
+
+## 2026-05-07 — fix(agro): mostrar solo reportes disponibles
+
+Estado inicial: YELLOW.
+
+### Diagnostico
+
+- `agro-reports-center.js` ya distingue `Disponible`, `Sin datos`, `No cargado` y `No disponible`.
+- El render seguia recorriendo `REPORT_CATEGORIES` completo, por lo que las tarjetas no listas seguian visibles aunque el badge fuera honesto.
+- `countReports()` y el resumen tambien contaban reportes configurados, no reportes realmente visibles/disponibles.
+
+### Plan
+
+1. Crear una lista visible derivada de `REPORT_CATEGORIES` con solo reportes cuyo estado resuelto sea `available`.
+2. Renderizar categorias solo si conservan al menos un reporte disponible.
+3. Ajustar el resumen para contar reportes/categorias visibles.
+4. Agregar estado vacio global si no queda ningun reporte disponible.
+
+### Archivos a tocar
+
+- `apps/gold/agro/agro-reports-center.js`
+- `apps/gold/agro/agro-reports-center.css`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Riesgo
+
+- Riesgo bajo: no se tocan exportadores ni fuentes de datos.
+- El cambio solo filtra visualmente acciones no ejecutables.
+
+### QA esperado
+
+1. Centro de Reportes muestra solo tarjetas `Disponible`.
+2. No se ven tarjetas `No cargado`, `Sin datos` ni `No disponible`.
+3. Categorias sin reportes disponibles desaparecen.
+4. Si no hay reportes disponibles, aparece estado vacio honesto.
+5. Exportar un reporte disponible sigue funcionando.
+
+### Resultado
+
+- Centro de Reportes ahora deriva categorias visibles con solo reportes `available`.
+- Las tarjetas `No cargado`, `Sin datos` y `No disponible` no se renderizan.
+- Las categorias sin reportes disponibles no se renderizan.
+- Se agrego estado vacio global: `No hay reportes disponibles`.
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS (con warning existente de Node engine: repo espera Node 20.x y el entorno uso v25.6.0).
+- Estado final: GREEN tecnico, pendiente QA online del usuario.

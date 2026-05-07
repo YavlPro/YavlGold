@@ -403,7 +403,7 @@ function resolveReportStatus(report) {
 }
 
 function canExportReport(report) {
-    if (resolveReportStatus(report) !== 'available') return false;
+    if ((report?.status || resolveReportStatus(report)) !== 'available') return false;
     if (!report.action) return false;
     return state.busyReportId !== report.id;
 }
@@ -412,8 +412,21 @@ function resolveActionLabel(report) {
     return state.busyReportId === report.id ? 'Exportando' : 'Exportar MD';
 }
 
-function countReports() {
-    return REPORT_CATEGORIES.reduce((total, category) => total + category.reports.length, 0);
+function getVisibleReportCategories() {
+    return REPORT_CATEGORIES.map((category) => {
+        const reports = category.reports
+            .map((report) => ({
+                ...report,
+                status: resolveReportStatus(report)
+            }))
+            .filter((report) => report.status === 'available');
+
+        return reports.length ? { ...category, reports } : null;
+    }).filter(Boolean);
+}
+
+function countReports(categories) {
+    return categories.reduce((total, category) => total + category.reports.length, 0);
 }
 
 function renderStatusChip(status) {
@@ -422,7 +435,7 @@ function renderStatusChip(status) {
 }
 
 function renderReportCard(category, report) {
-    const status = resolveReportStatus(report);
+    const status = report.status || resolveReportStatus(report);
     const enabled = canExportReport(report);
     const disabledAttr = enabled ? '' : ' disabled aria-disabled="true"';
 
@@ -472,20 +485,29 @@ function renderFeedback() {
     `;
 }
 
-function renderOverview() {
+function renderOverview(categories) {
     return `
         <section class="agro-reports-overview" aria-label="Resumen del Centro de Reportes">
             <dl class="agro-reports-summary" aria-label="Resumen de reportes">
                 <div>
                     <dt>Reportes</dt>
-                    <dd>${countReports()}</dd>
+                    <dd>${countReports(categories)}</dd>
                 </div>
                 <div>
                     <dt>Categorías</dt>
-                    <dd>${REPORT_CATEGORIES.length}</dd>
+                    <dd>${categories.length}</dd>
                 </div>
             </dl>
-            <p class="agro-reports-overview__note">Cada descarga genera un Markdown real; si falta una fuente, el archivo lo declara sin inventar datos.</p>
+            <p class="agro-reports-overview__note">Solo aparecen reportes con fuente lista para exportar en esta sesión.</p>
+        </section>
+    `;
+}
+
+function renderEmptyState() {
+    return `
+        <section class="agro-reports-empty" aria-live="polite">
+            <h2 class="agro-reports-empty__title">No hay reportes disponibles</h2>
+            <p class="agro-reports-empty__copy">Aún no hay fuentes listas para exportar en esta sesión.</p>
         </section>
     `;
 }
@@ -493,14 +515,16 @@ function renderOverview() {
 function render() {
     const root = state.root;
     if (!root) return;
+    const visibleCategories = getVisibleReportCategories();
+    const content = visibleCategories.length
+        ? `<div class="agro-reports-list">${visibleCategories.map(renderCategory).join('')}</div>`
+        : renderEmptyState();
 
     root.innerHTML = `
         <div class="agro-reports-center" tabindex="-1">
-            ${renderOverview()}
+            ${renderOverview(visibleCategories)}
             ${renderFeedback()}
-            <div class="agro-reports-list">
-                ${REPORT_CATEGORIES.map(renderCategory).join('')}
-            </div>
+            ${content}
         </div>
     `;
 }

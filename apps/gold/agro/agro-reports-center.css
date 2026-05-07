@@ -114,6 +114,28 @@
   gap: 1.2rem;
 }
 
+.agro-reports-empty {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem;
+  border: 1px solid var(--border-neutral);
+  border-radius: var(--radius-md);
+  background: var(--bg-2);
+}
+
+.agro-reports-empty__title {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: var(--type-section-title);
+  color: var(--gold-4);
+}
+
+.agro-reports-empty__copy {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--type-body);
+}
+
 .agro-reports-category {
   display: grid;
   gap: 0.7rem;
