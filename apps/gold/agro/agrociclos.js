@@ -231,6 +231,9 @@ function buildActions(ciclo) {
       <button type="button" class="cycle-action btn-edit-crop${disabledClass}" data-id="${escapeAttr(id)}"${disabledAttr}${isAudit ? disabledTitle : ' title="Editar Cultivo"'} aria-label="Editar cultivo">
         <i class="fa-solid fa-pen" aria-hidden="true"></i>
       </button>
+      <button type="button" class="cycle-action btn-archive-crop${disabledClass}" data-id="${escapeAttr(id)}"${disabledAttr}${isAudit ? disabledTitle : ' title="Archivar cultivo"'} aria-label="Archivar cultivo">
+        <i class="fa-solid fa-box-archive" aria-hidden="true"></i>
+      </button>
       <button type="button" class="cycle-action btn-delete-crop${disabledClass}" data-id="${escapeAttr(id)}"${disabledAttr}${isAudit ? disabledTitle : ' title="Eliminar Cultivo"'} aria-label="Eliminar cultivo">
         <i class="fa-solid fa-trash" aria-hidden="true"></i>
       </button>

@@ -1293,3 +1293,44 @@ El popup de confirmacion para "Mover a papelera" (y tambien "Archivar" y "Restau
 - No se toco logica de archivo/papelera salvo el flujo de confirmacion
 - No se tocaron clientes ni movimientos financieros
 - No se rompio restaurar/archivar/papelera
+
+---
+
+## 2026-05-07 — fix(agro): expose crop archive action in cycle cards
+
+Estado: GREEN (esperando QA online del usuario).
+
+### Diagnostico
+
+La accion "Archivar" faltaba en las tarjetas de Ciclos de cultivos (`agrociclos.js`). Las tarjetas del monolito (`agro.js`) ya tenian el boton `btn-archive-crop` conectado a `window.archiveCrop()`, pero la vista de ciclos renderizaba solo Informe, Editar y Eliminar en `buildActions()`.
+
+El flujo completo ya funciona:
+- `archiveCrop()` usa `showAgroConfirmDialog` (modal canonico ADN V11)
+- El listener delegado en `setupCropActionListeners()` ya captura `.btn-archive-crop`
+- CSS `.cycle-action.btn-archive-crop` hereda del sistema existente
+
+### Cambios
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agrociclos.js:226-241` | fix JS | Agregar boton `btn-archive-crop` en `buildActions()` con icono `fa-box-archive` |
+| `agro.js:5810` | fix JS | Agregar opcion `detail` a `showAgroConfirmDialog` |
+| `agro.js:5813` | fix JS | Agregar opcion `iconClass` a `showAgroConfirmDialog` (default `fa-trash-can`) |
+| `agro.js:5836` | fix JS | Icono dinamico en vez de hardcode |
+| `agro.js:5858-5864` | fix JS | Renderizar nodo `detail` secundario |
+| `agro.js:16565-16575` | fix JS | `archiveCrop` usa `showAgroConfirmDialog` en vez de `confirm()` |
+| `agro.js:16594-16607` | fix JS | `moveCropToTrash` usa `showAgroConfirmDialog` en vez de `confirm()` |
+| `agro.js:16626-16636` | fix JS | `restoreCrop` usa `showAgroConfirmDialog` en vez de `confirm()` |
+| `agro.css` | fix CSS | `.agro-confirm-dialog__detail` estilo para texto secundario |
+
+### QA tecnico
+
+- `git diff --check`: PASS
+- `pnpm build:gold`: PASS
+
+### No se hizo
+
+- No se toco Papelera ni Restaurar
+- No se cambio migracion
+- No se rediseño Mis cultivos
+- No se modificaron clientes ni movimientos financieros
