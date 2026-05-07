@@ -1883,7 +1883,7 @@ function renderNotificationItem(n, isRead = false) {
     if (n.deepLink && n.deepLink.tab) {
         const cta = document.createElement('button');
         cta.type = 'button';
-        cta.textContent = 'Ver en Facturero';
+        cta.textContent = 'Ver detalles';
         cta.style.cssText = [
             'font-size: 9px',
             'font-weight: 600',

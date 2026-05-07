@@ -1334,3 +1334,68 @@ El flujo completo ya funciona:
 - No se cambio migracion
 - No se rediseño Mis cultivos
 - No se modificaron clientes ni movimientos financieros
+
+---
+
+## 2026-05-07 — Diagnostico/plan: campana Facturero no debe abrir Operaciones legacy
+
+Estado inicial: YELLOW.
+
+### Sintoma reportado
+
+QA online detecto que la campana abre una notificacion `Facturero · Pendientes` con CTA `Ver en Facturero` y navega a `#view=operaciones`. Esa ruta muestra una superficie legacy `Operaciones` con historial/facturero viejo y ruido semantico.
+
+### Diagnostico inicial
+
+- `apps/gold/agro/agro-notifications.js` construye el CTA `Ver en Facturero`.
+- `apps/gold/agro/agro.js` expone `window.YG_AGRO_NAV.openFacturero()` y abre deep links del facturero legacy.
+- `apps/gold/agro/agro-shell.js` todavia reconoce `view=operaciones` como vista activa y mapea tabs historicos del facturero hacia esa vista.
+- La causa probable no es datos ni Supabase: es routing/copy legacy desde notificaciones.
+
+### Archivos a inspeccionar/tocar
+
+- `apps/gold/agro/agro-notifications.js`
+- `apps/gold/agro/agro.js`
+- `apps/gold/agro/agro-shell.js`
+- `apps/gold/agro/index.html` solo si aparece launcher/sidebar hacia `operaciones`
+
+### Plan
+
+1. Cambiar el CTA de notificacion de `Ver en Facturero` a `Ver detalles`.
+2. Para pendientes/fiados, enviar la accion a `Cartera Viva` como destino vivo.
+3. Para ingresos/gastos/perdidas/transferencias, usar `Cartera Operativa` si el deep link no tiene detalle directo.
+4. Redirigir `view=operaciones` como alias temporal hacia superficie moderna, sin borrar el render legacy en esta fase.
+5. Validar con `git diff --check` y `pnpm build:gold`.
+
+### Riesgo
+
+- Riesgo bajo si se corta solo el enlace activo de campana.
+- Riesgo medio si se elimina `view=operaciones` completo porque aun puede existir deuda legacy interna.
+- No se tocan clientes, movimientos financieros, base de datos ni migraciones.
+
+### QA online esperado
+
+1. Abrir Agro y la campana.
+2. Confirmar que `Facturero · Pendientes` muestra `Ver detalles`.
+3. Clic en `Ver detalles`.
+4. Confirmar que no abre `#view=operaciones`.
+5. Confirmar que abre Cartera Viva para pendientes.
+6. Confirmar que Cartera Viva, Cartera Operativa y Mi Carrito siguen funcionando.
+
+### Implementacion aplicada
+
+- `agro-notifications.js`: el CTA de deep links del Facturero cambia de `Ver en Facturero` a `Ver detalles`.
+- `agro.js`: `window.YG_AGRO_NAV.openFacturero()` ahora enruta notificaciones a superficies modernas:
+  - `pendientes` -> `cartera-viva`
+  - `gastos`, `ingresos`, `otros` -> `operational` / `active`
+  - `perdidas` -> `operational` / `losses`
+  - `transferencias` -> `operational` / `donations`
+- `agro-shell.js`: tabs legacy del facturero ya no mapean a `operaciones`; `view=operaciones` y `view=facturero` quedan como alias temporal hacia `operational`.
+
+### Resultado
+
+- No se elimino el render legacy en esta fase.
+- No se tocaron datos, clientes, movimientos, Supabase ni migraciones.
+- `git diff --check`: PASS
+- `pnpm build:gold`: PASS (con warning existente de Node engine: repo espera Node 20.x y el entorno uso v25.6.0)
+- Estado final: GREEN tecnico, pendiente QA online del usuario.

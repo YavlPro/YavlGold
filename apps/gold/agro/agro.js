@@ -13979,8 +13979,32 @@ function resolveFactureroItem(tab, itemId) {
     return document.querySelector(`.facturero-item[data-tab="${tab}"][data-id="${safeId}"]`);
 }
 
+const FACTURERO_MODERN_DEEP_LINK_ROUTES = Object.freeze({
+    pendientes: Object.freeze({ view: 'cartera-viva', subview: '' }),
+    gastos: Object.freeze({ view: 'operational', subview: 'active' }),
+    ingresos: Object.freeze({ view: 'operational', subview: 'active' }),
+    perdidas: Object.freeze({ view: 'operational', subview: 'losses' }),
+    transferencias: Object.freeze({ view: 'operational', subview: 'donations' }),
+    otros: Object.freeze({ view: 'operational', subview: 'active' })
+});
+
+function openModernFactureroDestination(tabName) {
+    if (typeof window === 'undefined') return false;
+    const route = FACTURERO_MODERN_DEEP_LINK_ROUTES[tabName] || FACTURERO_MODERN_DEEP_LINK_ROUTES.pendientes;
+    window.dispatchEvent(new CustomEvent('agro:shell:set-view', {
+        detail: {
+            view: route.view,
+            subview: route.subview,
+            scroll: true
+        }
+    }));
+    return true;
+}
+
 function openFactureroDeepLink(payload = {}) {
     const targetTab = FIN_TAB_NAMES.has(payload.tab) ? payload.tab : 'pendientes';
+    if (openModernFactureroDestination(targetTab)) return true;
+
     const maxAttempts = 10;
     let attempt = 0;
 

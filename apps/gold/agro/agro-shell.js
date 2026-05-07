@@ -33,12 +33,12 @@ const SHELL_MODE_ALIASES = Object.freeze({
 });
 
 const TAB_TO_VIEW = Object.freeze({
-    gastos: 'operaciones',
-    ingresos: 'operaciones',
-    pendientes: 'operaciones',
-    perdidas: 'operaciones',
-    transferencias: 'operaciones',
-    otros: 'operaciones',
+    gastos: 'operational',
+    ingresos: 'operational',
+    pendientes: 'cartera-viva',
+    perdidas: 'operational',
+    transferencias: 'operational',
+    otros: 'operational',
     carrito: 'carrito',
     rankings: 'rankings'
 });
@@ -97,6 +97,8 @@ const ACTION_TO_MOBILE_CONTEXT = Object.freeze({
 const VIEW_ALIASES = Object.freeze({
     cultivos: Object.freeze({ view: 'ciclos', subview: 'mis-cultivos' }),
     'historial-comercial': Object.freeze({ view: 'cartera-viva', subview: '' }),
+    operaciones: Object.freeze({ view: 'operational', subview: 'active' }),
+    facturero: Object.freeze({ view: 'operational', subview: 'active' }),
     clientes: Object.freeze({ view: 'clients', subview: '' }),
     'mis-clientes': Object.freeze({ view: 'clients', subview: '' }),
     carrito: Object.freeze({ view: 'carrito', subview: 'summary' }),
@@ -117,11 +119,11 @@ const VIEW_ALIASES = Object.freeze({
 });
 
 const LEGACY_VIEW_REDIRECTS = Object.freeze({
-    pagados: 'operaciones',
-    fiados: 'operaciones',
-    perdidas: 'operaciones',
-    donaciones: 'operaciones',
-    otros: 'operaciones'
+    pagados: 'operational',
+    fiados: 'cartera-viva',
+    perdidas: 'operational',
+    donaciones: 'operational',
+    otros: 'operational'
 });
 
 const NAV_PARENT_GROUPS = Object.freeze({
@@ -609,7 +611,7 @@ function resolveInitialView() {
         };
     }
 
-    const storedView = readStoredView();
+    const storedView = normalizeView(readStoredView());
     if (storedView && Object.prototype.hasOwnProperty.call(VIEW_CONFIG, storedView)) {
         return { view: storedView, subview: readStoredSubview() };
     }
@@ -848,7 +850,7 @@ function runAction(action, currentView = '') {
 
 function mapTabToView(tabName) {
     const token = String(tabName || '').trim().toLowerCase();
-    return TAB_TO_VIEW[token] || 'operaciones';
+    return TAB_TO_VIEW[token] || 'operational';
 }
 
 export function initAgroShell() {
