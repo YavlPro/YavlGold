@@ -1460,3 +1460,39 @@ Evidencia:
 - `git diff --check`: PASS
 - `pnpm build:gold`: PASS (con warning existente de Node engine: repo espera Node 20.x y el entorno uso v25.6.0)
 - Estado final: GREEN tecnico, pendiente QA online del usuario.
+
+---
+
+## 2026-05-07 — fix(agro): semantica de pendientes y disponibilidad de reportes
+
+Estado inicial: YELLOW.
+
+### Sintoma reportado
+
+QA online detecto dos incoherencias semanticas:
+- La campana muestra pendientes del Facturero como `vencidos`, `vence hoy` o `proximos` aunque no exista una fecha real de vencimiento/cobro prometido.
+- Centro de Reportes muestra tarjetas como `Disponible` aun cuando la fuente puede no estar cargada, no existir o no tener datos.
+
+### Diagnostico
+
+- `agro-notifications.js` calculaba `dueDate` desde `item.fecha` para pendientes. En fiados esa fecha es fecha del movimiento/registro, no vencimiento real.
+- No existe evidencia en `agro_pending` de un campo de vencimiento usado por el flujo actual; `fecha` es el campo de registro del movimiento.
+- `agro-reports-center.js` usaba `resolveReportStatus()` con retorno fijo `available`, por eso todas las tarjetas decian `Disponible` sin revisar fuente real.
+
+### Implementacion aplicada
+
+- `agro-notifications.js`: se agrego lista explicita de campos de vencimiento (`due_date`, `fecha_vencimiento`, `payment_due_date`, `promised_payment_date`, etc.).
+- `agro-notifications.js`: `Vencido`, `Vence hoy` y `Vence en X dias` solo se usan si existe uno de esos campos explicitos.
+- `agro-notifications.js`: pendientes sin vencimiento real usan `Pendiente desde hace X dias`, `Registrado hoy` o `Sin fecha de cobro`.
+- `agro-notifications.js`: el resumen cambia de `vencidos/proximos` inventados a `sin fecha de cobro` cuando aplica.
+- `agro-reports-center.js`: `resolveReportStatus(report)` ahora resuelve por fuente runtime y devuelve `Disponible`, `Sin datos`, `No cargado` o `No disponible`.
+- `agro-reports-center.css`: se agregaron tonos visuales para `Sin datos`, `No cargado` y `No disponible`.
+
+### Resultado
+
+- No se infiere vencimiento desde `fecha` ni `created_at`.
+- No se marca un reporte como `Disponible` por defecto.
+- No se tocaron datos, clientes, movimientos, Supabase ni migraciones.
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS (con warning existente de Node engine: repo espera Node 20.x y el entorno uso v25.6.0).
+- Estado final: GREEN tecnico, pendiente QA online del usuario.

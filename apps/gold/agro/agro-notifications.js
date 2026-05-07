@@ -1352,6 +1352,43 @@ function computeDueStatus(date) {
     return `Vence en ${formatDayCount(diffDays)}`;
 }
 
+const PENDING_DUE_DATE_FIELDS = Object.freeze([
+    'due_date',
+    'fecha_vencimiento',
+    'payment_due_date',
+    'promised_payment_date',
+    'promise_date',
+    'fecha_promesa_pago',
+    'fecha_cobro',
+    'collection_date',
+    'collection_due_date'
+]);
+
+function getPendingDueDate(item) {
+    if (!item || typeof item !== 'object') return null;
+    for (const field of PENDING_DUE_DATE_FIELDS) {
+        const parsed = parseNotificationDate(item[field]);
+        if (parsed) return parsed;
+    }
+    return null;
+}
+
+function computePendingOpenStatus(registeredAt) {
+    const diffDays = daysBetweenNow(registeredAt);
+    if (!Number.isFinite(diffDays)) return 'Sin fecha de cobro';
+    if (diffDays === 0) return 'Registrado hoy';
+    if (diffDays < 0) return `Pendiente desde hace ${formatDayCount(diffDays)}`;
+    return `Pendiente registrado para ${formatShortDate(registeredAt)}`;
+}
+
+function notificationContentMatches(prev, next) {
+    if (!prev) return false;
+    return String(prev.type || '') === String(next.type || '')
+        && String(prev.subtitle || '') === String(next.subtitle || '')
+        && String(prev.metaLine || '') === String(next.metaLine || '')
+        && JSON.stringify(prev.meta || null) === JSON.stringify(next.meta || null);
+}
+
 function getPendingClient(item) {
     return String(item?.cliente || '').trim() || 'Cliente';
 }
@@ -1427,7 +1464,8 @@ export function syncFactureroNotifications(tabName, items) {
         const keepIds = new Set();
         let overdueCount = 0;
         let upcomingCount = 0;
-        let recentUndatedCount = 0;
+        let noDueDateCount = 0;
+        let recentNoDueDateCount = 0;
         let actionableCount = 0;
         let individualAlertCount = 0;
 
@@ -1440,29 +1478,30 @@ export function syncFactureroNotifications(tabName, items) {
             const amountValue = getAmountField(item);
             const amount = formatCurrency(amountValue);
             const unit = getUnitSummary(item);
-            const dueDate = parseNotificationDate(item?.fecha);
+            const dueDate = getPendingDueDate(item);
             const rowTimestamp = parseNotificationDate(item?.created_at || item?.fecha);
             const overdue = isPastDue(dueDate);
             const upcoming = isUpcomingDueDate(dueDate);
-            const recentUndated = !dueDate && isRecentNotificationDate(rowTimestamp);
+            const hasDueDate = !!dueDate;
+            const recentUndated = !hasDueDate && isRecentNotificationDate(rowTimestamp);
             const actionable = isActionablePendingDate(dueDate, rowTimestamp);
-            const statusLabel = computeDueStatus(dueDate) || (overdue ? 'Vencido' : '');
+            const statusLabel = hasDueDate ? computeDueStatus(dueDate) : computePendingOpenStatus(rowTimestamp);
             if (overdue) overdueCount += 1;
             if (upcoming && !overdue) upcomingCount += 1;
-            if (recentUndated) recentUndatedCount += 1;
+            if (!hasDueDate) noDueDateCount += 1;
+            if (recentUndated) recentNoDueDateCount += 1;
             if (!actionable) return;
 
             actionableCount += 1;
             if (individualAlertCount >= FACTURERO_MAX_PENDING_ITEM_ALERTS) return;
             individualAlertCount += 1;
             keepIds.add(notifId);
-            if (isKnownNotificationId(notifId)) return;
 
             const title = `${buildFactureroChip('pendientes', false)}`;
             const subtitle = `Cliente: ${client}`;
             const metaLine = `${amount}${unit ? ` • ${unit}` : ''}${statusLabel ? ` — ${statusLabel}` : ''}`;
 
-            changed = upsertAgroNotification({
+            const nextNotification = {
                 id: notifId,
                 type: overdue ? 'danger' : 'warning',
                 title,
@@ -1475,8 +1514,15 @@ export function syncFactureroNotifications(tabName, items) {
                 entity: 'pendientes',
                 sourceLabel: FACTURERO_SOURCE_LABEL,
                 deepLink: buildDeepLink('pendientes', rowId),
-                meta: { tab: 'pendientes', rowId }
-            }, { silent: true }) || changed;
+                meta: {
+                    tab: 'pendientes',
+                    rowId,
+                    dateMode: hasDueDate ? 'due-date' : 'registered-at'
+                }
+            };
+
+            if (notificationContentMatches(getNotificationById(notifId), nextNotification)) return;
+            changed = upsertAgroNotification(nextNotification, { silent: true }) || changed;
         });
 
         const summaryId = 'facturero:pendientes:summary';
@@ -1487,13 +1533,14 @@ export function syncFactureroNotifications(tabName, items) {
                 || prev?.meta?.overdue !== overdueCount
                 || prev?.meta?.actionable !== actionableCount
                 || prev?.meta?.upcoming !== upcomingCount
-                || prev?.meta?.recentUndated !== recentUndatedCount;
+                || prev?.meta?.noDueDate !== noDueDateCount
+                || prev?.meta?.recentNoDueDate !== recentNoDueDateCount;
 
             const title = `${buildFactureroChip('pendientes', true)} (${rows.length})`;
             const summaryParts = [];
             if (overdueCount > 0) summaryParts.push(`${overdueCount} vencidos`);
             if (upcomingCount > 0) summaryParts.push(`${upcomingCount} próximos`);
-            if (recentUndatedCount > 0) summaryParts.push(`${recentUndatedCount} recientes sin fecha`);
+            if (noDueDateCount > 0) summaryParts.push(`${noDueDateCount} sin fecha de cobro`);
             const subtitle = summaryParts.length > 0
                 ? summaryParts.join(' • ')
                 : `${rows.length} pendientes activos`;
@@ -1516,7 +1563,8 @@ export function syncFactureroNotifications(tabName, items) {
                         overdue: overdueCount,
                         actionable: actionableCount,
                         upcoming: upcomingCount,
-                        recentUndated: recentUndatedCount,
+                        noDueDate: noDueDateCount,
+                        recentNoDueDate: recentNoDueDateCount,
                         individualLimit: FACTURERO_MAX_PENDING_ITEM_ALERTS
                     }
                 }, { silent: true, reopenIfRead: countChanged }) || changed;

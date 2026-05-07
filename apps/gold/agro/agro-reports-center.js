@@ -5,7 +5,10 @@ const CROPS_READY_EVENT = 'AGRO_CROPS_READY';
 const DATA_REFRESH_EVENT = 'data-refresh';
 
 const REPORT_STATUS = Object.freeze({
-    available: 'Disponible'
+    available: 'Disponible',
+    empty: 'Sin datos',
+    unloaded: 'No cargado',
+    unavailable: 'No disponible'
 });
 
 const REPORT_CATEGORIES = Object.freeze([
@@ -304,8 +307,99 @@ function mapCycleRows(cycles, stateLabel) {
     }));
 }
 
-function resolveReportStatus() {
-    return 'available';
+function resolveCropReportStatus(kind) {
+    const snapshot = getCropSnapshot();
+    if (!snapshot) return 'unloaded';
+    const active = Array.isArray(snapshot.active) ? snapshot.active : [];
+    const finished = Array.isArray(snapshot.finished) ? snapshot.finished : [];
+    const lost = Array.isArray(snapshot.lost) ? snapshot.lost : [];
+    const total = Number(snapshot.summary?.total || active.length + finished.length + lost.length) || 0;
+
+    if (kind === 'selected') return getSelectedCropId() ? 'available' : 'empty';
+    if (kind === 'closed') return finished.length + lost.length > 0 ? 'available' : 'empty';
+    return total > 0 ? 'available' : 'empty';
+}
+
+function resolveCarteraVivaStatus() {
+    const carteraState = typeof window !== 'undefined'
+        ? window._agroBuyerPortfolioState?.getState?.()
+        : null;
+    if (!carteraState || typeof carteraState !== 'object') return 'unloaded';
+    return carteraState.known ? 'available' : 'empty';
+}
+
+function resolveOperationalStatus() {
+    const api = typeof window !== 'undefined' ? window.YGAgroOperationalCycles : null;
+    return typeof api?.downloadMarkdown === 'function' ? 'available' : 'unloaded';
+}
+
+function resolveRankingsStatus() {
+    const rows = [
+        ...readListText('#ops-rankings-top-clients .ops-ranking-item, #ops-rankings-top-clients li'),
+        ...readListText('#ops-rankings-pending-clients .ops-ranking-item, #ops-rankings-pending-clients li'),
+        ...readListText('#ops-rankings-top-crops .ops-ranking-item, #ops-rankings-top-crops li')
+    ];
+    return rows.length ? 'available' : 'unloaded';
+}
+
+function resolveTaskCyclesStatus() {
+    const api = typeof window !== 'undefined' ? window.YGAgroTaskCycles : null;
+    const snapshot = typeof api?.getSnapshot === 'function' ? api.getSnapshot() : null;
+    if (!snapshot) return 'unloaded';
+    return Array.isArray(snapshot.tasks) && snapshot.tasks.length > 0 ? 'available' : 'empty';
+}
+
+function resolveAgroRepoStatus() {
+    const context = typeof window !== 'undefined' ? window._agroRepoContext : null;
+    if (!context) return 'unloaded';
+    const entries = Array.isArray(context.recent_entries) ? context.recent_entries : [];
+    return entries.length ? 'available' : 'empty';
+}
+
+function resolveGlobalStatsStatus() {
+    const summary = typeof window !== 'undefined' ? window.__YG_AGRO_LAST_SUMMARY__ : null;
+    if (!summary || typeof summary !== 'object') return 'unloaded';
+    return summary.hasData ? 'available' : 'empty';
+}
+
+function resolveProfileGlobalStatus() {
+    return typeof window !== 'undefined' && typeof window.exportAgroGlobalMd === 'function'
+        ? 'available'
+        : 'unloaded';
+}
+
+function resolveReportStatus(report) {
+    switch (report?.action) {
+        case 'export-selected-crop':
+            return resolveCropReportStatus('selected');
+        case 'export-closed-cycles':
+            return resolveCropReportStatus('closed');
+        case 'export-cycle-comparison':
+            return resolveCropReportStatus('comparison');
+        case 'export-cartera-viva':
+            return resolveCarteraVivaStatus();
+        case 'export-operational-wallet':
+            return resolveOperationalStatus();
+        case 'export-cart':
+            return 'unavailable';
+        case 'export-clients':
+            return 'unloaded';
+        case 'export-rankings':
+            return resolveRankingsStatus();
+        case 'export-task-cycles':
+            return resolveTaskCyclesStatus();
+        case 'export-agrorepo':
+            return resolveAgroRepoStatus();
+        case 'export-global-stats':
+        case 'export-financial-detail':
+            return resolveGlobalStatsStatus();
+        case 'export-profile-global':
+            return resolveProfileGlobalStatus();
+        case 'export-period-stats':
+            return 'unloaded';
+        default:
+            return report?.action ? 'unloaded' : 'unavailable';
+    }
 }
 
 function canExportReport(report) {
@@ -323,7 +417,7 @@ function countReports() {
 }
 
 function renderStatusChip(status) {
-    const label = REPORT_STATUS[status] || REPORT_STATUS.available;
+    const label = REPORT_STATUS[status] || REPORT_STATUS.unloaded;
     return `<span class="agro-report-card__status" data-status="${escapeHtml(status)}">${escapeHtml(label)}</span>`;
 }
 
