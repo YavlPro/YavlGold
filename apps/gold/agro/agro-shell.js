@@ -43,15 +43,6 @@ const TAB_TO_VIEW = Object.freeze({
     rankings: 'rankings'
 });
 
-const CORE_OPERATIONS_TABS = new Set([
-    'gastos',
-    'ingresos',
-    'pendientes',
-    'perdidas',
-    'transferencias',
-    'otros'
-]);
-
 const MOBILE_HUBS = new Set(['inicio', 'operacion', 'memoria', 'menu']);
 
 const MOBILE_HUB_TO_GATE_VIEW = Object.freeze({
@@ -74,7 +65,6 @@ const VIEW_TO_MOBILE_HUB = Object.freeze({
     ciclos: 'operacion',
     'period-cycles': 'operacion',
     operational: 'operacion',
-    operaciones: 'operacion',
     carrito: 'operacion',
     clients: 'operacion',
     rankings: 'operacion',
@@ -154,7 +144,6 @@ const VIEW_CONFIG = Object.freeze({
     operational: { region: 'operational', label: 'Cartera Operativa', focusSelector: '#agro-operational-root' },
     clients: { region: 'clients', label: 'Mis Clientes', focusSelector: '#agro-clients-root' },
     'task-cycles': { region: 'task-cycles', label: 'Ciclos de Tareas', focusSelector: '#agro-task-cycles-root' },
-    operaciones: { region: 'ops', label: 'Mi Granja', resolveTab: resolveOperationsTab, dense: true },
     carrito: { region: 'ops', label: 'Mi Carrito', tab: 'carrito', focusSelector: '#agro-carrito-dedicated', dense: true },
     rankings: { region: 'ops', label: 'Rankings de Clientes', tab: 'rankings', focusSelector: '#agro-rankings-dedicated', dense: true },
     reportes: { region: 'reports-center', label: 'Centro de Reportes', focusSelector: '#agro-reports-center-root' },
@@ -173,7 +162,6 @@ const SHELL_VIEW_KEYWORDS = Object.freeze({
     operational: Object.freeze(['cartera', 'operativa', 'facturero', 'movimiento', 'abono', 'pago']),
     clients: Object.freeze(['clientes', 'mis clientes', 'contactos', 'libreta', 'directorio', 'registrados', 'no registrados', 'yavlgold']),
     'task-cycles': Object.freeze(['tareas', 'trabajo diario', 'pendientes', 'agenda']),
-    operaciones: Object.freeze(['operacion comercial', 'gastos', 'ingresos', 'fiados', 'perdidas']),
     carrito: Object.freeze(['carrito', 'insumos', 'compras', 'lista']),
     rankings: Object.freeze(['ranking', 'rankings', 'clientes', 'estadisticas', 'top', 'comparacion']),
     reportes: Object.freeze(['reportes', 'markdown', 'exportar', 'exportes', 'informes', 'md', 'centro']),
@@ -194,12 +182,6 @@ const SHELL_SUBVIEW_KEYWORDS = Object.freeze({
 const SHELL_ACTION_KEYWORDS = Object.freeze({
     'new-crop': Object.freeze(['nuevo cultivo', 'crear cultivo', 'siembra', 'cultivo'])
 });
-
-function resolveOperationsTab() {
-    const currentTab = String(document.querySelector('.financial-tab-btn.is-active')?.dataset?.tab || '').trim();
-    if (CORE_OPERATIONS_TABS.has(currentTab)) return currentTab;
-    return 'gastos';
-}
 
 function normalizeCropIdToken(value) {
     if (value === undefined || value === null) return '';

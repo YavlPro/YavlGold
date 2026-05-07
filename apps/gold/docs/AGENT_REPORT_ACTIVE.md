@@ -1399,3 +1399,64 @@ QA online detecto que la campana abre una notificacion `Facturero · Pendientes`
 - `git diff --check`: PASS
 - `pnpm build:gold`: PASS (con warning existente de Node engine: repo espera Node 20.x y el entorno uso v25.6.0)
 - Estado final: GREEN tecnico, pendiente QA online del usuario.
+
+---
+
+## 2026-05-07 — Diagnostico/plan: retirar `view=operaciones` legacy
+
+Estado inicial: YELLOW.
+
+### Diagnostico inicial
+
+QA online valido la Fase 1: la campana ya no abre `#view=operaciones`. La Fase 2 busca retirar la pantalla legacy `Operaciones` como destino activo para reducir confusion y codigo muerto.
+
+Evidencia:
+- `agro-shell.js` ya mapea tabs del facturero a `cartera-viva`/`operational`.
+- `view=operaciones` y `view=facturero` ya existen como alias temporal hacia `operational`.
+- El render viejo vive en `index.html` dentro de `data-agro-shell-region="ops"`.
+- Ese mismo region `ops` todavia aloja Mi Carrito y Rankings dedicados, por lo que borrar toda la seccion HTML no es seguro en esta fase.
+- Funciones con nombre `facturero` siguen vivas para CRUD, historiales, notificaciones, editor de movimientos y Cartera Viva; no deben borrarse por nombre.
+
+### Plan de retiro
+
+1. Quitar `operaciones` de `VIEW_CONFIG`, `VIEW_TO_MOBILE_HUB` y keywords del shell para que no pueda quedar como vista activa propia.
+2. Mantener `view=operaciones` y `view=facturero` solo como aliases silenciosos a `operational`.
+3. Eliminar el fallback legacy de `openFactureroDeepLink()` que buscaba tabs/accordions/items del facturero viejo.
+4. No borrar el region `ops` de HTML porque todavia sostiene Mi Carrito/Rankings y compatibilidad financiera.
+5. Validar con `git diff --check` y `pnpm build:gold`.
+
+### Archivos a tocar
+
+- `apps/gold/agro/agro-shell.js`
+- `apps/gold/agro/agro.js`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Riesgo
+
+- Riesgo bajo en routing si se mantiene alias a `operational`.
+- Riesgo alto si se borra a ciegas el HTML `ops` o funciones `facturero`, porque todavia alimentan flujos vivos.
+- No se tocan datos, clientes, movimientos, Supabase ni migraciones.
+
+### QA esperado
+
+1. `/agro#view=operaciones` termina en Cartera Operativa, no en pantalla legacy.
+2. `/agro#view=facturero` termina en Cartera Operativa.
+3. Campana mantiene `Ver detalles`.
+4. Pendientes siguen abriendo Cartera Viva.
+5. Cartera Viva, Cartera Operativa y Mi Carrito siguen funcionando.
+
+### Implementacion aplicada
+
+- `agro-shell.js`: se retiro `operaciones` de `VIEW_CONFIG`, `VIEW_TO_MOBILE_HUB` y `SHELL_VIEW_KEYWORDS`.
+- `agro-shell.js`: `view=operaciones` y `view=facturero` permanecen solo como aliases hacia `operational`.
+- `agro.js`: se elimino el fallback legacy de `openFactureroDeepLink()` que buscaba `.finances-section`, tabs, accordions e items del facturero viejo.
+- `agro.js`: se eliminaron helpers exclusivos de ese fallback (`ensureFactureroHighlightStyles`, `highlightFactureroItem`, `resolveFactureroAccordion`, `resolveFactureroItem`).
+
+### Resultado
+
+- No se borro el region HTML `ops` porque todavia sostiene Mi Carrito/Rankings y compatibilidad financiera.
+- No se borraron funciones `facturero` vivas de CRUD, historiales, editor ni Cartera Viva.
+- No se tocaron datos, clientes, movimientos, Supabase ni migraciones.
+- `git diff --check`: PASS
+- `pnpm build:gold`: PASS (con warning existente de Node engine: repo espera Node 20.x y el entorno uso v25.6.0)
+- Estado final: GREEN tecnico, pendiente QA online del usuario.

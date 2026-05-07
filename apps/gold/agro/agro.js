@@ -13933,52 +13933,6 @@ function initFinanceTabs() {
     if (initialTab) switchTab(initialTab, { focus: false });
 }
 
-function ensureFactureroHighlightStyles() {
-    if (document.getElementById('yg-facturero-highlight-styles')) return;
-    const style = document.createElement('style');
-    style.id = 'yg-facturero-highlight-styles';
-    style.textContent = `
-        .yg-facturero-highlight {
-            outline: 1px solid rgba(200, 167, 82, 0.7);
-            box-shadow: 0 0 20px rgba(200, 167, 82, 0.25);
-            background: rgba(200, 167, 82, 0.08);
-            transition: box-shadow 0.2s ease, background 0.2s ease, outline 0.2s ease;
-        }
-        .facturero-search-input::placeholder { color: #888; }
-    `;
-    document.head.appendChild(style);
-}
-
-function highlightFactureroItem(el) {
-    if (!el) return;
-    ensureFactureroHighlightStyles();
-    el.classList.add('yg-facturero-highlight');
-    setTimeout(() => {
-        el.classList.remove('yg-facturero-highlight');
-    }, 1500);
-}
-
-function resolveFactureroAccordion(tab, accordionKey) {
-    if (!tab) return null;
-    const rawKey = accordionKey ? String(accordionKey) : 'history';
-    const contentId = rawKey.startsWith('facturero-') ? rawKey : `facturero-${tab}-${rawKey}`;
-    const content = document.getElementById(contentId);
-    if (content) {
-        return content.closest('details') || content;
-    }
-    const summary = document.querySelector(`.yg-accordion-summary[aria-controls="${contentId}"]`);
-    return summary?.closest('details') || null;
-}
-
-function resolveFactureroItem(tab, itemId) {
-    if (!tab || !itemId) return null;
-    const safeId = String(itemId);
-    if (tab === 'ingresos') {
-        return document.querySelector(`.income-item[data-income-id="${safeId}"]`);
-    }
-    return document.querySelector(`.facturero-item[data-tab="${tab}"][data-id="${safeId}"]`);
-}
-
 const FACTURERO_MODERN_DEEP_LINK_ROUTES = Object.freeze({
     pendientes: Object.freeze({ view: 'cartera-viva', subview: '' }),
     gastos: Object.freeze({ view: 'operational', subview: 'active' }),
@@ -14003,46 +13957,7 @@ function openModernFactureroDestination(tabName) {
 
 function openFactureroDeepLink(payload = {}) {
     const targetTab = FIN_TAB_NAMES.has(payload.tab) ? payload.tab : 'pendientes';
-    if (openModernFactureroDestination(targetTab)) return true;
-
-    const maxAttempts = 10;
-    let attempt = 0;
-
-    const run = () => {
-        attempt += 1;
-        const panel = document.querySelector(`.finances-section .tab-panel[data-tab="${targetTab}"]`)
-            || document.getElementById(`tab-panel-${targetTab}`);
-        if (!panel) {
-            if (attempt < maxAttempts) setTimeout(run, 120);
-            return;
-        }
-
-        switchTab(targetTab, { focus: false });
-        if (typeof window.initAgroAccordions === 'function') {
-            window.initAgroAccordions();
-        }
-
-        const accordion = resolveFactureroAccordion(targetTab, payload.accordionKey);
-        if (accordion && accordion.tagName === 'DETAILS') {
-            accordion.open = true;
-            const summary = accordion.querySelector('summary');
-            if (summary) summary.setAttribute('aria-expanded', 'true');
-        }
-
-        const itemEl = resolveFactureroItem(targetTab, payload.itemId);
-        const scrollTarget = itemEl || accordion || panel;
-        if (scrollTarget && typeof scrollTarget.scrollIntoView === 'function') {
-            scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-
-        if (itemEl) {
-            highlightFactureroItem(itemEl);
-        } else if (attempt < maxAttempts) {
-            setTimeout(run, 160);
-        }
-    };
-
-    run();
+    return openModernFactureroDestination(targetTab);
 }
 
 if (typeof window !== 'undefined') {
