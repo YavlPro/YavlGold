@@ -6,3 +6,5 @@ on public.agro_crops (user_id, archived_at, deleted_at);
 
 comment on column public.agro_crops.archived_at is
 'Fecha en que el cultivo se archivo para ocultarlo de Mis cultivos sin borrar su historia comercial.';
+
+notify pgrst, 'reload schema';
