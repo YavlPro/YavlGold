@@ -212,82 +212,9 @@ function getSelectedCropId() {
     return String(window.YG_AGRO_SELECTED_CROP_ID || '').trim();
 }
 
-function getCropSnapshot() {
-    if (typeof window === 'undefined') return null;
-    const workspaceSnapshot = window._agroCyclesWorkspace?.getSnapshot?.();
-    if (workspaceSnapshot && typeof workspaceSnapshot === 'object') return workspaceSnapshot;
-    const cropsState = window.__AGRO_CROPS_STATE;
-    if (cropsState && typeof cropsState === 'object') {
-        const crops = Array.isArray(cropsState.crops) ? cropsState.crops : [];
-        return {
-            active: crops.filter((crop) => !['finalizado', 'perdido', 'lost', 'finished'].includes(String(crop?.status || '').toLowerCase())),
-            finished: crops.filter((crop) => ['finalizado', 'finished'].includes(String(crop?.status || '').toLowerCase())),
-            lost: crops.filter((crop) => ['perdido', 'lost'].includes(String(crop?.status || '').toLowerCase())),
-            summary: { total: crops.length },
-            updatedAt: cropsState.ts || cropsState.updatedAt || null
-        };
-    }
-    return null;
-}
-
-function resolveCropReportStatus(kind) {
-    const snapshot = getCropSnapshot();
-    if (!snapshot) return 'unloaded';
-    const active = Array.isArray(snapshot.active) ? snapshot.active : [];
-    const finished = Array.isArray(snapshot.finished) ? snapshot.finished : [];
-    const lost = Array.isArray(snapshot.lost) ? snapshot.lost : [];
-    const total = Number(snapshot.summary?.total || active.length + finished.length + lost.length) || 0;
-
-    if (kind === 'selected') return getSelectedCropId() ? 'available' : 'empty';
-    if (kind === 'closed') return finished.length + lost.length > 0 ? 'available' : 'empty';
-    return total > 0 ? 'available' : 'empty';
-}
-
-function resolveOperationalStatus() {
-    const api = typeof window !== 'undefined' ? window.YGAgroOperationalCycles : null;
-    if (typeof api?.downloadMarkdown !== 'function') return 'unloaded';
-    const snapshot = typeof api.getSnapshot === 'function' ? api.getSnapshot() : null;
-    if (!snapshot || typeof snapshot !== 'object') return 'unloaded';
-    const activeCount = Number(snapshot.datasets?.active?.summary?.count || 0);
-    const finishedCount = Number(snapshot.datasets?.finished?.summary?.count || 0);
-    return activeCount + finishedCount > 0 ? 'available' : 'empty';
-}
-
-function resolveGlobalStatsStatus() {
-    const summary = typeof window !== 'undefined' ? window.__YG_AGRO_LAST_SUMMARY__ : null;
-    if (!summary || typeof summary !== 'object') return 'unloaded';
-    return summary.hasData ? 'available' : 'empty';
-}
-
-function resolveProfileGlobalStatus() {
-    return typeof window !== 'undefined' && typeof window.exportAgroGlobalMd === 'function'
-        ? 'available'
-        : 'unloaded';
-}
-
 function resolveReportStatus(report) {
-    switch (report?.action) {
-        case 'export-selected-crop':
-            return resolveCropReportStatus('selected');
-        case 'export-cartera-viva':
-            return 'available';
-        case 'export-operational-wallet':
-            return resolveOperationalStatus();
-        case 'export-cart':
-            return typeof window !== 'undefined' && typeof window.exportActiveCartMD === 'function'
-                ? 'available'
-                : 'unloaded';
-        case 'export-rankings':
-            return typeof window !== 'undefined' && typeof window.exportOpsRankingsMarkdown === 'function'
-                ? 'available'
-                : 'unloaded';
-        case 'export-global-stats':
-            return resolveGlobalStatsStatus();
-        case 'export-profile-global':
-            return resolveProfileGlobalStatus();
-        default:
-            return report?.action ? 'unloaded' : 'unavailable';
-    }
+    if (!report?.action) return 'unavailable';
+    return 'available';
 }
 
 function canExportReport(report) {
