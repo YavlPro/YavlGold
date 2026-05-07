@@ -1071,6 +1071,14 @@
   line-height: 1.45;
 }
 
+.agro-confirm-dialog__detail {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
 .agro-confirm-dialog__footer {
   display: flex;
   align-items: center;

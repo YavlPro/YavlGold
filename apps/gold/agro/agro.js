@@ -5807,8 +5807,10 @@ function showAgroConfirmDialog(options = {}) {
     const descId = `agro-confirm-dialog-desc-${agroConfirmDialogSeq}`;
     const title = String(options.title || 'Confirmar acción');
     const message = String(options.message || '¿Deseas continuar?');
+    const detail = options.detail ? String(options.detail) : '';
     const confirmText = String(options.confirmText || 'Confirmar');
     const cancelText = String(options.cancelText || 'Cancelar');
+    const iconClass = String(options.iconClass || 'fa-solid fa-trash-can');
 
     const overlay = document.createElement('div');
     overlay.id = 'agro-confirm-dialog';
@@ -5831,7 +5833,7 @@ function showAgroConfirmDialog(options = {}) {
     headerMain.className = 'agro-confirm-dialog__title-wrap';
 
     const icon = document.createElement('i');
-    icon.className = 'fa-solid fa-trash-can agro-confirm-dialog__icon';
+    icon.className = `${iconClass} agro-confirm-dialog__icon`;
     icon.setAttribute('aria-hidden', 'true');
 
     const titleNode = document.createElement('h3');
@@ -5857,6 +5859,13 @@ function showAgroConfirmDialog(options = {}) {
     messageNode.className = 'agro-confirm-dialog__message';
     messageNode.textContent = message;
     body.appendChild(messageNode);
+
+    if (detail) {
+        const detailNode = document.createElement('p');
+        detailNode.className = 'agro-confirm-dialog__detail';
+        detailNode.textContent = detail;
+        body.appendChild(detailNode);
+    }
 
     const footer = document.createElement('footer');
     footer.className = 'agro-confirm-dialog__footer';
@@ -16555,9 +16564,15 @@ async function updateCropLifecycle(id, payload, options = {}) {
 
 async function archiveCrop(id) {
     const cropName = getCropConfirmName(id);
-    if (!confirm(`Archivar "${cropName}"?\n\nEl cultivo saldrá de Activos/Finalizados/Perdidos, pero clientes y movimientos comerciales se conservan.`)) {
-        return;
-    }
+    const confirmed = await showAgroConfirmDialog({
+        title: 'Archivar cultivo',
+        message: `¿Deseas archivar "${cropName}"?`,
+        detail: 'El cultivo saldrá de Activos/Finalizados/Perdidos, pero clientes y movimientos comerciales se conservan.',
+        confirmText: 'Archivar',
+        cancelText: 'Cancelar',
+        iconClass: 'fa-solid fa-box-archive'
+    });
+    if (!confirmed) return;
 
     try {
         await updateCropLifecycle(id, {
@@ -16579,12 +16594,17 @@ async function archiveCrop(id) {
 async function moveCropToTrash(id, options = {}) {
     const cropName = getCropConfirmName(id);
     const fromArchive = !!options.fromArchive;
-    const message = fromArchive
-        ? `Mover "${cropName}" de Archivo a Papelera?\n\nNo se borran clientes ni movimientos comerciales. Podrás restaurarlo desde Eliminados.`
-        : `Mover "${cropName}" a Papelera?\n\nNo se borran clientes ni movimientos comerciales. Podrás restaurarlo desde Archivo y Papelera.`;
-    if (!confirm(message)) {
-        return;
-    }
+    const confirmed = await showAgroConfirmDialog({
+        title: 'Mover a papelera',
+        message: fromArchive
+            ? `¿Deseas mover "${cropName}" de Archivo a Papelera?`
+            : `¿Deseas mover "${cropName}" a Papelera?`,
+        detail: 'No se borran clientes ni movimientos comerciales. Podrás restaurarlo desde Archivo y Papelera.',
+        confirmText: 'Mover a papelera',
+        cancelText: 'Cancelar',
+        iconClass: 'fa-solid fa-trash-can'
+    });
+    if (!confirmed) return;
 
     try {
         await updateCropLifecycle(id, {
@@ -16605,9 +16625,15 @@ async function moveCropToTrash(id, options = {}) {
 
 async function restoreCrop(id) {
     const cropName = getCropConfirmName(id);
-    if (!confirm(`Restaurar "${cropName}"?\n\nEl cultivo volverá a su vista según su estado real.`)) {
-        return;
-    }
+    const confirmed = await showAgroConfirmDialog({
+        title: 'Restaurar cultivo',
+        message: `¿Deseas restaurar "${cropName}"?`,
+        detail: 'El cultivo volverá a su vista según su estado real.',
+        confirmText: 'Restaurar',
+        cancelText: 'Cancelar',
+        iconClass: 'fa-solid fa-rotate-left'
+    });
+    if (!confirmed) return;
 
     try {
         await updateCropLifecycle(id, {

@@ -1257,3 +1257,39 @@ Commit sugerido:
 ```bash
 docs(agro): close may 6 cartera viva and notifications log
 ```
+
+---
+
+## 2026-05-07 — fix(agro): align crop trash confirmation with modal canon
+
+Estado: GREEN (esperando QA online del usuario).
+
+### Diagnostico
+
+El popup de confirmacion para "Mover a papelera" (y tambien "Archivar" y "Restaurar") usa `window.confirm()` nativo del navegador, rompiendo la consistencia visual del sistema (fondo gris nativo, sin estilo dark/gold).
+
+**Causa raiz**: Las funciones `archiveCrop()`, `moveCropToTrash()` y `restoreCrop()` en `agro.js` (lineas 16556, 16579, 16606) usan `confirm()` nativo en lugar del modal canonico `showAgroConfirmDialog()`.
+
+**Modal canonico existente**: `showAgroConfirmDialog()` (linea 5799 en `agro.js`) — ya usa ADN Visual V11, backdrop blur, ARIA, Escape, focus-visible, responsive. CSS completo en `agro.css` linea 973+. Usado por `deleteFactureroItem` y otros flujos.
+
+**Archivos a tocar**:
+- `apps/gold/agro/agro.js` — Replace `confirm()` en 3 funciones + agregar opciones `iconClass` y `detail` a `showAgroConfirmDialog`
+- `apps/gold/agro/agro.css` — Agregar estilo `.agro-confirm-dialog__detail`
+
+**Riesgo**: Bajo. Las funciones ya son `async`, `showAgroConfirmDialog` retorna `Promise<boolean>`. Wiring minimo.
+
+### Plan
+
+1. Agregar opcion `iconClass` a `showAgroConfirmDialog` (default: `fa-solid fa-trash-can`)
+2. Agregar opcion `detail` a `showAgroConfirmDialog` para texto secundario
+3. Agregar CSS `.agro-confirm-dialog__detail`
+4. Reemplazar `confirm()` en `archiveCrop()` con `showAgroConfirmDialog`
+5. Reemplazar `confirm()` en `moveCropToTrash()` con `showAgroConfirmDialog`
+6. Reemplazar `confirm()` en `restoreCrop()` con `showAgroConfirmDialog`
+
+### No se hizo
+
+- No se rediseño el modulo Archivo/Papelera
+- No se toco logica de archivo/papelera salvo el flujo de confirmacion
+- No se tocaron clientes ni movimientos financieros
+- No se rompio restaurar/archivar/papelera
