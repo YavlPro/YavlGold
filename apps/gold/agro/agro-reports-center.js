@@ -371,6 +371,29 @@ function exportHonestUnavailable(report, category, nextData, summary = []) {
 }
 
 async function exportSelectedCrop(report, category) {
+    const cropId = getSelectedCropId();
+    if (!cropId) {
+        downloadReport({
+            report,
+            category,
+            status: 'sin datos cargados',
+            summary: [{ label: 'Cultivo seleccionado', value: 'Ninguno' }],
+            data: 'No hay cultivo seleccionado en esta sesión.',
+            observations: ['Selecciona un cultivo para generar el informe completo del ciclo.'],
+            nextData: 'Cultivo seleccionado desde Mis cultivos.'
+        });
+        return;
+    }
+
+    const mod = await import('./agro-crop-report.js');
+    if (typeof mod.exportCropReport !== 'function') {
+        exportHonestUnavailable(report, category, 'Exportador de cultivo cargado como función pública.');
+        return;
+    }
+    await mod.exportCropReport(cropId);
+}
+
+async function exportCarteraViva(report, category) {
     const carteraState = typeof window !== 'undefined'
         ? window._agroBuyerPortfolioState?.getState?.()
         : null;
