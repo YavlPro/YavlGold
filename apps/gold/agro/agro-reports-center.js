@@ -23,20 +23,6 @@ const REPORT_CATEGORIES = Object.freeze([
                 description: 'Exporta el informe Markdown real del ciclo seleccionado.',
                 status: 'available',
                 action: 'export-selected-crop'
-            },
-            {
-                id: 'crop-closed',
-                name: 'Reporte de ciclo finalizado o perdido',
-                description: 'Exporta ciclos cerrados desde la memoria de cultivos disponible en la sesión.',
-                status: 'available',
-                action: 'export-closed-cycles'
-            },
-            {
-                id: 'crop-comparison',
-                name: 'Resumen comparativo de ciclos',
-                description: 'Resume activos, finalizados y perdidos con los datos cargados del módulo de ciclos.',
-                status: 'available',
-                action: 'export-cycle-comparison'
             }
         ])
     },
@@ -48,7 +34,7 @@ const REPORT_CATEGORIES = Object.freeze([
             {
                 id: 'cartera-viva',
                 name: 'Reporte de Cartera Viva',
-                description: 'Exporta el estado disponible de la cartera de clientes y deja claro si faltan datos.',
+                description: 'Exporta el informe Markdown del cliente desde Cartera Viva.',
                 status: 'available',
                 action: 'export-cartera-viva'
             },
@@ -62,51 +48,16 @@ const REPORT_CATEGORIES = Object.freeze([
             {
                 id: 'mi-carrito',
                 name: 'Reporte de Mi Carrito',
-                description: 'Exporta el estado del carrito cuando exista fuente accesible; si no, documenta qué falta.',
+                description: 'Exporta el carrito activo en formato Markdown.',
                 status: 'available',
                 action: 'export-cart'
-            }
-        ])
-    },
-    {
-        id: 'clientes',
-        title: 'Clientes',
-        copy: 'Reportes relacionados con contactos, cartera y lectura de clientes.',
-        reports: Object.freeze([
-            {
-                id: 'mis-clientes',
-                name: 'Reporte de Mis Clientes',
-                description: 'Exporta contactos manuales y derivados si el módulo puede cargarlos en esta sesión.',
-                status: 'available',
-                action: 'export-clients'
             },
             {
                 id: 'rankings-clientes',
                 name: 'Reporte de rankings de clientes',
-                description: 'Exporta la lectura visible de rankings o un estado honesto si aún no fue cargada.',
+                description: 'Exporta los rankings de clientes desde Ciclos Operativos.',
                 status: 'available',
                 action: 'export-rankings'
-            }
-        ])
-    },
-    {
-        id: 'trabajo-memoria',
-        title: 'Trabajo y memoria',
-        copy: 'Bitácora, tareas y memoria operativa en formato Markdown.',
-        reports: Object.freeze([
-            {
-                id: 'trabajo-diario',
-                name: 'Reporte de Trabajo Diario',
-                description: 'Exporta tareas cargadas desde Ciclos de Tareas o explica si la fuente no está lista.',
-                status: 'available',
-                action: 'export-task-cycles'
-            },
-            {
-                id: 'agrorepo-memoria',
-                name: 'Reporte de AgroRepo',
-                description: 'Exporta un índice de notas recientes cuando la memoria local esté disponible.',
-                status: 'available',
-                action: 'export-agrorepo'
             }
         ])
     },
@@ -128,20 +79,6 @@ const REPORT_CATEGORIES = Object.freeze([
                 description: 'Usa el informe Markdown global original del perfil.',
                 status: 'available',
                 action: 'export-profile-global'
-            },
-            {
-                id: 'estadisticas-periodos',
-                name: 'Estadísticas de períodos',
-                description: 'Exporta el resumen disponible de ciclos de período.',
-                status: 'available',
-                action: 'export-period-stats'
-            },
-            {
-                id: 'financiero-detallado',
-                name: 'Reporte financiero detallado',
-                description: 'Exporta una lectura financiera desde el resumen global disponible.',
-                status: 'available',
-                action: 'export-financial-detail'
             }
         ])
     }
@@ -293,20 +230,6 @@ function getCropSnapshot() {
     return null;
 }
 
-function readCycleName(cycle) {
-    return cycle?.name || cycle?.label || cycle?.title || cycle?.crop_label || cycle?.id || 'Ciclo sin nombre';
-}
-
-function mapCycleRows(cycles, stateLabel) {
-    return (Array.isArray(cycles) ? cycles : []).map((cycle) => ({
-        Ciclo: readCycleName(cycle),
-        Estado: cycle?.status || stateLabel,
-        Cultivo: cycle?.variety || cycle?.crop_label || cycle?.cropName || cycle?.name || '-',
-        Inicio: cycle?.start_date || cycle?.startDate || cycle?.created_at || '-',
-        Cierre: cycle?.end_date || cycle?.closed_at || cycle?.updated_at || '-'
-    }));
-}
-
 function resolveCropReportStatus(kind) {
     const snapshot = getCropSnapshot();
     if (!snapshot) return 'unloaded';
@@ -320,10 +243,6 @@ function resolveCropReportStatus(kind) {
     return total > 0 ? 'available' : 'empty';
 }
 
-function resolveCarteraVivaStatus() {
-    return 'unavailable';
-}
-
 function resolveOperationalStatus() {
     const api = typeof window !== 'undefined' ? window.YGAgroOperationalCycles : null;
     if (typeof api?.downloadMarkdown !== 'function') return 'unloaded';
@@ -332,18 +251,6 @@ function resolveOperationalStatus() {
     const activeCount = Number(snapshot.datasets?.active?.summary?.count || 0);
     const finishedCount = Number(snapshot.datasets?.finished?.summary?.count || 0);
     return activeCount + finishedCount > 0 ? 'available' : 'empty';
-}
-
-function resolveRankingsStatus() {
-    return 'unavailable';
-}
-
-function resolveTaskCyclesStatus() {
-    return 'unavailable';
-}
-
-function resolveAgroRepoStatus() {
-    return 'unavailable';
 }
 
 function resolveGlobalStatsStatus() {
@@ -362,30 +269,22 @@ function resolveReportStatus(report) {
     switch (report?.action) {
         case 'export-selected-crop':
             return resolveCropReportStatus('selected');
-        case 'export-closed-cycles':
-        case 'export-cycle-comparison':
-            return 'unavailable';
         case 'export-cartera-viva':
-            return resolveCarteraVivaStatus();
+            return 'available';
         case 'export-operational-wallet':
             return resolveOperationalStatus();
         case 'export-cart':
-            return 'unavailable';
-        case 'export-clients':
-            return 'unloaded';
+            return typeof window !== 'undefined' && typeof window.exportActiveCartMD === 'function'
+                ? 'available'
+                : 'unloaded';
         case 'export-rankings':
-            return resolveRankingsStatus();
-        case 'export-task-cycles':
-            return resolveTaskCyclesStatus();
-        case 'export-agrorepo':
-            return resolveAgroRepoStatus();
+            return typeof window !== 'undefined' && typeof window.exportOpsRankingsMarkdown === 'function'
+                ? 'available'
+                : 'unloaded';
         case 'export-global-stats':
             return resolveGlobalStatsStatus();
         case 'export-profile-global':
             return resolveProfileGlobalStatus();
-        case 'export-period-stats':
-        case 'export-financial-detail':
-            return 'unloaded';
         default:
             return report?.action ? 'unloaded' : 'unavailable';
     }
@@ -545,111 +444,48 @@ function exportHonestUnavailable(report, category, nextData, summary = []) {
 }
 
 async function exportSelectedCrop(report, category) {
-    const cropId = getSelectedCropId();
-    if (!cropId) {
+    const carteraState = typeof window !== 'undefined'
+        ? window._agroBuyerPortfolioState?.getState?.()
+        : null;
+    if (!carteraState || typeof carteraState !== 'object' || !carteraState.selectedBuyerRow) {
         downloadReport({
             report,
             category,
             status: 'sin datos cargados',
-            summary: [{ label: 'Cultivo seleccionado', value: 'Ninguno' }],
-            data: 'No hay cultivo seleccionado en esta sesión.',
-            observations: ['Selecciona un cultivo para generar el informe completo del ciclo.'],
-            nextData: 'Cultivo seleccionado desde Mis cultivos.'
+            summary: [{ label: 'Fuente', value: 'Cartera Viva' }, { label: 'Estado', value: 'Ningún cliente seleccionado' }],
+            data: 'Selecciona un cliente en Cartera Viva para exportar su informe.',
+            observations: ['El exportador original requiere un cliente seleccionado en Cartera Viva.'],
+            nextData: 'Cartera Viva con un cliente seleccionado.'
         });
         return;
     }
-
-    const mod = await import('./agro-crop-report.js');
-    if (typeof mod.exportCropReport !== 'function') {
-        exportHonestUnavailable(report, category, 'Exportador de cultivo cargado como función pública.');
-        return;
+    try {
+        const mod = await import('./agro-cartera-viva-export.js');
+        if (typeof mod.downloadBuyerPortfolioExport === 'function') {
+            await mod.downloadBuyerPortfolioExport({
+                buyerRow: carteraState.selectedBuyerRow,
+                historyRows: carteraState.selectedBuyerHistory || []
+            });
+            return;
+        }
+        const markdown = mod.buildBuyerPortfolioExportMarkdown({
+            buyerRow: carteraState.selectedBuyerRow,
+            historyRows: carteraState.selectedBuyerHistory || []
+        });
+        const filename = mod.buildBuyerPortfolioExportFilename(carteraState.selectedBuyerRow);
+        downloadMarkdown(markdown, filename);
+    } catch (err) {
+        console.warn('[AgroReportsCenter] Cartera Viva export fallback:', err);
+        downloadReport({
+            report,
+            category,
+            status: 'fuente no disponible en esta sesión',
+            summary: [{ label: 'Fuente', value: 'Cartera Viva' }],
+            data: 'No se pudo cargar el exportador de Cartera Viva.',
+            observations: ['No se inventaron datos.'],
+            nextData: 'Módulo de Cartera Viva cargado con cliente seleccionado.'
+        });
     }
-    await mod.exportCropReport(cropId);
-}
-
-async function exportClosedCycles(report, category) {
-    const snapshot = getCropSnapshot();
-    const finished = Array.isArray(snapshot?.finished) ? snapshot.finished : [];
-    const lost = Array.isArray(snapshot?.lost) ? snapshot.lost : [];
-    const rows = [
-        ...mapCycleRows(finished, 'Finalizado'),
-        ...mapCycleRows(lost, 'Perdido')
-    ];
-    const status = snapshot ? (rows.length ? 'con datos' : 'sin datos cargados') : 'fuente no disponible en esta sesión';
-
-    downloadReport({
-        report,
-        category,
-        status,
-        summary: [
-            { label: 'Finalizados', value: finished.length },
-            { label: 'Perdidos', value: lost.length },
-            { label: 'Total cerrado', value: rows.length }
-        ],
-        data: markdownTable(['Ciclo', 'Estado', 'Cultivo', 'Inicio', 'Cierre'], rows),
-        observations: snapshot ? [] : ['La memoria de ciclos no está disponible todavía en esta sesión.'],
-        nextData: snapshot ? '' : 'Información de ciclos cargada desde Mis cultivos.'
-    });
-}
-
-async function exportCycleComparison(report, category) {
-    const snapshot = getCropSnapshot();
-    const summary = snapshot?.summary || {};
-    const active = Array.isArray(snapshot?.active) ? snapshot.active : [];
-    const finished = Array.isArray(snapshot?.finished) ? snapshot.finished : [];
-    const lost = Array.isArray(snapshot?.lost) ? snapshot.lost : [];
-    const total = Number(summary.total || active.length + finished.length + lost.length) || 0;
-    const rows = [
-        { Grupo: 'Activos', Cantidad: active.length },
-        { Grupo: 'Finalizados', Cantidad: finished.length },
-        { Grupo: 'Perdidos', Cantidad: lost.length },
-        { Grupo: 'Total visible', Cantidad: total }
-    ];
-
-    downloadReport({
-        report,
-        category,
-        status: snapshot ? (total ? 'con datos' : 'sin datos cargados') : 'fuente no disponible en esta sesión',
-        summary: [
-            { label: 'Ciclos activos', value: active.length },
-            { label: 'Ciclos cerrados', value: finished.length + lost.length },
-            { label: 'Total visible', value: total }
-        ],
-        data: markdownTable(['Grupo', 'Cantidad'], rows),
-        observations: ['Este resumen compara disponibilidad por estado; no recalcula finanzas.'],
-        nextData: snapshot ? '' : 'Información de ciclos cargada desde Mis cultivos.'
-    });
-}
-
-async function exportCarteraViva(report, category) {
-    const carteraState = typeof window !== 'undefined'
-        ? window._agroBuyerPortfolioState?.getState?.()
-        : null;
-    const hasState = carteraState && typeof carteraState === 'object';
-    const rows = hasState ? [{
-        Dato: 'Fiados activos generales',
-        Valor: carteraState.hasActivePending ? 'Sí' : 'No'
-    }, {
-        Dato: 'Total pendiente general',
-        Valor: formatMoneyUsd(carteraState.pendingGeneralTotalUsd)
-    }, {
-        Dato: 'Actualizado',
-        Valor: carteraState.updatedAt || '-'
-    }] : [];
-
-    downloadReport({
-        report,
-        category,
-        status: hasState && carteraState.known ? 'con datos' : (hasState ? 'sin datos cargados' : 'fuente no disponible en esta sesión'),
-        summary: [
-            { label: 'Fuente de cartera', value: hasState ? 'Resumen disponible de Cartera Viva' : 'No cargada' },
-            { label: 'Fiados activos', value: hasState && carteraState.hasActivePending ? 'Sí' : 'No' },
-            { label: 'Pendiente general', value: hasState ? formatMoneyUsd(carteraState.pendingGeneralTotalUsd) : '-' }
-        ],
-        data: markdownTable(['Dato', 'Valor'], rows),
-        observations: ['La fuente actual muestra estado general, no el detalle completo de cada cliente.'],
-        nextData: hasState && carteraState.known ? 'Resumen de clientes, cobrados y pérdidas disponible para el centro.' : 'Cartera Viva cargada con estado conocido.'
-    });
 }
 
 async function exportOperationalWallet(report, category) {
@@ -662,143 +498,43 @@ async function exportOperationalWallet(report, category) {
 }
 
 async function exportCart(report, category) {
-    exportHonestUnavailable(
+    if (typeof window !== 'undefined' && typeof window.exportActiveCartMD === 'function') {
+        window.exportActiveCartMD();
+        return;
+    }
+    try {
+        const mod = await import('./agro-cart.js');
+        if (typeof mod.exportActiveCartMD === 'function') {
+            await mod.exportActiveCartMD();
+            return;
+        }
+    } catch (err) {
+        console.warn('[AgroReportsCenter] Cart export fallback:', err);
+    }
+    downloadReport({
         report,
         category,
-        'Lista de carritos e ítems activos disponible para Centro de Reportes.',
-        [{ label: 'Fuente actual', value: 'El exportador existe dentro de Mi Carrito, pero todavía no hay entrada central estable.' }]
-    );
-}
-
-async function exportClients(report, category) {
-    try {
-        const mod = await import('./agro-clients.js');
-        const api = typeof mod.initAgroClients === 'function' ? mod.initAgroClients() : null;
-        if (typeof api?.refresh === 'function') await api.refresh();
-        const clients = typeof api?.getClients === 'function' ? api.getClients() : [];
-        const rows = (Array.isArray(clients) ? clients : []).map((client) => ({
-            Cliente: client.display_name || 'Sin nombre',
-            Tipo: client.source === 'buyer' || client.source === 'cartera-viva' ? 'Cartera Viva' : (client.client_type || client.type || 'Manual'),
-            Contacto: client.phone || client.whatsapp || client.email || '-',
-            Finca: client.location || '-'
-        }));
-        downloadReport({
-            report,
-            category,
-            status: rows.length ? 'con datos' : 'sin datos cargados',
-            summary: [
-                { label: 'Contactos visibles', value: rows.length },
-                { label: 'Fuente', value: 'Mis Clientes' }
-            ],
-            data: markdownTable(['Cliente', 'Tipo', 'Contacto', 'Finca'], rows),
-            observations: rows.length ? [] : ['Mis Clientes no devolvió contactos para esta sesión.'],
-            nextData: rows.length ? '' : 'Contactos manuales o derivados cargados en Mis Clientes.'
-        });
-    } catch (err) {
-        console.warn('[AgroReportsCenter] Clients export fallback:', err);
-        exportHonestUnavailable(report, category, 'Módulo Mis Clientes inicializado y con lectura de contactos.');
-    }
-}
-
-function readListText(selector) {
-    return Array.from(document.querySelectorAll(selector))
-        .map((node) => node.textContent?.replace(/\s+/g, ' ').trim())
-        .filter(Boolean)
-        .filter((text) => !/^sin datos/i.test(text));
+        status: 'sin datos cargados',
+        summary: [{ label: 'Fuente', value: 'Mi Carrito' }],
+        data: 'El módulo de Carrito no está disponible en esta sesión.',
+        observations: ['No se inventaron datos.'],
+        nextData: 'Mi Carrito cargado con un carrito activo.'
+    });
 }
 
 async function exportRankings(report, category) {
-    const topClients = readListText('#ops-rankings-top-clients .ops-ranking-item, #ops-rankings-top-clients li');
-    const pendingClients = readListText('#ops-rankings-pending-clients .ops-ranking-item, #ops-rankings-pending-clients li');
-    const topCrops = readListText('#ops-rankings-top-crops .ops-ranking-item, #ops-rankings-top-crops li');
-    const rows = [
-        ...topClients.map((text, index) => ({ Sección: 'Top clientes cobrados', Orden: index + 1, Lectura: text })),
-        ...pendingClients.map((text, index) => ({ Sección: 'Fiados por cliente', Orden: index + 1, Lectura: text })),
-        ...topCrops.map((text, index) => ({ Sección: 'Cultivos rentables', Orden: index + 1, Lectura: text }))
-    ];
-
-    downloadReport({
-        report,
-        category,
-        status: rows.length ? 'con datos' : 'fuente no disponible en esta sesión',
-        summary: [
-            { label: 'Top clientes', value: topClients.length },
-            { label: 'Fiados por cliente', value: pendingClients.length },
-            { label: 'Cultivos', value: topCrops.length }
-        ],
-        data: markdownTable(['Sección', 'Orden', 'Lectura'], rows),
-        observations: rows.length ? ['Lectura tomada del panel de Rankings visible en pantalla.'] : ['Rankings todavía no está abierto o cargado para el centro.'],
-        nextData: rows.length ? '' : 'Rankings cargado antes de exportar o fuente central de rankings.'
-    });
-}
-
-async function exportTaskCycles(report, category) {
-    let api = typeof window !== 'undefined' ? window.YGAgroTaskCycles : null;
-    if (!api) {
-        try {
-            const mod = await import('./agroTaskCycles.js');
-            if (typeof mod.initAgroTaskCycles === 'function') {
-                api = await mod.initAgroTaskCycles();
-            }
-        } catch (err) {
-            console.warn('[AgroReportsCenter] Task cycles init fallback:', err);
-        }
+    if (typeof window !== 'undefined' && typeof window.exportOpsRankingsMarkdown === 'function') {
+        window.exportOpsRankingsMarkdown();
+        return;
     }
-    if (typeof api?.refresh === 'function') await api.refresh();
-    const snapshot = typeof api?.getSnapshot === 'function' ? api.getSnapshot() : null;
-    const tasks = Array.isArray(snapshot?.tasks) ? snapshot.tasks : [];
-    const rows = tasks.map((task) => ({
-        Tarea: task.title || task.name || task.task_name || task.description || 'Tarea sin nombre',
-        Estado: task.task_status || task.status || '-',
-        Fecha: task.task_date || task.date || '-',
-        Cultivo: task.crop?.shortLabel || task.crop?.label || task.crop_id || 'General',
-        Duración: task.duration_minutes ? `${task.duration_minutes} min` : '-'
-    }));
-
     downloadReport({
         report,
         category,
-        status: snapshot ? (rows.length ? 'con datos' : 'sin datos cargados') : 'fuente no disponible en esta sesión',
-        summary: [
-            { label: 'Tareas', value: rows.length },
-            { label: 'Vista', value: snapshot?.currentView || '-' }
-        ],
-        data: markdownTable(['Tarea', 'Estado', 'Fecha', 'Cultivo', 'Duración'], rows),
-        observations: snapshot ? [] : ['No se encontró lectura de Ciclos de Tareas.'],
-        nextData: snapshot ? '' : 'Trabajo Diario cargado con lista de tareas.'
-    });
-}
-
-async function exportAgroRepo(report, category) {
-    try {
-        if (typeof window !== 'undefined' && typeof window.ensureAgroRepoReady === 'function') {
-            window.ensureAgroRepoReady();
-        }
-    } catch (err) {
-        console.warn('[AgroReportsCenter] AgroRepo ready fallback:', err);
-    }
-    const context = typeof window !== 'undefined' ? window._agroRepoContext : null;
-    const entries = Array.isArray(context?.recent_entries) ? context.recent_entries : [];
-    const rows = entries.map((entry) => ({
-        Bitácora: entry.bitacora || '-',
-        Ruta: entry.path || '-',
-        Tipo: entry.type || '-',
-        Fecha: entry.date || '-',
-        Resumen: entry.content || '-'
-    }));
-
-    downloadReport({
-        report,
-        category,
-        status: context ? (rows.length ? 'con datos' : 'sin datos cargados') : 'fuente no disponible en esta sesión',
-        summary: [
-            { label: 'Archivos', value: context?.total_files ?? '-' },
-            { label: 'Bitácoras', value: context?.bitacoras_count ?? '-' },
-            { label: 'Archivo activo', value: context?.active_file || '-' }
-        ],
-        data: markdownTable(['Bitácora', 'Ruta', 'Tipo', 'Fecha', 'Resumen'], rows),
-        observations: context ? ['Exporta un índice de memoria, no reemplaza los exportes propios de AgroRepo.'] : ['AgroRepo no expuso contexto local en esta sesión.'],
-        nextData: context ? '' : 'Memoria local cargada desde AgroRepo.'
+        status: 'fuente no disponible en esta sesión',
+        summary: [{ label: 'Fuente', value: 'Rankings de clientes' }],
+        data: 'El módulo de Rankings no está cargado en esta sesión.',
+        observations: ['No se inventaron datos.'],
+        nextData: 'Ciclos Operativos con Rankings cargado.'
     });
 }
 
@@ -819,78 +555,12 @@ async function exportProfileGlobal(report, category) {
     exportHonestUnavailable(report, category, 'Informe global del perfil cargado en la sesión.');
 }
 
-async function exportPeriodStats(report, category) {
-    try {
-        const mod = await import('./agro-period-cycles.js');
-        const summary = typeof mod.getAgroPeriodCyclesSummary === 'function'
-            ? mod.getAgroPeriodCyclesSummary()
-            : null;
-        const hasSummary = summary && typeof summary === 'object';
-        const rows = hasSummary ? [{
-            Métrica: 'Períodos visibles',
-            Valor: summary.total ?? 0
-        }, {
-            Métrica: 'Activos',
-            Valor: summary.active ?? 0
-        }, {
-            Métrica: 'Finalizados',
-            Valor: summary.finalized ?? 0
-        }, {
-            Métrica: 'Operativa abierta / cerrada',
-            Valor: `${summary.open ?? 0} / ${summary.closed ?? 0}`
-        }] : [];
-
-        downloadReport({
-            report,
-            category,
-            status: hasSummary ? (Number(summary.total || 0) > 0 ? 'con datos' : 'sin datos cargados') : 'fuente no disponible en esta sesión',
-            summary: [
-                { label: 'Períodos', value: hasSummary ? summary.total : '-' },
-                { label: 'Subvista', value: hasSummary ? summary.currentSubview : '-' }
-            ],
-            data: markdownTable(['Métrica', 'Valor'], rows),
-            observations: ['Resumen tomado del módulo de ciclos de período cuando está disponible.'],
-            nextData: hasSummary && Number(summary.total || 0) > 0 ? '' : 'Ciclos de período cargados o actividad mensual visible.'
-        });
-    } catch (err) {
-        console.warn('[AgroReportsCenter] Period stats fallback:', err);
-        exportHonestUnavailable(report, category, 'Módulo de ciclos de período cargado con resumen público.');
-    }
-}
-
-async function exportFinancialDetail(report, category) {
-    let summary = typeof window !== 'undefined' ? window.__YG_AGRO_LAST_SUMMARY__ : null;
-    if ((!summary || typeof summary !== 'object') && typeof window !== 'undefined' && typeof window.refreshAgroStats === 'function') {
-        summary = await window.refreshAgroStats();
-    }
-    const hasSummary = summary && typeof summary === 'object';
-    const rows = hasSummary ? [
-        { Métrica: 'Ingresos cobrados', Valor: formatMoneyUsd(summary.incomeTotal) },
-        { Métrica: 'Gastos directos', Valor: formatMoneyUsd(summary.directExpenseTotal ?? summary.expenseTotal) },
-        { Métrica: 'Inversión base', Valor: formatMoneyUsd(summary.cropsInvestmentTotal) },
-        { Métrica: 'Fiados', Valor: formatMoneyUsd(summary.pendingTotal) },
-        { Métrica: 'Pérdidas', Valor: formatMoneyUsd(summary.lossesTotal) },
-        { Métrica: 'Costos totales', Valor: formatMoneyUsd(summary.costTotal) },
-        { Métrica: 'Rentabilidad', Valor: formatMoneyUsd(summary.profitNet) }
-    ] : [];
-
-    downloadReport({
-        report,
-        category,
-        status: hasSummary ? (summary.hasData ? 'con datos' : 'sin datos cargados') : 'fuente no disponible en esta sesión',
-        summary: [
-            { label: 'Tiene datos', value: hasSummary && summary.hasData ? 'Sí' : 'No' },
-            { label: 'Rentabilidad', value: hasSummary ? formatMoneyUsd(summary.profitNet) : '-' }
-        ],
-        data: markdownTable(['Métrica', 'Valor'], rows),
-        observations: ['Montos leídos desde el resumen financiero global disponible en Agro.'],
-        nextData: hasSummary ? '' : 'Resumen financiero global cargado.'
-    });
-}
-
 const EXPORT_ACTIONS = Object.freeze({
     'export-selected-crop': exportSelectedCrop,
+    'export-cartera-viva': exportCarteraViva,
     'export-operational-wallet': exportOperationalWallet,
+    'export-cart': exportCart,
+    'export-rankings': exportRankings,
     'export-global-stats': exportGlobalStats,
     'export-profile-global': exportProfileGlobal
 });

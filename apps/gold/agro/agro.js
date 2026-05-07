@@ -16595,6 +16595,7 @@ async function restoreCrop(id) {
 window.archiveCrop = archiveCrop;
 window.deleteCrop = moveCropToTrash;
 window.restoreCrop = restoreCrop;
+window.exportOpsRankingsMarkdown = exportOpsRankingsMarkdown;
 
 // Inyectar CSS para botón de eliminar
 (function injectDeleteButtonStyles() {

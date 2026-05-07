@@ -1292,6 +1292,49 @@ El popup de confirmacion para "Mover a papelera" (y tambien "Archivar" y "Restau
 - No se rediseño el modulo Archivo/Papelera
 - No se toco logica de archivo/papelera salvo el flujo de confirmacion
 - No se tocaron clientes ni movimientos financieros
+
+---
+
+## 2026-05-07 — fix(agro): connect reports center to original exporters
+
+Estado: YELLOW (esperando QA online del usuario).
+
+### Diagnostico
+
+El Centro de Reportes quedo practicamente vacio tras una correccion anterior demasiado agresiva.
+La causa: `resolveReportStatus()` devuelve `'unavailable'` hardcoded para varios reportes, y `getVisibleReportCategories()` filtra todo lo que no sea `'available'`.
+
+### Matriz de exportadores originales
+
+| Reporte | Exportador original existe | Funcion encontrada | Archivo fuente | Accion |
+|---|---|---|---|---|
+| Reporte de cultivo seleccionado | Si | `exportCropReport()` | agro-crop-report.js:671 | YA conectado via import() |
+| Reporte de ciclo finalizado/perdido | No | — | — | OCULTAR: sin exportador original real |
+| Resumen comparativo de ciclos | No | — | — | OCULTAR: sin exportador original real |
+| Cartera Viva | Si | `downloadBuyerPortfolioExport()` | agro-cartera-viva-export.js:173 | RECONTRAR via import() |
+| Cartera Operativa | Si | `downloadMarkdown()` via `window.YGAgroOperationalCycles` | agroOperationalCycles.js:2822 | YA conectado |
+| Mi Carrito | Si | `exportCartMD()` | agro-cart.js:419 | EXPOSER + conectar |
+| Mis Clientes | No | — | — | OCULTAR: sin exportador MD original |
+| Rankings de clientes | Si | `exportOpsRankingsMarkdown()` | agro.js:13624 | EXPOSER + conectar |
+| Trabajo Diario | No | `YGAgroTaskCycles` no tiene `downloadMarkdown` | agroTaskCycles.js | OCULTAR: sin exportador MD |
+| AgroRepo | No | — | — | OCULTAR: sin exportador MD operativo |
+| Informe estadistico global | Si | `exportStatsReport()` | agro-stats-report.js:731 | YA conectado via import() |
+| Informe global de Agro | Si | `window.exportAgroGlobalMd()` | agroperfil.js:1666 | YA conectado |
+| Estadisticas de periodos | No | `getAgroPeriodCyclesSummary()` es solo datos, no exporta MD | agro-period-cycles.js:1396 | OCULTAR: sin exportador MD real |
+| Reporte financiero detallado | No | `window.refreshAgroStats()` es solo datos, no exporta MD | — | OCULTAR: sin exportador MD original |
+
+### Plan
+
+1. RECONTRAR Cartera Viva: usar `import()` de `agro-cartera-viva-export.js` con `downloadBuyerPortfolioExport`
+2. EXPOSER + conectar Rankings: exponer `exportOpsRankingsMarkdown` en `window` y llamarla desde reports center
+3. EXPOSER + conectar Carrito: exponer `exportCartMD` en `window` y llamarla desde reports center
+4. OCULTAR reportes sin exportador original real (7 reportes)
+5. OCULTAR categorias que queden vacias
+
+### Riesgo
+
+- Medio: exponer funciones globales es wiring minimo pero toca monolito
+- Bajo: los reportes ocultados no tenian exportador original; no se pierde nada real
 - No se rompio restaurar/archivar/papelera
 
 ---

@@ -418,7 +418,12 @@ function computeSummary(items) {
 
 function exportCartMD(cartId) {
     const cart = _carts.find(c => c.id === cartId);
-    if (!cart) return;
+    if (!cart) {
+        if (typeof window !== 'undefined' && typeof window.showToast === 'function') {
+            window.showToast('No hay carrito activo para exportar.', 'warn');
+        }
+        return;
+    }
     const items = _activeCartId === cartId ? _activeCartItems : [];
     const summary = computeSummary(items);
     const cropName = getCropName(cart.crop_id);
@@ -2282,4 +2287,14 @@ export function injectCartStyles() {
         }
     `;
     document.head.appendChild(style);
+}
+
+export function exportActiveCartMD() {
+    if (!_activeCartId) {
+        if (typeof window !== 'undefined' && typeof window.showToast === 'function') {
+            window.showToast('No hay carrito activo para exportar.', 'warn');
+        }
+        return;
+    }
+    exportCartMD(_activeCartId);
 }
