@@ -454,9 +454,9 @@ function buildCycleViewModel(cycle, activityMap) {
         : [];
     const linked = movements.filter((movement) => movement.association === 'linked');
     const unlinked = movements.filter((movement) => movement.association !== 'linked');
-    const status = deriveCalendarStatus(cycle);
-    const progress = deriveProgress(cycle);
     const activeCycleCount = Number(activity?.activeCycleCount || 0);
+    const status = activeCycleCount > 0 ? 'active' : deriveCalendarStatus(cycle);
+    const progress = deriveProgress(cycle);
     const portfolioStatus = activeCycleCount > 0 ? 'open' : 'closed';
 
     return {
@@ -495,7 +495,7 @@ function buildSummary(cycles) {
 const PERIOD_SUBVIEW_META = Object.freeze({
     calendario: Object.freeze({
         title: 'Calendario operativo',
-        subtitle: 'Períodos activos y finalizados',
+        subtitle: 'Períodos activos y finalizados para seguir tu operación.',
         overviewEyebrow: 'Calendario operativo',
         overviewTitle: 'Períodos en calendario',
         overviewCopy: 'Meses activos y finalizados concentrados en una sola vista para seguimiento del calendario operativo.',
@@ -596,14 +596,17 @@ function pluralize(count, singular, plural = `${singular}s`) {
 
 function renderModuleHeader() {
     const meta = getCurrentSubviewMeta();
+    const eyebrowMarkup = state.currentSubview === 'calendario'
+        ? ''
+        : '<p class="ops-module-eyebrow">Familia mensual</p>';
     return `
         <header class="module-header animate-in delay-3">
             <div class="module-title-group">
                 <div class="module-icon"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i></div>
                 <div class="module-heading">
-                    <p class="ops-module-eyebrow">Familia mensual</p>
+                    ${eyebrowMarkup}
                     <h2 class="module-title">${escapeHtml(meta.title)}</h2>
-                    <p class="module-subtitle">${escapeHtml(meta.subtitle)} dentro de la familia Ciclos de período.</p>
+                    <p class="module-subtitle">${escapeHtml(meta.subtitle)}</p>
                 </div>
             </div>
             <div class="header-actions">
@@ -614,6 +617,8 @@ function renderModuleHeader() {
 }
 
 function renderOverviewSection() {
+    if (state.currentSubview === 'calendario') return '';
+
     const summary = state.summary || createEmptySummary();
     const meta = getCurrentSubviewMeta();
     return `

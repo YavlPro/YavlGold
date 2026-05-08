@@ -38,6 +38,57 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-27__2026-05-05.md`
 
 ---
 
+## 2026-05-08 — Diagnóstico y plan: Calendario operativo vivo y menos copy
+
+**Estado:** COMPLETADO EN CÓDIGO / QA PRODUCCIÓN PENDIENTE
+
+### Diagnóstico inicial
+
+- La vista `Calendario operativo` vive en `apps/gold/agro/agro-period-cycles.js`.
+- El exceso de copy viene de tres capas visibles: `renderModuleHeader()` repite `Calendario operativo`, `renderOverviewSection()` vuelve a mostrar `Calendario operativo` / `Períodos en calendario`, y el shell superior ya muestra el título de la ruta.
+- Los contadores `Períodos`, `Activos / Final.` y `Operativa abierta / cerrada` salen de `buildSummary(cycles)`.
+- La clasificación activo/finalizado se determina con `deriveCalendarStatus(cycle)`, que solo mira `end_date < today`.
+- La conexión con Cartera Operativa sí existe: `fetchOperationalPeriodActivity()` lee `agro_operational_cycles` y `agro_operational_movements`, agrupa por mes y calcula `activeCycleCount` con estados `open`, `in_progress`, `compensating`.
+- La desalineación está en `buildCycleViewModel()`: calcula `status` por calendario antes de considerar `activeCycleCount`. Por eso un mes cerrado por fecha puede caer en `Finalizados` aunque tenga operativa abierta.
+
+### Plan breve
+
+1. Reducir el copy redundante del header/overview de Calendario operativo.
+2. Usar una sola explicación breve: `Períodos activos y finalizados para seguir tu operación.`
+3. Hacer que un período con `activeCycleCount > 0` sea visible como activo aunque el mes ya haya vencido por calendario.
+4. Mantener las tabs `Activos` / `Finalizados` y el estado vacío solo cuando no haya activos reales.
+5. Ejecutar `git diff --check` y `pnpm build:gold`.
+
+### Archivos candidatos
+
+- `apps/gold/agro/agro-period-cycles.js`
+- `apps/gold/agro/agro-period-cycles.css`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Riesgo
+
+- Bajo-medio: cambio de clasificación visible en Calendario operativo. No toca tablas ni persistencia; solo render/estado derivado.
+
+### Criterio de validación
+
+- La vista no debe repetir título/subtítulo varias veces.
+- Si un período tiene ciclos de Cartera Operativa abiertos, debe aparecer en `Activos`.
+- Si no hay período activo ni operativa viva, debe mostrar `No hay períodos activos visibles.`
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/agro-period-cycles.js` | En `calendario`, el header queda con una sola frase breve y `renderOverviewSection()` ya no muestra el bloque redundante `Calendario operativo / Períodos en calendario`. |
+| `apps/gold/agro/agro-period-cycles.js` | `buildCycleViewModel()` ahora marca como `active` cualquier período con `activeCycleCount > 0`, aunque el mes esté vencido por fecha calendario. |
+
+### Validación esperada
+
+- `git diff --check`.
+- `pnpm build:gold`.
+
+---
+
 ## 2026-05-08 — Diagnóstico y plan: rentabilidad real vs fiados pendientes en Mis Cultivos
 
 **Estado:** COMPLETADO EN CÓDIGO / QA PRODUCCIÓN PENDIENTE
