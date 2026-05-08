@@ -596,18 +596,28 @@ function pluralize(count, singular, plural = `${singular}s`) {
 
 function renderModuleHeader() {
     const meta = getCurrentSubviewMeta();
+    const isCalendario = state.currentSubview === 'calendario';
     const eyebrowMarkup = state.currentSubview === 'calendario'
         ? ''
         : '<p class="ops-module-eyebrow">Familia mensual</p>';
-    return `
-        <header class="module-header animate-in delay-3">
-            <div class="module-title-group">
+    const headingMarkup = isCalendario
+        ? `
+                <div class="module-heading">
+                    <p class="module-subtitle">${escapeHtml(meta.subtitle)}</p>
+                </div>
+        `
+        : `
                 <div class="module-icon"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i></div>
                 <div class="module-heading">
                     ${eyebrowMarkup}
                     <h2 class="module-title">${escapeHtml(meta.title)}</h2>
                     <p class="module-subtitle">${escapeHtml(meta.subtitle)}</p>
                 </div>
+        `;
+    return `
+        <header class="module-header animate-in delay-3">
+            <div class="module-title-group">
+                ${headingMarkup}
             </div>
             <div class="header-actions">
                 <button type="button" class="btn btn-primary" data-period-action="toggle-form">${state.formOpen ? 'Cerrar creación' : 'Crear ciclo del mes'}</button>

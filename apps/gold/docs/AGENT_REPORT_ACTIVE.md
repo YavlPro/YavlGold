@@ -80,6 +80,7 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-27__2026-05-05.md`
 | Archivo | Cambio |
 |---|---|
 | `apps/gold/agro/agro-period-cycles.js` | En `calendario`, el header queda con una sola frase breve y `renderOverviewSection()` ya no muestra el bloque redundante `Calendario operativo / Períodos en calendario`. |
+| `apps/gold/agro/agro-period-cycles.js` | Ajuste final: el `h2` interno `Calendario operativo` ya no se renderiza dentro del recuadro secundario; queda solo la explicación breve. |
 | `apps/gold/agro/agro-period-cycles.js` | `buildCycleViewModel()` ahora marca como `active` cualquier período con `activeCycleCount > 0`, aunque el mes esté vencido por fecha calendario. |
 
 ### Validación esperada
