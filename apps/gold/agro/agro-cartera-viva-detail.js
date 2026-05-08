@@ -1,6 +1,9 @@
 import {
     formatHistoryAbsoluteDayLabel,
+    getBuyerLivePendingBalance,
+    isPositiveBuyerPortfolioAmount,
     normalizeHistorySearchToken,
+    readBuyerPortfolioNumber,
     readHistoryItemField,
     renderHistoryDayGroups
 } from './agro-cartera-viva.js';
@@ -204,18 +207,11 @@ function clampPercent(value) {
 }
 
 function getReviewTotal(buyerRow) {
-    return Number(buyerRow?.review_required_total || 0) + Number(buyerRow?.legacy_unclassified_total || 0);
+    return readBuyerPortfolioNumber(buyerRow?.review_required_total) + readBuyerPortfolioNumber(buyerRow?.legacy_unclassified_total);
 }
 
 function getOutstandingBalance(buyerRow) {
-    const pendingTotal = Number(buyerRow?.pending_total);
-    if (Number.isFinite(pendingTotal)) return Math.max(0, pendingTotal);
-
-    const credited = Number(buyerRow?.credited_total || 0);
-    const paid = Number(buyerRow?.paid_total || 0);
-    const loss = Number(buyerRow?.loss_total || 0);
-    const transferred = Number(buyerRow?.transferred_total || 0);
-    return Math.max(0, credited - paid - loss - transferred);
+    return getBuyerLivePendingBalance(buyerRow);
 }
 
 function getProgressBase(buyerRow) {
@@ -239,27 +235,27 @@ function resolveBuyerStatus(buyerRow) {
     const loss = Number(buyerRow?.loss_total || 0);
     const review = getReviewTotal(buyerRow);
 
-    if (pending > 0) {
+    if (isPositiveBuyerPortfolioAmount(pending)) {
         return {
             tone: 'fiado',
-            label: paid > 0 ? 'Cobro en curso' : 'Fiado activo',
+            label: isPositiveBuyerPortfolioAmount(paid) ? 'Cobro en curso' : 'Fiado activo',
             copy: `${formatMoney(pending)} por cobrar`
         };
     }
 
-    if (paid > 0) {
-        return {
-            tone: 'pagado',
-            label: 'Pagado',
-            copy: 'Saldo cerrado sin pendiente'
-        };
-    }
-
-    if (loss > 0) {
+    if (isPositiveBuyerPortfolioAmount(loss)) {
         return {
             tone: 'perdido',
             label: 'Pérdida',
             copy: `${formatMoney(loss)} cerrados fuera de cartera`
+        };
+    }
+
+    if (isPositiveBuyerPortfolioAmount(paid)) {
+        return {
+            tone: 'pagado',
+            label: 'Pagado',
+            copy: 'Saldo cerrado sin pendiente'
         };
     }
 
@@ -1374,10 +1370,10 @@ function resolvePrimarySummaryMetric(buyerRow) {
     const reviewTotal = getReviewTotal(buyerRow);
     const buyerStatus = resolveBuyerStatus(buyerRow);
     const pending = getOutstandingBalance(buyerRow);
-    const paid = Number(buyerRow?.paid_total || 0);
-    const loss = Number(buyerRow?.loss_total || 0);
+    const paid = readBuyerPortfolioNumber(buyerRow?.paid_total);
+    const loss = readBuyerPortfolioNumber(buyerRow?.loss_total);
 
-    if (pending > 0) {
+    if (isPositiveBuyerPortfolioAmount(pending)) {
         return {
             label: 'Pendiente',
             amountUsd: pending,
@@ -1385,7 +1381,7 @@ function resolvePrimarySummaryMetric(buyerRow) {
         };
     }
 
-    if (loss > 0) {
+    if (isPositiveBuyerPortfolioAmount(loss)) {
         return {
             label: 'Pérdida',
             amountUsd: loss,
@@ -1393,7 +1389,7 @@ function resolvePrimarySummaryMetric(buyerRow) {
         };
     }
 
-    if (paid > 0) {
+    if (isPositiveBuyerPortfolioAmount(paid)) {
         return {
             label: 'Cobrado',
             amountUsd: paid,

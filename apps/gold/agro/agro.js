@@ -24,11 +24,15 @@ import { computeUnitTotalsFromRows as computeMdUnitTotalsFromRows, formatUnitTot
 import {
     fetchBuyerPortfolioSummary,
     formatHistoryAbsoluteDayLabel as formatPagadosDedicatedDayLabel,
+    getBuyerLivePendingBalance,
     formatHistoryDayLabel as formatDayHeader,
     getHistoryDayKey as getDayKey,
     getHistoryRowTimestamp as getRowTimestamp,
     groupHistoryRowsByDay as groupRowsByDay,
+    isAgroQaClientName,
+    isPositiveBuyerPortfolioAmount,
     normalizeHistorySearchToken as normalizeFactureroSearchToken,
+    readBuyerPortfolioNumber,
     readHistoryItemField,
     readHistoryItemFieldWithSource,
     renderHistoryDayGroups
@@ -12608,7 +12612,6 @@ let opsMovementSummaryTimer = null;
 const OPS_RANKINGS_RANGE_KEY = 'YG_AGRO_RANKINGS_RANGE_V1';
 const OPS_RANKINGS_DEFAULT_RANGE = '90d';
 const OPS_RANKINGS_LIMIT = 5;
-const OPS_RANKINGS_PENDING_EPSILON = 0.000001;
 const OPS_RANKINGS_VALID_RANGES = new Set(['30d', '90d', '6m', '12m', 'all']);
 const OPS_RANKINGS_RANGE_LABELS = Object.freeze({
     '30d': '30 días',
@@ -13224,25 +13227,12 @@ function normalizeOpsRankingsRows(rows) {
     return Array.isArray(rows) ? rows : [];
 }
 
-function readOpsRankingNumber(value) {
-    const numeric = Number(value);
-    return Number.isFinite(numeric) ? numeric : 0;
-}
-
 function isPositiveOpsRankingAmount(value) {
-    return readOpsRankingNumber(value) > OPS_RANKINGS_PENDING_EPSILON;
+    return isPositiveBuyerPortfolioAmount(value);
 }
 
 function getOpsRankingPortfolioOutstanding(row) {
-    const pendingTotal = readOpsRankingNumber(row?.pending_total);
-    const credited = readOpsRankingNumber(row?.credited_total);
-    const paid = readOpsRankingNumber(row?.paid_total);
-    const loss = readOpsRankingNumber(row?.loss_total);
-    const transferred = readOpsRankingNumber(row?.transferred_total);
-    const derivedBalance = Math.max(0, credited - paid - loss - transferred);
-    const hasLedgerTotals = [credited, paid, loss, transferred].some(isPositiveOpsRankingAmount);
-    const balance = hasLedgerTotals ? derivedBalance : Math.max(0, pendingTotal);
-    return isPositiveOpsRankingAmount(balance) ? balance : 0;
+    return getBuyerLivePendingBalance(row);
 }
 
 function normalizeOpsRankingNameToken(value) {
@@ -13298,13 +13288,14 @@ function pickOpsBuyerName(row) {
 function addOpsRankingPortfolioToken(map, token, outstanding) {
     const safeToken = normalizeFactureroSearchToken(token);
     if (!safeToken) return;
-    const current = readOpsRankingNumber(map.get(safeToken));
+    const current = readBuyerPortfolioNumber(map.get(safeToken));
     map.set(safeToken, Math.max(current, outstanding));
 }
 
 async function reconcileOpsRankingPendingClients(rows) {
     const pendingRows = normalizeOpsRankingsRows(rows)
-        .filter((row) => isPositiveOpsRankingAmount(row?.total_pending));
+        .filter((row) => isPositiveOpsRankingAmount(row?.total_pending))
+        .filter((row) => !isAgroQaClientName(pickOpsBuyerName(row) || row?.client_name));
     if (pendingRows.length <= 0) return [];
 
     try {
@@ -13497,7 +13488,8 @@ function renderOpsRankings() {
         status.textContent = `Actualizado: ${updated} · Rango: ${rangeLabel}${cropFilter}`;
     }
 
-    const allTopClients = normalizeOpsRankingsRows(opsRankingsState.topClients);
+    const allTopClients = normalizeOpsRankingsRows(opsRankingsState.topClients)
+        .filter((row) => !isAgroQaClientName(pickOpsBuyerName(row)));
     const missingTopClients = allTopClients.filter((row) => !pickOpsBuyerName(row));
     const namedTopClients = allTopClients.filter((row) => !!pickOpsBuyerName(row));
     const missingTopClientsSummary = missingTopClients.reduce((acc, row) => {
@@ -13713,7 +13705,8 @@ function exportOpsRankingsMarkdown() {
         md += `\n`;
     };
 
-    const allTopClientsMd = normalizeOpsRankingsRows(opsRankingsState.topClients);
+    const allTopClientsMd = normalizeOpsRankingsRows(opsRankingsState.topClients)
+        .filter((row) => !isAgroQaClientName(pickOpsBuyerName(row)));
     const missingTopClientsMd = allTopClientsMd.filter((row) => !pickOpsBuyerName(row));
     const namedTopClientsMd = allTopClientsMd.filter((row) => !!pickOpsBuyerName(row));
     const missingTopClientsMdSummary = missingTopClientsMd.reduce((acc, row) => {

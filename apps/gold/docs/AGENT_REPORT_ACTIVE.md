@@ -114,6 +114,107 @@ saldoPendienteActual > 0.000001
 
 ---
 
+## 2026-05-08 — Diagnóstico ampliado: Cartera Viva, Rankings y reportes con fuentes divergentes
+
+**Estado:** COMPLETADO EN CÓDIGO / QA PRODUCCIÓN PENDIENTE
+
+### Caso visible
+
+- Cliente: `jose luis`.
+- Card de Cartera Viva reportada: `0 unidades pendientes`, `9 unidades cobradas`, `0` pérdidas, avance operativo `100%`.
+- Aun así aparece en `Fiados` con badge `Cobro en proceso`.
+
+### Evidencia de reportes descargados
+
+- `C:\Users\yerik\Downloads\AgroRankings_2026-05-08.md` muestra a `jose luis` como:
+  - `Top Clientes (Cobrado)` #1 con `$445,51`.
+  - `Fiados por Cliente` #1 con `$271,05` y `2 fiados`.
+- `C:\Users\yerik\Downloads\Estadisticas_YavlGold_2026-05-08.md` muestra a `jose luis` como `Pagado`, pero el resumen global aún contiene `Fiados por cobrar: $491.06`.
+- El mismo informe estadístico lista clientes QA dentro del ranking real:
+  - `QA_MIN_1775009909605 Cliente`
+  - `QA_MIN_1775010011110 Cliente`
+  - `QA Cliente Cartera Viva`
+  - `QA_CTX_1775009602494 Cliente`
+  - `QA_MIN_1775009824180 Cliente`
+- `C:\Users\yerik\Downloads\agro_perfil_global_2026-05-08T12-15-07-288Z.md` reporta `Fiados activos: $491.08`.
+
+### Hipótesis
+
+1. La card de Cartera Viva mezcla progreso operativo por unidades con saldo financiero desde totales agregados; si el saldo financiero usa `pending_total` bruto, puede clasificar como fiado aunque las unidades ya estén cerradas.
+2. `AgroRankings` usa `agro_rank_pending_clients`, que lee `agro_pending` bruto y no descuenta pagos/losses si el registro original no quedó marcado como transferido.
+3. `agro-stats-report.js`, `agro-stats.js`, `agroestadistica.js` y `agroperfil.js` calculan fiados activos desde filas de `agro_pending` filtradas por `transfer_state`, no desde una lectura viva reconciliada contra cobros/pérdidas.
+4. Los registros QA están dentro de la cuenta/dataset usado por reportes. No se deben borrar automáticamente; primero se deben excluir de reportes reales mediante una regla explícita y documentar su presencia.
+
+### Archivos candidatos
+
+- `apps/gold/agro/agro-cartera-viva.js`
+- `apps/gold/agro/agro-cartera-viva-view.js`
+- `apps/gold/agro/agro-cartera-viva-detail.js`
+- `apps/gold/agro/agro-cartera-viva-export.js`
+- `apps/gold/agro/agro.js`
+- `apps/gold/agro/agro-stats-report.js`
+- `apps/gold/agro/agroperfil.js`
+- `apps/gold/agro/agroestadistica.js`
+- `apps/gold/agro/agro-stats.js`
+
+### Plan
+
+1. Centralizar un helper único para saldo vivo y clasificación de Cartera Viva.
+2. Reemplazar duplicaciones locales en UI, detalle, export de cliente y rankings.
+3. Ajustar reportes globales/estadísticos para no sumar como fiado activo un pendiente cubierto por cobros/pérdidas del mismo cliente.
+4. Excluir registros QA claramente marcados por nombre en reportes reales, sin borrar datos.
+5. Mantener historial: los fiados originales pueden aparecer como historial, pero no como deuda viva si el saldo ya cerró.
+6. Validar con `git diff --check` y `pnpm build:gold`.
+
+### Riesgo
+
+- Medio-alto: afecta saldos financieros exportados. Se evita mutación de datos; la corrección se limita a lectura/clasificación/export.
+
+### Criterio de validación
+
+- `jose luis` no debe aparecer en `Fiados` ni en `Fiados por Cliente` cuando su saldo vivo sea cero.
+- El badge `Cobro en proceso` solo puede aparecer con saldo pendiente vivo mayor a `EPSILON`.
+- Los informes no deben incluir clientes QA obvios en rankings reales.
+- `git diff --check` y `pnpm build:gold` deben pasar.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/agro-cartera-viva.js` | Centraliza `CARTERA_VIVA_BALANCE_EPSILON`, `getBuyerLivePendingBalance()`, `getBuyerLiveStatus()`, lectura numérica segura y detección de clientes QA. |
+| `apps/gold/agro/agro-cartera-viva-view.js` | Reusa el helper común para pestañas, badge y saldo visible. `Fiados` queda ligado a saldo vivo real, no a `pending_total` bruto. |
+| `apps/gold/agro/agro-cartera-viva-detail.js` | Reusa el saldo vivo en resumen/detalle para que el estado del cliente no contradiga la card principal. |
+| `apps/gold/agro/agro-cartera-viva-export.js` | Export del cliente usa el mismo saldo vivo para estado y `Falta por cobrar`. |
+| `apps/gold/agro/agro.js` | Rankings reconcilia `Fiados por Cliente` contra Cartera Viva y excluye nombres QA claros en top/clientes pendientes. |
+| `apps/gold/agro/agro-stats-report.js` | Informe estadístico reconcilia fiados con Cartera Viva y excluye clientes QA claros de ingresos/pendientes/pérdidas del reporte real. |
+| `apps/gold/agro/agroestadistica.js` | Perfil global usa saldo pendiente vivo desde Cartera Viva para `Fiados activos` y excluye clientes QA claros de los totales/rankings. |
+
+### Fórmula única
+
+```js
+saldoPendienteActual = Math.max(0, credited_total - paid_total - loss_total - transferred_total);
+```
+
+Con regla:
+
+```js
+pending: saldoPendienteActual > 0.000001
+lost: loss_total > 0.000001 && pending cerrado
+paid: paid_total > 0.000001 && pending cerrado
+```
+
+### Tratamiento de QA
+
+- No se borraron datos.
+- Los nombres claramente QA (`QA_MIN_*`, `QA_CTX_*`, `QA Cliente Cartera Viva`) se excluyen de reportes reales por nombre normalizado que empieza con `QA`, dejando la limpieza de datos para decisión manual posterior.
+
+### Validación técnica
+
+- `git diff --check`: OK.
+- `pnpm build:gold`: OK. Advertencia no bloqueante: Node actual `v25.6.0`; el repo declara engine `20.x`.
+
+---
+
 ## 2026-05-08 — Diagnóstico y plan: Calendario operativo vivo y menos copy
 
 **Estado:** COMPLETADO EN CÓDIGO / QA PRODUCCIÓN PENDIENTE

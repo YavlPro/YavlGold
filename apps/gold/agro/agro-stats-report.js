@@ -5,6 +5,13 @@
  */
 
 import supabase from '../assets/js/config/supabase-config.js';
+import {
+    fetchBuyerPortfolioSummary,
+    getBuyerLivePendingBalance,
+    isAgroQaClientName,
+    isPositiveBuyerPortfolioAmount,
+    normalizeHistorySearchToken
+} from './agro-cartera-viva.js';
 import { getPendingTransferToken } from './agro-unit-totals.js';
 
 // ============================================================
@@ -224,6 +231,64 @@ function resolveBuyerName(row) {
     if (direct) return direct;
     const fromConcept = parseWhoFromIncome(row?.concepto);
     return fromConcept || 'Sin cliente';
+}
+
+function isQaStatsRow(row) {
+    return isAgroQaClientName(resolveBuyerName(row));
+}
+
+function addPortfolioPendingToken(map, token, pending) {
+    const safeToken = normalizeHistorySearchToken(token);
+    if (!safeToken) return;
+    map.set(safeToken, Math.max(Number(map.get(safeToken) || 0), Number(pending || 0)));
+}
+
+function buildPortfolioPendingByBuyerName(portfolioRows) {
+    const pendingByName = new Map();
+    (Array.isArray(portfolioRows) ? portfolioRows : []).forEach((row) => {
+        if (isAgroQaClientName(row?.display_name) || isAgroQaClientName(row?.canonical_name) || isAgroQaClientName(row?.group_key)) return;
+        const pending = getBuyerLivePendingBalance(row);
+        [
+            row?.display_name,
+            row?.canonical_name,
+            row?.group_key
+        ].forEach((token) => addPortfolioPendingToken(pendingByName, token, pending));
+    });
+    return pendingByName;
+}
+
+function reconcilePendingRowsWithPortfolio(pendingRows, portfolioRows) {
+    const currentPendingByName = buildPortfolioPendingByBuyerName(portfolioRows);
+    if (currentPendingByName.size <= 0) {
+        return (Array.isArray(pendingRows) ? pendingRows : []).filter((row) => !isQaStatsRow(row));
+    }
+
+    const consumedByName = new Map();
+    return (Array.isArray(pendingRows) ? pendingRows : [])
+        .filter((row) => !isQaStatsRow(row))
+        .map((row) => {
+            const nameKey = normalizeHistorySearchToken(resolveBuyerName(row));
+            if (!nameKey || !currentPendingByName.has(nameKey)) return row;
+            const currentPending = Number(currentPendingByName.get(nameKey) || 0);
+            if (!isPositiveBuyerPortfolioAmount(currentPending)) return null;
+
+            const consumed = Number(consumedByName.get(nameKey) || 0);
+            const remaining = Math.max(0, currentPending - consumed);
+            if (!isPositiveBuyerPortfolioAmount(remaining)) return null;
+
+            const rowAmount = Math.max(0, Number(resolveAmountUsd(row) || 0));
+            const nextAmount = Math.min(rowAmount, remaining);
+            consumedByName.set(nameKey, consumed + nextAmount);
+            if (!isPositiveBuyerPortfolioAmount(nextAmount)) return null;
+            return {
+                ...row,
+                monto_usd: nextAmount,
+                monto: nextAmount,
+                currency: 'USD',
+                exchange_rate: 1
+            };
+        })
+        .filter(Boolean);
 }
 
 const CROP_STATUS_UI = {
@@ -756,13 +821,20 @@ export async function exportStatsReport() {
         } catch { /* ignore */ }
 
         // Fetch raw rows for per-crop breakdown and buyer ranking
-        const [crops, incomeRows, expenseRows, pendingRows, lossesRows] = await Promise.all([
+        const [crops, rawIncomeRows, expenseRows, rawPendingRows, rawLossesRows, portfolioRows] = await Promise.all([
             fetchCrops(user.id),
             fetchIncome(user.id),
             fetchExpenses(user.id),
             fetchPending(user.id),
-            fetchLosses(user.id)
+            fetchLosses(user.id),
+            fetchBuyerPortfolioSummary(supabase).catch((error) => {
+                console.warn('[StatsReport] portfolio summary error:', error?.message || error);
+                return [];
+            })
         ]);
+        const incomeRows = rawIncomeRows.filter((row) => !isQaStatsRow(row));
+        const pendingRows = reconcilePendingRowsWithPortfolio(rawPendingRows, portfolioRows);
+        const lossesRows = rawLossesRows.filter((row) => !isQaStatsRow(row));
 
         // Keep global totals aligned with the same source used in per-crop tables.
         const perCropBreakdown = buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRows);

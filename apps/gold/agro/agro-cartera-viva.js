@@ -7,6 +7,7 @@ export {
 } from './agro-buyer-identity.js';
 
 export const AGRO_BUYER_PORTFOLIO_RPC = 'agro_buyer_portfolio_summary_v1';
+export const CARTERA_VIVA_BALANCE_EPSILON = 0.000001;
 const BUYER_PORTFOLIO_CROP_SCOPE_TABLES = Object.freeze([
     Object.freeze({ table: 'agro_pending', excludeReverted: true }),
     Object.freeze({ table: 'agro_income', excludeReverted: true }),
@@ -53,6 +54,47 @@ function normalizeBuyerPortfolioBoolean(value) {
         return normalized === 'true' || normalized === 't' || normalized === '1';
     }
     return Boolean(value);
+}
+
+export function readBuyerPortfolioNumber(value) {
+    if (value === null || value === undefined || value === '') return 0;
+    const nextValue = Number(value);
+    return Number.isFinite(nextValue) ? nextValue : 0;
+}
+
+export function isPositiveBuyerPortfolioAmount(value) {
+    return readBuyerPortfolioNumber(value) > CARTERA_VIVA_BALANCE_EPSILON;
+}
+
+export function getBuyerLivePendingBalance(record) {
+    const pendingTotal = readBuyerPortfolioNumber(record?.pending_total);
+    const credited = readBuyerPortfolioNumber(record?.credited_total);
+    const paid = readBuyerPortfolioNumber(record?.paid_total);
+    const loss = readBuyerPortfolioNumber(record?.loss_total);
+    const transferred = readBuyerPortfolioNumber(record?.transferred_total);
+    const derivedBalance = Math.max(0, credited - paid - loss - transferred);
+    const hasLedgerTotals = [credited, paid, loss, transferred].some(isPositiveBuyerPortfolioAmount);
+    const balance = hasLedgerTotals ? derivedBalance : Math.max(0, pendingTotal);
+    return isPositiveBuyerPortfolioAmount(balance) ? balance : 0;
+}
+
+export function getBuyerLiveStatus(record) {
+    const pending = getBuyerLivePendingBalance(record);
+    const paid = readBuyerPortfolioNumber(record?.paid_total);
+    const loss = readBuyerPortfolioNumber(record?.loss_total);
+    const review = readBuyerPortfolioNumber(record?.review_required_total)
+        + readBuyerPortfolioNumber(record?.legacy_unclassified_total);
+
+    if (isPositiveBuyerPortfolioAmount(pending)) return 'pending';
+    if (isPositiveBuyerPortfolioAmount(loss)) return 'lost';
+    if (isPositiveBuyerPortfolioAmount(paid)) return 'paid';
+    if (isPositiveBuyerPortfolioAmount(review)) return 'review';
+    return 'no-record';
+}
+
+export function isAgroQaClientName(value) {
+    const token = normalizeHistorySearchToken(value);
+    return /^qa(?:[_\s-]|$)/.test(token);
 }
 
 export function normalizeBuyerPortfolioSummaryRow(row) {

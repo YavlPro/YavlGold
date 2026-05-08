@@ -1,18 +1,10 @@
 import {
     formatHistoryAbsoluteDayLabel,
-    groupHistoryRowsByDay
+    getBuyerLivePendingBalance,
+    groupHistoryRowsByDay,
+    isPositiveBuyerPortfolioAmount,
+    readBuyerPortfolioNumber
 } from './agro-cartera-viva.js';
-
-const CARTERA_VIVA_EXPORT_EPSILON = 0.000001;
-
-function readPortfolioNumber(value) {
-    const numeric = Number(value);
-    return Number.isFinite(numeric) ? numeric : 0;
-}
-
-function isPositivePortfolioAmount(value) {
-    return readPortfolioNumber(value) > CARTERA_VIVA_EXPORT_EPSILON;
-}
 
 function formatMoney(value) {
     const amount = Number(value);
@@ -32,31 +24,23 @@ function formatPercent(value) {
 }
 
 function getReviewTotal(buyerRow) {
-    return readPortfolioNumber(buyerRow?.review_required_total) + readPortfolioNumber(buyerRow?.legacy_unclassified_total);
+    return readBuyerPortfolioNumber(buyerRow?.review_required_total) + readBuyerPortfolioNumber(buyerRow?.legacy_unclassified_total);
 }
 
 function getOutstandingBalance(buyerRow) {
-    const pendingTotal = readPortfolioNumber(buyerRow?.pending_total);
-    const credited = readPortfolioNumber(buyerRow?.credited_total);
-    const paid = readPortfolioNumber(buyerRow?.paid_total);
-    const loss = readPortfolioNumber(buyerRow?.loss_total);
-    const transferred = readPortfolioNumber(buyerRow?.transferred_total);
-    const derivedBalance = Math.max(0, credited - paid - loss - transferred);
-    const hasLedgerTotals = [credited, paid, loss, transferred].some(isPositivePortfolioAmount);
-    const balance = hasLedgerTotals ? derivedBalance : Math.max(0, pendingTotal);
-    return isPositivePortfolioAmount(balance) ? balance : 0;
+    return getBuyerLivePendingBalance(buyerRow);
 }
 
 function resolveBuyerStatus(buyerRow) {
     const pending = getOutstandingBalance(buyerRow);
-    const paid = readPortfolioNumber(buyerRow?.paid_total);
-    const loss = readPortfolioNumber(buyerRow?.loss_total);
+    const paid = readBuyerPortfolioNumber(buyerRow?.paid_total);
+    const loss = readBuyerPortfolioNumber(buyerRow?.loss_total);
     const review = getReviewTotal(buyerRow);
 
-    if (isPositivePortfolioAmount(pending)) return isPositivePortfolioAmount(paid) ? 'Cobro en curso' : 'Fiado activo';
-    if (isPositivePortfolioAmount(paid) && !isPositivePortfolioAmount(loss)) return 'Pagado';
-    if (isPositivePortfolioAmount(loss)) return 'Pérdida';
-    if (isPositivePortfolioAmount(review)) return 'Por revisar';
+    if (isPositiveBuyerPortfolioAmount(pending)) return isPositiveBuyerPortfolioAmount(paid) ? 'Cobro en curso' : 'Fiado activo';
+    if (isPositiveBuyerPortfolioAmount(paid) && !isPositiveBuyerPortfolioAmount(loss)) return 'Pagado';
+    if (isPositiveBuyerPortfolioAmount(loss)) return 'Pérdida';
+    if (isPositiveBuyerPortfolioAmount(review)) return 'Por revisar';
     return 'Seguimiento';
 }
 
