@@ -21,6 +21,13 @@ const REPORT_CATEGORIES = Object.freeze([
                 description: 'Exporta el informe estadístico oficial de cultivos, clientes y operación.',
                 status: 'available',
                 action: 'export-global-stats'
+            },
+            {
+                id: 'perfil-global-agro',
+                name: 'Informe Global Agro',
+                description: 'Exporta el perfil global del agricultor con resumen de cultivos, totales y clientes principales.',
+                status: 'available',
+                action: 'export-global-agro'
             }
         ])
     },
@@ -267,9 +274,22 @@ async function exportGlobalStats(report, category) {
     });
 }
 
+async function exportGlobalAgro(report, category) {
+    if (typeof window !== 'undefined' && typeof window.exportAgroGlobalMd === 'function') {
+        window.exportAgroGlobalMd();
+        return;
+    }
+    downloadHonestReport({
+        report,
+        category,
+        reason: 'El módulo de Perfil Agricultor no está cargado en esta sesión.'
+    });
+}
+
 const EXPORT_ACTIONS = Object.freeze({
     'export-rankings': exportRankings,
-    'export-global-stats': exportGlobalStats
+    'export-global-stats': exportGlobalStats,
+    'export-global-agro': exportGlobalAgro
 });
 
 async function runReportExport(reportId) {

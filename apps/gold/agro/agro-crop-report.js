@@ -669,12 +669,35 @@ function buildTransferTable(items, historyMode = false) {
  * @param {{ skipHistoryConfirmation?: boolean }} [opts]
  */
 export async function exportCropReport(cropId, opts = {}) {
-    if (!cropId) { alert('No se seleccionó un cultivo.'); return; }
+    if (!cropId) {
+        if (typeof window.showAgroConfirmDialog === 'function') {
+            await window.showAgroConfirmDialog({
+                title: 'Sin cultivo seleccionado',
+                message: 'No se seleccionó un cultivo para exportar el reporte.',
+                detail: 'Selecciona un cultivo primero y vuelve a intentarlo.',
+                iconClass: 'fa-solid fa-triangle-exclamation',
+                confirmText: 'Entendido',
+                cancelText: ''
+            });
+        }
+        return;
+    }
     const skipHistoryConfirmation = !!opts.skipHistoryConfirmation;
 
     try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) { alert('Sesión no válida.'); return; }
+        if (!user) {
+            if (typeof window.showAgroConfirmDialog === 'function') {
+                await window.showAgroConfirmDialog({
+                    title: 'Sesión no válida',
+                    message: 'No se pudo verificar tu sesión. Recarga la página e intenta de nuevo.',
+                    iconClass: 'fa-solid fa-triangle-exclamation',
+                    confirmText: 'Entendido',
+                    cancelText: ''
+                });
+            }
+            return;
+        }
 
         const normalizedCropId = normalizeCropId(cropId) || String(cropId);
         const existsMap = await resolveCropExistenceMap(user.id, [normalizedCropId], { failOpen: false });
@@ -698,19 +721,16 @@ export async function exportCropReport(cropId, opts = {}) {
         } else {
             console.warn('[CropReport] Crop not found in agro_crops. cropId:', normalizedCropId);
             if (!skipHistoryConfirmation) {
-                // ── Guardia anti-accidente ────────────────────────────────────────
-                // Este crop_id no existe en agro_crops. Puede ser:
-                //   A) un ciclo eliminado con movimientos históricos (soft-deleted)
-                //   B) un ciclo de QA/pruebas borrado definitivamente
-                // Pedimos confirmación explícita antes de exportar en Modo Historial.
-                const confirmed = window.confirm(
-                    `⚠️ Modo Historial\n\n` +
-                    `El cultivo asociado a este botón ya no existe en la base de datos.\n\n` +
-                    `crop_id: ${normalizedCropId}\n\n` +
-                    `¿Deseas exportar el expediente histórico del ciclo?\n` +
-                    `(Incluirá movimientos eliminados marcados como [ELIMINADO] o [TRANSFERIDO])\n\n` +
-                    `Pulsa Cancelar si esto no corresponde al cultivo que quieres exportar.`
-                );
+                const confirmed = typeof window.showAgroConfirmDialog === 'function'
+                    ? await window.showAgroConfirmDialog({
+                        title: 'Modo Historial',
+                        message: 'El cultivo asociado ya no existe en la base de datos. ¿Deseas exportar el expediente histórico del ciclo?',
+                        detail: `crop_id: ${normalizedCropId}\nIncluirá movimientos eliminados marcados como [ELIMINADO] o [TRANSFERIDO].`,
+                        iconClass: 'fa-solid fa-clock-rotate-left',
+                        confirmText: 'Exportar historial',
+                        cancelText: 'Cancelar'
+                    })
+                    : window.confirm('¿Deseas exportar el expediente histórico del ciclo? (El cultivo ya no existe en la base de datos.)');
                 if (!confirmed) return;
             }
             crop = { id: normalizedCropId, name: 'Ciclo eliminado' };
@@ -923,6 +943,15 @@ export async function exportCropReport(cropId, opts = {}) {
         console.info(`[CropReport] Exported report for "${exportedCropLabel}" (${income.length} income, ${expenses.length} expenses, ${pending.length} pending, ${losses.length} losses, ${transfers.length} transfers)`);
     } catch (err) {
         console.error('[CropReport] Export error:', err);
-        alert('Error al exportar informe: ' + (err.message || err));
+        if (typeof window.showAgroConfirmDialog === 'function') {
+            await window.showAgroConfirmDialog({
+                title: 'Error de exportación',
+                message: 'No se pudo generar el informe del cultivo.',
+                detail: err?.message || 'Error desconocido',
+                iconClass: 'fa-solid fa-triangle-exclamation',
+                confirmText: 'Entendido',
+                cancelText: ''
+            });
+        }
     }
 }

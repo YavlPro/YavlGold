@@ -1802,3 +1802,46 @@ ormalizeMd, mdCell, getDateStamp, ormatExportDate, slugify, ormatMoneyUsd, mar
 ### Commit sugerido
 
 `fix(agro): limit reports center to general official reports`
+---
+
+## Sesion 2026-05-07 (3) — Ajuste semantico final: Centro de Reportes alineado con exportadores oficiales reales
+
+### Causa
+
+El usuario confirmo desde produccion que el boton "Reporte Detallado por Cultivo (MD)" en la vista de Estadisticas NO genera un reporte detallado por cultivo. Genera gro_perfil_global_*.md con titulo "Perfil Agricultor · Informe Global".
+
+El reporte detallado por cultivo real vive en cada card/ciclo con el boton "Informe del Cultivo".
+
+### Decision final
+
+1. Renombrar el boton en Estadisticas: de "Reporte Detallado por Cultivo (MD)" a "Informe Estadistico Global (MD)".
+2. El Centro de Reportes muestra 3 reportes oficiales generales:
+   - Informe estadistico global (xportStatsReport())
+   - Informe Global Agro (window.exportAgroGlobalMd())
+   - Rankings de clientes (Markdown) (window.exportOpsRankingsMarkdown())
+3. Nota explicativa: "Los reportes detallados por cultivo se acceden desde cada card/ciclo."
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| gro-reports-center.js | feat | Agregado reporte perfil-global-agro / Informe Global Agro con action xport-global-agro |
+| gro-reports-center.js | feat | Agregada funcion xportGlobalAgro() que llama window.exportAgroGlobalMd() con fallback honesto |
+| gro-reports-center.js | feat | Agregado xport-global-agro en EXPORT_ACTIONS |
+| index.html | fix | Renombrado boton de "Reporte Detallado por Cultivo (MD)" a "Informe Estadistico Global (MD)" |
+
+### Reportes oficiales en Centro (3)
+
+1. Informe estadistico global → xportStatsReport()
+2. Informe Global Agro → window.exportAgroGlobalMd()
+3. Rankings de clientes → window.exportOpsRankingsMarkdown()
+
+### Verificacion tecnica
+
+- git diff --check: PASS (0 warnings)
+- pnpm build:gold: PASS (4.56s)
+- No push.
+
+### Commit sugerido
+
+`fix(agro): align reports center with official global exports`
