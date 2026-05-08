@@ -15,70 +15,35 @@ const REPORT_CATEGORIES = Object.freeze([
     {
         id: 'cultivos',
         title: 'Cultivos y ciclos',
-        copy: 'Reportes de ciclos productivos y lectura de cultivos.',
+        copy: 'Reportes de ciclos productivos disponibles como exportación oficial.',
         reports: Object.freeze([
             {
                 id: 'crop-selected',
-                name: 'Reporte de cultivo seleccionado',
-                description: 'Exporta el informe Markdown real del ciclo seleccionado.',
+                name: 'Reporte detallado por cultivo',
+                description: 'Informe Markdown del ciclo seleccionado. Selecciona un cultivo antes de exportar.',
                 status: 'available',
                 action: 'export-selected-crop'
-            }
-        ])
-    },
-    {
-        id: 'operacion-comercial',
-        title: 'Operación Comercial',
-        copy: 'Carteras, compras e información comercial exportable.',
-        reports: Object.freeze([
-            {
-                id: 'cartera-viva',
-                name: 'Reporte de Cartera Viva',
-                description: 'Exporta el informe Markdown del cliente desde Cartera Viva.',
-                status: 'available',
-                action: 'export-cartera-viva'
             },
-            {
-                id: 'cartera-operativa',
-                name: 'Reporte de Cartera Operativa',
-                description: 'Usa el exportador Markdown original del módulo cuando hay ciclos visibles.',
-                status: 'available',
-                action: 'export-operational-wallet'
-            },
-            {
-                id: 'mi-carrito',
-                name: 'Reporte de Mi Carrito',
-                description: 'Exporta el carrito activo en formato Markdown.',
-                status: 'available',
-                action: 'export-cart'
-            },
-            {
-                id: 'rankings-clientes',
-                name: 'Reporte de rankings de clientes',
-                description: 'Exporta los rankings de clientes desde Ciclos Operativos.',
-                status: 'available',
-                action: 'export-rankings'
-            }
-        ])
-    },
-    {
-        id: 'estadisticas',
-        title: 'Estadísticas',
-        copy: 'Informes consolidados y lecturas financieras disponibles.',
-        reports: Object.freeze([
             {
                 id: 'estadisticas-globales',
                 name: 'Informe estadístico global',
                 description: 'Exporta estadísticas globales de cultivos, clientes y operación.',
                 status: 'available',
                 action: 'export-global-stats'
-            },
+            }
+        ])
+    },
+    {
+        id: 'rankings',
+        title: 'Rankings',
+        copy: 'Exportación oficial de rankings de clientes y cultivos.',
+        reports: Object.freeze([
             {
-                id: 'perfil-global',
-                name: 'Informe global de Agro',
-                description: 'Usa el informe Markdown global original del perfil.',
+                id: 'rankings-clientes',
+                name: 'Rankings de clientes (Markdown)',
+                description: 'Exporta los rankings de clientes desde Ciclos Operativos.',
                 status: 'available',
-                action: 'export-profile-global'
+                action: 'export-rankings'
             }
         ])
     }
@@ -313,7 +278,7 @@ function renderOverview(categories) {
                     <dd>${categories.length}</dd>
                 </div>
             </dl>
-            <p class="agro-reports-overview__note">Solo aparecen reportes con fuente lista para exportar en esta sesión.</p>
+            <p class="agro-reports-overview__note">Solo aparecen reportes oficiales que ya existen como exportación visible en Agro.</p>
         </section>
     `;
 }
@@ -393,85 +358,6 @@ async function exportSelectedCrop(report, category) {
     await mod.exportCropReport(cropId);
 }
 
-async function exportCarteraViva(report, category) {
-    const carteraState = typeof window !== 'undefined'
-        ? window._agroBuyerPortfolioState?.getState?.()
-        : null;
-    if (!carteraState || typeof carteraState !== 'object' || !carteraState.selectedBuyerRow) {
-        downloadReport({
-            report,
-            category,
-            status: 'sin datos cargados',
-            summary: [{ label: 'Fuente', value: 'Cartera Viva' }, { label: 'Estado', value: 'Ningún cliente seleccionado' }],
-            data: 'Selecciona un cliente en Cartera Viva para exportar su informe.',
-            observations: ['El exportador original requiere un cliente seleccionado en Cartera Viva.'],
-            nextData: 'Cartera Viva con un cliente seleccionado.'
-        });
-        return;
-    }
-    try {
-        const mod = await import('./agro-cartera-viva-export.js');
-        if (typeof mod.downloadBuyerPortfolioExport === 'function') {
-            await mod.downloadBuyerPortfolioExport({
-                buyerRow: carteraState.selectedBuyerRow,
-                historyRows: carteraState.selectedBuyerHistory || []
-            });
-            return;
-        }
-        const markdown = mod.buildBuyerPortfolioExportMarkdown({
-            buyerRow: carteraState.selectedBuyerRow,
-            historyRows: carteraState.selectedBuyerHistory || []
-        });
-        const filename = mod.buildBuyerPortfolioExportFilename(carteraState.selectedBuyerRow);
-        downloadMarkdown(markdown, filename);
-    } catch (err) {
-        console.warn('[AgroReportsCenter] Cartera Viva export fallback:', err);
-        downloadReport({
-            report,
-            category,
-            status: 'fuente no disponible en esta sesión',
-            summary: [{ label: 'Fuente', value: 'Cartera Viva' }],
-            data: 'No se pudo cargar el exportador de Cartera Viva.',
-            observations: ['No se inventaron datos.'],
-            nextData: 'Módulo de Cartera Viva cargado con cliente seleccionado.'
-        });
-    }
-}
-
-async function exportOperationalWallet(report, category) {
-    const api = typeof window !== 'undefined' ? window.YGAgroOperationalCycles : null;
-    if (typeof api?.downloadMarkdown === 'function') {
-        await api.downloadMarkdown();
-        return;
-    }
-    exportHonestUnavailable(report, category, 'Cartera Operativa cargada con exportación Markdown disponible.');
-}
-
-async function exportCart(report, category) {
-    if (typeof window !== 'undefined' && typeof window.exportActiveCartMD === 'function') {
-        window.exportActiveCartMD();
-        return;
-    }
-    try {
-        const mod = await import('./agro-cart.js');
-        if (typeof mod.exportActiveCartMD === 'function') {
-            await mod.exportActiveCartMD();
-            return;
-        }
-    } catch (err) {
-        console.warn('[AgroReportsCenter] Cart export fallback:', err);
-    }
-    downloadReport({
-        report,
-        category,
-        status: 'sin datos cargados',
-        summary: [{ label: 'Fuente', value: 'Mi Carrito' }],
-        data: 'El módulo de Carrito no está disponible en esta sesión.',
-        observations: ['No se inventaron datos.'],
-        nextData: 'Mi Carrito cargado con un carrito activo.'
-    });
-}
-
 async function exportRankings(report, category) {
     if (typeof window !== 'undefined' && typeof window.exportOpsRankingsMarkdown === 'function') {
         window.exportOpsRankingsMarkdown();
@@ -497,22 +383,10 @@ async function exportGlobalStats(report, category) {
     exportHonestUnavailable(report, category, 'Exportador de estadísticas globales disponible.');
 }
 
-async function exportProfileGlobal(report, category) {
-    if (typeof window !== 'undefined' && typeof window.exportAgroGlobalMd === 'function') {
-        await window.exportAgroGlobalMd();
-        return;
-    }
-    exportHonestUnavailable(report, category, 'Informe global del perfil cargado en la sesión.');
-}
-
 const EXPORT_ACTIONS = Object.freeze({
     'export-selected-crop': exportSelectedCrop,
-    'export-cartera-viva': exportCarteraViva,
-    'export-operational-wallet': exportOperationalWallet,
-    'export-cart': exportCart,
     'export-rankings': exportRankings,
-    'export-global-stats': exportGlobalStats,
-    'export-profile-global': exportProfileGlobal
+    'export-global-stats': exportGlobalStats
 });
 
 async function runReportExport(reportId) {
