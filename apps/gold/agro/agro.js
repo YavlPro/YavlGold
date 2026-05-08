@@ -10232,7 +10232,7 @@ function createProfitMetaItem(incomeTotal, costTotal, pendingTotal = 0, missingR
     const valueEl = item.querySelector('.meta-value');
     markMoneyNode(valueEl, valueEl?.textContent || '');
     if (valueEl) {
-        valueEl.style.color = net >= 0 ? 'var(--gold-light)' : 'var(--danger)';
+        valueEl.style.color = net > 0 && pending <= 0 ? 'var(--gold-light)' : 'var(--danger)';
         const breakdown = document.createElement('span');
         breakdown.className = 'crop-meta-subline';
         const paidLabel = document.createElement('span');
@@ -10248,14 +10248,14 @@ function createProfitMetaItem(incomeTotal, costTotal, pendingTotal = 0, missingR
         breakdown.append(paidLabel, paidValue, costLabel, costValue);
         const pendingLine = document.createElement('span');
         pendingLine.className = 'crop-meta-subline';
-        pendingLine.style.color = potential >= 0 ? 'var(--gold-light)' : 'var(--danger)';
+        pendingLine.style.color = pending > 0 ? 'var(--danger)' : 'var(--text-muted)';
         const pendingLabel = document.createElement('span');
         pendingLabel.textContent = 'Fiados: ';
         const pendingValue = document.createElement('span');
         pendingValue.textContent = formatCurrency(pending);
         markMoneyNode(pendingValue, pendingValue.textContent);
         const potentialLabel = document.createElement('span');
-        potentialLabel.textContent = ' | Potencial: ';
+        potentialLabel.textContent = pending > 0 ? ' | Si cobra todo: ' : ' | Potencial: ';
         const potentialValue = document.createElement('span');
         potentialValue.textContent = formatCurrency(potential);
         markMoneyNode(potentialValue, potentialValue.textContent);

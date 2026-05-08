@@ -38,6 +38,68 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-27__2026-05-05.md`
 
 ---
 
+## 2026-05-08 — Diagnóstico y plan: rentabilidad real vs fiados pendientes en Mis Cultivos
+
+**Estado:** COMPLETADO EN CÓDIGO / QA PRODUCCIÓN PENDIENTE
+
+### Diagnóstico inicial
+
+- El bug pertenece a Ciclos de cultivos / Mis cultivos, no a Reports Center.
+- `apps/gold/agro/agro.js` arma los datos de cards activas en `buildActiveCycleCardsData()`.
+- La rentabilidad real ya se calcula como `net = incomeTotal - totalCosts`, donde `totalCosts = baseInvestment + expenseInvestment + lossesTotal`.
+- El valor visible como `Potencial Neto` se calcula como `potential = net + pendingTotal`; si hay fiados abiertos, puede quedar positivo aunque no haya cobro real.
+- `apps/gold/agro/agrociclos.js` renderiza ese potencial con clase `success` cuando `potencialNeto >= 0`, lo que pinta verde una ganancia dependiente de cartera pendiente.
+- Caso observado: costos USD 106, pagados USD 0, fiados USD 366 => rentabilidad real -USD 106; potencial USD 260 no debe comunicarse como ganancia lograda.
+
+### Plan breve
+
+1. Mantener `rentabilidad` como resultado real cobrado: pagados menos inversión, gastos y pérdidas.
+2. Usar `balanceActual = rentabilidad - fiadosPendientes` como lectura visible principal.
+3. Mostrar copy humano: `Vas perdiendo X`, `Vas ganando X` o `Punto de equilibrio`.
+4. Si se conserva el potencial optimista, dejarlo como dato secundario `Si cobra todo`, sin verde ni protagonismo.
+5. Verificar Caso A, B y C por inspección de fórmula y salida renderizada; ejecutar `git diff --check` y `pnpm build:gold`.
+
+### Archivos candidatos a revisar
+
+- `apps/gold/agro/agro.js`
+- `apps/gold/agro/agrociclos.js`
+- `apps/gold/agro/agrociclos.css`
+- `apps/gold/agro/agro-stats.js`
+- `apps/gold/agro/agro-unit-totals.js`
+- `apps/gold/agro/agro-crop-report.js`
+
+### Riesgo
+
+- Medio: cambio visible financiero en cards activas/finalizadas. El riesgo principal es degradar el color/etiqueta sin cambiar datos persistidos.
+
+### Criterio de validación
+
+- Con costos USD 106, pagados USD 0 y fiados USD 366: el protagonista financiero debe decir `Vas perdiendo USD 472` en rojo; el USD 260, si aparece, debe ser `Si cobra todo` como dato secundario.
+- Con costos USD 106, pagados USD 366 y fiados USD 0: el protagonista financiero debe decir `Vas ganando USD 260` en verde.
+- Con pago parcial y fiado pendiente: no debe aparecer ganancia real verde; cartera viva sigue abierta.
+- `git diff --check` y `pnpm build:gold` deben pasar.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/agrociclos.js` | El protagonista financiero ahora responde en lenguaje humano con `Vas perdiendo`, `Vas ganando` o `Punto de equilibrio`, usando `balanceActual = rentabilidad - fiadosPendientes`. |
+| `apps/gold/agro/agrociclos.css` | Conservado éxito/error y agregado neutral para punto de equilibrio; se eliminó el estado ámbar como protagonista financiero. |
+| `apps/gold/agro/agro.js` | Ajustado el meta legacy para que fiados pendientes mantengan lectura roja y el potencial se nombre `Si cobra todo`. |
+
+### Validación ejecutada
+
+- `git diff --check`: OK. Aviso no bloqueante: normalización CRLF/LF en `AGENT_REPORT_ACTIVE.md`.
+- `pnpm build:gold`: OK. `agent-guard`, `agent-report-check`, Vite, `check-llms` y `check-dist-utf8` pasaron. Aviso no bloqueante: el entorno usa Node `v25.6.0` aunque el proyecto declara `20.x`.
+
+### QA funcional pendiente recomendada
+
+1. En producción, abrir `yavlgold.com/agro#view=ciclos&subview=mis-cultivos`.
+2. Revisar un cultivo con fiados pendientes: debe decir `Vas perdiendo ...` en rojo si el balance actual es negativo, sin ganancia real verde ni ámbar basada en deuda abierta.
+3. Registrar pago parcial controlado si aplica y confirmar que baja `Fiado`, sube `Pagado` y el color verde solo aparece cuando no quedan fiados/pérdidas y el resultado real es positivo.
+
+---
+
 ## 2026-05-05 — Diagnóstico y plan: separar flujos de cliente en Cartera Viva
 
 **Estado:** COMPLETADO EN CÓDIGO / QA MANUAL PENDIENTE POR USUARIO

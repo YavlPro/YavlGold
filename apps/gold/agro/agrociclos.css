@@ -441,6 +441,10 @@
   color: var(--color-success);
 }
 
+.agro-cycles .profit-value.neutral {
+  color: var(--text-secondary);
+}
+
 .agro-cycles .profit-value.error {
   color: var(--color-error);
 }

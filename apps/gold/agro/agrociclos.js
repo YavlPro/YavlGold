@@ -144,7 +144,10 @@ function buildCycleMoneyAttrs(value, displayValue, options = {}) {
   const trendAttr = options.trend
     ? ` data-cycle-money-trend="${escapeAttr(options.trend)}"`
     : '';
-  return ` data-money="1" data-raw-money="${escapeAttr(displayValue)}"${rawAttr}${signedAttr}${trendAttr}`;
+  const phraseAttr = options.phrase
+    ? ` data-cycle-money-phrase="${escapeAttr(options.phrase)}"`
+    : '';
+  return ` data-money="1" data-raw-money="${escapeAttr(displayValue)}"${rawAttr}${signedAttr}${trendAttr}${phraseAttr}`;
 }
 
 function buildCurrencyToggleMarkup() {
@@ -168,6 +171,13 @@ function refreshCurrencyToggle(toggle) {
 function refreshCycleMoneyNode(node) {
   const rawValue = Number(node?.dataset?.cycleMoneyUsd);
   if (!Number.isFinite(rawValue)) return;
+
+  const phrase = String(node.dataset.cycleMoneyPhrase || '').trim();
+  if (phrase === 'balance-actual') {
+    node.textContent = formatBalanceActualText(rawValue);
+    node.dataset.rawMoney = node.textContent;
+    return;
+  }
 
   const signed = node.dataset.cycleMoneySigned === '1';
   const displayValue = signed ? formatSignedUsd(rawValue) : formatUsdCompact(rawValue);
@@ -354,21 +364,50 @@ function renderBreakdownSection(options = {}) {
   `;
 }
 
+function hasFinancialExposure(pendingAmount, lossesAmount) {
+  return toNumber(pendingAmount, 0) > 0 || toNumber(lossesAmount, 0) > 0;
+}
+
+function resolveRealProfitTone(realNet, pendingAmount, lossesAmount) {
+  const net = toNumber(realNet, 0);
+  if (net > 0 && !hasFinancialExposure(pendingAmount, lossesAmount)) return 'success';
+  return 'error';
+}
+
+function resolveBalanceActualTone(value) {
+  const balance = toNumber(value, 0);
+  if (balance > 0) return 'success';
+  if (balance < 0) return 'error';
+  return 'neutral';
+}
+
+function formatBalanceActualText(value) {
+  const balance = toNumber(value, 0);
+  if (balance > 0) return `Vas ganando ${formatUsdCompact(Math.abs(balance))}`;
+  if (balance < 0) return `Vas perdiendo ${formatUsdCompact(Math.abs(balance))}`;
+  return 'Punto de equilibrio';
+}
+
 function renderCard(ciclo, index = 0) {
   const mode = String(ciclo?.mode || 'active').trim().toLowerCase() === 'finished'
     ? 'finished'
     : 'active';
   const porcentaje = mode === 'finished' ? 100 : resolveProgress(ciclo);
-  const esPositivo = toNumber(ciclo?.rentabilidad, 0) >= 0;
-  const netoPositivo = toNumber(ciclo?.potencialNeto, 0) >= 0;
+  const rentabilidadUsd = toNumber(ciclo?.rentabilidad, 0);
+  const potencialNetoUsd = toNumber(ciclo?.potencialNeto, rentabilidadUsd);
+  const fiadosUsd = toNumber(ciclo?.fiadosUsd, 0);
+  const perdidasUsd = toNumber(ciclo?.perdidasUsd, 0);
+  const hasFiadosPendientes = fiadosUsd > 0;
+  const balanceActualUsd = rentabilidadUsd - fiadosUsd;
+  const balanceActualText = formatBalanceActualText(balanceActualUsd);
+  const rentabilidadTone = resolveRealProfitTone(rentabilidadUsd, fiadosUsd, perdidasUsd);
+  const balanceActualTone = resolveBalanceActualTone(balanceActualUsd);
   const statusClass = statusClassFor(ciclo?.estado);
   const rentabilidadText = formatSignedUsd(ciclo?.rentabilidad);
-  const potencialText = formatSignedUsd(ciclo?.potencialNeto);
   const inversionText = formatUsdCompact(ciclo?.inversionUSD);
-  const trendIcon = esPositivo ? '↗' : '↘';
-  const profitLabel = mode === 'finished'
-    ? (ciclo?.estado === 'perdido' ? 'Pérdida Total' : 'Rentabilidad Final')
-    : 'Potencial Neto';
+  const potentialIfCollectedText = formatSignedUsd(potencialNetoUsd);
+  const trendIcon = rentabilidadTone === 'success' ? '↗' : '↘';
+  const profitLabel = 'Ahora mismo';
   const currencyToggleMarkup = buildCurrencyToggleMarkup();
   const badges = resolveAllPortfolioBadges(ciclo);
   const isLost = ciclo?.estado === 'perdido';
@@ -408,16 +447,15 @@ function renderCard(ciclo, index = 0) {
   const operationalPendingUsd = toNumber(ciclo?.operationalPendingUsd, 0);
   const pagadosUsd = toNumber(ciclo?.pagadosUsd, 0);
   const costosUsd = toNumber(ciclo?.costosUsd, 0);
-  const fiadosUsd = toNumber(ciclo?.fiadosUsd, 0);
-  const perdidasUsd = toNumber(ciclo?.perdidasUsd, 0);
   const carteraVivaTotal = baseInvestmentUsd + directGastosUsd + perdidasUsd;
   const carteraVivaRows = [
     renderBreakdownUsdRow('Base inversión multimoneda', baseInvestmentUsd, desgloseBase),
     renderBreakdownUsdRow('Gastos directos del cultivo', directGastosUsd, desgloseGastosDirectos),
     renderBreakdownUsdRow('Pagados cartera viva', pagadosUsd, desglosePagados),
     renderBreakdownUsdRow('Fiados cartera viva', fiadosUsd, desgloseFiados),
+    hasFiadosPendientes ? renderBreakdownUsdRow('Si cobra todo', potencialNetoUsd, potentialIfCollectedText) : '',
     renderBreakdownUsdRow('Pérdidas cartera viva', perdidasUsd, desglosePerdidasCarteraViva)
-  ];
+  ].filter(Boolean);
   if (globalBreakdownMarkup) {
     carteraVivaRows.push(globalBreakdownMarkup);
   }
@@ -508,13 +546,13 @@ function renderCard(ciclo, index = 0) {
         </div>
         <div class="data-cell">
           <span class="data-label">Rentabilidad</span>
-          <span class="data-value ${esPositivo ? 'success' : 'error'}"${buildCycleMoneyAttrs(ciclo?.rentabilidad, rentabilidadText, { signed: true, trend: trendIcon })}>${trendIcon} ${escapeHtml(rentabilidadText)}</span>
+          <span class="data-value ${rentabilidadTone}"${buildCycleMoneyAttrs(ciclo?.rentabilidad, rentabilidadText, { signed: true, trend: trendIcon })}>${trendIcon} ${escapeHtml(rentabilidadText)}</span>
         </div>
       </div>
 
       <div class="profit-row">
         <span class="profit-label">${profitLabel}</span>
-        <span class="profit-value ${netoPositivo ? 'success' : 'error'}"${buildCycleMoneyAttrs(ciclo?.potencialNeto, potencialText, { signed: true })}>${escapeHtml(potencialText)}</span>
+        <span class="profit-value ${balanceActualTone}"${buildCycleMoneyAttrs(balanceActualUsd, balanceActualText, { phrase: 'balance-actual' })}>${escapeHtml(balanceActualText)}</span>
       </div>
 
       <details class="desglose">
