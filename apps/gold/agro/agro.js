@@ -5926,6 +5926,8 @@ function showAgroConfirmDialog(options = {}) {
     });
 }
 
+window.showAgroConfirmDialog = showAgroConfirmDialog;
+
 // ============================================================
 // V9.5.1: FACTURERO CRUD HANDLERS
 // ============================================================
