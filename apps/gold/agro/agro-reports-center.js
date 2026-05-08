@@ -172,9 +172,26 @@ function downloadReport({ report, category, status, summary, data, observations,
 function getSelectedCropId() {
     if (typeof window === 'undefined') return '';
     if (typeof window.getSelectedCropId === 'function') {
-        return String(window.getSelectedCropId() || '').trim();
+        const fromGetter = String(window.getSelectedCropId() || '').trim();
+        if (fromGetter) return fromGetter;
     }
-    return String(window.YG_AGRO_SELECTED_CROP_ID || '').trim();
+    if (window.YG_AGRO_SELECTED_CROP_ID) {
+        const fromGlobal = String(window.YG_AGRO_SELECTED_CROP_ID).trim();
+        if (fromGlobal) return fromGlobal;
+    }
+    try {
+        const fromV1 = localStorage.getItem('YG_AGRO_SELECTED_CROP_V1');
+        if (fromV1) return String(fromV1).trim();
+        const fromLegacy = localStorage.getItem('selectedCropId');
+        if (fromLegacy) return String(fromLegacy).trim();
+    } catch (_) { /* ignore storage errors */ }
+    const fromHash = new URLSearchParams(location.hash.split('?')[1] || '');
+    const cropParam = fromHash.get('crop_id') || fromHash.get('crop');
+    if (cropParam) return String(cropParam).trim();
+    const fromSearch = new URLSearchParams(location.search || '');
+    const searchCrop = fromSearch.get('crop_id') || fromSearch.get('crop');
+    if (searchCrop) return String(searchCrop).trim();
+    return '';
 }
 
 function resolveReportStatus(report) {
