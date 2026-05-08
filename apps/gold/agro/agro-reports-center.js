@@ -1,7 +1,5 @@
 const ROOT_SELECTOR = '#agro-reports-center-root';
 const VIEW_CHANGED_EVENT = 'agro:shell:view-changed';
-const CROP_CHANGED_EVENT = 'agro:crop:changed';
-const CROPS_READY_EVENT = 'AGRO_CROPS_READY';
 const DATA_REFRESH_EVENT = 'data-refresh';
 
 const REPORT_STATUS = Object.freeze({
@@ -13,21 +11,14 @@ const REPORT_STATUS = Object.freeze({
 
 const REPORT_CATEGORIES = Object.freeze([
     {
-        id: 'cultivos',
-        title: 'Cultivos y ciclos',
-        copy: 'Reportes de ciclos productivos disponibles como exportación oficial.',
+        id: 'estadisticas',
+        title: 'Estadísticas',
+        copy: 'Reportes generales de operación y ciclos productivos.',
         reports: Object.freeze([
-            {
-                id: 'crop-selected',
-                name: 'Reporte detallado por cultivo',
-                description: 'Informe Markdown del ciclo seleccionado. Selecciona un cultivo antes de exportar.',
-                status: 'available',
-                action: 'export-selected-crop'
-            },
             {
                 id: 'estadisticas-globales',
                 name: 'Informe estadístico global',
-                description: 'Exporta estadísticas globales de cultivos, clientes y operación.',
+                description: 'Exporta el informe estadístico oficial de cultivos, clientes y operación.',
                 status: 'available',
                 action: 'export-global-stats'
             }
@@ -49,6 +40,8 @@ const REPORT_CATEGORIES = Object.freeze([
     }
 ]);
 
+const CROP_REPORT_NOTE = 'Los reportes detallados por cultivo se acceden directamente desde cada ciclo de cultivo creado. Abre Mis cultivos y usa el botón "Informe del Cultivo" en la tarjeta correspondiente.';
+
 const state = {
     root: null,
     feedback: '',
@@ -63,135 +56,6 @@ function escapeHtml(value) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
-}
-
-function normalizeMd(value) {
-    return String(value ?? '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
-}
-
-function mdCell(value) {
-    const safe = normalizeMd(value);
-    return safe ? safe.replace(/\|/g, '·').replace(/\n/g, ' ') : '-';
-}
-
-function getDateStamp(date = new Date()) {
-    return date.toISOString().slice(0, 10);
-}
-
-function formatExportDate(date = new Date()) {
-    return date.toLocaleString('es-VE', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-}
-
-function slugify(value) {
-    return String(value || 'reporte')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '')
-        .slice(0, 72) || 'reporte';
-}
-
-function formatMoneyUsd(value) {
-    const amount = Number(value || 0);
-    if (!Number.isFinite(amount)) return 'USD 0.00';
-    return `USD ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
-function markdownTable(headers, rows) {
-    const safeHeaders = headers.map(mdCell);
-    const safeRows = Array.isArray(rows) ? rows : [];
-    if (!safeRows.length) return 'Sin datos cargados.\n';
-
-    const headerLine = `| ${safeHeaders.join(' | ')} |`;
-    const separatorLine = `| ${safeHeaders.map(() => '---').join(' | ')} |`;
-    const rowLines = safeRows.map((row) => `| ${headers.map((header) => mdCell(row?.[header])).join(' | ')} |`);
-    return `${headerLine}\n${separatorLine}\n${rowLines.join('\n')}\n`;
-}
-
-function buildReportMarkdown({
-    report,
-    category,
-    status = 'sin datos cargados',
-    summary = [],
-    data = '',
-    observations = [],
-    nextData = ''
-} = {}) {
-    const title = report?.name || 'Reporte';
-    const categoryTitle = category?.title || 'Agro';
-    const now = new Date();
-    const summaryRows = Array.isArray(summary) ? summary : [];
-    const observationRows = [
-        'Reporte generado desde Centro de Reportes.',
-        ...((Array.isArray(observations) ? observations : []).filter(Boolean))
-    ];
-
-    let md = `# YavlGold Agro - ${normalizeMd(title)}\n\n`;
-    md += `Fecha: ${formatExportDate(now)}\n`;
-    md += `Categoría: ${normalizeMd(categoryTitle)}\n`;
-    md += `Estado: ${normalizeMd(status)}\n\n`;
-    md += `## Resumen\n\n`;
-    md += summaryRows.length
-        ? summaryRows.map((item) => `- ${normalizeMd(item.label || 'Dato')}: ${normalizeMd(item.value ?? '-')}`).join('\n') + '\n'
-        : '- Sin datos cargados.\n';
-    md += `\n## Datos\n\n`;
-    md += `${normalizeMd(data) || 'Sin datos cargados.'}\n\n`;
-    md += `## Observaciones\n\n`;
-    md += observationRows.map((item) => `- ${normalizeMd(item)}`).join('\n');
-    if (nextData) {
-        md += `\n\n## Próximo dato necesario\n\n${normalizeMd(nextData)}\n`;
-    }
-    return `${md}\n`;
-}
-
-function downloadMarkdown(markdown, filename) {
-    const blob = new Blob(['\ufeff' + markdown], { type: 'text/markdown;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-}
-
-function downloadReport({ report, category, status, summary, data, observations, nextData }) {
-    const markdown = buildReportMarkdown({ report, category, status, summary, data, observations, nextData });
-    const filename = `yavlgold-reporte-${slugify(category?.title)}-${slugify(report?.name)}-${getDateStamp()}.md`;
-    downloadMarkdown(markdown, filename);
-}
-
-function getSelectedCropId() {
-    if (typeof window === 'undefined') return '';
-    if (typeof window.getSelectedCropId === 'function') {
-        const fromGetter = String(window.getSelectedCropId() || '').trim();
-        if (fromGetter) return fromGetter;
-    }
-    if (window.YG_AGRO_SELECTED_CROP_ID) {
-        const fromGlobal = String(window.YG_AGRO_SELECTED_CROP_ID).trim();
-        if (fromGlobal) return fromGlobal;
-    }
-    try {
-        const fromV1 = localStorage.getItem('YG_AGRO_SELECTED_CROP_V1');
-        if (fromV1) return String(fromV1).trim();
-        const fromLegacy = localStorage.getItem('selectedCropId');
-        if (fromLegacy) return String(fromLegacy).trim();
-    } catch (_) { /* ignore storage errors */ }
-    const fromHash = new URLSearchParams(location.hash.split('?')[1] || '');
-    const cropParam = fromHash.get('crop_id') || fromHash.get('crop');
-    if (cropParam) return String(cropParam).trim();
-    const fromSearch = new URLSearchParams(location.search || '');
-    const searchCrop = fromSearch.get('crop_id') || fromSearch.get('crop');
-    if (searchCrop) return String(searchCrop).trim();
-    return '';
 }
 
 function resolveReportStatus(report) {
@@ -295,8 +159,17 @@ function renderOverview(categories) {
                     <dd>${categories.length}</dd>
                 </div>
             </dl>
-            <p class="agro-reports-overview__note">Solo aparecen reportes oficiales que ya existen como exportación visible en Agro.</p>
+            <p class="agro-reports-overview__note">Solo aparecen reportes oficiales generales. Los informes por cultivo viven en cada ciclo creado.</p>
         </section>
+    `;
+}
+
+function renderCropNote() {
+    return `
+        <aside class="agro-reports-crop-note" role="note">
+            <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+            <p>${escapeHtml(CROP_REPORT_NOTE)}</p>
+        </aside>
     `;
 }
 
@@ -322,6 +195,7 @@ function render() {
             ${renderOverview(visibleCategories)}
             ${renderFeedback()}
             ${content}
+            ${renderCropNote()}
         </div>
     `;
 }
@@ -340,39 +214,32 @@ function findReport(reportId) {
     return { report: null, category: null };
 }
 
-function exportHonestUnavailable(report, category, nextData, summary = []) {
-    downloadReport({
-        report,
-        category,
-        status: 'fuente no disponible en esta sesión',
-        summary,
-        data: 'La vista actual no expone datos suficientes para construir este reporte con detalle.',
-        observations: ['No se inventaron datos.'],
-        nextData
-    });
+function buildHonestMarkdown({ report, category, reason }) {
+    const title = report?.name || 'Reporte';
+    const categoryTitle = category?.title || 'Agro';
+    const now = new Date();
+    const stamp = now.toISOString().slice(0, 10);
+    let md = `# YavlGold Agro - ${title}\n\n`;
+    md += `Fecha: ${stamp}\n`;
+    md += `Categoría: ${categoryTitle}\n`;
+    md += `Estado: fuente no disponible en esta sesión\n\n`;
+    md += `${reason}\n\n`;
+    md += `No se inventaron datos.\n`;
+    return md;
 }
 
-async function exportSelectedCrop(report, category) {
-    const cropId = getSelectedCropId();
-    if (!cropId) {
-        downloadReport({
-            report,
-            category,
-            status: 'sin datos cargados',
-            summary: [{ label: 'Cultivo seleccionado', value: 'Ninguno' }],
-            data: 'No hay cultivo seleccionado en esta sesión.',
-            observations: ['Selecciona un cultivo para generar el informe completo del ciclo.'],
-            nextData: 'Cultivo seleccionado desde Mis cultivos.'
-        });
-        return;
-    }
-
-    const mod = await import('./agro-crop-report.js');
-    if (typeof mod.exportCropReport !== 'function') {
-        exportHonestUnavailable(report, category, 'Exportador de cultivo cargado como función pública.');
-        return;
-    }
-    await mod.exportCropReport(cropId);
+function downloadHonestReport({ report, category, reason }) {
+    const markdown = buildHonestMarkdown({ report, category, reason });
+    const filename = `yavlgold-reporte-${(report?.id || 'export')}-${new Date().toISOString().slice(0, 10)}.md`;
+    const blob = new Blob(['\ufeff' + markdown], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 }
 
 async function exportRankings(report, category) {
@@ -380,14 +247,10 @@ async function exportRankings(report, category) {
         window.exportOpsRankingsMarkdown();
         return;
     }
-    downloadReport({
+    downloadHonestReport({
         report,
         category,
-        status: 'fuente no disponible en esta sesión',
-        summary: [{ label: 'Fuente', value: 'Rankings de clientes' }],
-        data: 'El módulo de Rankings no está cargado en esta sesión.',
-        observations: ['No se inventaron datos.'],
-        nextData: 'Ciclos Operativos con Rankings cargado.'
+        reason: 'El módulo de Rankings no está cargado en esta sesión.'
     });
 }
 
@@ -397,11 +260,14 @@ async function exportGlobalStats(report, category) {
         await mod.exportStatsReport();
         return;
     }
-    exportHonestUnavailable(report, category, 'Exportador de estadísticas globales disponible.');
+    downloadHonestReport({
+        report,
+        category,
+        reason: 'El exportador de estadísticas globales no está disponible en esta sesión.'
+    });
 }
 
 const EXPORT_ACTIONS = Object.freeze({
-    'export-selected-crop': exportSelectedCrop,
     'export-rankings': exportRankings,
     'export-global-stats': exportGlobalStats
 });
@@ -414,7 +280,11 @@ async function runReportExport(reportId) {
 
     const handler = EXPORT_ACTIONS[report.action];
     if (typeof handler !== 'function') {
-        exportHonestUnavailable(report, category, 'Acción de exportación registrada en Centro de Reportes.');
+        downloadHonestReport({
+            report,
+            category,
+            reason: 'Acción de exportación registrada en Centro de Reportes.'
+        });
         return;
     }
 
@@ -427,14 +297,10 @@ async function runReportExport(reportId) {
         setFeedback(`${report.name}: exportación iniciada.`, 'success');
     } catch (err) {
         console.warn('[AgroReportsCenter] Export error:', err);
-        downloadReport({
+        downloadHonestReport({
             report,
             category,
-            status: 'fuente no disponible en esta sesión',
-            summary: [{ label: 'Error de exportación', value: err?.message || 'No se pudo exportar.' }],
-            data: 'No se pudo leer la fuente del reporte durante esta sesión.',
-            observations: ['No se inventaron datos.'],
-            nextData: 'Revisar que el módulo origen esté cargado y exponga su fuente.'
+            reason: `No se pudo leer la fuente del reporte: ${err?.message || 'Error desconocido.'}`
         });
         setFeedback(`${report.name}: se descargó un reporte honesto sin datos completos.`, 'warn');
     } finally {
@@ -459,12 +325,6 @@ function bindRootEvents(root) {
             render();
         }
     });
-    window.addEventListener(CROP_CHANGED_EVENT, render);
-    window.addEventListener(CROPS_READY_EVENT, render);
-    window.addEventListener('agro:buyer-portfolio-state-updated', render);
-    window.addEventListener('agro:operational-portfolio-updated', render);
-    window.addEventListener('agro:clients:changed', render);
-    window.addEventListener('agro:period-cycles:updated', render);
     document.addEventListener(DATA_REFRESH_EVENT, render);
 }
 

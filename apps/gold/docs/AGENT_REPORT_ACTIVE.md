@@ -1651,3 +1651,154 @@ Estado inicial: YELLOW.
 - `git diff --check`: PASS.
 - `pnpm build:gold`: PASS (con warning existente de Node engine: repo espera Node 20.x y el entorno uso v25.6.0).
 - Estado final: GREEN tecnico, pendiente QA online del usuario.
+---
+
+## Sesion 2026-05-07 — Auditoria quirurgica del Centro de Reportes y flujo de seleccion de cultivo
+
+### Diagnostico
+
+Gemini implemento promptCropSelection() en gro-reports-center.js para resolver el YELLOW del Centro de Reportes: el "Reporte detallado por cultivo" salia con "Cultivo seleccionado: Ninguno" cuando no habia crop_id en sesion.
+
+### Lo que hizo Gemini (diagnostico)
+
+1. Anadio promptCropSelection() — consulta minima a Supabase gro_crops para listar cultivos del usuario.
+2. Anadio selector modal para elegir cultivo si no hay crop_id.
+3. Guarda el ID elegido en YG_AGRO_SELECTED_CROP_V1 y key legacy selectedCropId.
+4. Llama al exportador oficial gro-crop-report.js:exportCropReport(cropId).
+
+### Riesgos encontrados y corregidos
+
+1. **lert() en promptCropSelection()** (2 instancias) — violaba regla canonica. Reemplazado por showAgroConfirmDialog().
+2. **window.confirm() en gro-crop-report.js** — guardia de Modo Historial usaba dialog nativo. Reemplazado por showAgroConfirmDialog() con fallback.
+3. **lert() en gro-crop-report.js** (2 instancias) — sesion invalida y error de exportacion. Reemplazado por showAgroConfirmDialog().
+4. **Inline styles masivos en promptCropSelection()** — violaba ADN Visual V11. Migrados a clases CSS con tokens.
+5. **Event listeners inline mouseenter/mouseleave** — eliminados, reemplazados por CSS :hover.
+6. **document.body.removeChild()** — reemplazado por overlay.remove().
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| gro.js:5928 | bridge | Expuesto window.showAgroConfirmDialog |
+| gro-crop-report.js | fix | 3 lert() reemplazados por showAgroConfirmDialog() |
+| gro-crop-report.js | fix | 1 window.confirm() reemplazado por showAgroConfirmDialog() con fallback |
+| gro-reports-center.js | fix | 2 lert() en promptCropSelection() reemplazados por showAgroConfirmDialog() |
+| gro-reports-center.js | refactor | Inline styles migrados a CSS classes |
+| gro-reports-center.js | refactor | Eliminados listeners inline, id por clase, ody.removeChild por emove() |
+| gro-reports-center.css | styles | 7 nuevas clases con tokens ADN Visual V11 y prefers-reduced-motion |
+
+### Lo que NO se hizo (scope respetado)
+
+- No se crearon reportes nuevos.
+- No se reconectaron reportes no oficiales.
+- No se invento Markdown dentro del Centro.
+- No se consultaron movimientos financieros desde el Centro.
+- No se touch base de datos ni migraciones.
+- No se hizo push.
+
+### Verificacion tecnica
+
+- git diff --check: PASS
+- pnpm build:gold: PASS
+
+### QA online esperado
+
+1. /agro#view=reportes — solo 3 reportes visibles.
+2. Exportar Rankings e Informe Estadistico — funcionan.
+3. Click en "Reporte detallado por cultivo" sin seleccion — abre selector.
+4. Selector lista cultivos reales del usuario desde Supabase.
+5. Al seleccionar cultivo, llama al exportador oficial.
+6. No hay lert() ni window.confirm() en todo el flujo.
+7. Modal usa tokens ADN Visual V11.
+8. Consola limpia.
+
+### Estado: GREEN tecnico, pendiente QA online del usuario.
+
+### Commit sugerido
+
+`fix(agro): harden crop selection for detailed markdown report`
+---
+
+## Sesion 2026-05-07 (2) — Correccion final del Centro de Reportes
+
+### Causa
+
+Se descubrio que el "Reporte detallado por cultivo" ya tiene su propio boton oficial visible en cada card/ciclo de cultivo ("Informe del Cultivo"). Por lo tanto, el Centro de Reportes no necesita seleccionar cultivos, consultar Supabase, abrir modales ni generar reportes detallados por cultivo.
+
+El Centro de Reportes debe ser un indice de reportes generales oficiales, nada mas.
+
+### Decision final
+
+- Centro de Reportes = indice de reportes generales.
+- Los reportes detallados por cultivo viven en cada card/ciclo, no en el Centro.
+- Se eliminaron del Centro: selector de cultivos, consulta Supabase, crop_id fallbacks, modal de seleccion.
+
+### Reportes conservados en el Centro (2)
+
+1. Informe estadistico global — xportStatsReport()
+2. Rankings de clientes (Markdown) — window.exportOpsRankingsMarkdown()
+
+### Reportes eliminados del Centro
+
+- Reporte detallado por cultivo (ya vive en cada card)
+- Cartera Viva, Cartera Operativa, Mi Carrito, Perfil Global, AgroRepo, Trabajo Diario, Mis Clientes (ya eliminados antes)
+
+### Metadata explicativa agregada
+
+> Los reportes detallados por cultivo se acceden directamente desde cada ciclo de cultivo creado. Abre Mis cultivos y usa el boton "Informe del Cultivo" en la tarjeta correspondiente.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| gro-reports-center.js | refactor | Eliminado import supabase |
+| gro-reports-center.js | refactor | Eliminadas promptCropSelection(), xportSelectedCrop(), getSelectedCropId() |
+| gro-reports-center.js | refactor | Eliminados constantes CROP_CHANGED_EVENT, CROPS_READY_EVENT y sus event listeners |
+| gro-reports-center.js | refactor | Eliminado reporte crop-selected de REPORT_CATEGORIES |
+| gro-reports-center.js | refactor | Eliminado xport-selected-crop de EXPORT_ACTIONS |
+| gro-reports-center.js | refactor | Eliminadas funciones muertas: 
+ormalizeMd, mdCell, getDateStamp, ormatExportDate, slugify, ormatMoneyUsd, markdownTable, uildReportMarkdown, downloadMarkdown, downloadReport, xportHonestUnavailable |
+| gro-reports-center.js | refactor | Simplificados uildHonestMarkdown y downloadHonestReport para fallback honesto |
+| gro-reports-center.js | refactor | Cambiada categoria cultivos por stadisticas |
+| gro-reports-center.js | fix | Overview copy: "Solo aparecen reportes oficiales generales. Los informes por cultivo viven en cada ciclo creado." |
+| gro-reports-center.js | feat | Agregada CROP_REPORT_NOTE y enderCropNote() con metadata explicativa |
+| gro-reports-center.js | refactor | Eliminados event listeners de gro:crop:changed, AGRO_CROPS_READY, gro:buyer-portfolio-state-updated, gro:operational-portfolio-updated, gro:clients:changed, gro:period-cycles:updated — ya no necesarios |
+| gro-reports-center.css | refactor | Eliminadas clases .agro-crop-select-* (overlay, dialog, title, copy, list, btn, cancel) |
+| gro-reports-center.css | feat | Agregadas clases .agro-reports-crop-note con tokens ADN Visual V11 |
+
+### Codigo eliminado
+
+- ~220 lineas eliminadas de gro-reports-center.js (de 570 a ~305)
+- ~80 lineas eliminadas de gro-reports-center.css (clases del modal de seleccion de cultivos)
+- Supabase ya no se importa en el Centro de Reportes
+- Bundle paso de ~12.73 KB a ~7.85 KB
+
+### Verificacion tecnica
+
+- git diff --check: PASS
+- pnpm build:gold: PASS (4.70s)
+- Grep de referencias muertas: 0 resultados
+- Grep de exportadores oficiales: correctos (xportStatsReport, xportOpsRankingsMarkdown)
+
+### No se toco
+
+- gro.js (la correccion anterior de window.showAgroConfirmDialog se mantiene — la necesita gro-crop-report.js)
+- gro-crop-report.js (sigue funcionando desde cada card/ciclo de cultivo)
+- Base de datos, migraciones
+- No se hizo push
+
+### QA online esperado
+
+1. /agro#view=reportes muestra solo 2 reportes: Informe estadistico global y Rankings.
+2. Aparece nota informativa: "Los reportes detallados por cultivo se acceden directamente desde cada ciclo..."
+3. No aparece: Reporte detallado por cultivo, Cartera Viva, Cartera Operativa, Mi Carrito, Perfil Global, etc.
+4. Exportar Informe estadistico global funciona.
+5. Exportar Rankings funciona.
+6. Ir a Mis cultivos > card de cultivo > boton "Informe del Cultivo" sigue funcionando.
+7. Consola limpia.
+
+### Estado: GREEN tecnico, pendiente QA online del usuario.
+
+### Commit sugerido
+
+`fix(agro): limit reports center to general official reports`
