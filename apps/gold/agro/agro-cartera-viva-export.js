@@ -3,6 +3,17 @@ import {
     groupHistoryRowsByDay
 } from './agro-cartera-viva.js';
 
+const CARTERA_VIVA_EXPORT_EPSILON = 0.000001;
+
+function readPortfolioNumber(value) {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : 0;
+}
+
+function isPositivePortfolioAmount(value) {
+    return readPortfolioNumber(value) > CARTERA_VIVA_EXPORT_EPSILON;
+}
+
 function formatMoney(value) {
     const amount = Number(value);
     if (!Number.isFinite(amount)) return '$0.00';
@@ -21,19 +32,31 @@ function formatPercent(value) {
 }
 
 function getReviewTotal(buyerRow) {
-    return Number(buyerRow?.review_required_total || 0) + Number(buyerRow?.legacy_unclassified_total || 0);
+    return readPortfolioNumber(buyerRow?.review_required_total) + readPortfolioNumber(buyerRow?.legacy_unclassified_total);
+}
+
+function getOutstandingBalance(buyerRow) {
+    const pendingTotal = readPortfolioNumber(buyerRow?.pending_total);
+    const credited = readPortfolioNumber(buyerRow?.credited_total);
+    const paid = readPortfolioNumber(buyerRow?.paid_total);
+    const loss = readPortfolioNumber(buyerRow?.loss_total);
+    const transferred = readPortfolioNumber(buyerRow?.transferred_total);
+    const derivedBalance = Math.max(0, credited - paid - loss - transferred);
+    const hasLedgerTotals = [credited, paid, loss, transferred].some(isPositivePortfolioAmount);
+    const balance = hasLedgerTotals ? derivedBalance : Math.max(0, pendingTotal);
+    return isPositivePortfolioAmount(balance) ? balance : 0;
 }
 
 function resolveBuyerStatus(buyerRow) {
-    const pending = Number(buyerRow?.pending_total || 0);
-    const paid = Number(buyerRow?.paid_total || 0);
-    const loss = Number(buyerRow?.loss_total || 0);
+    const pending = getOutstandingBalance(buyerRow);
+    const paid = readPortfolioNumber(buyerRow?.paid_total);
+    const loss = readPortfolioNumber(buyerRow?.loss_total);
     const review = getReviewTotal(buyerRow);
 
-    if (pending > 0) return paid > 0 ? 'Cobro en curso' : 'Fiado activo';
-    if (paid > 0) return 'Pagado';
-    if (loss > 0) return 'Pérdida';
-    if (review > 0) return 'Por revisar';
+    if (isPositivePortfolioAmount(pending)) return isPositivePortfolioAmount(paid) ? 'Cobro en curso' : 'Fiado activo';
+    if (isPositivePortfolioAmount(paid) && !isPositivePortfolioAmount(loss)) return 'Pagado';
+    if (isPositivePortfolioAmount(loss)) return 'Pérdida';
+    if (isPositivePortfolioAmount(review)) return 'Por revisar';
     return 'Seguimiento';
 }
 
@@ -148,7 +171,7 @@ export function buildBuyerPortfolioExportMarkdown({ buyerRow, historyRows, expor
         `- Fiado: ${formatMoney(buyerRow.credited_total)}`,
         `- Cobrado: ${formatMoney(buyerRow.paid_total)}`,
         `- Pérdida: ${formatMoney(buyerRow.loss_total)}`,
-        `- Falta por cobrar: ${formatMoney(buyerRow.pending_total)}`,
+        `- Falta por cobrar: ${formatMoney(getOutstandingBalance(buyerRow))}`,
         `- Cumplimiento: ${formatPercent(buyerRow.compliance_percent)}`,
         '',
         '## Movimientos separados',

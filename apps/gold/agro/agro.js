@@ -22,6 +22,7 @@ import { initAgroShell } from './agro-shell.js';
 import { initFactureroSelection } from './agro-selection.js';
 import { computeUnitTotalsFromRows as computeMdUnitTotalsFromRows, formatUnitTotalsMarkdown as formatMdUnitTotalsMarkdown } from './agro-unit-totals.js';
 import {
+    fetchBuyerPortfolioSummary,
     formatHistoryAbsoluteDayLabel as formatPagadosDedicatedDayLabel,
     formatHistoryDayLabel as formatDayHeader,
     getHistoryDayKey as getDayKey,
@@ -12607,6 +12608,7 @@ let opsMovementSummaryTimer = null;
 const OPS_RANKINGS_RANGE_KEY = 'YG_AGRO_RANKINGS_RANGE_V1';
 const OPS_RANKINGS_DEFAULT_RANGE = '90d';
 const OPS_RANKINGS_LIMIT = 5;
+const OPS_RANKINGS_PENDING_EPSILON = 0.000001;
 const OPS_RANKINGS_VALID_RANGES = new Set(['30d', '90d', '6m', '12m', 'all']);
 const OPS_RANKINGS_RANGE_LABELS = Object.freeze({
     '30d': '30 días',
@@ -13222,6 +13224,27 @@ function normalizeOpsRankingsRows(rows) {
     return Array.isArray(rows) ? rows : [];
 }
 
+function readOpsRankingNumber(value) {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : 0;
+}
+
+function isPositiveOpsRankingAmount(value) {
+    return readOpsRankingNumber(value) > OPS_RANKINGS_PENDING_EPSILON;
+}
+
+function getOpsRankingPortfolioOutstanding(row) {
+    const pendingTotal = readOpsRankingNumber(row?.pending_total);
+    const credited = readOpsRankingNumber(row?.credited_total);
+    const paid = readOpsRankingNumber(row?.paid_total);
+    const loss = readOpsRankingNumber(row?.loss_total);
+    const transferred = readOpsRankingNumber(row?.transferred_total);
+    const derivedBalance = Math.max(0, credited - paid - loss - transferred);
+    const hasLedgerTotals = [credited, paid, loss, transferred].some(isPositiveOpsRankingAmount);
+    const balance = hasLedgerTotals ? derivedBalance : Math.max(0, pendingTotal);
+    return isPositiveOpsRankingAmount(balance) ? balance : 0;
+}
+
 function normalizeOpsRankingNameToken(value) {
     if (typeof value === 'string' || typeof value === 'number') {
         return String(value).trim();
@@ -13270,6 +13293,47 @@ function pickOpsBuyerName(row) {
         return candidate;
     }
     return '';
+}
+
+function addOpsRankingPortfolioToken(map, token, outstanding) {
+    const safeToken = normalizeFactureroSearchToken(token);
+    if (!safeToken) return;
+    const current = readOpsRankingNumber(map.get(safeToken));
+    map.set(safeToken, Math.max(current, outstanding));
+}
+
+async function reconcileOpsRankingPendingClients(rows) {
+    const pendingRows = normalizeOpsRankingsRows(rows)
+        .filter((row) => isPositiveOpsRankingAmount(row?.total_pending));
+    if (pendingRows.length <= 0) return [];
+
+    try {
+        const portfolioRows = await fetchBuyerPortfolioSummary(supabase);
+        const currentPendingByName = new Map();
+        portfolioRows.forEach((row) => {
+            const outstanding = getOpsRankingPortfolioOutstanding(row);
+            [
+                row?.display_name,
+                row?.canonical_name,
+                row?.group_key
+            ].forEach((token) => addOpsRankingPortfolioToken(currentPendingByName, token, outstanding));
+        });
+
+        return pendingRows
+            .map((row) => {
+                const buyerName = pickOpsBuyerName(row) || row?.client_name;
+                const currentPending = currentPendingByName.get(normalizeFactureroSearchToken(buyerName));
+                if (currentPending === undefined) return row;
+                return {
+                    ...row,
+                    total_pending: currentPending
+                };
+            })
+            .filter((row) => isPositiveOpsRankingAmount(row?.total_pending));
+    } catch (error) {
+        console.warn('[AGRO][Rankings] No se pudo reconciliar fiados con Cartera Viva:', error?.message || error);
+        return pendingRows;
+    }
 }
 
 function resolveOpsRankingCropLabel(row) {
@@ -13573,9 +13637,10 @@ async function fetchOpsRankingsData() {
     }
 
     const errors = [topClientsRes.error, pendingRes.error, cropsRes.error].filter(Boolean);
+    const pendingClientsRows = await reconcileOpsRankingPendingClients(pendingRes.data);
     return {
         topClients: topClientsRows,
-        pendingClients: normalizeOpsRankingsRows(pendingRes.data),
+        pendingClients: pendingClientsRows,
         topCrops: normalizeOpsRankingsRows(cropsRes.data),
         error: pickRankingsErrorMessage(errors)
     };

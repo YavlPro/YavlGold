@@ -38,6 +38,82 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-27__2026-05-05.md`
 
 ---
 
+## 2026-05-08 — Diagnóstico y plan: Cartera Viva no debe dejar pagados en Fiados
+
+**Estado:** COMPLETADO EN CÓDIGO / QA PRODUCCIÓN PENDIENTE
+
+### Diagnóstico inicial
+
+- Caso real reportado: `jose luis` aparece en la pestaña `Fiados` aunque la card muestra `0 unidades pendientes`, `9 unidades cobradas`, `0 sacos` en pérdida y avance operativo `100%`.
+- La vista `Cartera Viva` arma las pestañas en `apps/gold/agro/agro-cartera-viva-view.js`.
+- El cálculo de saldo actual existe: `getOutstandingBalance(row)` lee `pending_total` o calcula `credited_total - paid_total - loss_total - transferred_total`.
+- La clasificación visible actual usa `hasVisibleCategory(row, category)` y permite que un registro entre a `Fiados` con `pending > 0 || review > 0`. Eso puede mantener una entrada en Fiados por revisión/historial aunque el saldo actual sea cero.
+- El badge sale de `resolveBuyerStatus()` / `resolveBuyerStatusForCategory()`, por lo que debe depender del saldo actual y no del origen del movimiento.
+- El export de detalle `apps/gold/agro/agro-cartera-viva-export.js` ya lee `pending_total`, pero requiere tolerancia numérica para no tratar residuos mínimos como deuda.
+- El reporte `AgroRankings_2026-05-08.md` muestra `jose luis` en `Fiados por Cliente`; ese bloque sale del RPC `agro_rank_pending_clients`, definido en `supabase/sql/agro_rankings_rpc_v1.sql`, que consulta `agro_pending` y puede contar registros brutos si el cierre no queda reflejado como `transfer_state = transferred`.
+
+### Hipótesis
+
+1. La UI está duplicando un mismo cliente en categorías por estado histórico/revisión y no por saldo actual.
+2. Puede existir residuo decimal: la UI muestra `0`, pero el filtro aún evalúa un número positivo muy pequeño.
+3. Rankings puede seguir leyendo `agro_pending` bruto en vez del saldo vivo normalizado.
+
+### Archivos candidatos
+
+- `apps/gold/agro/agro-cartera-viva-view.js`
+- `apps/gold/agro/agro-cartera-viva-export.js`
+- `apps/gold/agro/agro.js`
+- `supabase/sql/agro_rankings_rpc_v1.sql`
+- `supabase/migrations/*agro_rank_pending_clients*`
+
+### Plan breve
+
+1. Añadir una tolerancia mínima de saldo para Cartera Viva.
+2. Hacer que `Fiados` solo acepte `pending_total` vivo mayor a la tolerancia.
+3. Clasificar `pending <= EPSILON && paid > EPSILON && loss <= EPSILON` como `Pagados`.
+4. Mantener pérdidas separadas cuando `loss > EPSILON` y no exista saldo pendiente.
+5. Revisar el export para que estado y falta por cobrar usen el mismo criterio.
+6. Filtrar o ajustar rankings para no listar saldos cerrados como fiados.
+7. Validar con `git diff --check` y `pnpm build:gold`.
+
+### Riesgo
+
+- Medio: afecta clasificación financiera visible y reporte de rankings. No debe borrar historial ni mutar datos reales; solo lectura/clasificación.
+
+### Criterio de validación
+
+- `jose luis` con pendiente `0`, cobrado `9` y pérdida `0` no debe aparecer en `Fiados`.
+- Debe aparecer como `Pagados` / `Pagado`.
+- El badge no debe decir `Cobro en proceso` cuando el saldo pendiente actual sea cero.
+- Los reportes no deben listar saldos cerrados como fiado pendiente.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/agro-cartera-viva-view.js` | `getOutstandingBalance()` ahora deriva el saldo vivo como `credited_total - paid_total - loss_total - transferred_total` cuando existen totales de historial, con tolerancia `EPSILON`. La pestaña `Fiados` solo acepta saldo pendiente real; `Pagados` requiere saldo pendiente cerrado, cobro positivo y pérdida cerrada en cero. |
+| `apps/gold/agro/agro-cartera-viva-export.js` | El export de detalle usa la misma lectura de saldo vivo para `Estado` y `Falta por cobrar`, evitando que un saldo cerrado salga como fiado por `pending_total` bruto. |
+| `apps/gold/agro/agro.js` | Rankings reconcilia `Fiados por Cliente` contra `fetchBuyerPortfolioSummary()` antes de render/exportar, para filtrar clientes cuyo saldo actual ya está cerrado aunque el RPC de ranking devuelva un registro bruto de `agro_pending`. |
+
+### Fórmula final
+
+```js
+saldoPendienteActual = Math.max(0, credited_total - paid_total - loss_total - transferred_total);
+```
+
+Con tolerancia:
+
+```js
+saldoPendienteActual > 0.000001
+```
+
+### Validación técnica
+
+- `git diff --check`: OK.
+- `pnpm build:gold`: OK. Advertencia no bloqueante: Node actual `v25.6.0`; el repo declara engine `20.x`.
+
+---
+
 ## 2026-05-08 — Diagnóstico y plan: Calendario operativo vivo y menos copy
 
 **Estado:** COMPLETADO EN CÓDIGO / QA PRODUCCIÓN PENDIENTE

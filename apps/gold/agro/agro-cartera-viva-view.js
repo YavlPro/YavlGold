@@ -29,6 +29,7 @@ const CARTERA_VIVA_UNIT_FAMILY_KEY = 'YG_AGRO_CARTERA_VIVA_UNIT_FAMILY_V1';
 const CARTERA_VIVA_GENERAL_CROP_ID = '__general__';
 const CARTERA_VIVA_CROP_BLOCK_MESSAGE = 'Este cultivo aún no está en producción. Para registrar ventas o fiados en Cartera Viva, cambia el estado a En producción, Finalizado o Perdido.';
 const CARTERA_VIVA_ALLOWED_CROP_STATUSES = new Set(['produccion', 'finalizado', 'lost']);
+const CARTERA_VIVA_BALANCE_EPSILON = 0.000001;
 
 const CATEGORY_META = Object.freeze({
     'sin-registro': Object.freeze({
@@ -177,6 +178,15 @@ function normalizeOperationalFamily(value) {
     if (token === 'baskets' || token === 'basket' || token === 'cesta' || token === 'cestas') return 'baskets';
     if (token === 'kg' || token === 'kilogram' || token === 'kilograms' || token === 'kilogramo' || token === 'kilogramos') return 'kg';
     return 'all';
+}
+
+function readPortfolioNumber(value) {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : 0;
+}
+
+function isPositivePortfolioAmount(value) {
+    return readPortfolioNumber(value) > CARTERA_VIVA_BALANCE_EPSILON;
 }
 
 function createBuyerPortfolioFallbackRow(buyer = {}) {
@@ -792,32 +802,32 @@ function resolveCropScopedGlobalStatus(bucket, clientStatus = 'active') {
     const safeClientStatus = String(clientStatus || 'active').trim().toLowerCase();
     if (safeClientStatus === 'archived') return 'Archivado';
 
-    const credited = Number(bucket?.credited_total || 0);
-    const paid = Number(bucket?.paid_total || 0);
-    const loss = Number(bucket?.loss_total || 0);
-    const transferred = Number(bucket?.transferred_total || 0);
-    const pending = Number(bucket?.pending_total || 0);
-    const reviewRequired = Number(bucket?.review_required_total || 0);
-    const legacyUnclassified = Number(bucket?.legacy_unclassified_total || 0);
+    const credited = readPortfolioNumber(bucket?.credited_total);
+    const paid = readPortfolioNumber(bucket?.paid_total);
+    const loss = readPortfolioNumber(bucket?.loss_total);
+    const transferred = readPortfolioNumber(bucket?.transferred_total);
+    const pending = Math.max(0, credited - paid - loss - transferred);
+    const reviewRequired = readPortfolioNumber(bucket?.review_required_total);
+    const legacyUnclassified = readPortfolioNumber(bucket?.legacy_unclassified_total);
     const visibleBalance = credited - paid - loss - transferred;
 
-    if (pending > 0 && paid <= 0 && loss <= 0 && transferred <= 0) return 'Fiado';
+    if (isPositivePortfolioAmount(pending) && !isPositivePortfolioAmount(paid) && !isPositivePortfolioAmount(loss) && !isPositivePortfolioAmount(transferred)) return 'Fiado';
     if (
-        credited > 0
-        && pending <= 0
+        isPositivePortfolioAmount(credited)
+        && !isPositivePortfolioAmount(pending)
         && visibleBalance >= 0
-        && reviewRequired <= 0
-        && legacyUnclassified <= 0
+        && !isPositivePortfolioAmount(reviewRequired)
+        && !isPositivePortfolioAmount(legacyUnclassified)
     ) {
         return 'Pagado';
     }
     if (
-        credited <= 0
-        && paid <= 0
-        && loss <= 0
-        && pending <= 0
-        && reviewRequired <= 0
-        && legacyUnclassified <= 0
+        !isPositivePortfolioAmount(credited)
+        && !isPositivePortfolioAmount(paid)
+        && !isPositivePortfolioAmount(loss)
+        && !isPositivePortfolioAmount(pending)
+        && !isPositivePortfolioAmount(reviewRequired)
+        && !isPositivePortfolioAmount(legacyUnclassified)
     ) {
         return 'Sin movimientos';
     }
@@ -828,11 +838,11 @@ function buildCropScopedSummaryOverlay(row, bucket = null) {
     const safeBucket = bucket && typeof bucket === 'object'
         ? bucket
         : createEmptyCropScopedSummaryBucket();
-    const credited = Number(safeBucket.credited_total || 0);
-    const paid = Number(safeBucket.paid_total || 0);
-    const loss = Number(safeBucket.loss_total || 0);
-    const transferred = Number(safeBucket.transferred_total || 0);
-    const pending = Number(safeBucket.pending_total || 0);
+    const credited = readPortfolioNumber(safeBucket.credited_total);
+    const paid = readPortfolioNumber(safeBucket.paid_total);
+    const loss = readPortfolioNumber(safeBucket.loss_total);
+    const transferred = readPortfolioNumber(safeBucket.transferred_total);
+    const pending = Math.max(0, credited - paid - loss - transferred);
     const visibleBalance = credited - paid - loss - transferred;
     const compliance = credited <= 0 || visibleBalance < 0
         ? null
@@ -844,8 +854,8 @@ function buildCropScopedSummaryOverlay(row, bucket = null) {
         compliance_percent: compliance,
         global_status: resolveCropScopedGlobalStatus(safeBucket, row?.client_status),
         balance_gap_total: roundPortfolioMetric(pending - visibleBalance, 2),
-        requires_review: Number(safeBucket.review_required_total || 0) > 0
-            || Number(safeBucket.legacy_unclassified_total || 0) > 0
+        requires_review: isPositivePortfolioAmount(safeBucket.review_required_total)
+            || isPositivePortfolioAmount(safeBucket.legacy_unclassified_total)
             || visibleBalance < 0
     });
 }
@@ -1041,18 +1051,19 @@ function clampPercent(value) {
 }
 
 function getReviewTotal(row) {
-    return Number(row?.review_required_total || 0) + Number(row?.legacy_unclassified_total || 0);
+    return readPortfolioNumber(row?.review_required_total) + readPortfolioNumber(row?.legacy_unclassified_total);
 }
 
 function getOutstandingBalance(row) {
-    const pendingTotal = Number(row?.pending_total);
-    if (Number.isFinite(pendingTotal)) return Math.max(0, pendingTotal);
-
-    const credited = Number(row?.credited_total || 0);
-    const paid = Number(row?.paid_total || 0);
-    const loss = Number(row?.loss_total || 0);
-    const transferred = Number(row?.transferred_total || 0);
-    return Math.max(0, credited - paid - loss - transferred);
+    const pendingTotal = readPortfolioNumber(row?.pending_total);
+    const credited = readPortfolioNumber(row?.credited_total);
+    const paid = readPortfolioNumber(row?.paid_total);
+    const loss = readPortfolioNumber(row?.loss_total);
+    const transferred = readPortfolioNumber(row?.transferred_total);
+    const derivedBalance = Math.max(0, credited - paid - loss - transferred);
+    const hasLedgerTotals = [credited, paid, loss, transferred].some(isPositivePortfolioAmount);
+    const balance = hasLedgerTotals ? derivedBalance : Math.max(0, pendingTotal);
+    return isPositivePortfolioAmount(balance) ? balance : 0;
 }
 
 function getProgressBase(row) {
@@ -1168,15 +1179,15 @@ function hasBuyerPortfolioHistory(row) {
 function resolveVisibleCategory(row) {
     const hasHistory = hasBuyerPortfolioHistory(row);
     const pending = getOutstandingBalance(row);
-    const paid = Number(row?.paid_total || 0);
-    const loss = Number(row?.loss_total || 0);
+    const paid = readPortfolioNumber(row?.paid_total);
+    const loss = readPortfolioNumber(row?.loss_total);
     const review = getReviewTotal(row);
 
     if (!hasHistory) return 'sin-registro';
-    if (pending > 0) return 'fiados';
-    if (loss > 0) return 'perdidos';
-    if (paid > 0) return 'pagados';
-    if (review > 0) return 'fiados';
+    if (isPositivePortfolioAmount(pending)) return 'fiados';
+    if (isPositivePortfolioAmount(loss)) return 'perdidos';
+    if (isPositivePortfolioAmount(paid)) return 'pagados';
+    if (isPositivePortfolioAmount(review)) return 'fiados';
     return 'fiados';
 }
 
@@ -1191,14 +1202,17 @@ function hasVisibleCategory(row, category) {
     const safeCategory = normalizeCategory(category);
     const hasHistory = hasBuyerPortfolioHistory(row);
     const pending = getOutstandingBalance(row);
-    const paid = Number(row?.paid_total || 0);
-    const loss = Number(row?.loss_total || 0);
+    const paid = readPortfolioNumber(row?.paid_total);
+    const loss = readPortfolioNumber(row?.loss_total);
     const review = getReviewTotal(row);
+    const hasPending = isPositivePortfolioAmount(pending);
+    const hasPaid = isPositivePortfolioAmount(paid);
+    const hasLoss = isPositivePortfolioAmount(loss);
 
     if (safeCategory === 'sin-registro') return !hasHistory;
-    if (safeCategory === 'pagados') return paid > 0;
-    if (safeCategory === 'perdidos') return loss > 0;
-    return pending > 0 || review > 0;
+    if (safeCategory === 'pagados') return !hasPending && hasPaid && !hasLoss;
+    if (safeCategory === 'perdidos') return !hasPending && hasLoss;
+    return hasPending || (isPositivePortfolioAmount(review) && !hasPaid && !hasLoss);
 }
 
 function buildPortfolioEntries(rows, category) {
@@ -1234,8 +1248,8 @@ function resolveBuyerStatus(row) {
     const clientStatus = String(row?.client_status || 'active').trim().toLowerCase();
     const hasHistory = hasBuyerPortfolioHistory(row);
     const pending = getOutstandingBalance(row);
-    const paid = Number(row?.paid_total || 0);
-    const loss = Number(row?.loss_total || 0);
+    const paid = readPortfolioNumber(row?.paid_total);
+    const loss = readPortfolioNumber(row?.loss_total);
     const review = getReviewTotal(row);
     const operationalProgress = getOperationalProgress(row);
     const operationalStatus = getOperationalStatusSnapshot(row, activeOperationalFamily);
@@ -1267,7 +1281,7 @@ function resolveBuyerStatus(row) {
         };
     }
 
-    if (pending > 0) {
+    if (isPositivePortfolioAmount(pending)) {
         if (hasOpPaid) {
             return {
                 tone: 'fiado',
@@ -1295,7 +1309,7 @@ function resolveBuyerStatus(row) {
         };
     }
 
-    if (loss > 0) {
+    if (isPositivePortfolioAmount(loss)) {
         return {
             tone: 'perdido',
             label: paid > 0 ? 'Con pérdida' : 'Pérdida',
@@ -1323,7 +1337,7 @@ function resolveBuyerStatus(row) {
         };
     }
 
-    if (paid > 0) {
+    if (isPositivePortfolioAmount(paid)) {
         return {
             tone: 'pagado',
             label: 'Ingreso registrado',
@@ -1347,8 +1361,8 @@ function resolveBuyerStatusForCategory(row, category) {
     if (safeCategory === 'sin-registro') return globalStatus;
 
     const pending = getOutstandingBalance(row);
-    const loss = Number(row?.loss_total || 0);
-    if (pending > 0 || loss > 0) return globalStatus;
+    const loss = readPortfolioNumber(row?.loss_total);
+    if (isPositivePortfolioAmount(pending) || isPositivePortfolioAmount(loss)) return globalStatus;
 
     return globalStatus;
 }
@@ -1805,13 +1819,13 @@ function resolveCategorySummary(rows, category) {
     const paid = sumField(rows, 'paid_total');
     const loss = sumField(rows, 'loss_total');
     const review = rows.reduce((total, row) => total + getReviewTotal(row), 0);
-    const pendingClients = rows.filter((row) => getOutstandingBalance(row) > 0).length;
+    const pendingClients = rows.filter((row) => isPositivePortfolioAmount(getOutstandingBalance(row))).length;
     const readyClients = rows.filter((row) =>
-        getOutstandingBalance(row) <= 0
-        && Number(row?.paid_total || 0) <= 0
-        && Number(row?.loss_total || 0) <= 0
-        && Number(row?.credited_total || 0) <= 0
-        && getReviewTotal(row) <= 0
+        !isPositivePortfolioAmount(getOutstandingBalance(row))
+        && !isPositivePortfolioAmount(row?.paid_total)
+        && !isPositivePortfolioAmount(row?.loss_total)
+        && !isPositivePortfolioAmount(row?.credited_total)
+        && !isPositivePortfolioAmount(getReviewTotal(row))
     ).length;
 
     if (category === 'pagados') {
@@ -2294,9 +2308,9 @@ function renderPortfolioCard(row) {
     const isArchived = String(row?.client_status || '').trim().toLowerCase() === 'archived';
     const safeBuyerId = escapeHtml(row?.buyer_id || '');
     const activeStateCount = [
-        getOutstandingBalance(row) > 0,
-        Number(row?.paid_total || 0) > 0,
-        Number(row?.loss_total || 0) > 0
+        isPositivePortfolioAmount(getOutstandingBalance(row)),
+        isPositivePortfolioAmount(row?.paid_total),
+        isPositivePortfolioAmount(row?.loss_total)
     ].filter(Boolean).length;
     const safeScope = activeStateCount > 1 ? 'todos' : escapeHtml(category);
     const safeEntryKey = escapeHtml(row?.__portfolioEntryKey || '');
