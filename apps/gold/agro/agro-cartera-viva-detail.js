@@ -288,13 +288,65 @@ function buildProgressBreakdown(buyerRow) {
 function normalizeBuyerScope(buyerRow) {
     const buyerId = String(buyerRow?.buyer_id || '').trim();
     const groupKey = normalizeHistorySearchToken(buyerRow?.group_key || buyerRow?.buyer_group_key || '');
+    const displayName = String(buyerRow?.display_name || '').trim();
+    const tokenCandidates = [
+        displayName,
+        buyerRow?.canonical_name,
+        buyerRow?.buyer_name,
+        buyerRow?.client_name,
+        groupKey ? groupKey.replace(/[_-]+/g, ' ') : ''
+    ];
+    const legacyTextTokens = [];
+    const seenTokens = new Set();
+
+    tokenCandidates.forEach((candidate) => {
+        const value = String(candidate || '').trim();
+        const normalized = normalizeHistorySearchToken(value);
+        if (normalized.length < 3 || seenTokens.has(normalized)) return;
+        seenTokens.add(normalized);
+        legacyTextTokens.push(value);
+    });
 
     return {
         buyerId,
         groupKey,
-        displayName: String(buyerRow?.display_name || '').trim(),
-        hasIdentity: Boolean(buyerId || groupKey)
+        displayName,
+        legacyTextTokens,
+        hasIdentity: Boolean(buyerId || groupKey || legacyTextTokens.length > 0)
     };
+}
+
+function applyBuyerHistoryFilters(query, filters, options = {}) {
+    let nextQuery = query.is('deleted_at', null);
+
+    if (options.excludeReverted !== false) {
+        nextQuery = nextQuery.is('reverted_at', null);
+    }
+
+    filters.forEach((applyFilter) => {
+        nextQuery = applyFilter(nextQuery);
+    });
+
+    return nextQuery;
+}
+
+function getBuyerLegacySearchColumns(tableName) {
+    if (tableName === 'agro_pending') return ['cliente', 'concepto'];
+    if (tableName === 'agro_income') return ['concepto'];
+    if (tableName === 'agro_losses') return ['concepto', 'causa'];
+    return [];
+}
+
+function mergeBuyerHistoryRows(tableName, ...rowGroups) {
+    const rows = rowGroups.flatMap((group) => Array.isArray(group) ? group : []);
+    const seen = new Set();
+
+    return rows.filter((row) => {
+        const key = `${tableName}:${row?.id || ''}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
 }
 
 async function fetchBuyerScopedRows(supabaseClient, tableName, columns, buyerScope, options = {}) {
@@ -309,18 +361,9 @@ async function fetchBuyerScopedRows(supabaseClient, tableName, columns, buyerSco
         let query = supabaseClient
             .from(tableName)
             .select(columns)
-            .eq('buyer_id', buyerScope.buyerId)
-            .is('deleted_at', null);
+            .eq('buyer_id', buyerScope.buyerId);
 
-        if (options.excludeReverted !== false) {
-            query = query.is('reverted_at', null);
-        }
-
-        filters.forEach((applyFilter) => {
-            query = applyFilter(query);
-        });
-
-        queries.push(query);
+        queries.push(applyBuyerHistoryFilters(query, filters, options));
     }
 
     if (buyerScope.groupKey) {
@@ -328,18 +371,24 @@ async function fetchBuyerScopedRows(supabaseClient, tableName, columns, buyerSco
             .from(tableName)
             .select(columns)
             .is('buyer_id', null)
-            .eq('buyer_group_key', buyerScope.groupKey)
-            .is('deleted_at', null);
+            .eq('buyer_group_key', buyerScope.groupKey);
 
-        if (options.excludeReverted !== false) {
-            query = query.is('reverted_at', null);
-        }
+        queries.push(applyBuyerHistoryFilters(query, filters, options));
+    }
 
-        filters.forEach((applyFilter) => {
-            query = applyFilter(query);
+    const legacyColumns = getBuyerLegacySearchColumns(tableName);
+    if (legacyColumns.length > 0 && Array.isArray(buyerScope.legacyTextTokens)) {
+        buyerScope.legacyTextTokens.forEach((token) => {
+            legacyColumns.forEach((column) => {
+                let query = supabaseClient
+                    .from(tableName)
+                    .select(columns)
+                    .is('buyer_id', null)
+                    .ilike(column, `%${token}%`);
+
+                queries.push(applyBuyerHistoryFilters(query, filters, options));
+            });
         });
-
-        queries.push(query);
     }
 
     if (queries.length <= 0) return [];
@@ -354,13 +403,34 @@ async function fetchBuyerScopedRows(supabaseClient, tableName, columns, buyerSco
         }
     });
 
-    const seen = new Set();
-    return rows.filter((row) => {
-        const key = `${tableName}:${row?.id || ''}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-    });
+    return mergeBuyerHistoryRows(tableName, rows);
+}
+
+async function fetchRowsByPendingOrigin(supabaseClient, tableName, columns, pendingRows, options = {}) {
+    if (!supabaseClient?.from) {
+        throw new TypeError('fetchRowsByPendingOrigin requires a Supabase client with from().');
+    }
+
+    const pendingIds = Array.from(new Set(
+        (Array.isArray(pendingRows) ? pendingRows : [])
+            .map((row) => String(row?.id || '').trim())
+            .filter(Boolean)
+    ));
+
+    if (pendingIds.length <= 0) return [];
+
+    const filters = Array.isArray(options.extraFilters) ? options.extraFilters : [];
+    let query = supabaseClient
+        .from(tableName)
+        .select(columns)
+        .eq('origin_table', 'agro_pending')
+        .in('origin_id', pendingIds);
+
+    query = applyBuyerHistoryFilters(query, filters, options);
+
+    const result = await query;
+    if (result?.error) throw result.error;
+    return Array.isArray(result?.data) ? result.data : [];
 }
 
 function formatHistoryQuantity(value, decimals = 2) {
@@ -839,11 +909,15 @@ export async function fetchBuyerHistoryTimeline(supabaseClient, buyerRow, option
         ? [(query) => query.eq('crop_id', cropId)]
         : [];
 
-    const [pendingRows, incomeRows, lossRows] = await Promise.all([
-        fetchBuyerScopedRows(supabaseClient, 'agro_pending', PENDING_HISTORY_COLUMNS, buyerScope, { extraFilters, excludeReverted: false }),
+    const pendingRows = await fetchBuyerScopedRows(supabaseClient, 'agro_pending', PENDING_HISTORY_COLUMNS, buyerScope, { extraFilters, excludeReverted: false });
+    const [scopedIncomeRows, scopedLossRows, originIncomeRows, originLossRows] = await Promise.all([
         fetchBuyerScopedRows(supabaseClient, 'agro_income', INCOME_HISTORY_COLUMNS, buyerScope, { extraFilters, excludeReverted: false }),
-        fetchBuyerScopedRows(supabaseClient, 'agro_losses', LOSS_HISTORY_COLUMNS, buyerScope, { extraFilters, excludeReverted: false })
+        fetchBuyerScopedRows(supabaseClient, 'agro_losses', LOSS_HISTORY_COLUMNS, buyerScope, { extraFilters, excludeReverted: false }),
+        fetchRowsByPendingOrigin(supabaseClient, 'agro_income', INCOME_HISTORY_COLUMNS, pendingRows, { extraFilters, excludeReverted: false }),
+        fetchRowsByPendingOrigin(supabaseClient, 'agro_losses', LOSS_HISTORY_COLUMNS, pendingRows, { extraFilters, excludeReverted: false })
     ]);
+    const incomeRows = mergeBuyerHistoryRows('agro_income', scopedIncomeRows, originIncomeRows);
+    const lossRows = mergeBuyerHistoryRows('agro_losses', scopedLossRows, originLossRows);
 
     const timelineRows = [
         ...pendingRows.map(buildPendingLedgerRow).filter(Boolean),

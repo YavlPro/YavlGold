@@ -38,6 +38,55 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-27__2026-05-05.md`
 
 ---
 
+## 2026-05-08 — Continuación urgente: historial incompleto en Cartera Viva
+
+**Estado:** COMPLETADO EN CÓDIGO / QA PRODUCCIÓN PENDIENTE
+
+### Diagnóstico inicial
+
+- El incidente de `jose luis` sigue abierto en producción: la card comunica `0 unidades pendientes`, `9 unidades cobradas` y avance `100%`, pero la pestaña `Fiados`, el badge y rankings aún pueden tratarlo como deuda viva.
+- La hipótesis prioritaria ya no es solo reporte: el usuario no puede auditar desde `Ver detalle` todos los movimientos que explican el cierre o el saldo restante.
+- `apps/gold/agro/agro-cartera-viva-detail.js` arma el historial con `fetchBuyerHistoryTimeline()`.
+- `fetchBuyerScopedRows()` solo consulta filas por `buyer_id` o por `buyer_group_key` cuando `buyer_id` es `null`; no contempla movimientos legacy por `cliente`/`concepto` ni cierres relacionados por `origin_id`.
+- Riesgo principal: un fiado original aparece en ranking o resumen, pero sus pagos/cierres no aparecen en el detalle porque viven en otra tabla o no tienen identidad normalizada.
+
+### Plan breve
+
+1. Corregir primero el historial de Cartera Viva para traer movimientos legacy por nombre y movimientos de cierre ligados al `origin_id` del fiado.
+2. Mantener deduplicación por tabla/id para no duplicar eventos.
+3. Confirmar si la card debe mostrar saldo monetario vivo aunque las unidades estén en cero.
+4. Solo después revisar pestañas, badge, rankings y reportes restantes.
+
+### Archivos candidatos
+
+- `apps/gold/agro/agro-cartera-viva-detail.js`
+- `apps/gold/agro/agro-cartera-viva-view.js`
+- `apps/gold/agro/agro.js`
+- `apps/gold/agro/agro-stats-report.js`
+
+### Criterio de validación
+
+- Si `Fiados por Cliente` habla de 2 fiados de `jose luis`, esos movimientos deben poder verse en `Ver detalle`.
+- Si esos fiados fueron pagados/cerrados, los pagos/cierres también deben verse.
+- Si no queda saldo monetario ni unidades, `jose luis` no debe clasificarse como fiado activo.
+- `git diff --check` y `pnpm build:gold` deben pasar.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/agro-cartera-viva-detail.js` | El historial ahora busca movimientos por `buyer_id`, `buyer_group_key`, texto legacy (`cliente`, `concepto`, `causa`) y cobros/pérdidas ligados al `origin_id` del fiado. Deduplica por tabla/id para evitar eventos repetidos. |
+| `apps/gold/agro/agro-cartera-viva-view.js` | Si queda saldo monetario vivo aunque las unidades estén cerradas, la card muestra chip `Por cobrar USD X`. |
+| `apps/gold/agro/agro-stats-report.js` | El ranking de clientes usa `portfolioRows` reconciliado desde Cartera Viva, no filas de fiados crudas/ajustadas como fuente del estado del cliente. |
+
+### Validación técnica
+
+- `git diff --check`: OK. Advertencia no bloqueante: Git avisa normalización futura CRLF/LF en `AGENT_REPORT_ACTIVE.md`.
+- `node --check` en los 3 módulos tocados: OK.
+- `pnpm build:gold`: OK. Advertencia no bloqueante: Node actual `v25.6.0`; el repo declara engine `20.x`.
+
+---
+
 ## 2026-05-08 — Diagnóstico y plan: Cartera Viva no debe dejar pagados en Fiados
 
 **Estado:** COMPLETADO EN CÓDIGO / QA PRODUCCIÓN PENDIENTE

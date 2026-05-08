@@ -741,33 +741,55 @@ function parseWhoFromIncome(concept) {
     return legacyMatch?.[1]?.trim() || '';
 }
 
-function buildBuyerRanking(incomeRows, pendingRows) {
+function buildBuyerRanking(incomeRows, portfolioRows) {
     const buyers = new Map();
     const currencyCount = new Map();
+    const portfolioByName = new Map();
+
+    for (const row of (Array.isArray(portfolioRows) ? portfolioRows : [])) {
+        if (isAgroQaClientName(row?.display_name) || isAgroQaClientName(row?.canonical_name) || isAgroQaClientName(row?.group_key)) continue;
+        const pending = getBuyerLivePendingBalance(row);
+        const paid = Number(row?.paid_total || 0);
+        const totalActivity = pending + paid;
+        if (totalActivity <= 0 && !isPositiveBuyerPortfolioAmount(paid)) continue;
+        const displayWho = String(row?.display_name || row?.canonical_name || row?.group_key || '').trim() || 'Cliente';
+        [
+            row?.display_name,
+            row?.canonical_name,
+            row?.group_key
+        ].forEach((token) => {
+            const key = normalizeHistorySearchToken(token);
+            if (key) portfolioByName.set(key, { displayWho, pending, paid, row });
+        });
+    }
 
     for (const r of incomeRows) {
+        if (isQaStatsRow(r)) continue;
         const who = resolveBuyerName(r);
         const key = String(who).trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-        if (!buyers.has(key)) buyers.set(key, { displayWho: who, count: 0, totalCents: 0, paid: true, currencies: new Set() });
+        if (!buyers.has(key)) buyers.set(key, { displayWho: who, count: 0, totalCents: 0, paidCents: 0, currencies: new Set() });
         const b = buyers.get(key);
         b.count += 1;
         b.totalCents += toCents(resolveAmountUsd(r));
+        b.paidCents += toCents(resolveAmountUsd(r));
         const cur = String(r.currency || 'USD').trim().toUpperCase() || 'USD';
         b.currencies.add(cur);
         currencyCount.set(cur, (currencyCount.get(cur) || 0) + 1);
     }
 
-    for (const r of pendingRows) {
-        const who = resolveBuyerName(r);
-        const key = String(who).trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-        if (!buyers.has(key)) buyers.set(key, { displayWho: who, count: 0, totalCents: 0, paid: true, currencies: new Set() });
+    for (const [key, entry] of portfolioByName) {
+        if (!buyers.has(key)) {
+            buyers.set(key, {
+                displayWho: entry.displayWho,
+                count: 0,
+                totalCents: toCents(entry.paid) + toCents(entry.pending),
+                paidCents: toCents(entry.paid),
+                currencies: new Set(['USD'])
+            });
+        }
         const b = buyers.get(key);
-        b.count += 1;
-        b.totalCents += toCents(resolveAmountUsd(r));
-        const cur = String(r.currency || 'USD').trim().toUpperCase() || 'USD';
-        b.currencies.add(cur);
-        b.paid = false;
-        currencyCount.set(cur, (currencyCount.get(cur) || 0) + 1);
+        b.totalCents = Math.max(b.totalCents, toCents(entry.paid) + toCents(entry.pending));
+        b.paidCents = Math.max(b.paidCents, toCents(entry.paid));
     }
 
     const sorted = Array.from(buyers.entries())
@@ -779,7 +801,17 @@ function buildBuyerRanking(incomeRows, pendingRows) {
     md += '|---------|--------:|---------|------------:|--------|\n';
     for (const [, b] of sorted) {
         const name = b.displayWho;
-        const estado = b.paid ? '✅ Pagado' : '⏳ Debe';
+        const portfolioKey = Array.from(portfolioByName.keys()).find((k) => {
+            const entry = portfolioByName.get(k);
+            return normalizeHistorySearchToken(name) === k;
+        });
+        let estado;
+        if (portfolioKey) {
+            const entry = portfolioByName.get(portfolioKey);
+            estado = isPositiveBuyerPortfolioAmount(entry.pending) ? '\u23f3 Debe' : '\u2705 Pagado';
+        } else {
+            estado = b.count > 0 ? '\u2705 Pagado' : '\u23f3 Debe';
+        }
         const curs = Array.from(b.currencies).join(', ');
         md += `| ${escMd(name)} | ${b.count} | ${curs} | ${centsToStr(b.totalCents)} | ${estado} |\n`;
     }
@@ -894,7 +926,7 @@ export async function exportStatsReport() {
 
         // Buyer ranking
         md += `## 👥 Ranking de Clientes\n`;
-        md += buildBuyerRanking(incomeRows, pendingRows);
+        md += buildBuyerRanking(incomeRows, portfolioRows);
         md += '\n---\n\n';
 
         // Projection

@@ -2201,6 +2201,7 @@ function renderCardSignal(row) {
 function renderSupportChips(row) {
     const chips = [];
     const review = getReviewTotal(row);
+    const pending = getOutstandingBalance(row);
     const operationalProgress = getOperationalProgress(row);
     const operationalStatus = getOperationalStatusSnapshot(row, activeOperationalFamily);
     const visibleFamilies = getVisibleOperationalProgressFamilies(row, activeOperationalFamily);
@@ -2219,6 +2220,9 @@ function renderSupportChips(row) {
     const partialChip = formatOperationalPartialChip(operationalStatus.primaryProgress);
     if (partialChip) {
         chips.push(`<span class="cartera-viva-chip">${partialChip}</span>`);
+    }
+    if (isPositiveBuyerPortfolioAmount(pending)) {
+        chips.push(`<span class="cartera-viva-chip is-review">Por cobrar ${renderMoneyNode(formatMoney(pending))}</span>`);
     }
     if (Number(row?.loss_total || 0) > 0) {
         chips.push(`<span class="cartera-viva-chip is-loss">Pérdida ${renderMoneyNode(formatMoney(row.loss_total))}</span>`);
