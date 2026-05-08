@@ -75,7 +75,10 @@ This file contains the current product, architecture and routing policy for `app
 - Supabase tables use soft-delete (`deleted_at`) as standard pattern
 - Supported currencies: COP, USD, VES
 - Agro navigation: hub/module pattern with Inicio, Granja, Memoria, Menu; Granja contains Mi Granja: Mis cultivos, Calendario operativo, estadisticas/comparadores, Mis finanzas (Cartera Viva, Cartera Operativa, Mi Carrito, Mis Clientes), Trabajo Diario, Rankings de Clientes, Clima Agro, Centro de Reportes. Operacion Comercial no debe tratarse como modulo/card del hub. Deep modules use contextual Volver and hide global navigation. Shell gates (Inicio/Granja/Memoria/Menu) use canonical hash routes and persist across F5 refresh.
-- Centro de Reportes: centralizes Markdown exports by category without replacing existing per-module exports. Generates honest Markdown when a data source is not loaded.
+- Centro de Reportes: índice de reportes generales oficiales (Informe estadístico global, Informe Global Agro, Rankings de clientes). No es selector de cultivos, no consulta Supabase, no inventa Markdown. Los reportes detallados por cultivo viven en cada card/ciclo, no en el Centro.
+- `#view=operaciones` is legacy/compatibility, not a primary functional destination. Notifications route to modern surfaces (Cartera Viva, Cartera Operativa), not to Operaciones.
+- Archivar/eliminar un cultivo NO borra clientes ni movimientos comerciales. La historia económica permanece.
+- `showAgroConfirmDialog()` is the canonical modal for destructive confirmations. Do not use `window.confirm()` or `alert()` in sensitive flows.
 - Cartera Viva: separates Nuevo cliente (create new) and Cliente existente (select/link existing) flows. Does not expose UUID/user_id to end user.
 - Mis Clientes: contact directory combining `agro_clients` (manual, editable) with `agro_buyers` (derived from Cartera Viva, read-only). Deduplication by canonical name. Mis Clientes does NOT handle debts, balances or financial data — that is Cartera Viva's domain.
 - Crop states are manual: active, finalizado, perdido. No automatic transitions. The farmer decides when to change state.

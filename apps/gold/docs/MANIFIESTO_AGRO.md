@@ -678,34 +678,38 @@ El clima afecta tu trabajo diariamente: evitas siembras si hay probabilidad de g
 
 ### Qué es
 
-El Centro de Reportes es la superficie donde Agro reúne los reportes exportables en Markdown, organizados por categoría. Sirve para encontrar y descargar memoria operativa sin tener que entrar módulo por módulo.
+El Centro de Reportes es el índice de reportes generales oficiales de Agro. Muestra solo los reportes que el producto define como exportaciones oficiales generales, organizados por categoría.
 
 ### Qué no es
 
-No reemplaza los reportes existentes dentro de cada módulo. No borra ni mueve exportaciones actuales. No es una estadística nueva ni una segunda cartera. No es un facturero ni un módulo de registro de datos. Es un centro de acceso y generación de reportes.
+No es una fábrica de reportes nuevos. No es un selector de cultivos. No es un buscador de funciones internas. No reemplaza los reportes detallados por cultivo que viven en cada card/ciclo. No consulta Supabase directamente. No inventa Markdown ni datos.
 
 ### Para qué sirve
 
-* Exportar reportes de cultivos, ciclos, cartera, clientes, carrito, trabajo, memoria y estadísticas.
+* Exportar los reportes generales oficiales: Informe estadístico global, Informe Global Agro y Rankings de clientes.
 * Mantener los reportes ordenados por categoría.
 * Generar archivos `.md` útiles para archivo, revisión, soporte, memoria operativa o IA.
-* Ahorrar tiempo al agricultor cuando necesita compartir o revisar información.
+* Indicar al usuario que los reportes detallados por cultivo se acceden desde cada card/ciclo de cultivo.
+
+### Regla canónica
+
+El Centro de Reportes solo incluye reportes generales oficiales definidos por el producto. Una función exportadora interna equivale a un reporte del Centro solo si el producto lo define explícitamente como tal.
+
+Los reportes detallados por cultivo viven en cada card/ciclo de cultivo mediante el botón "Informe del Cultivo". No pertenecen al Centro de Reportes.
+
+### Reportes oficiales del Centro
+
+| Reporte | Exportador | Descripción |
+|---|---|---|
+| Informe estadístico global | `exportStatsReport()` | Estadísticas globales de cultivos, clientes y operación |
+| Informe Global Agro | `window.exportAgroGlobalMd()` | Perfil del agricultor con resumen de cultivos, totales y clientes principales |
+| Rankings de clientes (Markdown) | `window.exportOpsRankingsMarkdown()` | Rankings de clientes y cultivos desde Ciclos Operativos |
+
+No pertenecen al Centro de Reportes: reporte detallado por cultivo (vive en cada card), Cartera Viva, Cartera Operativa, Mi Carrito, AgroRepo, Trabajo Diario, Mis Clientes, reportes financieros inventados, exportadores internos sueltos.
 
 ### Regla de honestidad documental
 
-Si una fuente de datos no está cargada o no existe una API pública estable, el Centro de Reportes genera un Markdown honesto indicando estado, observaciones y próximo dato necesario. No inventa números ni promete información que no pudo leer.
-
-### Cómo se conecta
-
-Lee o reutiliza exportadores existentes de Agro cuando están disponibles. Cada módulo conserva sus propios botones de exportación, pero el Centro de Reportes ofrece una entrada común para encontrarlos todos.
-
-### Reportes conectados
-
-* Reporte de cultivo seleccionado (reutiliza `exportCropReport`).
-* Informe estadístico global (reutiliza `exportStatsReport`).
-* Informe global de Agro (reutiliza exportador global si está cargado).
-* Reporte de Cartera Operativa (reutiliza exportador de ciclos operativos si está cargado).
-* Reportes honestos para Mi Carrito, Rankings, AgroRepo y otras fuentes cuando no exista API pública estable desde el centro.
+Si una fuente de datos no está cargada o no está disponible en la sesión, el Centro genera un archivo Markdown honesto indicando estado y observaciones. No inventa números ni promete información que no pudo leer.
 
 ---
 
@@ -1110,8 +1114,12 @@ Su propósito es concentrar el acceso a **Ciclos de Cultivo** (via Mis cultivos)
 ### Cómo se exportan hoy
 
 * Mediante el botón "Exportar Informe Global (MD)" dentro de Estadísticas.
-* Mediante el botón "Reporte Detallado por Cultivo (MD)" dentro de cada ciclo de cultivo.
+* Mediante el botón "Informe Estadístico Global (MD)" dentro de Estadísticas.
+* Mediante el botón "Informe del Cultivo" dentro de cada card de cultivo.
+* Mediante el Centro de Reportes (`#view=reportes`), que agrupa los reportes generales oficiales.
 * En formato abierto Markdown (texto simple).
+
+Los reportes detallados por cultivo se acceden directamente desde cada card/ciclo de cultivo, no desde el Centro de Reportes.
 
 ### Por qué utilizamos MD por ahora
 

@@ -1845,3 +1845,49 @@ El reporte detallado por cultivo real vive en cada card/ciclo con el boton "Info
 ### Commit sugerido
 
 `fix(agro): align reports center with official global exports`
+---
+
+## Sesion 2026-05-07 (4) — Actualizacion documental canonica
+
+### Causa
+
+Alinear documentacion con la verdad final del Centro de Reportes y cambios del dia.
+
+### Archivos revisados
+
+1. MANIFIESTO_AGRO.md — SI, actualizado
+2. FICHA_TECNICA.md — SI, actualizado
+3. llms.txt — SI, actualizado
+4. docs-agro.html — SI, actualizado
+5. AGENT_CONTEXT_INDEX.md — NO, no necesita cambios (solo es indice)
+6. README.md — NO, no contiene contenido relevante a estos cambios
+
+### Archivos modificados
+
+| Archivo | Que se actualizo |
+|---|---|
+| MANIFIESTO_AGRO.md §4.8.1 | Centro de Reportes reescrito: definicion, que es, que no es, reportes oficiales en tabla, regla canonica, regla de honestidad |
+| MANIFIESTO_AGRO.md §7 | "Como se exportan hoy" corregido: agrega Centro de Reportes y aclara que reportes por cultivo viven en cards |
+| FICHA_TECNICA.md | Descripcion del Centro de Reportes alineada con verdad final |
+| FICHA_TECNICA.md | gro-crop-report.js aclara que se accede desde cards |
+| FICHA_TECNICA.md | gro-reports-center.css agrega nota informativa |
+| llms.txt | Centro de Reportes reescrito como indice de reportes generales oficiales |
+| llms.txt | Agregados guardrails: #view=operaciones legacy, archivo/papelera no borra historia, showAgroConfirmDialog canonico |
+| docs-agro.html | FAQ "Como hago un respaldo?" actualizado con Centro de Reportes y boton Informe del Cultivo |
+
+### Que se decidio no tocar
+
+- AGENT_CONTEXT_INDEX.md — solo es indice de navegacion, no tiene contenido de features
+- README.md — no contiene referencias a Centro de Reportes ni a reportes
+- No se toco codigo JS funcional
+- No se toco base de datos ni migraciones
+
+### Verificacion tecnica
+
+- git diff --check: PASS (0 warnings)
+- pnpm build:gold: PASS (4.43s)
+- No push.
+
+### Commit sugerido
+
+`docs(agro): align reports center and crop archive documentation`

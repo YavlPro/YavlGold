@@ -135,7 +135,7 @@ Regla estricta:
 - Facturero financiero: gastos, ingresos (pagados), fiados, pérdidas, donaciones, otros
 - Gestión de cultivos con ciclos productivos
 - Dashboard agrícola con clima en tiempo real
-- Centro de Reportes para exportar reportes Markdown por categoría
+- Centro de Reportes: índice de reportes generales oficiales (estadísticas globales, perfil agricultor, rankings). Los reportes detallados por cultivo viven en cada card/ciclo, no en el Centro.
 - Rankings y estadísticas financieras
 - Carrito de compras con lista de insumos
 - Planificación y agenda agrícola
@@ -156,7 +156,7 @@ agro-cartera-viva-client-merge.js — modal seguro para unificar clientes duplic
 agro-cartera-viva-view.js — Cartera Viva: vista de clientes, estados, wizard de compradores y flujos separados Nuevo cliente / Cliente existente
 agro-clients.js      — Mis Clientes: directorio de contactos (clientes manuales + buyers derivados de Cartera Viva)
 agro-clima.js        — integración meteorológica
-agro-crop-report.js  — reportes por cultivo
+agro-crop-report.js  — reportes detallados por cultivo (se acceden desde cada card/ciclo, no desde el Centro de Reportes)
 agro-exchange.js     — tasas de cambio
 agro-feedback.js     — feedback y encuestas
 agro-interactions.js — interacciones
@@ -164,7 +164,7 @@ agro-market.js       — inteligencia de mercado
 agro-notifications.js — notificaciones
 agro-planning.js     — planificación
 agro-privacy.js      — privacidad de datos
-agro-reports-center.js — Centro de Reportes: centraliza exportaciones Markdown por categoría y genera reportes honestos cuando una fuente no está cargada
+agro-reports-center.js — Centro de Reportes: índice de reportes generales oficiales (estadísticas globales, perfil agricultor, rankings). No consulta Supabase, no selecciona cultivos, no inventa Markdown.
 agro-selection.js    — selección de cultivos
 agro-shell.js        — shell UI de Agro: gestiona navegación hub/module con puertas Inicio · Granja · Memoria · Menú con persistencia por hash, hub central Mi Granja con Mis cultivos y Calendario operativo, barra inferior mobile, topbar contextual con Volver en módulos profundos, launcher/favoritos/búsqueda compacta cuando aplican, y entrada inicial al Dashboard Agro
 agro-stats.js        — estadísticas financieras
@@ -180,7 +180,7 @@ agro-wizard.js       — wizard de configuración
 - `agro-dashboard.css` — dashboard
 - `agro-operations.css` — operaciones financieras
 - `agro-clients.css` — Mis Clientes
-- `agro-reports-center.css` — Centro de Reportes: vista, cards, estados, botones y responsive mobile
+- `agro-reports-center.css` — Centro de Reportes: vista, cards, estados, botones, nota informativa y responsive mobile
 
 **LocalStorage Keys:**
 - `YG_MANUAL_LOCATION`
