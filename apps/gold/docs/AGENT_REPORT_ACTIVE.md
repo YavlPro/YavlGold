@@ -2036,3 +2036,16 @@ No aceptar nuevos fixes hasta demostrar:
 - que registros ya fueron cobrados;
 - que registros fueron perdidos;
 - que accion corresponde a cada uno.
+
+---
+
+## TEST — Cartera Viva: acción Transferir no debe aparecer si el fiado ya fue transferido
+
+Síntoma: en `Cartera Viva > Ver detalle`, algunos fiados muestran `Transferir`, pero el handler real responde `Este fiado ya fue transferido.`
+Hipótesis: el detalle solo evalúa `transfer_state`, mientras el handler también considera señales legacy de transferencia.
+Archivos autorizados: `apps/gold/agro/agro-cartera-viva-detail.js` y `apps/gold/docs/AGENT_REPORT_ACTIVE.md`.
+Plan mínimo: comparar columnas/detección del detalle contra `isPendingTransferred()`, agregar solo señales faltantes y usar una función local equivalente en ledger/menú.
+Riesgos: ocultar por error `Transferir` en fiados abiertos si la condición local es más amplia que el handler real.
+Validación esperada: `git diff --check`, `node --check apps/gold/agro/agro-cartera-viva-detail.js` y `pnpm build:gold`.
+
+Resultado: se agregaron `transferred_at` y `transferred_income_id` al detalle, y el menú de fiados usa `isLedgerPendingTransferred()` para no prometer `Transferir` cuando ya hay señales de transferencia. Validación técnica PASS; QA producción pendiente.

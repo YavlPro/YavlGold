@@ -25,6 +25,8 @@ const PENDING_HISTORY_COLUMNS = [
     'unit_qty',
     'quantity_kg',
     'transfer_state',
+    'transferred_at',
+    'transferred_income_id',
     'transferred_to',
     'buyer_id',
     'buyer_group_key',
@@ -480,9 +482,21 @@ function createActionHistoryRow(row, config = {}) {
     };
 }
 
+function isLedgerPendingTransferred(row) {
+    if (!row) return false;
+    const transferState = String(row?.transfer_state || '').trim().toLowerCase();
+    if (transferState === 'reverted' || row?.reverted_at) return false;
+    if (transferState === 'transferred') return true;
+    return Boolean(
+        String(row?.transferred_at || '').trim()
+        || String(row?.transferred_income_id || '').trim()
+        || String(row?.transferred_to || '').trim()
+    );
+}
+
 function buildPendingLedgerRow(row) {
     const transferState = String(row?.transfer_state || 'active').trim().toLowerCase();
-    if (transferState === 'transferred') return null;
+    if (isLedgerPendingTransferred(row)) return null;
 
     const amount = normalizeMoney(readHistoryItemField(row, ['monto_usd', 'monto']));
     const transferredTo = String(row?.transferred_to || '').trim().toLowerCase();
@@ -515,6 +529,8 @@ function buildPendingLedgerRow(row) {
         quantity_kg: Number(row?.quantity_kg ?? NaN),
         ledger_scope: 'fiados',
         transfer_state: transferState,
+        transferred_at: row?.transferred_at || '',
+        transferred_income_id: row?.transferred_income_id || '',
         transferred_to: transferredTo,
         reverted_at: row?.reverted_at || '',
         origin_table: '',
@@ -547,7 +563,7 @@ function buildPendingActionRows(row) {
         ];
     }
 
-    if (transferState !== 'transferred') return [];
+    if (!isLedgerPendingTransferred(row)) return [];
 
     const transferLabel = transferredTo === 'income'
         ? 'Transferido a cobro'
@@ -1203,7 +1219,6 @@ function resolveHistoryMenuActions(row, options = {}) {
     const actions = [];
     const sourceTab = String(row?.source_tab || '').trim().toLowerCase();
     const sourceId = String(row?.source_id || '').trim();
-    const transferState = String(row?.transfer_state || '').trim().toLowerCase();
     const originTable = String(row?.origin_table || '').trim().toLowerCase();
     const cropId = String(row?.crop_id || '').trim();
 
@@ -1251,7 +1266,7 @@ function resolveHistoryMenuActions(row, options = {}) {
         });
     }
 
-    if (sourceTab === 'pendientes' && transferState !== 'transferred') {
+    if (sourceTab === 'pendientes' && !isLedgerPendingTransferred(row)) {
         actions.push({
             className: 'btn-transfer-pending',
             label: 'Transferir',
