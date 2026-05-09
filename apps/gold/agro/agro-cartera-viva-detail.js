@@ -1,11 +1,7 @@
 import {
     formatHistoryAbsoluteDayLabel,
-    getBuyerLivePendingBalance,
-    isPositiveBuyerPortfolioAmount,
     normalizeHistorySearchToken,
-    readBuyerPortfolioNumber,
     readHistoryItemField,
-    resolvePendingPortfolioState,
     renderHistoryDayGroups
 } from './agro-cartera-viva.js';
 import {
@@ -29,9 +25,7 @@ const PENDING_HISTORY_COLUMNS = [
     'unit_qty',
     'quantity_kg',
     'transfer_state',
-    'transferred_at',
     'transferred_to',
-    'transferred_income_id',
     'buyer_id',
     'buyer_group_key',
     'buyer_match_status',
@@ -210,11 +204,18 @@ function clampPercent(value) {
 }
 
 function getReviewTotal(buyerRow) {
-    return readBuyerPortfolioNumber(buyerRow?.review_required_total) + readBuyerPortfolioNumber(buyerRow?.legacy_unclassified_total);
+    return Number(buyerRow?.review_required_total || 0) + Number(buyerRow?.legacy_unclassified_total || 0);
 }
 
 function getOutstandingBalance(buyerRow) {
-    return getBuyerLivePendingBalance(buyerRow);
+    const pendingTotal = Number(buyerRow?.pending_total);
+    if (Number.isFinite(pendingTotal)) return Math.max(0, pendingTotal);
+
+    const credited = Number(buyerRow?.credited_total || 0);
+    const paid = Number(buyerRow?.paid_total || 0);
+    const loss = Number(buyerRow?.loss_total || 0);
+    const transferred = Number(buyerRow?.transferred_total || 0);
+    return Math.max(0, credited - paid - loss - transferred);
 }
 
 function getProgressBase(buyerRow) {
@@ -238,27 +239,27 @@ function resolveBuyerStatus(buyerRow) {
     const loss = Number(buyerRow?.loss_total || 0);
     const review = getReviewTotal(buyerRow);
 
-    if (isPositiveBuyerPortfolioAmount(pending)) {
+    if (pending > 0) {
         return {
             tone: 'fiado',
-            label: 'Fiado',
+            label: paid > 0 ? 'Cobro en curso' : 'Fiado activo',
             copy: `${formatMoney(pending)} por cobrar`
         };
     }
 
-    if (isPositiveBuyerPortfolioAmount(loss)) {
+    if (paid > 0) {
         return {
-            tone: 'perdido',
-            label: 'Perdido',
-            copy: `${formatMoney(loss)} cerrados fuera de cartera`
+            tone: 'pagado',
+            label: 'Pagado',
+            copy: 'Saldo cerrado sin pendiente'
         };
     }
 
-    if (isPositiveBuyerPortfolioAmount(paid)) {
+    if (loss > 0) {
         return {
-            tone: 'pagado',
-            label: 'Cobrado',
-            copy: 'Saldo cerrado sin pendiente'
+            tone: 'perdido',
+            label: 'Pérdida',
+            copy: `${formatMoney(loss)} cerrados fuera de cartera`
         };
     }
 
@@ -291,65 +292,13 @@ function buildProgressBreakdown(buyerRow) {
 function normalizeBuyerScope(buyerRow) {
     const buyerId = String(buyerRow?.buyer_id || '').trim();
     const groupKey = normalizeHistorySearchToken(buyerRow?.group_key || buyerRow?.buyer_group_key || '');
-    const displayName = String(buyerRow?.display_name || '').trim();
-    const tokenCandidates = [
-        displayName,
-        buyerRow?.canonical_name,
-        buyerRow?.buyer_name,
-        buyerRow?.client_name,
-        groupKey ? groupKey.replace(/[_-]+/g, ' ') : ''
-    ];
-    const legacyTextTokens = [];
-    const seenTokens = new Set();
-
-    tokenCandidates.forEach((candidate) => {
-        const value = String(candidate || '').trim();
-        const normalized = normalizeHistorySearchToken(value);
-        if (normalized.length < 3 || seenTokens.has(normalized)) return;
-        seenTokens.add(normalized);
-        legacyTextTokens.push(value);
-    });
 
     return {
         buyerId,
         groupKey,
-        displayName,
-        legacyTextTokens,
-        hasIdentity: Boolean(buyerId || groupKey || legacyTextTokens.length > 0)
+        displayName: String(buyerRow?.display_name || '').trim(),
+        hasIdentity: Boolean(buyerId || groupKey)
     };
-}
-
-function applyBuyerHistoryFilters(query, filters, options = {}) {
-    let nextQuery = query.is('deleted_at', null);
-
-    if (options.excludeReverted !== false) {
-        nextQuery = nextQuery.is('reverted_at', null);
-    }
-
-    filters.forEach((applyFilter) => {
-        nextQuery = applyFilter(nextQuery);
-    });
-
-    return nextQuery;
-}
-
-function getBuyerLegacySearchColumns(tableName) {
-    if (tableName === 'agro_pending') return ['cliente', 'concepto'];
-    if (tableName === 'agro_income') return ['concepto'];
-    if (tableName === 'agro_losses') return ['concepto', 'causa'];
-    return [];
-}
-
-function mergeBuyerHistoryRows(tableName, ...rowGroups) {
-    const rows = rowGroups.flatMap((group) => Array.isArray(group) ? group : []);
-    const seen = new Set();
-
-    return rows.filter((row) => {
-        const key = `${tableName}:${row?.id || ''}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-    });
 }
 
 async function fetchBuyerScopedRows(supabaseClient, tableName, columns, buyerScope, options = {}) {
@@ -364,9 +313,18 @@ async function fetchBuyerScopedRows(supabaseClient, tableName, columns, buyerSco
         let query = supabaseClient
             .from(tableName)
             .select(columns)
-            .eq('buyer_id', buyerScope.buyerId);
+            .eq('buyer_id', buyerScope.buyerId)
+            .is('deleted_at', null);
 
-        queries.push(applyBuyerHistoryFilters(query, filters, options));
+        if (options.excludeReverted !== false) {
+            query = query.is('reverted_at', null);
+        }
+
+        filters.forEach((applyFilter) => {
+            query = applyFilter(query);
+        });
+
+        queries.push(query);
     }
 
     if (buyerScope.groupKey) {
@@ -374,24 +332,18 @@ async function fetchBuyerScopedRows(supabaseClient, tableName, columns, buyerSco
             .from(tableName)
             .select(columns)
             .is('buyer_id', null)
-            .eq('buyer_group_key', buyerScope.groupKey);
+            .eq('buyer_group_key', buyerScope.groupKey)
+            .is('deleted_at', null);
 
-        queries.push(applyBuyerHistoryFilters(query, filters, options));
-    }
+        if (options.excludeReverted !== false) {
+            query = query.is('reverted_at', null);
+        }
 
-    const legacyColumns = getBuyerLegacySearchColumns(tableName);
-    if (legacyColumns.length > 0 && Array.isArray(buyerScope.legacyTextTokens)) {
-        buyerScope.legacyTextTokens.forEach((token) => {
-            legacyColumns.forEach((column) => {
-                let query = supabaseClient
-                    .from(tableName)
-                    .select(columns)
-                    .is('buyer_id', null)
-                    .ilike(column, `%${token}%`);
-
-                queries.push(applyBuyerHistoryFilters(query, filters, options));
-            });
+        filters.forEach((applyFilter) => {
+            query = applyFilter(query);
         });
+
+        queries.push(query);
     }
 
     if (queries.length <= 0) return [];
@@ -406,55 +358,13 @@ async function fetchBuyerScopedRows(supabaseClient, tableName, columns, buyerSco
         }
     });
 
-    return mergeBuyerHistoryRows(tableName, rows);
-}
-
-async function fetchRowsByPendingOrigin(supabaseClient, tableName, columns, pendingRows, options = {}) {
-    if (!supabaseClient?.from) {
-        throw new TypeError('fetchRowsByPendingOrigin requires a Supabase client with from().');
-    }
-
-    const pendingIds = Array.from(new Set(
-        (Array.isArray(pendingRows) ? pendingRows : [])
-            .map((row) => String(row?.id || '').trim())
-            .filter(Boolean)
-    ));
-
-    if (pendingIds.length <= 0) return [];
-
-    const filters = Array.isArray(options.extraFilters) ? options.extraFilters : [];
-    let query = supabaseClient
-        .from(tableName)
-        .select(columns)
-        .eq('origin_table', 'agro_pending')
-        .in('origin_id', pendingIds);
-
-    query = applyBuyerHistoryFilters(query, filters, options);
-
-    const result = await query;
-    if (result?.error) throw result.error;
-    return Array.isArray(result?.data) ? result.data : [];
-}
-
-function buildClosureMapByPendingId(incomeRows, lossRows) {
-    const map = new Map();
-    const addClosure = (type, row) => {
-        const originTable = String(row?.origin_table || '').trim().toLowerCase();
-        const originId = String(row?.origin_id || '').trim();
-        const isReverted = String(row?.transfer_state || '').trim().toLowerCase() === 'reverted' || Boolean(row?.reverted_at);
-        if (originTable !== 'agro_pending' || !originId || isReverted) return;
-        if (!map.has(originId)) map.set(originId, []);
-        map.get(originId).push({ type, row });
-    };
-
-    (Array.isArray(incomeRows) ? incomeRows : []).forEach((row) => addClosure('income', row));
-    (Array.isArray(lossRows) ? lossRows : []).forEach((row) => addClosure('loss', row));
-
-    map.forEach((closures) => {
-        closures.sort((a, b) => compareHistoryRows(a.row, b.row));
+    const seen = new Set();
+    return rows.filter((row) => {
+        const key = `${tableName}:${row?.id || ''}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
     });
-
-    return map;
 }
 
 function formatHistoryQuantity(value, decimals = 2) {
@@ -570,114 +480,13 @@ function createActionHistoryRow(row, config = {}) {
     };
 }
 
-function getClosureAmount(row) {
-    return normalizeMoney(readHistoryItemField(row, ['monto_usd', 'monto']));
-}
+function buildPendingLedgerRow(row) {
+    const transferState = String(row?.transfer_state || 'active').trim().toLowerCase();
+    if (transferState === 'transferred') return null;
 
-function buildClosureSummary(closure) {
-    const row = closure?.row || {};
-    const type = String(closure?.type || '').trim().toLowerCase();
-    const label = type === 'loss' ? 'Transferido a perdido' : 'Transferido a cobrado';
-    const amount = formatMoney(getClosureAmount(row));
-    const date = formatHistoryAbsoluteDayLabel(row?.fecha || row?.created_at || '');
-    const meta = buildMovementMeta(row, [String(row?.categoria || row?.causa || '').trim()]);
-    return [label, amount, date, meta].filter(Boolean).join(' · ');
-}
-
-function summarizeClosures(closures) {
-    const safeClosures = Array.isArray(closures) ? closures : [];
-    if (safeClosures.length <= 0) return '';
-    return safeClosures.map(buildClosureSummary).filter(Boolean).join(' | ');
-}
-
-function resolvePendingClosureState(row, closures = []) {
-    const safeClosures = Array.isArray(closures) ? closures : [];
-    const pendingState = resolvePendingPortfolioState(row, safeClosures);
-    const closureSummary = summarizeClosures(safeClosures);
-
-    if (pendingState.isReverted) {
-        return {
-            label: 'Fiado',
-            tone: 'review',
-            ledgerScope: 'fiados',
-            note: closureSummary
-                ? `La transferencia fue reversada. Cierre anterior: ${closureSummary}.`
-                : 'La transferencia fue reversada y el fiado volvió a la cartera activa.',
-            closed: false,
-            closureSummary
-        };
-    }
-
-    if (pendingState.isClosed) {
-        if (pendingState.status === 'paid') {
-            return {
-                label: 'Cobrado',
-                tone: 'paid',
-                ledgerScope: 'pagados',
-                note: closureSummary
-                    ? `Este fiado ya no está abierto. Cierre: ${closureSummary}.`
-                    : 'Este fiado ya fue transferido a cobrado, pero el cierre relacionado no tiene detalle visible.',
-                closed: true,
-                closureSummary
-            };
-        }
-
-        if (pendingState.status === 'lost') {
-            return {
-                label: 'Perdido',
-                tone: 'loss',
-                ledgerScope: 'perdidos',
-                note: closureSummary
-                    ? `Este fiado ya no está abierto. Cierre: ${closureSummary}.`
-                    : 'Este fiado ya fue transferido a perdido, pero el cierre relacionado no tiene detalle visible.',
-                closed: true,
-                closureSummary
-            };
-        }
-
-        return {
-            label: 'Cobrado',
-            tone: 'paid',
-            ledgerScope: 'pagados',
-            note: closureSummary
-                ? `Este fiado ya fue transferido. Cierre: ${closureSummary}.`
-                : 'Este fiado ya fue transferido, pero la app no encontró el destino relacionado en el historial visible.',
-            closed: true,
-            closureSummary
-        };
-    }
-
-    if (safeClosures.length > 0) {
-        return {
-            label: 'Fiado',
-            tone: 'pending',
-            ledgerScope: 'fiados',
-            note: closureSummary
-                ? `Tiene cierres parciales registrados: ${closureSummary}. El saldo restante sigue en Fiados.`
-                : 'Tiene cierres parciales registrados. El saldo restante sigue en Fiados.',
-            closed: false,
-            closureSummary
-        };
-    }
-
-    return {
-        label: 'Fiado',
-        tone: 'pending',
-        ledgerScope: 'fiados',
-        note: 'Deuda viva del cliente. Este movimiento todavía puede cerrarse o transferirse.',
-        closed: false,
-        closureSummary: ''
-    };
-}
-
-function buildPendingLedgerRow(row, closures = []) {
     const amount = normalizeMoney(readHistoryItemField(row, ['monto_usd', 'monto']));
     const transferredTo = String(row?.transferred_to || '').trim().toLowerCase();
     const isReview = String(row?.buyer_match_status || '').trim().toLowerCase() !== 'matched';
-    const closureState = resolvePendingClosureState(row, closures);
-    const note = isReview && !closureState.closed
-        ? `${closureState.note} Este movimiento aún necesita revisión antes de cerrar su lectura.`
-        : closureState.note;
 
     return {
         history_id: `agro_pending:${row?.id || ''}`,
@@ -687,7 +496,7 @@ function buildPendingLedgerRow(row, closures = []) {
         source_tab: 'pendientes',
         source_id: String(row?.id || '').trim(),
         title: String(row?.cliente || '').trim() ? `Fiado a ${row.cliente}` : 'Fiado registrado',
-        label: closureState.label,
+        label: isReview ? 'Por revisar' : 'Fiado',
         amount,
         currency: normalizeDetailCurrency(row?.currency),
         exchange_rate: Number(row?.exchange_rate) || null,
@@ -695,34 +504,32 @@ function buildPendingLedgerRow(row, closures = []) {
         created_at: row?.created_at || '',
         concept: String(row?.concepto || '').trim(),
         meta: buildMovementMeta(row),
-        note,
-        tone: isReview && !closureState.closed ? 'review' : closureState.tone,
+        note: isReview
+            ? 'Este movimiento aún necesita revisión antes de cerrar su lectura.'
+            : 'Registro canónico de deuda del cliente.',
+        tone: isReview ? 'review' : 'pending',
         is_review: isReview,
         crop_id: String(row?.crop_id || '').trim(),
         unit_type: String(row?.unit_type || (Number(row?.quantity_kg) > 0 ? 'kg' : '')).trim().toLowerCase(),
         unit_qty: Number(row?.unit_qty ?? row?.quantity_kg ?? NaN),
         quantity_kg: Number(row?.quantity_kg ?? NaN),
-        ledger_scope: closureState.ledgerScope,
-        transfer_state: String(row?.transfer_state || 'active').trim().toLowerCase(),
+        ledger_scope: 'fiados',
+        transfer_state: transferState,
         transferred_to: transferredTo,
         reverted_at: row?.reverted_at || '',
         origin_table: '',
         origin_id: '',
-        is_transfer_related: closureState.closed || closures.length > 0,
-        has_closure: closures.length > 0,
-        closure_count: closures.length,
-        closure_summary: closureState.closureSummary,
+        is_transfer_related: false,
         support_url_raw: String(row?.evidence_url || row?.soporte_url || '').trim(),
         support_url_resolved: '',
         support_label: 'Ver soporte'
     };
 }
 
-function buildPendingActionRows(row, closures = []) {
+function buildPendingActionRows(row) {
     const transferState = String(row?.transfer_state || '').trim().toLowerCase();
     const transferredTo = String(row?.transferred_to || '').trim().toLowerCase();
     const isReverted = transferState === 'reverted' || Boolean(row?.reverted_at);
-    const closureState = resolvePendingClosureState(row, closures);
 
     if (isReverted) {
         return [
@@ -743,7 +550,7 @@ function buildPendingActionRows(row, closures = []) {
     if (transferState !== 'transferred') return [];
 
     const transferLabel = transferredTo === 'income'
-        ? 'Transferido a pagado'
+        ? 'Transferido a cobro'
         : transferredTo === 'losses'
             ? 'Transferido a pérdida'
             : (transferredTo ? `Transferido a ${transferredTo}` : 'Transferido fuera de cartera');
@@ -755,12 +562,10 @@ function buildPendingActionRows(row, closures = []) {
             source_table: 'agro_pending',
             source_tab: 'pendientes',
             source_id: String(row?.id || '').trim(),
-            ledger_scope: closureState.ledgerScope,
+            ledger_scope: 'fiados',
             label: transferLabel,
-            tone: closureState.tone,
-            note: closureState.closureSummary
-                ? `Destino visible: ${closureState.closureSummary}.`
-                : 'Este fiado salió de la cartera activa hacia otra salida operativa.'
+            tone: 'review',
+            note: 'Este fiado salió de la cartera activa hacia otra salida operativa.'
         })
     ];
 }
@@ -782,8 +587,8 @@ function buildIncomeLedgerRow(row) {
         source_table: 'agro_income',
         source_tab: 'ingresos',
         source_id: String(row?.id || '').trim(),
-        title: 'Cobrado',
-        label: 'Cobrado',
+        title: fromPendingContext ? 'Cobro registrado' : 'Ingreso aparte',
+        label: fromPendingContext ? 'Cobro' : 'Ingreso aparte',
         amount,
         currency: normalizeDetailCurrency(row?.currency),
         exchange_rate: Number(row?.exchange_rate) || null,
@@ -794,8 +599,8 @@ function buildIncomeLedgerRow(row) {
         note: isReview
             ? 'Este ingreso aún está pendiente por revisar.'
             : (fromPendingContext
-                ? 'Cierra o reduce un fiado del cliente.'
-                : 'No vinculado a fiado; no cierra deuda de cartera.'),
+                ? 'Movimiento económico confirmado dentro del saldo del cliente.'
+                : 'Entrada relacionada con el cliente, pero separada de la cartera.'),
         tone: isReview ? 'review' : (fromPendingContext ? 'paid' : 'neutral'),
         is_review: isReview,
         crop_id: String(row?.crop_id || '').trim(),
@@ -865,7 +670,7 @@ function buildIncomeActionRows(row) {
             source_tab: 'ingresos',
             source_id: String(row?.id || '').trim(),
             ledger_scope: 'pagados',
-            label: 'Transferido a cobrado',
+            label: 'Transferido a cobro',
             tone: 'paid',
             note: 'Acción del sistema: este cobro nació desde un fiado canónico.',
             metaParts: [String(row?.categoria || '').trim()]
@@ -891,8 +696,8 @@ function buildLossLedgerRow(row) {
         source_table: 'agro_losses',
         source_tab: 'perdidas',
         source_id: String(row?.id || '').trim(),
-        title: 'Perdido',
-        label: 'Perdido',
+        title: fromPendingContext ? 'Pérdida registrada' : 'Pérdida por revisar',
+        label: fromPendingContext ? 'Pérdida' : 'Por revisar',
         amount,
         currency: normalizeDetailCurrency(row?.currency),
         exchange_rate: Number(row?.exchange_rate) || null,
@@ -904,9 +709,7 @@ function buildLossLedgerRow(row) {
             ? (matchStatus === 'legacy_unclassified'
                 ? 'Hay un registro antiguo que todavía necesita ordenarse.'
                 : 'Esta pérdida aún necesita confirmación final.')
-            : (fromPendingContext
-                ? 'Cierra o reduce un fiado del cliente como pérdida.'
-                : 'Pérdida no vinculada a un fiado.'),
+            : 'Salida cerrada de la cartera.',
         tone: isReview ? 'review' : 'loss',
         is_review: isReview,
         crop_id: String(row?.crop_id || '').trim(),
@@ -1040,20 +843,15 @@ export async function fetchBuyerHistoryTimeline(supabaseClient, buyerRow, option
         ? [(query) => query.eq('crop_id', cropId)]
         : [];
 
-    const pendingRows = await fetchBuyerScopedRows(supabaseClient, 'agro_pending', PENDING_HISTORY_COLUMNS, buyerScope, { extraFilters, excludeReverted: false });
-    const [scopedIncomeRows, scopedLossRows, originIncomeRows, originLossRows] = await Promise.all([
+    const [pendingRows, incomeRows, lossRows] = await Promise.all([
+        fetchBuyerScopedRows(supabaseClient, 'agro_pending', PENDING_HISTORY_COLUMNS, buyerScope, { extraFilters, excludeReverted: false }),
         fetchBuyerScopedRows(supabaseClient, 'agro_income', INCOME_HISTORY_COLUMNS, buyerScope, { extraFilters, excludeReverted: false }),
-        fetchBuyerScopedRows(supabaseClient, 'agro_losses', LOSS_HISTORY_COLUMNS, buyerScope, { extraFilters, excludeReverted: false }),
-        fetchRowsByPendingOrigin(supabaseClient, 'agro_income', INCOME_HISTORY_COLUMNS, pendingRows, { extraFilters, excludeReverted: false }),
-        fetchRowsByPendingOrigin(supabaseClient, 'agro_losses', LOSS_HISTORY_COLUMNS, pendingRows, { extraFilters, excludeReverted: false })
+        fetchBuyerScopedRows(supabaseClient, 'agro_losses', LOSS_HISTORY_COLUMNS, buyerScope, { extraFilters, excludeReverted: false })
     ]);
-    const incomeRows = mergeBuyerHistoryRows('agro_income', scopedIncomeRows, originIncomeRows);
-    const lossRows = mergeBuyerHistoryRows('agro_losses', scopedLossRows, originLossRows);
-    const closureMap = buildClosureMapByPendingId(incomeRows, lossRows);
 
     const timelineRows = [
-        ...pendingRows.map((row) => buildPendingLedgerRow(row, closureMap.get(String(row?.id || '').trim()) || [])).filter(Boolean),
-        ...pendingRows.flatMap((row) => buildPendingActionRows(row, closureMap.get(String(row?.id || '').trim()) || [])),
+        ...pendingRows.map(buildPendingLedgerRow).filter(Boolean),
+        ...pendingRows.flatMap(buildPendingActionRows),
         ...incomeRows.map(buildIncomeLedgerRow).filter(Boolean),
         ...incomeRows.flatMap(buildIncomeActionRows),
         ...lossRows.map(buildLossLedgerRow).filter(Boolean),
@@ -1265,8 +1063,8 @@ function renderLedgerScopeFilters(ledgerRows, activeScope) {
     const normalizedScope = normalizeLedgerScope(activeScope);
     const filters = [
         { id: 'fiados', label: 'Fiados', count: getLedgerScopeCount(ledgerRows, 'fiados') },
-        { id: 'pagados', label: 'Cobrados', count: getLedgerScopeCount(ledgerRows, 'pagados') },
-        { id: 'perdidos', label: 'Perdidos', count: getLedgerScopeCount(ledgerRows, 'perdidos') },
+        { id: 'pagados', label: 'Cobros', count: getLedgerScopeCount(ledgerRows, 'pagados') },
+        { id: 'perdidos', label: 'Pérdidas', count: getLedgerScopeCount(ledgerRows, 'perdidos') },
         { id: 'todos', label: 'Todo', count: getLedgerScopeCount(ledgerRows, 'todos') }
     ].filter((filter) => filter.id === 'todos' || filter.count > 0);
 
@@ -1408,10 +1206,6 @@ function resolveHistoryMenuActions(row, options = {}) {
     const transferState = String(row?.transfer_state || '').trim().toLowerCase();
     const originTable = String(row?.origin_table || '').trim().toLowerCase();
     const cropId = String(row?.crop_id || '').trim();
-    const ledgerScope = normalizeLedgerScope(row?.ledger_scope);
-    const isPendingRow = sourceTab === 'pendientes';
-    const pendingIsClosed = isPendingRow && (transferState === 'transferred' || ledgerScope !== 'fiados');
-    const pendingHasPartialClosure = isPendingRow && !pendingIsClosed && Number(row?.closure_count || 0) > 0;
 
     if (!sourceTab || !sourceId) return actions;
 
@@ -1457,26 +1251,24 @@ function resolveHistoryMenuActions(row, options = {}) {
         });
     }
 
-    if (sourceTab === 'pendientes' && !pendingIsClosed) {
+    if (sourceTab === 'pendientes' && transferState !== 'transferred') {
         actions.push({
             className: 'btn-transfer-pending',
-            label: pendingHasPartialClosure ? 'Cerrar saldo restante' : 'Transferir',
+            label: 'Transferir',
             iconClass: 'fa fa-arrow-right-long',
             sourceTab,
             sourceId
         });
-    } else if (sourceTab === 'pendientes' && pendingIsClosed) {
-        actions.push({
-            className: 'is-disabled',
-            label: row?.closure_summary ? 'Cierre visible' : 'Ya transferido',
-            iconClass: 'fa fa-link',
-            sourceTab,
-            sourceId,
-            disabled: true
-        });
     }
 
     if (sourceTab === 'ingresos') {
+        actions.push({
+            className: 'btn-transfer-income',
+            label: 'Transferir',
+            iconClass: 'fa fa-arrow-right-long',
+            sourceTab,
+            sourceId
+        });
         if (originTable === 'agro_pending' && !row?.reverted_at) {
             actions.push({
                 className: 'btn-revert-income',
@@ -1489,6 +1281,13 @@ function resolveHistoryMenuActions(row, options = {}) {
     }
 
     if (sourceTab === 'perdidas') {
+        actions.push({
+            className: 'btn-transfer-loss',
+            label: 'Transferir',
+            iconClass: 'fa fa-arrow-right-long',
+            sourceTab,
+            sourceId
+        });
         if (originTable === 'agro_pending' && !row?.reverted_at) {
             actions.push({
                 className: 'btn-revert-loss',
@@ -1575,10 +1374,10 @@ function resolvePrimarySummaryMetric(buyerRow) {
     const reviewTotal = getReviewTotal(buyerRow);
     const buyerStatus = resolveBuyerStatus(buyerRow);
     const pending = getOutstandingBalance(buyerRow);
-    const paid = readBuyerPortfolioNumber(buyerRow?.paid_total);
-    const loss = readBuyerPortfolioNumber(buyerRow?.loss_total);
+    const paid = Number(buyerRow?.paid_total || 0);
+    const loss = Number(buyerRow?.loss_total || 0);
 
-    if (isPositiveBuyerPortfolioAmount(pending)) {
+    if (pending > 0) {
         return {
             label: 'Pendiente',
             amountUsd: pending,
@@ -1586,7 +1385,7 @@ function resolvePrimarySummaryMetric(buyerRow) {
         };
     }
 
-    if (isPositiveBuyerPortfolioAmount(loss)) {
+    if (loss > 0) {
         return {
             label: 'Pérdida',
             amountUsd: loss,
@@ -1594,7 +1393,7 @@ function resolvePrimarySummaryMetric(buyerRow) {
         };
     }
 
-    if (isPositiveBuyerPortfolioAmount(paid)) {
+    if (paid > 0) {
         return {
             label: 'Cobrado',
             amountUsd: paid,
@@ -1951,9 +1750,9 @@ export function renderBuyerHistoryDetail(root, options = {}) {
             ? (ledgerScope === 'fiados'
                 ? `${unitFamilyPrefix}Fiados del cliente`
                 : (ledgerScope === 'pagados'
-                        ? `${unitFamilyPrefix}Cobrados del cliente`
+                    ? `${unitFamilyPrefix}Cobros del cliente`
                     : (ledgerScope === 'perdidos'
-                        ? `${unitFamilyPrefix}Perdidos del cliente`
+                        ? `${unitFamilyPrefix}Pérdidas del cliente`
                         : (unitFamily === 'all'
                             ? 'Timeline canónico del cliente'
                             : `Historial de ${getUnitFamilyLabel(unitFamily).toLowerCase()}`))))

@@ -22,17 +22,12 @@ import { initAgroShell } from './agro-shell.js';
 import { initFactureroSelection } from './agro-selection.js';
 import { computeUnitTotalsFromRows as computeMdUnitTotalsFromRows, formatUnitTotalsMarkdown as formatMdUnitTotalsMarkdown } from './agro-unit-totals.js';
 import {
-    fetchBuyerPortfolioSummary,
     formatHistoryAbsoluteDayLabel as formatPagadosDedicatedDayLabel,
-    getBuyerLivePendingBalance,
     formatHistoryDayLabel as formatDayHeader,
     getHistoryDayKey as getDayKey,
     getHistoryRowTimestamp as getRowTimestamp,
     groupHistoryRowsByDay as groupRowsByDay,
-    isAgroQaClientName,
-    isPositiveBuyerPortfolioAmount,
     normalizeHistorySearchToken as normalizeFactureroSearchToken,
-    readBuyerPortfolioNumber,
     readHistoryItemField,
     readHistoryItemFieldWithSource,
     renderHistoryDayGroups
@@ -1568,13 +1563,11 @@ async function selectSingleWithMissingColumnFallback(tableName, fields, eqFilter
 
 function isPendingTransferred(item) {
     if (!item) return false;
-    const transferState = String(item.transfer_state || '').trim().toLowerCase();
-    const transferredTo = String(item.transferred_to || '').trim();
-    if (transferState === 'reverted' || item.reverted_at) return false;
+    if (item.transfer_state === 'reverted' || item.reverted_at) return false;
     // V9.7: Use transfer_state for accurate detection
-    if (transferState === 'transferred') return true;
+    if (item.transfer_state === 'transferred') return true;
     // Legacy fallback for data without transfer_state
-    return !!(item.transferred_at || item.transferred_income_id || transferredTo);
+    return !!(item.transferred_at || item.transferred_income_id);
 }
 
 // V9.7: Check if a pending item was transferred but then reverted (back to active)
@@ -13229,14 +13222,6 @@ function normalizeOpsRankingsRows(rows) {
     return Array.isArray(rows) ? rows : [];
 }
 
-function isPositiveOpsRankingAmount(value) {
-    return isPositiveBuyerPortfolioAmount(value);
-}
-
-function getOpsRankingPortfolioOutstanding(row) {
-    return getBuyerLivePendingBalance(row);
-}
-
 function normalizeOpsRankingNameToken(value) {
     if (typeof value === 'string' || typeof value === 'number') {
         return String(value).trim();
@@ -13285,48 +13270,6 @@ function pickOpsBuyerName(row) {
         return candidate;
     }
     return '';
-}
-
-function addOpsRankingPortfolioToken(map, token, outstanding) {
-    const safeToken = normalizeFactureroSearchToken(token);
-    if (!safeToken) return;
-    const current = readBuyerPortfolioNumber(map.get(safeToken));
-    map.set(safeToken, Math.max(current, outstanding));
-}
-
-async function reconcileOpsRankingPendingClients(rows) {
-    const pendingRows = normalizeOpsRankingsRows(rows)
-        .filter((row) => isPositiveOpsRankingAmount(row?.total_pending))
-        .filter((row) => !isAgroQaClientName(pickOpsBuyerName(row) || row?.client_name));
-    if (pendingRows.length <= 0) return [];
-
-    try {
-        const portfolioRows = await fetchBuyerPortfolioSummary(supabase);
-        const currentPendingByName = new Map();
-        portfolioRows.forEach((row) => {
-            const outstanding = getOpsRankingPortfolioOutstanding(row);
-            [
-                row?.display_name,
-                row?.canonical_name,
-                row?.group_key
-            ].forEach((token) => addOpsRankingPortfolioToken(currentPendingByName, token, outstanding));
-        });
-
-        return pendingRows
-            .map((row) => {
-                const buyerName = pickOpsBuyerName(row) || row?.client_name;
-                const currentPending = currentPendingByName.get(normalizeFactureroSearchToken(buyerName));
-                if (currentPending === undefined) return row;
-                return {
-                    ...row,
-                    total_pending: currentPending
-                };
-            })
-            .filter((row) => isPositiveOpsRankingAmount(row?.total_pending));
-    } catch (error) {
-        console.warn('[AGRO][Rankings] No se pudo reconciliar fiados con Cartera Viva:', error?.message || error);
-        return pendingRows;
-    }
 }
 
 function resolveOpsRankingCropLabel(row) {
@@ -13490,8 +13433,7 @@ function renderOpsRankings() {
         status.textContent = `Actualizado: ${updated} · Rango: ${rangeLabel}${cropFilter}`;
     }
 
-    const allTopClients = normalizeOpsRankingsRows(opsRankingsState.topClients)
-        .filter((row) => !isAgroQaClientName(pickOpsBuyerName(row)));
+    const allTopClients = normalizeOpsRankingsRows(opsRankingsState.topClients);
     const missingTopClients = allTopClients.filter((row) => !pickOpsBuyerName(row));
     const namedTopClients = allTopClients.filter((row) => !!pickOpsBuyerName(row));
     const missingTopClientsSummary = missingTopClients.reduce((acc, row) => {
@@ -13631,10 +13573,9 @@ async function fetchOpsRankingsData() {
     }
 
     const errors = [topClientsRes.error, pendingRes.error, cropsRes.error].filter(Boolean);
-    const pendingClientsRows = await reconcileOpsRankingPendingClients(pendingRes.data);
     return {
         topClients: topClientsRows,
-        pendingClients: pendingClientsRows,
+        pendingClients: normalizeOpsRankingsRows(pendingRes.data),
         topCrops: normalizeOpsRankingsRows(cropsRes.data),
         error: pickRankingsErrorMessage(errors)
     };
@@ -13707,8 +13648,7 @@ function exportOpsRankingsMarkdown() {
         md += `\n`;
     };
 
-    const allTopClientsMd = normalizeOpsRankingsRows(opsRankingsState.topClients)
-        .filter((row) => !isAgroQaClientName(pickOpsBuyerName(row)));
+    const allTopClientsMd = normalizeOpsRankingsRows(opsRankingsState.topClients);
     const missingTopClientsMd = allTopClientsMd.filter((row) => !pickOpsBuyerName(row));
     const namedTopClientsMd = allTopClientsMd.filter((row) => !!pickOpsBuyerName(row));
     const missingTopClientsMdSummary = missingTopClientsMd.reduce((acc, row) => {

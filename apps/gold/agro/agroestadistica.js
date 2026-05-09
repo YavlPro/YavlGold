@@ -1,9 +1,4 @@
 import { convertToUSD, getRate, initExchangeRates } from './agro-exchange.js';
-import {
-    fetchBuyerPortfolioSummary,
-    getBuyerLivePendingBalance,
-    isAgroQaClientName
-} from './agro-cartera-viva.js';
 import { getPendingTransferToken } from './agro-unit-totals.js';
 
 const CROP_STATUSES = {
@@ -352,19 +347,6 @@ function parseBuyerName(concepto) {
     return 'Sin cliente';
 }
 
-function isQaStatsRow(row) {
-    return isAgroQaClientName(parseBuyerName(row?.concepto));
-}
-
-function sumPortfolioPendingUsd(portfolioRows) {
-    return (Array.isArray(portfolioRows) ? portfolioRows : []).reduce((total, row) => {
-        if (isAgroQaClientName(row?.display_name) || isAgroQaClientName(row?.canonical_name) || isAgroQaClientName(row?.group_key)) {
-            return total;
-        }
-        return total + getBuyerLivePendingBalance(row);
-    }, 0);
-}
-
 function resolveCropLabel(cropMap, cropId) {
     const key = String(cropId || '').trim();
     if (!key) return 'Sin cultivo';
@@ -415,7 +397,7 @@ export async function getGlobalStats({ supabase: supabaseClient, userId, range }
         usdVes: toPositiveRate(getRate('VES', rates))
     };
 
-    const [cropsRows, incomeRows, pendingRows, expenseRows, lossesRows, transferRows, portfolioRows] = await Promise.all([
+    const [cropsRows, incomeRows, pendingRows, expenseRows, lossesRows, transferRows] = await Promise.all([
         fetchRowsWithFallback(
             supabaseClient,
             'agro_crops',
@@ -486,18 +468,14 @@ export async function getGlobalStats({ supabase: supabaseClient, userId, range }
             ],
             warnings,
             { range, dateCandidates: ['fecha', 'created_at'] }
-        ),
-        fetchBuyerPortfolioSummary(supabaseClient).catch((error) => {
-            warnings.push(`No se pudo reconciliar Cartera Viva: ${error?.message || error}`);
-            return [];
-        })
+        )
     ]);
 
     const crops = cropsRows.filter((row) => !row?.deleted_at);
-    const incomes = incomeRows.filter((row) => !row?.deleted_at && !row?.reverted_at && !isQaStatsRow(row));
-    const pending = pendingRows.filter((row) => !row?.deleted_at && isActivePendingRow(row) && !isQaStatsRow(row));
+    const incomes = incomeRows.filter((row) => !row?.deleted_at && !row?.reverted_at);
+    const pending = pendingRows.filter((row) => !row?.deleted_at && isActivePendingRow(row));
     const expenses = expenseRows.filter((row) => !row?.deleted_at);
-    const losses = lossesRows.filter((row) => !row?.deleted_at && !isQaStatsRow(row));
+    const losses = lossesRows.filter((row) => !row?.deleted_at);
     const transfers = transferRows.filter((row) => !row?.deleted_at);
 
     const cropsSummary = crops.reduce((acc, row) => {
@@ -542,11 +520,7 @@ export async function getGlobalStats({ supabase: supabaseClient, userId, range }
     }
 
     const incomeUsd = sumRowsUsd(incomes, ['monto', 'amount'], 'Ingresos', incomeUsdByRow);
-    const fallbackPendingUsd = sumRowsUsd(pending, ['monto', 'amount'], 'Fiados');
-    const portfolioPendingUsd = sumPortfolioPendingUsd(portfolioRows);
-    const pendingUsd = Array.isArray(portfolioRows) && portfolioRows.length > 0
-        ? portfolioPendingUsd
-        : fallbackPendingUsd;
+    const pendingUsd = sumRowsUsd(pending, ['monto', 'amount'], 'Fiados');
     const expenseUsd = sumRowsUsd(expenses, ['amount', 'monto'], 'Gastos');
     const lossesUsd = sumRowsUsd(losses, ['monto', 'amount'], 'Pérdidas');
     const transfersUsd = sumRowsUsd(transfers, ['monto', 'amount'], 'Donaciones');

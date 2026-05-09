@@ -5,13 +5,6 @@
  */
 
 import supabase from '../assets/js/config/supabase-config.js';
-import {
-    fetchBuyerPortfolioSummary,
-    getBuyerLivePendingBalance,
-    isAgroQaClientName,
-    isPositiveBuyerPortfolioAmount,
-    normalizeHistorySearchToken
-} from './agro-cartera-viva.js';
 import { getPendingTransferToken } from './agro-unit-totals.js';
 
 // ============================================================
@@ -231,64 +224,6 @@ function resolveBuyerName(row) {
     if (direct) return direct;
     const fromConcept = parseWhoFromIncome(row?.concepto);
     return fromConcept || 'Sin cliente';
-}
-
-function isQaStatsRow(row) {
-    return isAgroQaClientName(resolveBuyerName(row));
-}
-
-function addPortfolioPendingToken(map, token, pending) {
-    const safeToken = normalizeHistorySearchToken(token);
-    if (!safeToken) return;
-    map.set(safeToken, Math.max(Number(map.get(safeToken) || 0), Number(pending || 0)));
-}
-
-function buildPortfolioPendingByBuyerName(portfolioRows) {
-    const pendingByName = new Map();
-    (Array.isArray(portfolioRows) ? portfolioRows : []).forEach((row) => {
-        if (isAgroQaClientName(row?.display_name) || isAgroQaClientName(row?.canonical_name) || isAgroQaClientName(row?.group_key)) return;
-        const pending = getBuyerLivePendingBalance(row);
-        [
-            row?.display_name,
-            row?.canonical_name,
-            row?.group_key
-        ].forEach((token) => addPortfolioPendingToken(pendingByName, token, pending));
-    });
-    return pendingByName;
-}
-
-function reconcilePendingRowsWithPortfolio(pendingRows, portfolioRows) {
-    const currentPendingByName = buildPortfolioPendingByBuyerName(portfolioRows);
-    if (currentPendingByName.size <= 0) {
-        return (Array.isArray(pendingRows) ? pendingRows : []).filter((row) => !isQaStatsRow(row));
-    }
-
-    const consumedByName = new Map();
-    return (Array.isArray(pendingRows) ? pendingRows : [])
-        .filter((row) => !isQaStatsRow(row))
-        .map((row) => {
-            const nameKey = normalizeHistorySearchToken(resolveBuyerName(row));
-            if (!nameKey || !currentPendingByName.has(nameKey)) return row;
-            const currentPending = Number(currentPendingByName.get(nameKey) || 0);
-            if (!isPositiveBuyerPortfolioAmount(currentPending)) return null;
-
-            const consumed = Number(consumedByName.get(nameKey) || 0);
-            const remaining = Math.max(0, currentPending - consumed);
-            if (!isPositiveBuyerPortfolioAmount(remaining)) return null;
-
-            const rowAmount = Math.max(0, Number(resolveAmountUsd(row) || 0));
-            const nextAmount = Math.min(rowAmount, remaining);
-            consumedByName.set(nameKey, consumed + nextAmount);
-            if (!isPositiveBuyerPortfolioAmount(nextAmount)) return null;
-            return {
-                ...row,
-                monto_usd: nextAmount,
-                monto: nextAmount,
-                currency: 'USD',
-                exchange_rate: 1
-            };
-        })
-        .filter(Boolean);
 }
 
 const CROP_STATUS_UI = {
@@ -741,55 +676,33 @@ function parseWhoFromIncome(concept) {
     return legacyMatch?.[1]?.trim() || '';
 }
 
-function buildBuyerRanking(incomeRows, portfolioRows) {
+function buildBuyerRanking(incomeRows, pendingRows) {
     const buyers = new Map();
     const currencyCount = new Map();
-    const portfolioByName = new Map();
-
-    for (const row of (Array.isArray(portfolioRows) ? portfolioRows : [])) {
-        if (isAgroQaClientName(row?.display_name) || isAgroQaClientName(row?.canonical_name) || isAgroQaClientName(row?.group_key)) continue;
-        const pending = getBuyerLivePendingBalance(row);
-        const paid = Number(row?.paid_total || 0);
-        const totalActivity = pending + paid;
-        if (totalActivity <= 0 && !isPositiveBuyerPortfolioAmount(paid)) continue;
-        const displayWho = String(row?.display_name || row?.canonical_name || row?.group_key || '').trim() || 'Cliente';
-        [
-            row?.display_name,
-            row?.canonical_name,
-            row?.group_key
-        ].forEach((token) => {
-            const key = normalizeHistorySearchToken(token);
-            if (key) portfolioByName.set(key, { displayWho, pending, paid, row });
-        });
-    }
 
     for (const r of incomeRows) {
-        if (isQaStatsRow(r)) continue;
         const who = resolveBuyerName(r);
         const key = String(who).trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-        if (!buyers.has(key)) buyers.set(key, { displayWho: who, count: 0, totalCents: 0, paidCents: 0, currencies: new Set() });
+        if (!buyers.has(key)) buyers.set(key, { displayWho: who, count: 0, totalCents: 0, paid: true, currencies: new Set() });
         const b = buyers.get(key);
         b.count += 1;
         b.totalCents += toCents(resolveAmountUsd(r));
-        b.paidCents += toCents(resolveAmountUsd(r));
         const cur = String(r.currency || 'USD').trim().toUpperCase() || 'USD';
         b.currencies.add(cur);
         currencyCount.set(cur, (currencyCount.get(cur) || 0) + 1);
     }
 
-    for (const [key, entry] of portfolioByName) {
-        if (!buyers.has(key)) {
-            buyers.set(key, {
-                displayWho: entry.displayWho,
-                count: 0,
-                totalCents: toCents(entry.paid) + toCents(entry.pending),
-                paidCents: toCents(entry.paid),
-                currencies: new Set(['USD'])
-            });
-        }
+    for (const r of pendingRows) {
+        const who = resolveBuyerName(r);
+        const key = String(who).trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        if (!buyers.has(key)) buyers.set(key, { displayWho: who, count: 0, totalCents: 0, paid: true, currencies: new Set() });
         const b = buyers.get(key);
-        b.totalCents = Math.max(b.totalCents, toCents(entry.paid) + toCents(entry.pending));
-        b.paidCents = Math.max(b.paidCents, toCents(entry.paid));
+        b.count += 1;
+        b.totalCents += toCents(resolveAmountUsd(r));
+        const cur = String(r.currency || 'USD').trim().toUpperCase() || 'USD';
+        b.currencies.add(cur);
+        b.paid = false;
+        currencyCount.set(cur, (currencyCount.get(cur) || 0) + 1);
     }
 
     const sorted = Array.from(buyers.entries())
@@ -801,17 +714,7 @@ function buildBuyerRanking(incomeRows, portfolioRows) {
     md += '|---------|--------:|---------|------------:|--------|\n';
     for (const [, b] of sorted) {
         const name = b.displayWho;
-        const portfolioKey = Array.from(portfolioByName.keys()).find((k) => {
-            const entry = portfolioByName.get(k);
-            return normalizeHistorySearchToken(name) === k;
-        });
-        let estado;
-        if (portfolioKey) {
-            const entry = portfolioByName.get(portfolioKey);
-            estado = isPositiveBuyerPortfolioAmount(entry.pending) ? '\u23f3 Debe' : '\u2705 Pagado';
-        } else {
-            estado = b.count > 0 ? '\u2705 Pagado' : '\u23f3 Debe';
-        }
+        const estado = b.paid ? '✅ Pagado' : '⏳ Debe';
         const curs = Array.from(b.currencies).join(', ');
         md += `| ${escMd(name)} | ${b.count} | ${curs} | ${centsToStr(b.totalCents)} | ${estado} |\n`;
     }
@@ -853,20 +756,13 @@ export async function exportStatsReport() {
         } catch { /* ignore */ }
 
         // Fetch raw rows for per-crop breakdown and buyer ranking
-        const [crops, rawIncomeRows, expenseRows, rawPendingRows, rawLossesRows, portfolioRows] = await Promise.all([
+        const [crops, incomeRows, expenseRows, pendingRows, lossesRows] = await Promise.all([
             fetchCrops(user.id),
             fetchIncome(user.id),
             fetchExpenses(user.id),
             fetchPending(user.id),
-            fetchLosses(user.id),
-            fetchBuyerPortfolioSummary(supabase).catch((error) => {
-                console.warn('[StatsReport] portfolio summary error:', error?.message || error);
-                return [];
-            })
+            fetchLosses(user.id)
         ]);
-        const incomeRows = rawIncomeRows.filter((row) => !isQaStatsRow(row));
-        const pendingRows = reconcilePendingRowsWithPortfolio(rawPendingRows, portfolioRows);
-        const lossesRows = rawLossesRows.filter((row) => !isQaStatsRow(row));
 
         // Keep global totals aligned with the same source used in per-crop tables.
         const perCropBreakdown = buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRows);
@@ -926,7 +822,7 @@ export async function exportStatsReport() {
 
         // Buyer ranking
         md += `## 👥 Ranking de Clientes\n`;
-        md += buildBuyerRanking(incomeRows, portfolioRows);
+        md += buildBuyerRanking(incomeRows, pendingRows);
         md += '\n---\n\n';
 
         // Projection

@@ -1,9 +1,6 @@
 import {
     formatHistoryAbsoluteDayLabel,
-    getBuyerLivePendingBalance,
-    groupHistoryRowsByDay,
-    isPositiveBuyerPortfolioAmount,
-    readBuyerPortfolioNumber
+    groupHistoryRowsByDay
 } from './agro-cartera-viva.js';
 
 function formatMoney(value) {
@@ -24,23 +21,19 @@ function formatPercent(value) {
 }
 
 function getReviewTotal(buyerRow) {
-    return readBuyerPortfolioNumber(buyerRow?.review_required_total) + readBuyerPortfolioNumber(buyerRow?.legacy_unclassified_total);
-}
-
-function getOutstandingBalance(buyerRow) {
-    return getBuyerLivePendingBalance(buyerRow);
+    return Number(buyerRow?.review_required_total || 0) + Number(buyerRow?.legacy_unclassified_total || 0);
 }
 
 function resolveBuyerStatus(buyerRow) {
-    const pending = getOutstandingBalance(buyerRow);
-    const paid = readBuyerPortfolioNumber(buyerRow?.paid_total);
-    const loss = readBuyerPortfolioNumber(buyerRow?.loss_total);
+    const pending = Number(buyerRow?.pending_total || 0);
+    const paid = Number(buyerRow?.paid_total || 0);
+    const loss = Number(buyerRow?.loss_total || 0);
     const review = getReviewTotal(buyerRow);
 
-    if (isPositiveBuyerPortfolioAmount(pending)) return isPositiveBuyerPortfolioAmount(paid) ? 'Cobro en curso' : 'Fiado activo';
-    if (isPositiveBuyerPortfolioAmount(paid) && !isPositiveBuyerPortfolioAmount(loss)) return 'Pagado';
-    if (isPositiveBuyerPortfolioAmount(loss)) return 'Pérdida';
-    if (isPositiveBuyerPortfolioAmount(review)) return 'Por revisar';
+    if (pending > 0) return paid > 0 ? 'Cobro en curso' : 'Fiado activo';
+    if (paid > 0) return 'Pagado';
+    if (loss > 0) return 'Pérdida';
+    if (review > 0) return 'Por revisar';
     return 'Seguimiento';
 }
 
@@ -155,7 +148,7 @@ export function buildBuyerPortfolioExportMarkdown({ buyerRow, historyRows, expor
         `- Fiado: ${formatMoney(buyerRow.credited_total)}`,
         `- Cobrado: ${formatMoney(buyerRow.paid_total)}`,
         `- Pérdida: ${formatMoney(buyerRow.loss_total)}`,
-        `- Falta por cobrar: ${formatMoney(getOutstandingBalance(buyerRow))}`,
+        `- Falta por cobrar: ${formatMoney(buyerRow.pending_total)}`,
         `- Cumplimiento: ${formatPercent(buyerRow.compliance_percent)}`,
         '',
         '## Movimientos separados',
