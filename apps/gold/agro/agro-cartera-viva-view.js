@@ -1218,7 +1218,11 @@ function hasVisibleCategory(row, category) {
                 && !isPositivePortfolioAmount(loss)
                 && isPositivePortfolioAmount(review));
     }
-    if (safeCategory === 'pagados') return isPositivePortfolioAmount(paid);
+    if (safeCategory === 'pagados') {
+        return isPositivePortfolioAmount(paid)
+            && !isPositivePortfolioAmount(pending)
+            && !isPositivePortfolioAmount(loss);
+    }
     if (safeCategory === 'perdidos') return isPositivePortfolioAmount(loss);
     return isPositivePortfolioAmount(pending);
 }

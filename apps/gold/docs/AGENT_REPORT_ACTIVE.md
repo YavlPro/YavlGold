@@ -2060,4 +2060,16 @@ Archivos autorizados: `apps/gold/agro/agro-cartera-viva-view.js` y `apps/gold/do
 Plan mínimo: ubicar agregación/clasificación de cards, alinear `Fiados` con saldo vivo real y renderizar cultivos asociados si ya están disponibles en memoria.
 Validación: `git diff --check`, `node --check apps/gold/agro/agro-cartera-viva-view.js` y `pnpm build:gold`.
 
+Resultado: `Pagados` ahora exige `paid > EPSILON`, `pending <= EPSILON` y `loss <= EPSILON`; cobros parciales quedan en `Fiados` y clientes con pérdida quedan en `Perdidos`. Validación técnica PASS; QA producción pendiente.
+
 Resultado: Vista general ahora recalcula el resumen visible con el mismo overlay vivo usado por cultivo; `Fiados` exige saldo pendiente real mayor a EPSILON y las cards muestran `Cultivo(s)` cuando los `crop_id` ya consultados pueden resolverse contra el snapshot local. Validación técnica PASS; QA producción pendiente.
+
+---
+
+## TEST — Cartera Viva: Pagados no debe mezclar clientes con pendiente o pérdida
+
+Síntoma: `Vista general > Pagados` muestra clientes con pendiente vivo o pérdida.
+Hipótesis: el filtro de `Pagados` sigue aceptando cualquier cliente con `paid_total > 0`, aunque también tenga `pending` o `loss`.
+Archivos autorizados: `apps/gold/agro/agro-cartera-viva-view.js` y `apps/gold/docs/AGENT_REPORT_ACTIVE.md`.
+Plan mínimo: ajustar solo la condición de `Pagados` para exigir cobro positivo, pendiente cero y pérdida cero con EPSILON.
+Validación: `git diff --check`, `node --check apps/gold/agro/agro-cartera-viva-view.js` y `pnpm build:gold`.
