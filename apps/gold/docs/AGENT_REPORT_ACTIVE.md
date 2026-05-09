@@ -38,6 +38,124 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-27__2026-05-05.md`
 
 ---
 
+## 2026-05-08 — Ajuste final: Cartera Viva con tres estados principales
+
+**Estado:** COMPLETADO EN CÓDIGO / QA PRODUCCIÓN PENDIENTE
+
+### Diagnóstico inicial
+
+- La corrección anterior hizo visible la relación fiado → cierre, pero dejó etiquetas principales demasiado técnicas: `Cerrado como pagado`, `Fiado parcialmente cerrado`, `Cobro de fiado`, `Ingreso directo`, `Transferido`.
+- El criterio de producto se simplifica: Cartera Viva debe responder solo tres lecturas principales: `Fiado`, `Cobrado`, `Perdido`.
+- `Transferidos` y `Revertidos` se mantienen como filtros secundarios/auditoría dinámica, no como estados principales equivalentes.
+
+### Plan
+
+1. Auditar labels y filtros visibles de `agro-cartera-viva-detail.js`.
+2. Reducir labels principales del historial a `Fiado`, `Cobrado`, `Perdido`.
+3. Mantener explicación secundaria para transferencia/reversión/cierre en `note`.
+4. Ajustar filtro de detalle `Cobros` a `Cobrados` si corresponde.
+5. Validar que `Transferidos`/`Revertidos` sigan apareciendo solo cuando existan acciones reales.
+
+### Riesgo
+
+- Bajo-medio: cambio de copy/semántica visible sobre una zona financiera sensible. No debe ocultar historial ni borrar relaciones internas.
+
+### Criterio de validación
+
+- José Luis no debe verse como `Fiado` principal si su movimiento ya fue cobrado/perdido.
+- Chuto no debe mostrar `Ingreso aparte` / `Cobro registrado` como categorías principales.
+- `git diff --check` y `pnpm build:gold` deben pasar.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/agro-cartera-viva-detail.js` | Labels principales del detalle reducidos a `Fiado`, `Cobrado`, `Perdido`. Transferencias/reversiones quedan en notas y filtros secundarios. |
+| `apps/gold/agro/agro-cartera-viva-detail.js` | Filtro de scope `Cobros` pasa a `Cobrados`; `Pérdidas` pasa a `Perdidos`. |
+| `apps/gold/agro/agro-cartera-viva-view.js` | Categoría visible `Pagados` pasa a `Cobrados`; `Pérdidas` pasa a `Perdidos`. Badges de card usan `Fiado`, `Cobrado`, `Perdido`. |
+
+### Validación técnica
+
+- `git diff --check`: OK. Advertencia no bloqueante: Git avisa normalización futura CRLF/LF en `AGENT_REPORT_ACTIVE.md`.
+- `node --check apps/gold/agro/agro-cartera-viva-detail.js`: OK.
+- `node --check apps/gold/agro/agro-cartera-viva-view.js`: OK.
+- `node --check apps/gold/agro/agro-cartera-viva.js`: OK.
+- `pnpm build:gold`: OK. Advertencia no bloqueante: Node actual `v25.6.0`; el repo declara engine `20.x`.
+
+---
+
+## 2026-05-08 — RED: Cartera Viva: organización semántica de historial y transferencias
+
+**Estado:** COMPLETADO EN CÓDIGO / QA PRODUCCIÓN PENDIENTE
+
+### Caso principal
+
+- Cliente crítico: `jose luis`.
+- Tras ampliar el historial, aparecen fiados antiguos reales:
+  - `Fiado a jose luis` · `5 sacos` · `USD 65`.
+  - `Fiado a jose luis` · `10 sacos` · `USD 130`.
+
+### Evidencia
+
+- Al intentar transferir/cerrar un registro, la app indica que el movimiento `ya fue transferido`.
+- Visualmente, el movimiento puede seguir pareciendo fiado o no mostrar con claridad a dónde fue transferido.
+- En detalles de otros clientes, como `Chuto`, se mezclan copys/estados como `Cobro registrado`, `Ingreso aparte`, `Fiado`, `Transferidos`, `Cobro en curso` y `Pagado`.
+- La app ya trae más historial, pero todavía no lo organiza como historia económica humana.
+
+### Hipótesis
+
+- El bug principal está en interpretación/render/acciones: el historial trae más filas, pero no agrupa fiado origen + cierre ni comunica si el fiado está abierto, cerrado, transferido o reversado.
+- El menú de acciones puede seguir ofreciendo `Transferir` por familia/pestaña en vez de por estado real del movimiento.
+- Los ingresos con `origin_id` deberían leerse como `Cobro de fiado`; los ingresos sin vínculo real deberían leerse como `Ingreso directo`.
+
+### Plan
+
+1. Auditar detalle/historial en `agro-cartera-viva-detail.js`.
+2. Auditar acciones por movimiento en `agro-cartera-viva-view.js`.
+3. Auditar relaciones por `origin_id` y estado `transfer_state`.
+4. Ordenar semántica visible: fiado abierto, fiado cerrado, cobro de fiado, ingreso directo, transferido y reversado.
+5. Validar pestañas/acciones.
+6. Validar rankings/reportes al final, sin empezar por ellos.
+
+### Riesgo
+
+- Alto: confianza financiera rota si un fiado cerrado parece abierto, si un fiado abierto no se puede cerrar, o si la UI dice `ya fue transferido` sin mostrar el cierre relacionado.
+
+### Criterio de validación
+
+- Un fiado transferido no debe mostrar `Transferir` como acción principal.
+- Si la app dice que ya fue transferido, el detalle debe mostrar destino/cierre relacionado.
+- `Cobro de fiado` e `Ingreso directo` deben quedar diferenciados.
+- `Cobro en curso` solo debe aparecer con saldo pendiente vivo.
+- `git diff --check`, `node --check` y `pnpm build:gold` deben pasar.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/agro-cartera-viva-detail.js` | Los fiados transferidos ya no desaparecen como ledger: se muestran como `Cerrado como pagado`, `Cerrado como pérdida` o `Transferido`, con cierre relacionado cuando existe `origin_id`. |
+| `apps/gold/agro/agro-cartera-viva-detail.js` | Se crea un mapa fiado → cierres desde `agro_income` y `agro_losses` por `origin_table = agro_pending` + `origin_id`. |
+| `apps/gold/agro/agro-cartera-viva-detail.js` | `Cobro registrado` pasa a `Cobro de fiado` cuando cierra/reduce un fiado; `Ingreso aparte` pasa a `Ingreso directo` cuando no tiene vínculo real con fiado. |
+| `apps/gold/agro/agro-cartera-viva-detail.js` | El menú del detalle ya no ofrece `Transferir` para fiados cerrados/transferidos; muestra `Cierre visible`/`Ya transferido` deshabilitado. Los fiados parciales muestran `Cerrar saldo restante`. |
+
+### Resultado semántico
+
+- `Fiados`: conserva deuda viva o parcial.
+- `Cobros`: muestra cobros reales y cobros de fiado.
+- `Pérdidas`: muestra pérdidas directas y cierres de fiado por pérdida.
+- `Transferidos`: muestra acciones de cierre/transferencia, no deuda viva.
+- `Todo`: muestra la historia completa fiado → cierre.
+
+### Validación técnica
+
+- `git diff --check`: OK. Advertencia no bloqueante: Git avisa normalización futura CRLF/LF en `AGENT_REPORT_ACTIVE.md`.
+- `node --check apps/gold/agro/agro-cartera-viva-detail.js`: OK.
+- `node --check apps/gold/agro/agro-cartera-viva-view.js`: OK.
+- `node --check apps/gold/agro/agro-cartera-viva.js`: OK.
+- `pnpm build:gold`: OK. Advertencia no bloqueante: Node actual `v25.6.0`; el repo declara engine `20.x`.
+
+---
+
 ## 2026-05-08 — Continuación urgente: historial incompleto en Cartera Viva
 
 **Estado:** COMPLETADO EN CÓDIGO / QA PRODUCCIÓN PENDIENTE

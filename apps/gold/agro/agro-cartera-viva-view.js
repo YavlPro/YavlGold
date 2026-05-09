@@ -46,12 +46,12 @@ const CATEGORY_META = Object.freeze({
         emptyCopy: 'Aquí ves a quienes todavía tienen saldo pendiente.'
     }),
     pagados: Object.freeze({
-        label: 'Pagados',
+        label: 'Cobrados',
         emptyTitle: 'No hay clientes al día',
         emptyCopy: 'Aquí aparecen los clientes que ya cerraron su saldo.'
     }),
     perdidos: Object.freeze({
-        label: 'Pérdidas',
+        label: 'Perdidos',
         emptyTitle: 'No hay pérdidas registradas',
         emptyCopy: 'Aquí solo quedan los casos cerrados como pérdida.'
     })
@@ -1268,7 +1268,7 @@ function resolveBuyerStatus(row) {
         if (hasOpPaid) {
             return {
                 tone: 'fiado',
-                label: 'Cobro en proceso',
+                label: 'Fiado',
                 detail: operationalProgress.mode === 'unified'
                     ? `${pendingUnits} · ${paidUnits}`
                     : (hasSeparatedFamilies
@@ -1281,7 +1281,7 @@ function resolveBuyerStatus(row) {
 
         return {
             tone: 'fiado',
-            label: 'Fiado activo',
+            label: 'Fiado',
             detail: operationalProgress.mode === 'unified'
                 ? `${pendingUnits}${review > 0 ? ' · con revisión pendiente' : ''}`
                 : (hasSeparatedFamilies
@@ -1295,7 +1295,7 @@ function resolveBuyerStatus(row) {
     if (isPositiveBuyerPortfolioAmount(loss)) {
         return {
             tone: 'perdido',
-            label: paid > 0 ? 'Con pérdida' : 'Pérdida',
+            label: 'Perdido',
             detail: operationalProgress.mode === 'unified'
                 ? `${lossUnits}`
                 : (hasSeparatedFamilies
@@ -1309,7 +1309,7 @@ function resolveBuyerStatus(row) {
     if (hasOpPaid) {
         return {
             tone: 'pagado',
-            label: 'Pagado',
+            label: 'Cobrado',
             detail: operationalProgress.mode === 'unified'
                 ? `${paidUnits} · sin pendiente operativo`
                 : (hasSeparatedFamilies
@@ -1323,7 +1323,7 @@ function resolveBuyerStatus(row) {
     if (isPositiveBuyerPortfolioAmount(paid)) {
         return {
             tone: 'pagado',
-            label: 'Ingreso registrado',
+            label: 'Cobrado',
             detail: 'Ingreso del cultivo sin pendiente operativo.'
         };
     }
@@ -1827,7 +1827,7 @@ function resolveCategorySummary(rows, category) {
 
     if (category === 'perdidos') {
         return {
-            label: '🔴 Pérdidas',
+            label: '🔴 Perdido',
             amount: formatMoney(loss),
             amountIsMoney: true,
             copy: `${formatCount(count)} caso${count === 1 ? '' : 's'} cerrados fuera de cartera`,
