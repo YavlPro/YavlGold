@@ -66,6 +66,73 @@ export function isPositiveBuyerPortfolioAmount(value) {
     return readBuyerPortfolioNumber(value) > CARTERA_VIVA_BALANCE_EPSILON;
 }
 
+export function resolvePendingPortfolioState(row, closures = []) {
+    const transferState = String(row?.transfer_state || '').trim().toLowerCase();
+    const transferredTo = String(row?.transferred_to || '').trim().toLowerCase();
+    const hasTransferMarker = transferState === 'transferred'
+        || Boolean(row?.transferred_at)
+        || Boolean(row?.transferred_income_id)
+        || Boolean(row?.transferred_to_id)
+        || transferredTo !== '';
+    const safeClosures = Array.isArray(closures) ? closures : [];
+    const hasPaidClosure = safeClosures.some((closure) => String(closure?.type || '').trim().toLowerCase() === 'income');
+    const hasLossClosure = safeClosures.some((closure) => String(closure?.type || '').trim().toLowerCase() === 'loss');
+    const isReverted = transferState === 'reverted'
+        || transferState === 'reverted_to_pending'
+        || Boolean(row?.reverted_at)
+        || Boolean(row?.reverted_reason);
+
+    if (isReverted) {
+        return {
+            status: 'pending',
+            label: 'Fiado',
+            ledgerScope: 'fiados',
+            tone: 'review',
+            countsAsReceivable: true,
+            canTransfer: true,
+            isClosed: false,
+            isReverted: true
+        };
+    }
+
+    if (hasTransferMarker) {
+        if (transferredTo === 'losses' || hasLossClosure) {
+            return {
+                status: 'lost',
+                label: 'Perdido',
+                ledgerScope: 'perdidos',
+                tone: 'loss',
+                countsAsReceivable: false,
+                canTransfer: false,
+                isClosed: true,
+                isReverted: false
+            };
+        }
+
+        return {
+            status: 'paid',
+            label: 'Cobrado',
+            ledgerScope: 'pagados',
+            tone: 'paid',
+            countsAsReceivable: false,
+            canTransfer: false,
+            isClosed: true,
+            isReverted: false
+        };
+    }
+
+    return {
+        status: 'pending',
+        label: 'Fiado',
+        ledgerScope: 'fiados',
+        tone: safeClosures.length > 0 ? 'pending' : 'pending',
+        countsAsReceivable: true,
+        canTransfer: true,
+        isClosed: false,
+        isReverted: false
+    };
+}
+
 export function getBuyerLivePendingBalance(record) {
     const pendingTotal = readBuyerPortfolioNumber(record?.pending_total);
     const credited = readBuyerPortfolioNumber(record?.credited_total);
@@ -74,12 +141,16 @@ export function getBuyerLivePendingBalance(record) {
     const transferred = readBuyerPortfolioNumber(record?.transferred_total);
     const derivedBalance = Math.max(0, credited - paid - loss - transferred);
     const hasLedgerTotals = [credited, paid, loss, transferred].some(isPositiveBuyerPortfolioAmount);
-    const balance = hasLedgerTotals ? derivedBalance : Math.max(0, pendingTotal);
+    const hasPendingTotal = record && Object.prototype.hasOwnProperty.call(record, 'pending_total');
+    const balance = hasPendingTotal && hasLedgerTotals
+        ? Math.min(Math.max(0, pendingTotal), derivedBalance)
+        : (hasLedgerTotals ? derivedBalance : Math.max(0, pendingTotal));
     return isPositiveBuyerPortfolioAmount(balance) ? balance : 0;
 }
 
 export function getBuyerLiveStatus(record) {
     const pending = getBuyerLivePendingBalance(record);
+    const credited = readBuyerPortfolioNumber(record?.credited_total);
     const paid = readBuyerPortfolioNumber(record?.paid_total);
     const loss = readBuyerPortfolioNumber(record?.loss_total);
     const review = readBuyerPortfolioNumber(record?.review_required_total)
@@ -88,6 +159,7 @@ export function getBuyerLiveStatus(record) {
     if (isPositiveBuyerPortfolioAmount(pending)) return 'pending';
     if (isPositiveBuyerPortfolioAmount(loss)) return 'lost';
     if (isPositiveBuyerPortfolioAmount(paid)) return 'paid';
+    if (isPositiveBuyerPortfolioAmount(credited) && !isPositiveBuyerPortfolioAmount(review)) return 'paid';
     if (isPositiveBuyerPortfolioAmount(review)) return 'review';
     return 'no-record';
 }

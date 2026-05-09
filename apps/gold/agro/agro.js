@@ -1568,11 +1568,13 @@ async function selectSingleWithMissingColumnFallback(tableName, fields, eqFilter
 
 function isPendingTransferred(item) {
     if (!item) return false;
-    if (item.transfer_state === 'reverted' || item.reverted_at) return false;
+    const transferState = String(item.transfer_state || '').trim().toLowerCase();
+    const transferredTo = String(item.transferred_to || '').trim();
+    if (transferState === 'reverted' || item.reverted_at) return false;
     // V9.7: Use transfer_state for accurate detection
-    if (item.transfer_state === 'transferred') return true;
+    if (transferState === 'transferred') return true;
     // Legacy fallback for data without transfer_state
-    return !!(item.transferred_at || item.transferred_income_id);
+    return !!(item.transferred_at || item.transferred_income_id || transferredTo);
 }
 
 // V9.7: Check if a pending item was transferred but then reverted (back to active)

@@ -9,6 +9,7 @@ import {
     normalizeBuyerGroupKey,
     normalizeBuyerPortfolioSummaryRow,
     normalizeHistorySearchToken,
+    resolvePendingPortfolioState,
     isPositiveBuyerPortfolioAmount,
     readBuyerPortfolioNumber
 } from './agro-cartera-viva.js';
@@ -22,7 +23,6 @@ import {
     openBuyerProfileById,
     openNewBuyerProfile
 } from './agrocompradores.js';
-import { getPendingTransferToken } from './agro-unit-totals.js';
 import { openCarteraVivaClientMergeModal } from './agro-cartera-viva-client-merge.js';
 
 const CARTERA_VIVA_VIEW = 'cartera-viva';
@@ -800,7 +800,7 @@ function resolveCropScopedGlobalStatus(bucket, clientStatus = 'active') {
     const paid = readBuyerPortfolioNumber(bucket?.paid_total);
     const loss = readBuyerPortfolioNumber(bucket?.loss_total);
     const transferred = readBuyerPortfolioNumber(bucket?.transferred_total);
-    const pending = Math.max(0, credited - paid - loss - transferred);
+    const pending = getBuyerLivePendingBalance(bucket);
     const reviewRequired = readBuyerPortfolioNumber(bucket?.review_required_total);
     const legacyUnclassified = readBuyerPortfolioNumber(bucket?.legacy_unclassified_total);
     const visibleBalance = credited - paid - loss - transferred;
@@ -836,7 +836,7 @@ function buildCropScopedSummaryOverlay(row, bucket = null) {
     const paid = readBuyerPortfolioNumber(safeBucket.paid_total);
     const loss = readBuyerPortfolioNumber(safeBucket.loss_total);
     const transferred = readBuyerPortfolioNumber(safeBucket.transferred_total);
-    const pending = Math.max(0, credited - paid - loss - transferred);
+    const pending = getBuyerLivePendingBalance(safeBucket);
     const visibleBalance = credited - paid - loss - transferred;
     const compliance = credited <= 0 || visibleBalance < 0
         ? null
@@ -892,11 +892,10 @@ async function fetchOperationalProgressMap(supabaseClient, cropId = null) {
     const nextSummaryMap = new Map();
 
     (Array.isArray(pendingResult?.data) ? pendingResult.data : []).forEach((row) => {
-        const transferToken = getPendingTransferToken(row);
-        const isActivePending = transferToken !== 'transferred' && transferToken !== 'reverted';
-        const transferTarget = String(row?.transferred_to || '').trim().toLowerCase();
-        const isClosedIntoIncome = transferTarget === 'income' || !!row?.transferred_income_id;
-        const isClosedIntoLoss = transferTarget === 'losses';
+        const pendingState = resolvePendingPortfolioState(row);
+        const isActivePending = pendingState.countsAsReceivable;
+        const isClosedIntoIncome = pendingState.status === 'paid';
+        const isClosedIntoLoss = pendingState.status === 'lost';
         const matchStatus = String(row?.buyer_match_status || '').trim().toLowerCase();
         if (safeCropId) {
             appendCropScopedReview(nextSummaryMap, row);
@@ -907,7 +906,7 @@ async function fetchOperationalProgressMap(supabaseClient, cropId = null) {
                     bucket.credited_total += amount;
                     if (isActivePending) {
                         bucket.pending_total += amount;
-                    } else if (transferToken === 'transferred' && !isClosedIntoIncome && !isClosedIntoLoss) {
+                    } else if (pendingState.isClosed && !isClosedIntoIncome && !isClosedIntoLoss) {
                         bucket.transferred_total += amount;
                     }
                 }
@@ -1185,15 +1184,17 @@ function hasVisibleCategory(row, category) {
     const safeCategory = normalizeCategory(category);
     const hasHistory = hasBuyerPortfolioHistory(row);
     const pending = getOutstandingBalance(row);
+    const credited = readBuyerPortfolioNumber(row?.credited_total);
     const paid = readBuyerPortfolioNumber(row?.paid_total);
     const loss = readBuyerPortfolioNumber(row?.loss_total);
     const review = getReviewTotal(row);
     const hasPending = isPositiveBuyerPortfolioAmount(pending);
     const hasPaid = isPositiveBuyerPortfolioAmount(paid);
     const hasLoss = isPositiveBuyerPortfolioAmount(loss);
+    const isClosedCredit = isPositiveBuyerPortfolioAmount(credited) && !hasPending && !hasLoss && !isPositiveBuyerPortfolioAmount(review);
 
     if (safeCategory === 'sin-registro') return !hasHistory;
-    if (safeCategory === 'pagados') return !hasPending && hasPaid && !hasLoss;
+    if (safeCategory === 'pagados') return !hasPending && (hasPaid || isClosedCredit) && !hasLoss;
     if (safeCategory === 'perdidos') return !hasPending && hasLoss;
     return hasPending || (isPositiveBuyerPortfolioAmount(review) && !hasPaid && !hasLoss);
 }
@@ -1231,6 +1232,7 @@ function resolveBuyerStatus(row) {
     const clientStatus = String(row?.client_status || 'active').trim().toLowerCase();
     const hasHistory = hasBuyerPortfolioHistory(row);
     const pending = getOutstandingBalance(row);
+    const credited = readBuyerPortfolioNumber(row?.credited_total);
     const paid = readBuyerPortfolioNumber(row?.paid_total);
     const loss = readBuyerPortfolioNumber(row?.loss_total);
     const review = getReviewTotal(row);
@@ -1325,6 +1327,14 @@ function resolveBuyerStatus(row) {
             tone: 'pagado',
             label: 'Cobrado',
             detail: 'Ingreso del cultivo sin pendiente operativo.'
+        };
+    }
+
+    if (isPositiveBuyerPortfolioAmount(credited) && !isPositiveBuyerPortfolioAmount(review)) {
+        return {
+            tone: 'pagado',
+            label: 'Cobrado',
+            detail: 'Fiados cerrados sin saldo pendiente.'
         };
     }
 

@@ -5,6 +5,7 @@ import {
     normalizeHistorySearchToken,
     readBuyerPortfolioNumber,
     readHistoryItemField,
+    resolvePendingPortfolioState,
     renderHistoryDayGroups
 } from './agro-cartera-viva.js';
 import {
@@ -590,15 +591,11 @@ function summarizeClosures(closures) {
 }
 
 function resolvePendingClosureState(row, closures = []) {
-    const transferState = String(row?.transfer_state || 'active').trim().toLowerCase();
-    const transferredTo = String(row?.transferred_to || '').trim().toLowerCase();
-    const isReverted = transferState === 'reverted' || Boolean(row?.reverted_at);
     const safeClosures = Array.isArray(closures) ? closures : [];
-    const hasPaidClosure = safeClosures.some((closure) => String(closure?.type || '').trim().toLowerCase() === 'income');
-    const hasLossClosure = safeClosures.some((closure) => String(closure?.type || '').trim().toLowerCase() === 'loss');
+    const pendingState = resolvePendingPortfolioState(row, safeClosures);
     const closureSummary = summarizeClosures(safeClosures);
 
-    if (isReverted) {
+    if (pendingState.isReverted) {
         return {
             label: 'Fiado',
             tone: 'review',
@@ -611,8 +608,8 @@ function resolvePendingClosureState(row, closures = []) {
         };
     }
 
-    if (transferState === 'transferred' || transferredTo) {
-        if (transferredTo === 'income' || hasPaidClosure) {
+    if (pendingState.isClosed) {
+        if (pendingState.status === 'paid') {
             return {
                 label: 'Cobrado',
                 tone: 'paid',
@@ -625,7 +622,7 @@ function resolvePendingClosureState(row, closures = []) {
             };
         }
 
-        if (transferredTo === 'losses' || hasLossClosure) {
+        if (pendingState.status === 'lost') {
             return {
                 label: 'Perdido',
                 tone: 'loss',

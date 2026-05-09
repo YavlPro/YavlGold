@@ -2349,3 +2349,44 @@ Alinear documentacion con la verdad final del Centro de Reportes y cambios del d
 ### Commit sugerido
 
 `docs(agro): align reports center and crop archive documentation`
+
+---
+
+## Sesion 2026-05-09 — Bug final Cartera Viva: saldo vivo vs transferidos
+
+### Diagnostico
+
+La card de Cartera Viva calcula `Por cobrar` con una lectura distinta al detalle y a la accion de transferencia.
+El caso observado suma como deuda viva un fiado ya transferido a cobrado cuando el cierre relacionado no entra como detalle visible.
+
+### Causa raiz probable
+
+`getBuyerLivePendingBalance()` prioriza el derivado `credited_total - paid_total - loss_total - transferred_total` cuando hay totales de cartera.
+Ese derivado puede recontar un `agro_pending` transferido si el destino no suma en `paid_total`/`loss_total` o no entra en `transferred_total`.
+
+### Plan
+
+1. Centralizar la clasificacion de un fiado en `agro-cartera-viva.js`.
+2. Hacer que el saldo vivo use la menor deuda confiable entre `pending_total` y el derivado por cierres.
+3. Reusar esa lectura en la vista y el detalle de Cartera Viva.
+4. Verificar con `node --check`, `git diff --check` y `pnpm build:gold`.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `agro-cartera-viva.js` | Agregada `resolvePendingPortfolioState()` y ajustado `getBuyerLivePendingBalance()` para no recontar transferidos ni cierres legacy. |
+| `agro-cartera-viva-view.js` | Card, categorias y overlay por cultivo usan la lectura viva compartida. |
+| `agro-cartera-viva-detail.js` | El detalle reusa la misma clasificacion base para mover fiados cerrados a Cobrado/Perdido. |
+| `agro.js` | `isPendingTransferred()` ahora tambien respeta `transferred_to` como marca legacy de transferencia. |
+
+### Verificacion
+
+- `node --check` en `agro-cartera-viva.js`, `agro-cartera-viva-view.js`, `agro-cartera-viva-detail.js` y `agro.js`: PASS.
+- Prueba directa del caso 271.05 / 195: `getBuyerLivePendingBalance()` devuelve 195.
+- `git diff --check`: PASS, con warning de line endings en `AGENT_REPORT_ACTIVE.md`.
+- `pnpm build:gold`: PASS. Warning no bloqueante: entorno Node v25.6.0 vs engine esperado Node 20.x.
+
+### Resultado esperado
+
+Para jose luis, si USD 76.05 ya esta transferido a cobrado, no suma en `Por cobrar` ni queda como fiado accionable. Si los vivos son USD 65 + USD 130, la card debe mostrar `Por cobrar USD 195.00`.
