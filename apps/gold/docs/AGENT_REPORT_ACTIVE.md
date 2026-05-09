@@ -2049,3 +2049,15 @@ Riesgos: ocultar por error `Transferir` en fiados abiertos si la condición loca
 Validación esperada: `git diff --check`, `node --check apps/gold/agro/agro-cartera-viva-detail.js` y `pnpm build:gold`.
 
 Resultado: se agregaron `transferred_at` y `transferred_income_id` al detalle, y el menú de fiados usa `isLedgerPendingTransferred()` para no prometer `Transferir` cuando ya hay señales de transferencia. Validación técnica PASS; QA producción pendiente.
+
+---
+
+## TEST — Cartera Viva: Vista general no debe agregar fiados cerrados y debe mostrar cultivos asociados
+
+Síntoma: `Vista general` sigue mostrando clientes en `Fiados` de forma confusa aunque el filtro por cultivo parece más correcto.
+Hipótesis: la vista general clasifica por saldos agregados legacy y no por saldo vivo real derivado del resumen operacional por cultivo; además la card no expone los cultivos asociados.
+Archivos autorizados: `apps/gold/agro/agro-cartera-viva-view.js` y `apps/gold/docs/AGENT_REPORT_ACTIVE.md`.
+Plan mínimo: ubicar agregación/clasificación de cards, alinear `Fiados` con saldo vivo real y renderizar cultivos asociados si ya están disponibles en memoria.
+Validación: `git diff --check`, `node --check apps/gold/agro/agro-cartera-viva-view.js` y `pnpm build:gold`.
+
+Resultado: Vista general ahora recalcula el resumen visible con el mismo overlay vivo usado por cultivo; `Fiados` exige saldo pendiente real mayor a EPSILON y las cards muestran `Cultivo(s)` cuando los `crop_id` ya consultados pueden resolverse contra el snapshot local. Validación técnica PASS; QA producción pendiente.

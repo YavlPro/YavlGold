@@ -29,6 +29,7 @@ const CARTERA_VIVA_UNIT_FAMILY_KEY = 'YG_AGRO_CARTERA_VIVA_UNIT_FAMILY_V1';
 const CARTERA_VIVA_GENERAL_CROP_ID = '__general__';
 const CARTERA_VIVA_CROP_BLOCK_MESSAGE = 'Este cultivo aún no está en producción. Para registrar ventas o fiados en Cartera Viva, cambia el estado a En producción, Finalizado o Perdido.';
 const CARTERA_VIVA_ALLOWED_CROP_STATUSES = new Set(['produccion', 'finalizado', 'lost']);
+const PORTFOLIO_BALANCE_EPSILON = 0.000001;
 
 const CATEGORY_META = Object.freeze({
     'sin-registro': Object.freeze({
@@ -91,6 +92,7 @@ let visibleCropScopeRequestId = 0;
 const sessionCropBuyerScopeKeys = new Map();
 let externalRefreshTimer = 0;
 let cropScopedSummaryMap = new Map();
+let portfolioCropAssociationMap = new Map();
 let operationalProgressMap = new Map();
 let operationalProgressFamilyMap = new Map();
 
@@ -737,6 +739,11 @@ function roundPortfolioMetric(value, decimals = 2) {
     return Math.round(numeric * precision) / precision;
 }
 
+function isPositivePortfolioAmount(value) {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) && numeric > PORTFOLIO_BALANCE_EPSILON;
+}
+
 function readPortfolioAmount(row) {
     const amountUsd = Number(row?.monto_usd);
     if (Number.isFinite(amountUsd)) return amountUsd;
@@ -786,6 +793,16 @@ function appendCropScopedReview(summaryMapTarget, row) {
         bucket.legacy_unclassified_total += amount;
         bucket.legacy_unclassified_count += 1;
     }
+}
+
+function appendPortfolioCropAssociation(associationMapTarget, row) {
+    const scopeKey = buildBuyerPortfolioScopeKey(row);
+    const cropId = normalizeCropId(row?.crop_id);
+    if (!scopeKey || !cropId) return;
+    if (!associationMapTarget.has(scopeKey)) {
+        associationMapTarget.set(scopeKey, new Set());
+    }
+    associationMapTarget.get(scopeKey).add(cropId);
 }
 
 function resolveCropScopedGlobalStatus(bucket, clientStatus = 'active') {
@@ -855,7 +872,7 @@ async function fetchOperationalProgressMap(supabaseClient, cropId = null) {
     const baseColumns = 'buyer_id,buyer_group_key,unit_type,unit_qty,quantity_kg,monto,monto_usd,buyer_match_status';
     const pendingQuery = supabaseClient
         .from('agro_pending')
-        .select(`${baseColumns},transfer_state,transferred_to,transferred_income_id,crop_id`)
+        .select(`${baseColumns},transfer_state,transferred_at,transferred_to,transferred_income_id,crop_id`)
         .is('deleted_at', null)
         .is('reverted_at', null);
     const incomeQuery = supabaseClient
@@ -886,26 +903,26 @@ async function fetchOperationalProgressMap(supabaseClient, cropId = null) {
     const nextMap = new Map();
     const nextFamilyMap = new Map();
     const nextSummaryMap = new Map();
+    const nextCropAssociationMap = new Map();
 
     (Array.isArray(pendingResult?.data) ? pendingResult.data : []).forEach((row) => {
+        appendPortfolioCropAssociation(nextCropAssociationMap, row);
         const transferToken = getPendingTransferToken(row);
         const isActivePending = transferToken !== 'transferred' && transferToken !== 'reverted';
         const transferTarget = String(row?.transferred_to || '').trim().toLowerCase();
         const isClosedIntoIncome = transferTarget === 'income' || !!row?.transferred_income_id;
         const isClosedIntoLoss = transferTarget === 'losses';
         const matchStatus = String(row?.buyer_match_status || '').trim().toLowerCase();
-        if (safeCropId) {
-            appendCropScopedReview(nextSummaryMap, row);
-            if (matchStatus === 'matched') {
-                const bucket = ensureCropScopedSummaryBucket(nextSummaryMap, row);
-                if (bucket) {
-                    const amount = readPortfolioAmount(row);
-                    bucket.credited_total += amount;
-                    if (isActivePending) {
-                        bucket.pending_total += amount;
-                    } else if (transferToken === 'transferred' && !isClosedIntoIncome && !isClosedIntoLoss) {
-                        bucket.transferred_total += amount;
-                    }
+        appendCropScopedReview(nextSummaryMap, row);
+        if (matchStatus === 'matched') {
+            const bucket = ensureCropScopedSummaryBucket(nextSummaryMap, row);
+            if (bucket) {
+                const amount = readPortfolioAmount(row);
+                bucket.credited_total += amount;
+                if (isActivePending) {
+                    bucket.pending_total += amount;
+                } else if (transferToken === 'transferred' && !isClosedIntoIncome && !isClosedIntoLoss) {
+                    bucket.transferred_total += amount;
                 }
             }
         }
@@ -916,19 +933,18 @@ async function fetchOperationalProgressMap(supabaseClient, cropId = null) {
     });
 
     (Array.isArray(incomeResult?.data) ? incomeResult.data : []).forEach((row) => {
+        appendPortfolioCropAssociation(nextCropAssociationMap, row);
         const originTable = String(row?.origin_table || '').trim().toLowerCase();
         const matchStatus = String(row?.buyer_match_status || '').trim().toLowerCase();
-        if (safeCropId) {
-            appendCropScopedReview(nextSummaryMap, row);
-            if (matchStatus === 'matched') {
-                const bucket = ensureCropScopedSummaryBucket(nextSummaryMap, row);
-                if (bucket) {
-                    const amount = readPortfolioAmount(row);
-                    if (originTable === 'agro_pending') {
-                        bucket.paid_total += amount;
-                    } else {
-                        bucket.non_debt_income_total += amount;
-                    }
+        appendCropScopedReview(nextSummaryMap, row);
+        if (matchStatus === 'matched') {
+            const bucket = ensureCropScopedSummaryBucket(nextSummaryMap, row);
+            if (bucket) {
+                const amount = readPortfolioAmount(row);
+                if (originTable === 'agro_pending') {
+                    bucket.paid_total += amount;
+                } else {
+                    bucket.non_debt_income_total += amount;
                 }
             }
         }
@@ -939,15 +955,14 @@ async function fetchOperationalProgressMap(supabaseClient, cropId = null) {
     });
 
     (Array.isArray(lossResult?.data) ? lossResult.data : []).forEach((row) => {
+        appendPortfolioCropAssociation(nextCropAssociationMap, row);
         const originTable = String(row?.origin_table || '').trim().toLowerCase();
         const matchStatus = String(row?.buyer_match_status || '').trim().toLowerCase();
-        if (safeCropId) {
-            appendCropScopedReview(nextSummaryMap, row);
-            if (matchStatus === 'matched' && originTable === 'agro_pending') {
-                const bucket = ensureCropScopedSummaryBucket(nextSummaryMap, row);
-                if (bucket) {
-                    bucket.loss_total += readPortfolioAmount(row);
-                }
+        appendCropScopedReview(nextSummaryMap, row);
+        if (matchStatus === 'matched' && originTable === 'agro_pending') {
+            const bucket = ensureCropScopedSummaryBucket(nextSummaryMap, row);
+            if (bucket) {
+                bucket.loss_total += readPortfolioAmount(row);
             }
         }
         if (originTable !== 'agro_pending') return;
@@ -971,7 +986,8 @@ async function fetchOperationalProgressMap(supabaseClient, cropId = null) {
     return {
         aggregateMap: nextMap,
         familyMap: nextFamilyMap,
-        summaryMap: nextSummaryMap
+        summaryMap: nextSummaryMap,
+        cropAssociationMap: nextCropAssociationMap
     };
 }
 
@@ -1173,11 +1189,11 @@ function resolveVisibleCategory(row) {
     const review = getReviewTotal(row);
 
     if (!hasHistory) return 'sin-registro';
-    if (pending > 0) return 'fiados';
-    if (loss > 0) return 'perdidos';
-    if (paid > 0) return 'pagados';
-    if (review > 0) return 'fiados';
-    return 'fiados';
+    if (isPositivePortfolioAmount(pending)) return 'fiados';
+    if (isPositivePortfolioAmount(loss)) return 'perdidos';
+    if (isPositivePortfolioAmount(paid)) return 'pagados';
+    if (isPositivePortfolioAmount(review)) return 'sin-registro';
+    return 'sin-registro';
 }
 
 function resolveDisplayCategory(row) {
@@ -1195,10 +1211,16 @@ function hasVisibleCategory(row, category) {
     const loss = Number(row?.loss_total || 0);
     const review = getReviewTotal(row);
 
-    if (safeCategory === 'sin-registro') return !hasHistory;
-    if (safeCategory === 'pagados') return paid > 0;
-    if (safeCategory === 'perdidos') return loss > 0;
-    return pending > 0 || review > 0;
+    if (safeCategory === 'sin-registro') {
+        return !hasHistory
+            || (!isPositivePortfolioAmount(pending)
+                && !isPositivePortfolioAmount(paid)
+                && !isPositivePortfolioAmount(loss)
+                && isPositivePortfolioAmount(review));
+    }
+    if (safeCategory === 'pagados') return isPositivePortfolioAmount(paid);
+    if (safeCategory === 'perdidos') return isPositivePortfolioAmount(loss);
+    return isPositivePortfolioAmount(pending);
 }
 
 function buildPortfolioEntries(rows, category) {
@@ -1427,7 +1449,13 @@ function matchesPortfolioSearch(row, query = searchQuery) {
 function getCropScopedRows(rows) {
     const safeRows = Array.isArray(rows) ? rows.slice() : [];
     const selectedCropId = getSelectedCropId();
-    if (!selectedCropId) return safeRows;
+    if (!selectedCropId) {
+        return safeRows.map((row) => {
+            const scopeKey = buildBuyerPortfolioScopeKey(row);
+            if (!scopeKey || !hasBuyerPortfolioHistory(row)) return row;
+            return buildCropScopedSummaryOverlay(row, cropScopedSummaryMap.get(scopeKey));
+        });
+    }
     if (!(visibleCropScopeKeys instanceof Set) || visibleCropScopeId !== selectedCropId) return [];
     const sessionKeys = getSessionCropScopeKeys(selectedCropId);
 
@@ -1979,6 +2007,40 @@ function renderCropSelector() {
     `;
 }
 
+function resolvePortfolioCropLabels(row) {
+    if (getSelectedCropId()) return [];
+    const scopeKey = buildBuyerPortfolioScopeKey(row);
+    const cropIds = scopeKey ? portfolioCropAssociationMap.get(scopeKey) : null;
+    if (!(cropIds instanceof Set) || cropIds.size <= 0) return [];
+
+    const cropById = new Map(
+        getAvailableCrops()
+            .map((crop) => [normalizeCropId(crop?.id), crop])
+            .filter(([cropId, crop]) => cropId && crop)
+    );
+    const labels = [];
+    const seen = new Set();
+
+    cropIds.forEach((cropId) => {
+        const crop = cropById.get(normalizeCropId(cropId));
+        if (!crop) return;
+        const label = String(resolveCropDisplay(crop).shortLabel || '').trim();
+        const labelKey = getSearchToken(label);
+        if (!label || seen.has(labelKey)) return;
+        seen.add(labelKey);
+        labels.push(label);
+    });
+
+    return labels;
+}
+
+function renderPortfolioCropSource(row) {
+    const labels = resolvePortfolioCropLabels(row);
+    if (labels.length <= 0) return '';
+    const prefix = labels.length === 1 ? 'Cultivo' : 'Cultivos';
+    return `<p class="cartera-viva-card__subtitle cartera-viva-card__crop-source">${prefix}: ${escapeHtml(labels.join(' · '))}</p>`;
+}
+
 function renderPrivacyStrip() {
     return `
         <div class="agro-privacy-strip cartera-viva-privacy-strip" aria-label="Controles de privacidad">
@@ -2300,6 +2362,7 @@ function renderPortfolioCard(row) {
     ].filter(Boolean).length;
     const safeScope = activeStateCount > 1 ? 'todos' : escapeHtml(category);
     const safeEntryKey = escapeHtml(row?.__portfolioEntryKey || '');
+    const cropSource = renderPortfolioCropSource(row);
 
     return `
         <article
@@ -2313,6 +2376,7 @@ function renderPortfolioCard(row) {
         fallback: 'Cliente sin nombre'
     })}
                     <p class="cartera-viva-card__subtitle">${escapeHtml(status.detail)}${row?.created_at ? ` · ${escapeHtml(formatShortDate(row.created_at))}` : ''}</p>
+                    ${cropSource}
                 </div>
                 <div class="cartera-viva-card__head-side">
                     ${renderCardSignal(row)}
@@ -2773,13 +2837,18 @@ async function loadSummary() {
                 console.warn('[CarteraViva] operational progress load failed:', error?.message || error);
                 return {
                     aggregateMap: new Map(),
-                    familyMap: new Map()
+                    familyMap: new Map(),
+                    summaryMap: new Map(),
+                    cropAssociationMap: new Map()
                 };
             })
         ]);
         summaryRows = mergeSummaryRowsWithBuyerDirectory(nextSummaryRows, nextBuyerDirectoryRows);
         cropScopedSummaryMap = nextOperationalProgress?.summaryMap instanceof Map
             ? nextOperationalProgress.summaryMap
+            : new Map();
+        portfolioCropAssociationMap = nextOperationalProgress?.cropAssociationMap instanceof Map
+            ? nextOperationalProgress.cropAssociationMap
             : new Map();
         operationalProgressMap = nextOperationalProgress?.aggregateMap instanceof Map
             ? nextOperationalProgress.aggregateMap
@@ -2793,6 +2862,7 @@ async function loadSummary() {
         lastErrorMessage = String(error?.message || 'Error leyendo la cartera de clientes.');
         summaryRows = [];
         cropScopedSummaryMap = new Map();
+        portfolioCropAssociationMap = new Map();
         operationalProgressMap = new Map();
         operationalProgressFamilyMap = new Map();
         visibleCropScopeKeys = null;
