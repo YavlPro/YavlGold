@@ -2,7 +2,7 @@
 
 Mapa central de navegación documental de YavlGold.
 Este archivo es el punto de entrada para cualquier agente que necesite entender el sistema.
-Actualizado: 2026-05-06.
+Actualizado: 2026-05-09.
 
 ---
 
@@ -16,7 +16,7 @@ Actualizado: 2026-05-06.
 | **Vision estrategica** | ROADMAP_VISION_YAVLGOLD.md | docs/ | Roadmap conceptual del producto: Agro V1 como base y primitives futuras sin implementar módulos prematuros |
 | **Estructura** | FICHA_TECNICA.md | raiz | Ficha técnica del proyecto |
 | **Wiki viva** | AGENT_REPORT_ACTIVE.md | docs/ | Estado operativo acumulativo |
-| **Bitácora mensual** | daily-log-YYYY-MM-DD.md | docs/ops/ | Handoff operativo temporal entre agentes |
+| **Bitácora diaria** | daily-log-YYYY-MM-DD.md | docs/ops/ | Handoff operativo temporal entre agentes |
 | **Mapa central** | AGENT_CONTEXT_INDEX.md | docs/ | Este archivo |
 | **Resumen operativo** | llms.txt | public/ | Contexto para LLMs (servido en prod) |
 

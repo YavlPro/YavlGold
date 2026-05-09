@@ -2073,3 +2073,30 @@ Hipótesis: el filtro de `Pagados` sigue aceptando cualquier cliente con `paid_t
 Archivos autorizados: `apps/gold/agro/agro-cartera-viva-view.js` y `apps/gold/docs/AGENT_REPORT_ACTIVE.md`.
 Plan mínimo: ajustar solo la condición de `Pagados` para exigir cobro positivo, pendiente cero y pérdida cero con EPSILON.
 Validación: `git diff --check`, `node --check apps/gold/agro/agro-cartera-viva-view.js` y `pnpm build:gold`.
+
+Resultado: `Pagados` queda restringido a clientes con cobro positivo, sin pendiente vivo y sin pérdida. Clientes con cobro parcial permanecen en `Fiados`; clientes con pérdida permanecen en `Perdidos`. Validación técnica PASS; QA producción pendiente.
+
+---
+
+## 2026-05-09 — Cierre documental 08-09 mayo Agro
+
+### Diagnóstico documental
+
+- `daily-log-2026-05-08.md` ya existía y documentaba el cierre RED parcial de Cartera Viva, los fixes GREEN de Ciclos de cultivo y Calendario operativo, y la regla pendiente de tres estados.
+- `daily-log-2026-05-09.md` no existía.
+- `MANIFIESTO_AGRO.md`, `FICHA_TECNICA.md`, `docs-agro.html` y `llms.txt` estaban desactualizados frente a los fixes quirúrgicos del 09 de mayo.
+- `AGENT_CONTEXT_INDEX.md` solo necesitaba fecha y nombre de capa para reflejar la bitácora diaria vigente.
+
+### Contenido actualizado
+
+- 2026-05-08 queda como cierre honesto: Ciclos de cultivo y Calendario operativo en GREEN técnico; Cartera Viva cerró en RED parcial con rollback de regresión semántica.
+- 2026-05-09 queda como GREEN técnico en tres fixes quirúrgicos de Cartera Viva: `Transferir` alineado con estado transferido, Vista general alineada con saldos vivos por cultivo, y `Pagados` sin mezcla de fiados ni perdidos.
+- Regla canónica de Cartera Viva: `Fiado = me deben`, `Cobrado/Pagado = me pagaron`, `Perdido = lo perdí`.
+- `Transferido` y `Revertido` quedan documentados como trazabilidad secundaria, no estados principales.
+- `Cartera Viva Lifecycle — Archivo / Papelera / Restauración` queda como pendiente futuro, no como feature implementada.
+- Nota operativa: Codex debe usarse en este frente para tareas quirúrgicas, cerradas, medibles y con archivos autorizados; GLM queda como mejor perfil para diagnóstico semántico amplio cuando haya créditos.
+
+### Validación ejecutada
+
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS. Advertencia conocida: el entorno usa Node v25.6.0 y el proyecto declara Node 20.x.

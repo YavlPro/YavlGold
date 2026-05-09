@@ -241,6 +241,19 @@ Los estados de un ciclo de cultivo (activo, finalizado, perdido) son controlados
 
 Los estados manuales existen porque en la agricultura real las fechas estimadas no siempre se cumplen y las decisiones dependen del criterio del agricultor, no de una condición automática del sistema.
 
+### Balance operativo en lenguaje de agricultor
+
+La lectura financiera protagonista del ciclo debe hablar como habla el productor: `Vas ganando`, `Vas perdiendo` o `Punto de equilibrio`.
+
+La regla conceptual vigente es:
+
+```txt
+balanceActual = rentabilidadReal - fiadosPendientes
+rentabilidadReal = cobradoReal - costosTotales
+```
+
+`costosTotales` ya incluye inversion, gastos y perdidas. Las perdidas no deben restarse dos veces.
+
 ### Cómo se usa
 
 1. **Crear cultivo**: Botón "+ Nuevo Cultivo" → nombre, variedad, área, inversión, fecha de siembra, fecha de cosecha esperada.
@@ -303,6 +316,10 @@ No es un ciclo de cultivo. No representa la vida biológica/productiva de una si
   * Finalizados — los períodos ya cerrados
 * Comparar períodos — elegir dos períodos y verlos lado a lado
 * Estadísticas de períodos — consolidado por período
+
+### Vigencia operativa
+
+Un período no se considera finalizado solo porque venció el calendario si todavía tiene operaciones vivas asociadas. Si `activeCycleCount > 0`, el período permanece activo para el agricultor aunque el mes o rango temporal ya haya pasado.
 
 ### Relación con otros módulos
 
@@ -374,15 +391,31 @@ No es un registro de todas las ventas. No es la cartera bancaria. No es dónde r
 * Dar seguimiento a los pagos atrasados.
 * Ver el historial de cada cliente: qué le has vendido, cuánto ha pagado, cuánto debe.
 
-### Estados clave
+### Estados principales visibles
 
-* **Abierta**: El cliente tiene fiados pendientes.
-* **Cerrada**: El cliente no debe nada (pagó todo).
-* **Sin registro**: Cliente nuevo sin movimientos aún.
+Cartera Viva debe leerse con tres estados principales:
+
+* **Fiado**: me deben; existe saldo pendiente vivo.
+* **Cobrado/Pagado**: me pagaron; hay cobro y no queda pendiente ni perdida.
+* **Perdido**: lo perdi; existe perdida asumida por el agricultor.
+
+`Sin registro` puede existir como filtro auxiliar para clientes sin movimientos, pero no es un estado financiero principal.
+
+Regla canonica de tabs:
+
+```txt
+Fiados  = pendiente vivo > EPSILON
+Pagados = cobrado > EPSILON && pendiente <= EPSILON && perdida <= EPSILON
+Perdidos = perdida > EPSILON
+```
+
+Un cobro parcial no convierte al cliente en pagado si todavia queda pendiente vivo. Si existe perdida, el cliente pertenece a Perdidos antes que a Pagados.
 
 ### Relación con ciclos de cultivo
 
 Los movimientos en Cartera Viva pueden asociarse a un cultivo específico. Cuando registras un fiado, puedes indicar a qué ciclo pertenece.
+
+En `Vista general`, si un cliente aparece por saldos o historia asociada a cultivos, la card debe ayudar a entender la fuente cuando existan datos reales: `Cultivo: Pepino vega` o `Cultivos: Pepino vega · Maiz mio`. No se deben inventar nombres ni mostrar IDs tecnicos al usuario.
 
 ### Flujo de uso
 
@@ -420,6 +453,8 @@ Los registros de Cartera Viva no deben sentirse congelados. Un fiado puede cambi
 Transferir historial significa mover un registro desde su estado actual hacia el estado que mejor representa la realidad. Por ejemplo: si un cliente pagó, ya no debe quedar como deuda pendiente; si nunca pagó y el agricultor decide asumirlo como pérdida, debe poder quedar documentado como pérdida; si una parte se entregó como donación, esa parte debe leerse como donación.
 
 Esto vuelve más honesto el libro de cuentas. El agricultor no queda obligado a borrar y volver a escribir la historia para que los números cuadren. Agro debe ayudar a corregir el estado de un movimiento sin perder la memoria de lo que pasó.
+
+`Transferido` y `Revertido` no son estados principales de Cartera Viva. Son trazabilidad secundaria, nota tecnica, evidencia de auditoria o filtro dinamico cuando existan datos reales. No deben competir visualmente con `Fiado`, `Cobrado/Pagado` y `Perdido`.
 
 ### Transferencia completa o parcial
 
@@ -1196,7 +1231,7 @@ Un archivo `.md` se abre en cualquier editor de texto, en cualquier equipo, sin 
 
 ### 9.8 ¿Qué diferencia hay entre Cartera Viva y Cartera Operativa?
 
-* **Cartera Viva**: El seguimiento completo del crédito a clientes. Incluye fiados pendientes, cobros recibidos, pérdidas asumidas y donaciones. No es solo lo que te deben hoy — es el ciclo de vida entero de cada crédito otorgado.
+* **Cartera Viva**: El seguimiento completo del crédito a clientes. Sus estados principales son Fiado, Cobrado/Pagado y Perdido. Incluye fiados pendientes, cobros recibidos, pérdidas asumidas y donaciones como historia del crédito. No es solo lo que te deben hoy — es el ciclo de vida entero de cada crédito otorgado.
 * **Cartera Operativa**: Todo movimiento financiero (gastos de finca, compras, cobros, las deudas que luego irán a la cartera viva y ventas perdidas). Es el libro mayor.
 
 ### 9.9 ¿Cómo separo la idea de Ciclo de Cultivo frente al Ciclo de Período?
@@ -1393,6 +1428,7 @@ Cualquier cambio visual debe obedecer el ADN Visual V11 y el canon de modales §
 * [x] Agregar sección "cómo empezar desde cero"
 * [x] Agregar sección "cómo exportar / salir / respaldar"
 * [ ] Validar alcance funcional exacto de multimoneda, transferencias parciales y reversión por superficie
+* [ ] Cartera Viva Lifecycle — Archivo / Papelera / Restauracion: pendiente futuro para archivar/restaurar clientes y, despues, registros. Nada que afecte dinero debe desaparecer sin trazabilidad.
 
 ---
 

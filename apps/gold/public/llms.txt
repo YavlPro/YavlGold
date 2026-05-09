@@ -80,6 +80,11 @@ This file contains the current product, architecture and routing policy for `app
 - Archivar/eliminar un cultivo NO borra clientes ni movimientos comerciales. La historia económica permanece.
 - `showAgroConfirmDialog()` is the canonical modal for destructive confirmations. Do not use `window.confirm()` or `alert()` in sensitive flows.
 - Cartera Viva: separates Nuevo cliente (create new) and Cliente existente (select/link existing) flows. Does not expose UUID/user_id to end user.
+- Cartera Viva visible states: `Fiado` = live pending balance, `Cobrado/Pagado` = paid with no pending/loss, `Perdido` = loss. `Transferido` and `Revertido` are traceability only, not primary states. Paid tab requires `paid > EPSILON && pending <= EPSILON && loss <= EPSILON`.
+- Cartera Viva general view should align with live crop balances and show associated crop names in cards when real data exists. Do not invent crop names or show technical IDs.
+- Crop cycle balance language: `Vas ganando`, `Vas perdiendo`, `Punto de equilibrio`; conceptual formula is `balanceActual = rentabilidadReal - fiadosPendientes`, where `rentabilidadReal = cobradoReal - costosTotales` and losses are not subtracted twice.
+- Calendario operativo: a period remains active when `activeCycleCount > 0`, even if the calendar month/range has expired.
+- Future only: `Cartera Viva Lifecycle — Archivo / Papelera / Restauracion` is pending/proposed, not implemented. Money-affecting records must not disappear without traceability.
 - Mis Clientes: contact directory combining `agro_clients` (manual, editable) with `agro_buyers` (derived from Cartera Viva, read-only). Deduplication by canonical name. Mis Clientes does NOT handle debts, balances or financial data — that is Cartera Viva's domain.
 - Crop states are manual: active, finalizado, perdido. No automatic transitions. The farmer decides when to change state.
 - Seed kg: optional field for crop creation. Not required.

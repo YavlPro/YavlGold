@@ -1,6 +1,6 @@
 # FICHA TECNICA - YavlGold V1
 
-**Fecha de Referencia:** 15/04/2026
+**Fecha de Referencia:** 09/05/2026
 **Tipo de Proyecto:** Herramienta agricola digital (Agro V1 liberado)
 **Arquitectura:** Monorepo Turborepo
 **Release activo visible:** `V1`
@@ -133,9 +133,11 @@ Regla estricta:
 
 **Funcionalidades:**
 - Facturero financiero: gastos, ingresos (pagados), fiados, pérdidas, donaciones, otros
-- Gestión de cultivos con ciclos productivos
+- Gestión de cultivos con ciclos productivos y balance humano (`Vas ganando`, `Vas perdiendo`, `Punto de equilibrio`)
 - Dashboard agrícola con clima en tiempo real
 - Centro de Reportes: índice de reportes generales oficiales (estadísticas globales, perfil agricultor, rankings). Los reportes detallados por cultivo viven en cada card/ciclo, no en el Centro.
+- Calendario operativo: los períodos siguen activos si tienen operaciones vivas asociadas (`activeCycleCount > 0`)
+- Cartera Viva: `Fiados` por pendiente vivo, `Pagados` solo con cobro completo sin pendiente/perdida, `Perdidos` por perdida
 - Rankings y estadísticas financieras
 - Carrito de compras con lista de insumos
 - Planificación y agenda agrícola
@@ -153,7 +155,7 @@ agro-agenda.js       — agenda agrícola
 agro-cart.js         — carrito de insumos
 agro-cartera-viva-client-assignment.js — reasignación segura de cliente dentro del editor de movimientos, sin borrar historial
 agro-cartera-viva-client-merge.js — modal seguro para unificar clientes duplicados moviendo movimientos al cliente destino
-agro-cartera-viva-view.js — Cartera Viva: vista de clientes, estados, wizard de compradores y flujos separados Nuevo cliente / Cliente existente
+agro-cartera-viva-view.js — Cartera Viva: vista de clientes, tabs por saldo vivo, cultivos asociados en cards, wizard de compradores y flujos separados Nuevo cliente / Cliente existente
 agro-clients.js      — Mis Clientes: directorio de contactos (clientes manuales + buyers derivados de Cartera Viva)
 agro-clima.js        — integración meteorológica
 agro-crop-report.js  — reportes detallados por cultivo (se acceden desde cada card/ciclo, no desde el Centro de Reportes)
