@@ -1,4 +1,5 @@
 import { formatUsd, getGlobalStats } from './agroestadistica.js';
+import { validateExportBundle, showExportError } from './agro-report-guard.js';
 import {
     applyBuyerPrivacy,
     applyMoneyPrivacy,
@@ -1423,6 +1424,11 @@ function buildProfileMarkdown(options = {}) {
 
 function downloadMarkdown(content) {
     const normalized = normalizeMarkdownForExport(content);
+    const vResult = validateExportBundle({ rows: [], totals: {}, currency: 'USD' });
+    if (!vResult.valid) {
+        showExportError(vResult.errors);
+        return;
+    }
     const blob = new Blob([`\ufeff${normalized}`], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');

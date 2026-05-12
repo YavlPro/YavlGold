@@ -6,20 +6,12 @@
 
 import supabase from '../assets/js/config/supabase-config.js';
 import { getPendingTransferToken } from './agro-unit-totals.js';
+import { filterQARows, validateExportBundle, showExportError } from './agro-report-guard.js';
+import { toCents, formatMoney } from './agro-format.js';
 
 // ============================================================
 // HELPERS
 // ============================================================
-
-function toCents(value) {
-    return Math.round((Number(value) || 0) * 100);
-}
-
-function centsToStr(cents) {
-    const abs = Math.abs(cents);
-    const sign = cents < 0 ? '-' : '';
-    return `${sign}$${(abs / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
 
 function pctSafe(numerator, denominator) {
     if (!denominator) return 'N/A';
@@ -400,7 +392,7 @@ async function fetchCrops(userId) {
         if (error) {
             console.warn('[StatsReport] crops error:', error.message || error);
         }
-        return rows;
+        return filterQARows(rows);
     } catch (err) {
         console.warn('[StatsReport] crops exception:', err);
         return [];
@@ -432,7 +424,7 @@ async function fetchIncome(userId) {
         if (error) {
             console.warn('[StatsReport] income error:', error.message || error);
         }
-        return rows;
+        return filterQARows(rows);
     } catch (err) {
         console.warn('[StatsReport] income exception:', err);
         return [];
@@ -455,7 +447,7 @@ async function fetchExpenses(userId) {
         if (error) {
             console.warn('[StatsReport] expenses error:', error.message || error);
         }
-        return rows;
+        return filterQARows(rows);
     } catch (err) {
         console.warn('[StatsReport] expenses exception:', err);
         return [];
@@ -482,7 +474,7 @@ async function fetchPending(userId) {
         if (error) {
             console.warn('[StatsReport] pending error:', error.message || error);
         }
-        return rows.filter(isActivePendingRow);
+        return filterQARows(rows).filter(isActivePendingRow);
     } catch (err) {
         console.warn('[StatsReport] pending exception:', err);
         return [];
@@ -505,7 +497,7 @@ async function fetchLosses(userId) {
         if (error) {
             console.warn('[StatsReport] losses error:', error.message || error);
         }
-        return rows;
+        return filterQARows(rows);
     } catch (err) {
         console.warn('[StatsReport] losses exception:', err);
         return [];
@@ -618,7 +610,7 @@ function buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRo
             const status = resolveCropStatus(c.crop, progress);
             const statusLine = formatCropStatusLine(status);
             const progressLine = formatCropProgressLine(progress);
-            md += `| ${escMd(label)} | ${escMd(statusLine)} | ${escMd(progressLine)} | ${centsToStr(c.incomeCents)} | ${centsToStr(costCents)} | ${centsToStr(profitCents)} | ${centsToStr(c.pendingCents)} | ${roi} |\n`;
+            md += `| ${escMd(label)} | ${escMd(statusLine)} | ${escMd(progressLine)} | ${formatMoney(c.incomeCents, 'USD')} | ${formatMoney(costCents, 'USD')} | ${formatMoney(profitCents, 'USD')} | ${formatMoney(c.pendingCents, 'USD')} | ${roi} |\n`;
         }
     }
 
@@ -651,11 +643,11 @@ function buildUnassignedSection(unassigned) {
 
     md += '| Concepto | Registros | Monto (USD) |\n';
     md += '|----------|----------:|------------:|\n';
-    md += `| Pagados | ${info.incomeCount || 0} | ${centsToStr(info.incomeCents || 0)} |\n`;
-    md += `| Gastos | ${info.expenseCount || 0} | ${centsToStr(info.expenseCents || 0)} |\n`;
-    md += `| Fiados | ${info.pendingCount || 0} | ${centsToStr(info.pendingCents || 0)} |\n`;
-    md += `| Pérdidas | ${info.lossesCount || 0} | ${centsToStr(info.lossesCents || 0)} |\n`;
-    md += `| Resultado neto | - | ${centsToStr(profitCents)} |\n\n`;
+    md += `| Pagados | ${info.incomeCount || 0} | ${formatMoney(info.incomeCents || 0, 'USD')} |\n`;
+    md += `| Gastos | ${info.expenseCount || 0} | ${formatMoney(info.expenseCents || 0, 'USD')} |\n`;
+    md += `| Fiados | ${info.pendingCount || 0} | ${formatMoney(info.pendingCents || 0, 'USD')} |\n`;
+    md += `| Pérdidas | ${info.lossesCount || 0} | ${formatMoney(info.lossesCents || 0, 'USD')} |\n`;
+    md += `| Resultado neto | - | ${formatMoney(profitCents, 'USD')} |\n\n`;
     return md;
 }
 
@@ -716,7 +708,7 @@ function buildBuyerRanking(incomeRows, pendingRows) {
         const name = b.displayWho;
         const estado = b.paid ? '✅ Pagado' : '⏳ Debe';
         const curs = Array.from(b.currencies).join(', ');
-        md += `| ${escMd(name)} | ${b.count} | ${curs} | ${centsToStr(b.totalCents)} | ${estado} |\n`;
+        md += `| ${escMd(name)} | ${b.count} | ${curs} | ${formatMoney(b.totalCents, 'USD')} | ${estado} |\n`;
     }
     return md;
 }
@@ -731,7 +723,7 @@ function buildBuyerRanking(incomeRows, pendingRows) {
 export async function exportStatsReport() {
     try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) { alert('Sesión no válida.'); return; }
+        if (!user) { showExportError(['Sesión no válida.']); return; }
 
         // Get profile name
         let userName = user.email || 'Usuario';
@@ -802,13 +794,13 @@ export async function exportStatsReport() {
         md += `## 💰 Resumen Global\n`;
         md += `| Concepto | Monto |\n`;
         md += `|----------|------:|\n`;
-        md += `| Total pagados | ${centsToStr(incomeCents)} |\n`;
-        md += `| Total costos | ${centsToStr(costCents)} |\n`;
-        md += `| Ganancia neta | ${centsToStr(profitCents)} |\n`;
+        md += `| Total pagados | ${formatMoney(incomeCents, 'USD')} |\n`;
+        md += `| Total costos | ${formatMoney(costCents, 'USD')} |\n`;
+        md += `| Ganancia neta | ${formatMoney(profitCents, 'USD')} |\n`;
         md += `| Margen | ${marginStr} |\n`;
         md += `| ROI | ${roiStr} |\n`;
-        md += `| Fiados por cobrar | ${centsToStr(pendingCents)} |\n`;
-        md += `| Pagado proyectado (si se cobra todo) | ${centsToStr(projIncomeCents)} |\n`;
+        md += `| Fiados por cobrar | ${formatMoney(pendingCents, 'USD')} |\n`;
+        md += `| Pagado proyectado (si se cobra todo) | ${formatMoney(projIncomeCents, 'USD')} |\n`;
         md += `| ROI proyectado | ${projRoiStr} |\n\n`;
         md += `> _Moneda base: USD \u00b7 Tasas al momento del registro_\n\n`;
         md += `---\n\n`;
@@ -827,9 +819,9 @@ export async function exportStatsReport() {
 
         // Projection
         md += `## 📈 Proyección\n`;
-        md += `Si se cobran los ${centsToStr(pendingCents)} fiados:\n`;
-        md += `- **Pagado total:** ${centsToStr(projIncomeCents)}\n`;
-        md += `- **Ganancia neta:** ${centsToStr(projProfitCents)}\n`;
+        md += `Si se cobran los ${formatMoney(pendingCents, 'USD')} fiados:\n`;
+        md += `- **Pagado total:** ${formatMoney(projIncomeCents, 'USD')}\n`;
+        md += `- **Ganancia neta:** ${formatMoney(projProfitCents, 'USD')}\n`;
         md += `- **ROI:** ${projRoiStr}\n\n`;
 
         // Footer
@@ -838,6 +830,15 @@ export async function exportStatsReport() {
         md += `> Generado por YavlGold · yavlgold.com\n`;
 
         // Download with UTF-8 BOM
+        const vResult = validateExportBundle({
+            rows: [...incomeRows, ...expenseRows, ...pendingRows, ...lossesRows],
+            totals: { incomeUsd: incomeCents / 100 },
+            currency: 'USD'
+        });
+        if (!vResult.valid) {
+            showExportError(vResult.errors);
+            return;
+        }
         const blob = new Blob(['\ufeff' + md], { type: 'text/markdown;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -851,6 +852,6 @@ export async function exportStatsReport() {
         console.info(`[StatsReport] Exported global stats report (${crops.length} crops, ${incomeRows.length} income, ${expenseRows.length} expenses, ${pendingRows.length} pending, ${lossesRows.length} losses)`);
     } catch (err) {
         console.error('[StatsReport] Export error:', err);
-        alert('Error al exportar estadísticas: ' + (err.message || err));
+        showExportError(['Error al exportar estadísticas: ' + (err.message || err)]);
     }
 }

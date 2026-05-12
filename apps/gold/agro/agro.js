@@ -3691,10 +3691,13 @@ function formatSplitQuantity(value, unitType) {
 function fmtMoneyUI(amount, currency = 'COP') {
     const safeAmount = toSafeLocaleNumber(amount) ?? 0;
     const code = String(currency || 'COP').trim().toUpperCase();
+    if (_formatOpsRankingMoney && _toCentsForRankings) {
+        return _formatOpsRankingMoney(_toCentsForRankings(safeAmount), code, { showCurrencyCode: true });
+    }
     const cfg = SUPPORTED_CURRENCIES[code] || null;
     const label = cfg?.symbol || code || 'COP';
     const decimals = Number.isInteger(cfg?.decimals) ? cfg.decimals : 2;
-    const formatted = Number(safeAmount).toLocaleString('es-VE', {
+    const formatted = Number(safeAmount).toLocaleString('en-US', {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals
     });
@@ -9100,12 +9103,11 @@ function formatDate(dateStr) {
  * Formatea moneda USD
  */
 function formatCurrency(value) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-    }).format(value || 0);
+    if (_formatOpsRankingMoney && _toCentsForRankings) {
+        return _formatOpsRankingMoney(_toCentsForRankings(value), 'USD', { showCurrencyCode: false, minimumFractionDigits: 0 });
+    }
+    const safe = Number(value) || 0;
+    return '$' + safe.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
 function normalizeMoneyCurrency(value) {
@@ -9155,7 +9157,7 @@ function confirmHighUsdAmountGuardrail({ currency, amount, amountUsd, contextLab
     if (typeof window === 'undefined' || typeof window.confirm !== 'function') return true;
 
     const amountNum = toSafeLocaleNumber(amount) || 0;
-    const amountLabel = amountNum.toLocaleString('es-VE', {
+    const amountLabel = amountNum.toLocaleString('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     });
@@ -10109,26 +10111,27 @@ function resolveCropInvestmentSnapshot(crop) {
 }
 
 function formatMoneyByCode(value, code) {
+    if (_formatOpsRankingMoney && _toCentsForRankings) {
+        if (!Number.isFinite(Number(value))) {
+            if (code === 'COP') return 'N/D COP';
+            if (code === 'VES') return 'N/D Bs';
+            return 'N/D';
+        }
+        return _formatOpsRankingMoney(_toCentsForRankings(value), code, { showCurrencyCode: true });
+    }
     const amount = Number(value);
     if (!Number.isFinite(amount)) {
         if (code === 'COP') return 'N/D COP';
         if (code === 'VES') return 'N/D Bs';
         return 'N/D';
     }
-
     if (code === 'USD') {
-        return `$${amount.toLocaleString('en-US', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2
-        })}`;
+        return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
     }
     if (code === 'COP') {
         return `${Math.round(amount).toLocaleString('es-CO')} COP`;
     }
-    return `${amount.toLocaleString('es-VE', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    })} Bs`;
+    return `${amount.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs`;
 }
 
 function formatInvestmentTriplet(usdAmount, rates) {
@@ -12654,6 +12657,10 @@ let opsRankingsInitBound = false;
 let opsRankingsInFlight = null;
 let opsRankingsQueued = false;
 let opsRankingsDebugSampleLogged = false;
+let _formatOpsRankingMoney = null;
+let _toCentsForRankings = null;
+let _validateExportBundle = null;
+let _showExportError = null;
 
 function createEmptyOpsMovementSummary() {
     const globalByTab = {};
@@ -13128,7 +13135,7 @@ function formatOpsRankingDate(value) {
     if (!value) return '-';
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return '-';
-    return date.toLocaleDateString('es-VE', {
+    return date.toLocaleDateString('es-CO', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric'
@@ -13139,24 +13146,18 @@ function formatOpsRankingTime(value) {
     if (!value) return '-';
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return '-';
-    return date.toLocaleTimeString('es-VE', {
+    return date.toLocaleTimeString('es-CO', {
         hour: '2-digit',
         minute: '2-digit'
     });
 }
 
 function formatOpsRankingCurrency(value) {
-    const amount = Number(value || 0);
-    if (!Number.isFinite(amount)) return '$0';
-
-    const absolute = Math.abs(amount);
-    const hasDecimals = Math.abs(absolute - Math.round(absolute)) > 0.000001;
-    const formatter = new Intl.NumberFormat('es-VE', {
-        minimumFractionDigits: hasDecimals ? 2 : 0,
-        maximumFractionDigits: hasDecimals ? 2 : 0
-    });
-
-    return `${amount < 0 ? '-' : ''}$${formatter.format(absolute)}`;
+    if (_formatOpsRankingMoney && _toCentsForRankings) {
+        return _formatOpsRankingMoney(_toCentsForRankings(value), 'USD');
+    }
+    const safe = Number(value) || 0;
+    return `$${safe.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
 }
 
 function formatOpsRankingCount(value, singular, plural) {
@@ -13528,6 +13529,13 @@ function pickRankingsErrorMessage(errors) {
 }
 
 async function fetchOpsRankingsData() {
+    const { filterQARows } = await import('./agro-report-guard.js');
+    const { formatMoney: _fmtMoney, toCents: _toCents } = await import('./agro-format.js');
+    const { validateExportBundle: _vEB, showExportError: _sEE } = await import('./agro-report-guard.js');
+    _formatOpsRankingMoney = _fmtMoney;
+    _toCentsForRankings = _toCents;
+    _validateExportBundle = _vEB;
+    _showExportError = _sEE;
     const rangeDates = resolveOpsRankingsDateRange(opsRankingsState.range);
     const { data: userData } = await supabase.auth.getUser();
     if (!userData?.user?.id) {
@@ -13574,9 +13582,9 @@ async function fetchOpsRankingsData() {
 
     const errors = [topClientsRes.error, pendingRes.error, cropsRes.error].filter(Boolean);
     return {
-        topClients: topClientsRows,
-        pendingClients: normalizeOpsRankingsRows(pendingRes.data),
-        topCrops: normalizeOpsRankingsRows(cropsRes.data),
+        topClients: filterQARows(topClientsRows),
+        pendingClients: filterQARows(normalizeOpsRankingsRows(pendingRes.data)),
+        topCrops: filterQARows(normalizeOpsRankingsRows(cropsRes.data)),
         error: pickRankingsErrorMessage(errors)
     };
 }
@@ -13631,7 +13639,7 @@ function exportOpsRankingsMarkdown() {
     const privacyLabel = opsRankingsState.hideNames ? 'Ocultar nombres: ON' : 'Ocultar nombres: OFF';
 
     let md = `# 🏆 Rankings Agro\n\n`;
-    md += `- Fecha: ${now.toLocaleString('es-VE')}\n`;
+    md += `- Fecha: ${now.toLocaleString('es-CO')}\n`;
     md += `- Rango: ${rangeLabel}\n`;
     md += `- ${cropLabel}\n`;
     md += `- ${privacyLabel}\n\n`;
@@ -13688,6 +13696,17 @@ function exportOpsRankingsMarkdown() {
     }
 
     const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    if (_validateExportBundle && _showExportError) {
+        const vResult = _validateExportBundle({
+            rows: [...(opsRankingsState.topClients || []), ...(opsRankingsState.pendingClients || []), ...(opsRankingsState.topCrops || [])],
+            totals: {},
+            currency: 'USD'
+        });
+        if (!vResult.valid) {
+            _showExportError(vResult.errors);
+            return;
+        }
+    }
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;

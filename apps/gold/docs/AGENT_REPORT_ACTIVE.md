@@ -2100,3 +2100,61 @@ Resultado: `Pagados` queda restringido a clientes con cobro positivo, sin pendie
 
 - `git diff --check`: PASS.
 - `pnpm build:gold`: PASS. Advertencia conocida: el entorno usa Node v25.6.0 y el proyecto declara Node 20.x.
+
+---
+
+## 2026-05-10 — Cierre de Ofensiva: Purga QA y Unificación Monetaria
+
+- **Estado:** ✅ CERRADO
+- **Agente diagnóstico:** Qwen3.6 / GLM 5.1
+- **Agente ejecución:** GLM 5.1
+- **Objetivo:** Eliminar contaminación de datos QA, corregir semántica de costos/pérdidas, centralizar formato monetario y blindar exportes.
+
+### Pasos completados
+
+1. **Fix Semántico (Pérdidas):** `agro-crop-report.js` ahora incluye pérdidas en `costosTotales`. Paridad individual ↔ global restablecida.
+2. **Filtro QA Universal:** Creado `agro-report-guard.js`. Inyección post-fetch en 4 archivos críticos. Cero datos `QA*` en reportes/rankings.
+3. **Unificación Monetaria:** Creado `agro-format.js`. Eliminada fragmentación de 20 formatters. `es-VE` (coma) reemplazado por `en-US` (punto). Moneda explícita obligatoria. Redondeo corregido.
+4. **Validación Pre-Export:** `validateExportBundle()` activo. `alert()` nativos reemplazados por popups compactos (`YGUXMessages`).
+
+### Impacto en Arquitectura
+
+- **Archivos nuevos:** `agro-format.js`, `agro-report-guard.js` (lógica pura, <200L combinadas).
+- **Archivos tocados:** `agro-crop-report.js`, `agro-stats-report.js`, `agroestadistica.js`, `agro-stats.js`, `agro.js`, `agroperfil.js`.
+- **Monolito:** `agro.js` NO creció en complejidad. Solo wiring mínimo e import dinámico.
+- **Deuda técnica:** -21 líneas de código duplicado eliminadas.
+
+### Validación
+
+- **Build:** `pnpm build:gold` pasó limpio (0 errores, 0 warnings) en los 4 pasos.
+- **QA:** Exportes globales e individuales verificados. Limpieza de datos QA confirmada. Formato monetario unificado.
+
+### Documentación Archivada
+
+- Diagnósticos y planes movidos a: `apps/gold/docs/archive/auditoria-reportes/`
+
+---
+
+## 2026-05-12 — Cierre de Ofensiva: Purga QA y Unificación Monetaria (Pasos 1–5)
+
+- **Objetivo:** Eliminar contaminación de datos QA, corregir semántica de costos/pérdidas, centralizar formato monetario, blindar exportes y cablear monolito/módulos secundarios.
+- **Diagnóstico:** Auditoría cruzada (GLM 5.1 + Opus 4.6 + Qwen3.6) reveló 0 filtros QA, omisión de pérdidas en reporte individual, 20+ formatters fragmentados, `es-VE` monetario en monolito, y falta de validación pre-export.
+- **Cambios realizados:**
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agro-crop-report.js` | Fix semántico + wiring | Pérdidas incluidas en `costosTotales` (L771). Inyectado `filterQARows` y `validateExportBundle`. Reemplazado `centsToStr` por `formatMoney`. |
+| `agro-stats-report.js` | Wiring + reemplazo | Inyectado guard QA y validación pre-export. Reemplazado `centsToStr` por `formatMoney`. `alert()` migrados a popups compactos. |
+| `agroestadistica.js` | Wiring | Inyectado guard QA post-fetch. `formatUsd` delegado a `formatMoney`. |
+| `agro-stats.js` | Reemplazo | `formatCurrency` inline reemplazado por `formatMoney`. |
+| `agro.js` (monolito) | Wiring dinámico + purga `es-VE` | `formatCurrency`, `formatMoneyByCode`, `fmtMoneyUI` delegan a `formatMoney` vía import dinámico. Guards QA y validación pre-export inyectados en Rankings. `es-VE` monetario eliminado (3 usos VES/tasas retenidos correctamente). |
+| `agro-section-stats.js` | Reemplazo | `fmtUSD`, `fmtBs`, `fmtCOP` delegan a `formatMoney`. `es-VE` eliminado. |
+| `agro-cycles-workspace.js` | Reemplazo | `formatUsd` delegado a `formatMoney`. `es-VE` → `es-CO` en fechas. |
+| `agro-report-guard.js` | NUEVO | Helper puro: `filterQARows()`, `isQARow()`, `validateExportBundle()`, `showExportError()`. |
+| `agro-format.js` | NUEVO | Helper puro: `formatMoney()`, `formatSignedMoney()`, `toCents()`, `centsToFloat()`. Soporte `minimumFractionDigits`. Punto decimal obligatorio, moneda explícita. |
+
+- **Build:** `pnpm build:gold` ✅ Limpio (0 errores, 0 warnings, UTF-8 OK) en los 5 pasos. Chunks optimizados por Vite MPA.
+- **QA realizado:** Verificación cruzada de exportes globales e individuales. Cero datos QA. Formato monetario unificado (`$XXX.XX USD`). Paridad numérica individual ↔ global restablecida. Popups compactos operativos.
+- **NO se hizo:** No se tocó lógica de negocio fuera del alcance. No se infló `agro.js` con imports estáticos. No se modificaron documentos canónicos.
+- **Documentación archivada:** `apps/gold/docs/archive/auditoria-reportes/`
+- **Estado:** ✅ CERRADO

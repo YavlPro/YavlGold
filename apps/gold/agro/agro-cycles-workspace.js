@@ -1,3 +1,5 @@
+import { toCents, formatMoney, formatSignedMoney } from './agro-format.js';
+
 const COMPARE_ROOT_ID = 'agro-cycle-compare-root';
 const SELECT_PRIMARY_ID = 'agro-cycle-compare-a';
 const SELECT_SECONDARY_ID = 'agro-cycle-compare-b';
@@ -162,17 +164,11 @@ function readBuyerPortfolioState() {
 }
 
 function formatUsd(value, options = {}) {
-    const number = toNumber(value, 0);
-    const abs = Math.abs(number);
-    const text = abs.toLocaleString('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2
-    });
-    if (!options.signed) return text;
-    if (number === 0) return text;
-    return `${number > 0 ? '+' : '-'}${text}`;
+    const cents = toCents(value);
+    if (options.signed) {
+        return formatSignedMoney(cents, 'USD', { showCurrencyCode: false });
+    }
+    return formatMoney(cents, 'USD', { showCurrencyCode: false, minimumFractionDigits: 0 });
 }
 
 function formatPercent(value) {
@@ -201,7 +197,7 @@ function formatRelativePercentValue(value) {
     const abs = Math.abs(toNumber(value, 0));
     const hasDecimals = Math.abs(abs - Math.round(abs)) > RELATIVE_DELTA_EPSILON;
     const minimumFractionDigits = hasDecimals && abs < 100 ? 1 : 0;
-    return abs.toLocaleString('es-VE', {
+    return abs.toLocaleString('es-CO', {
         minimumFractionDigits,
         maximumFractionDigits: 1
     });

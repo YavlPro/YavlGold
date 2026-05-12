@@ -7,6 +7,7 @@
  */
 
 import supabase from '../assets/js/config/supabase-config.js';
+import { toCents, formatMoney } from './agro-format.js';
 
 let roiChartInstance = null;
 let expensesChartInstance = null;
@@ -884,11 +885,7 @@ export async function computeAgroFinanceSummaryV1() {
 export function updateUIFromSummary(summary) {
     if (!summary) return;
 
-    const formatCurrency = (num) => {
-        const safe = Number(num);
-        if (!Number.isFinite(safe)) return '$0.00';
-        return '$' + safe.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    };
+    const formatCurrency = (num) => formatMoney(toCents(num), 'USD');
     const formatK = (num) => {
         const safe = Number(num);
         if (!Number.isFinite(safe) || safe === 0) return '$0.00';

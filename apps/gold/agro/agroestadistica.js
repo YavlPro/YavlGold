@@ -1,5 +1,7 @@
 import { convertToUSD, getRate, initExchangeRates } from './agro-exchange.js';
 import { getPendingTransferToken } from './agro-unit-totals.js';
+import { filterQARows } from './agro-report-guard.js';
+import { toCents, formatMoney } from './agro-format.js';
 
 const CROP_STATUSES = {
     FINALIZED: new Set(['finalizado', 'finalized', 'harvested', 'completed', 'cosechado']),
@@ -366,11 +368,7 @@ function buildTopRows(sourceMap, limit = 5) {
 }
 
 export function formatUsd(amount) {
-    const safe = Number(amount || 0);
-    return `$${safe.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    })}`;
+    return formatMoney(toCents(amount), 'USD');
 }
 
 export async function getGlobalStats({ supabase: supabaseClient, userId, range } = {}) {
@@ -471,12 +469,12 @@ export async function getGlobalStats({ supabase: supabaseClient, userId, range }
         )
     ]);
 
-    const crops = cropsRows.filter((row) => !row?.deleted_at);
-    const incomes = incomeRows.filter((row) => !row?.deleted_at && !row?.reverted_at);
-    const pending = pendingRows.filter((row) => !row?.deleted_at && isActivePendingRow(row));
-    const expenses = expenseRows.filter((row) => !row?.deleted_at);
-    const losses = lossesRows.filter((row) => !row?.deleted_at);
-    const transfers = transferRows.filter((row) => !row?.deleted_at);
+    const crops = filterQARows(cropsRows).filter((row) => !row?.deleted_at);
+    const incomes = filterQARows(incomeRows).filter((row) => !row?.deleted_at && !row?.reverted_at);
+    const pending = filterQARows(pendingRows).filter((row) => !row?.deleted_at && isActivePendingRow(row));
+    const expenses = filterQARows(expenseRows).filter((row) => !row?.deleted_at);
+    const losses = filterQARows(lossesRows).filter((row) => !row?.deleted_at);
+    const transfers = filterQARows(transferRows).filter((row) => !row?.deleted_at);
 
     const cropsSummary = crops.reduce((acc, row) => {
         const statusValue = normalizeCropStatus(row?.status_override ?? row?.status);

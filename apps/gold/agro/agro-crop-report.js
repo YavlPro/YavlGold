@@ -6,6 +6,8 @@
 
 import supabase from '../assets/js/config/supabase-config.js';
 import { computeUnitTotalsFromRows, formatUnitTotalsMarkdown } from './agro-unit-totals.js';
+import { filterQARows, validateExportBundle, showExportError } from './agro-report-guard.js';
+import { toCents, formatMoney } from './agro-format.js';
 
 // ============================================================
 // HELPERS (self-contained to avoid coupling with agro.js internals)
@@ -153,16 +155,6 @@ export async function fetchCropForUser(userId, cropId, selectFields = CROP_REPOR
     }
 
     return { exists: false, crop: null, error: lastError };
-}
-
-function toCents(value) {
-    return Math.round((Number(value) || 0) * 100);
-}
-
-function centsToStr(cents) {
-    const abs = Math.abs(cents);
-    const sign = cents < 0 ? '-' : '';
-    return `${sign}$${(abs / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function pct(numerator, denominator) {
@@ -517,11 +509,11 @@ function fmtMontoWithCurrency(item, amountField) {
     const monto = Number(item[amountField] || 0);
     const currency = item.currency || 'USD';
     const montoUsd = Number(item.monto_usd ?? item[amountField] ?? 0);
-    if (currency === 'USD') return centsToStr(toCents(monto));
+    if (currency === 'USD') return formatMoney(toCents(monto), 'USD');
     const cfg = { COP: { symbol: 'COP', decimals: 0 }, VES: { symbol: 'Bs', decimals: 2 } };
     const c = cfg[currency] || { symbol: currency, decimals: 2 };
     const local = c.decimals === 0 ? `${c.symbol} ${Math.round(monto).toLocaleString()}` : `${c.symbol} ${monto.toFixed(c.decimals)}`;
-    return `${local} (\u2248 ${centsToStr(toCents(montoUsd))})`;
+    return `${local} (\u2248 ${formatMoney(toCents(montoUsd), 'USD')})`;
 }
 
 /** Prefijo visual para filas soft-deleted en modo historial */
@@ -542,10 +534,10 @@ function buildIncomeTable(items, historyMode = false) {
         const raw = it.concepto || 'Sin concepto';
         const parsed = parseWho('ingresos', raw);
         const currency = it.currency || 'USD';
-        const amtUsd = centsToStr(toCents(it.monto_usd ?? it.monto));
+        const amtUsd = formatMoney(toCents(it.monto_usd ?? it.monto), 'USD');
         const flag = deletedFlag(it, historyMode);
         const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(parsed.concept || raw)} | ${escMd(parsed.who) || '-'} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd}`;
+        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(parsed.concept || raw)} | ${escMd(parsed.who) || '-'} | ${fmtUnits(it)} | ${currency} | ${formatMoney(toCents(it.monto), 'USD')} | ${amtUsd}`;
         md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
@@ -562,10 +554,10 @@ function buildExpenseTable(items, historyMode = false) {
     for (let index = 0; index < items.length; index += 1) {
         const it = items[index];
         const currency = it.currency || 'USD';
-        const amtUsd = centsToStr(toCents(it.monto_usd ?? it.amount));
+        const amtUsd = formatMoney(toCents(it.monto_usd ?? it.monto), 'USD');
         const flag = deletedFlag(it, historyMode);
         const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.date)} | ${flag}${escMd(it.concept)} | ${escMd(it.category) || '-'} | ${currency} | ${centsToStr(toCents(it.amount))} | ${amtUsd}`;
+        md += `| ${fmtDate(it.date)} | ${flag}${escMd(it.concept)} | ${escMd(it.category) || '-'} | ${currency} | ${formatMoney(toCents(it.amount), 'USD')} | ${amtUsd}`;
         md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
@@ -586,10 +578,10 @@ function buildPendingTable(items, historyMode = false) {
         const client = it.cliente || parsed.who || '-';
         const state = it.transfer_state || 'fiado';
         const currency = it.currency || 'USD';
-        const amtUsd = centsToStr(toCents(it.monto_usd ?? it.monto));
+        const amtUsd = formatMoney(toCents(it.monto_usd ?? it.monto), 'USD');
         const flag = deletedFlag(it, historyMode);
         const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(parsed.concept || raw)} | ${escMd(client)} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd} | ${escMd(state)}`;
+        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(parsed.concept || raw)} | ${escMd(client)} | ${fmtUnits(it)} | ${currency} | ${formatMoney(toCents(it.monto), 'USD')} | ${amtUsd} | ${escMd(state)}`;
         md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
@@ -610,10 +602,10 @@ function buildPendingTransferredTable(items) {
         const parsed = parseWho('pendientes', raw);
         const client = it.cliente || parsed.who || '-';
         const currency = it.currency || 'USD';
-        const amtUsd = centsToStr(toCents(it.monto_usd ?? it.monto));
+        const amtUsd = formatMoney(toCents(it.monto_usd ?? it.monto), 'USD');
         const dest = it.transferred_to || it.transfer_state || 'pagado/pérdida';
         const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.fecha)} | [TRANSFERIDO] ${escMd(parsed.concept || raw)} | ${escMd(client)} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd} | ${escMd(dest)}`;
+        md += `| ${fmtDate(it.fecha)} | [TRANSFERIDO] ${escMd(parsed.concept || raw)} | ${escMd(client)} | ${fmtUnits(it)} | ${currency} | ${formatMoney(toCents(it.monto), 'USD')} | ${amtUsd} | ${escMd(dest)}`;
         md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
@@ -630,10 +622,10 @@ function buildLossTable(items, historyMode = false) {
     for (let index = 0; index < items.length; index += 1) {
         const it = items[index];
         const currency = it.currency || 'USD';
-        const amtUsd = centsToStr(toCents(it.monto_usd ?? it.monto));
+        const amtUsd = formatMoney(toCents(it.monto_usd ?? it.monto), 'USD');
         const flag = deletedFlag(it, historyMode);
         const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(it.concepto)} | ${escMd(it.causa) || '-'} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd}`;
+        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(it.concepto)} | ${escMd(it.causa) || '-'} | ${fmtUnits(it)} | ${currency} | ${formatMoney(toCents(it.monto), 'USD')} | ${amtUsd}`;
         md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
@@ -650,10 +642,10 @@ function buildTransferTable(items, historyMode = false) {
     for (let index = 0; index < items.length; index += 1) {
         const it = items[index];
         const currency = it.currency || 'USD';
-        const amtUsd = centsToStr(toCents(it.monto_usd ?? it.monto));
+        const amtUsd = formatMoney(toCents(it.monto_usd ?? it.monto), 'USD');
         const flag = deletedFlag(it, historyMode);
         const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(it.concepto)} | ${escMd(it.destino) || '-'} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd}`;
+        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(it.concepto)} | ${escMd(it.destino) || '-'} | ${fmtUnits(it)} | ${currency} | ${formatMoney(toCents(it.monto), 'USD')} | ${amtUsd}`;
         md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
@@ -741,13 +733,13 @@ export async function exportCropReport(cropId, opts = {}) {
         const fetchOpts = { includeDeleted: historyMode };
 
         // Fetch all tabs in parallel
-        const [income, expenses, pending, losses, transfers] = await Promise.all([
+        const [income, expenses, pending, losses, transfers] = (await Promise.all([
             fetchTabData(user.id, normalizedCropId, 'ingresos', fetchOpts),
             fetchTabData(user.id, normalizedCropId, 'gastos', fetchOpts),
             fetchTabData(user.id, normalizedCropId, 'pendientes', fetchOpts),
             fetchTabData(user.id, normalizedCropId, 'perdidas', fetchOpts),
             fetchTabData(user.id, normalizedCropId, 'transferencias', fetchOpts)
-        ]);
+        ])).map(filterQARows);
 
         // ── Split semántico de fiados ──────────────────────────────────────────
         // transferred → pasó a pagado/pérdida (etiqueta [TRANSFERIDO])
@@ -768,7 +760,7 @@ export async function exportCropReport(cropId, opts = {}) {
         const initialInvestmentCents = cropExists && crop?.investment !== null && crop?.investment !== undefined
             ? toCents(crop.investment)
             : 0;
-        const totalCostWithInvestmentCents = totalExpensesCents + initialInvestmentCents;
+        const totalCostWithInvestmentCents = totalExpensesCents + initialInvestmentCents + totalLossesCents;
         const profitCents = totalIncomeCents - totalCostWithInvestmentCents;
         const roiStr = totalCostWithInvestmentCents > 0
             ? (((totalIncomeCents - totalCostWithInvestmentCents) / totalCostWithInvestmentCents) * 100).toFixed(1) + '%'
@@ -793,7 +785,7 @@ export async function exportCropReport(cropId, opts = {}) {
         const harvestLine = cropExists && crop?.expected_harvest_date ? fmtDate(crop.expected_harvest_date) : 'N/A';
         const progressLine = cropExists && progress?.ok ? formatCropProgressLine(progress) : 'N/A';
         const investmentLine = cropExists && crop?.investment !== null && crop?.investment !== undefined
-            ? centsToStr(toCents(crop.investment))
+            ? formatMoney(toCents(crop.investment), 'USD')
             : 'N/A';
 
         // Conteos por modo
@@ -841,13 +833,13 @@ export async function exportCropReport(cropId, opts = {}) {
         md += `## 💰 Resumen Financiero\n`;
         md += `| Concepto | Monto |\n`;
         md += `|----------|------:|\n`;
-        md += `| Pagados | ${centsToStr(totalIncomeCents)} |\n`;
-        md += `| Inversión inicial | ${centsToStr(initialInvestmentCents)} |\n`;
-        md += `| Gastos vinculados | ${centsToStr(totalExpensesCents)} |\n`;
-        md += `| Costos/Inversión | ${centsToStr(totalCostWithInvestmentCents)} |\n`;
-        md += `| Ganancia neta | ${centsToStr(profitCents)} |\n`;
-        md += `| Fiados por cobrar (activos) | ${centsToStr(totalPendingCents)} |\n`;
-        md += `| Pérdidas | ${centsToStr(totalLossesCents)} |\n`;
+        md += `| Pagados | ${formatMoney(totalIncomeCents, 'USD')} |\n`;
+        md += `| Inversión inicial | ${formatMoney(initialInvestmentCents, 'USD')} |\n`;
+        md += `| Gastos vinculados | ${formatMoney(totalExpensesCents, 'USD')} |\n`;
+        md += `| Costos/Inversión | ${formatMoney(totalCostWithInvestmentCents, 'USD')} |\n`;
+        md += `| Ganancia neta | ${formatMoney(profitCents, 'USD')} |\n`;
+        md += `| Fiados por cobrar (activos) | ${formatMoney(totalPendingCents, 'USD')} |\n`;
+        md += `| Pérdidas | ${formatMoney(totalLossesCents, 'USD')} |\n`;
         md += `| ROI | ${roiStr} |\n\n`;
         md += `> _Totales convertidos a USD \u00b7 Tasas al momento del registro_\n\n`;
 
@@ -926,6 +918,11 @@ export async function exportCropReport(cropId, opts = {}) {
         md += `> Generado por YavlGold · yavlgold.com\n`;
 
         // Download with UTF-8 BOM
+        const vResult = validateExportBundle({ rows: [...income, ...expenses, ...pending, ...losses, ...transfers], totals: { incomeUsd: totalIncomeCents / 100 }, currency: 'USD' });
+        if (!vResult.valid) {
+            showExportError(vResult.errors);
+            return;
+        }
         const blob = new Blob(['\ufeff' + md], { type: 'text/markdown;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');

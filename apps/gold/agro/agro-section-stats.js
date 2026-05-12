@@ -5,6 +5,7 @@
  */
 
 import supabase from '../assets/js/config/supabase-config.js';
+import { toCents, formatMoney } from './agro-format.js';
 
 // ============================================================
 // SECTION CONFIGURATION
@@ -363,18 +364,15 @@ function getWeekKey(dateStr) {
 // ============================================================
 
 function fmtUSD(n) {
-    const v = Number(n) || 0;
-    return '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return formatMoney(toCents(n), 'USD');
 }
 
 function fmtBs(n) {
-    const v = Number(n) || 0;
-    return 'Bs ' + v.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return formatMoney(toCents(n), 'VES');
 }
 
 function fmtCOP(n) {
-    const v = Number(n) || 0;
-    return 'COP ' + v.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    return formatMoney(toCents(n), 'COP');
 }
 
 function slugify(value) {
@@ -680,12 +678,12 @@ function barChartOptions(horizontal) {
         scales: {
             y: {
                 beginAtZero: true,
-                ticks: { color: 'rgba(255,255,255,0.5)', callback: horizontal ? undefined : (v) => '$' + Number(v).toLocaleString() },
+                ticks: { color: 'rgba(255,255,255,0.5)', callback: horizontal ? undefined : (v) => '$' + Number(v).toLocaleString('en-US') },
                 grid: { color: 'rgba(255,255,255,0.06)' }
             },
             x: {
                 beginAtZero: horizontal ? true : undefined,
-                ticks: { color: 'rgba(255,255,255,0.5)', maxRotation: 45, callback: horizontal ? (v) => '$' + Number(v).toLocaleString() : undefined },
+                ticks: { color: 'rgba(255,255,255,0.5)', maxRotation: 45, callback: horizontal ? (v) => '$' + Number(v).toLocaleString('en-US') : undefined },
                 grid: { display: !horizontal, color: 'rgba(255,255,255,0.06)' }
             }
         }
