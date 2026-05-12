@@ -831,7 +831,7 @@ export async function exportStatsReport() {
 
         // Download with UTF-8 BOM
         const vResult = validateExportBundle({
-            rows: [...incomeRows, ...expenseRows, ...pendingRows, ...lossesRows],
+            rows: incomeRows,
             totals: { incomeUsd: incomeCents / 100 },
             currency: 'USD'
         });

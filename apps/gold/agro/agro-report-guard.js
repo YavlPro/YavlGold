@@ -15,7 +15,7 @@ export function filterQARows(rows, options = {}) {
     return rows.filter((row) => !isQARow(row));
 }
 
-const EPSILON_CENTS = 1;
+const EPSILON_CENTS = 100;
 
 export function validateExportBundle(bundle) {
     const errors = [];

@@ -537,7 +537,7 @@ function buildIncomeTable(items, historyMode = false) {
         const amtUsd = formatMoney(toCents(it.monto_usd ?? it.monto), 'USD');
         const flag = deletedFlag(it, historyMode);
         const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(parsed.concept || raw)} | ${escMd(parsed.who) || '-'} | ${fmtUnits(it)} | ${currency} | ${formatMoney(toCents(it.monto), 'USD')} | ${amtUsd}`;
+        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(parsed.concept || raw)} | ${escMd(parsed.who) || '-'} | ${fmtUnits(it)} | ${currency} | ${formatMoney(toCents(it.monto), currency)} | ${amtUsd}`;
         md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
@@ -557,7 +557,7 @@ function buildExpenseTable(items, historyMode = false) {
         const amtUsd = formatMoney(toCents(it.monto_usd ?? it.monto), 'USD');
         const flag = deletedFlag(it, historyMode);
         const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.date)} | ${flag}${escMd(it.concept)} | ${escMd(it.category) || '-'} | ${currency} | ${formatMoney(toCents(it.amount), 'USD')} | ${amtUsd}`;
+        md += `| ${fmtDate(it.date)} | ${flag}${escMd(it.concept)} | ${escMd(it.category) || '-'} | ${currency} | ${formatMoney(toCents(it.amount), currency)} | ${amtUsd}`;
         md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
@@ -581,7 +581,7 @@ function buildPendingTable(items, historyMode = false) {
         const amtUsd = formatMoney(toCents(it.monto_usd ?? it.monto), 'USD');
         const flag = deletedFlag(it, historyMode);
         const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(parsed.concept || raw)} | ${escMd(client)} | ${fmtUnits(it)} | ${currency} | ${formatMoney(toCents(it.monto), 'USD')} | ${amtUsd} | ${escMd(state)}`;
+        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(parsed.concept || raw)} | ${escMd(client)} | ${fmtUnits(it)} | ${currency} | ${formatMoney(toCents(it.monto), currency)} | ${amtUsd} | ${escMd(state)}`;
         md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
@@ -605,7 +605,7 @@ function buildPendingTransferredTable(items) {
         const amtUsd = formatMoney(toCents(it.monto_usd ?? it.monto), 'USD');
         const dest = it.transferred_to || it.transfer_state || 'pagado/pérdida';
         const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.fecha)} | [TRANSFERIDO] ${escMd(parsed.concept || raw)} | ${escMd(client)} | ${fmtUnits(it)} | ${currency} | ${formatMoney(toCents(it.monto), 'USD')} | ${amtUsd} | ${escMd(dest)}`;
+        md += `| ${fmtDate(it.fecha)} | [TRANSFERIDO] ${escMd(parsed.concept || raw)} | ${escMd(client)} | ${fmtUnits(it)} | ${currency} | ${formatMoney(toCents(it.monto), currency)} | ${amtUsd} | ${escMd(dest)}`;
         md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
@@ -625,7 +625,7 @@ function buildLossTable(items, historyMode = false) {
         const amtUsd = formatMoney(toCents(it.monto_usd ?? it.monto), 'USD');
         const flag = deletedFlag(it, historyMode);
         const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(it.concepto)} | ${escMd(it.causa) || '-'} | ${fmtUnits(it)} | ${currency} | ${formatMoney(toCents(it.monto), 'USD')} | ${amtUsd}`;
+        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(it.concepto)} | ${escMd(it.causa) || '-'} | ${fmtUnits(it)} | ${currency} | ${formatMoney(toCents(it.monto), currency)} | ${amtUsd}`;
         md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
@@ -645,7 +645,7 @@ function buildTransferTable(items, historyMode = false) {
         const amtUsd = formatMoney(toCents(it.monto_usd ?? it.monto), 'USD');
         const flag = deletedFlag(it, historyMode);
         const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(it.concepto)} | ${escMd(it.destino) || '-'} | ${fmtUnits(it)} | ${currency} | ${formatMoney(toCents(it.monto), 'USD')} | ${amtUsd}`;
+        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(it.concepto)} | ${escMd(it.destino) || '-'} | ${fmtUnits(it)} | ${currency} | ${formatMoney(toCents(it.monto), currency)} | ${amtUsd}`;
         md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
