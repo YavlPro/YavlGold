@@ -66,3 +66,36 @@ export function formatSignedMoney(cents, currency = 'USD', options = {}) {
     }
     return formatMoney(cents, currency, options);
 }
+
+export function toSafeNumber(value) {
+    if (typeof value === 'number') {
+        return Number.isFinite(value) ? value : 0;
+    }
+
+    const raw = String(value ?? '').trim();
+    if (!raw) return 0;
+
+    const normalized = raw
+        .replace(/\s/g, '')
+        .replace(/\.(?=\d{3}(\D|$))/g, '')
+        .replace(/,(?=\d{3}(\D|$))/g, '')
+        .replace(',', '.');
+
+    const parsed = Number.parseFloat(normalized);
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+export function resolveAmountUsd(row) {
+    const explicitUsd = row?.amount_usd ?? row?.monto_usd;
+    if (explicitUsd !== null && explicitUsd !== undefined && explicitUsd !== '') {
+        return toSafeNumber(explicitUsd);
+    }
+
+    const amount = toSafeNumber(row?.amount ?? row?.monto);
+    const currency = String(row?.currency || 'USD').trim().toUpperCase();
+    const rate = toSafeNumber(row?.exchange_rate);
+    if (currency !== 'USD' && rate > 0) {
+        return amount / rate;
+    }
+    return amount;
+}

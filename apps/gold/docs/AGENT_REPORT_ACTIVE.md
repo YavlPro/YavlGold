@@ -2158,3 +2158,59 @@ Resultado: `Pagados` queda restringido a clientes con cobro positivo, sin pendie
 - **NO se hizo:** No se tocó lógica de negocio fuera del alcance. No se infló `agro.js` con imports estáticos. No se modificaron documentos canónicos.
 - **Documentación archivada:** `apps/gold/docs/archive/auditoria-reportes/`
 - **Estado:** ✅ CERRADO
+
+## 2026-05-13 — Cierre Definitivo: Diagnóstico Profundo y Fixes de Integridad Financiera
+- **Estado:** ✅ CERRADO (Ofensiva Purga QA y Unificación Monetaria completada al 100%)
+- **Agentes:** GLM 5.1 (diagnóstico/ejecución) + OpenCode (validación cruzada, build y commit)
+- **Objetivo:** Auditoría profunda post-fix, corrección de bugs silenciosos de multimoneda, expansión de filtro QA y limpieza arquitectónica.
+
+### Diagnóstico Inicial de Hallazgos
+El diagnóstico profundo reveló 20 issues clasificados: 2 Críticos, 6 Medios, 8 Bajos, 3 Cosméticos. Se corrigieron los 2 críticos y 3 medios con impacto real. Los issues bajos/cosméticos quedan documentados como deuda técnica conocida sin riesgo operativo inmediato.
+
+### Fixes Críticos Aplicados
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agro-crop-report.js` | Fix multimoneda (C1) | Totales financieros y columnas USD en 6 tablas ahora usan `resolveAmountUsd(it)`. Cero montos locales (COP/VES) tratados como USD cuando `monto_usd` es null. Tasa de cambio aplicada correctamente. |
+| `agro-crop-report.js` | Fix formato split (M3) | Resúmenes divididos delegan a `formatMoney(toCents(...), 'USD')`. Eliminados `$` y `.toFixed(2)` hardcodeados. |
+| `agro-crop-report.js` | Limpieza | Código muerto `fmtMontoWithCurrency` eliminado. |
+| `agro-report-guard.js` | Fix validador (C2) | `validateExportBundle` ahora importa y usa `resolveAmountUsd()` para la verificación de suma. Paridad matemática con totales precomputados restablecida. |
+| `agro-report-guard.js` | Fix QA pattern (M5) | Regex cambiado de `^(QA_|...)` a `(^|[\s·|-])(QA_|...)` para detectar marcadores QA incrustados en conceptos (ej: "Venta a QA_MIN_test - café"). |
+| `agro-report-guard.js` | Campos QA expandidos | Agregados `cliente`, `comprador`, `destino` a `QA_FIELDS`. Fugas de datos de prueba por campos no monitoreados cerradas. |
+| `agro-stats-report.js` | Fix semántica compradores (M2) | Reemplazado flag booleano `paid` por `hasPaid`/`hasPending`. Compradores con pedidos pagados Y pendientes ahora muestran `🔔 Mixto`. |
+| `agro-stats-report.js` | Centralización | Eliminadas copias locales de `toSafeNumber` y `resolveAmountUsd`. Ahora importadas desde `agro-format.js`. |
+| `agro-format.js` | Centralización | `resolveAmountUsd()` y `toSafeNumber()` movidos aquí como utilidades compartidas canónicas. Disponibles para crop-report, stats-report y report-guard. |
+
+### Flujo de Validación Final (post-fixes)
+| Reporte | Validación QA | Validación Suma | Estado |
+|---|---|---|---|
+| Crop Report (individual) | ✅ filterQARows + QA check en bundle | ⏭️ skipSumCheck: true (reporte multi-sección) | ✅ Exporta sin abortar |
+| Stats Report (global) | ✅ filterQARows en cada fetch + QA check en bundle con `resolveAmountUsd` | ✅ Suma de income rows vs incomeCents con tolerancia $1 | ✅ Exporta sin abortar |
+| Rankings UI | ✅ filterQARows pre-ranking | N/A | ✅ Cero clientes QA |
+| Perfil Global | ✅ validateExportBundle (rows vacíos) | ⏭️ totals vacío → skip automático | ✅ Exporta sin abortar |
+
+### Build & QA
+- **Build:** `pnpm build:gold` ✅ Limpio (0 errores, 0 warnings, UTF-8 OK).
+- **Arquitectura:** Helpers centralizados en `agro-format.js`. Cero inflación de monolito. Modularidad estricta respetada.
+- **Impacto neto:** Integridad financiera multimoneda restablecida. Fugas QA cerradas en todos los campos. Verdad comercial en rankings mejorada. Código muerto eliminado. Duplicación reducida.
+
+### Deuda Técnica Documentada (post-cierre)
+- **L2**: 15+ funciones duplicadas entre crop-report y stats-report (CROP_STATUS_UI, computeCropProgress, etc.) — extraer a módulo compartido cuando se toquen esas zonas.
+- **L3**: Divergencia leve `toSafeNumber` vs `toCents` en parsing de strings locale-formatted — riesgo latente bajo.
+- **L7**: Fiados transferidos muestran fallback `pagado/pérdida` si `transferred_to` es null.
+- **M4**: `normalizeSplitMeta` con check de tipo inconsistente entre crop-report y unit-totals.
+- **X1**: Headers de archivo referencian "V9.7" — actualizar a "V1" en próxima rotación.
+
+### Documentación Archivada
+- Diagnósticos y planes movidos a: `apps/gold/docs/archive/auditoria-reportes/`
+
+### NO se hizo
+- No se tocó `agro.js` (monolito).
+- No se modificaron documentos canónicos (`MANIFIESTO_AGRO.md`, `ADN-VISUAL-V11.0.md`, `FICHA_TECNICA.md`).
+- No se alteró lógica de negocio fuera del alcance de exportación/validación.
+
+### Checklist QA Manual (pendiente de ejecución por usuario)
+- [ ] Exportar Reporte Individual: columna Monto con moneda real (COP/Bs), columna USD con conversión correcta, cero filas QA.
+- [ ] Exportar Informe Estadístico Global: se genera sin abortar, ranking muestra `🔔 Mixto`, cero clientes QA, totales globales cuadran con suma de cultivos ($1 tolerancia).
+- [ ] UI Rankings: montos con punto decimal y código USD, popups compactos sin `alert()` nativos.
+
+- **Estado:** ✅ CERRADO

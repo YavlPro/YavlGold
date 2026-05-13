@@ -7,7 +7,7 @@
 import supabase from '../assets/js/config/supabase-config.js';
 import { getPendingTransferToken } from './agro-unit-totals.js';
 import { filterQARows, validateExportBundle, showExportError } from './agro-report-guard.js';
-import { toCents, formatMoney } from './agro-format.js';
+import { toCents, formatMoney, resolveAmountUsd } from './agro-format.js';
 
 // ============================================================
 // HELPERS
@@ -176,39 +176,6 @@ async function fetchRowsWithAttempts(table, userId, attempts = []) {
     }
 
     return { rows: [], error: lastError };
-}
-
-function toSafeNumber(value) {
-    if (typeof value === 'number') {
-        return Number.isFinite(value) ? value : 0;
-    }
-
-    const raw = String(value ?? '').trim();
-    if (!raw) return 0;
-
-    const normalized = raw
-        .replace(/\s/g, '')
-        .replace(/\.(?=\d{3}(\D|$))/g, '')
-        .replace(/,(?=\d{3}(\D|$))/g, '')
-        .replace(',', '.');
-
-    const parsed = Number.parseFloat(normalized);
-    return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function resolveAmountUsd(row) {
-    const explicitUsd = row?.amount_usd ?? row?.monto_usd;
-    if (explicitUsd !== null && explicitUsd !== undefined && explicitUsd !== '') {
-        return toSafeNumber(explicitUsd);
-    }
-
-    const amount = toSafeNumber(row?.amount ?? row?.monto);
-    const currency = String(row?.currency || 'USD').trim().toUpperCase();
-    const rate = toSafeNumber(row?.exchange_rate);
-    if (currency !== 'USD' && rate > 0) {
-        return amount / rate;
-    }
-    return amount;
 }
 
 function resolveBuyerName(row) {
@@ -675,10 +642,11 @@ function buildBuyerRanking(incomeRows, pendingRows) {
     for (const r of incomeRows) {
         const who = resolveBuyerName(r);
         const key = String(who).trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-        if (!buyers.has(key)) buyers.set(key, { displayWho: who, count: 0, totalCents: 0, paid: true, currencies: new Set() });
+        if (!buyers.has(key)) buyers.set(key, { displayWho: who, count: 0, totalCents: 0, hasPaid: false, hasPending: false, currencies: new Set() });
         const b = buyers.get(key);
         b.count += 1;
         b.totalCents += toCents(resolveAmountUsd(r));
+        b.hasPaid = true;
         const cur = String(r.currency || 'USD').trim().toUpperCase() || 'USD';
         b.currencies.add(cur);
         currencyCount.set(cur, (currencyCount.get(cur) || 0) + 1);
@@ -687,13 +655,13 @@ function buildBuyerRanking(incomeRows, pendingRows) {
     for (const r of pendingRows) {
         const who = resolveBuyerName(r);
         const key = String(who).trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-        if (!buyers.has(key)) buyers.set(key, { displayWho: who, count: 0, totalCents: 0, paid: true, currencies: new Set() });
+        if (!buyers.has(key)) buyers.set(key, { displayWho: who, count: 0, totalCents: 0, hasPaid: false, hasPending: false, currencies: new Set() });
         const b = buyers.get(key);
         b.count += 1;
         b.totalCents += toCents(resolveAmountUsd(r));
+        b.hasPending = true;
         const cur = String(r.currency || 'USD').trim().toUpperCase() || 'USD';
         b.currencies.add(cur);
-        b.paid = false;
         currencyCount.set(cur, (currencyCount.get(cur) || 0) + 1);
     }
 
@@ -706,7 +674,7 @@ function buildBuyerRanking(incomeRows, pendingRows) {
     md += '|---------|--------:|---------|------------:|--------|\n';
     for (const [, b] of sorted) {
         const name = b.displayWho;
-        const estado = b.paid ? '✅ Pagado' : '⏳ Debe';
+        const estado = b.hasPaid && b.hasPending ? '🔔 Mixto' : b.hasPaid ? '✅ Pagado' : '⏳ Debe';
         const curs = Array.from(b.currencies).join(', ');
         md += `| ${escMd(name)} | ${b.count} | ${curs} | ${formatMoney(b.totalCents, 'USD')} | ${estado} |\n`;
     }

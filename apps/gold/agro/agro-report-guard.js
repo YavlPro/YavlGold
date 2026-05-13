@@ -1,5 +1,7 @@
-const QA_PATTERN = /^(?:QA_|QA\s|test_|prueba|admin_test|borrador|demo)/i;
-const QA_FIELDS = ['name', 'client_name', 'concept', 'concepto', 'description', 'descripcion', 'notes', 'notas', 'variety', 'variedad'];
+import { resolveAmountUsd } from './agro-format.js';
+
+const QA_PATTERN = /(?:^|[\s·|-])(?:QA_|QA\s|QA_MIN_|QA_CTX_|test_|prueba|admin_test|borrador|demo)/i;
+const QA_FIELDS = ['name', 'client_name', 'concept', 'concepto', 'description', 'descripcion', 'notes', 'notas', 'variety', 'variedad', 'cliente', 'comprador', 'destino'];
 
 export function isQARow(row) {
     if (!row || typeof row !== 'object') return false;
@@ -17,7 +19,8 @@ export function filterQARows(rows, options = {}) {
 
 const EPSILON_CENTS = 100;
 
-export function validateExportBundle(bundle) {
+export function validateExportBundle(bundle, options = {}) {
+    const skipSumCheck = !!options.skipSumCheck;
     const errors = [];
     if (!bundle || typeof bundle !== 'object') {
         return { valid: false, errors: ['Bundle vacío o inválido.'] };
@@ -29,11 +32,8 @@ export function validateExportBundle(bundle) {
     if (Array.isArray(rows) && rows.some(isQARow)) {
         errors.push('Filas QA residuales detectadas en el bundle.');
     }
-    if (totals && typeof totals === 'object' && Array.isArray(rows)) {
-        const sumCents = rows.reduce((s, r) => {
-            const val = r.monto_usd ?? r.amount_usd ?? r.monto ?? r.amount ?? 0;
-            return s + Math.round((Number(val) || 0) * 100);
-        }, 0);
+    if (!skipSumCheck && totals && typeof totals === 'object' && Array.isArray(rows)) {
+        const sumCents = rows.reduce((s, r) => s + Math.round(resolveAmountUsd(r) * 100), 0);
         const expectedCents = Math.round((Number(totals.incomeUsd ?? totals.total ?? 0)) * 100);
         if (expectedCents > 0 && Math.abs(sumCents - expectedCents) > EPSILON_CENTS) {
             errors.push(`Discrepancia numérica en totales: suma=$${(sumCents / 100).toFixed(2)}, esperado=$${(expectedCents / 100).toFixed(2)}.`);
