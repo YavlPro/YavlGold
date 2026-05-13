@@ -12546,7 +12546,7 @@ function renderOpsCultivosPanel() {
         const cropId = normalizeCropId(crop?.id);
         if (!cropId) return;
         activeRow.appendChild(buildOpsCultivoChip({
-            label: `${crop.icon || '🌱'} ${crop.name || 'Cultivo'}`,
+            label: getCropDisplayParts(crop, { fallbackIcon: '🌱', fallbackName: 'Cultivo' }).label,
             meta: resolveOpsChipStatus(crop),
             cropId,
             selected: cropId === selectedId

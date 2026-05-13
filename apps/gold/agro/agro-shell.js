@@ -218,10 +218,43 @@ function getRenderedActiveCropIds() {
     return ids;
 }
 
+const CROP_DISPLAY_FALLBACK_ICON = '🌱';
+const CROP_DISPLAY_FALLBACK_NAME = 'Cultivo';
+const CROP_EMOJI_TOKEN_RE = /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u;
+
+function isCropEmojiToken(token) {
+    const value = String(token || '').trim();
+    if (!value) return false;
+    return CROP_EMOJI_TOKEN_RE.test(value) && !/[\p{L}\p{N}]/u.test(value);
+}
+
+function normalizeCropIcon(icon, fallback) {
+    const value = String(icon || '').trim();
+    if (!value) return String(fallback || CROP_DISPLAY_FALLBACK_ICON).trim() || CROP_DISPLAY_FALLBACK_ICON;
+    if (isCropEmojiToken(value)) return value;
+    return String(fallback || CROP_DISPLAY_FALLBACK_ICON).trim() || CROP_DISPLAY_FALLBACK_ICON;
+}
+
+function getCropDisplayLabel(crop) {
+    const rawName = String(crop?.name || '').trim();
+    const tokens = rawName ? rawName.split(/\s+/).filter(Boolean) : [];
+    const leadingIcons = [];
+    let cursor = 0;
+    while (cursor < tokens.length && isCropEmojiToken(tokens[cursor])) {
+        leadingIcons.push(tokens[cursor]);
+        cursor += 1;
+    }
+    const cleanedName = tokens.slice(cursor).join(' ').trim();
+    const iconFromName = leadingIcons.length ? leadingIcons[leadingIcons.length - 1] : '';
+    const icon = normalizeCropIcon(iconFromName || crop?.icon, CROP_DISPLAY_FALLBACK_ICON);
+    const variety = String(crop?.variety || '').trim();
+    const name = cleanedName || (rawName && leadingIcons.length === 0 ? rawName : CROP_DISPLAY_FALLBACK_NAME);
+    const label = variety ? `${icon} ${name} (${variety})` : `${icon} ${name}`;
+    return label.trim();
+}
+
 function getCropChipLabel(crop) {
-    const icon = String(crop?.icon || '🌱').trim() || '🌱';
-    const name = String(crop?.name || crop?.nombre || 'Cultivo').trim() || 'Cultivo';
-    return `${icon} ${name}`.trim();
+    return getCropDisplayLabel(crop);
 }
 
 function getCropChipMeta(crop) {
