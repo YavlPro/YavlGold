@@ -33,7 +33,7 @@ const TAB_CONFIGS = {
         conceptField: 'concepto',
         amountField: 'monto',
         dateField: 'fecha',
-        columns: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,cliente,unit_type,unit_qty,quantity_kg,crop_id,deleted_at,transfer_state,split_from_id,split_meta'
+        columns: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,cliente,unit_type,unit_qty,quantity_kg,crop_id,deleted_at,transfer_state,transferred_at,transferred_income_id,transferred_to,reverted_at,split_from_id,split_meta'
     },
     perdidas: {
         table: 'agro_losses',
@@ -732,9 +732,13 @@ export async function exportCropReport(cropId, opts = {}) {
 
         // ── Split semántico de fiados ──────────────────────────────────────────
         // transferred → pasó a pagado/pérdida (etiqueta [TRANSFERIDO])
+        // reverted → transferido y luego revertido, vuelve a activo
         // deleted_at sin transfer → borrado lógico real (etiqueta [ELIMINADO])
         function isPendingTransferred(r) {
-            return r.transfer_state === 'transferred' || !!r.transferred_at;
+            if (!r) return false;
+            if (r.transfer_state === 'reverted' || r.reverted_at) return false;
+            if (r.transfer_state === 'transferred') return true;
+            return !!(r.transferred_at || r.transferred_income_id);
         }
         const pendingActive = pending.filter(r => !isPendingTransferred(r) && !r.deleted_at);
         const pendingTransferred = pending.filter(r => isPendingTransferred(r));

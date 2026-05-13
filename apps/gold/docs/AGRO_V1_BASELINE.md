@@ -17,7 +17,7 @@ Este documento fija la primera base formal de `Agro V1` como modulo real dentro 
 - Dashboard Agro
 - Cultivos activos
 - Historial de ciclos
-- Centro de Operaciones
+- Cartera Operativa
 - Flujo financiero oficial:
   - Pagados
   - Fiados

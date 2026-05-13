@@ -13223,6 +13223,69 @@ function normalizeOpsRankingsRows(rows) {
     return Array.isArray(rows) ? rows : [];
 }
 
+function normalizeOpsRankingNameForDedup(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '');
+}
+
+function deduplicateOpsRankingsByName(rows, nameField) {
+    if (!Array.isArray(rows) || rows.length === 0) return rows;
+    const groups = new Map();
+    const order = [];
+    for (const row of rows) {
+        const rawName = row?.[nameField] || pickOpsBuyerName(row) || '';
+        const key = normalizeOpsRankingNameForDedup(rawName) || `__unknown_${groups.size}`;
+        if (groups.has(key)) {
+            const existing = groups.get(key);
+            existing.total = Number(existing.total || 0) + Number(row.total || 0);
+            existing.operations = Number(existing.operations || 0) + Number(row.operations || 0);
+            if (row.last_date && (!existing.last_date || row.last_date > existing.last_date)) {
+                existing.last_date = row.last_date;
+            }
+            const existingName = existing[nameField] || '';
+            const newName = rawName;
+            if (newName.length > existingName.length && newName === newName.charAt(0).toUpperCase() + newName.slice(1).toLowerCase()) {
+                existing[nameField] = newName;
+            }
+        } else {
+            const merged = { ...row, [nameField]: rawName };
+            groups.set(key, merged);
+            order.push(key);
+        }
+    }
+    return order.map((key) => groups.get(key));
+}
+
+function deduplicateOpsPendingClientsByName(rows) {
+    if (!Array.isArray(rows) || rows.length === 0) return rows;
+    const groups = new Map();
+    const order = [];
+    for (const row of rows) {
+        const rawName = row?.client_name || '';
+        const key = normalizeOpsRankingNameForDedup(rawName) || `__unknown_${groups.size}`;
+        if (groups.has(key)) {
+            const existing = groups.get(key);
+            existing.total_pending = Number(existing.total_pending || 0) + Number(row.total_pending || 0);
+            existing.pending_count = Number(existing.pending_count || 0) + Number(row.pending_count || 0);
+            if (row.next_due_date && (!existing.next_due_date || row.next_due_date < existing.next_due_date)) {
+                existing.next_due_date = row.next_due_date;
+            }
+            const existingName = existing.client_name || '';
+            const newName = rawName;
+            if (newName.length > existingName.length) {
+                existing.client_name = newName;
+            }
+        } else {
+            groups.set(key, { ...row, client_name: rawName });
+            order.push(key);
+        }
+    }
+    return order.map((key) => groups.get(key));
+}
+
 function normalizeOpsRankingNameToken(value) {
     if (typeof value === 'string' || typeof value === 'number') {
         return String(value).trim();
@@ -13581,9 +13644,11 @@ async function fetchOpsRankingsData() {
     }
 
     const errors = [topClientsRes.error, pendingRes.error, cropsRes.error].filter(Boolean);
+    const dedupedTopClients = deduplicateOpsRankingsByName(filterQARows(topClientsRows), 'buyer_name');
+    const dedupedPendingClients = deduplicateOpsPendingClientsByName(filterQARows(normalizeOpsRankingsRows(pendingRes.data)));
     return {
-        topClients: filterQARows(topClientsRows),
-        pendingClients: filterQARows(normalizeOpsRankingsRows(pendingRes.data)),
+        topClients: dedupedTopClients,
+        pendingClients: dedupedPendingClients,
         topCrops: filterQARows(normalizeOpsRankingsRows(cropsRes.data)),
         error: pickRankingsErrorMessage(errors)
     };
@@ -13631,18 +13696,23 @@ async function refreshOpsRankings() {
     }
 }
 
-function exportOpsRankingsMarkdown() {
+async function exportOpsRankingsMarkdown() {
+    const hasNoData = (!opsRankingsState.topClients || opsRankingsState.topClients.length === 0)
+        && (!opsRankingsState.pendingClients || opsRankingsState.pendingClients.length === 0)
+        && (!opsRankingsState.topCrops || opsRankingsState.topCrops.length === 0);
+    if (hasNoData && !opsRankingsState.loading) {
+        await refreshOpsRankings();
+    }
+
     const now = new Date();
     const dateStamp = now.toISOString().slice(0, 10);
     const rangeLabel = OPS_RANKINGS_RANGE_LABELS[opsRankingsState.range] || OPS_RANKINGS_RANGE_LABELS[OPS_RANKINGS_DEFAULT_RANGE];
     const cropLabel = `Cultivo: ${getOpsSelectedCropLabel(selectedCropId)}`;
-    const privacyLabel = opsRankingsState.hideNames ? 'Ocultar nombres: ON' : 'Ocultar nombres: OFF';
 
     let md = `# 🏆 Rankings Agro\n\n`;
     md += `- Fecha: ${now.toLocaleString('es-CO')}\n`;
     md += `- Rango: ${rangeLabel}\n`;
-    md += `- ${cropLabel}\n`;
-    md += `- ${privacyLabel}\n\n`;
+    md += `- ${cropLabel}\n\n`;
 
     const appendSection = (title, rows, mapper) => {
         md += `## ${title}\n\n`;
