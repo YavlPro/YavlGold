@@ -402,11 +402,11 @@ async function fetchExpenses(userId) {
     try {
         const attempts = [
             {
-                select: 'id,amount,monto_usd,currency,crop_id,deleted_at',
+                select: 'id,concept,amount,monto_usd,currency,crop_id,deleted_at',
                 filterDeletedAt: true
             },
             {
-                select: 'id,amount,monto_usd,currency,crop_id',
+                select: 'id,concept,amount,monto_usd,currency,crop_id',
                 filterDeletedAt: true
             }
         ];
@@ -452,11 +452,11 @@ async function fetchLosses(userId) {
     try {
         const attempts = [
             {
-                select: 'id,monto,monto_usd,currency,crop_id,deleted_at',
+                select: 'id,concepto,monto,monto_usd,currency,crop_id,deleted_at',
                 filterDeletedAt: true
             },
             {
-                select: 'id,monto,monto_usd,currency,crop_id',
+                select: 'id,concepto,monto,monto_usd,currency,crop_id',
                 filterDeletedAt: true
             }
         ];
