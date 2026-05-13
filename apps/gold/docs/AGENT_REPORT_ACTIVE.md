@@ -2215,8 +2215,8 @@ El diagnóstico profundo reveló 20 issues clasificados: 2 Críticos, 6 Medios, 
 - [x] Informe Perfil Global: cero datos QA, montos correctos. ✅ Verificado 2026-05-13
 - [x] Cultivos finalizados se exportan sin abortar (Maíz mio, Batatas). ✅ Verificado 2026-05-13
 
-### Observación pendiente
-- Informe Estadístico Global puede mostrar costos de Maíz mio = $106.15 (incluye gasto QA residual) vs reporte individual = $92.64 (QA filtrado). Se resuelve con hard refresh (Ctrl+Shift+R) del navegador.
+### Observación pendiente (RESUELTA)
+- ❌ ~~Informe Estadístico Global costos Maíz mio = $106.15 (QA leak)~~ → ✅ $92.64 (QA filtrado). Causa raíz: fetchExpenses y fetchLosses no incluían `concept`/`concepto` en select de Supabase. Resuelto en 5c39ce2.
 
 ### Commits del frente
 - b2bd604: fix(agro): purga QA, unificación monetaria y fix semántico de costos (Pasos 1-5)
@@ -2224,5 +2224,6 @@ El diagnóstico profundo reveló 20 issues clasificados: 2 Críticos, 6 Medios, 
 - d57ee5c: fix(agro): diagnóstico profundo, fix multimoneda y cierre de fugas QA
 - b87e7ec: fix(agro): agregar 'qa' suelta al patrón QA filter
 - 9b09bd7: fix(agro): normalizar emojis duplicados en selector de cultivos de Rankings
+- 5c39ce2: fix(agro): agregar concept/concepto a fetchExpenses y fetchLosses en stats-report
 
-- **Estado:** ✅ CERRADO
+- **Estado:** ✅ CERRADO (Ofensiva completada al 100%)
