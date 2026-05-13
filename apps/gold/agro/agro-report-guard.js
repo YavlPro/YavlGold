@@ -1,6 +1,6 @@
 import { resolveAmountUsd } from './agro-format.js';
 
-const QA_PATTERN = /(?:^|[\s·|-])(?:QA_|QA\s|QA_MIN_|QA_CTX_|test_|prueba|admin_test|borrador|demo)/i;
+const QA_PATTERN = /(?:^|[\s·|-])(?:QA_|QA\s|QA_MIN_|QA_CTX_|test_|prueba|admin_test|borrador|demo)|\bqa\b/i;
 const QA_FIELDS = ['name', 'client_name', 'concept', 'concepto', 'description', 'descripcion', 'notes', 'notas', 'variety', 'variedad', 'cliente', 'comprador', 'destino'];
 
 export function isQARow(row) {
