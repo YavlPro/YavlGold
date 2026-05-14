@@ -2227,3 +2227,20 @@ El diagnóstico profundo reveló 20 issues clasificados: 2 Críticos, 6 Medios, 
 - 5c39ce2: fix(agro): agregar concept/concepto a fetchExpenses y fetchLosses en stats-report
 
 - **Estado:** ✅ CERRADO (Ofensiva completada al 100%)
+
+---
+
+## 2026-05-14 — Rollback de reportes (regresión QA online)
+
+### Situación
+- Commit `6fea66e` intentó corregir bugs 1-4 en reportes/exportes.
+- Build local PASS, pero QA online confirmó FAIL: el output real de los MD empeoró.
+
+### Acción de contención
+- Revert de `6fea66e` → `bc7cca4`.
+- `origin/main` restaurado a `e7bcbfb` (estado estable previo).
+- Daily log creado en `apps/gold/docs/ops/daily-log-2026-05-14.md`.
+
+### Lección
+- Build PASS no garantiza output correcto en frentes semánticos (reportes/finanzas).
+- Próximo intento debe usar PRs separados por bug + QA online individual antes de merge.
