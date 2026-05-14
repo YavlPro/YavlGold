@@ -251,7 +251,7 @@ function downloadHonestReport({ report, category, reason }) {
 
 async function exportRankings(report, category) {
     if (typeof window !== 'undefined' && typeof window.exportOpsRankingsMarkdown === 'function') {
-        await window.exportOpsRankingsMarkdown();
+        await window.exportOpsRankingsMarkdown({ scope: 'global' });
         return;
     }
     downloadHonestReport({

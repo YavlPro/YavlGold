@@ -13696,73 +13696,101 @@ async function refreshOpsRankings() {
     }
 }
 
-async function exportOpsRankingsMarkdown() {
-    const hasNoData = (!opsRankingsState.topClients || opsRankingsState.topClients.length === 0)
-        && (!opsRankingsState.pendingClients || opsRankingsState.pendingClients.length === 0)
-        && (!opsRankingsState.topCrops || opsRankingsState.topCrops.length === 0);
-    if (hasNoData && !opsRankingsState.loading) {
-        await refreshOpsRankings();
+async function exportOpsRankingsMarkdown(options = {}) {
+    const isGlobal = options.scope === 'global';
+    const savedCropId = selectedCropId;
+    let savedState = null;
+    if (isGlobal) {
+        savedState = {
+            topClients: opsRankingsState.topClients,
+            pendingClients: opsRankingsState.pendingClients,
+            topCrops: opsRankingsState.topCrops,
+            error: opsRankingsState.error,
+            updatedAt: opsRankingsState.updatedAt
+        };
+        selectedCropId = null;
     }
 
     const now = new Date();
     const dateStamp = now.toISOString().slice(0, 10);
-    const rangeLabel = OPS_RANKINGS_RANGE_LABELS[opsRankingsState.range] || OPS_RANKINGS_RANGE_LABELS[OPS_RANKINGS_DEFAULT_RANGE];
-    const cropLabel = `Cultivo: ${getOpsSelectedCropLabel(selectedCropId)}`;
-
-    let md = `# 🏆 Rankings Agro\n\n`;
-    md += `- Fecha: ${now.toLocaleString('es-CO')}\n`;
-    md += `- Rango: ${rangeLabel}\n`;
-    md += `- ${cropLabel}\n\n`;
-
-    const appendSection = (title, rows, mapper) => {
-        md += `## ${title}\n\n`;
-        if (!Array.isArray(rows) || rows.length === 0) {
-            md += `Sin datos.\n\n`;
-            return;
+    let md = '';
+    try {
+        const hasNoData = (!opsRankingsState.topClients || opsRankingsState.topClients.length === 0)
+            && (!opsRankingsState.pendingClients || opsRankingsState.pendingClients.length === 0)
+            && (!opsRankingsState.topCrops || opsRankingsState.topCrops.length === 0);
+        if (hasNoData && !opsRankingsState.loading) {
+            await refreshOpsRankings();
         }
-        rows.forEach((row, index) => {
-            md += `${index + 1}. ${mapper(row)}\n`;
+
+        function fmtRankingMoney(value) {
+            if (readMoneyValuesHidden()) return '••••';
+            return formatOpsRankingCurrency(value);
+        }
+        const rangeLabel = OPS_RANKINGS_RANGE_LABELS[opsRankingsState.range] || OPS_RANKINGS_RANGE_LABELS[OPS_RANKINGS_DEFAULT_RANGE];
+        const cropLabel = isGlobal ? 'Cultivo: 📋 Vista General' : `Cultivo: ${getOpsSelectedCropLabel(selectedCropId)}`;
+
+        md = `# 🏆 Rankings Agro\n\n`;
+        md += `- Fecha: ${now.toLocaleString('es-CO')}\n`;
+        md += `- Rango: ${rangeLabel}\n`;
+        md += `- ${cropLabel}\n\n`;
+
+        const appendSection = (title, rows, mapper) => {
+            md += `## ${title}\n\n`;
+            if (!Array.isArray(rows) || rows.length === 0) {
+                md += `Sin datos.\n\n`;
+                return;
+            }
+            rows.forEach((row, index) => {
+                md += `${index + 1}. ${mapper(row)}\n`;
+            });
+            md += `\n`;
+        };
+
+        const allTopClientsMd = normalizeOpsRankingsRows(opsRankingsState.topClients);
+        const missingTopClientsMd = allTopClientsMd.filter((row) => !pickOpsBuyerName(row));
+        const namedTopClientsMd = allTopClientsMd.filter((row) => !!pickOpsBuyerName(row));
+        const missingTopClientsMdSummary = missingTopClientsMd.reduce((acc, row) => {
+            acc.operations += Number(row?.operations || 0);
+            acc.total += Number(row?.total || 0);
+            return acc;
+        }, { operations: 0, total: 0 });
+
+        appendSection('Top Clientes (Cobrado)', namedTopClientsMd, (row) => {
+            const name = getOpsRankingDisplayName(pickOpsBuyerName(row));
+            const operationsLabel = formatOpsRankingCount(row?.operations, 'operación', 'operaciones');
+            return `${name} · ${fmtRankingMoney(row?.total)} · ${operationsLabel} · última ${formatOpsRankingDate(row?.last_date)}`;
         });
-        md += `\n`;
-    };
+        if (missingTopClientsMd.length > 0) {
+            md += `> ⚠️ ${formatOpsRankingCount(missingTopClientsMdSummary.operations, 'registro', 'registros')} sin cliente: ${fmtRankingMoney(missingTopClientsMdSummary.total)}\n\n`;
+        }
 
-    const allTopClientsMd = normalizeOpsRankingsRows(opsRankingsState.topClients);
-    const missingTopClientsMd = allTopClientsMd.filter((row) => !pickOpsBuyerName(row));
-    const namedTopClientsMd = allTopClientsMd.filter((row) => !!pickOpsBuyerName(row));
-    const missingTopClientsMdSummary = missingTopClientsMd.reduce((acc, row) => {
-        acc.operations += Number(row?.operations || 0);
-        acc.total += Number(row?.total || 0);
-        return acc;
-    }, { operations: 0, total: 0 });
-
-    appendSection('Top Clientes (Cobrado)', namedTopClientsMd, (row) => {
-        const name = getOpsRankingDisplayName(pickOpsBuyerName(row));
-        const operationsLabel = formatOpsRankingCount(row?.operations, 'operación', 'operaciones');
-        return `${name} · ${formatOpsRankingCurrency(row?.total)} · ${operationsLabel} · última ${formatOpsRankingDate(row?.last_date)}`;
-    });
-    if (missingTopClientsMd.length > 0) {
-        md += `> ⚠️ ${formatOpsRankingCount(missingTopClientsMdSummary.operations, 'registro', 'registros')} sin cliente: ${formatOpsRankingCurrency(missingTopClientsMdSummary.total)}\n\n`;
-    }
-
-    appendSection('Fiados por Cliente', opsRankingsState.pendingClients, (row) => {
-        const name = getOpsRankingDisplayName(row?.client_name);
-        const pendingLabel = formatOpsRankingCount(row?.pending_count, 'fiado', 'fiados');
-        return `${name} · ${formatOpsRankingCurrency(row?.total_pending)} · ${pendingLabel} · próximo ${formatOpsRankingDate(row?.next_due_date)}`;
-    });
-
-    const topCropsTitle = selectedCropId ? 'Rentabilidad real del cultivo' : 'Top Cultivos (Rentabilidad real)';
-    md += `## ${topCropsTitle}\n\n`;
-    md += `> Nota: Usa ingresos cobrados menos gastos cerrados y pérdidas confirmadas de Operación Comercial. No incluye inversión base ni fiados.\n\n`;
-    if (!Array.isArray(opsRankingsState.topCrops) || opsRankingsState.topCrops.length === 0) {
-        md += selectedCropId
-            ? 'Sin ingresos cobrados para este cultivo en el rango seleccionado.\n\n'
-            : 'Sin ingresos cobrados en el rango seleccionado.\n\n';
-    } else {
-        opsRankingsState.topCrops.forEach((row, index) => {
-            const label = resolveOpsRankingCropLabel(row);
-            md += `${index + 1}. ${label} · Rentabilidad real ${formatOpsRankingCurrency(row?.profit)} · Ingresos cobrados: ${formatOpsRankingCurrency(row?.ingresos)} · Gastos cerrados / pérdidas: ${formatOpsRankingCurrency(row?.gastos)}\n`;
+        appendSection('Fiados por Cliente', opsRankingsState.pendingClients, (row) => {
+            const name = getOpsRankingDisplayName(row?.client_name);
+            const pendingLabel = formatOpsRankingCount(row?.pending_count, 'fiado', 'fiados');
+            return `${name} · ${fmtRankingMoney(row?.total_pending)} · ${pendingLabel} · próximo ${formatOpsRankingDate(row?.next_due_date)}`;
         });
-        md += `\n`;
+
+        const topCropsTitle = selectedCropId ? 'Rentabilidad real del cultivo' : 'Top Cultivos (Rentabilidad real)';
+        md += `## ${topCropsTitle}\n\n`;
+        md += `> Nota: Usa ingresos cobrados menos gastos cerrados y pérdidas confirmadas de Operación Comercial. No incluye inversión base ni fiados.\n\n`;
+        if (!Array.isArray(opsRankingsState.topCrops) || opsRankingsState.topCrops.length === 0) {
+            md += selectedCropId
+                ? 'Sin ingresos cobrados para este cultivo en el rango seleccionado.\n\n'
+                : 'Sin ingresos cobrados en el rango seleccionado.\n\n';
+        } else {
+            opsRankingsState.topCrops.forEach((row, index) => {
+                const label = resolveOpsRankingCropLabel(row);
+                md += `${index + 1}. ${label} · Rentabilidad real ${fmtRankingMoney(row?.profit)} · Ingresos cobrados: ${fmtRankingMoney(row?.ingresos)} · Gastos cerrados / pérdidas: ${fmtRankingMoney(row?.gastos)}\n`;
+            });
+            md += `\n`;
+        }
+    } finally {
+        if (isGlobal) {
+            selectedCropId = savedCropId;
+            if (savedState) {
+                Object.assign(opsRankingsState, savedState);
+            }
+        }
     }
 
     const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });

@@ -2227,3 +2227,24 @@ El diagnóstico profundo reveló 20 issues clasificados: 2 Críticos, 6 Medios, 
 - 5c39ce2: fix(agro): agregar concept/concepto a fetchExpenses y fetchLosses en stats-report
 
 - **Estado:** ✅ CERRADO (Ofensiva completada al 100%)
+
+---
+
+## 2026-05-14 — Corrección de reportes/exportes (bugs 1-4)
+
+### Bugs corregidos
+1. **Transferidos etiquetados como "active"**: `agro-crop-report.js` ya no usa `transfer_state` como fallback de destino; muestra "transferido (sin destino)" cuando no hay `transferred_to`.
+2. **Clientes duplicados en informe por cultivo**: se agrega tabla "Resumen por cliente (consolidado)" arriba de las tablas crudas de Pagados, Fiados y Transferidos, agrupando por nombre canónico normalizado.
+3. **Rankings vacío desde Centro de Reportes**: `exportOpsRankingsMarkdown` acepta `options.scope='global'`; `agro-reports-center.js` lo pasa para forzar ranking global sin depender de `selectedCropId`. Estado se guarda/restaura para no contaminar la UI.
+4. **Privacidad ignorada en exportes MD**: `agro-crop-report.js`, `agro-stats-report.js` y `agro.js` (rankings) ahora leen `readBuyerNamesHidden()` / `readMoneyValuesHidden()` y aplican máscaras (`J•••` / `••••`) durante la generación del string Markdown.
+
+### Archivos tocados
+- `apps/gold/agro/agro-crop-report.js`
+- `apps/gold/agro/agro-stats-report.js`
+- `apps/gold/agro/agro.js`
+- `apps/gold/agro/agro-reports-center.js`
+
+### Reglas operativas establecidas
+- Export de Rankings desde Centro de Reportes = **siempre global**.
+- Tablas crudas de movimientos se mantienen para auditoría; el resumen consolidado es lectura amigable.
+- Privacidad en exportes MD respeta los mismos flags de `localStorage` que la UI.
