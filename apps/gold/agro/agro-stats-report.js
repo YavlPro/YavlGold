@@ -8,7 +8,6 @@ import supabase from '../assets/js/config/supabase-config.js';
 import { getPendingTransferToken } from './agro-unit-totals.js';
 import { filterQARows, validateExportBundle, showExportError } from './agro-report-guard.js';
 import { toCents, formatMoney, resolveAmountUsd } from './agro-format.js';
-import { readBuyerNamesHidden, readMoneyValuesHidden } from './agro-privacy.js';
 
 // ============================================================
 // HELPERS
@@ -21,16 +20,6 @@ function pctSafe(numerator, denominator) {
 
 function escMd(str) {
     return String(str || '').replace(/\|/g, '·').replace(/\n/g, ' ');
-}
-
-function fmtPrivacyName(name) {
-    if (!readBuyerNamesHidden()) return String(name || '');
-    const n = String(name || '').trim();
-    if (!n) return '••••';
-    return n.charAt(0).toUpperCase() + '•••';
-}
-function fmtPrivacyMoney(value) {
-    return readMoneyValuesHidden() ? '••••' : value;
 }
 
 const CROP_DISPLAY_FALLBACK_ICON = '🌱';
@@ -588,7 +577,7 @@ function buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRo
             const status = resolveCropStatus(c.crop, progress);
             const statusLine = formatCropStatusLine(status);
             const progressLine = formatCropProgressLine(progress);
-            md += `| ${escMd(label)} | ${escMd(statusLine)} | ${escMd(progressLine)} | ${fmtPrivacyMoney(formatMoney(c.incomeCents, 'USD'))} | ${fmtPrivacyMoney(formatMoney(costCents, 'USD'))} | ${fmtPrivacyMoney(formatMoney(profitCents, 'USD'))} | ${fmtPrivacyMoney(formatMoney(c.pendingCents, 'USD'))} | ${roi} |\n`;
+            md += `| ${escMd(label)} | ${escMd(statusLine)} | ${escMd(progressLine)} | ${formatMoney(c.incomeCents, 'USD')} | ${formatMoney(costCents, 'USD')} | ${formatMoney(profitCents, 'USD')} | ${formatMoney(c.pendingCents, 'USD')} | ${roi} |\n`;
         }
     }
 
@@ -684,10 +673,10 @@ function buildBuyerRanking(incomeRows, pendingRows) {
     let md = '| Cliente | Compras | Monedas | Total (USD) | Estado |\n';
     md += '|---------|--------:|---------|------------:|--------|\n';
     for (const [, b] of sorted) {
-        const name = fmtPrivacyName(b.displayWho);
+        const name = b.displayWho;
         const estado = b.hasPaid && b.hasPending ? '🔔 Mixto' : b.hasPaid ? '✅ Pagado' : '⏳ Debe';
         const curs = Array.from(b.currencies).join(', ');
-        md += `| ${escMd(name)} | ${b.count} | ${curs} | ${fmtPrivacyMoney(formatMoney(b.totalCents, 'USD'))} | ${estado} |\n`;
+        md += `| ${escMd(name)} | ${b.count} | ${curs} | ${formatMoney(b.totalCents, 'USD')} | ${estado} |\n`;
     }
     return md;
 }
@@ -773,13 +762,13 @@ export async function exportStatsReport() {
         md += `## 💰 Resumen Global\n`;
         md += `| Concepto | Monto |\n`;
         md += `|----------|------:|\n`;
-        md += `| Total pagados | ${fmtPrivacyMoney(formatMoney(incomeCents, 'USD'))} |\n`;
-        md += `| Total costos | ${fmtPrivacyMoney(formatMoney(costCents, 'USD'))} |\n`;
-        md += `| Ganancia neta | ${fmtPrivacyMoney(formatMoney(profitCents, 'USD'))} |\n`;
+        md += `| Total pagados | ${formatMoney(incomeCents, 'USD')} |\n`;
+        md += `| Total costos | ${formatMoney(costCents, 'USD')} |\n`;
+        md += `| Ganancia neta | ${formatMoney(profitCents, 'USD')} |\n`;
         md += `| Margen | ${marginStr} |\n`;
         md += `| ROI | ${roiStr} |\n`;
-        md += `| Fiados por cobrar | ${fmtPrivacyMoney(formatMoney(pendingCents, 'USD'))} |\n`;
-        md += `| Pagado proyectado (si se cobra todo) | ${fmtPrivacyMoney(formatMoney(projIncomeCents, 'USD'))} |\n`;
+        md += `| Fiados por cobrar | ${formatMoney(pendingCents, 'USD')} |\n`;
+        md += `| Pagado proyectado (si se cobra todo) | ${formatMoney(projIncomeCents, 'USD')} |\n`;
         md += `| ROI proyectado | ${projRoiStr} |\n\n`;
         md += `> _Moneda base: USD \u00b7 Tasas al momento del registro_\n\n`;
         md += `---\n\n`;
@@ -798,9 +787,9 @@ export async function exportStatsReport() {
 
         // Projection
         md += `## 📈 Proyección\n`;
-        md += `Si se cobran los ${fmtPrivacyMoney(formatMoney(pendingCents, 'USD'))} fiados:\n`;
-        md += `- **Pagado total:** ${fmtPrivacyMoney(formatMoney(projIncomeCents, 'USD'))}\n`;
-        md += `- **Ganancia neta:** ${fmtPrivacyMoney(formatMoney(projProfitCents, 'USD'))}\n`;
+        md += `Si se cobran los ${formatMoney(pendingCents, 'USD')} fiados:\n`;
+        md += `- **Pagado total:** ${formatMoney(projIncomeCents, 'USD')}\n`;
+        md += `- **Ganancia neta:** ${formatMoney(projProfitCents, 'USD')}\n`;
         md += `- **ROI:** ${projRoiStr}\n\n`;
 
         // Footer

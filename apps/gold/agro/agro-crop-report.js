@@ -8,7 +8,6 @@ import supabase from '../assets/js/config/supabase-config.js';
 import { computeUnitTotalsFromRows, formatUnitTotalsMarkdown } from './agro-unit-totals.js';
 import { filterQARows, validateExportBundle, showExportError } from './agro-report-guard.js';
 import { toCents, formatMoney, resolveAmountUsd } from './agro-format.js';
-import { readBuyerNamesHidden, readMoneyValuesHidden } from './agro-privacy.js';
 
 // ============================================================
 // HELPERS (self-contained to avoid coupling with agro.js internals)
@@ -211,39 +210,6 @@ function fmtUnits(item) {
     const kg = Number(item.quantity_kg);
     if (Number.isFinite(kg) && kg > 0) parts.push(`${kg} kg`);
     return parts.join(' · ') || '-';
-}
-
-function fmtPrivacyName(name) {
-    if (!readBuyerNamesHidden()) return String(name || '');
-    const n = String(name || '').trim();
-    if (!n) return '••••';
-    return n.charAt(0).toUpperCase() + '•••';
-}
-function fmtPrivacyMoney(value) {
-    return readMoneyValuesHidden() ? '••••' : value;
-}
-function normalizeBuyerKey(name) {
-    return String(name || '').trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-}
-function buildBuyerSummaryTable(rows, typeLabel) {
-    if (!rows.length) return '';
-    const map = new Map();
-    for (const r of rows) {
-        const rawName = r.cliente || (typeLabel === 'ingresos' ? parseWho('ingresos', r.concepto || '').who : parseWho('pendientes', r.concepto || '').who) || 'Sin cliente';
-        const key = normalizeBuyerKey(rawName);
-        if (!map.has(key)) {
-            map.set(key, { displayName: rawName, count: 0, totalUsdCents: 0 });
-        }
-        const entry = map.get(key);
-        entry.count += 1;
-        entry.totalUsdCents += toCents(resolveAmountUsd(r));
-    }
-    const sorted = Array.from(map.values()).sort((a, b) => b.totalUsdCents - a.totalUsdCents);
-    let md = `| Cliente | Operaciones | Total (USD) |\n|---------|------------:|------------:|\n`;
-    for (const e of sorted) {
-        md += `| ${escMd(fmtPrivacyName(e.displayName))} | ${e.count} | ${fmtPrivacyMoney(formatMoney(e.totalUsdCents, 'USD'))} |\n`;
-    }
-    return md + '\n';
 }
 
 function normalizeSplitMeta(raw) {
@@ -560,7 +526,7 @@ function buildIncomeTable(items, historyMode = false) {
         const amtUsd = formatMoney(toCents(resolveAmountUsd(it)), 'USD');
         const flag = deletedFlag(it, historyMode);
         const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(parsed.concept || raw)} | ${escMd(fmtPrivacyName(parsed.who)) || '-'} | ${fmtUnits(it)} | ${currency} | ${fmtPrivacyMoney(formatMoney(toCents(it.monto), currency))} | ${fmtPrivacyMoney(amtUsd)}`;
+        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(parsed.concept || raw)} | ${escMd(parsed.who) || '-'} | ${fmtUnits(it)} | ${currency} | ${formatMoney(toCents(it.monto), currency)} | ${amtUsd}`;
         md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
@@ -604,7 +570,7 @@ function buildPendingTable(items, historyMode = false) {
         const amtUsd = formatMoney(toCents(resolveAmountUsd(it)), 'USD');
         const flag = deletedFlag(it, historyMode);
         const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(parsed.concept || raw)} | ${escMd(fmtPrivacyName(client))} | ${fmtUnits(it)} | ${currency} | ${fmtPrivacyMoney(formatMoney(toCents(it.monto), currency))} | ${fmtPrivacyMoney(amtUsd)} | ${escMd(state)}`;
+        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(parsed.concept || raw)} | ${escMd(client)} | ${fmtUnits(it)} | ${currency} | ${formatMoney(toCents(it.monto), currency)} | ${amtUsd} | ${escMd(state)}`;
         md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
@@ -626,9 +592,9 @@ function buildPendingTransferredTable(items) {
         const client = it.cliente || parsed.who || '-';
         const currency = it.currency || 'USD';
         const amtUsd = formatMoney(toCents(resolveAmountUsd(it)), 'USD');
-        const dest = it.transferred_to ? it.transferred_to : 'transferido (sin destino)';
+        const dest = it.transferred_to || it.transfer_state || 'pagado/pérdida';
         const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.fecha)} | [TRANSFERIDO] ${escMd(parsed.concept || raw)} | ${escMd(fmtPrivacyName(client))} | ${fmtUnits(it)} | ${currency} | ${fmtPrivacyMoney(formatMoney(toCents(it.monto), currency))} | ${fmtPrivacyMoney(amtUsd)} | ${escMd(dest)}`;
+        md += `| ${fmtDate(it.fecha)} | [TRANSFERIDO] ${escMd(parsed.concept || raw)} | ${escMd(client)} | ${fmtUnits(it)} | ${currency} | ${formatMoney(toCents(it.monto), currency)} | ${amtUsd} | ${escMd(dest)}`;
         md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
@@ -648,7 +614,7 @@ function buildLossTable(items, historyMode = false) {
         const amtUsd = formatMoney(toCents(resolveAmountUsd(it)), 'USD');
         const flag = deletedFlag(it, historyMode);
         const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(it.concepto)} | ${escMd(it.causa) || '-'} | ${fmtUnits(it)} | ${currency} | ${fmtPrivacyMoney(formatMoney(toCents(it.monto), currency))} | ${fmtPrivacyMoney(amtUsd)}`;
+        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(it.concepto)} | ${escMd(it.causa) || '-'} | ${fmtUnits(it)} | ${currency} | ${formatMoney(toCents(it.monto), currency)} | ${amtUsd}`;
         md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
@@ -668,7 +634,7 @@ function buildTransferTable(items, historyMode = false) {
         const amtUsd = formatMoney(toCents(resolveAmountUsd(it)), 'USD');
         const flag = deletedFlag(it, historyMode);
         const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(it.concepto)} | ${escMd(it.destino) || '-'} | ${fmtUnits(it)} | ${currency} | ${fmtPrivacyMoney(formatMoney(toCents(it.monto), currency))} | ${fmtPrivacyMoney(amtUsd)}`;
+        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(it.concepto)} | ${escMd(it.destino) || '-'} | ${fmtUnits(it)} | ${currency} | ${formatMoney(toCents(it.monto), currency)} | ${amtUsd}`;
         md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
@@ -860,13 +826,13 @@ export async function exportCropReport(cropId, opts = {}) {
         md += `## 💰 Resumen Financiero\n`;
         md += `| Concepto | Monto |\n`;
         md += `|----------|------:|\n`;
-        md += `| Pagados | ${fmtPrivacyMoney(formatMoney(totalIncomeCents, 'USD'))} |\n`;
-        md += `| Inversión inicial | ${fmtPrivacyMoney(formatMoney(initialInvestmentCents, 'USD'))} |\n`;
-        md += `| Gastos vinculados | ${fmtPrivacyMoney(formatMoney(totalExpensesCents, 'USD'))} |\n`;
-        md += `| Costos/Inversión | ${fmtPrivacyMoney(formatMoney(totalCostWithInvestmentCents, 'USD'))} |\n`;
-        md += `| Ganancia neta | ${fmtPrivacyMoney(formatMoney(profitCents, 'USD'))} |\n`;
-        md += `| Fiados por cobrar (activos) | ${fmtPrivacyMoney(formatMoney(totalPendingCents, 'USD'))} |\n`;
-        md += `| Pérdidas | ${fmtPrivacyMoney(formatMoney(totalLossesCents, 'USD'))} |\n`;
+        md += `| Pagados | ${formatMoney(totalIncomeCents, 'USD')} |\n`;
+        md += `| Inversión inicial | ${formatMoney(initialInvestmentCents, 'USD')} |\n`;
+        md += `| Gastos vinculados | ${formatMoney(totalExpensesCents, 'USD')} |\n`;
+        md += `| Costos/Inversión | ${formatMoney(totalCostWithInvestmentCents, 'USD')} |\n`;
+        md += `| Ganancia neta | ${formatMoney(profitCents, 'USD')} |\n`;
+        md += `| Fiados por cobrar (activos) | ${formatMoney(totalPendingCents, 'USD')} |\n`;
+        md += `| Pérdidas | ${formatMoney(totalLossesCents, 'USD')} |\n`;
         md += `| ROI | ${roiStr} |\n\n`;
         md += `> _Totales convertidos a USD \u00b7 Tasas al momento del registro_\n\n`;
 
@@ -898,16 +864,8 @@ export async function exportCropReport(cropId, opts = {}) {
         }
         md += `---\n\n`;
 
-        // Resumen por cliente (consolidado)
-        const buyerSummaryIncome = buildBuyerSummaryTable(income, 'ingresos');
-        const buyerSummaryPending = buildBuyerSummaryTable(pendingActive, 'pendientes');
-        const buyerSummaryTransferred = buildBuyerSummaryTable(pendingTransferred, 'pendientes');
-
         // Pagados
         md += `## 📥 Pagados (${fmtCount(ci, historyMode)})\n`;
-        if (buyerSummaryIncome) {
-            md += `**Resumen por cliente**\n\n${buyerSummaryIncome}\n`;
-        }
         md += buildIncomeTable(income, historyMode);
         md += '\n';
 
@@ -918,18 +876,12 @@ export async function exportCropReport(cropId, opts = {}) {
 
         // Fiados — solo activos (por cobrar)
         md += `## ⏳ Fiados activos — por cobrar (${pendingActive.length})\n`;
-        if (buyerSummaryPending) {
-            md += `**Resumen por cliente**\n\n${buyerSummaryPending}\n`;
-        }
         md += buildPendingTable(pendingActive, false);
         md += '\n';
 
         // Fiados transferidos (→ pagado / pérdida)
         if (historyMode || pendingTransferred.length > 0) {
             md += `## ⇔️ Fiados transferidos (${pendingTransferred.length})\n`;
-            if (buyerSummaryTransferred) {
-                md += `**Resumen por cliente**\n\n${buyerSummaryTransferred}\n`;
-            }
             md += pendingTransferred.length
                 ? buildPendingTransferredTable(pendingTransferred)
                 : 'Sin fiados transferidos\n';
