@@ -362,7 +362,7 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-27__2026-05-05.md`
 ### Reportes habilitados
 
 - Cultivos y ciclos: cultivo seleccionado, ciclo finalizado/perdido y comparativo de ciclos.
-- Operación Comercial: Cartera Viva, Cartera Operativa y Mi Carrito.
+- Finanzas: Cartera Viva, Cartera Operativa y Mi Carrito.
 - Clientes: Mis Clientes y rankings de clientes.
 - Trabajo y memoria: Trabajo Diario y AgroRepo.
 - Estadísticas: estadísticas globales, informe global, períodos y financiero detallado.
@@ -2264,3 +2264,30 @@ El diagnóstico profundo reveló 20 issues clasificados: 2 Críticos, 6 Medios, 
 - Helper check PASS: legacy `transfer_state=active` + `transferred_income_id` resuelve `pagado/pérdida`; `income` resuelve `pagado`; `Jesús/Jesus berraco` comparten key.
 - `pnpm build:gold` PASS (agent-guard, report-check, Vite, llms, UTF-8).
 - Pendiente QA real de exportes en navegador/cuenta QA antes de dar el frente como cerrado en producción.
+
+---
+
+## 2026-05-15 — Cierre canónico: "Operación Comercial" eliminado del canon activo
+
+### Situación
+- El término "Operación Comercial" no existe como módulo real en YavlGold Agro. Es una denominación histórica que confundía la semántica del sistema.
+
+### Cambios aplicados
+- MANIFIESTO_AGRO.md: §4.5 renombrado de "Operación Comercial" → "Finanzas" (categoría agrupadora). Todas las referencias reemplazadas por "Cartera Operativa" o "finanzas" según contexto.
+- AGENT_REPORT_ACTIVE.md: listado de reportes corregido.
+- llms.txt: eliminada frase "Operacion Comercial no debe tratarse como modulo/card del hub".
+- docs-agro.html: definición, paso de inicio y controles de privacidad corregidos.
+- terms.html: "operacion comercial formal" → "uso comercial formal".
+- agro.js: nota en export Markdown.
+- agro-cart.js: 7 ediciones (comentarios, notificaciones, error, modal UI).
+- agro-agenda.js: texto de ayuda de calculadora.
+- agro-period-cycles.js: copy de overview.
+
+### Verificación
+- `pnpm build:gold` PASS.
+- `rg` confirma 0 ocurrencias en superficies activas; solo en crónicas y legacy (intencional).
+- "Finanzas" aparece como categoría (§4.5), no como módulo.
+- JS edits fueron solo strings/UI copy, sin lógica ni selectores.
+
+### Estado
+- Pendiente #7 (nomenclatura): **DONE**.

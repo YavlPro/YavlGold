@@ -43,7 +43,7 @@ Aquí se define:
 YavlGold Agro es una herramienta agrícola digital pensada para el trabajo real de campo. No es una aplicación teórica ni un panel vacío: es un sistema diseñado para registrar, entender y operar la realidad agrícola del usuario.
 
 **Definición amplia**
-Agro reúne producción, operación comercial, contexto, clima, memoria y asistencia inteligente en una sola superficie de trabajo.
+Agro reúne producción, finanzas, contexto, clima, memoria y asistencia inteligente en una sola superficie de trabajo.
 
 Agro no es una app aislada ni un añadido sin relación. Es una parte del ecosistema YavlGold: toma el trabajo real del agricultor, lo ordena, lo conecta con memoria, contexto y lectura del negocio, y permite que la ayuda inteligente tenga algo concreto sobre qué trabajar.
 
@@ -164,7 +164,7 @@ No es un módulo de estadísticas. No es un facturero. No es una segunda cuenta 
 
 ### Cómo se conecta con Agro
 
-Todo empieza desde aquí. Cuando abres Agro por primera vez, tu perfil se usa para saludarte. Los datos de contacto ayudan a otros agricultores a localizarte en la red Social. El modo privacidad afecta la visualización de Cartera Viva y Operación Comercial.
+Todo empieza desde aquí. Cuando abres Agro por primera vez, tu perfil se usa para saludarte. Los datos de contacto ayudan a otros agricultores a localizarte en la red Social. El modo privacidad afecta la visualización de Cartera Viva y Cartera Operativa.
 
 ---
 
@@ -182,7 +182,7 @@ No es un reemplazo de los módulos profundos ni un simple panel decorativo. No e
 
 * Orientar al usuario al entrar.
 * Resumir el estado actual del día: clima, mercados, fase lunar.
-* Servir como punto de acceso rápido a herramientas, ciclos, operación comercial y contexto.
+* Servir como punto de acceso rápido a herramientas, ciclos, finanzas y contexto.
 * Dar una ruta sugerida de arranque rápido ("Arranque rápido del día").
 
 ### Componentes actuales
@@ -336,15 +336,15 @@ Si existe duda sobre si usar "ciclo de cultivo" o "período", puedes hacerte la 
 
 ---
 
-## 4.5 Operación Comercial
+## 4.5 Finanzas
 
 ### Qué es
 
-Aquí registras el dinero que entra y sale de tu finca. Te permite ver con claridad cuánto te deben tus clientes, cuánto has cobrado y cuáles son tus gastos operativos reales.
+El conjunto de herramientas financieras de Agro. Te permite registrar el dinero que entra y sale de tu finca, ver con claridad cuánto te deben tus clientes, cuánto has cobrado y cuáles son tus gastos operativos reales.
 
 ### Qué no es
 
-No es el registro de crecimiento de un cultivo ni tu lista de tareas. Es, concretamente, tu libro de cuentas.
+No es el registro de crecimiento de un cultivo ni tu lista de tareas. Es, concretamente, tu libro de cuentas y seguimiento financiero.
 
 ### Núcleos incluidos
 
@@ -355,7 +355,7 @@ No es el registro de crecimiento de un cultivo ni tu lista de tareas. Es, concre
 
 ### Misión
 
-Registrar y seguir la realidad comercial y operativa del agricultor.
+Registrar y seguir la realidad financiera del agricultor.
 
 ### Contexto multimoneda real
 
@@ -511,7 +511,7 @@ No es la Cartera Viva (la sección destinada solo a llevar el saldo de quienes t
 
 ### Flujo de uso
 
-1. En la Operación Comercial, seleccionas primero el contexto: ¿es un movimiento general o pertenece a un cultivo específico? Desde el hub Mi Granja puedes acceder a Mis cultivos para ver tus ciclos o a Calendario operativo para tus períodos.
+1. En Cartera Operativa, seleccionas primero el contexto: ¿es un movimiento general o pertenece a un cultivo específico? Desde el hub Mi Granja puedes acceder a Mis cultivos para ver tus ciclos o a Calendario operativo para tus períodos.
 2. Luego eliges el tipo de registro: gasto, ingreso, fiado, pérdida o donación.
 3. Registras el monto, fecha, concepto.
 4. El movimiento aparece en el historial y afecta las estadísticas.
@@ -556,7 +556,7 @@ No es un gasto real. No es Cartera Operativa. Es una **lista de intención de co
 3. Cuando realizas la compra, puedes convertir ese ítem en un gasto real y registrarlo en la Cartera Operativa.
 4. También puedes exportar la lista completa.
 
-### Cómo se relaciona con operación comercial
+### Cómo se relaciona con las finanzas
 
 * Es una herramienta de planificación que alimenta la Cartera Operativa.
 * Los ítems del carrito NO son gastos hasta que los registras como tales.
@@ -967,7 +967,7 @@ El patrón hub/module organiza Agro en dos estados de experiencia:
 #### Puertas principales del hub
 
 - **Inicio:** entrada rápida, dashboard, nuevo registro y nuevo cultivo.
-- **Operación:** cultivos, operación comercial, Cartera Viva, Cartera Operativa, Mi Carrito, Mis Clientes, Trabajo Diario, Rankings y Clima Agro.
+- **Operación:** cultivos, Cartera Viva, Cartera Operativa, Mi Carrito, Mis Clientes, Trabajo Diario, Rankings y Clima Agro.
 - **Memoria:** AgroRepo y Asistente IA.
 - **Menú:** perfil, documentación, feedback, ajustes y soporte.
 
@@ -1030,11 +1030,11 @@ Todo `alert()` nativo en Agro debe migrarse progresivamente a popups compactos v
 
 ### 5.0 Nota sobre «Mi Granja»
 
-En la navegación principal, **Mi Granja** (puerta «Granja» en `Inicio · Granja · Memoria · Menú`) funciona como hub central donde el agricultor organiza cultivos, períodos, finanzas, trabajo, rankings y clima. No es un módulo financiero. No compite con Operación Comercial ni reemplaza a Cartera Operativa.
+En la navegación principal, **Mi Granja** (puerta «Granja» en `Inicio · Granja · Memoria · Menú`) funciona como hub central donde el agricultor organiza cultivos, períodos, finanzas, trabajo, rankings y clima. No es un módulo financiero. No reemplaza a Cartera Operativa.
 
 Su propósito es concentrar el acceso a **Ciclos de Cultivo** (via Mis cultivos), **Ciclos de Período** (via Calendario operativo), **Mis finanzas** y **Trabajo y lectura** bajo una sola puerta.
 
-**Los movimientos financieros no asociados a un cultivo específico** (gasolina, mantenimiento de infraestructura, etc.) se registran como «movimiento general» dentro de Cartera Operativa (§4.5.2). No pertenecen a Mi Granja. El término «movimiento general» es financiero y vive en Operación Comercial.
+**Los movimientos financieros no asociados a un cultivo específico** (gasolina, mantenimiento de infraestructura, etc.) se registran como «movimiento general» dentro de Cartera Operativa (§4.5.2). No pertenecen a Mi Granja. El término «movimiento general» es financiero y vive en Cartera Operativa.
 
 ### 5.1 Lo productivo
 
@@ -1182,7 +1182,7 @@ Los reportes detallados por cultivo se acceden directamente desde cada card/cicl
 
 * Dashboard Agro
 * Cartera Viva
-* Operación Comercial (tabs de gastos, ingresos, fiados)
+* Cartera Operativa (tabs de gastos, ingresos, fiados)
 * Estadísticas
 
 ### Para qué existen
@@ -1237,7 +1237,7 @@ Un archivo `.md` se abre en cualquier editor de texto, en cualquier equipo, sin 
 ### 9.9 ¿Cómo separo la idea de Ciclo de Cultivo frente al Ciclo de Período?
 
 * **Ciclo de Cultivo:** Acompaña solamente el desarrollo de una siembra específica desde que la plantas en tierra hasta el fin de su venta o consumo.
-* **Ciclo de Período:** Abarca un rango temporal (como "enero a junio") agrupando todos los movimientos operativos de ese lapso, sin importar a qué cultivo correspondían. Los movimientos financieros del período provienen de Operación Comercial / Cartera Operativa.
+* **Ciclo de Período:** Abarca un rango temporal (como "enero a junio") agrupando todos los movimientos operativos de ese lapso, sin importar a qué cultivo correspondían. Los movimientos financieros del período provienen de Cartera Operativa.
 
 ### 9.10 ¿El asistente IA auditará la rentabilidad general para aconsejarme opciones de inversión bursátil?
 
@@ -1257,7 +1257,7 @@ La herramienta no sirve para consultas que no tengan respaldo en lo que ya regis
 1. Entras al Dashboard y revisas las condiciones del día.
 2. Si es tu primera vez, usa el botón "Arranque rápido".
 3. Lo primero es crear tu primer cultivo en Ciclos Activos, si tienes una siembra en curso.
-4. Luego registra algún gasto real de insumos en Operación Comercial. Tu pantalla irá creciendo y notarás la utilidad con el tiempo.
+4. Luego registra algún gasto real de insumos en Cartera Operativa. Tu pantalla irá creciendo y notarás la utilidad con el tiempo.
 
 ### 9.13 ¿Cómo creo un cultivo?
 
@@ -1281,7 +1281,7 @@ La herramienta no sirve para consultas que no tengan respaldo en lo que ya regis
 ### 9.15 ¿Cuándo un registro va a un cultivo y cuándo queda como movimiento general?
 
 **Cargos a un cultivo**: Corresponden al gasto directamente relacionado con una siembra específica. Por ejemplo: abono para una hectárea de tomate.
-**Movimientos generales**: Un saco de cal para mantenimiento de infraestructura, gasolina para el vehículo de la finca o cualquier gasto que no pertenezca a un cultivo en particular. Estos se registran en Cartera Operativa (dentro de Operación Comercial) como movimiento general. No se asocian a Mi Granja, que no es un módulo financiero.
+**Movimientos generales**: Un saco de cal para mantenimiento de infraestructura, gasolina para el vehículo de la finca o cualquier gasto que no pertenezca a un cultivo en particular. Estos se registran en Cartera Operativa como movimiento general. No se asocian a Mi Granja, que no es un módulo financiero.
 
 ### 9.16 ¿Acaso los inventarios van a saturar el almacenamiento local de mis equipos?
 
@@ -1369,7 +1369,7 @@ Son mensajes emergentes estilizados que reemplazan los `alert()` nativos del nav
 ### Caso 6
 
 * **Confusión**: "Mi Granja" es un módulo financiero donde se registran los gastos y ganancias generales de la finca.
-* **La realidad**: «Mi Granja» es el **hub central de navegación** accesible desde la puerta «Granja» en `Inicio · Granja · Memoria · Menú`. Agrupa Mis cultivos, Calendario operativo, Mis finanzas y Trabajo y lectura. No es un módulo financiero. Los «movimientos generales» (gastos no asociados a un cultivo específico) se registran en Cartera Operativa, dentro de Operación Comercial. Mi Granja no tiene libro de cuentas propio.
+* **La realidad**: «Mi Granja» es el **hub central de navegación** accesible desde la puerta «Granja» en `Inicio · Granja · Memoria · Menú`. Agrupa Mis cultivos, Calendario operativo, Mis finanzas y Trabajo y lectura. No es un módulo financiero. Los «movimientos generales» (gastos no asociados a un cultivo específico) se registran en Cartera Operativa. Mi Granja no tiene libro de cuentas propio.
 
 ### Caso 7
 

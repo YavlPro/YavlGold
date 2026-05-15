@@ -13767,7 +13767,7 @@ async function exportOpsRankingsMarkdown() {
 
     const topCropsTitle = 'Top Cultivos (Rentabilidad real)';
     md += `## ${topCropsTitle}\n\n`;
-    md += `> Nota: Usa ingresos cobrados menos gastos cerrados y pérdidas confirmadas de Operación Comercial. No incluye inversión base ni fiados.\n\n`;
+    md += `> Nota: Usa ingresos cobrados menos gastos cerrados y pérdidas confirmadas de Cartera Operativa. No incluye inversión base ni fiados.\n\n`;
     if (!exportTopCrops.length) {
         md += 'Sin ingresos cobrados en el rango seleccionado.\n\n';
     } else {

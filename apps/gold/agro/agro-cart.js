@@ -1,7 +1,7 @@
 /**
  * YavlGold V1 — Agro Cart (Carrito de Compras Agrícola)
  * Lista de compras con presupuesto, vinculada a cultivos.
- * Los items se planifican aquí y se registran en Operación Comercial al ejecutarse.
+ * Los items se planifican aquí y se registran en Cartera Operativa al ejecutarse.
  *
  * Lazy-loaded: only initialized when the Carrito tab is first activated.
  */
@@ -348,7 +348,7 @@ async function handleRegisterPurchase(itemId, option) {
     const item = _activeCartItems.find(i => i.id === itemId);
     if (!item) return;
     if (isProcessedItem(item)) {
-        notifyCart('Este item ya fue procesado en Operación Comercial.', 'warning');
+        notifyCart('Este item ya fue procesado en Cartera Operativa.', 'warning');
         return;
     }
 
@@ -375,7 +375,7 @@ async function handleRegisterPurchase(itemId, option) {
             operation_id: operationId
         });
         renderCartTab();
-        notifyCart(`Item registrado en Operación Comercial como ${option.successLabel}.`, 'success');
+        notifyCart(`Item registrado en Cartera Operativa como ${option.successLabel}.`, 'success');
     } catch (err) {
         console.error('[AgroCart] handleRegisterPurchase error:', err.message);
         notifyCart(`Error al registrar compra: ${err.message}`, 'error');
@@ -604,7 +604,7 @@ async function ensureOperationalBridge() {
         return window.YGAgroOperationalCycles;
     }
 
-    throw new Error('Operación Comercial no está disponible en este momento.');
+    throw new Error('Cartera Operativa no está disponible en este momento.');
 }
 
 function buildOperationalPayloadFromCart(cart, item, option) {
@@ -834,7 +834,7 @@ function renderActiveCart(cart, items, summary) {
         })}
         ${processedItems.length ? renderCartItemsSection({
             title: 'Procesados',
-            helper: 'Trazabilidad de lo ya registrado en Operación Comercial.',
+            helper: 'Trazabilidad de lo ya registrado en Cartera Operativa.',
             items: processedItems,
             variant: 'processed'
         }) : ''}
@@ -1364,11 +1364,11 @@ function renderPurchaseStateModal(item) {
     const modal = document.createElement('div');
     modal.className = 'agro-cart-modal agro-cart-modal--purchase-state agro-modal-canon__dialog';
     modal.innerHTML = `
-        <p class="agro-cart-modal__eyebrow">Operación Comercial</p>
+        <p class="agro-cart-modal__eyebrow">Cartera Operativa</p>
         <h3 class="agro-cart-modal__title" id="agro-cart-purchase-state-title">¿Cómo se registró esta compra?</h3>
         <p class="agro-cart-modal__copy">
             <strong>${escapeHtml(item?.name || 'Item')}</strong><br>
-            Selecciona el estado real para enviar este item desde Mi Carrito hacia Operación Comercial.
+            Selecciona el estado real para enviar este item desde Mi Carrito hacia Cartera Operativa.
         </p>
         <div class="agro-cart-modal__options">
             ${CART_OPERATION_REGISTRATION_OPTIONS.map((option) => `
@@ -1466,7 +1466,7 @@ function attachCartListeners(container) {
             const item = _activeCartItems.find(i => i.id === itemId);
             if (!item) return;
             if (isProcessedItem(item)) {
-                notifyCart('Este item ya fue procesado. Edita la operación desde Operación Comercial.', 'warning');
+                notifyCart('Este item ya fue procesado. Edita la operación desde Cartera Operativa.', 'warning');
                 return;
             }
             renderEditItemModal(item);
