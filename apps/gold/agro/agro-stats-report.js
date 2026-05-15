@@ -8,6 +8,14 @@ import supabase from '../assets/js/config/supabase-config.js';
 import { getPendingTransferToken } from './agro-unit-totals.js';
 import { filterQARows, validateExportBundle, showExportError } from './agro-report-guard.js';
 import { toCents, formatMoney, resolveAmountUsd } from './agro-format.js';
+import {
+    chooseReportClientName,
+    getMarkdownPrivacyState,
+    maskReportMetric,
+    maskReportMoney,
+    maskReportName,
+    normalizeReportClientKey
+} from './agro-report-format.js';
 
 // ============================================================
 // HELPERS
@@ -20,6 +28,14 @@ function pctSafe(numerator, denominator) {
 
 function escMd(str) {
     return String(str || '').replace(/\|/g, '·').replace(/\n/g, ' ');
+}
+
+function fmtMoneyMd(cents, currency, privacy) {
+    return maskReportMoney(formatMoney(cents, currency), privacy);
+}
+
+function fmtMetricMd(value, privacy) {
+    return maskReportMetric(value, privacy);
 }
 
 const CROP_DISPLAY_FALLBACK_ICON = '🌱';
@@ -370,16 +386,16 @@ async function fetchIncome(userId) {
     try {
         const attempts = [
             {
-                select: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,crop_id,reverted_at',
+                select: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,crop_id,buyer_group_key,reverted_at',
                 filterDeletedAt: true,
                 extendQuery: (query) => query.is('reverted_at', null)
             },
             {
-                select: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,crop_id',
+                select: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,crop_id,buyer_group_key',
                 filterDeletedAt: true
             },
             {
-                select: 'id,concepto,monto,monto_usd,currency,fecha,crop_id',
+                select: 'id,concepto,monto,monto_usd,currency,fecha,crop_id,buyer_group_key',
                 filterDeletedAt: true
             },
             {
@@ -425,15 +441,15 @@ async function fetchPending(userId) {
     try {
         const attempts = [
             {
-                select: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,cliente,crop_id,deleted_at,transfer_state,transferred_to,transferred_income_id,reverted_at',
+                select: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,cliente,crop_id,buyer_group_key,deleted_at,transfer_state,transferred_to,transferred_income_id,reverted_at',
                 filterDeletedAt: true
             },
             {
-                select: 'id,concepto,monto,monto_usd,currency,fecha,cliente,crop_id,deleted_at',
+                select: 'id,concepto,monto,monto_usd,currency,fecha,cliente,crop_id,buyer_group_key,deleted_at',
                 filterDeletedAt: true
             },
             {
-                select: 'id,concepto,monto,monto_usd,currency,fecha,cliente,crop_id',
+                select: 'id,concepto,monto,monto_usd,currency,fecha,cliente,crop_id,buyer_group_key',
                 filterDeletedAt: true
             }
         ];
@@ -475,7 +491,7 @@ async function fetchLosses(userId) {
 // PER-CROP BREAKDOWN
 // ============================================================
 
-function buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRows) {
+function buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRows, privacy = getMarkdownPrivacyState()) {
     const unassigned = {
         incomeCents: 0,
         expenseCents: 0,
@@ -577,7 +593,7 @@ function buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRo
             const status = resolveCropStatus(c.crop, progress);
             const statusLine = formatCropStatusLine(status);
             const progressLine = formatCropProgressLine(progress);
-            md += `| ${escMd(label)} | ${escMd(statusLine)} | ${escMd(progressLine)} | ${formatMoney(c.incomeCents, 'USD')} | ${formatMoney(costCents, 'USD')} | ${formatMoney(profitCents, 'USD')} | ${formatMoney(c.pendingCents, 'USD')} | ${roi} |\n`;
+            md += `| ${escMd(label)} | ${escMd(statusLine)} | ${escMd(progressLine)} | ${fmtMoneyMd(c.incomeCents, 'USD', privacy)} | ${fmtMoneyMd(costCents, 'USD', privacy)} | ${fmtMoneyMd(profitCents, 'USD', privacy)} | ${fmtMoneyMd(c.pendingCents, 'USD', privacy)} | ${fmtMetricMd(roi, privacy)} |\n`;
         }
     }
 
@@ -593,7 +609,7 @@ function buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRo
     return { tableMd: md, unassigned, totals };
 }
 
-function buildUnassignedSection(unassigned) {
+function buildUnassignedSection(unassigned, privacy = getMarkdownPrivacyState()) {
     const info = unassigned || {};
     const totalCount = (info.incomeCount || 0)
         + (info.expenseCount || 0)
@@ -610,11 +626,11 @@ function buildUnassignedSection(unassigned) {
 
     md += '| Concepto | Registros | Monto (USD) |\n';
     md += '|----------|----------:|------------:|\n';
-    md += `| Pagados | ${info.incomeCount || 0} | ${formatMoney(info.incomeCents || 0, 'USD')} |\n`;
-    md += `| Gastos | ${info.expenseCount || 0} | ${formatMoney(info.expenseCents || 0, 'USD')} |\n`;
-    md += `| Fiados | ${info.pendingCount || 0} | ${formatMoney(info.pendingCents || 0, 'USD')} |\n`;
-    md += `| Pérdidas | ${info.lossesCount || 0} | ${formatMoney(info.lossesCents || 0, 'USD')} |\n`;
-    md += `| Resultado neto | - | ${formatMoney(profitCents, 'USD')} |\n\n`;
+    md += `| Pagados | ${info.incomeCount || 0} | ${fmtMoneyMd(info.incomeCents || 0, 'USD', privacy)} |\n`;
+    md += `| Gastos | ${info.expenseCount || 0} | ${fmtMoneyMd(info.expenseCents || 0, 'USD', privacy)} |\n`;
+    md += `| Fiados | ${info.pendingCount || 0} | ${fmtMoneyMd(info.pendingCents || 0, 'USD', privacy)} |\n`;
+    md += `| Pérdidas | ${info.lossesCount || 0} | ${fmtMoneyMd(info.lossesCents || 0, 'USD', privacy)} |\n`;
+    md += `| Resultado neto | - | ${fmtMoneyMd(profitCents, 'USD', privacy)} |\n\n`;
     return md;
 }
 
@@ -635,15 +651,20 @@ function parseWhoFromIncome(concept) {
     return legacyMatch?.[1]?.trim() || '';
 }
 
-function buildBuyerRanking(incomeRows, pendingRows) {
+function resolveBuyerKey(row, displayName) {
+    return normalizeReportClientKey(row?.buyer_group_key || displayName) || normalizeReportClientKey(displayName);
+}
+
+function buildBuyerRanking(incomeRows, pendingRows, privacy = getMarkdownPrivacyState()) {
     const buyers = new Map();
     const currencyCount = new Map();
 
     for (const r of incomeRows) {
         const who = resolveBuyerName(r);
-        const key = String(who).trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        const key = resolveBuyerKey(r, who) || `__income_${buyers.size}`;
         if (!buyers.has(key)) buyers.set(key, { displayWho: who, count: 0, totalCents: 0, hasPaid: false, hasPending: false, currencies: new Set() });
         const b = buyers.get(key);
+        b.displayWho = chooseReportClientName(b.displayWho, who);
         b.count += 1;
         b.totalCents += toCents(resolveAmountUsd(r));
         b.hasPaid = true;
@@ -654,9 +675,10 @@ function buildBuyerRanking(incomeRows, pendingRows) {
 
     for (const r of pendingRows) {
         const who = resolveBuyerName(r);
-        const key = String(who).trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        const key = resolveBuyerKey(r, who) || `__pending_${buyers.size}`;
         if (!buyers.has(key)) buyers.set(key, { displayWho: who, count: 0, totalCents: 0, hasPaid: false, hasPending: false, currencies: new Set() });
         const b = buyers.get(key);
+        b.displayWho = chooseReportClientName(b.displayWho, who);
         b.count += 1;
         b.totalCents += toCents(resolveAmountUsd(r));
         b.hasPending = true;
@@ -673,10 +695,10 @@ function buildBuyerRanking(incomeRows, pendingRows) {
     let md = '| Cliente | Compras | Monedas | Total (USD) | Estado |\n';
     md += '|---------|--------:|---------|------------:|--------|\n';
     for (const [, b] of sorted) {
-        const name = b.displayWho;
+        const name = maskReportName(b.displayWho, privacy);
         const estado = b.hasPaid && b.hasPending ? '🔔 Mixto' : b.hasPaid ? '✅ Pagado' : '⏳ Debe';
         const curs = Array.from(b.currencies).join(', ');
-        md += `| ${escMd(name)} | ${b.count} | ${curs} | ${formatMoney(b.totalCents, 'USD')} | ${estado} |\n`;
+        md += `| ${escMd(name)} | ${b.count} | ${curs} | ${fmtMoneyMd(b.totalCents, 'USD', privacy)} | ${estado} |\n`;
     }
     return md;
 }
@@ -723,9 +745,10 @@ export async function exportStatsReport() {
             fetchPending(user.id),
             fetchLosses(user.id)
         ]);
+        const privacy = getMarkdownPrivacyState();
 
         // Keep global totals aligned with the same source used in per-crop tables.
-        const perCropBreakdown = buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRows);
+        const perCropBreakdown = buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRows, privacy);
         const totals = perCropBreakdown.totals || {};
         const incomeCents = Number(totals.incomeCents) || 0;
         const costCents = Number(totals.costCents) || 0;
@@ -753,7 +776,7 @@ export async function exportStatsReport() {
         let md = '';
         md += `# 📊 YavlGold — Informe Estadístico\n`;
         md += `> **Fecha:** ${dateStr} ${timeStr}\n`;
-        md += `> **Usuario:** ${escMd(userName)}\n`;
+        md += `> **Usuario:** ${escMd(maskReportName(userName, privacy, 'Usuario'))}\n`;
         md += `> **Cultivos activos:** ${activeCrops.length}\n`;
         md += `> **Sistema:** YavlGold\n\n`;
         md += `---\n\n`;
@@ -762,14 +785,14 @@ export async function exportStatsReport() {
         md += `## 💰 Resumen Global\n`;
         md += `| Concepto | Monto |\n`;
         md += `|----------|------:|\n`;
-        md += `| Total pagados | ${formatMoney(incomeCents, 'USD')} |\n`;
-        md += `| Total costos | ${formatMoney(costCents, 'USD')} |\n`;
-        md += `| Ganancia neta | ${formatMoney(profitCents, 'USD')} |\n`;
-        md += `| Margen | ${marginStr} |\n`;
-        md += `| ROI | ${roiStr} |\n`;
-        md += `| Fiados por cobrar | ${formatMoney(pendingCents, 'USD')} |\n`;
-        md += `| Pagado proyectado (si se cobra todo) | ${formatMoney(projIncomeCents, 'USD')} |\n`;
-        md += `| ROI proyectado | ${projRoiStr} |\n\n`;
+        md += `| Total pagados | ${fmtMoneyMd(incomeCents, 'USD', privacy)} |\n`;
+        md += `| Total costos | ${fmtMoneyMd(costCents, 'USD', privacy)} |\n`;
+        md += `| Ganancia neta | ${fmtMoneyMd(profitCents, 'USD', privacy)} |\n`;
+        md += `| Margen | ${fmtMetricMd(marginStr, privacy)} |\n`;
+        md += `| ROI | ${fmtMetricMd(roiStr, privacy)} |\n`;
+        md += `| Fiados por cobrar | ${fmtMoneyMd(pendingCents, 'USD', privacy)} |\n`;
+        md += `| Pagado proyectado (si se cobra todo) | ${fmtMoneyMd(projIncomeCents, 'USD', privacy)} |\n`;
+        md += `| ROI proyectado | ${fmtMetricMd(projRoiStr, privacy)} |\n\n`;
         md += `> _Moneda base: USD \u00b7 Tasas al momento del registro_\n\n`;
         md += `---\n\n`;
 
@@ -777,20 +800,20 @@ export async function exportStatsReport() {
         md += `## 🌾 Resumen por Cultivo\n`;
         md += perCropBreakdown.tableMd;
         md += '\n> _Montos en USD \u00b7 Tasas al momento del registro_\n\n---\n\n';
-        md += buildUnassignedSection(perCropBreakdown.unassigned);
+        md += buildUnassignedSection(perCropBreakdown.unassigned, privacy);
         md += '---\n\n';
 
         // Buyer ranking
         md += `## 👥 Ranking de Clientes\n`;
-        md += buildBuyerRanking(incomeRows, pendingRows);
+        md += buildBuyerRanking(incomeRows, pendingRows, privacy);
         md += '\n---\n\n';
 
         // Projection
         md += `## 📈 Proyección\n`;
-        md += `Si se cobran los ${formatMoney(pendingCents, 'USD')} fiados:\n`;
-        md += `- **Pagado total:** ${formatMoney(projIncomeCents, 'USD')}\n`;
-        md += `- **Ganancia neta:** ${formatMoney(projProfitCents, 'USD')}\n`;
-        md += `- **ROI:** ${projRoiStr}\n\n`;
+        md += `Si se cobran los ${fmtMoneyMd(pendingCents, 'USD', privacy)} fiados:\n`;
+        md += `- **Pagado total:** ${fmtMoneyMd(projIncomeCents, 'USD', privacy)}\n`;
+        md += `- **Ganancia neta:** ${fmtMoneyMd(projProfitCents, 'USD', privacy)}\n`;
+        md += `- **ROI:** ${fmtMetricMd(projRoiStr, privacy)}\n\n`;
 
         // Footer
         md += `---\n`;

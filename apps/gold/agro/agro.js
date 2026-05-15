@@ -37,6 +37,7 @@ import uxMessages from '../assets/js/ui/uxMessages.js';
 import {
     BUYER_PRIVACY_CHANGE_EVENT,
     BUYER_PRIVACY_MASK,
+    MONEY_PRIVACY_MASK,
     applyBuyerPrivacy,
     applyMoneyPrivacy,
     initBuyerPrivacy,
@@ -13182,6 +13183,14 @@ function getOpsRankingDisplayName(value) {
     return sanitizeOpsRankingName(value);
 }
 
+function getOpsRankingMarkdownName(value, hideNames = readBuyerNamesHidden()) {
+    return hideNames ? BUYER_PRIVACY_MASK : sanitizeOpsRankingName(value);
+}
+
+function getOpsRankingMarkdownCurrency(value, hideMoney = readMoneyValuesHidden()) {
+    return hideMoney ? MONEY_PRIVACY_MASK : formatOpsRankingCurrency(value);
+}
+
 function resolveOpsRankingsDateRange(range) {
     const now = new Date();
     now.setHours(23, 59, 59, 999);
@@ -13591,7 +13600,7 @@ function pickRankingsErrorMessage(errors) {
     return errors.map((err) => err?.message || 'Error de consulta').join(' | ');
 }
 
-async function fetchOpsRankingsData() {
+async function fetchOpsRankingsData(options = {}) {
     const { filterQARows } = await import('./agro-report-guard.js');
     const { formatMoney: _fmtMoney, toCents: _toCents } = await import('./agro-format.js');
     const { validateExportBundle: _vEB, showExportError: _sEE } = await import('./agro-report-guard.js');
@@ -13610,11 +13619,14 @@ async function fetchOpsRankingsData() {
         };
     }
 
+    const scopedCropId = Object.prototype.hasOwnProperty.call(options || {}, 'cropId')
+        ? normalizeCropId(options.cropId)
+        : selectedCropId;
     const params = {
         p_from: rangeDates.from,
         p_to: rangeDates.to,
         p_limit: OPS_RANKINGS_LIMIT,
-        p_crop_id: selectedCropId || null
+        p_crop_id: scopedCropId || null
     };
 
     const [topClientsRes, pendingRes, cropsRes] = await Promise.all([
@@ -13697,22 +13709,25 @@ async function refreshOpsRankings() {
 }
 
 async function exportOpsRankingsMarkdown() {
-    const hasNoData = (!opsRankingsState.topClients || opsRankingsState.topClients.length === 0)
-        && (!opsRankingsState.pendingClients || opsRankingsState.pendingClients.length === 0)
-        && (!opsRankingsState.topCrops || opsRankingsState.topCrops.length === 0);
-    if (hasNoData && !opsRankingsState.loading) {
-        await refreshOpsRankings();
-    }
+    const exportData = await fetchOpsRankingsData({ cropId: null });
+    const exportTopClients = normalizeOpsRankingsRows(exportData.topClients);
+    const exportPendingClients = normalizeOpsRankingsRows(exportData.pendingClients);
+    const exportTopCrops = normalizeOpsRankingsRows(exportData.topCrops);
+    const hideNames = readBuyerNamesHidden();
+    const hideMoney = readMoneyValuesHidden();
 
     const now = new Date();
     const dateStamp = now.toISOString().slice(0, 10);
     const rangeLabel = OPS_RANKINGS_RANGE_LABELS[opsRankingsState.range] || OPS_RANKINGS_RANGE_LABELS[OPS_RANKINGS_DEFAULT_RANGE];
-    const cropLabel = `Cultivo: ${getOpsSelectedCropLabel(selectedCropId)}`;
+    const cropLabel = 'Cultivo: 📋 Vista General';
 
     let md = `# 🏆 Rankings Agro\n\n`;
     md += `- Fecha: ${now.toLocaleString('es-CO')}\n`;
     md += `- Rango: ${rangeLabel}\n`;
     md += `- ${cropLabel}\n\n`;
+    if (exportData.error) {
+        md += `> Aviso: ${exportData.error}\n\n`;
+    }
 
     const appendSection = (title, rows, mapper) => {
         md += `## ${title}\n\n`;
@@ -13726,7 +13741,7 @@ async function exportOpsRankingsMarkdown() {
         md += `\n`;
     };
 
-    const allTopClientsMd = normalizeOpsRankingsRows(opsRankingsState.topClients);
+    const allTopClientsMd = exportTopClients;
     const missingTopClientsMd = allTopClientsMd.filter((row) => !pickOpsBuyerName(row));
     const namedTopClientsMd = allTopClientsMd.filter((row) => !!pickOpsBuyerName(row));
     const missingTopClientsMdSummary = missingTopClientsMd.reduce((acc, row) => {
@@ -13736,31 +13751,29 @@ async function exportOpsRankingsMarkdown() {
     }, { operations: 0, total: 0 });
 
     appendSection('Top Clientes (Cobrado)', namedTopClientsMd, (row) => {
-        const name = getOpsRankingDisplayName(pickOpsBuyerName(row));
+        const name = getOpsRankingMarkdownName(pickOpsBuyerName(row), hideNames);
         const operationsLabel = formatOpsRankingCount(row?.operations, 'operación', 'operaciones');
-        return `${name} · ${formatOpsRankingCurrency(row?.total)} · ${operationsLabel} · última ${formatOpsRankingDate(row?.last_date)}`;
+        return `${name} · ${getOpsRankingMarkdownCurrency(row?.total, hideMoney)} · ${operationsLabel} · última ${formatOpsRankingDate(row?.last_date)}`;
     });
     if (missingTopClientsMd.length > 0) {
-        md += `> ⚠️ ${formatOpsRankingCount(missingTopClientsMdSummary.operations, 'registro', 'registros')} sin cliente: ${formatOpsRankingCurrency(missingTopClientsMdSummary.total)}\n\n`;
+        md += `> ⚠️ ${formatOpsRankingCount(missingTopClientsMdSummary.operations, 'registro', 'registros')} sin cliente: ${getOpsRankingMarkdownCurrency(missingTopClientsMdSummary.total, hideMoney)}\n\n`;
     }
 
-    appendSection('Fiados por Cliente', opsRankingsState.pendingClients, (row) => {
-        const name = getOpsRankingDisplayName(row?.client_name);
+    appendSection('Fiados por Cliente', exportPendingClients, (row) => {
+        const name = getOpsRankingMarkdownName(row?.client_name, hideNames);
         const pendingLabel = formatOpsRankingCount(row?.pending_count, 'fiado', 'fiados');
-        return `${name} · ${formatOpsRankingCurrency(row?.total_pending)} · ${pendingLabel} · próximo ${formatOpsRankingDate(row?.next_due_date)}`;
+        return `${name} · ${getOpsRankingMarkdownCurrency(row?.total_pending, hideMoney)} · ${pendingLabel} · próximo ${formatOpsRankingDate(row?.next_due_date)}`;
     });
 
-    const topCropsTitle = selectedCropId ? 'Rentabilidad real del cultivo' : 'Top Cultivos (Rentabilidad real)';
+    const topCropsTitle = 'Top Cultivos (Rentabilidad real)';
     md += `## ${topCropsTitle}\n\n`;
     md += `> Nota: Usa ingresos cobrados menos gastos cerrados y pérdidas confirmadas de Operación Comercial. No incluye inversión base ni fiados.\n\n`;
-    if (!Array.isArray(opsRankingsState.topCrops) || opsRankingsState.topCrops.length === 0) {
-        md += selectedCropId
-            ? 'Sin ingresos cobrados para este cultivo en el rango seleccionado.\n\n'
-            : 'Sin ingresos cobrados en el rango seleccionado.\n\n';
+    if (!exportTopCrops.length) {
+        md += 'Sin ingresos cobrados en el rango seleccionado.\n\n';
     } else {
-        opsRankingsState.topCrops.forEach((row, index) => {
+        exportTopCrops.forEach((row, index) => {
             const label = resolveOpsRankingCropLabel(row);
-            md += `${index + 1}. ${label} · Rentabilidad real ${formatOpsRankingCurrency(row?.profit)} · Ingresos cobrados: ${formatOpsRankingCurrency(row?.ingresos)} · Gastos cerrados / pérdidas: ${formatOpsRankingCurrency(row?.gastos)}\n`;
+            md += `${index + 1}. ${label} · Rentabilidad real ${getOpsRankingMarkdownCurrency(row?.profit, hideMoney)} · Ingresos cobrados: ${getOpsRankingMarkdownCurrency(row?.ingresos, hideMoney)} · Gastos cerrados / pérdidas: ${getOpsRankingMarkdownCurrency(row?.gastos, hideMoney)}\n`;
         });
         md += `\n`;
     }
@@ -13768,7 +13781,7 @@ async function exportOpsRankingsMarkdown() {
     const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
     if (_validateExportBundle && _showExportError) {
         const vResult = _validateExportBundle({
-            rows: [...(opsRankingsState.topClients || []), ...(opsRankingsState.pendingClients || []), ...(opsRankingsState.topCrops || [])],
+            rows: [...exportTopClients, ...exportPendingClients, ...exportTopCrops],
             totals: {},
             currency: 'USD'
         });

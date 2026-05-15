@@ -2244,3 +2244,23 @@ El diagnóstico profundo reveló 20 issues clasificados: 2 Críticos, 6 Medios, 
 ### Lección
 - Build PASS no garantiza output correcto en frentes semánticos (reportes/finanzas).
 - Próximo intento debe usar PRs separados por bug + QA online individual antes de merge.
+
+---
+
+## 2026-05-15 — Cirugía de exportes Agro (privacidad, rankings y clientes)
+
+### Situación
+- Se retomaron bugs de reportes/exportes tras el rollback de `6fea66e`.
+- Alcance limitado a exportes Markdown y presentación de rankings; sin migraciones ni cambios canónicos.
+
+### Cambios aplicados
+- Nuevo helper `agro-report-format.js` para privacidad Markdown, normalización de cliente y destino humano de transferidos.
+- `agro-crop-report.js`: `Pagados` se consolida por cliente canónico; fiados transferidos legacy ya no muestran `active` como destino.
+- `agro-stats-report.js`: aplica privacidad de nombres/montos y usa `buyer_group_key` cuando está disponible.
+- `agro.js`: `AgroRankings_*.md` exporta Vista General estable y respeta ocultar nombres/montos.
+
+### Verificación
+- `node --check` PASS en módulos tocados.
+- Helper check PASS: legacy `transfer_state=active` + `transferred_income_id` resuelve `pagado/pérdida`; `income` resuelve `pagado`; `Jesús/Jesus berraco` comparten key.
+- `pnpm build:gold` PASS (agent-guard, report-check, Vite, llms, UTF-8).
+- Pendiente QA real de exportes en navegador/cuenta QA antes de dar el frente como cerrado en producción.

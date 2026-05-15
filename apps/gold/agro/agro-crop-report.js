@@ -8,6 +8,15 @@ import supabase from '../assets/js/config/supabase-config.js';
 import { computeUnitTotalsFromRows, formatUnitTotalsMarkdown } from './agro-unit-totals.js';
 import { filterQARows, validateExportBundle, showExportError } from './agro-report-guard.js';
 import { toCents, formatMoney, resolveAmountUsd } from './agro-format.js';
+import {
+    chooseReportClientName,
+    getMarkdownPrivacyState,
+    maskReportMetric,
+    maskReportMoney,
+    maskReportName,
+    normalizeReportClientKey,
+    resolvePendingTransferDestination
+} from './agro-report-format.js';
 
 // ============================================================
 // HELPERS (self-contained to avoid coupling with agro.js internals)
@@ -172,6 +181,14 @@ function fmtDate(dateStr) {
 
 function escMd(str) {
     return String(str || '').replace(/\|/g, '·').replace(/\n/g, ' ');
+}
+
+function fmtMoneyMd(cents, currency, privacy) {
+    return maskReportMoney(formatMoney(cents, currency), privacy);
+}
+
+function fmtMetricMd(value, privacy) {
+    return maskReportMetric(value, privacy);
 }
 
 function isMissingColumnError(error, column) {
@@ -510,29 +527,71 @@ function deletedFlag(row, historyMode) {
     return historyMode && row.deleted_at ? '[ELIMINADO] ' : '';
 }
 
-function buildIncomeTable(items, historyMode = false) {
+function formatUnitTotalsInline(rows) {
+    const totals = computeUnitTotalsFromRows(rows);
+    const parts = [];
+    const sacos = Number(totals?.sacos || 0);
+    const kg = Number(totals?.kilogramos || 0);
+    const cestas = Number(totals?.cestas || 0);
+    const fmtQty = (value) => {
+        const safe = Number(value);
+        if (!Number.isFinite(safe)) return '0';
+        return Number.isInteger(safe) ? String(safe) : String(Number(safe.toFixed(2)));
+    };
+    if (sacos > 0) parts.push(`${fmtQty(sacos)} ${Math.abs(sacos - 1) < 1e-9 ? 'saco' : 'sacos'}`);
+    if (kg > 0) parts.push(`${fmtQty(kg)} kg`);
+    if (cestas > 0) parts.push(`${fmtQty(cestas)} ${Math.abs(cestas - 1) < 1e-9 ? 'cesta' : 'cestas'}`);
+    return parts.join(' · ') || '-';
+}
+
+function buildIncomeTable(items, historyMode = false, privacy = getMarkdownPrivacyState()) {
     if (!items.length) return 'Sin registros\n';
-    const splitNotes = items.map((it) => buildSplitMdSummary(it, 'pagados'));
-    const hasSplit = splitNotes.some(Boolean);
-    let md = '| Fecha | Concepto | Cliente | Cantidad | Moneda | Monto | USD';
-    md += hasSplit ? ' | Split |\n' : ' |\n';
-    md += '|-------|----------|-----------|----------|--------|------:|----:';
-    md += hasSplit ? '|-------|\n' : '|\n';
+    const groups = new Map();
     for (let index = 0; index < items.length; index += 1) {
         const it = items[index];
         const raw = it.concepto || 'Sin concepto';
         const parsed = parseWho('ingresos', raw);
-        const currency = it.currency || 'USD';
-        const amtUsd = formatMoney(toCents(resolveAmountUsd(it)), 'USD');
-        const flag = deletedFlag(it, historyMode);
-        const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(parsed.concept || raw)} | ${escMd(parsed.who) || '-'} | ${fmtUnits(it)} | ${currency} | ${formatMoney(toCents(it.monto), currency)} | ${amtUsd}`;
-        md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
+        const client = parsed.who || 'Sin cliente';
+        const key = normalizeReportClientKey(client) || `__sin_cliente_${index}`;
+        if (!groups.has(key)) {
+            groups.set(key, {
+                client,
+                count: 0,
+                totalUsdCents: 0,
+                currencies: new Set(),
+                rows: [],
+                lastDate: ''
+            });
+        }
+        const group = groups.get(key);
+        group.client = chooseReportClientName(group.client, client);
+        group.count += 1;
+        group.totalUsdCents += toCents(resolveAmountUsd(it));
+        group.currencies.add(String(it.currency || 'USD').trim().toUpperCase() || 'USD');
+        group.rows.push(it);
+        if (it.fecha && (!group.lastDate || it.fecha > group.lastDate)) {
+            group.lastDate = it.fecha;
+        }
+    }
+
+    const rows = Array.from(groups.values()).sort((a, b) => b.totalUsdCents - a.totalUsdCents);
+    let md = '| Cliente | Movimientos | Monedas | Cantidad | Total USD | Última fecha |\n';
+    md += '|---------|------------:|---------|----------|----------:|--------------|\n';
+    for (const group of rows) {
+        const name = maskReportName(group.client, privacy);
+        const currencies = Array.from(group.currencies).join(', ') || 'USD';
+        md += `| ${escMd(name)} | ${group.count} | ${escMd(currencies)} | ${escMd(formatUnitTotalsInline(group.rows))} | ${fmtMoneyMd(group.totalUsdCents, 'USD', privacy)} | ${fmtDate(group.lastDate)} |\n`;
+    }
+
+    if (historyMode) {
+        md += `\n> _Pagados agrupados por cliente canónico; movimientos eliminados siguen marcados en conteos de evidencia._\n`;
+    } else {
+        md += `\n> _Pagados agrupados por cliente canónico; ${items.length} movimientos consolidados en ${rows.length} cliente(s)._\n`;
     }
     return md;
 }
 
-function buildExpenseTable(items, historyMode = false) {
+function buildExpenseTable(items, historyMode = false, privacy = getMarkdownPrivacyState()) {
     if (!items.length) return 'Sin registros\n';
     const splitNotes = items.map((it) => buildSplitMdSummary(it, 'gastos'));
     const hasSplit = splitNotes.some(Boolean);
@@ -543,16 +602,16 @@ function buildExpenseTable(items, historyMode = false) {
     for (let index = 0; index < items.length; index += 1) {
         const it = items[index];
         const currency = it.currency || 'USD';
-        const amtUsd = formatMoney(toCents(resolveAmountUsd(it)), 'USD');
+        const amtUsd = fmtMoneyMd(toCents(resolveAmountUsd(it)), 'USD', privacy);
         const flag = deletedFlag(it, historyMode);
         const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.date)} | ${flag}${escMd(it.concept)} | ${escMd(it.category) || '-'} | ${currency} | ${formatMoney(toCents(it.amount), currency)} | ${amtUsd}`;
+        md += `| ${fmtDate(it.date)} | ${flag}${escMd(it.concept)} | ${escMd(it.category) || '-'} | ${currency} | ${fmtMoneyMd(toCents(it.amount), currency, privacy)} | ${amtUsd}`;
         md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
 }
 
-function buildPendingTable(items, historyMode = false) {
+function buildPendingTable(items, historyMode = false, privacy = getMarkdownPrivacyState()) {
     if (!items.length) return 'Sin registros\n';
     const splitNotes = items.map((it) => buildSplitMdSummary(it, 'fiados'));
     const hasSplit = splitNotes.some(Boolean);
@@ -567,17 +626,17 @@ function buildPendingTable(items, historyMode = false) {
         const client = it.cliente || parsed.who || '-';
         const state = it.transfer_state || 'fiado';
         const currency = it.currency || 'USD';
-        const amtUsd = formatMoney(toCents(resolveAmountUsd(it)), 'USD');
+        const amtUsd = fmtMoneyMd(toCents(resolveAmountUsd(it)), 'USD', privacy);
         const flag = deletedFlag(it, historyMode);
         const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(parsed.concept || raw)} | ${escMd(client)} | ${fmtUnits(it)} | ${currency} | ${formatMoney(toCents(it.monto), currency)} | ${amtUsd} | ${escMd(state)}`;
+        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(parsed.concept || raw)} | ${escMd(maskReportName(client, privacy))} | ${fmtUnits(it)} | ${currency} | ${fmtMoneyMd(toCents(it.monto), currency, privacy)} | ${amtUsd} | ${escMd(state)}`;
         md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
 }
 
 /** Tabla para fiados que fueron transferidos a pagado/pérdida */
-function buildPendingTransferredTable(items) {
+function buildPendingTransferredTable(items, privacy = getMarkdownPrivacyState()) {
     if (!items.length) return 'Sin registros\n';
     const splitNotes = items.map((it) => buildSplitMdSummary(it, 'fiados'));
     const hasSplit = splitNotes.some(Boolean);
@@ -591,16 +650,16 @@ function buildPendingTransferredTable(items) {
         const parsed = parseWho('pendientes', raw);
         const client = it.cliente || parsed.who || '-';
         const currency = it.currency || 'USD';
-        const amtUsd = formatMoney(toCents(resolveAmountUsd(it)), 'USD');
-        const dest = it.transferred_to || it.transfer_state || 'pagado/pérdida';
+        const amtUsd = fmtMoneyMd(toCents(resolveAmountUsd(it)), 'USD', privacy);
+        const dest = resolvePendingTransferDestination(it);
         const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.fecha)} | [TRANSFERIDO] ${escMd(parsed.concept || raw)} | ${escMd(client)} | ${fmtUnits(it)} | ${currency} | ${formatMoney(toCents(it.monto), currency)} | ${amtUsd} | ${escMd(dest)}`;
+        md += `| ${fmtDate(it.fecha)} | [TRANSFERIDO] ${escMd(parsed.concept || raw)} | ${escMd(maskReportName(client, privacy))} | ${fmtUnits(it)} | ${currency} | ${fmtMoneyMd(toCents(it.monto), currency, privacy)} | ${amtUsd} | ${escMd(dest)}`;
         md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
 }
 
-function buildLossTable(items, historyMode = false) {
+function buildLossTable(items, historyMode = false, privacy = getMarkdownPrivacyState()) {
     if (!items.length) return 'Sin pérdidas registradas ✅\n';
     const splitNotes = items.map((it) => buildSplitMdSummary(it, 'perdidas'));
     const hasSplit = splitNotes.some(Boolean);
@@ -611,16 +670,16 @@ function buildLossTable(items, historyMode = false) {
     for (let index = 0; index < items.length; index += 1) {
         const it = items[index];
         const currency = it.currency || 'USD';
-        const amtUsd = formatMoney(toCents(resolveAmountUsd(it)), 'USD');
+        const amtUsd = fmtMoneyMd(toCents(resolveAmountUsd(it)), 'USD', privacy);
         const flag = deletedFlag(it, historyMode);
         const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(it.concepto)} | ${escMd(it.causa) || '-'} | ${fmtUnits(it)} | ${currency} | ${formatMoney(toCents(it.monto), currency)} | ${amtUsd}`;
+        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(it.concepto)} | ${escMd(it.causa) || '-'} | ${fmtUnits(it)} | ${currency} | ${fmtMoneyMd(toCents(it.monto), currency, privacy)} | ${amtUsd}`;
         md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
 }
 
-function buildTransferTable(items, historyMode = false) {
+function buildTransferTable(items, historyMode = false, privacy = getMarkdownPrivacyState()) {
     if (!items.length) return 'Sin donaciones registradas\n';
     const splitNotes = items.map((it) => buildSplitMdSummary(it, 'donaciones'));
     const hasSplit = splitNotes.some(Boolean);
@@ -631,10 +690,10 @@ function buildTransferTable(items, historyMode = false) {
     for (let index = 0; index < items.length; index += 1) {
         const it = items[index];
         const currency = it.currency || 'USD';
-        const amtUsd = formatMoney(toCents(resolveAmountUsd(it)), 'USD');
+        const amtUsd = fmtMoneyMd(toCents(resolveAmountUsd(it)), 'USD', privacy);
         const flag = deletedFlag(it, historyMode);
         const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(it.concepto)} | ${escMd(it.destino) || '-'} | ${fmtUnits(it)} | ${currency} | ${formatMoney(toCents(it.monto), currency)} | ${amtUsd}`;
+        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(it.concepto)} | ${escMd(maskReportName(it.destino, privacy, '-'))} | ${fmtUnits(it)} | ${currency} | ${fmtMoneyMd(toCents(it.monto), currency, privacy)} | ${amtUsd}`;
         md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
@@ -758,6 +817,7 @@ export async function exportCropReport(cropId, opts = {}) {
         const roiStr = totalCostWithInvestmentCents > 0
             ? (((totalIncomeCents - totalCostWithInvestmentCents) / totalCostWithInvestmentCents) * 100).toFixed(1) + '%'
             : 'N/A';
+        const privacy = getMarkdownPrivacyState();
 
         const now = new Date();
         const dateStr = now.toISOString().split('T')[0];
@@ -778,7 +838,7 @@ export async function exportCropReport(cropId, opts = {}) {
         const harvestLine = cropExists && crop?.expected_harvest_date ? fmtDate(crop.expected_harvest_date) : 'N/A';
         const progressLine = cropExists && progress?.ok ? formatCropProgressLine(progress) : 'N/A';
         const investmentLine = cropExists && crop?.investment !== null && crop?.investment !== undefined
-            ? formatMoney(toCents(crop.investment), 'USD')
+            ? fmtMoneyMd(toCents(crop.investment), 'USD', privacy)
             : 'N/A';
 
         // Conteos por modo
@@ -826,14 +886,14 @@ export async function exportCropReport(cropId, opts = {}) {
         md += `## 💰 Resumen Financiero\n`;
         md += `| Concepto | Monto |\n`;
         md += `|----------|------:|\n`;
-        md += `| Pagados | ${formatMoney(totalIncomeCents, 'USD')} |\n`;
-        md += `| Inversión inicial | ${formatMoney(initialInvestmentCents, 'USD')} |\n`;
-        md += `| Gastos vinculados | ${formatMoney(totalExpensesCents, 'USD')} |\n`;
-        md += `| Costos/Inversión | ${formatMoney(totalCostWithInvestmentCents, 'USD')} |\n`;
-        md += `| Ganancia neta | ${formatMoney(profitCents, 'USD')} |\n`;
-        md += `| Fiados por cobrar (activos) | ${formatMoney(totalPendingCents, 'USD')} |\n`;
-        md += `| Pérdidas | ${formatMoney(totalLossesCents, 'USD')} |\n`;
-        md += `| ROI | ${roiStr} |\n\n`;
+        md += `| Pagados | ${fmtMoneyMd(totalIncomeCents, 'USD', privacy)} |\n`;
+        md += `| Inversión inicial | ${fmtMoneyMd(initialInvestmentCents, 'USD', privacy)} |\n`;
+        md += `| Gastos vinculados | ${fmtMoneyMd(totalExpensesCents, 'USD', privacy)} |\n`;
+        md += `| Costos/Inversión | ${fmtMoneyMd(totalCostWithInvestmentCents, 'USD', privacy)} |\n`;
+        md += `| Ganancia neta | ${fmtMoneyMd(profitCents, 'USD', privacy)} |\n`;
+        md += `| Fiados por cobrar (activos) | ${fmtMoneyMd(totalPendingCents, 'USD', privacy)} |\n`;
+        md += `| Pérdidas | ${fmtMoneyMd(totalLossesCents, 'USD', privacy)} |\n`;
+        md += `| ROI | ${fmtMetricMd(roiStr, privacy)} |\n\n`;
         md += `> _Totales convertidos a USD \u00b7 Tasas al momento del registro_\n\n`;
 
         const cycleBaseUnitTotals = computeUnitTotalsFromRows([
@@ -866,24 +926,24 @@ export async function exportCropReport(cropId, opts = {}) {
 
         // Pagados
         md += `## 📥 Pagados (${fmtCount(ci, historyMode)})\n`;
-        md += buildIncomeTable(income, historyMode);
+        md += buildIncomeTable(income, historyMode, privacy);
         md += '\n';
 
         // Expenses
         md += `## 📤 Gastos (${fmtCount(ce, historyMode)})\n`;
-        md += buildExpenseTable(expenses, historyMode);
+        md += buildExpenseTable(expenses, historyMode, privacy);
         md += '\n';
 
         // Fiados — solo activos (por cobrar)
         md += `## ⏳ Fiados activos — por cobrar (${pendingActive.length})\n`;
-        md += buildPendingTable(pendingActive, false);
+        md += buildPendingTable(pendingActive, false, privacy);
         md += '\n';
 
         // Fiados transferidos (→ pagado / pérdida)
         if (historyMode || pendingTransferred.length > 0) {
             md += `## ⇔️ Fiados transferidos (${pendingTransferred.length})\n`;
             md += pendingTransferred.length
-                ? buildPendingTransferredTable(pendingTransferred)
+                ? buildPendingTransferredTable(pendingTransferred, privacy)
                 : 'Sin fiados transferidos\n';
             md += '\n';
         }
@@ -891,18 +951,18 @@ export async function exportCropReport(cropId, opts = {}) {
         // Fiados eliminados reales (solo en historyMode)
         if (historyMode && pendingDeletedReal.length > 0) {
             md += `## 🗑️ Fiados eliminados (${pendingDeletedReal.length})\n`;
-            md += buildPendingTable(pendingDeletedReal, true);
+            md += buildPendingTable(pendingDeletedReal, true, privacy);
             md += '\n';
         }
 
         // Losses
         md += `## 📉 Pérdidas (${fmtCount(cl, historyMode)})\n`;
-        md += buildLossTable(losses, historyMode);
+        md += buildLossTable(losses, historyMode, privacy);
         md += '\n';
 
         // Transfers
         md += `## 🎁 Donaciones (${fmtCount(ct, historyMode)})\n`;
-        md += buildTransferTable(transfers, historyMode);
+        md += buildTransferTable(transfers, historyMode, privacy);
         md += '\n';
 
         // Footer
