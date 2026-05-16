@@ -11,12 +11,25 @@
 
 ## Gobernanza
 
-Este documento es la **verdad semántica canónica del módulo Agro**. Define qué es cada superficie, cómo se relaciona y qué malentendidos ya quedaron resueltos.
+Este documento es la **verdad semántica canónica del módulo Agro**. Define qué es cada superficie, cómo se relación y qué malentendidos ya quedaron resueltos.
 
 * Ningún agente puede modificar, ampliar o eliminar contenido de este documento sin autorización expresa del usuario o autorización explícita en sesión activa.
 * Toda mejora funcional real, nueva familia, nuevo módulo, cambio importante de experiencia o cambio semántico relevante de Agro debe reflejarse aquí.
 * Este documento **no reemplaza** `AGENT_REPORT_ACTIVE.md`. Este es ley semántica; el reporte activo es bitácora operativa.
 * Este documento **no es bitácora de sesión**. No debe contaminarse con detalles técnicos innecesarios, logs de build ni reportes de diagnóstico.
+
+### Precedencia canónica
+
+Cuando exista conflicto entre documentos canónicos, la jerarquía de autoridad es:
+
+1. `AGENTS.md` — reglas globales de repo y operación (autoridad suprema del proyecto)
+2. `ADN-VISUAL-V11.0.md` — identidad visual y sistema de diseño
+3. `FICHA_TECNICA.md` — arquitectura y límites técnicos
+4. `MANIFIESTO_AGRO.md` — semántica funcional de Agro (este documento)
+5. `NAVEGACION.md` — rutas y nombres visibles de navegación (si existe)
+6. `AGENT_REPORT_ACTIVE.md` — bitácora operativa (no es ley, no prevalece en conflictos)
+
+> **Regla:** un documento más arriba en la jerarquía prevalece. El reporte activo (`AGENT_REPORT_ACTIVE.md`) registra decisiones, pero no sustituye la ley semántica del manifiesto ni las reglas del repo.
 
 ---
 
