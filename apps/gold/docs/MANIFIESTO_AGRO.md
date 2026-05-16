@@ -1407,7 +1407,7 @@ Cualquier cambio visual debe obedecer el ADN Visual V11 y el canon de modales §
 
 ## 12. Pendientes de redacción
 
-### Pendientes críticos
+### Pendientes semánticos reales
 
 * [x] Definir con precisión Cartera Viva
 * [x] Definir con precisión Cartera Operativa
@@ -1418,6 +1418,15 @@ Cualquier cambio visual debe obedecer el ADN Visual V11 y el canon de modales §
 * [x] Añadir bugs históricos resueltos
 * [x] Agregar multimoneda real como contexto operativo
 * [x] Documentar transferencia de historial, parcialidad y reversión segura
+* [x] Unificar "Granja" vs "Operación" en hub de navegación — "Operación Comercial" no existe como módulo real; la categoría financiera se llama "Finanzas"
+
+### Pendientes funcionales por validar
+
+* [ ] Validar alcance funcional exacto de multimoneda (COP/USD/VES) en balances y estadísticas por superficie
+* [ ] Definir reglas de conversión monetaria: tasa de cambio, fuente de la tasa, rounding
+* [ ] Validar alcance exacto de reversión segura por superficie: qué se revierte, qué se preserva
+* [ ] Pendiente #8 (reportes): fiados/pendientes no agrupados por cliente canónico en informes de cultivo — necesita QA online
+* [ ] Pendiente #9 (reportes): rankings exportado vs ranking en informe estadístico global pueden divergir por alcance/fuente de datos — necesita QA online
 
 ### Pendientes deseables
 
@@ -1425,8 +1434,7 @@ Cualquier cambio visual debe obedecer el ADN Visual V11 y el canon de modales §
 * [ ] Agregar glosario breve
 * [x] Agregar sección "cómo empezar desde cero"
 * [x] Agregar sección "cómo exportar / salir / respaldar"
-* [ ] Validar alcance funcional exacto de multimoneda, transferencias parciales y reversión por superficie
-* [ ] Cartera Viva Lifecycle — Archivo / Papelera / Restauracion: pendiente futuro para archivar/restaurar clientes y, despues, registros. Nada que afecte dinero debe desaparecer sin trazabilidad.
+* [ ] Cartera Viva Lifecycle — Archivo / Papelera / Restauración: pendiente futuro para archivar/restaurar clientes y, después, registros. Nada que afecte dinero debe desaparecer sin trazabilidad.
 
 ---
 
