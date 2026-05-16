@@ -611,6 +611,49 @@ function buildExpenseTable(items, historyMode = false, privacy = getMarkdownPriv
     return md;
 }
 
+function buildPendingSummaryTable(items, privacy = getMarkdownPrivacyState()) {
+    if (!items.length) return '';
+    const groups = new Map();
+    for (let index = 0; index < items.length; index += 1) {
+        const it = items[index];
+        const raw = it.concepto || 'Sin concepto';
+        const parsed = parseWho('pendientes', raw);
+        const client = it.cliente || parsed.who || '-';
+        const key = normalizeReportClientKey(client) || `__sin_cliente_${index}`;
+        if (!groups.has(key)) {
+            groups.set(key, {
+                client,
+                count: 0,
+                totalUsdCents: 0,
+                currencies: new Set(),
+                rows: [],
+                lastDate: ''
+            });
+        }
+        const group = groups.get(key);
+        group.client = chooseReportClientName(group.client, client);
+        group.count += 1;
+        group.totalUsdCents += toCents(resolveAmountUsd(it));
+        group.currencies.add(String(it.currency || 'USD').trim().toUpperCase() || 'USD');
+        group.rows.push(it);
+        if (it.fecha && (!group.lastDate || it.fecha > group.lastDate)) {
+            group.lastDate = it.fecha;
+        }
+    }
+
+    const rows = Array.from(groups.values()).sort((a, b) => b.totalUsdCents - a.totalUsdCents);
+    let md = '| Cliente | Fiados | Monedas | Cantidad | Total USD | Última fecha |\n';
+    md += '|---------|-------:|---------|----------|----------:|--------------|\n';
+    for (const group of rows) {
+        const name = maskReportName(group.client, privacy);
+        const currencies = Array.from(group.currencies).join(', ') || 'USD';
+        md += `| ${escMd(name)} | ${group.count} | ${escMd(currencies)} | ${escMd(formatUnitTotalsInline(group.rows))} | ${fmtMoneyMd(group.totalUsdCents, 'USD', privacy)} | ${fmtDate(group.lastDate)} |\n`;
+    }
+
+    md += `\n> _Fiados agrupados por cliente canónico; ${items.length} movimiento(s) consolidado(s) en ${rows.length} cliente(s)._\n`;
+    return md;
+}
+
 function buildPendingTable(items, historyMode = false, privacy = getMarkdownPrivacyState()) {
     if (!items.length) return 'Sin registros\n';
     const splitNotes = items.map((it) => buildSplitMdSummary(it, 'fiados'));
@@ -936,6 +979,11 @@ export async function exportCropReport(cropId, opts = {}) {
 
         // Fiados — solo activos (por cobrar)
         md += `## ⏳ Fiados activos — por cobrar (${pendingActive.length})\n`;
+        if (pendingActive.length > 0) {
+            md += `### Resumen por cliente (Fiados)\n`;
+            md += buildPendingSummaryTable(pendingActive, privacy);
+            md += '\n';
+        }
         md += buildPendingTable(pendingActive, false, privacy);
         md += '\n';
 
