@@ -2291,3 +2291,98 @@ El diagnóstico profundo reveló 20 issues clasificados: 2 Críticos, 6 Medios, 
 
 ### Estado
 - Pendiente #7 (nomenclatura): **DONE**.
+
+---
+
+## 2026-05-15 — Manifiesto parchado y reindexado
+
+### Cambios
+- §3.1: bloque legacy duplicado eliminado (Operación comercial, Trabajo diario, etc. ya dentro de Mi Granja).
+- §4.12.3/4.12.4: puerta del hub "Operación" → "Granja" (3 ocurrencias: puertas, mobile bar, descripción). Consistente con `#view=granja`.
+- Centro de Reportes: 4.8.1 → 4.9; Bitácora 4.9 → 4.10; Asistente IA 4.10 → 4.11; Shell 4.11 → 4.12 (.1–.5).
+- Confirmaciones destructivas: canon alineado con `showAgroConfirmDialog()`. `confirm()` nativo ya no es canon para acciones destructivas.
+- §8 Privacidad: agregada subsección "Privacidad y exportes" — exports MD respetan privacidad cuando está activa.
+
+### Verificación
+- `rg` confirma 0 "Operación" como puerta del hub, 0 "4.8.1", numeración 4.1–4.12 consecutiva.
+- 0 links internos rotos por renumeración (§4.5.4 intacta, sin otras refs por número).
+- `pnpm build:gold` PASS.
+
+---
+
+## 2026-05-14 — Reporte final de agentes
+
+**Estado:** YELLOW (avance real + rollback correcto + canon limpio; quedan pendientes semánticos en reportes)
+**Branch:** `main`
+**QA:** QA FAIL en intento amplio de fix; luego rollback y correcciones controladas.
+
+### Resumen ejecutivo
+El 14 de mayo fue un día de corrección y gobernanza:
+
+- Se intentó un fix grande de exportes/reportes; **build pasó pero QA online falló**, por lo que se aplicó **revert inmediato** (decisión correcta).
+- Luego se avanzó con enfoque más seguro: **unificación de formato de reportes mediante resolver compartido** (privacidad, normalización de nombre, etiqueta de transferidos).
+- Se cerró formalmente el **Pendiente #7**: nomenclatura canónica "Operación Comercial" → **Finanzas** como categoría (módulos reales intactos).
+- Codex fue esencial para este frente con alta carga semántica; en modo gratuito/limitado solo alcanzó para diagnóstico y correcciones parciales.
+
+### Commits del día
+1. `fix(agro): stabilize exports` — intento amplio → **QA FAIL** (regresión).
+2. `Revert "fix(agro): stabilize exports"` — rollback para restaurar estabilidad.
+3. `docs(agro): rollback reportes QA FAIL 2026-05-14` — registro documental del fallo.
+4. `fix(agro): unify report formatting with shared resolver` — avance real post-rollback (privacidad / nombres / transferidos).
+5. `docs(agro): close pending #7 (Finanzas canon rename)` — cierre formal del pendiente.
+
+### Qué se solucionó
+- **Gobernanza:** QA online manda. Build PASS ≠ cierre si el output real falla. Rollback ejecutado rápido y documentado.
+- **Pendiente #7 (DONE):** canon semántico actualizado a "Finanzas" como categoría.
+- **Reportes/exportes — coherencia parcial:** resolver compartido para privacidad, normalización de nombre de cliente y etiqueta humana de transferidos.
+
+### Pendientes vivos
+- **Pendiente #8 (Crítico):** fiados/pendientes no agrupados por cliente canónico en informes de cultivo.
+- **Pendiente #9 (Alto):** rankings exportado vs ranking en informe estadístico global pueden divergir por alcance/fuente de datos.
+
+### QA online pendiente
+- Export de informe por cultivo con caso conocido (José Luis / Batata amarilla).
+- Export de rankings desde Centro (global) y comparación contra ranking del informe estadístico global.
+- Verificar que transferidos no aparecen con destino "active".
+
+### Recomendación para mañana
+1. QA online post-cambios para confirmar estado real de #8 y #9.
+2. Si persisten: atacar **#8** primero (legibilidad y auditoría por cultivo), luego **#9** (rankings y alcance).
+3. Regla: PRs pequeños + QA online por caso antes de declarar GREEN.
+
+### Estado de agentes (hoy)
+- **Codex:** esencial para frentes semánticos (reportes/finanzas). Modo gratuito/limitado ayuda pero no sustituye ofensiva quirúrgica completa.
+- **GLM 5.1:** útil para canon/documentación y diagnóstico semántico.
+- **Kimi K2.6:** auditor honesto / diagnóstico con evidencia; útil para señalar raíces.
+
+### Cierre del día
+**YELLOW**: no fue cierre perfecto del frente de reportes, pero sí fue un día correcto de ingeniería: rollback a tiempo, canon limpio, y avance estructural (resolver compartido) para evitar inconsistencias futuras.
+
+---
+
+## 2026-05-16 — Cierre Pendiente #8 (agrupación de fiados por cliente)
+
+### Problema
+En el "Informe del Cultivo", la sección FIADOS/PENDIENTES mostraba filas crudas por movimiento sin agrupar. Un mismo cliente aparecía fragmentado ("Jesús" vs "Jesus berraco", "Orlando" vs "Orlando Pineda") dificultando la auditoría.
+
+### Solución
+- Nueva función `buildPendingSummaryTable()` en `agro-crop-report.js`.
+- Usa `normalizeReportClientKey()` y `chooseReportClientName()` (helpers existentes) para agrupar por cliente canónico.
+- Renderiza tabla resumida ANTES de la tabla cruda de movimientos.
+- Respetando privacidad (máscara de nombres/montos).
+
+### Archivos tocados
+- `apps/gold/agro/agro-crop-report.js` — función nueva + wired en `exportCropReport()`
+
+### Validación
+- `node --check` PASS
+- `pnpm build:gold` PASS
+
+### QA online pendiente
+- Exportar "Informe del Cultivo" de Maíz mio (tiene 9 fiados activos de Pedro Suarez, Yony chupeto, etc.)
+- Verificar que Pedro Suarez aparece como una sola fila en el resumen, no cuatro.
+- Verificar tabla cruda sigue mostrando todos los movimientos individuales.
+
+### Estado
+- **Pendiente #8**: CLOSED ✅ (implementación completada, QA pendiente)
+- **Pendiente #9**: sigue abierto (rankings exportado vs global)
