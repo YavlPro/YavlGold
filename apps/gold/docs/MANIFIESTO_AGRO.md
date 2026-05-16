@@ -112,12 +112,6 @@ El valor de Agro no está solo en registrar. Está en conectar lo que pasa en el
     * Rankings de Clientes
     * Clima Agro
     * Centro de Reportes
-* Operación comercial
-* Trabajo diario
-* Rankings de Clientes
-* Clima Agro
-* Asistente IA
-* Herramientas y acciones operativas
 
 ### 3.2 Pregunta central del sistema
 
@@ -527,7 +521,7 @@ Cuando un fiado cambia de estado, la Cartera Operativa debe reflejar la historia
 
 ### Regla de separación visual
 
-En la navegación hub, Cartera Viva y Cartera Operativa pueden aparecer como accesos hermanos dentro de Operación.
+En la navegación hub, Cartera Viva y Cartera Operativa pueden aparecer como accesos hermanos dentro de Granja.
 Pero cuando una de ellas está abierta como módulo profundo, debe presentarse como superficie dedicada, sin tabs hermanas que mezclen la lectura con la otra cartera.
 
 ---
@@ -709,7 +703,7 @@ El clima afecta tu trabajo diariamente: evitas siembras si hay probabilidad de g
 
 ---
 
-## 4.8.1 Centro de Reportes
+## 4.9 Centro de Reportes
 
 ### Qué es
 
@@ -748,7 +742,7 @@ Si una fuente de datos no está cargada o no está disponible en la sesión, el 
 
 ---
 
-## 4.9 Bitácora / AgroRepo
+## 4.10 Bitácora / AgroRepo
 
 ### Qué es
 
@@ -782,7 +776,7 @@ No es una aplicación separada ni un segundo facturero. Es una libreta que puede
 
 ---
 
-## 4.10 Asistente IA
+## 4.11 Asistente IA
 
 ### Qué es
 
@@ -811,7 +805,7 @@ El asistente entiende las herramientas de Agro tal como las usas en la plataform
 
 ---
 
-## 4.11 Modo de Lectura del Shell
+## 4.12 Modo de Lectura del Shell
 
 ### Qué es
 
@@ -859,7 +853,7 @@ El agricultor entra al shell y ve todo disponible. Quiere enfocarse en sus ciclo
 
 ---
 
-### 4.11.1 Favoritos del Shell
+### 4.12.1 Favoritos del Shell
 
 #### Qué es
 
@@ -892,7 +886,7 @@ Vive como bloque dinámico dentro del shell. Si el usuario no tiene favoritos ma
 
 ---
 
-### 4.11.2 Búsqueda Agro Compacta
+### 4.12.2 Búsqueda Agro Compacta
 
 #### Qué es
 
@@ -926,7 +920,7 @@ Vive como componente compacto del header del sidebar. Se despliega con un input 
 
 ---
 
-### 4.11.3 Navegación del Shell
+### 4.12.3 Navegación del Shell
 
 #### Qué es
 
@@ -940,14 +934,14 @@ No debe existir una segunda hamburguesa en el header que abra el mismo launcher 
 
 * Hub principal = mapa de entrada de Agro.
 * Módulo profundo = superficie inmersiva de trabajo.
-* En el hub se muestran las puertas principales: Inicio, Operación, Memoria, Menú.
+* En el hub se muestran las puertas principales: Inicio, Granja, Memoria, Menú.
 * En módulo profundo se oculta navegación global y se muestra Volver + título.
 * Mobile usa barra inferior para el hub.
 * Desktop usa hub central, sin rail legacy protagonista.
 * El rail/sidebar legacy no debe competir con el hub nuevo.
 * Header = identidad, usuario, notificaciones y acciones estrictamente necesarias; no debe duplicar navegación.
 
-### 4.11.4 Navegación Hub/Module
+### 4.12.4 Navegación Hub/Module
 
 #### Qué es
 
@@ -961,13 +955,13 @@ El patrón hub/module organiza Agro en dos estados de experiencia:
 - Hub = elegir camino.
 - Module = trabajar enfocado.
 - Volver = regresar al hub correcto.
-- Mobile = barra inferior con `Inicio · Operación · Memoria · Menú`.
+- Mobile = barra inferior con `Inicio · Granja · Memoria · Menú`.
 - Desktop = hub central sin rail legacy protagonista.
 
 #### Puertas principales del hub
 
 - **Inicio:** entrada rápida, dashboard, nuevo registro y nuevo cultivo.
-- **Operación:** cultivos, Cartera Viva, Cartera Operativa, Mi Carrito, Mis Clientes, Trabajo Diario, Rankings y Clima Agro.
+- **Granja:** cultivos, períodos, Cartera Viva, Cartera Operativa, Mi Carrito, Mis Clientes, Trabajo Diario, Rankings y Clima Agro.
 - **Memoria:** AgroRepo y Asistente IA.
 - **Menú:** perfil, documentación, feedback, ajustes y soporte.
 
@@ -991,7 +985,7 @@ El usuario quiere ir a "Ciclos de período" pero no recuerda dónde está. Usa l
 
 ---
 
-### 4.11.5 Popups informativos compactos
+### 4.12.5 Popups informativos compactos
 
 #### Qué es
 
@@ -1001,7 +995,7 @@ Un sistema de mensajes emergentes compactos dentro de Agro que reemplaza los `al
 
 * **No es un sistema de notificaciones.** No hay bandeja de entrada ni historial.
 * **No es un modal de formulario.** Los popups no contienen inputs ni formularios.
-* **No reemplaza `confirm()` destructivo.** Las confirmaciones de acciones destructivas (eliminar, borrar) siguen usando `confirm()` nativo por seguridad.
+* **No reemplaza `confirm()` destructivo por popups.** Las confirmaciones de acciones destructivas (eliminar, borrar) usan el modal canónico `showAgroConfirmDialog()`, no este sistema de popups.
 
 #### Para qué sirve
 
@@ -1022,7 +1016,7 @@ El sistema se extiende desde `YGUXMessages` (el sistema de toasts existente) usa
 
 #### Regla canónica
 
-Todo `alert()` nativo en Agro debe migrarse progresivamente a popups compactos via `uxMessages.show({ popup: true })`. Las confirmaciones destructivas (`confirm()`) y los prompts funcionales (`prompt()`) permanecen nativos por ahora.
+Todo `alert()` nativo en Agro debe migrarse progresivamente a popups compactos via `uxMessages.show({ popup: true })`. Las confirmaciones destructivas (eliminar, borrar) deben usar el modal canónico `showAgroConfirmDialog()`. Los prompts funcionales (`prompt()`) permanecen nativos por ahora.
 
 ---
 
@@ -1184,6 +1178,10 @@ Los reportes detallados por cultivo se acceden directamente desde cada card/cicl
 * Cartera Viva
 * Cartera Operativa (tabs de gastos, ingresos, fiados)
 * Estadísticas
+
+### Privacidad y exportes
+
+Los controles de privacidad protegen la visualización en pantalla. Los reportes exportados (Markdown) respetan la privacidad cuando está activa: si el usuario tiene nombres ocultos o montos ocultos, los exports MD aplican las mismas reglas de ocultamiento.
 
 ### Para qué existen
 
