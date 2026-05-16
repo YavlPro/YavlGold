@@ -2384,5 +2384,6 @@ En el "Informe del Cultivo", la sección FIADOS/PENDIENTES mostraba filas crudas
 - Verificar tabla cruda sigue mostrando todos los movimientos individuales.
 
 ### Estado
-- **Pendiente #8**: CLOSED ✅ (implementación completada, QA pendiente)
-- **Pendiente #9**: sigue abierto (rankings exportado vs global)
+- **Pendiente #8**: REABIERTO — los reportes en producción siguen sin agrupar. Fix quedó en código local pero no resuelve el problema en producción. QA online FAIL.
+- Pendiente #9: sigue abierto (rankings exportado vs global)
+- Responsabilidad transferida a Codex/Opus para ofensiva completa.
