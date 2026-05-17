@@ -13709,64 +13709,143 @@ async function refreshOpsRankings() {
 }
 
 async function exportOpsRankingsMarkdown() {
+    // Dynamic imports for modules needed by the unified ranking logic
+    const { filterQARows, validateExportBundle: _vEB, showExportError: _sEE } = await import('./agro-report-guard.js');
+    const { formatMoney: _fmtMoney, toCents: _toCents, resolveAmountUsd: _resolveUsd } = await import('./agro-format.js');
+    const {
+        chooseReportClientName: _chooseName,
+        getMarkdownPrivacyState: _getPrivacy,
+        maskReportMoney: _maskMoney,
+        maskReportMetric: _maskMetric,
+        maskReportName: _maskName,
+        normalizeReportClientKey: _normKey
+    } = await import('./agro-report-format.js');
+    const { getPendingTransferToken } = await import('./agro-unit-totals.js');
+    _formatOpsRankingMoney = _fmtMoney;
+    _toCentsForRankings = _toCents;
+    _validateExportBundle = _vEB;
+    _showExportError = _sEE;
+
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData?.user?.id) {
+        if (_showExportError) _showExportError(['Sesión no disponible.']);
+        return;
+    }
+    const userId = userData.user.id;
+
+    // ── Fetch raw rows (same source as Stats report) ──────────────────
+    const fetchRows = async (table, selectFields, opts = {}) => {
+        try {
+            let q = supabase.from(table).select(selectFields).eq('user_id', userId).is('deleted_at', null);
+            if (opts.filterReverted) q = q.is('reverted_at', null);
+            if (opts.filterTransferred) q = q.neq('transfer_state', 'transferred');
+            const { data, error } = await q;
+            if (error) { console.warn(`[Rankings] ${table} error:`, error.message); return []; }
+            return filterQARows(Array.isArray(data) ? data : []);
+        } catch (err) {
+            console.warn(`[Rankings] ${table} exception:`, err);
+            return [];
+        }
+    };
+
+    const [incomeRows, pendingRows] = await Promise.all([
+        fetchRows('agro_income',
+            'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,crop_id,buyer_group_key',
+            { filterReverted: true }),
+        fetchRows('agro_pending',
+            'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,cliente,crop_id,buyer_group_key,transfer_state',
+            { filterTransferred: true })
+    ]);
+
+    // Filter pending to only active (not transferred/reverted)
+    const activePending = pendingRows.filter(r => {
+        const token = getPendingTransferToken(r);
+        return token !== 'transferred' && token !== 'reverted';
+    });
+
+    // ── Build unified buyer ranking (same logic as agro-stats-report.js) ──
+    const privacy = _getPrivacy();
+    const buyers = new Map();
+
+    const parseIncomeWho = (concept) => {
+        const text = String(concept || '').trim();
+        if (!text) return '';
+        const m = text.match(/^Venta a\s+(.+?)\s+-\s+(.+)$/i);
+        return m?.[1]?.trim() || '';
+    };
+
+    const resolveName = (row, isIncome) => {
+        const direct = String(row?.cliente || row?.comprador || '').trim();
+        if (direct) return direct;
+        if (isIncome) return parseIncomeWho(row?.concepto) || 'Sin cliente';
+        return 'Sin cliente';
+    };
+
+    const resolveKey = (row, displayName) => {
+        return _normKey(row?.buyer_group_key || displayName) || _normKey(displayName);
+    };
+
+    for (const r of incomeRows) {
+        const who = resolveName(r, true);
+        const key = resolveKey(r, who) || `__income_${buyers.size}`;
+        if (!buyers.has(key)) buyers.set(key, { displayWho: who, count: 0, totalCents: 0, hasPaid: false, hasPending: false, currencies: new Set() });
+        const b = buyers.get(key);
+        b.displayWho = _chooseName(b.displayWho, who);
+        b.count += 1;
+        b.totalCents += _toCents(_resolveUsd(r));
+        b.hasPaid = true;
+        b.currencies.add(String(r.currency || 'USD').trim().toUpperCase() || 'USD');
+    }
+
+    for (const r of activePending) {
+        const who = resolveName(r, false);
+        const key = resolveKey(r, who) || `__pending_${buyers.size}`;
+        if (!buyers.has(key)) buyers.set(key, { displayWho: who, count: 0, totalCents: 0, hasPaid: false, hasPending: false, currencies: new Set() });
+        const b = buyers.get(key);
+        b.displayWho = _chooseName(b.displayWho, who);
+        b.count += 1;
+        b.totalCents += _toCents(_resolveUsd(r));
+        b.hasPending = true;
+        b.currencies.add(String(r.currency || 'USD').trim().toUpperCase() || 'USD');
+    }
+
+    const sortedBuyers = Array.from(buyers.values()).sort((a, b) => b.totalCents - a.totalCents);
+
+    // ── Top Crops: still use RPC (has no JS equivalent) ──
     const exportData = await fetchOpsRankingsData({ cropId: null });
-    const exportTopClients = normalizeOpsRankingsRows(exportData.topClients);
-    const exportPendingClients = normalizeOpsRankingsRows(exportData.pendingClients);
     const exportTopCrops = normalizeOpsRankingsRows(exportData.topCrops);
-    const hideNames = readBuyerNamesHidden();
-    const hideMoney = readMoneyValuesHidden();
+
+    // ── Build Markdown ──────────────────────────────────────────────
+    const hideNames = privacy.hideBuyerNames;
+    const hideMoney = privacy.hideMoneyValues;
+    const fmtMd = (cents) => hideMoney ? MONEY_PRIVACY_MASK : _fmtMoney(cents, 'USD');
 
     const now = new Date();
     const dateStamp = now.toISOString().slice(0, 10);
-    const rangeLabel = OPS_RANKINGS_RANGE_LABELS[opsRankingsState.range] || OPS_RANKINGS_RANGE_LABELS[OPS_RANKINGS_DEFAULT_RANGE];
-    const cropLabel = 'Cultivo: 📋 Vista General';
 
     let md = `# 🏆 Rankings Agro\n\n`;
     md += `- Fecha: ${now.toLocaleString('es-CO')}\n`;
-    md += `- Rango: ${rangeLabel}\n`;
-    md += `- ${cropLabel}\n\n`;
-    if (exportData.error) {
-        md += `> Aviso: ${exportData.error}\n\n`;
-    }
+    md += `- Alcance: Global (todo el historial)\n`;
+    md += `- Cultivo: 📋 Vista General\n\n`;
 
-    const appendSection = (title, rows, mapper) => {
-        md += `## ${title}\n\n`;
-        if (!Array.isArray(rows) || rows.length === 0) {
-            md += `Sin datos.\n\n`;
-            return;
+    // Unified client ranking
+    md += `## 👥 Ranking de Clientes\n`;
+    if (!sortedBuyers.length) {
+        md += `Sin clientes registrados\n\n`;
+    } else {
+        md += `| Cliente | Compras | Monedas | Total (USD) | Estado |\n`;
+        md += `|---------|--------:|---------|------------:|--------|\n`;
+        for (const b of sortedBuyers) {
+            const name = hideNames ? BUYER_PRIVACY_MASK : String(b.displayWho || 'Sin cliente').trim();
+            const estado = b.hasPaid && b.hasPending ? '🔔 Mixto' : b.hasPaid ? '✅ Pagado' : '⏳ Debe';
+            const curs = Array.from(b.currencies).join(', ');
+            md += `| ${name.replace(/\|/g, '·')} | ${b.count} | ${curs} | ${fmtMd(b.totalCents)} | ${estado} |\n`;
         }
-        rows.forEach((row, index) => {
-            md += `${index + 1}. ${mapper(row)}\n`;
-        });
         md += `\n`;
-    };
-
-    const allTopClientsMd = exportTopClients;
-    const missingTopClientsMd = allTopClientsMd.filter((row) => !pickOpsBuyerName(row));
-    const namedTopClientsMd = allTopClientsMd.filter((row) => !!pickOpsBuyerName(row));
-    const missingTopClientsMdSummary = missingTopClientsMd.reduce((acc, row) => {
-        acc.operations += Number(row?.operations || 0);
-        acc.total += Number(row?.total || 0);
-        return acc;
-    }, { operations: 0, total: 0 });
-
-    appendSection('Top Clientes (Cobrado)', namedTopClientsMd, (row) => {
-        const name = getOpsRankingMarkdownName(pickOpsBuyerName(row), hideNames);
-        const operationsLabel = formatOpsRankingCount(row?.operations, 'operación', 'operaciones');
-        return `${name} · ${getOpsRankingMarkdownCurrency(row?.total, hideMoney)} · ${operationsLabel} · última ${formatOpsRankingDate(row?.last_date)}`;
-    });
-    if (missingTopClientsMd.length > 0) {
-        md += `> ⚠️ ${formatOpsRankingCount(missingTopClientsMdSummary.operations, 'registro', 'registros')} sin cliente: ${getOpsRankingMarkdownCurrency(missingTopClientsMdSummary.total, hideMoney)}\n\n`;
     }
 
-    appendSection('Fiados por Cliente', exportPendingClients, (row) => {
-        const name = getOpsRankingMarkdownName(row?.client_name, hideNames);
-        const pendingLabel = formatOpsRankingCount(row?.pending_count, 'fiado', 'fiados');
-        return `${name} · ${getOpsRankingMarkdownCurrency(row?.total_pending, hideMoney)} · ${pendingLabel} · próximo ${formatOpsRankingDate(row?.next_due_date)}`;
-    });
-
-    const topCropsTitle = 'Top Cultivos (Rentabilidad real)';
-    md += `## ${topCropsTitle}\n\n`;
+    // Top Crops (from RPC - keeps server-side calculation for operational costs)
+    md += `## Top Cultivos (Rentabilidad real)\n\n`;
     md += `> Nota: Usa ingresos cobrados menos gastos cerrados y pérdidas confirmadas de Cartera Operativa. No incluye inversión base ni fiados.\n\n`;
     if (!exportTopCrops.length) {
         md += 'Sin ingresos cobrados en el rango seleccionado.\n\n';
@@ -13778,13 +13857,14 @@ async function exportOpsRankingsMarkdown() {
         md += `\n`;
     }
 
-    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    // Validate and download
+    const blob = new Blob(['\ufeff' + md], { type: 'text/markdown;charset=utf-8' });
     if (_validateExportBundle && _showExportError) {
         const vResult = _validateExportBundle({
-            rows: [...exportTopClients, ...exportPendingClients, ...exportTopCrops],
+            rows: incomeRows,
             totals: {},
             currency: 'USD'
-        });
+        }, { skipSumCheck: true });
         if (!vResult.valid) {
             _showExportError(vResult.errors);
             return;

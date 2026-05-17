@@ -2387,3 +2387,32 @@ En el "Informe del Cultivo", la sección FIADOS/PENDIENTES mostraba filas crudas
 - **Pendiente #8**: REABIERTO — los reportes en producción siguen sin agrupar. Fix quedó en código local pero no resuelve el problema en producción. QA online FAIL.
 - Pendiente #9: sigue abierto (rankings exportado vs global)
 - Responsabilidad transferida a Codex/Opus para ofensiva completa.
+
+---
+
+## 2026-05-17 — Corrección final de Reportes Agro, Unificación de Identidades y Purga QA
+
+**Estado:** YELLOW (técnico GREEN, pendiente validación humana de cierre online)
+**Branch:** `main`
+
+### Resumen operativo
+- Se resolvió el **Pendiente #8**: Los "Fiados transferidos" se eliminaron de los informes operativos detallados (solo visibles en modo historial).
+- Se resolvió el **Pendiente #9**: El exporte MD de Rankings se reescribió para usar `resolveAmountUsd` y alcance *all-time*, igualando los montos y posiciones al Informe Estadístico Global.
+- Fragmentación de identidades resuelta ("orlando" unificado a "orlando pineda", "pedro" unificado a "pedro suarez").
+- Los RPCs `agro_rank_top_clients` y `agro_rank_pending_clients` se actualizaron para agrupar por `buyer_group_key`.
+- Se aplicó *soft-delete* (`deleted_at = NOW()`) a toda la basura histórica de pruebas (`qa`).
+
+### Archivos tocados
+- `apps/gold/agro/agro-crop-report.js`
+- `apps/gold/agro/agro.js`
+- `supabase/sql/agro_rankings_rpc_v1.sql` (aplicado remoto)
+
+### Validación
+- DB: Operaciones directas en producción y purga exitosa.
+- Build: `pnpm build:gold` (Exit code: 0).
+- Guardrails: UTF-8 OK.
+
+### QA online pendiente
+- Descargar y verificar "Informe del Cultivo" (fiados transferidos ausentes).
+- Descargar "Rankings de Clientes" y comparar contra "Informe Estadístico Global" para comprobar alineación.
+

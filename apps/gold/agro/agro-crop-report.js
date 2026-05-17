@@ -988,7 +988,7 @@ export async function exportCropReport(cropId, opts = {}) {
         md += '\n';
 
         // Fiados transferidos (→ pagado / pérdida)
-        if (historyMode || pendingTransferred.length > 0) {
+        if (historyMode && pendingTransferred.length > 0) {
             md += `## ⇔️ Fiados transferidos (${pendingTransferred.length})\n`;
             md += pendingTransferred.length
                 ? buildPendingTransferredTable(pendingTransferred, privacy)
