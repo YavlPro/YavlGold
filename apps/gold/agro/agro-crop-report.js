@@ -28,7 +28,7 @@ const TAB_CONFIGS = {
         conceptField: 'concepto',
         amountField: 'monto',
         dateField: 'fecha',
-        columns: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,categoria,unit_type,unit_qty,quantity_kg,crop_id,deleted_at,transfer_state,split_from_id,split_meta'
+        columns: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,categoria,unit_type,unit_qty,quantity_kg,crop_id,deleted_at,transfer_state,split_from_id,split_meta,buyer_group_key'
     },
     gastos: {
         table: 'agro_expenses',
@@ -42,7 +42,7 @@ const TAB_CONFIGS = {
         conceptField: 'concepto',
         amountField: 'monto',
         dateField: 'fecha',
-        columns: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,cliente,unit_type,unit_qty,quantity_kg,crop_id,deleted_at,transfer_state,transferred_at,transferred_income_id,transferred_to,reverted_at,split_from_id,split_meta'
+        columns: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,cliente,unit_type,unit_qty,quantity_kg,crop_id,deleted_at,transfer_state,transferred_at,transferred_income_id,transferred_to,reverted_at,split_from_id,split_meta,buyer_group_key'
     },
     perdidas: {
         table: 'agro_losses',
