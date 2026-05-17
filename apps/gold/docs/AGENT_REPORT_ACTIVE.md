@@ -2412,7 +2412,14 @@ En el "Informe del Cultivo", la sección FIADOS/PENDIENTES mostraba filas crudas
 - Build: `pnpm build:gold` (Exit code: 0).
 - Guardrails: UTF-8 OK.
 
+### 2026-05-17 (Fase Quirúrgica 2)
+QA Humano detectó que Bug 2 y Bug 3 persistían parcialmente.
+- **Fix Bug 2:** `agro-crop-report.js` ahora prioriza `buyer_group_key` para agrupar clientes en la vista detallada de cultivo, eliminando la separación visual de "Orlando" y "Yony".
+- **Fix Bug 3:** `agro.js` (Rankings) fallaba al excluir fiados transferidos porque `.neq('transfer_state', 'transferred')` filtraba registros en NULL y además omitía columnas en el SELECT. Se corrigió el query y se delegó el filtrado exacto al JS (como en Estadísticas Globales).
+- **Estado de Bugs 1, 2 y 3:** Técnicamente resueltos.
+
 ### QA online pendiente
-- Descargar y verificar "Informe del Cultivo" (fiados transferidos ausentes).
-- Descargar "Rankings de Clientes" y comparar contra "Informe Estadístico Global" para comprobar alineación.
+- Descargar y verificar "Informe del Cultivo" (fiados transferidos ausentes y clientes como Orlando unificados).
+- Descargar "Rankings de Clientes" y comparar contra "Informe Estadístico Global" para comprobar alineación final de `jose luis` y otros.
+
 
