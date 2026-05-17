@@ -551,11 +551,11 @@ function buildIncomeTable(items, historyMode = false, privacy = getMarkdownPriva
         const it = items[index];
         const raw = it.concepto || 'Sin concepto';
         const parsed = parseWho('ingresos', raw);
-        const client = parsed.who || 'Sin cliente';
-        const key = normalizeReportClientKey(client) || `__sin_cliente_${index}`;
+        const clientRaw = parsed.who || 'Sin cliente';
+        const key = normalizeReportClientKey(it.buyer_group_key || clientRaw) || `__sin_cliente_${index}`;
         if (!groups.has(key)) {
             groups.set(key, {
-                client,
+                client: clientRaw,
                 count: 0,
                 totalUsdCents: 0,
                 currencies: new Set(),
@@ -564,7 +564,7 @@ function buildIncomeTable(items, historyMode = false, privacy = getMarkdownPriva
             });
         }
         const group = groups.get(key);
-        group.client = chooseReportClientName(group.client, client);
+        group.client = chooseReportClientName(group.client, clientRaw);
         group.count += 1;
         group.totalUsdCents += toCents(resolveAmountUsd(it));
         group.currencies.add(String(it.currency || 'USD').trim().toUpperCase() || 'USD');
@@ -618,11 +618,11 @@ function buildPendingSummaryTable(items, privacy = getMarkdownPrivacyState()) {
         const it = items[index];
         const raw = it.concepto || 'Sin concepto';
         const parsed = parseWho('pendientes', raw);
-        const client = it.cliente || parsed.who || '-';
-        const key = normalizeReportClientKey(client) || `__sin_cliente_${index}`;
+        const clientRaw = it.cliente || parsed.who || '-';
+        const key = normalizeReportClientKey(it.buyer_group_key || clientRaw) || `__sin_cliente_${index}`;
         if (!groups.has(key)) {
             groups.set(key, {
-                client,
+                client: clientRaw,
                 count: 0,
                 totalUsdCents: 0,
                 currencies: new Set(),
@@ -631,7 +631,7 @@ function buildPendingSummaryTable(items, privacy = getMarkdownPrivacyState()) {
             });
         }
         const group = groups.get(key);
-        group.client = chooseReportClientName(group.client, client);
+        group.client = chooseReportClientName(group.client, clientRaw);
         group.count += 1;
         group.totalUsdCents += toCents(resolveAmountUsd(it));
         group.currencies.add(String(it.currency || 'USD').trim().toUpperCase() || 'USD');

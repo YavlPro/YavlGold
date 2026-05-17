@@ -13738,7 +13738,6 @@ async function exportOpsRankingsMarkdown() {
         try {
             let q = supabase.from(table).select(selectFields).eq('user_id', userId).is('deleted_at', null);
             if (opts.filterReverted) q = q.is('reverted_at', null);
-            if (opts.filterTransferred) q = q.neq('transfer_state', 'transferred');
             const { data, error } = await q;
             if (error) { console.warn(`[Rankings] ${table} error:`, error.message); return []; }
             return filterQARows(Array.isArray(data) ? data : []);
@@ -13750,11 +13749,11 @@ async function exportOpsRankingsMarkdown() {
 
     const [incomeRows, pendingRows] = await Promise.all([
         fetchRows('agro_income',
-            'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,crop_id,buyer_group_key',
+            'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,crop_id,buyer_group_key,reverted_at',
             { filterReverted: true }),
         fetchRows('agro_pending',
-            'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,cliente,crop_id,buyer_group_key,transfer_state',
-            { filterTransferred: true })
+            'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,cliente,crop_id,buyer_group_key,transfer_state,transferred_to,transferred_income_id,reverted_at',
+            {})
     ]);
 
     // Filter pending to only active (not transferred/reverted)
