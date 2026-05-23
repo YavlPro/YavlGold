@@ -9223,6 +9223,8 @@ function toUsdEquivFromMoneyRow(row, fallbackRates, bumpMissingRate, amountField
     const usdCop = toPositiveRate(rates?.usdCop) || toPositiveRate(getRate('COP', fallbackRates));
     const usdVes = toPositiveRate(rates?.usdVes) || toPositiveRate(getRate('VES', fallbackRates));
 
+    if (explicitUsd !== null) return explicitUsd;
+
     if (currency === 'USD') return explicitUsd !== null ? explicitUsd : amount;
 
     if (currency === 'COP' || currency === 'VES') {
@@ -9236,8 +9238,6 @@ function toUsdEquivFromMoneyRow(row, fallbackRates, bumpMissingRate, amountField
         const converted = convertToUSD(amount, currency, rate);
         return Number.isFinite(converted) ? converted : (amount / rate);
     }
-
-    if (explicitUsd !== null) return explicitUsd;
 
     if (meta && typeof meta === 'object') {
         meta.missingRate = true;
@@ -10669,7 +10669,6 @@ function buildActiveCycleCardsData(crops, options = {}) {
             estadoCultivo: effectiveStatus
         });
         const totalCosts = metrics.costosTotales;
-        const totalInvestment = baseInvestment + expenseInvestment;
         const net = metrics.rentabilidad;
         const potential = net + pendingTotal;
         const areaSize = Number(crop?.area_size);
@@ -10698,7 +10697,7 @@ function buildActiveCycleCardsData(crops, options = {}) {
             porcentaje: progress.ok ? normalizeProgress(progress.percent) : 0,
             durationDays: null,
             seedKg: seedKgValue,
-            inversionUSD: totalInvestment,
+            inversionUSD: baseInvestment,
             rentabilidad: net,
             potencialNeto: potential,
             baseInvestmentUsd: baseInvestment,
@@ -10790,7 +10789,6 @@ function buildFinishedCycleCardsData(crops, options = {}) {
             estadoCultivo: effectiveStatus
         });
         const totalCosts = metrics.costosTotales;
-        const totalInvestment = baseInvestment + expenseInvestment;
         const finalNet = metrics.rentabilidad;
         const areaSize = Number(crop?.area_size);
         const areaText = Number.isFinite(areaSize) ? `${areaSize} Ha` : 'N/A';
@@ -10831,7 +10829,7 @@ function buildFinishedCycleCardsData(crops, options = {}) {
             porcentaje: 100,
             durationDays,
             seedKg: seedKgValue,
-            inversionUSD: totalInvestment,
+            inversionUSD: baseInvestment,
             rentabilidad: finalNet,
             potencialNeto: finalNet,
             baseInvestmentUsd: baseInvestment,
@@ -13790,7 +13788,7 @@ async function fetchOpsRankingsData(options = {}) {
         supabase.rpc('agro_rank_pending_clients', params),
         fetchOpsTopCropsCanonical({
             userId: userData.user.id,
-            rangeDates,
+            rangeDates: { from: null, to: null },
             cropId: scopedCropId || null,
             filterRows: filterQARows,
             resolveUsd: _resolveUsd
@@ -14007,7 +14005,7 @@ async function exportOpsRankingsMarkdown() {
 
     // Top Crops: canonical client-side calculation shared with UI/Stats/MD.
     md += `## Top Cultivos (Rentabilidad real)\n\n`;
-    md += `> Nota: Usa la fórmula canónica: pagados - (inversión + gastos + pérdidas). Los fiados no entran en rentabilidad.\n\n`;
+    md += `> Nota: Usa historial completo y la fórmula canónica: pagados - (inversión + gastos + pérdidas). Los fiados no entran en rentabilidad.\n\n`;
     if (!exportTopCrops.length) {
         md += 'Sin movimientos financieros en el rango seleccionado.\n\n';
     } else {

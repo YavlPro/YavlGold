@@ -2828,3 +2828,38 @@ El avance más importante de esta sesión es la confirmación de que **3 de las 
 2. Confirmar Maíz mio: inversión `$92.64` y rentabilidad `-$106.64` si gastos son `$14.00`.
 3. Abrir Cartera Viva y confirmar Freddy en `Perdidos` / estado de pérdida, no `Pagado`.
 4. Exportar MD y Rankings para comparar UI ↔ MD ↔ Stats ↔ Rankings.
+
+---
+
+## 2026-05-22 — Follow-up: UI y Rankings aún recortados
+
+**Estado:** COMPLETADO EN CÓDIGO / QA PRODUCCIÓN PENDIENTE
+
+### Diagnóstico ejecutado
+
+- Los 8 MD en `C:\Users\yerik\OneDrive\Documentos\Downloads` confirman que MD/Stats ya estaban correctos.
+- `AgroRankings_2026-05-23.md` ya usaba la fórmula nueva, pero Top Cultivos seguía leyendo el rango activo (`90d`), por eso Batata amarilla 2 quedaba en `$916.00` y `batata` en `$294.69`.
+- Mis Cultivos seguía mostrando `$32.00` en pérdidas porque `toUsdEquivFromMoneyRow()` recalculaba COP/VES con `exchange_rate` antes de respetar `monto_usd`. MD/Stats priorizan `monto_usd`.
+- El indicador principal `Inversión` en cards mostraba `inversión + gastos`; para Maíz mio eso convertía `$92.64 + $14.00` en `$106`.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/agro.js` | `toUsdEquivFromMoneyRow()` ahora prioriza `monto_usd`/`amount_usd` antes de recalcular por tasa. |
+| `apps/gold/agro/agro.js` | Cards de Mis Cultivos muestran inversión base en `inversionUSD`, no inversión + gastos. |
+| `apps/gold/agro/agro.js` | Top Cultivos de Rankings usa historial completo (`rangeDates: null`) aunque el resto del panel conserve el rango para clientes/fiados. |
+| `apps/gold/agro/index.html` | Nota visible de Top Cultivos aclara que usa historial completo. |
+
+### Validación ejecutada
+
+- `node --test apps/gold/agro/agro-profit-calculator.test.mjs`: PASS, 3/3.
+- `git diff --check`: PASS.
+- `pnpm build:gold`: PASS.
+- Nota: el entorno sigue avisando Node `v25.6.0` vs engine declarado `20.x`; no bloqueó build.
+
+### QA producción pendiente
+
+1. Mis Cultivos: Batata amarilla 2 debe mostrar pagados `$1,263.25`, pérdidas `$108.13`, costos `$308.13`, rentabilidad `$955.12`.
+2. Mis Cultivos: Maíz mio debe mostrar inversión `$92.64` y costos `$106.64`.
+3. Rankings exportado: Batata amarilla 2 debe mostrar ingresos `$1,263.25` y rentabilidad `$955.12`; `batata` ingresos `$1,061.95` y rentabilidad `$861.95`.
