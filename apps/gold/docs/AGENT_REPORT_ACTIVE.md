@@ -1798,7 +1798,8 @@ Gemini implemento promptCropSelection() en gro-reports-center.js para resolver 
 | gro-crop-report.js | fix | 1 window.confirm() reemplazado por showAgroConfirmDialog() con fallback |
 | gro-reports-center.js | fix | 2 lert() en promptCropSelection() reemplazados por showAgroConfirmDialog() |
 | gro-reports-center.js | refactor | Inline styles migrados a CSS classes |
-| gro-reports-center.js | refactor | Eliminados listeners inline, id por clase, ody.removeChild por emove() |
+| gro-reports-center.js | refactor | Eliminados listeners inline, id por clase, ody.removeChild por
+emove() |
 | gro-reports-center.css | styles | 7 nuevas clases con tokens ADN Visual V11 y prefers-reduced-motion |
 
 ### Lo que NO se hizo (scope respetado)
@@ -1870,12 +1871,13 @@ El Centro de Reportes debe ser un indice de reportes generales oficiales, nada m
 | gro-reports-center.js | refactor | Eliminados constantes CROP_CHANGED_EVENT, CROPS_READY_EVENT y sus event listeners |
 | gro-reports-center.js | refactor | Eliminado reporte crop-selected de REPORT_CATEGORIES |
 | gro-reports-center.js | refactor | Eliminado xport-selected-crop de EXPORT_ACTIONS |
-| gro-reports-center.js | refactor | Eliminadas funciones muertas: 
+| gro-reports-center.js | refactor | Eliminadas funciones muertas:
 ormalizeMd, mdCell, getDateStamp, ormatExportDate, slugify, ormatMoneyUsd, markdownTable, uildReportMarkdown, downloadMarkdown, downloadReport, xportHonestUnavailable |
 | gro-reports-center.js | refactor | Simplificados uildHonestMarkdown y downloadHonestReport para fallback honesto |
 | gro-reports-center.js | refactor | Cambiada categoria cultivos por stadisticas |
 | gro-reports-center.js | fix | Overview copy: "Solo aparecen reportes oficiales generales. Los informes por cultivo viven en cada ciclo creado." |
-| gro-reports-center.js | feat | Agregada CROP_REPORT_NOTE y enderCropNote() con metadata explicativa |
+| gro-reports-center.js | feat | Agregada CROP_REPORT_NOTE y
+enderCropNote() con metadata explicativa |
 | gro-reports-center.js | refactor | Eliminados event listeners de gro:crop:changed, AGRO_CROPS_READY, gro:buyer-portfolio-state-updated, gro:operational-portfolio-updated, gro:clients:changed, gro:period-cycles:updated — ya no necesarios |
 | gro-reports-center.css | refactor | Eliminadas clases .agro-crop-select-* (overlay, dialog, title, copy, list, btn, cancel) |
 | gro-reports-center.css | feat | Agregadas clases .agro-reports-crop-note con tokens ADN Visual V11 |
@@ -2412,14 +2414,417 @@ En el "Informe del Cultivo", la sección FIADOS/PENDIENTES mostraba filas crudas
 - Build: `pnpm build:gold` (Exit code: 0).
 - Guardrails: UTF-8 OK.
 
-### 2026-05-17 (Fase Quirúrgica 2)
+### 2026-05-17 (Fase Quirúrgica 2 & 3)
 QA Humano detectó que Bug 2 y Bug 3 persistían parcialmente.
-- **Fix Bug 2:** `agro-crop-report.js` ahora prioriza `buyer_group_key` para agrupar clientes en la vista detallada de cultivo, eliminando la separación visual de "Orlando" y "Yony".
+- **Fix Bug 2 (Final):** En la fase anterior se priorizó el uso de `buyer_group_key`, pero se descubrió que dicha columna **no estaba siendo descargada** de Supabase en la configuración de `TAB_CONFIGS` para `agro-crop-report.js`. Al ser `undefined`, volvía al fallback y causaba la fragmentación. Se añadió la columna al `SELECT` de `agro_income` y `agro_pending`, eliminando por completo la fragmentación (Orlando y Yony consolidados).
 - **Fix Bug 3:** `agro.js` (Rankings) fallaba al excluir fiados transferidos porque `.neq('transfer_state', 'transferred')` filtraba registros en NULL y además omitía columnas en el SELECT. Se corrigió el query y se delegó el filtrado exacto al JS (como en Estadísticas Globales).
 - **Estado de Bugs 1, 2 y 3:** Técnicamente resueltos.
 
 ### QA online pendiente
-- Descargar y verificar "Informe del Cultivo" (fiados transferidos ausentes y clientes como Orlando unificados).
+- Descargar y verificar "Informe del Cultivo" (fiados transferidos ausentes y clientes como Orlando unificados al fin).
 - Descargar "Rankings de Clientes" y comparar contra "Informe Estadístico Global" para comprobar alineación final de `jose luis` y otros.
 
 
+## 2026-05-17 — Cierre Quirúrgico, Auditoría de Consolidación y Lección Operativa
+- **Estado global del día:** YELLOW
+- **Agente diagnóstico/gobernanza:** Qwen3.6 / Kimi K2.6 / Gemini 3.1 Pro / Opus 4.6
+- **Agente ejecución:** Opus 4.6 (cirugía) · Gemini 3.1 Pro (auditoría cruzada)
+- **Build:** `pnpm build:gold` ✅ PASS
+- **QA Humano:** ✅ Ejecutado y validado como gate final.
+
+### Cerrados (GREEN, verificados por QA humano)
+- **Bug 1:** Transferidos ocultos/activos en reportes de cultivo → corregido y verificado.
+- **Bug 2:** Fragmentación/deduplicación de compradores en reportes → consolidación por cliente canónico activa y verificada.
+- **Bug 3:** Rankings de clientes vs Estadísticas Globales divergentes → unificados y verificados.
+
+### Expuesto (P1, pendiente)
+- **Bug 4:** Rankings de cultivos usa fuente/constructor divergente (preexistente, no regresión).
+  - **Acción recomendada:** Unificar builder/fuente de verdad con `buildCropStats()` y documentar alcance (global vs por cultivo).
+  - **Gate:** QA humano + exportes comparados. No declarar GREEN hasta verificación real.
+
+### Lección Operativa Consolidada: Orquestación Multi-Agente
+- El sistema multi-agente no es redundancia; es **resiliencia por especialización temporal**.
+- **Cirugía:** Agente de ejecución pesada cuando la causa raíz está clara (Opus).
+- **Auditoría cruzada:** Agente que compara outputs y detecta divergencias o deuda dormida (Gemini/Kimi).
+- **Validación:** QA humano como gate final inquebrantable.
+- **Regla de estado:** `GREEN` se declara por bug/frente solo cuando está corregido y verificado (build + QA humano). Un bug nuevo encontrado durante QA no ensucia lo ya cerrado, pero mantiene el estado global en `YELLOW` si queda pendiente.
+
+### Commits del día
+- `fix(agro): stabilize exports (privacy, crop report summary, global rankings)` → Revertido por QA FAIL.
+- `Revert "fix(agro): stabilize exports..."` → Rollback correcto y documentado.
+- `docs(agro): rollback reportes QA FAIL 2026-05-17`
+- `fix(agro): unify report formatting with shared resolver (privacy, buyer name, transfer label)`
+- `docs(agro): close pending #7 (Finanzas canon rename)`
+- `fix(agro): consolidate pending buyers in crop report` (Pendiente #8)
+- `docs(agro): reopen Pendiente #8 — QA FAIL, reports still not grouping`
+- `fix(agro): transferidos, dedup compradores, rankings clientes` (Bugs 1-3)
+- `docs(agro): lección operativa cierre vs hallazgo (orquestación multi-agente)`
+
+### Documentación Archivada
+- Diagnósticos y planes de este frente movidos a: `apps/gold/docs/archive/auditoria-reportes/`
+- Daily log operativo: `apps/gold/docs/ops/daily-log-2026-05-17.md`
+
+---
+
+## 2026-05-22 — Auditoría de Bugs: Contradicciones UI vs Informes MD vs Manifiesto Agro
+
+**Estado:** YELLOW (bugs documentados, pendientes de corrección arquitectónica)
+**Agente diagnóstico:** Qwen3.7 + Kimi K2.6 (auditoría cruzada)
+**Objetivo:** Detectar contradicciones entre UI, informes MD individuales, estadísticas globales y Manifiesto Agro.
+
+### Bugs Detectados por Prioridad
+
+#### 🔴 P0 - CRÍTICOS (Arquitectónicos)
+
+##### Bug 1: Cuatro Calculadores de Cultivo en Paralelo
+**Impacto:** Inconsistencia sistémica en todos los números del sistema
+**Descripción:** La UI, los informes MD, las estadísticas globales y los rankings usan 4 funciones de cálculo diferentes para los mismos datos de cultivo.
+
+**Manifestaciones:**
+- Rankings de cultivos muestran números distintos a Stats globales
+- UI muestra valores distintos a los informes MD
+- Los números cambian entre días sin que cambien los datos fuente
+
+**Causa raíz:** No existe un calculador único canónico de cultivo. Cada superficie implementa su propia lógica.
+
+---
+
+#### 🟠 P1 - ALTOS (Datos Incorrectos)
+
+##### Bug 2: Discrepancias Numéricas UI vs Informes MD
+**Impacto:** El agricultor ve números distintos en diferentes pantallas
+**Diferencias detectadas:**
+
+| Cultivo | Métrica | UI | MD | Diferencia |
+|---------|---------|----|----|-----------|
+| Batata amarilla 2 | Pagados | $1,193.00 | $1,122.75 | **$70.25** |
+| Batata amarilla 2 | Pérdidas | $32.00 | $108.13 | **$76.13** |
+| Maíz mio | Inversión | $106.00 | $92.64 | **$13.36** |
+
+**Causa raíz:** Bug #1 (4 calculadores paralelos)
+
+---
+
+##### Bug 3: Estado Incorrecto de Cliente con Pérdida
+**Impacto:** Viola regla canónica del Manifiesto §4.5.1
+**Descripción:** Freddy tiene pérdida confirmada de $108.13 (3 sacos fiados cancelados) pero aparece como "✅ Pagado" en lugar de "Perdido".
+
+**Regla violada (§4.5.1):**
+> "Si existe perdida, el cliente pertenece a **Perdidos** antes que a Pagados."
+
+**Causa raíz:** Cartera Viva no está aplicando correctamente la jerarquía de estados.
+
+---
+
+##### Bug 4: Metodología de Rentabilidad Inconsistente
+**Impacto:** AgroRankings usa fórmula distinta al Manifiesto
+**Descripción:**
+
+| Documento | Fórmula |
+|-----------|---------|
+| Manifiesto §4.3 | `rentabilidadReal = cobradoReal - (inversión + gastos + pérdidas)` |
+| AgroRankings | Excluye inversión base del cálculo |
+
+**Ejemplo:** Batata amarilla 2 debería calcular:
+- Manifiesto: $1,193 - ($200 + $0 + $32) = **$961**
+- AgroRankings parece usar lógica distinta
+
+---
+
+#### 🟡 P2 - MEDIOS (Rankings y Agregaciones)
+
+##### Bug 5: Rankings de Cultivos Desfasados
+**Impacto:** Los rankings no reflejan el estado actual
+**Descripción:** Los números en rankings de cultivos cambian entre días sin que cambien los datos fuente. Inestabilidad en la agregación.
+
+**Causa raíz:** Bug #1 (4 calculadores paralelos)
+
+---
+
+##### Bug 6: Rankings de Clientes Divergentes
+**Impacto:** Top clientes inconsistente entre documentos
+**Descripción:**
+
+| Documento | Top 5 Clientes |
+|-----------|---------------|
+| Perfil Global | jose luis, tito, Gollo, oliva, Freddy |
+| AgroRankings | jose luis, **Yony chupeto**, Tito, Gollo, Oliva |
+
+Yony chupeto tiene estado "🔔 Mixto" (parte pagado, parte pendiente), lo que sugiere criterio de ranking distinto.
+
+---
+
+##### Bug 7: Pérdidas No Reflejadas en Rankings
+**Impacto:** Rankings muestran $0 en pérdidas cuando hay pérdidas confirmadas
+**Descripción:**
+- Batata amarilla 2 tiene **$108.13 USD** en pérdidas confirmadas
+- AgroRankings reporta "Gastos cerrados / pérdidas: **$0.00 USD**"
+
+---
+
+### Resumen Ejecutivo de Bugs
+
+| Prioridad | Bugs Abiertos | Impacto |
+|-----------|---------------|---------|
+| **P0** | 1 (Arquitectónico) | Inconsistencia sistémica |
+| **P1** | 3 (Datos) | Información incorrecta al usuario |
+| **P2** | 3 (Rankings) | Agregaciones inestables |
+
+---
+
+### Plan de Ataque Recomendado
+
+#### **Fase 1: Unificar Calculador (Bug #1)**
+Antes de tocar cualquier otra cosa, extraer y consolidar en **una sola función canónica** el cálculo de:
+- Inversión
+- Gastos
+- Pérdidas
+- Pagados
+- Fiados
+- Rentabilidad
+
+Esta función debe ser la única fuente de verdad para:
+- UI de cultivos
+- Informes MD
+- Estadísticas globales
+- Rankings
+
+#### **Fase 2: Corregir Datos (Bugs #2, #3, #4)**
+Una vez unificado el calculador:
+- Recalcular todos los valores
+- Aplicar jerarquía de estados de Cartera Viva (§4.5.1)
+- Validar que AgroRankings use la fórmula del Manifiesto §4.3
+
+#### **Fase 3: Estabilizar Rankings (Bugs #5, #6, #7)**
+Con el calculador único funcionando:
+- Rankings de cultivos se estabilizarán automáticamente
+- Las pérdidas se reflejarán correctamente
+- Los criterios de ranking serán consistentes
+
+---
+
+### Validación Requerida
+
+Antes de declarar cualquier bug como resuelto:
+1. **Build:** `pnpm build:gold` debe pasar
+2. **QA Humano:** Exportar MD y comparar contra UI
+3. **Cruce de datos:** Verificar consistencia UI ↔ MD ↔ Stats ↔ Rankings
+4. **Manifiesto:** Validar que la implementación siga las reglas canónicas
+
+---
+
+### Observación Importante
+
+El Bug #1 (4 calculadores paralelos) es la **causa raíz** de la mayoría de los demás problemas. Atacarlo primero eliminará múltiples síntomas de una sola vez.
+
+**Recomendación:** No declarar GREEN en ningún bug hasta que el calculador único esté implementado y validado.
+
+---
+
+## 2026-05-22 (continuación) — Diagnóstico Cruzado: UI vs MD vs Estadísticas vs Perfil Global
+
+### Resumen Ejecutivo
+
+Se realizó un cruce exhaustivo entre **5 fuentes de datos** con fechas recientes (UI del 21-22 may, Estadísticas del 21 may 2026 21:01):
+
+1. UI YavlGold (Mis Cultivos + Estadísticas)
+2. 5 Informes MD individuales de cultivos
+3. AgroRankings_2026-05-18.md
+4. agro_perfil_global_2026-05-18T23-33-24-044Z.md
+5. Estadisticas_YavlGold_2026-05-18.md
+
+### Hallazgos Clave
+
+#### ✅ Fuentes Canónicas Sincronizadas
+
+**Estadísticas (21 may 2026), Perfil Global y MD Individual están completamente sincronizados:**
+
+| Métrica | Estadísticas | Perfil Global | MD Individual (suma) | Δ |
+|---------|:------------:|:-------------:|:--------------------:|---:|
+| Ingresos cobrados | $2,325.19 | $2,325.19 | $2,325.20 | $0.01 ✅ |
+| Pérdidas | $108.13 | $108.13 | $108.13 | $0.00 ✅ |
+| Inversión base | $492.64 | $492.64 | $492.64 | $0.00 ✅ |
+| Costos totales | $600.77 | $600.77 | — | ✅ |
+| Rentabilidad | $1,724.42 | $1,724.42 | — | ✅ |
+
+**Conclusión:** Estas tres fuentes usan el **mismo calculador canónico**.
+
+#### 🔴 UI Desincronizada
+
+La UI de Mis Cultivos muestra valores **inconsistentes** con todas las demás fuentes:
+
+| Cultivo | Métrica | UI | MD + Stats + Perfil | Δ |
+|---------|---------|---:|:-------------------:|---:|
+| **Batata amarilla 2** | Pagados | $1,193.00 | $1,263.25 | **-$70.25** 🔴 |
+| **Batata amarilla 2** | Pérdidas | $32.00 | $108.13 | **-$76.13** 🔴 |
+| **Batata amarilla 2** | Costos | $232.00 | $308.13 | **-$76.13** 🔴 |
+| **Batata amarilla 2** | Rentabilidad | +$961.00 | +$955.12 | +$5.88 🟡 |
+| **Maíz mio** | Inversión | $106.00 | $92.64 | **+$13.36** 🔴 |
+| **Maíz mio** | Costos | $106.00 | $92.64 | **+$13.36** 🔴 |
+
+#### 🔴 AgroRankings con Metodología Diferente
+
+AgroRankings explícitamente declara:
+> "Usa ingresos cobrados menos gastos cerrados y pérdidas confirmadas. **No incluye inversión base** ni fiados."
+
+Esto contradice el Manifiesto §4.3: `rentabilidadReal = cobradoReal - (inversión + gastos + pérdidas)`
+
+| Cultivo | Rentabilidad (canónica) | AgroRankings | Δ |
+|---------|:-----------------------:|:------------:|---:|
+| Batata amarilla 2 | +$955.12 | $943.18 | -$11.94 |
+| batata | +$861.95 | $294.69 | -$567.26 |
+| Maíz mio | -$92.64 | -$13.51 | +$79.13 |
+
+#### 🔴 Estado Incorrecto de Cliente con Pérdida
+
+Freddy tiene pérdida confirmada de $108.13 (3 sacos fiados cancelados, MD Batata amarilla 2, 23 mar 2026) pero aparece como "✅ Pagado" en Cartera Viva.
+
+**Regla violada (Manifiesto §4.5.1):**
+> "Si existe pérdida, el cliente pertenece a Perdidos antes que a Pagados."
+
+#### ✅ Bug Resuelto: Pepino vega
+
+Pepino vega ahora aparece correctamente en la UI:
+- Progreso: Día 23/92 (25%)
+- Estado: "Creciendo" (activo)
+- Mensaje: "Punto de equilibrio"
+- Antes: AUSENTE en UI (reportado 18 may)
+
+### Tabla Consolidada de Bugs (Estado Actual)
+
+| ID | Bug | Estado | Prioridad | Fuentes Afectadas |
+|----|-----|:------:|:---------:|:-----------------:|
+| **P0-A** | 4 calculadores paralelos (UI, MD, Stats, Rankings) | 🔴 Abierto | 🔴 Arquitectónico | Todas |
+| **P0-B** | AgroRankings usa metodología incorrecta (excluye inversión) | 🔴 Abierto | 🔴 Crítico | Rankings vs Manifiesto §4.3 |
+| **P1-A** | UI muestra $32 pérdidas vs $108.13 canónico (Batata amarilla 2) | 🔴 Abierto | 🟠 Alto | UI vs MD/Stats/Perfil |
+| **P1-B** | UI muestra $70.25 menos en pagados (Batata amarilla 2) | 🔴 Abierto | 🟠 Alto | UI vs MD/Stats/Perfil |
+| **P1-C** | UI muestra $13.36 más en inversión (Maíz mio) | 🔴 Abierto | 🟠 Alto | UI vs MD/Stats/Perfil |
+| **P1-D** | Estado de Freddy incorrecto (Pagado vs Perdido) | 🔴 Abierto | 🟠 Alto | Cartera Viva vs Manifiesto §4.5.1 |
+| **P2-A** | Top clientes divergente (Perfil vs Rankings) | 🟡 Abierto | 🟡 Medio | Perfil vs Stats/Rankings |
+| **R-1** | Pepino vega ausente en UI | ✅ Resuelto | — | — |
+| **R-2** | Estadísticas mostraba $0 pérdidas (ahora $108.13) | ✅ Resuelto | — | — |
+
+### Matriz de Consistencia (Actualizada)
+
+| Fuente 1 | Fuente 2 | Consistente | Notas |
+|----------|----------|:-----------:|:------|
+| Estadísticas | Perfil Global | ✅ Sí | Completamente sincronizados |
+| Estadísticas | MD Individual | ✅ Sí | Excepto redondeos de centavos |
+| Perfil Global | MD Individual | ✅ Sí | Completamente sincronizados |
+| **UI** | **Estadísticas** | **❌ No** | **Δ = -$76.13 en pérdidas** |
+| **UI** | **MD Individual** | **❌ No** | **Δ = -$70.25 en pagados, +$13.36 en inversión** |
+| **UI** | **Perfil Global** | **❌ No** | **Δ = -$76.13 en pérdidas** |
+| AgroRankings | Todas (canónicas) | ❌ No | Metodología diferente (sin inversión) |
+
+**Conclusión:** La UI es la **única fuente desincronizada** con las fuentes canónicas. Todo lo demás está consistente.
+
+### Hipótesis de Causa Raíz
+
+1. **Calculador UI desincronizado:** La UI de Mis Cultivos tiene su propia función de cálculo que no está alineada con el calculador canónico usado por Estadísticas, Perfil Global y generación de MD.
+
+2. **Origen de los $32 en pérdidas:** Hipótesis verificable - la UI podría estar tratando los 3 sacos fiados cancelados de Freddy ($108.13) como **pagados** ($119.00), lo que explicaría la diferencia. Pero los números no cuadran exactamente, lo que sugiere un tercer factor no identificado.
+
+3. **Inversión de Maíz mio:** UI suma $13.36 más que MD. Posible causa: redondeo de cotización COP→USD o cálculo en tiempo real vs cache.
+
+4. **AgroRankings por diseño vs bug:** Necesario confirmar si la exclusión de inversión base es intencional (métrica de flujo de caja) o bug (debería seguir Manifiesto §4.3).
+
+### Plan de Ataque Refinado
+
+#### **Fase 1: Identificar Calculadores (prioridad máxima)**
+
+Ubicar en código las funciones exactas:
+- `UI`: calcular `pagados`, `pérdidas`, `inversión` por cultivo
+- `Estadísticas`: función canónica (referencia correcta)
+- `AgroRankings`: RPC específico de rankings
+- `MD Individual`: generador de informes
+
+#### **Fase 2: Unificar con el Canónico**
+
+Reemplazar el calculador de la UI con el mismo que usa Estadísticas (ya validado como correcto).
+
+#### **Fase 3: Decidir sobre AgroRankings**
+
+- **Opción A:** Incluir inversión base (alinear con Manifiesto §4.3)
+- **Opción B:** Mantener metodología actual (documentar como métrica de flujo de caja, renombrar a "Rentabilidad Operativa")
+
+#### **Fase 4: Corregir Cartera Viva**
+
+Aplicar jerarquía de estados §4.5.1: si hay pérdida confirmada, el cliente debe aparecer en "Perdidos" antes que en "Pagados".
+
+### Preguntas Abiertas para el Código
+
+1. ¿Por qué la UI muestra $32 en pérdidas en lugar de $108.13?
+2. ¿Hay lógica hardcoded que limita las pérdidas?
+3. ¿La UI usa datos cacheados antiguos o en tiempo real?
+4. ¿AgroRankings debería incluir inversión base?
+5. ¿Dónde está el código que calcula `pagados` para Freddy en Cartera Viva?
+
+### Métricas de Precisión del Diagnóstico
+
+| Tipo | Cantidad |
+|------|:--------:|
+| Datos concretos verificados | 35+ métricas cruzadas |
+| Fuentes analizadas | 5 (UI, 5 MD individuales, Estadísticas, Perfil Global, Rankings) |
+| Discrepancias confirmadas | 7 bugs (2 P0, 4 P1, 1 P2) |
+| Bugs resueltos | 2 (Pepino vega, Estadísticas pérdidas) |
+| Afirmaciones sin inventar | ✅ Todas respaldadas por evidencia directa |
+
+---
+
+### Validación Requerida
+
+Antes de declarar estos bugs como resueltos:
+1. **Cruce UI vs Stats:** Después del fix, UI debe mostrar $108.13 en pérdidas (Batata amarilla 2)
+2. **Estado Freddy:** Debe moverse a "Perdidos" en Cartera Viva
+3. **AgroRankings:** Decisión documentada sobre metodología
+4. **Build:** `pnpm build:gold` debe pasar sin errores
+5. **QA Humano:** Exportar MD de cada cultivo y comparar contra UI
+
+---
+
+### Observación Final
+
+El avance más importante de esta sesión es la confirmación de que **3 de las 5 fuentes (Estadísticas, Perfil Global, MD Individual) ya están sincronizadas** usando un calculador canónico común. Esto reduce significativamente el alcance del fix: solo hay que alinear la UI con ese calculador existente y decidir sobre AgroRankings.
+
+**Ya no es necesario "inventar" un calculador canónico** — ya existe y está probado en 3 superficies. El trabajo es consolidar las 2 superficies restantes (UI y AgroRankings) con ese estándar.
+
+---
+
+## 2026-05-22 — Cierre quirúrgico: calculador canónico de rentabilidad Agro
+
+**Estado:** COMPLETADO EN CÓDIGO / QA PRODUCCIÓN PENDIENTE
+
+### Diagnóstico ejecutado
+
+- La fórmula canónica vigente es `rentabilidadReal = cobradoReal - (inversión + gastos + pérdidas)`.
+- La UI de Mis Cultivos calculaba costos localmente y tomaba inversión desde `investment_usd_equiv`, lo que podía divergir del `investment` usado por MD/Stats.
+- Stats y reportes MD ya estaban alineados en fórmula, pero la fórmula estaba duplicada en cada superficie.
+- Rankings de Top Cultivos dependía de `agro_rank_top_crops_profit`, RPC que no incluía inversión base y por tanto no podía llamarse "Rentabilidad real".
+- Cartera Viva tenía resolutores donde `paid > 0` ganaba antes que `loss > 0`, permitiendo estados "Pagado" en casos con pérdida confirmada.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/agro-profit-calculator.js` | Nuevo calculador canónico `calcularRentabilidad()` / alias `calcular_rentabilidad()`. Devuelve pagados, inversión, gastos, pérdidas, fiados, costos, rentabilidad real, balance actual, capital en riesgo y estados. |
+| `apps/gold/agro/agro-profit-calculator.test.mjs` | 3 pruebas unitarias con Batata amarilla 2, Maíz mio y jerarquía de cliente perdido. |
+| `apps/gold/agro/agro.js` | Mis Cultivos usa el calculador canónico y toma inversión desde `agro_crops.investment` como MD/Stats; Rankings Top Cultivos ahora calcula en cliente desde datos crudos con la misma función, incluyendo inversión. |
+| `apps/gold/agro/agro-stats.js` | Summary financiero consume `calcularRentabilidad()`. |
+| `apps/gold/agro/agro-crop-report.js` | Informe MD por cultivo consume `calcularRentabilidad()`. |
+| `apps/gold/agro/agro-stats-report.js` | Informe global/per-crop consume `calcularRentabilidad()`. |
+| `apps/gold/agro/index.html` | Nota de Rankings actualizada: pagados menos inversión, gastos y pérdidas; fiados fuera de rentabilidad. |
+| `apps/gold/agro/agro-cartera-viva-view.js` | Estado global por cultivo marca `Perdido` antes de `Pagado` si existe pérdida. |
+| `apps/gold/agro/agro-cartera-viva-detail.js` | Detalle de cliente evalúa pérdida antes de pagado. |
+
+### Validación ejecutada
+
+- `node --test apps/gold/agro/agro-profit-calculator.test.mjs`: PASS, 3/3.
+- `pnpm build:gold`: PASS.
+- Nota: el entorno sigue avisando Node `v25.6.0` vs engine declarado `20.x`; no bloqueó build.
+
+### QA producción pendiente
+
+1. Abrir Mis Cultivos y confirmar Batata amarilla 2: pagados `$1,263.25`, pérdidas `$108.13`, rentabilidad `$955.12`.
+2. Confirmar Maíz mio: inversión `$92.64` y rentabilidad `-$106.64` si gastos son `$14.00`.
+3. Abrir Cartera Viva y confirmar Freddy en `Perdidos` / estado de pérdida, no `Pagado`.
+4. Exportar MD y Rankings para comparar UI ↔ MD ↔ Stats ↔ Rankings.

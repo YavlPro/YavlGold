@@ -8,6 +8,7 @@ import supabase from '../assets/js/config/supabase-config.js';
 import { getPendingTransferToken } from './agro-unit-totals.js';
 import { filterQARows, validateExportBundle, showExportError } from './agro-report-guard.js';
 import { toCents, formatMoney, resolveAmountUsd } from './agro-format.js';
+import { calcularRentabilidad } from './agro-profit-calculator.js';
 import {
     chooseReportClientName,
     getMarkdownPrivacyState,
@@ -586,8 +587,15 @@ function buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRo
             totals.lossesCents += c.lossesCents;
 
             const label = c.label || (c.variety ? `${c.name} (${c.variety})` : c.name);
-            const costCents = c.investmentCents + c.expenseCents + c.lossesCents;
-            const profitCents = c.incomeCents - costCents;
+            const finance = calcularRentabilidad({
+                pagados: c.incomeCents,
+                inversion: c.investmentCents,
+                gastos: c.expenseCents,
+                perdidas: c.lossesCents,
+                fiados: c.pendingCents
+            });
+            const costCents = finance.costosTotales;
+            const profitCents = finance.rentabilidad;
             const roi = costCents > 0 ? (((c.incomeCents - costCents) / costCents) * 100).toFixed(1) + '%' : 'N/A';
             const progress = computeCropProgress(c.crop);
             const status = resolveCropStatus(c.crop, progress);
@@ -601,8 +609,15 @@ function buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRo
     totals.expenseCents += unassigned.expenseCents;
     totals.pendingCents += unassigned.pendingCents;
     totals.lossesCents += unassigned.lossesCents;
-    totals.costCents = totals.investmentCents + totals.expenseCents + totals.lossesCents;
-    totals.profitCents = totals.incomeCents - totals.costCents;
+    const totalsFinance = calcularRentabilidad({
+        pagados: totals.incomeCents,
+        inversion: totals.investmentCents,
+        gastos: totals.expenseCents,
+        perdidas: totals.lossesCents,
+        fiados: totals.pendingCents
+    });
+    totals.costCents = totalsFinance.costosTotales;
+    totals.profitCents = totalsFinance.rentabilidad;
     totals.projectedIncomeCents = totals.incomeCents + totals.pendingCents;
     totals.projectedProfitCents = totals.projectedIncomeCents - totals.costCents;
 
@@ -622,7 +637,12 @@ function buildUnassignedSection(unassigned, privacy = getMarkdownPrivacyState())
         return md;
     }
 
-    const profitCents = (info.incomeCents || 0) - ((info.expenseCents || 0) + (info.lossesCents || 0));
+    const profitCents = calcularRentabilidad({
+        pagados: info.incomeCents || 0,
+        gastos: info.expenseCents || 0,
+        perdidas: info.lossesCents || 0,
+        fiados: info.pendingCents || 0
+    }).rentabilidad;
 
     md += '| Concepto | Registros | Monto (USD) |\n';
     md += '|----------|----------:|------------:|\n';

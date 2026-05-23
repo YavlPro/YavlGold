@@ -249,19 +249,19 @@ function resolveBuyerStatus(buyerRow) {
         };
     }
 
-    if (paid > 0) {
-        return {
-            tone: 'pagado',
-            label: 'Pagado',
-            copy: 'Saldo cerrado sin pendiente'
-        };
-    }
-
     if (loss > 0) {
         return {
             tone: 'perdido',
             label: 'Pérdida',
             copy: `${formatMoney(loss)} cerrados fuera de cartera`
+        };
+    }
+
+    if (paid > 0) {
+        return {
+            tone: 'pagado',
+            label: 'Pagado',
+            copy: 'Saldo cerrado sin pendiente'
         };
     }
 

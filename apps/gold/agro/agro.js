@@ -14,6 +14,7 @@ import { initAgroCompradores, openBuyerProfileByName } from './agrocompradores.j
 import { initAgroSocial, openSocialPanel } from './agrosocial.js';
 import { initAgroCalculadora } from './agrocalculadora.js';
 import { initClimaWeeklyEmbed } from './agroclima-layout.js';
+import { calcularRentabilidad } from './agro-profit-calculator.js';
 import { formatCurrencyDisplay, SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, hasOverride, clearOverride } from './agro-exchange.js';
 import { ensureBuyerIdentityLink, isBuyerIdentityRelevantTab } from './agro-buyer-identity.js';
 import { resolveClientAssignmentEditor, setupClientAssignmentEditor } from './agro-cartera-viva-client-assignment.js';
@@ -9961,7 +9962,7 @@ function buildCycleGlobalTotalsByCropType(crops, options = {}) {
         const normalizedCropId = normalizeCropId(crop?.id);
 
         const investmentSnapshot = resolveCropInvestmentSnapshot(crop);
-        const baseInvestment = investmentSnapshot.usdEquiv;
+        const baseInvestment = resolveCropCanonicalInvestmentUsd(crop, investmentSnapshot);
         const expenseInvestment = normalizedCropId && expenseTotalsByCrop
             ? (Number(expenseTotalsByCrop.get(normalizedCropId)) || 0)
             : 0;
@@ -9997,7 +9998,14 @@ function buildCycleGlobalTotalsByCropType(crops, options = {}) {
         bucket.expenseInvestment += expenseInvestment;
         bucket.incomeTotal += incomeTotal;
         bucket.lossesTotal += lossesTotal;
-        bucket.totalCosts += baseInvestment + expenseInvestment + lossesTotal;
+        const metrics = calcularRentabilidad({
+            pagados: incomeTotal,
+            inversion: baseInvestment,
+            gastos: expenseInvestment,
+            perdidas: lossesTotal,
+            fiados: pendingTotal
+        });
+        bucket.totalCosts += metrics.costosTotales;
         bucket.pendingTotal += pendingTotal;
         if (normalizedCropId && unitTotalsByCrop) {
             addCycleUnitTotals(bucket.unitTotals, unitTotalsByCrop.get(normalizedCropId));
@@ -10109,6 +10117,13 @@ function resolveCropInvestmentSnapshot(crop) {
         usdEquiv: Number.isFinite(usdEquiv) ? usdEquiv : 0,
         fxSnapshot
     };
+}
+
+function resolveCropCanonicalInvestmentUsd(crop, snapshot = null) {
+    const storedInvestment = toSafeLocaleNumber(crop?.investment);
+    if (storedInvestment !== null) return storedInvestment;
+    const investmentSnapshot = snapshot || resolveCropInvestmentSnapshot(crop);
+    return Number.isFinite(investmentSnapshot?.usdEquiv) ? investmentSnapshot.usdEquiv : 0;
 }
 
 function formatMoneyByCode(value, code) {
@@ -10526,7 +10541,7 @@ function createCropCardElement(crop, index, options = {}) {
     metaGrid.className = 'crop-meta-grid';
     const normalizedCropId = normalizeCropId(crop?.id);
     const investmentSnapshot = resolveCropInvestmentSnapshot(crop);
-    const baseInvestment = investmentSnapshot.usdEquiv;
+    const baseInvestment = resolveCropCanonicalInvestmentUsd(crop, investmentSnapshot);
     const fxSnapshot = investmentSnapshot.fxSnapshot;
     const effectiveRates = resolveEffectiveUsdRates(fxSnapshot);
     const expenseInvestment = normalizedCropId && expenseTotalsByCrop
@@ -10544,7 +10559,15 @@ function createCropCardElement(crop, index, options = {}) {
     const missingRateCount = normalizedCropId && missingRateCountsByCrop
         ? (Number(missingRateCountsByCrop.get(normalizedCropId)) || 0)
         : 0;
-    const totalCosts = baseInvestment + expenseInvestment + lossesTotal;
+    const metrics = calcularRentabilidad({
+        pagados: incomeTotal,
+        inversion: baseInvestment,
+        gastos: expenseInvestment,
+        perdidas: lossesTotal,
+        fiados: pendingTotal,
+        estadoCultivo: effectiveStatus
+    });
+    const totalCosts = metrics.costosTotales;
     metaGrid.append(
         createMetaItem('Siembra', formatDate(crop.start_date)),
         createEstimatedHarvestMetaItem(crop.expected_harvest_date),
@@ -10608,7 +10631,7 @@ function buildActiveCycleCardsData(crops, options = {}) {
         const normalizedCropId = normalizeCropId(crop?.id);
 
         const investmentSnapshot = resolveCropInvestmentSnapshot(crop);
-        const baseInvestment = investmentSnapshot.usdEquiv;
+        const baseInvestment = resolveCropCanonicalInvestmentUsd(crop, investmentSnapshot);
         const fxSnapshot = investmentSnapshot.fxSnapshot;
         const effectiveRates = resolveEffectiveUsdRates(fxSnapshot);
 
@@ -10637,9 +10660,17 @@ function buildActiveCycleCardsData(crops, options = {}) {
             ? (Number(operationalPendingTotalsByCrop.get(normalizedCropId)) || 0)
             : 0;
 
-        const totalCosts = baseInvestment + expenseInvestment + lossesTotal;
+        const metrics = calcularRentabilidad({
+            pagados: incomeTotal,
+            inversion: baseInvestment,
+            gastos: expenseInvestment,
+            perdidas: lossesTotal,
+            fiados: pendingTotal,
+            estadoCultivo: effectiveStatus
+        });
+        const totalCosts = metrics.costosTotales;
         const totalInvestment = baseInvestment + expenseInvestment;
-        const net = incomeTotal - totalCosts;
+        const net = metrics.rentabilidad;
         const potential = net + pendingTotal;
         const areaSize = Number(crop?.area_size);
         const areaText = Number.isFinite(areaSize) ? `${areaSize} Ha` : 'N/A';
@@ -10721,7 +10752,7 @@ function buildFinishedCycleCardsData(crops, options = {}) {
         const normalizedCropId = normalizeCropId(crop?.id);
 
         const investmentSnapshot = resolveCropInvestmentSnapshot(crop);
-        const baseInvestment = investmentSnapshot.usdEquiv;
+        const baseInvestment = resolveCropCanonicalInvestmentUsd(crop, investmentSnapshot);
         const fxSnapshot = investmentSnapshot.fxSnapshot;
         const effectiveRates = resolveEffectiveUsdRates(fxSnapshot);
 
@@ -10750,9 +10781,17 @@ function buildFinishedCycleCardsData(crops, options = {}) {
             ? (Number(operationalPendingTotalsByCrop.get(normalizedCropId)) || 0)
             : 0;
 
-        const totalCosts = baseInvestment + expenseInvestment + lossesTotal;
+        const metrics = calcularRentabilidad({
+            pagados: incomeTotal,
+            inversion: baseInvestment,
+            gastos: expenseInvestment,
+            perdidas: lossesTotal,
+            fiados: pendingTotal,
+            estadoCultivo: effectiveStatus
+        });
+        const totalCosts = metrics.costosTotales;
         const totalInvestment = baseInvestment + expenseInvestment;
-        const finalNet = incomeTotal - totalCosts;
+        const finalNet = metrics.rentabilidad;
         const areaSize = Number(crop?.area_size);
         const areaText = Number.isFinite(areaSize) ? `${areaSize} Ha` : 'N/A';
         const baseTriplet = formatInvestmentTriplet(baseInvestment, effectiveRates);
@@ -13566,14 +13605,14 @@ function renderOpsRankings() {
             index,
             name: resolveOpsRankingCropLabel(row),
             value: formatOpsRankingCurrency(profit),
-            meta: `Ingresos cobrados: ${formatOpsRankingCurrency(row?.ingresos)} · Gastos cerrados / pérdidas: ${formatOpsRankingCurrency(row?.gastos)}`,
+            meta: `Ingresos cobrados: ${formatOpsRankingCurrency(row?.ingresos)} · Inversión + gastos + pérdidas: ${formatOpsRankingCurrency(row?.costos)}`,
             valueColor: profitColor,
             maskMetaMoney: true
         });
     }, {
         emptyText: hasSelectedCrop
-            ? 'Sin ingresos cobrados para este cultivo en el rango seleccionado.'
-            : 'Sin ingresos cobrados en el rango seleccionado.'
+            ? 'Sin movimientos financieros para este cultivo en el rango seleccionado.'
+            : 'Sin movimientos financieros en el rango seleccionado.'
     });
 
     applyBuyerPrivacy(panel, opsRankingsState.hideNames);
@@ -13600,9 +13639,126 @@ function pickRankingsErrorMessage(errors) {
     return errors.map((err) => err?.message || 'Error de consulta').join(' | ');
 }
 
+function applyOpsRankingDateRange(query, field, rangeDates) {
+    let next = query;
+    if (rangeDates?.from) next = next.gte(field, rangeDates.from);
+    if (rangeDates?.to) next = next.lte(field, rangeDates.to);
+    return next;
+}
+
+function isOpsRankingActivePending(row) {
+    const token = String(row?.transfer_state || '').trim().toLowerCase();
+    if (token === 'transferred' || token === 'reverted') return false;
+    if (row?.reverted_at) return false;
+    return true;
+}
+
+async function fetchOpsTopCropsCanonical({ userId, rangeDates, cropId, filterRows, resolveUsd }) {
+    const fetchRows = async (table, selectFields, opts = {}) => {
+        try {
+            let q = supabase.from(table).select(selectFields).eq('user_id', userId);
+            if (opts.activeOnly !== false) q = q.is('deleted_at', null);
+            if (opts.filterReverted) q = q.is('reverted_at', null);
+            if (opts.cropId) q = q.eq('crop_id', opts.cropId);
+            if (opts.dateField) q = applyOpsRankingDateRange(q, opts.dateField, rangeDates);
+            const { data, error } = await q;
+            if (error) {
+                console.warn(`[AGRO][Rankings] ${table} canonical fetch error:`, error.message);
+                return [];
+            }
+            return filterRows(Array.isArray(data) ? data : []);
+        } catch (err) {
+            console.warn(`[AGRO][Rankings] ${table} canonical fetch exception:`, err?.message || err);
+            return [];
+        }
+    };
+
+    const [cropRowsRaw, incomeRows, expenseRows, lossRows, pendingRowsRaw] = await Promise.all([
+        fetchRows('agro_crops', '*', { activeOnly: false }),
+        fetchRows('agro_income', 'id,monto,monto_usd,currency,exchange_rate,fecha,crop_id,reverted_at', { dateField: 'fecha', cropId, filterReverted: true }),
+        fetchRows('agro_expenses', 'id,amount,monto_usd,currency,exchange_rate,date,crop_id', { dateField: 'date', cropId }),
+        fetchRows('agro_losses', 'id,monto,monto_usd,currency,exchange_rate,fecha,crop_id,reverted_at', { dateField: 'fecha', cropId, filterReverted: true }),
+        fetchRows('agro_pending', 'id,monto,monto_usd,currency,exchange_rate,fecha,crop_id,transfer_state,reverted_at', { dateField: 'fecha', cropId })
+    ]);
+
+    const cropRows = cropRowsRaw.filter((crop) => {
+        if (!crop || isCropDeleted(crop) || isCropArchived(crop)) return false;
+        return cropId ? normalizeCropId(crop.id) === cropId : true;
+    });
+    const cropMap = new Map(cropRows.map((crop) => [normalizeCropId(crop.id), crop]));
+    const buckets = new Map();
+
+    const ensureBucket = (rawCropId) => {
+        const key = normalizeCropId(rawCropId);
+        if (!key) return null;
+        let bucket = buckets.get(key);
+        if (bucket) return bucket;
+        const crop = cropMap.get(key) || null;
+        const investmentSnapshot = crop ? resolveCropInvestmentSnapshot(crop) : { usdEquiv: 0 };
+        const display = crop ? getCropDisplayParts(crop) : null;
+        bucket = {
+            crop_id: key,
+            crop_name: display?.name || crop?.name || 'Cultivo',
+            crop,
+            inversion: resolveCropCanonicalInvestmentUsd(crop, investmentSnapshot),
+            ingresos: 0,
+            gastos: 0,
+            perdidas: 0,
+            fiados: 0
+        };
+        buckets.set(key, bucket);
+        return bucket;
+    };
+
+    cropRows.forEach((crop) => ensureBucket(crop.id));
+    incomeRows.forEach((row) => {
+        const bucket = ensureBucket(row?.crop_id);
+        if (bucket) bucket.ingresos += Number(resolveUsd(row)) || 0;
+    });
+    expenseRows.forEach((row) => {
+        const bucket = ensureBucket(row?.crop_id);
+        if (bucket) bucket.gastos += Number(resolveUsd(row)) || 0;
+    });
+    lossRows.forEach((row) => {
+        const bucket = ensureBucket(row?.crop_id);
+        if (bucket) bucket.perdidas += Number(resolveUsd(row)) || 0;
+    });
+    pendingRowsRaw.filter(isOpsRankingActivePending).forEach((row) => {
+        const bucket = ensureBucket(row?.crop_id);
+        if (bucket) bucket.fiados += Number(resolveUsd(row)) || 0;
+    });
+
+    return Array.from(buckets.values())
+        .map((bucket) => {
+            const finance = calcularRentabilidad({
+                pagados: bucket.ingresos,
+                inversion: bucket.inversion,
+                gastos: bucket.gastos,
+                perdidas: bucket.perdidas,
+                fiados: bucket.fiados
+            });
+            return {
+                crop_id: bucket.crop_id,
+                crop_name: bucket.crop_name,
+                ingresos: finance.pagados,
+                inversion: finance.inversion,
+                gastos: finance.gastos + finance.perdidas,
+                gastos_directos: finance.gastos,
+                perdidas: finance.perdidas,
+                fiados: finance.fiadosPendientes,
+                costos: finance.costosTotales,
+                capital_en_riesgo: finance.capitalEnRiesgo,
+                profit: finance.rentabilidad
+            };
+        })
+        .filter((row) => Math.abs(row.ingresos) > 0 || Math.abs(row.costos) > 0 || Math.abs(row.fiados) > 0)
+        .sort((a, b) => Number(b.profit || 0) - Number(a.profit || 0))
+        .slice(0, OPS_RANKINGS_LIMIT);
+}
+
 async function fetchOpsRankingsData(options = {}) {
     const { filterQARows } = await import('./agro-report-guard.js');
-    const { formatMoney: _fmtMoney, toCents: _toCents } = await import('./agro-format.js');
+    const { formatMoney: _fmtMoney, toCents: _toCents, resolveAmountUsd: _resolveUsd } = await import('./agro-format.js');
     const { validateExportBundle: _vEB, showExportError: _sEE } = await import('./agro-report-guard.js');
     _formatOpsRankingMoney = _fmtMoney;
     _toCentsForRankings = _toCents;
@@ -13629,10 +13785,16 @@ async function fetchOpsRankingsData(options = {}) {
         p_crop_id: scopedCropId || null
     };
 
-    const [topClientsRes, pendingRes, cropsRes] = await Promise.all([
+    const [topClientsRes, pendingRes, topCropsRows] = await Promise.all([
         supabase.rpc('agro_rank_top_clients', params),
         supabase.rpc('agro_rank_pending_clients', params),
-        supabase.rpc('agro_rank_top_crops_profit', params)
+        fetchOpsTopCropsCanonical({
+            userId: userData.user.id,
+            rangeDates,
+            cropId: scopedCropId || null,
+            filterRows: filterQARows,
+            resolveUsd: _resolveUsd
+        })
     ]);
 
     const topClientsRows = normalizeOpsRankingsRows(topClientsRes.data);
@@ -13655,13 +13817,13 @@ async function fetchOpsRankingsData(options = {}) {
         }
     }
 
-    const errors = [topClientsRes.error, pendingRes.error, cropsRes.error].filter(Boolean);
+    const errors = [topClientsRes.error, pendingRes.error].filter(Boolean);
     const dedupedTopClients = deduplicateOpsRankingsByName(filterQARows(topClientsRows), 'buyer_name');
     const dedupedPendingClients = deduplicateOpsPendingClientsByName(filterQARows(normalizeOpsRankingsRows(pendingRes.data)));
     return {
         topClients: dedupedTopClients,
         pendingClients: dedupedPendingClients,
-        topCrops: filterQARows(normalizeOpsRankingsRows(cropsRes.data)),
+        topCrops: topCropsRows,
         error: pickRankingsErrorMessage(errors)
     };
 }
@@ -13810,7 +13972,7 @@ async function exportOpsRankingsMarkdown() {
 
     const sortedBuyers = Array.from(buyers.values()).sort((a, b) => b.totalCents - a.totalCents);
 
-    // ── Top Crops: still use RPC (has no JS equivalent) ──
+    // ── Top Crops: same canonical calculator used by UI/Stats/MD ──
     const exportData = await fetchOpsRankingsData({ cropId: null });
     const exportTopCrops = normalizeOpsRankingsRows(exportData.topCrops);
 
@@ -13843,15 +14005,15 @@ async function exportOpsRankingsMarkdown() {
         md += `\n`;
     }
 
-    // Top Crops (from RPC - keeps server-side calculation for operational costs)
+    // Top Crops: canonical client-side calculation shared with UI/Stats/MD.
     md += `## Top Cultivos (Rentabilidad real)\n\n`;
-    md += `> Nota: Usa ingresos cobrados menos gastos cerrados y pérdidas confirmadas de Cartera Operativa. No incluye inversión base ni fiados.\n\n`;
+    md += `> Nota: Usa la fórmula canónica: pagados - (inversión + gastos + pérdidas). Los fiados no entran en rentabilidad.\n\n`;
     if (!exportTopCrops.length) {
-        md += 'Sin ingresos cobrados en el rango seleccionado.\n\n';
+        md += 'Sin movimientos financieros en el rango seleccionado.\n\n';
     } else {
         exportTopCrops.forEach((row, index) => {
             const label = resolveOpsRankingCropLabel(row);
-            md += `${index + 1}. ${label} · Rentabilidad real ${getOpsRankingMarkdownCurrency(row?.profit, hideMoney)} · Ingresos cobrados: ${getOpsRankingMarkdownCurrency(row?.ingresos, hideMoney)} · Gastos cerrados / pérdidas: ${getOpsRankingMarkdownCurrency(row?.gastos, hideMoney)}\n`;
+            md += `${index + 1}. ${label} · Rentabilidad real ${getOpsRankingMarkdownCurrency(row?.profit, hideMoney)} · Ingresos cobrados: ${getOpsRankingMarkdownCurrency(row?.ingresos, hideMoney)} · Inversión + gastos + pérdidas: ${getOpsRankingMarkdownCurrency(row?.costos, hideMoney)}\n`;
         });
         md += `\n`;
     }

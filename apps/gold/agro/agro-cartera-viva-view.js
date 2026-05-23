@@ -818,6 +818,7 @@ function resolveCropScopedGlobalStatus(bucket, clientStatus = 'active') {
     const legacyUnclassified = Number(bucket?.legacy_unclassified_total || 0);
     const visibleBalance = credited - paid - loss - transferred;
 
+    if (loss > 0) return 'Perdido';
     if (pending > 0 && paid <= 0 && loss <= 0 && transferred <= 0) return 'Fiado';
     if (
         credited > 0

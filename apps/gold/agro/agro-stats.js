@@ -7,6 +7,7 @@
  */
 
 import supabase from '../assets/js/config/supabase-config.js';
+import { calcularRentabilidad } from './agro-profit-calculator.js';
 import { toCents, formatMoney } from './agro-format.js';
 
 let roiChartInstance = null;
@@ -796,8 +797,15 @@ export async function computeAgroFinanceSummaryV1() {
         }
 
         // Cálculos derivados - V9.5: SOLO datos reales, NO proyecciones
-        const costTotal = cropsInvestmentTotal + expenseTotal + lossesTotal; // Costo Total = Inversión + Gastos + Pérdidas
-        const profitNet = incomeTotal - costTotal;    // Ganancia Neta = Ingresos - Costos
+        const canonicalFinance = calcularRentabilidad({
+            pagados: incomeTotal,
+            inversion: cropsInvestmentTotal,
+            gastos: expenseTotal,
+            perdidas: lossesTotal,
+            fiados: pendingTotal
+        });
+        const costTotal = canonicalFinance.costosTotales;
+        const profitNet = canonicalFinance.rentabilidad;
 
         // ROI: N/A si no hay ingresos reales (V9.5: NO usar revenue_projected)
         let roiDisplay = 'N/A';

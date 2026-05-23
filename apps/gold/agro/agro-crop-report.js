@@ -8,6 +8,7 @@ import supabase from '../assets/js/config/supabase-config.js';
 import { computeUnitTotalsFromRows, formatUnitTotalsMarkdown } from './agro-unit-totals.js';
 import { filterQARows, validateExportBundle, showExportError } from './agro-report-guard.js';
 import { toCents, formatMoney, resolveAmountUsd } from './agro-format.js';
+import { calcularRentabilidad } from './agro-profit-calculator.js';
 import {
     chooseReportClientName,
     getMarkdownPrivacyState,
@@ -855,8 +856,15 @@ export async function exportCropReport(cropId, opts = {}) {
         const initialInvestmentCents = cropExists && crop?.investment !== null && crop?.investment !== undefined
             ? toCents(crop.investment)
             : 0;
-        const totalCostWithInvestmentCents = totalExpensesCents + initialInvestmentCents + totalLossesCents;
-        const profitCents = totalIncomeCents - totalCostWithInvestmentCents;
+        const canonicalFinance = calcularRentabilidad({
+            pagados: totalIncomeCents,
+            inversion: initialInvestmentCents,
+            gastos: totalExpensesCents,
+            perdidas: totalLossesCents,
+            fiados: totalPendingCents
+        });
+        const totalCostWithInvestmentCents = canonicalFinance.costosTotales;
+        const profitCents = canonicalFinance.rentabilidad;
         const roiStr = totalCostWithInvestmentCents > 0
             ? (((totalIncomeCents - totalCostWithInvestmentCents) / totalCostWithInvestmentCents) * 100).toFixed(1) + '%'
             : 'N/A';
