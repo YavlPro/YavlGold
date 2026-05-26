@@ -3274,3 +3274,109 @@ WHERE user_id = :userId
 ```
 pnpm build:gold → ✓ 178 modules → built in 3.05s → UTF-8 OK
 ```
+
+---
+
+### Auditoría Post-Fixes — 25 de mayo de 2026 (continuación)
+
+**Estado:** AUDITORÍA COMPLETADA · 2 DE 4 FIXES EFECTIVOS
+
+#### Contexto
+
+Re-auditoría de los 8 informes regenerados después de aplicar los fixes. El SQL de P3-A fue ejecutado manualmente (6 filas actualizadas en `agro_income` y `agro_pending`).
+
+#### Resultado General
+
+| Bug | Estado previo | Estado actual | Resultado |
+|-----|---------------|---------------|-----------|
+| **P1-A** Yony chupeto | $199.26 (3 mov) | **Parcial** ⚠️ | Rankings/Estadísticas ✅ — Dashboard/Perfil ❌ |
+| **P1-B** Maíz mio costos | $92.64 vs $106.15 | **Sin cambios** ❌ | Informe individual sigue sin gastos |
+| **P2-A** Redondeo $0.01 | 6 métricas con diferencias | **Mejorado** ⚠️ | Ingresos globales ahora coinciden |
+| **P3-A** Nombre canónico | "yony" vs "Yony chupeto" | **Parcial** ⚠️ | Informe batata aún muestra "yony" |
+
+---
+
+#### P1-A: Yony chupeto — Fix parcial
+
+**Fix aplicado:** `agroestadistica.js:540` ahora usa `normalizeReportClientKey()`.
+
+**Resultado:**
+- Rankings: $293.61 (6 mov) ✅
+- Estadísticas: $293.61 (6 mov) ✅
+- **Dashboard (UI): $199.26 (3 mov) ❌**
+- **Perfil Global: $199.26 (3 mov) ❌**
+
+**Diagnóstico post-fix:** El fix solo afectó a `agroestadistica.js`. El Dashboard y Perfil Global usan un módulo diferente que NO fue tocado. Hay que aplicar el mismo `normalizeReportClientKey()` en el código que genera esos dos componentes.
+
+**Verificación manual desde informes individuales:**
+- Informe Batata amarilla 2: Yony chupeto → 3 mov, $80.72
+- Informe batata: **yony** (minúscula) → 1 mov, $40.74
+- Informe Maíz mio: Yony chupeto → 2 mov, $172.15
+- **Total real: 6 mov = $293.61** ✅
+
+---
+
+#### P1-B: Maíz mio costos — Sin cambios
+
+**Fix aplicado:** `agro-crop-report.js` agrega lookup de gastos operativos.
+
+**Resultado:**
+- Informe individual Maíz mio: Gastos $0.00, Costos $92.64 ❌
+- Rankings: $106.15 ✅
+- Dashboard UI: Gastos $14, Costos $106 ✅
+
+**Diagnóstico post-fix:** El informe individual aún muestra "Gastos (0) — Sin registros". El lookup de gastos operativos no se refleja en el informe exportado. Posibles causas:
+1. El fix no se desplegó correctamente
+2. La query de gastos operativos no funciona como se esperaba
+3. Los gastos están en una tabla diferente a `YGAgroOperationalCycles`
+
+---
+
+#### P2-A: Redondeo $0.01 — Mejorado
+
+**Fix aplicado:** `agroestadistica.js:501-519` usa integer cents.
+
+**Resultado:**
+| Métrica | Dashboard | Estadísticas | Δ |
+|---------|----------:|------------:|--:|
+| Ingresos cobrados | $2,691.50 | $2,691.51 | $0.01 ✅ |
+| Fiados | $175.96 | $175.95 | $0.01 ✅ |
+| Rentabilidad | $2,036.62 | $2,036.63 | $0.01 ✅ |
+
+**Mejora significativa:** Los totales globales ahora coinciden entre Perfil Global, Estadísticas y Rankings. Queda una pequeña diferencia residual entre Dashboard (redondeo en UI) y los informes.
+
+---
+
+#### P3-A: Nombre canónico — Parcial
+
+**SQL ejecutado:** 6 filas actualizadas en `agro_income` y `agro_pending`.
+
+**Resultado:**
+- Informe Batata amarilla 2: **Yony chupeto** ✅
+- Informe Maíz mio: **Yony chupeto** ✅
+- **Informe batata: yony (minúscula) ❌**
+
+**Diagnóstico post-fix:** El SQL actualizó `buyer_group_key` pero el informe de batata parece leer el nombre de otro campo (posiblemente `buyer_name` o el nombre original del movimiento). Hay que verificar qué columna exacta muestra el informe individual.
+
+---
+
+#### Resumen de Acción Post-Auditoría
+
+| Prioridad | Bug | Qué pasó | Qué falta |
+|-----------|-----|----------|-----------|
+| **P1-A** | Yony chupeto en Dashboard/Perfil | Fix aplicado solo a `agroestadistica.js` | Aplicar `normalizeReportClientKey()` también en el módulo que genera Dashboard y Perfil Global |
+| **P1-B** | Maíz mio costos | Informe individual aún muestra 0 gastos | Verificar que el fix en `agro-crop-report.js` esté desplegado y la query funcione |
+| **P2-A** | Redondeo | Mejorado — totales globales OK | Fix casi completo, diferencias residuales de UI |
+| **P3-A** | Nombre canónico | SQL parcial | Verificar qué columna lee el informe individual y corregir el UPDATE |
+
+---
+
+#### Conclusión
+
+2 de los 4 fixes funcionan correctamente en Rankings y Estadísticas. El Dashboard y Perfil Global siguen usando un módulo diferente que no fue tocado. Se requiere:
+
+1. **P1-A:** Buscar en el código qué archivo genera el Top Clientes del Dashboard y Perfil Global para aplicar el fix ahí también.
+2. **P1-B:** Verificar que el build se desplegó correctamente y que la query de gastos operativos funciona.
+3. **P3-A:** Verificar qué columna exacta lee el informe de batata para corregir el SQL.
+
+**Estado final:** YELLOW (2 de 4 fixes efectivos en producción).
