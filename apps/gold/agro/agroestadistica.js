@@ -2,6 +2,7 @@ import { convertToUSD, getRate, initExchangeRates } from './agro-exchange.js';
 import { getPendingTransferToken } from './agro-unit-totals.js';
 import { filterQARows } from './agro-report-guard.js';
 import { toCents, formatMoney } from './agro-format.js';
+import { normalizeReportClientKey } from './agro-report-format.js';
 
 const CROP_STATUSES = {
     FINALIZED: new Set(['finalizado', 'finalized', 'harvested', 'completed', 'cosechado']),
@@ -498,7 +499,7 @@ export async function getGlobalStats({ supabase: supabaseClient, userId, range }
     }
 
     function sumRowsUsd(rows, amountFields, bucket, rowUsdMap = null) {
-        let total = 0;
+        let totalCents = 0;
         rows.forEach((row) => {
             const evaluation = evaluateUsdAmount(row, amountFields, {
                 outlierThreshold: USD_LEGACY_OUTLIER_THRESHOLD
@@ -511,10 +512,10 @@ export async function getGlobalStats({ supabase: supabaseClient, userId, range }
             }
 
             const usd = Number(evaluation.usd || 0);
-            total += usd;
+            totalCents += toCents(usd);
             if (rowUsdMap) rowUsdMap.set(row, usd);
         });
-        return total;
+        return totalCents / 100;
     }
 
     const incomeUsd = sumRowsUsd(incomes, ['monto', 'amount'], 'Ingresos', incomeUsdByRow);
@@ -536,7 +537,7 @@ export async function getGlobalStats({ supabase: supabaseClient, userId, range }
         const totalUsd = Number(incomeUsdByRow.get(row) || 0);
         if (!(totalUsd > 0)) return;
         const buyer = parseBuyerName(row?.concepto);
-        const key = buyer.toLowerCase();
+        const key = normalizeReportClientKey(row?.buyer_group_key || buyer) || buyer.toLowerCase();
         const current = buyerTotals.get(key) || { name: buyer, totalUsd: 0, count: 0 };
         current.totalUsd += totalUsd;
         current.count += 1;

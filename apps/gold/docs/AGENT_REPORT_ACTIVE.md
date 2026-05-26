@@ -2971,4 +2971,306 @@ Capturas de UI y 8 MDs actualizados confirman que el fix funcionó correctamente
 
 ---
 
-**Fin de la auditoría completa — 22 de mayo de 2026**
+## 2026-05-25 — Auditoría de Informes Post-Deploy (8 archivos)
+
+**Estado:** AUDITORÍA COMPLETADA
+
+### Contexto
+
+Revisión cruzada de 8 informes exportados desde producción el 25 may. 2026 (19:22–19:23), contrastados con el Dashboard en vivo.
+
+**Archivos auditados:**
+1. `Informe_Pepino_2026-05-25.md`
+2. `Informe_Maíz-mio_2026-05-25.md`
+3. `Informe_Batata-amarilla-2_2026-05-25.md`
+4. `Informe_batata_2026-05-25.md`
+5. `Informe_caraota-roja_2026-05-25.md`
+6. `AgroRankings_2026-05-25.md`
+7. `agro_perfil_global_2026-05-25T23-23-13-285Z.md`
+8. `Estadisticas_YavlGold_2026-05-25.md`
+
+### Validaciones Previas
+
+| Check | Resultado |
+|-------|:---------:|
+| Residuos de "Pepino Vega" en informes | ✅ Limpio (0 apariciones) |
+| Caraota roja (nuevo cultivo) presente | ✅ Correcto en todos los informes |
+| Inversión base ($546.75) = suma individual | ✅ $0 + $92.64 + $200 + $200 + $54.11 |
+| Pérdidas ($108.13) = solo Batata amarilla 2 | ✅ Consistente |
+| Costos totales ($654.88) = inversión + gastos + pérdidas | ✅ Consistente |
+| Unidades globales (233.5 sacos) | ✅ 11 + 39 + 98.5 + 85 |
+| Clientes top (jose luis, tito, Gollo, oliva) | ✅ Cuadran contra informes individuales |
+
+### Bugs Confirmados (4)
+
+#### 🔴 P1-A: Yony chupeto — Agrupación incorrecta en Top Clientes
+
+- **Problema:** Dashboard muestra $199.26 (3 mov) vs Rankings/Estadísticas muestra $293.61 (6 mov)
+- **Impacto:** Subestima ingresos en $94.35 USD (31.8% menos)
+- **Causa raíz:** El Dashboard no canonicaliza "yony" → "Yony chupeto". Rankings sí lo fusiona pero el Dashboard/Perfil Global usan una fuente distinta.
+- **Evidencia:**
+  - batata: "yony" = $40.74 (1 mov)
+  - Maíz mio: "Yony chupeto" = $172.15 (2 mov)
+  - Batata amarilla 2: "Yony chupeto" = $80.72 (3 mov)
+  - Suma real: $293.61 (6 mov) — solo Rankings/Estadísticas lo reflejan
+  - Dashboard/Global: $199.26 (3 mov) — irreconciliable con cualquier combinación
+- **Solución:** Unificar algoritmo de consolidación de clientes en Dashboard y Perfil Global
+
+#### 🔴 P1-B: Maíz mio — Costos divergentes entre informes
+
+- **Problema:** Informe individual muestra $92.64 vs Rankings muestra $106.15. Dashboard muestra $106.
+- **Diferencia:** $13.51 USD en costos no reportados
+- **Causa raíz:** El informe individual no exporta gastos vinculados ($14). Rankings los incluye con valor diferente ($13.51 vs $14) sugiriendo conversión de moneda inconsistente.
+- **Evidencia:**
+  - Informe individual Maíz: Inversión $92.64, Gastos $0.00, Costos $92.64
+  - Dashboard UI: Gastos $14, Costos combinados $106
+  - Rankings: Inversión+gastos+pérdidas = $106.15
+  - Estadísticas: Costos $92.64
+- **Solución:** Incluir gastos en exportación del informe individual + unificar cálculo de costos
+
+#### 🟡 P2-A: Errores de redondeo ($0.01) en 6 métricas
+
+- **Problema:** Seis métricas con diferencias de $0.01 entre Dashboard/Global y Estadísticas/Informes individuales
+- **Causa raíz:** Dos código distintos calculan el mismo total con redondeos en pasos intermedios distintos
+- **Evidencia:**
+
+  | Métrica | Dashboard/Global | Estadísticas/Indiv. | Δ |
+  |---------|-----------------:|--------------------:|--:|
+  | Pagados totales | $2,691.50 | $2,691.51 | +$0.01 |
+  | Fiados totales | $175.96 | $175.95 | -$0.01 |
+  | Ganancia neta | $2,036.62 | $2,036.63 | +$0.01 |
+  | Resultado potencial | $2,212.57 | $2,212.58 | +$0.01 |
+  | B.a.2 pagados | $1,263.24 | $1,263.25 | +$0.01 |
+  | B.a.2 rentabilidad | $955.11 | $955.12 | +$0.01 |
+
+- **Solución:** Unificar cálculo en una sola función con redondeo consistente (aplicar al final, no en pasos intermedios)
+
+#### 🟢 P3-A: Nombre canónico inconsistente "yony" vs "Yony chupeto"
+
+- **Problema:** En batata aparece "yony" (minúscula) vs "Yony chupeto" en Maíz y Batata amarilla 2
+- **Causa raíz:** Falta normalización al registrar movimientos — el usuario escribió "yony" en un cultivo y "Yony chupeto" en otros
+- **Solución:** Normalizar nombre canónico al guardar movimientos (trim + lowercase comparison para matching)
+
+### Resumen Ejecutivo
+
+| Categoría | Resultado |
+|-----------|-----------|
+| Informes auditados | 8 archivos |
+| Residuos de Pepino Vega | 0 (limpio) |
+| Bugs encontrados | 4 (2 P1, 1 P2, 1 P3) |
+| Impacto financiero | $94.35 USD subestimados + $13.51 costos inconsistentes |
+| Salud general | 95% funcional, 5% con bugs menores |
+
+### Acciones Inmediatas Recomendadas
+
+| Prioridad | Acción | Impacto | Esfuerzo |
+|-----------|--------|---------|----------|
+| P1-A | Corregir canonicalización de clientes en Dashboard y Perfil Global | +$94.35 USD en precisión | Bajo |
+| P1-B | Incluir gastos en informe individual de Maíz + unificar costos | Consistencia de $13.51 | Bajo |
+| P2-A | Unificar función de cálculo de totales con redondeo al final | Eliminar 6 inconsistencias de $0.01 | Medio |
+| P3-A | Normalizar nombres canónicos al registrar movimientos | Mejora de calidad de datos | Bajo |
+
+---
+
+### Diagnóstico de Causa Raíz — 25 de mayo de 2026
+
+#### P1-A: Yony chupeto — Agrupación incorrecta en Top Clientes
+
+**Causa raíz confirmada:** `agroestadistica.js:539` usa `buyer.toLowerCase()` para agrupar clientes, ignorando el sistema canónico `normalizeBuyerGroupKey()`.
+
+**Cadena de fallo:**
+1. `agroestadistica.js:538` → `parseBuyerName(row?.concepto)` extrae el nombre del concepto
+2. `agroestadistica.js:539` → `const key = buyer.toLowerCase()` agrupa solo por lowercase
+3. "yony" y "Yony chupeto" generan keys distintas: `"yony"` vs `"yony chupeto"`
+4. El Dashboard y Perfil Global usan estos datos → muestran montos incorrectos
+
+**Flujo correcto (Rankings/Estadísticas):**
+1. `agro-report-format.js:16` → `normalizeReportClientKey()` → llama a `normalizeBuyerGroupKey()`
+2. `agro-buyer-identity.js:45-54` → strip accents + lowercase + collapse spaces + trim
+3. `agro-stats-report.js:675` → `resolveBuyerKey(row, who)` usa `normalizeReportClientKey()`
+4. `agro.js:13944` → Rankings usa `_normKey(row?.buyer_group_key || displayName)`
+
+**Contraste:**
+
+| Componente | Función de agrupación | Resultado "yony" / "Yony chupeto" |
+|------------|----------------------|----------------------------------|
+| Dashboard (`agroestadistica.js:539`) | `buyer.toLowerCase()` | Keys distintas |
+| Perfil Global (`agroestadistica.js:539`) | `buyer.toLowerCase()` | Keys distintas |
+| Rankings (`agro.js:13944`) | `_normKey(buyer_group_key)` | Usa buyer_group_key de DB |
+| Estadísticas (`agro-stats-report.js:675`) | `normalizeReportClientKey()` | Usa buyer_group_key de DB |
+
+**Fix:** Reemplazar `agroestadistica.js:539`:
+```javascript
+// ANTES:
+const key = buyer.toLowerCase();
+// DESPUÉS:
+const key = normalizeReportClientKey(row?.buyer_group_key || buyer) || buyer.toLowerCase();
+```
+
+---
+
+#### P1-B: Maíz mio — Costos divergentes entre informes
+
+**Causa raíz confirmada (doble):**
+
+**(a) El informe individual NO exporta gastos operativos:**
+- `agro-crop-report.js:828-829` → `fetchTabData(user.id, normalizedCropId, 'gastos', fetchOpts)` consulta `agro_expenses` con `crop_id` → devuelve 0 filas para Maíz
+- `agro.js:11475-11484` → El Dashboard agrega gastos operativos desde `YGAgroOperationalCycles.getOperationalExpensesByCrop()` → estos $14 NO están en `agro_expenses`
+- El informe individual solo ve `agro_expenses` → muestra $0 gastos, $92.64 costos
+- El Dashboard ve `agro_expenses` + operativos → muestra $14 gastos, $106 costos
+
+**(b) Error de código en Rankings `agro.js:13743`:**
+```javascript
+gastos: finance.gastos + finance.perdidas,  // BUG: suma pérdidas en gastos
+```
+Esto crea confusión porque el campo `gastos` incluye pérdidas cuando no debería. El campo `costos` (`finance.costosTotales`) es correcto.
+
+**Flujo de datos por componente:**
+
+| Componente | Fuente de gastos | Maíz gastos | Maíz costos |
+|------------|-----------------|-------------|-------------|
+| Informe individual | `agro_expenses` solo | $0 | $92.64 |
+| Dashboard card | `agro_expenses` + operativos | $14 | $106 |
+| Rankings | `agro_expenses` (otro query) | variable | $106.15 |
+| Estadísticas | `agro_expenses` (cents) | $0 | $92.64 |
+
+**Fix (a):** En `agro-crop-report.js`, agregar consulta de gastos operativos y sumarlos a `totalExpensesCents` antes de pasar a `calcularRentabilidad`.
+
+**Fix (b):** En `agro.js:13743`:
+```javascript
+// ANTES:
+gastos: finance.gastos + finance.perdidas,
+// DESPUÉS:
+gastos: finance.gastos,
+```
+
+---
+
+#### P2-A: Errores de redondeo $0.01 en 6 métricas
+
+**Causa raíz confirmada:** Dos sistemas de precisión numérica coexisten — `agroestadistica.js` usa **float dollars** y los demás módulos usan **integer cents**.
+
+**Flujo divergente:**
+
+1. **Dashboard/Global (`agroestadistica.js:500-524`):**
+   ```javascript
+   function sumRowsUsd(rows, amountFields, bucket, rowUsdMap = null) {
+       let total = 0;  // float dollars
+       rows.forEach((row) => {
+           const evaluation = evaluateUsdAmount(row, amountFields, { outlierThreshold: ... });
+           const usd = Number(evaluation.usd || 0);  // float
+           total += usd;  // acumulación float
+       });
+       return total;
+   }
+   ```
+   - Cada `evaluateUsdAmount` puede devolver un float con decimales
+   - Sumar ~90+ filas de floats acumula error de punto flotante
+   - Resultado: $2,691.50 (con rounding implícito)
+
+2. **Estadísticas/Informes (`agro-stats-report.js`, `agro-crop-report.js`):**
+   ```javascript
+   const totalIncomeCents = income.reduce((s, it) => s + toCents(resolveAmountUsd(it)), 0);
+   // toCents = Math.round(value * 100) → integer
+   ```
+   - Cada fila se convierte a **integer cents** via `toCents()`
+   - Suma de integers es exacta
+   - Resultado: 269151 cents = $2,691.51
+
+3. **`calcularRentabilidad` (`agro-profit-calculator.js:30-32`):**
+   ```javascript
+   function roundMoney(value) {
+       return Math.round((Number(value) || 0) * 100) / 100;
+   }
+   ```
+   - Recibe valores que pueden ser cents (integers) o dollars (floats)
+   - `roundMoney` redondea a 2 decimales pero el resultado depende de la entrada
+
+**El delta $0.01 surge porque:**
+- `evaluateUsdAmount` en `agroestadistica.js` convierte COP/USD con exchange_rate (división float) y luego suma ~90 floats
+- `toCents(resolveAmountUsd())` convierte a cents ANTES de sumar → sin error acumulativo
+
+**Fix:** Migrar `agroestadistica.js` a integer cents:
+```javascript
+// ANTES:
+let total = 0; // float
+total += Number(evaluation.usd || 0);
+
+// DESPUÉS:
+let totalCents = 0; // integer
+totalCents += toCents(evaluation.usd);
+```
+
+---
+
+#### P3-A: Nombre canónico inconsistente "yony" vs "Yony chupeto"
+
+**Causa raíz confirmada:** El usuario registró el mismo cliente con nombres distintos en diferentes cultivos. El `buyer_group_key` almacenado refleja el nombre original sin fuzzy matching.
+
+**Flujo de registro:**
+1. Usuario registra movimiento en batata → ingresa "yony"
+2. `agro-buyer-identity.js:121-206` → `ensureBuyerIdentityLink()` se ejecuta
+3. `normalizeBuyerGroupKey("yony")` = `"yony"` → se crea buyer con `group_key = "yony"`
+4. `buyer_group_key = "yony"` se guarda en la fila de `agro_income`
+
+5. Usuario registra movimiento en Maíz → ingresa "Yony chupeto"
+6. `normalizeBuyerGroupKey("Yony chupeto")` = `"yony chupeto"` → se crea buyer con `group_key = "yony chupeto"`
+7. `buyer_group_key = "yony chupeto"` se guarda en la fila de `agro_income`
+
+**Resultado en base de datos:**
+- Movimientos de batata: `buyer_group_key = "yony"`
+- Movimientos de Maíz/Batata amarilla 2: `buyer_group_key = "yony chupeto"`
+
+**No existe sistema de alias** que vincule "yony" con "Yony chupeto". La tabla `agro_buyers` tiene dos registros separados.
+
+**Fix (inmediato):** Actualizar `buyer_group_key` de los movimientos históricos de batata de `"yony"` a `"yony chupeto"`:
+```sql
+UPDATE agro_income
+SET buyer_group_key = 'yony chupeto'
+WHERE user_id = :userId
+  AND buyer_group_key = 'yony';
+```
+
+**Fix (prevención):** Agregar fuzzy matching en `ensureBuyerIdentityLink` para detectar que "yony" es substring de "yony chupeto" y sugerir vinculación.
+
+---
+
+**Fin del diagnóstico de causa raíz — 25 de mayo de 2026**
+
+---
+
+### Fixes Aplicados — 25 de mayo de 2026
+
+**Estado:** FIX APLICADO · PENDIENTE QA HUMANO / RE-AUDITORÍA
+
+#### P1-A: Yony chupeto — Agrupación incorrecta ✅ FIX APLICADO
+- **Archivo:** `apps/gold/agro/agroestadistica.js`
+- **Línea 5:** Agregado `import { normalizeReportClientKey } from './agro-report-format.js'`
+- **Línea 540:** `buyer.toLowerCase()` → `normalizeReportClientKey(row?.buyer_group_key || buyer) || buyer.toLowerCase()`
+- **Pendiente QA:** Verificar que Dashboard/Global muestra $293.61 (6 mov) para Yony chupeto
+
+#### P1-B parte 1: Rankings `gastos` suma pérdidas ✅ FIX APLICADO
+- **Archivo:** `apps/gold/agro/agro.js`
+- **Línea 13743:** `gastos: finance.gastos + finance.perdidas` → `gastos: finance.gastos`
+- **Pendiente QA:** Verificar que Rankings muestra costos correctos por cultivo
+
+#### P1-B parte 2: Informe individual sin gastos operativos ✅ FIX APLICADO
+- **Archivo:** `apps/gold/agro/agro-crop-report.js`
+- **Líneas 856-861:** Agregado lookup de gastos operativos via `window.YGAgroOperationalCycles.getOperationalExpensesByCrop()`
+- **Líneas 948-950:** Display actualizado — muestra gastos operativos si > 0
+- **Pendiente QA:** Verificar que informe individual de Maíz muestra $14 gastos operativos
+
+#### P2-A: Errores de redondeo $0.01 ✅ FIX APLICADO
+- **Archivo:** `apps/gold/agro/agroestadistica.js`
+- **Líneas 501-519:** `sumRowsUsd` migrada a integer cents internos (`totalCents += toCents(usd)` → `return totalCents / 100`)
+- **Pendiente QA:** Verificar que Dashboard/Global y Estadísticas muestran los mismos totales (sin deltas de $0.01)
+
+#### P3-A: Nombre canónico "yony" → "yony chupeto" ✅ FIX PENDIENTE EJECUCIÓN SQL
+- **SQL proporcionado al usuario** para ejecutar manualmente desde SQL Editor de Supabase
+- Sentencias: `UPDATE agro_income SET buyer_group_key = 'yony chupeto' WHERE buyer_group_key = 'yony'` + mismo en `agro_pending`
+- **Pendiente QA:** Verificar que "yony" ya no aparece como cliente separado en ningún informe
+
+#### Build ✅ PASS
+```
+pnpm build:gold → ✓ 178 modules → built in 3.05s → UTF-8 OK
+```

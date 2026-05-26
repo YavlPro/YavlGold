@@ -853,13 +853,18 @@ export async function exportCropReport(cropId, opts = {}) {
         const totalExpensesCents = expenses.reduce((s, it) => s + toCents(resolveAmountUsd(it)), 0);
         const totalPendingCents = pendingActive.reduce((s, it) => s + toCents(resolveAmountUsd(it)), 0);
         const totalLossesCents = losses.reduce((s, it) => s + toCents(resolveAmountUsd(it)), 0);
+        const opsApi = typeof window !== 'undefined' ? window.YGAgroOperationalCycles : null;
+        const operationalExpenseUsd = opsApi?.getOperationalExpensesByCrop
+            ? Number(opsApi.getOperationalExpensesByCrop().get(normalizedCropId) || 0)
+            : 0;
+        const totalExpensesWithOpsCents = totalExpensesCents + toCents(operationalExpenseUsd);
         const initialInvestmentCents = cropExists && crop?.investment !== null && crop?.investment !== undefined
             ? toCents(crop.investment)
             : 0;
         const canonicalFinance = calcularRentabilidad({
             pagados: totalIncomeCents,
             inversion: initialInvestmentCents,
-            gastos: totalExpensesCents,
+            gastos: totalExpensesWithOpsCents,
             perdidas: totalLossesCents,
             fiados: totalPendingCents
         });
@@ -939,7 +944,10 @@ export async function exportCropReport(cropId, opts = {}) {
         md += `|----------|------:|\n`;
         md += `| Pagados | ${fmtMoneyMd(totalIncomeCents, 'USD', privacy)} |\n`;
         md += `| Inversión inicial | ${fmtMoneyMd(initialInvestmentCents, 'USD', privacy)} |\n`;
-        md += `| Gastos vinculados | ${fmtMoneyMd(totalExpensesCents, 'USD', privacy)} |\n`;
+        md += `| Gastos vinculados | ${fmtMoneyMd(totalExpensesWithOpsCents, 'USD', privacy)} |\n`;
+        if (operationalExpenseUsd > 0) {
+            md += `| _Gastos operativos incluidos_ | ${fmtMoneyMd(toCents(operationalExpenseUsd), 'USD', privacy)} |\n`;
+        }
         md += `| Costos/Inversión | ${fmtMoneyMd(totalCostWithInvestmentCents, 'USD', privacy)} |\n`;
         md += `| Ganancia neta | ${fmtMoneyMd(profitCents, 'USD', privacy)} |\n`;
         md += `| Fiados por cobrar (activos) | ${fmtMoneyMd(totalPendingCents, 'USD', privacy)} |\n`;

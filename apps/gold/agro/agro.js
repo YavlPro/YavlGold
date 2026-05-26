@@ -13740,7 +13740,7 @@ async function fetchOpsTopCropsCanonical({ userId, rangeDates, cropId, filterRow
                 crop_name: bucket.crop_name,
                 ingresos: finance.pagados,
                 inversion: finance.inversion,
-                gastos: finance.gastos + finance.perdidas,
+                gastos: finance.gastos,
                 gastos_directos: finance.gastos,
                 perdidas: finance.perdidas,
                 fiados: finance.fiadosPendientes,
