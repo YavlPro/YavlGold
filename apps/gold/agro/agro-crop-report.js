@@ -853,10 +853,31 @@ export async function exportCropReport(cropId, opts = {}) {
         const totalExpensesCents = expenses.reduce((s, it) => s + toCents(resolveAmountUsd(it)), 0);
         const totalPendingCents = pendingActive.reduce((s, it) => s + toCents(resolveAmountUsd(it)), 0);
         const totalLossesCents = losses.reduce((s, it) => s + toCents(resolveAmountUsd(it)), 0);
-        const opsApi = typeof window !== 'undefined' ? window.YGAgroOperationalCycles : null;
-        const operationalExpenseUsd = opsApi?.getOperationalExpensesByCrop
-            ? Number(opsApi.getOperationalExpensesByCrop().get(normalizedCropId) || 0)
-            : 0;
+        let operationalExpenseUsd = 0;
+        try {
+            const { data: cycles, error: cyclesError } = await supabase
+                .from('agro_operational_cycles')
+                .select('id')
+                .eq('user_id', user.id)
+                .eq('crop_id', normalizedCropId)
+                .eq('economic_type', 'expense')
+                .in('status', ['closed', 'lost'])
+                .is('deleted_at', null);
+            if (!cyclesError && cycles?.length) {
+                const cycleIds = cycles.map(c => c.id);
+                const { data: movements, error: movError } = await supabase
+                    .from('agro_operational_movements')
+                    .select('amount_usd')
+                    .in('cycle_id', cycleIds)
+                    .eq('direction', 'out')
+                    .is('deleted_at', null);
+                if (!movError && movements?.length) {
+                    operationalExpenseUsd = movements.reduce((sum, m) => sum + (Number(m.amount_usd) || 0), 0);
+                }
+            }
+        } catch (err) {
+            console.warn('[CropReport] Error fetching operational expenses:', err?.message || err);
+        }
         const totalExpensesWithOpsCents = totalExpensesCents + toCents(operationalExpenseUsd);
         const initialInvestmentCents = cropExists && crop?.investment !== null && crop?.investment !== undefined
             ? toCents(crop.investment)

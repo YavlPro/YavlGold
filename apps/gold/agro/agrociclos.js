@@ -147,7 +147,13 @@ function buildCycleMoneyAttrs(value, displayValue, options = {}) {
   const phraseAttr = options.phrase
     ? ` data-cycle-money-phrase="${escapeAttr(options.phrase)}"`
     : '';
-  return ` data-money="1" data-raw-money="${escapeAttr(displayValue)}"${rawAttr}${signedAttr}${trendAttr}${phraseAttr}`;
+  const rentRealAttr = Number.isFinite(Number(options.rentReal))
+    ? ` data-cycle-money-rent-real="${escapeAttr(Number(options.rentReal))}"`
+    : '';
+  const fiadosAttr = Number.isFinite(Number(options.fiados))
+    ? ` data-cycle-money-fiados="${escapeAttr(Number(options.fiados))}"`
+    : '';
+  return ` data-money="1" data-raw-money="${escapeAttr(displayValue)}"${rawAttr}${signedAttr}${trendAttr}${phraseAttr}${rentRealAttr}${fiadosAttr}`;
 }
 
 function buildCurrencyToggleMarkup() {
@@ -174,7 +180,12 @@ function refreshCycleMoneyNode(node) {
 
   const phrase = String(node.dataset.cycleMoneyPhrase || '').trim();
   if (phrase === 'balance-actual') {
-    node.textContent = formatBalanceActualText(rawValue);
+    const rentReal = Number(node.dataset.cycleMoneyRentReal);
+    const fiados = Number(node.dataset.cycleMoneyFiados);
+    const hasContext = Number.isFinite(rentReal) && Number.isFinite(fiados);
+    node.textContent = hasContext
+      ? formatBalanceActualText(rawValue, rentReal, fiados)
+      : formatBalanceActualText(rawValue);
     node.dataset.rawMoney = node.textContent;
     return;
   }
@@ -381,8 +392,11 @@ function resolveBalanceActualTone(value) {
   return 'neutral';
 }
 
-function formatBalanceActualText(value) {
+function formatBalanceActualText(value, rentabilidadRealUsd, fiadosPendientesUsd) {
   const balance = toNumber(value, 0);
+  const rentReal = toNumber(rentabilidadRealUsd, 0);
+  const fiados = toNumber(fiadosPendientesUsd, 0);
+  if (rentReal >= 0 && fiados > 0) return `Por recuperar ${formatUsdCompact(fiados)}`;
   if (balance > 0) return `Vas ganando ${formatUsdCompact(Math.abs(balance))}`;
   if (balance < 0) return `Vas perdiendo ${formatUsdCompact(Math.abs(balance))}`;
   return 'Punto de equilibrio';
@@ -399,7 +413,7 @@ function renderCard(ciclo, index = 0) {
   const perdidasUsd = toNumber(ciclo?.perdidasUsd, 0);
   const hasFiadosPendientes = fiadosUsd > 0;
   const balanceActualUsd = rentabilidadUsd - fiadosUsd;
-  const balanceActualText = formatBalanceActualText(balanceActualUsd);
+  const balanceActualText = formatBalanceActualText(balanceActualUsd, rentabilidadUsd, fiadosUsd);
   const rentabilidadTone = resolveRealProfitTone(rentabilidadUsd, fiadosUsd, perdidasUsd);
   const balanceActualTone = resolveBalanceActualTone(balanceActualUsd);
   const statusClass = statusClassFor(ciclo?.estado);
@@ -552,7 +566,7 @@ function renderCard(ciclo, index = 0) {
 
       <div class="profit-row">
         <span class="profit-label">${profitLabel}</span>
-        <span class="profit-value ${balanceActualTone}"${buildCycleMoneyAttrs(balanceActualUsd, balanceActualText, { phrase: 'balance-actual' })}>${escapeHtml(balanceActualText)}</span>
+        <span class="profit-value ${balanceActualTone}"${buildCycleMoneyAttrs(balanceActualUsd, balanceActualText, { phrase: 'balance-actual', rentReal: rentabilidadUsd, fiados: fiadosUsd })}>${escapeHtml(balanceActualText)}</span>
       </div>
 
       <details class="desglose">
