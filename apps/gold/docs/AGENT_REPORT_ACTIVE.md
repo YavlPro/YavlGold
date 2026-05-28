@@ -3579,3 +3579,97 @@ pnpm build:gold → ✓ built → UTF-8 OK
 1. **P1-A v2:** Agregado `buyer_group_key` a query → verificar que Dashboard muestra $293.61
 2. **P1-B:** Necesita investigación con query SQL directa para comparar `crop_id` en `agro_expenses` vs `agro_crops.id`
 3. **P2-A:** Cerrado ✅
+
+---
+
+## 2026-05-27 — Sesión de fixes y propagación de gastos operativos
+
+### Commits realizados
+
+| Commit | Archivo(s) | Descripción |
+|--------|-----------|-------------|
+| `fix(agro): P1-A v2` | agroestadistica.js | Agregar `buyer_group_key` a query de agro_income para que Dashboard/Perfil Global consoliden correctamente "yony" con "Yony chupeto" |
+| `fix(agro): propagar gastos operativos` | agro.js, agro-stats-report.js, agroestadistica.js | Rankings, Estadísticas MD y Estadísticas globales ahora incluyen gastos operativos en la fórmula de costos |
+| `fix(agro): semántica Por recuperar + query directa` | agrociclos.js, agro-crop-report.js | Dashboard muestra "Por recuperar USD X" cuando rentabilidadReal >= 0 y fiados > 0. Informe individual hace query directa a Supabase en lugar de depender de window.YGAgroOperationalCycles |
+
+### Bug P1-A: CERRADO 100%
+
+**Problema:** Dashboard y Perfil Global mostraban $199.26 (3 mov) para Yony chupeto, mientras Rankings y Estadísticas mostraban $293.61 (6 mov).
+
+**Causa raíz:** `agroestadistica.js:417` no incluía `buyer_group_key` en la query de `agro_income`. El fix usaba `row?.buyer_group_key` que siempre era `undefined`.
+
+**Fix aplicado:** Agregar `buyer_group_key` a las 3 variantes de columnas en la query.
+
+**Resultado:** Yony chupeto ahora muestra $293.61 (6 mov) consistente en Dashboard, Perfil Global, Rankings y Estadísticas.
+
+### Bug P1-B: CERRADO 100%
+
+**Problema:** Informe individual de Maíz mio mostraba costos $92.64 (solo inversión), mientras Rankings mostraba $106.15 (inversión + gastos).
+
+**Investigación:** Se consultó Supabase y se descubrió que `YGAgroOperationalCycles` contenía 3 registros reales de abono urea ($83.79 total) para Maíz mio. NO eran datos QA, eran gastos operativos reales del agricultor.
+
+**Fix aplicado:**
+1. **Propagación:** Rankings (agro.js:13729), Estadísticas MD (agro-stats-report.js:563) y Estadísticas globales (agroestadistica.js:527) ahora consultan `getOperationalExpensesByCrop()` y suman gastos operativos a costos.
+2. **Query directa:** agro-crop-report.js reemplazó dependencia de `window.YGAgroOperationalCycles` por query directa a Supabase (`agro_operational_cycles` + `agro_operational_movements`).
+
+**Fórmula canónica aplicada:** `costos = inversión + gastos_directos + gastos_operativos + pérdidas`
+
+**Resultado:** Maíz mio ahora muestra costos $176.43 (inversión $92.64 + gastos $83.79) consistente en informe individual, Rankings, Estadísticas y Dashboard global.
+
+### Semántica "Por recuperar": CERRADO
+
+**Problema:** Dashboard individual de cultivo mostraba "Vas perdiendo USD 125" para Pepino cuando en realidad eran fiados (cuentas por cobrar), no pérdidas.
+
+**Fix aplicado en agrociclos.js:**
+- `formatBalanceActualText()` ahora recibe `rentabilidadRealUsd` y `fiadosPendientesUsd`
+- Si `rentReal >= 0` y `fiados > 0`, muestra "Por recuperar USD X" en vez de "Vas perdiendo"
+- `buildCycleMoneyAttrs()` guarda data-attributes para refresh de moneda
+- `refreshCycleMoneyNode()` usa los nuevos data attributes
+
+**Resultado:** Pepino (fiados=$125, rentabilidad=+$125) ahora muestra "Por recuperar USD 125". Maíz mio (fiados=$51, rentabilidad=+$274) muestra "Por recuperar USD 51".
+
+### Estado final de bugs
+
+| Bug | Estado anterior | Estado actual | Resultado |
+|-----|-----------------|---------------|----------|
+| P1-A Yony chupeto | $199.26 (3 mov) en Dashboard/Global | $293.61 (6 mov) en TODAS las fuentes | CERRADO |
+| P1-B Maíz mio costos | $92.64 vs $106.15 divergente | $176.43 consistente en TODAS las fuentes | CERRADO |
+| P2-A Redondeo $0.01 | Mejorado | Totales globales OK; $0.01 residual menor | MEJORADO |
+| P3-A "yony" display | Aceptado | Informe batata aún muestra "yony" (comportamiento esperado) | ACEPTADO |
+| Semántica "Por recuperar" | Pendiente | Pepino y Maíz mio muestran "Por recuperar" | CERRADO |
+
+### Build PASS
+
+```
+pnpm build:gold → built → UTF-8 OK
+```
+
+### Lecciones aprendidas
+
+1. **Verificar datos antes de recomendar reversa:** Inicialmente recomendé revertir el fix P1-B.2 porque parecía código especulativo. Al consultar Supabase, descubrí que los gastos operativos eran datos reales del agricultor. Lección: antes de recomendar revertir un fix, verificar si los datos subyacentes son reales o QA.
+
+2. **Dependencias de estado global son frágiles:** El informe individual dependía de `window.YGAgroOperationalCycles` que solo se llenaba si el usuario visitaba Cartera Operativa primero. Fix correcto: query directa a Supabase.
+
+3. **Propagación de fixes:** Un fix en un archivo no garantiza que el problema se resuelva en toda la aplicación. Rankings, Estadísticas y Dashboard global usaban fórmulas diferentes. Hubo que propagar el lookup de gastos operativos a los 3 módulos.
+
+### Salud financiera global verificada
+
+| Métrica | Valor |
+|---------|------:|
+| Ingresos cobrados reales | $2,691.51 USD |
+| Costos totales (con gastos operativos) | $738.67 USD |
+| Rentabilidad real | $1,952.84 USD (264.4% ROI) |
+| Por cobrar (fiados) | $175.95 USD |
+| Si cobras todo | $2,212.58 USD (300.4% ROI proyectado) |
+| Tasa de cobro | 93.9% |
+| Pérdidas asumidas | $108.13 USD |
+
+### Pendientes para próxima sesión
+
+1. **Colores semánticos:** Dashboard individual usa colores incorrectos para estados "Por recuperar" (debería ser ámbar), "Vas perdiendo" (rojo), "Vas ganando" (verde), "Punto de equilibrio" (gris). Necesita fix de tokens CSS alineado a ADN Visual V11 §2.
+
+2. **Archivos untracked:** `agro-farms.css` y `agro-farms.js` llevan varios días como untracked. Decidir si trackear, ignorar o eliminar.
+
+3. **Documentar tabla YGAgroOperationalCycles:** Esta tabla no aparece en FICHA_TECNICA.md §5 pero contiene datos operativos reales. Debería documentarse eventualmente.
+
+4. **Bug residual P2-A:** Diferencia de $0.01 en Batata amarilla 2 entre Dashboard/Rankings ($1,263.24) y Estadísticas/Informe individual ($1,263.25). Menor, no bloqueante.
