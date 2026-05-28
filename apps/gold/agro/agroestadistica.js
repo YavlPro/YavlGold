@@ -414,9 +414,9 @@ export async function getGlobalStats({ supabase: supabaseClient, userId, range }
             'agro_income',
             resolvedUserId,
             [
-                'id,crop_id,concepto,monto,monto_usd,currency,exchange_rate,created_at,fecha,deleted_at,reverted_at',
-                'id,crop_id,concepto,monto,monto_usd,currency,exchange_rate,created_at,fecha,deleted_at',
-                'id,crop_id,concepto,monto,monto_usd,currency,exchange_rate,created_at,fecha'
+                'id,crop_id,concepto,monto,monto_usd,currency,exchange_rate,created_at,fecha,deleted_at,reverted_at,buyer_group_key',
+                'id,crop_id,concepto,monto,monto_usd,currency,exchange_rate,created_at,fecha,deleted_at,buyer_group_key',
+                'id,crop_id,concepto,monto,monto_usd,currency,exchange_rate,created_at,fecha,buyer_group_key'
             ],
             warnings,
             { range, dateCandidates: ['fecha', 'created_at'] }
