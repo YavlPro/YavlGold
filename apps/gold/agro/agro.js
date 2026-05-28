@@ -13726,6 +13726,16 @@ async function fetchOpsTopCropsCanonical({ userId, rangeDates, cropId, filterRow
         if (bucket) bucket.fiados += Number(resolveUsd(row)) || 0;
     });
 
+    // Operational expenses from YGAgroOperationalCycles (closed cycles)
+    const opsApi = typeof window !== 'undefined' ? window.YGAgroOperationalCycles : null;
+    if (opsApi?.getOperationalExpensesByCrop) {
+        const opsByCrop = opsApi.getOperationalExpensesByCrop();
+        for (const [cropIdKey, opsUsd] of opsByCrop) {
+            const bucket = ensureBucket(cropIdKey);
+            if (bucket) bucket.gastos += Number(opsUsd) || 0;
+        }
+    }
+
     return Array.from(buckets.values())
         .map((bucket) => {
             const finance = calcularRentabilidad({

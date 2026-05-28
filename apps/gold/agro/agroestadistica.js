@@ -525,6 +525,13 @@ export async function getGlobalStats({ supabase: supabaseClient, userId, range }
     const transfersUsd = sumRowsUsd(transfers, ['monto', 'amount'], 'Donaciones');
     const investmentUsd = crops.reduce((sum, row) => sum + resolveCropInvestmentUsd(row, effectiveRates), 0);
 
+    // Operational expenses from YGAgroOperationalCycles (closed cycles)
+    const opsApi = typeof window !== 'undefined' ? window.YGAgroOperationalCycles : null;
+    const opsExpenseUsd = opsApi?.getOperationalExpensesByCrop
+        ? Array.from(opsApi.getOperationalExpensesByCrop().values()).reduce((s, v) => s + (Number(v) || 0), 0)
+        : 0;
+    const expenseWithOpsUsd = expenseUsd + opsExpenseUsd;
+
     const cropMap = new Map();
     crops.forEach((row) => {
         const key = String(row?.id || '').trim();
@@ -561,7 +568,7 @@ export async function getGlobalStats({ supabase: supabaseClient, userId, range }
         cropTotals.set(cropId, current);
     });
 
-    const costUsd = investmentUsd + expenseUsd + lossesUsd;
+    const costUsd = investmentUsd + expenseWithOpsUsd + lossesUsd;
     const profitUsd = incomeUsd - costUsd;
     const usdUnverifiedCount = Object.values(usdUnverifiedByBucket).reduce((sum, value) => sum + Number(value || 0), 0);
     if (usdUnverifiedCount > 0) {
@@ -572,7 +579,7 @@ export async function getGlobalStats({ supabase: supabaseClient, userId, range }
         crops: cropsSummary,
         money: {
             incomeUsd,
-            expenseUsd,
+            expenseUsd: expenseWithOpsUsd,
             pendingUsd,
             lossesUsd,
             transfersUsd,

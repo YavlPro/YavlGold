@@ -560,6 +560,16 @@ function buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRo
         }
     }
 
+    // Operational expenses from YGAgroOperationalCycles (closed cycles)
+    const opsApi = typeof window !== 'undefined' ? window.YGAgroOperationalCycles : null;
+    if (opsApi?.getOperationalExpensesByCrop) {
+        const opsByCrop = opsApi.getOperationalExpensesByCrop();
+        for (const [cropIdKey, opsUsd] of opsByCrop) {
+            const e = cropMap.get(String(cropIdKey));
+            if (e) e.expenseCents += toCents(Number(opsUsd) || 0);
+        }
+    }
+
     const totals = {
         investmentCents: 0,
         incomeCents: 0,
