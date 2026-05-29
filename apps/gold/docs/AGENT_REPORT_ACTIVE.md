@@ -3673,3 +3673,44 @@ pnpm build:gold → built → UTF-8 OK
 3. **Documentar tabla YGAgroOperationalCycles:** Esta tabla no aparece en FICHA_TECNICA.md §5 pero contiene datos operativos reales. Debería documentarse eventualmente.
 
 4. **Bug residual P2-A:** Diferencia de $0.01 en Batata amarilla 2 entre Dashboard/Rankings ($1,263.24) y Estadísticas/Informe individual ($1,263.25). Menor, no bloqueante.
+
+---
+
+## Sesión 2026-05-29 — Cierre de auditoría: semántica visual y gastos operativos
+
+### Objetivo
+Cerrar los bugs BUG-2026-05-28-01 (colores semánticos) y BUG-2026-05-28-02 (flecha rentabilidad con condiciones cruzadas), y resolver la ausencia de gastos operativos de Cartera Operativa en informes individuales.
+
+### Diagnóstico
+- BUG-01: Los mensajes "Ahora mismo" no usaban tokens ADN V11 §2
+- BUG-02: La flecha de rentabilidad evaluaba condiciones cruzadas (`crop.perdidas`, `crop.inversion`) en vez de `rentabilidadReal`
+- Gastos operativos: `agro-crop-report.js` tenía filtro `deleted_at` fantasma (la tabla usa hard delete) y `amount_usd = 0` sin fallback de conversión
+
+### Archivos modificados
+
+| Archivo | Cambio |
+|---------|--------|
+| `agrociclos.js` | 4 estados semánticos (Ganado/Recuperando/Invirtiendo/Equilibrio) + flecha solo con rentabilidadReal |
+| `agrociclos.css` | Tokens ADN V11 §2 para .data-value y .profit-value (success/warning/error/neutral) |
+| `agro-crop-report.js` | Query directa a Supabase eliminando filtro deleted_at + fallback de conversión amount_usd |
+
+### Commits
+- `e2a7ad2` — Fix base: rentabilidad solo con rentabilidadReal, tokens ADN V11 §2
+- `e50d034` — Semántica visual Ganado/Perdido/Por recuperar, sin "Vas"
+- `a4b6f4a` — Ajuste de copia — "Recuperando" y "Equilibrio"
+- `6d29cda` — Distinguir Invirtiendo de Recuperando en cards de cultivo
+- `15781c9` — Gastos operativos en informes individuales (rebase sobre merge de dependabot)
+
+### Resultado
+- Build: PASS (`pnpm build:gold` 4.04s sin errores)
+- QA post-deploy: sistema 100% consistente en Dashboard, Rankings, Estadísticas, Perfil Global y 5 informes individuales
+- Bugs cerrados: BUG-2026-05-28-01, BUG-2026-05-28-02, gastos operativos en informes
+- Totales globales verificados: ingresos $2,710.19, costos $698.19, rentabilidad $2,012.00 (288.2% ROI)
+
+### NO se hizo
+- No se tocó `agro.js` (respeto a AGENTS.md §3.1)
+- No se modificó ADN-VISUAL-V11.0.md (los tokens ya existían)
+- No se agregaron features nuevas
+
+### Lección aprendida
+Dos balances negativos no son semánticamente iguales: "Recuperando" implica dinero en la calle que requiere cobro; "Invirtiendo" es estado natural de ciclo joven sin acción pendiente. Marcar ambos como ámbar habría generado falsa alarma en cultivos tempranos.

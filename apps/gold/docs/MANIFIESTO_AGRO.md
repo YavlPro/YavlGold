@@ -250,7 +250,7 @@ Los estados manuales existen porque en la agricultura real las fechas estimadas 
 
 ### Balance operativo en lenguaje de agricultor
 
-La lectura financiera protagonista del ciclo debe hablar como habla el productor: `Vas ganando`, `Vas perdiendo` o `Punto de equilibrio`.
+La lectura financiera protagonista del ciclo debe hablar como habla el productor con cuatro estados semánticos claros: `Ganado`, `Recuperando`, `Invirtiendo` o `Equilibrio`.
 
 La regla conceptual vigente es:
 
@@ -259,7 +259,43 @@ balanceActual = rentabilidadReal - fiadosPendientes
 rentabilidadReal = cobradoReal - costosTotales
 ```
 
-`costosTotales` ya incluye inversion, gastos y perdidas. Las perdidas no deben restarse dos veces.
+`costosTotales` ya incluye inversión, gastos operativos y pérdidas. Las pérdidas no deben restarse dos veces.
+
+#### Cuatro estados semánticos del balance
+
+| Condición | Estado | Color (ADN V11 §2) | Significado operativo |
+|-----------|--------|-------------------|---------------------|
+| `balanceActual > 0` | **Ganado** | Verde (`--color-success`) | Dinero real en mano tras cubrir costos |
+| `balanceActual < 0` con `fiadosPendientes > 0` | **Recuperando** | Ámbar (`--color-warning`) | Hay dinero en la calle pendiente de cobro |
+| `balanceActual < 0` sin fiados | **Invirtiendo** | Gris (`--text-muted`) | Ciclo en etapa temprana, sin ventas aún |
+| `balanceActual = 0` | **Equilibrio** | Gris (`--text-muted`) | Punto neutro, sin ganancia ni inversión pendiente |
+
+#### Interpretación de cada estado
+
+* **Ganado**: El cultivo ya generó utilidad neta en mano. El agricultor recuperó inversión, gastos y pérdidas, y tiene saldo positivo disponible.
+* **Recuperando**: El ciclo tiene rentabilidad real positiva o neutra, pero parte del dinero está en fiados pendientes de cobro. La acción operativa es gestionar cobros en Cartera Viva.
+* **Invirtiendo**: El ciclo está en etapa temprana (ej: día 3 de 92), tiene gastos registrados pero aún no hay ventas. Es el estado natural de un cultivo joven y no representa alarma.
+* **Equilibrio**: El ciclo cerró en punto neutro. No hay ganancia ni pérdida neta.
+
+#### Flecha de rentabilidad
+
+La flecha del bloque Rentabilidad depende únicamente de `rentabilidadReal`, no de condiciones cruzadas con pérdidas históricas o fiados:
+
+| Condición | Icono | Color |
+|-----------|-------|-------|
+| `rentabilidadReal > 0` | ↗ | Verde (`--color-success`) |
+| `rentabilidadReal = 0` | → | Gris (`--text-muted`) |
+| `rentabilidadReal < 0` | ↘ | Rojo (`--color-error`) |
+
+#### Gastos operativos de Cartera Operativa
+
+Los gastos registrados en Cartera Operativa asociados a un cultivo específico (ej: abono urea, gramonson) se incluyen en `costosTotales` del ciclo. La fórmula canónica es:
+
+```txt
+costosTotales = inversión + gastos_operativos + pérdidas
+```
+
+Esto asegura que los reportes individuales, estadísticas globales y rankings reflejen la realidad operativa completa del cultivo.
 
 ### Cómo se usa
 
@@ -1391,6 +1427,16 @@ Son mensajes emergentes estilizados que reemplazan los `alert()` nativos del nav
 
 * **Confusión**: "Los estados de un cultivo son automáticos: si pasa la fecha de cosecha, el cultivo se finaliza solo."
 * **La realidad**: Los estados de un cultivo (activo, finalizado, perdido) son **control manual del agricultor**. No existen transiciones automáticas. El agricultor decide cuándo un cultivo pasa a finalizado o perdido, porque en el campo real las fechas estimadas no siempre se cumplen y la decisión depende del criterio del agricultor, no de una condición automática del sistema.
+
+### Caso 9
+
+* **Confusión**: "Todo balance negativo es pérdida y debería mostrarse en rojo."
+* **La realidad**: Un balance negativo tiene dos significados distintos. Si el ciclo tiene fiados pendientes de cobro, el dinero está en la calle: el estado es "Recuperando" (ámbar) porque el agricultor puede actuar cobrando. Si el ciclo es joven y no tiene ventas ni fiados, el déficit es inversión natural en curso: el estado es "Invirtiendo" (gris) porque no requiere acción del agricultor. Marcar ambos como rojo genera falsa alarma en cultivos tempranos.
+
+### Caso 10
+
+* **Confusión**: "La flecha de rentabilidad debería reflejar si el cultivo tuvo pérdidas de sacos o gastos pendientes."
+* **La realidad**: La flecha de rentabilidad (la que acompaña al monto de rentabilidad en la card) depende **únicamente** de `rentabilidadReal`. Si `rentabilidadReal > 0`, la flecha es verde (`--color-success`). Evaluar condiciones cruzadas con pérdidas históricas o fiados causaba que cultivos rentables con pérdidas anteriores (ej: Batata amarilla 2, ganancia +$955) mostraran flecha roja, comunicando pérdida donde hay ganancia.
 
 ---
 

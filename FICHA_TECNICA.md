@@ -233,6 +233,10 @@ agro-wizard.js       — wizard de configuración
 #### Agro — Clientes
 - `agro_clients` - Contactos manuales del agricultor (soft-delete con `deleted_at`, RLS owner-only, campo `client_type`)
 
+#### Agro — Operaciones (Cartera Operativa)
+- `agro_operational_cycles` - Ciclos operativos de Cartera Operativa (hard delete, no usan `deleted_at`)
+- `agro_operational_movements` - Movimientos de ciclos operativos (hard delete, cascade con ciclo padre)
+
 #### Contenido y Módulos
 - `modules` - Definición de módulos
 - `user_favorites` - Favoritos del usuario
