@@ -409,6 +409,14 @@
   color: var(--color-success);
 }
 
+.agro-cycles .data-value.neutral {
+  color: var(--text-muted);
+}
+
+.agro-cycles .data-value.warning {
+  color: var(--color-warning);
+}
+
 .agro-cycles .data-value.error {
   color: var(--color-error);
 }
@@ -442,7 +450,11 @@
 }
 
 .agro-cycles .profit-value.neutral {
-  color: var(--text-secondary);
+  color: var(--text-muted);
+}
+
+.agro-cycles .profit-value.warning {
+  color: var(--color-warning);
 }
 
 .agro-cycles .profit-value.error {

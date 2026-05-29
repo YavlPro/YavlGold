@@ -379,15 +379,19 @@ function hasFinancialExposure(pendingAmount, lossesAmount) {
   return toNumber(pendingAmount, 0) > 0 || toNumber(lossesAmount, 0) > 0;
 }
 
-function resolveRealProfitTone(realNet, pendingAmount, lossesAmount) {
+function resolveRealProfitTone(realNet) {
   const net = toNumber(realNet, 0);
-  if (net > 0 && !hasFinancialExposure(pendingAmount, lossesAmount)) return 'success';
+  if (net > 0) return 'success';
+  if (net === 0) return 'neutral';
   return 'error';
 }
 
-function resolveBalanceActualTone(value) {
+function resolveBalanceActualTone(value, rentabilidadRealUsd, fiadosPendientesUsd) {
   const balance = toNumber(value, 0);
+  const rentReal = toNumber(rentabilidadRealUsd, 0);
+  const fiados = toNumber(fiadosPendientesUsd, 0);
   if (balance > 0) return 'success';
+  if (balance < 0 && rentReal >= 0 && fiados > 0) return 'warning';
   if (balance < 0) return 'error';
   return 'neutral';
 }
@@ -396,8 +400,8 @@ function formatBalanceActualText(value, rentabilidadRealUsd, fiadosPendientesUsd
   const balance = toNumber(value, 0);
   const rentReal = toNumber(rentabilidadRealUsd, 0);
   const fiados = toNumber(fiadosPendientesUsd, 0);
-  if (rentReal >= 0 && fiados > 0) return `Por recuperar ${formatUsdCompact(fiados)}`;
   if (balance > 0) return `Vas ganando ${formatUsdCompact(Math.abs(balance))}`;
+  if (balance < 0 && rentReal >= 0 && fiados > 0) return `Por recuperar ${formatUsdCompact(fiados)}`;
   if (balance < 0) return `Vas perdiendo ${formatUsdCompact(Math.abs(balance))}`;
   return 'Punto de equilibrio';
 }
@@ -414,13 +418,13 @@ function renderCard(ciclo, index = 0) {
   const hasFiadosPendientes = fiadosUsd > 0;
   const balanceActualUsd = rentabilidadUsd - fiadosUsd;
   const balanceActualText = formatBalanceActualText(balanceActualUsd, rentabilidadUsd, fiadosUsd);
-  const rentabilidadTone = resolveRealProfitTone(rentabilidadUsd, fiadosUsd, perdidasUsd);
-  const balanceActualTone = resolveBalanceActualTone(balanceActualUsd);
+  const rentabilidadTone = resolveRealProfitTone(rentabilidadUsd);
+  const balanceActualTone = resolveBalanceActualTone(balanceActualUsd, rentabilidadUsd, fiadosUsd);
   const statusClass = statusClassFor(ciclo?.estado);
   const rentabilidadText = formatSignedUsd(ciclo?.rentabilidad);
   const inversionText = formatUsdCompact(ciclo?.inversionUSD);
   const potentialIfCollectedText = formatSignedUsd(potencialNetoUsd);
-  const trendIcon = rentabilidadTone === 'success' ? '↗' : '↘';
+  const trendIcon = rentabilidadTone === 'success' ? '↗' : rentabilidadTone === 'neutral' ? '→' : '↘';
   const profitLabel = 'Ahora mismo';
   const currencyToggleMarkup = buildCurrencyToggleMarkup();
   const badges = resolveAllPortfolioBadges(ciclo);
