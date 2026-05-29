@@ -861,18 +861,25 @@ export async function exportCropReport(cropId, opts = {}) {
                 .eq('user_id', user.id)
                 .eq('crop_id', normalizedCropId)
                 .eq('economic_type', 'expense')
-                .in('status', ['closed', 'lost'])
-                .is('deleted_at', null);
+                .in('status', ['closed', 'lost']);
             if (!cyclesError && cycles?.length) {
                 const cycleIds = cycles.map(c => c.id);
                 const { data: movements, error: movError } = await supabase
                     .from('agro_operational_movements')
-                    .select('amount_usd')
+                    .select('amount,currency,amount_usd,exchange_rate')
                     .in('cycle_id', cycleIds)
-                    .eq('direction', 'out')
-                    .is('deleted_at', null);
+                    .eq('direction', 'out');
                 if (!movError && movements?.length) {
-                    operationalExpenseUsd = movements.reduce((sum, m) => sum + (Number(m.amount_usd) || 0), 0);
+                    operationalExpenseUsd = movements.reduce((sum, m) => {
+                        const persisted = Number(m.amount_usd);
+                        if (persisted > 0) return sum + persisted;
+                        const amount = Number(m.amount);
+                        if (!(amount > 0)) return sum;
+                        const rate = Number(m.exchange_rate);
+                        if (!(rate > 0)) return sum;
+                        const currency = String(m.currency || '').trim().toUpperCase();
+                        return sum + (currency === 'USD' ? amount : amount / rate);
+                    }, 0);
                 }
             }
         } catch (err) {
