@@ -391,8 +391,8 @@ function resolveBalanceActualTone(value) {
 function formatBalanceActualText(value) {
   const balance = toNumber(value, 0);
   if (balance > 0) return `Ganado ${formatUsdCompact(Math.abs(balance))}`;
-  if (balance < 0) return `Por recuperar ${formatUsdCompact(Math.abs(balance))}`;
-  return 'Punto de equilibrio';
+  if (balance < 0) return `Recuperando ${formatUsdCompact(Math.abs(balance))}`;
+  return 'Equilibrio';
 }
 
 function renderCard(ciclo, index = 0) {
