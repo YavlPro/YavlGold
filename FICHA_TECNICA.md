@@ -1,6 +1,6 @@
 # FICHA TECNICA - YavlGold V1
 
-**Fecha de Referencia:** 09/05/2026
+**Fecha de Referencia:** 30/05/2026
 **Tipo de Proyecto:** Herramienta agricola digital (Agro V1 liberado)
 **Arquitectura:** Monorepo Turborepo
 **Release activo visible:** `V1`
@@ -160,6 +160,7 @@ agro-clients.js      — Mis Clientes: directorio de contactos (clientes manuale
 agro-clima.js        — integración meteorológica
 agro-crop-report.js  — reportes detallados por cultivo (se acceden desde cada card/ciclo, no desde el Centro de Reportes)
 agro-exchange.js     — tasas de cambio
+agro-farms.js        — CRUD de fincas, selector, estadísticas por finca
 agro-feedback.js     — feedback y encuestas
 agro-interactions.js — interacciones
 agro-market.js       — inteligencia de mercado
@@ -181,6 +182,7 @@ agro-wizard.js       — wizard de configuración
 - `agro-cartera-viva.css` — Cartera Viva: vista, cards, estados, acciones separadas y responsive mobile
 - `agro-dashboard.css` — dashboard
 - `agro-operations.css` — operaciones financieras
+- `agro-farms.css` — estilos de gestión de fincas (ADN V11)
 - `agro-clients.css` — Mis Clientes
 - `agro-reports-center.css` — Centro de Reportes: vista, cards, estados, botones, nota informativa y responsive mobile
 
@@ -227,8 +229,11 @@ agro-wizard.js       — wizard de configuración
 - `agro_transfers` - Donaciones/Transferencias (con `deleted_at`)
 
 #### Agro — Cultivos
-- `agro_crops` - Cultivos activos
+- `agro_crops` - Cultivos activos; campo `farm_id` (FK a `agro_farms`, nullable por migración)
 - `agro_crop_cycles` - Ciclos productivos
+
+#### Agro — Recursos
+- `agro_farms` - Fincas del agricultor (id, user_id, name, location_text, notes, is_default, deleted_at). Soft-delete.
 
 #### Agro — Clientes
 - `agro_clients` - Contactos manuales del agricultor (soft-delete con `deleted_at`, RLS owner-only, campo `client_type`)
@@ -422,5 +427,5 @@ git status
 
 ---
 
-**Versión de Ficha:** 1.3
+**Versión de Ficha:** 1.4
 **Última Actualización:** 15/04/2026

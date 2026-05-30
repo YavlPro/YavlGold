@@ -109,6 +109,7 @@ El valor de Agro no está solo en registrar. Está en conectar lo que pasa en el
 * Mi Granja *(agrupador de navegación — no es un módulo financiero)*
   * Ciclos de cultivos
     * Mis cultivos (activos, finalizados, perdidos)
+    * Mis Fincas
     * Estadísticas de ciclos
     * Comparar ciclos
   * Ciclos de períodos
@@ -239,6 +240,7 @@ No es cartera operativa. No es historial administrativo abstracto. No es bitáco
   * Activos — los que están sembrados y en producción
   * Finalizados — los que ya se cosecharon o vendieron completo
   * Perdidos — los que se perdieron o dañaron
+* Mis Fincas — gestión de propiedades de tierra asociadas a los cultivos
 * Comparar ciclos — elegir dos ciclos y verlos lado a lado
 * Estadísticas de ciclos — consolidado histórico de todos los ciclos
 
@@ -308,6 +310,7 @@ Esto asegura que los reportes individuales, estadísticas globales y rankings re
 
 ### Campos opcionales y semántica real
 
+* **Finca (obligatoria)**: Cada ciclo pertenece a una finca específica. Al crear un cultivo, se selecciona la finca destino. Si solo existe una, se preselecciona automáticamente.
 * **Semilla (kg)**: Campo opcional. Permite registrar la cantidad de semilla utilizada en la siembra. No es obligatorio; el agricultor Puede omitirlo si no tiene el dato.
 * **Duración real del ciclo**: La duración del ciclo refleja el tiempo real de vida del cultivo, no solo la fecha de cosecha esperada. Cuando un ciclo se finaliza o se pierde, su duración real se calcula desde la fecha de siembra hasta la fecha de cierre, no hasta la fecha estimada.
 
@@ -317,6 +320,7 @@ Esto asegura que los reportes individuales, estadísticas globales y rankings re
 * Se conecta con Estadísticas (alimenta los números consolidados).
 * Se conecta con Bitácora (puedes guardar notas sobre el cultivo).
 * Se conecta con Trabajo Diario cuando las tareas pertenecen a una siembra concreta.
+* Cada cultivo pertenece a una finca mediante `farm_id`.
 * Se conecta con decisiones futuras porque deja memoria comparativa de lo que funcionó y lo que no.
 * Cada ciclo tiene su propio historial de movimientos.
 
@@ -1069,6 +1073,36 @@ Todo `alert()` nativo en Agro debe migrarse progresivamente a popups compactos v
 
 ---
 
+## 4.13 Mis Fincas
+
+### Qué es
+
+La gestión de propiedades de tierra del agricultor. Cada finca es un recurso físico donde se siembran cultivos. Un agricultor puede tener una o varias fincas según su realidad productiva.
+
+### Qué no es
+
+No es un perfil ni una identidad. No reemplaza el perfil del agricultor (§4.1). No es un módulo financiero. No es una carpeta de cultivos.
+
+### Para qué sirve
+
+* Dar contexto geográfico a los cultivos.
+* Agrupar estadísticas por propiedad (inversión, ingresos, balance).
+* Distinguir operaciones cuando el agricultor trabaja en varias tierras.
+* Filtrar cultivos por finca en "Mis cultivos".
+
+### Relación con otros módulos
+
+* Cada cultivo pertenece a una finca (campo `farm_id`).
+* Los movimientos financieros heredan el contexto de la finca del cultivo.
+* Estadísticas pueden agregarse por finca o verse globales.
+* El filtro de finca en "Mis cultivos" permite lectura enfocada.
+
+### Auto-migración inicial
+
+Si un usuario nunca creó fincas, al entrar por primera vez se crea automáticamente una finca predeterminada usando el nombre del perfil. Los cultivos legacy (sin `farm_id`) se asocian a esa finca default.
+
+---
+
 ## 5. Relaciones canónicas entre módulos
 
 ### 5.0 Nota sobre «Mi Granja»
@@ -1430,10 +1464,15 @@ Son mensajes emergentes estilizados que reemplazan los `alert()` nativos del nav
 
 ### Caso 9
 
+* **Confusión**: "Fincas son perfiles con nombres, y los cultivos van dentro."
+* **La realidad**: Una finca NO es un perfil. El perfil es la identidad del agricultor (uno por usuario). Las fincas son recursos de tierra (una o varias por usuario). Los cultivos pertenecen a una finca mediante `farm_id`, pero la navegación principal sigue siendo "Mis cultivos" con filtro por finca. No anidar cultivos como carpetas dentro de fincas.
+
+### Caso 10
+
 * **Confusión**: "Todo balance negativo es pérdida y debería mostrarse en rojo."
 * **La realidad**: Un balance negativo tiene dos significados distintos. Si el ciclo tiene fiados pendientes de cobro, el dinero está en la calle: el estado es "Recuperando" (ámbar) porque el agricultor puede actuar cobrando. Si el ciclo es joven y no tiene ventas ni fiados, el déficit es inversión natural en curso: el estado es "Invirtiendo" (gris) porque no requiere acción del agricultor. Marcar ambos como rojo genera falsa alarma en cultivos tempranos.
 
-### Caso 10
+### Caso 11
 
 * **Confusión**: "La flecha de rentabilidad debería reflejar si el cultivo tuvo pérdidas de sacos o gastos pendientes."
 * **La realidad**: La flecha de rentabilidad (la que acompaña al monto de rentabilidad en la card) depende **únicamente** de `rentabilidadReal`. Si `rentabilidadReal > 0`, la flecha es verde (`--color-success`). Evaluar condiciones cruzadas con pérdidas históricas o fiados causaba que cultivos rentables con pérdidas anteriores (ej: Batata amarilla 2, ganancia +$955) mostraran flecha roja, comunicando pérdida donde hay ganancia.

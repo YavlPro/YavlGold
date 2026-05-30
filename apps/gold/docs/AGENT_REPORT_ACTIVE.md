@@ -3714,3 +3714,36 @@ Cerrar los bugs BUG-2026-05-28-01 (colores semánticos) y BUG-2026-05-28-02 (fle
 
 ### Lección aprendida
 Dos balances negativos no son semánticamente iguales: "Recuperando" implica dinero en la calle que requiere cobro; "Invirtiendo" es estado natural de ciclo joven sin acción pendiente. Marcar ambos como ámbar habría generado falsa alarma en cultivos tempranos.
+
+---
+
+## Sesión 2026-05-30 — Integración de Fincas en Ciclos de Cultivos
+
+### Objetivo
+Integrar las fincas como primitive "Recursos" en el flujo de cultivos, con Mis Fincas como superficie de gestión y filtro por finca en Mis cultivos.
+
+### Diagnóstico
+- `agro-farms.js` y `agro-farms.css` existían como untracked.
+- No existía migración local para `agro_farms` ni `agro_crops.farm_id`.
+- El gate remoto de Supabase con `supabase db query --linked` no respondió dentro de 120s; se versionó la migración canónica local en `supabase/`.
+- `FICHA_TECNICA.md` existe en la raíz del repo, no en `apps/gold/docs/`; se actualizó el archivo existente para no crear duplicado documental.
+
+### Archivos modificados
+
+| Archivo | Cambio |
+|---------|--------|
+| `agro-farms.js` | Módulo CRUD de fincas, selector, filtro, auto-migración y sanitización de HTML |
+| `agro-farms.css` | Estilos ADN V11 con tokens, responsive y `prefers-reduced-motion` |
+| `agro.js` | Wiring quirúrgico en selector de finca, filtro de cultivos y edición |
+| `agro-shell.js` | Registro de subvista `mis-fincas` y carga al navegar |
+| `index.html` | CSS/import, subvista, filtro, selector obligatorio y modal de finca |
+| `supabase/migrations/20260530090000_agro_farms_resources.sql` | Tabla `agro_farms`, `agro_crops.farm_id`, índices y RLS owner-only |
+| `MANIFIESTO_AGRO.md` | Nueva §4.13, superficie Mis Fincas, campo finca y malentendido histórico |
+| `FICHA_TECNICA.md` | v1.4: módulo, CSS, tabla `agro_farms` y `farm_id` |
+
+### Resultado
+- Build: PASS (`pnpm build:gold`, Vite + UTF-8 OK; warning esperado de engine Node local v25 vs requerido 20.x).
+- QA visual/browser: omitida por instrucción explícita del usuario durante la sesión.
+- NO se tocó §4.1 Mi Perfil.
+- NO se anidaron cultivos como carpetas dentro de fincas.
+- NO se creó una nueva entrada principal fuera de Ciclos de cultivos.
