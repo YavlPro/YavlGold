@@ -128,7 +128,7 @@ const NAV_PARENT_GROUPS = Object.freeze({
 });
 
 const VIEW_SUBNAV_CONFIG = Object.freeze({
-    ciclos: Object.freeze({ defaultSubview: 'mis-cultivos', allowed: ['mis-cultivos', 'comparar', 'estadisticas'] }),
+    ciclos: Object.freeze({ defaultSubview: 'mis-cultivos', allowed: ['mis-cultivos', 'mis-fincas', 'comparar', 'estadisticas'] }),
     'period-cycles': Object.freeze({ defaultSubview: 'calendario', allowed: ['calendario', 'comparar', 'estadisticas'] }),
     carrito: Object.freeze({ defaultSubview: 'summary', allowed: ['summary', 'planning', 'calculator'] }),
     operational: Object.freeze({ defaultSubview: 'active', allowed: ['active', 'finished', 'donations', 'losses', 'export'] })
@@ -175,6 +175,7 @@ const SHELL_VIEW_KEYWORDS = Object.freeze({
 const SHELL_SUBVIEW_KEYWORDS = Object.freeze({
     activos: Object.freeze(['activo', 'activos', 'en curso', 'abierto']),
     finalizados: Object.freeze(['finalizado', 'finalizados', 'cerrado', 'cerrados', 'historial']),
+    'mis-fincas': Object.freeze(['finca', 'fincas', 'propiedad', 'propiedades', 'terreno']),
     comparar: Object.freeze(['comparar', 'comparacion', 'contraste']),
     estadisticas: Object.freeze(['estadistica', 'estadisticas', 'metricas', 'resumen'])
 });
@@ -746,6 +747,11 @@ const CYCLE_SUBVIEW_META = Object.freeze({
         copy: 'Activos, finalizados y perdidos en una sola vista',
         focusSelector: '#cyclesContainer'
     }),
+    'mis-fincas': Object.freeze({
+        title: 'Mis Fincas',
+        copy: 'Gestiona las propiedades donde siembras tus cultivos',
+        focusSelector: '#agro-farms-root'
+    }),
     comparar: Object.freeze({
         title: 'Comparar ciclos',
         copy: 'Cruza rendimiento, duracion y resultado entre dos ciclos',
@@ -1178,6 +1184,10 @@ export function initAgroShell() {
 
         if (view === 'ciclos' && activeSubview === 'estadisticas' && typeof window.loadAgroGlobalStats === 'function') {
             window.loadAgroGlobalStats();
+        }
+
+        if (view === 'ciclos' && activeSubview === 'mis-fincas' && typeof window._agroFarms?.loadFarms === 'function') {
+            window._agroFarms.loadFarms();
         }
 
         if (view === 'clima' && typeof window.openAgroClima === 'function') {

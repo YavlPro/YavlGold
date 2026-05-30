@@ -54,6 +54,7 @@
     <link rel="stylesheet" href="./agro-cartera-viva.css">
     <link rel="stylesheet" href="./agro-clients.css">
     <link rel="stylesheet" href="./agro-reports-center.css">
+    <link rel="stylesheet" href="./agro-farms.css">
     <link rel="stylesheet" href="./tx-cards-v2.css">
     <link rel="stylesheet" href="./agro-index-critical.css">
 </head>
@@ -232,6 +233,10 @@
                             data-agro-subview="mis-cultivos" data-agro-mode-scope="crop"><i class="fa-solid fa-leaf agro-shell-link__icon"
                                 aria-hidden="true"></i><span class="agro-shell-link__label">Mis
                                 cultivos</span></button>
+                        <button type="button" class="agro-shell-sublink" data-agro-view="ciclos"
+                            data-agro-subview="mis-fincas" data-agro-mode-scope="crop"><i class="fa-solid fa-mountain-sun agro-shell-link__icon"
+                                aria-hidden="true"></i><span class="agro-shell-link__label">Mis
+                                Fincas</span></button>
                         <button type="button" class="agro-shell-sublink" data-agro-view="ciclos"
                             data-agro-subview="comparar" data-agro-mode-scope="crop"><i class="fa-solid fa-scale-balanced agro-shell-link__icon"
                                 aria-hidden="true"></i><span class="agro-shell-link__label">Comparar
@@ -575,6 +580,11 @@
                         data-agro-subview="mis-cultivos">
                         <i class="fa-solid fa-seedling" aria-hidden="true"></i>
                         <span>Mis cultivos</span>
+                    </button>
+                    <button type="button" class="agro-mobile-hub__item" data-agro-view="ciclos"
+                        data-agro-subview="mis-fincas">
+                        <i class="fa-solid fa-mountain-sun" aria-hidden="true"></i>
+                        <span>Mis Fincas</span>
                     </button>
                     <button type="button" class="agro-mobile-hub__item" data-agro-view="ciclos"
                         data-agro-subview="estadisticas">
@@ -1104,6 +1114,12 @@
                     aria-pressed="false">Ocultar montos</button>
             </div>
             <div class="agro-cycle-subview" data-agro-cycle-subview="mis-cultivos">
+                <div class="agro-farm-filter-container">
+                    <label for="agro-farm-filter-select"><i class="fa-solid fa-mountain-sun" aria-hidden="true"></i> Finca</label>
+                    <select id="agro-farm-filter-select" aria-label="Filtrar cultivos por finca">
+                        <option value="">Todas las fincas</option>
+                    </select>
+                </div>
                 <div class="agro-internal-tabs" role="tablist" aria-label="Tabs de Mis cultivos">
                     <button type="button" class="agro-internal-tab is-active" role="tab" data-agro-crop-tab="activos" aria-selected="true">Activos</button>
                     <button type="button" class="agro-internal-tab" role="tab" data-agro-crop-tab="finalizados" aria-selected="false">Finalizados</button>
@@ -1122,6 +1138,10 @@
                 <div class="agro-internal-tab-content" data-agro-crop-tab-content="archivo">
                     <div id="agro-crop-archive-root" class="agro-crop-archive-root"></div>
                 </div>
+            </div>
+
+            <div class="agro-cycle-subview" data-agro-cycle-subview="mis-fincas">
+                <div id="agro-farms-root" class="agro-farms-root"></div>
             </div>
 
             <div class="agro-cycle-subview" data-agro-cycle-subview="comparar">
@@ -1355,6 +1375,12 @@
                 onsubmit="event.preventDefault(); window.saveCrop();">
                 <input type="hidden" id="crop-edit-id" value="">
                 <div class="input-group agro-modal-field-block">
+                    <label class="input-label" for="crop-farm-id">Finca *</label>
+                    <select id="crop-farm-id" class="styled-input agro-modal-input--select" required>
+                        <option value="">Selecciona una finca</option>
+                    </select>
+                </div>
+                <div class="input-group agro-modal-field-block">
                     <label class="input-label" for="crop-name">Nombre del Cultivo *</label>
                     <input type="text" id="crop-name" class="styled-input agro-modal-input--compact"
                         placeholder="Ej: Tomate Cherry" required>
@@ -1460,6 +1486,47 @@
                     onclick="window.closeCropModal()">Cancelar</button>
                 <button type="submit" id="btn-save-crop" form="form-new-crop"
                     class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary">Guardar siembra</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Fincas -->
+    <div id="modal-farm" class="modal-overlay hidden agro-modal-canon" role="dialog" aria-modal="true"
+        aria-labelledby="farm-modal-title">
+        <div class="modal-container agro-modal-canon__dialog">
+            <div class="modal-header agro-modal-canon__header">
+                <h3 id="farm-modal-title" class="modal-title">Nueva Finca</h3>
+                <button class="modal-close agro-modal-canon__close" type="button" onclick="window.closeFarmModal()"
+                    aria-label="Cerrar finca">&times;</button>
+            </div>
+            <form id="form-new-farm" class="modal-body agro-modal-canon__body"
+                onsubmit="event.preventDefault(); window.saveFarm();">
+                <input type="hidden" id="farm-edit-id" value="">
+                <div class="input-group agro-modal-field-block">
+                    <label class="input-label" for="farm-name">Nombre de la finca *</label>
+                    <input type="text" id="farm-name" class="styled-input agro-modal-input--compact"
+                        placeholder="Ej: Finca El Progreso" required>
+                </div>
+                <div class="input-group agro-modal-field-block">
+                    <label class="input-label" for="farm-location">Ubicación</label>
+                    <input type="text" id="farm-location" class="styled-input agro-modal-input--compact"
+                        placeholder="Ej: San Cristóbal, Táchira">
+                </div>
+                <div class="input-group agro-modal-field-block">
+                    <label class="input-label" for="farm-notes">Notas</label>
+                    <textarea id="farm-notes" class="styled-input" rows="3"
+                        placeholder="Notas internas de esta propiedad"></textarea>
+                </div>
+                <label class="agro-checkbox-row" for="farm-is-default">
+                    <input type="checkbox" id="farm-is-default">
+                    <span>Usar como finca principal</span>
+                </label>
+            </form>
+            <div class="modal-footer agro-modal-canon__footer">
+                <button type="button" class="btn-cancel agro-modal-canon__button agro-modal-canon__button--secondary"
+                    onclick="window.closeFarmModal()">Cancelar</button>
+                <button type="submit" id="btn-save-farm" form="form-new-farm"
+                    class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary">Guardar finca</button>
             </div>
         </div>
     </div>
@@ -2416,7 +2483,8 @@
                 'seed_kg',
                 'actual_harvest_date',
                 'lost_at',
-                'closed_at'
+                'closed_at',
+                'farm_id'
             ];
             const hasOptionalColumnError = (error) => {
                 return OPTIONAL_CROP_COLUMNS.some((column) => isMissingColumnError(error, column));
@@ -2520,6 +2588,7 @@
 
                 const fullName = `${icon} ${name}`;
                 const editId = document.getElementById('crop-edit-id')?.value || '';
+                const farmId = String(document.getElementById('crop-farm-id')?.value || '').trim();
                 const statusValue = document.getElementById('crop-status')?.value || 'sembrado';
                 const statusMode = statusValue === 'auto' ? 'auto' : 'manual';
                 const rawStatusOverride = statusMode === 'manual' ? statusValue : null;
@@ -2547,9 +2616,15 @@
                 let insertedId = null;
                 let showEditSuccess = false;
 
+                if (!farmId) {
+                    showValidationError('Selecciona la finca de este cultivo.');
+                    return;
+                }
+
                 if (editId) {
                     let updatePayload = {
                         name: fullName,
+                        farm_id: farmId,
                         variety,
                         area_size: area,
                         investment: investmentUsdEquiv,
@@ -2611,6 +2686,7 @@
                     let insertPayload = {
                         user_id: user.id,
                         name: fullName,
+                        farm_id: farmId,
                         variety,
                         area_size: area,
                         investment: investmentUsdEquiv,
@@ -3038,6 +3114,7 @@
                 }
 
                 await import('./agro.js');
+                await import('./agro-farms.js');
                 await import('../assets/js/geolocation.js');
                 await import('./dashboard.js');
                 await import('../assets/js/utils/activityTracker.js');
@@ -3143,6 +3220,7 @@
                     interactionsModule.initInteractions();
                     statsModule.initStats();
                     notificationsModule.initNotifications();
+                    window._agroFarms?.loadFarms?.();
                 };
 
                 if (document.readyState === 'loading') {

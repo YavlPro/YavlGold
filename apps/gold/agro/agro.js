@@ -8537,6 +8537,12 @@ function setupCropActionListeners() {
 
     });
 
+    document.addEventListener('change', (e) => {
+        if (e.target?.id === 'agro-farm-filter-select') {
+            window.loadCrops?.();
+        }
+    });
+
     console.info('[AGRO] Crop action listeners initialized');
 }
 
@@ -11412,11 +11418,21 @@ export async function loadCrops() {
 
         if (!isLatest) return;
 
-        const {
+        let {
             visible: visibleCrops,
             archived: archivedCrops,
             deleted: deletedCrops
         } = splitCropsByArchiveState(crops);
+
+        const selectedFarmFilterId = typeof window._agroFarms?.getSelectedFarmId === 'function'
+            ? normalizeCropId(window._agroFarms.getSelectedFarmId())
+            : '';
+        if (selectedFarmFilterId) {
+            const belongsToSelectedFarm = (crop) => normalizeCropId(crop?.farm_id) === selectedFarmFilterId;
+            visibleCrops = visibleCrops.filter(belongsToSelectedFarm);
+            archivedCrops = archivedCrops.filter(belongsToSelectedFarm);
+            deletedCrops = deletedCrops.filter(belongsToSelectedFarm);
+        }
 
         let expenseTotalsByCrop = new Map();
         let directExpenseTotalsByCrop = new Map();
@@ -16533,6 +16549,7 @@ export function openCropModal() {
     if (investmentFxMeta) {
         investmentFxMeta.textContent = 'Cotización al guardar: se tomará la tasa vigente del Facturero.';
     }
+    window._agroFarms?.renderFarmSelector?.(document.getElementById('crop-farm-id'));
 
     setCropModalMode('create');
 
@@ -16614,6 +16631,7 @@ export function openEditModal(id) {
             statusSelect.value = manualStatus || normalizeCropStatus(crop.status);
         }
     }
+    window._agroFarms?.renderFarmSelector?.(document.getElementById('crop-farm-id'), crop.farm_id || null);
     const cropForm = getCropModalForm();
     if (cropForm?.dataset) {
         cropForm.dataset.initialStatus = resolveManualCropStatus(crop) || normalizeCropStatus(crop.status);
