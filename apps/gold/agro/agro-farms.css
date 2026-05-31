@@ -246,6 +246,16 @@
   color: var(--color-error);
 }
 
+.farm-stat-hint {
+  display: block;
+  margin-top: 0.1rem;
+  color: var(--text-secondary);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
 .farm-card__actions {
   display: flex;
   gap: 0.5rem;

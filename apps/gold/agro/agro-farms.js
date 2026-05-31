@@ -148,6 +148,7 @@ async function loadFarms() {
     const statsMap = new Map();
     farmsCache.forEach(f => {
       statsMap.set(f.id, {
+        totalCrops: 0,
         activeCrops: 0,
         totalExpenses: 0,
         totalIncome: 0,
@@ -158,16 +159,20 @@ async function loadFarms() {
     (crops || []).forEach(c => {
       if (!c.farm_id || !statsMap.has(c.farm_id)) return;
       const fStats = statsMap.get(c.farm_id);
-      
+
+      // Contar todos los cultivos (activos, finalizados y perdidos)
+      fStats.totalCrops++;
+
       // Cultivo activo si no está finalizado ni perdido
       const isActive = c.status !== 'finalizado' && c.status !== 'lost';
       if (isActive) fStats.activeCrops++;
 
-      // Sumar gastos e ingresos asociados al cultivo
+      // Sumar inversión base del cultivo + gastos operativos e ingresos asociados
+      const cropInvestment = Number(c.investment) || 0;
       const cExp = expMap.get(c.id) || 0;
       const cInc = incMap.get(c.id) || 0;
 
-      fStats.totalExpenses += cExp;
+      fStats.totalExpenses += cExp + cropInvestment;
       fStats.totalIncome += cInc;
       fStats.balance = fStats.totalIncome - fStats.totalExpenses;
     });
@@ -274,7 +279,7 @@ function renderFarmsView(container, statsMap) {
   `;
 
   farmsCache.forEach(farm => {
-    const stats = statsMap.get(farm.id) || { activeCrops: 0, totalExpenses: 0, totalIncome: 0, balance: 0 };
+    const stats = statsMap.get(farm.id) || { totalCrops: 0, activeCrops: 0, totalExpenses: 0, totalIncome: 0, balance: 0 };
     const safeName = escapeHtml(farm.name);
     const safeLocation = escapeHtml(farm.location_text || '');
     html += `
@@ -291,8 +296,9 @@ function renderFarmsView(container, statsMap) {
         <div class="farm-card__body">
           <div class="farm-stats-grid">
             <div class="farm-stat-item">
-              <span class="farm-stat-label">Cultivos Activos</span>
-              <span class="farm-stat-value gold">${stats.activeCrops}</span>
+              <span class="farm-stat-label">Cultivos Totales</span>
+              <span class="farm-stat-value gold">${stats.totalCrops}</span>
+              ${stats.activeCrops < stats.totalCrops ? `<span class="farm-stat-hint">${stats.activeCrops} activos</span>` : ''}
             </div>
             <div class="farm-stat-item">
               <span class="farm-stat-label">Gastos (Inversión)</span>
