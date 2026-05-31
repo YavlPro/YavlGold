@@ -820,6 +820,14 @@ function syncCultivosSubview(view, subview) {
         subtitle.textContent = meta.copy;
     }
 
+    // Control action button visibility based on active subview
+    const activeSub = isCyclesView ? normalizeSubview('ciclos', subview) : '';
+    const isFarmsView = activeSub === 'mis-fincas';
+    const btnNewCrop = document.getElementById('btn-new-crop');
+    const btnNewFarm = document.getElementById('btn-new-farm-header');
+    if (btnNewCrop) btnNewCrop.style.display = isFarmsView ? 'none' : '';
+    if (btnNewFarm) btnNewFarm.style.display = isFarmsView ? '' : 'none';
+
     syncCycleStatsPanel(isCyclesView ? subview : '');
 }
 

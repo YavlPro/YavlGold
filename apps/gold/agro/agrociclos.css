@@ -729,6 +729,7 @@
 }
 
 body[data-agro-active-view='ciclos'][data-agro-subview='mis-cultivos'] .crops-section[data-agro-shell-region="cultivos"] [data-agro-cycle-subview='mis-cultivos'],
+body[data-agro-active-view='ciclos'][data-agro-subview='mis-fincas'] .crops-section[data-agro-shell-region="cultivos"] [data-agro-cycle-subview='mis-fincas'],
 body[data-agro-active-view='ciclos'][data-agro-subview='comparar'] .crops-section[data-agro-shell-region="cultivos"] [data-agro-cycle-subview='comparar'],
 body[data-agro-active-view='ciclos'][data-agro-subview='estadisticas'] .crops-section[data-agro-shell-region="cultivos"] [data-agro-cycle-subview='estadisticas'] {
   display: block;
