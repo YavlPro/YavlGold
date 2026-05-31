@@ -270,15 +270,6 @@ function populateFilterSelector() {
  */
 function renderFarmsView(container, statsMap) {
   let html = `
-    <div class="agro-farms-header-bar">
-      <div class="agro-farms-title-group">
-        <h3>Mis Fincas</h3>
-        <p>Monitorea y administra la producción y rendimiento financiero de tus propiedades.</p>
-      </div>
-      <button class="btn btn-gold" type="button" data-farm-action="create">
-        <i class="fa-solid fa-plus"></i> Nueva Finca
-      </button>
-    </div>
     <div class="farm-grid">
   `;
 
