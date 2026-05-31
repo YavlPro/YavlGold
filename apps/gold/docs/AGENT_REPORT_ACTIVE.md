@@ -3747,3 +3747,42 @@ Integrar las fincas como primitive "Recursos" en el flujo de cultivos, con Mis F
 - NO se tocó §4.1 Mi Perfil.
 - NO se anidaron cultivos como carpetas dentro de fincas.
 - NO se creó una nueva entrada principal fuera de Ciclos de cultivos.
+
+---
+
+## Sesión 2026-05-30 (tarde) — Fixes post-integración de Fincas
+
+### Objetivo
+Aplicar fixes finales post-integración: duplicación de header en subvista "Mis Fincas", estadísticas que solo contaban cultivos activos, y actualización documental.
+
+### Diagnóstico
+- BUG-01: Subvista "Mis Fincas" mostraba dos headers superpuestos (uno en `index.html` controlado por `syncCultivosSubview()`, otro interno en `agro-farms.js:renderFarmsView()`)
+- BUG-02: Estadísticas por finca solo contaban cultivos con estado activo, excluyendo la historia productiva completa de la propiedad
+- BUG-03: CSS de subview `mis-fincas` faltaba en `agrociclos.css`, impidiendo que la subvista se mostrara
+
+### Archivos modificados
+
+| Archivo | Cambio |
+|---------|--------|
+| `agro-farms.js:271-274` | Eliminación de bloque `agro-farms-header-bar` duplicado |
+| `agro-farms.js:147-180` | Modelo de stats agrega `totalCrops`; loop cuenta TODOS los cultivos |
+| `agro-farms.js:293-297` | Tarjeta muestra "Cultivos Totales" con hint "N activos" |
+| `agro-farms.css:248-256` | Nuevo estilo `.farm-stat-hint` |
+| `agrociclos.css:731` | Regla CSS faltante para subview `mis-fincas` |
+
+### Commits
+- `810e44f` — Eliminar duplicación de header en Mis Fincas
+- `4dbc777` — Mis Fincas lee todos los cultivos (activos + finalizados + perdidos)
+
+### Resultado
+- Build: PASS (`pnpm build:gold` sin errores)
+- Estadísticas por finca ahora reflejan historia completa (activos + finalizados + perdidos)
+- Inversión base de cultivos incluida en gastos por finca
+- Un solo header visible por subvista (sin duplicación)
+
+### NO se hizo
+- No se tocó `agro.js` (wiring del 29-may sigue intacto)
+- No se agregaron features nuevas
+
+### Lección aprendida
+Una finca es un recurso de tierra con historia completa, no un snapshot de cultivos vivos. Filtrar por estado `activo` excluye la realidad productiva del agricultor y pierde memoria valiosa para decisiones futuras.

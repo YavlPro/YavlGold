@@ -320,7 +320,7 @@ Esto asegura que los reportes individuales, estadísticas globales y rankings re
 * Se conecta con Estadísticas (alimenta los números consolidados).
 * Se conecta con Bitácora (puedes guardar notas sobre el cultivo).
 * Se conecta con Trabajo Diario cuando las tareas pertenecen a una siembra concreta.
-* Cada cultivo pertenece a una finca mediante `farm_id`.
+* Cada cultivo pertenece a una finca mediante `farm_id`. Al crear un cultivo, se selecciona la finca destino. Si solo existe una, se pre-selecciona automáticamente. Los cultivos legacy sin `farm_id` se asocian a la finca default durante la auto-migración inicial.
 * Se conecta con decisiones futuras porque deja memoria comparativa de lo que funcionó y lo que no.
 * Cada ciclo tiene su propio historial de movimientos.
 
@@ -1089,6 +1089,7 @@ No es un perfil ni una identidad. No reemplaza el perfil del agricultor (§4.1).
 * Agrupar estadísticas por propiedad (inversión, ingresos, balance).
 * Distinguir operaciones cuando el agricultor trabaja en varias tierras.
 * Filtrar cultivos por finca en "Mis cultivos".
+* Mostrar la historia completa de la propiedad (cultivos activos, finalizados y perdidos).
 
 ### Relación con otros módulos
 
@@ -1096,10 +1097,15 @@ No es un perfil ni una identidad. No reemplaza el perfil del agricultor (§4.1).
 * Los movimientos financieros heredan el contexto de la finca del cultivo.
 * Estadísticas pueden agregarse por finca o verse globales.
 * El filtro de finca en "Mis cultivos" permite lectura enfocada.
+* La subvista "Mis Fincas" es superficie de gestión, no entrada principal al sistema.
 
 ### Auto-migración inicial
 
 Si un usuario nunca creó fincas, al entrar por primera vez se crea automáticamente una finca predeterminada usando el nombre del perfil. Los cultivos legacy (sin `farm_id`) se asocian a esa finca default.
+
+### Historia completa de la finca
+
+Las estadísticas por finca (cultivos, inversión, ingresos, balance) se calculan sobre TODOS los cultivos de la finca: activos, finalizados y perdidos. Una finca es un recurso de tierra con historia, no solo un snapshot de cultivos vivos.
 
 ---
 
@@ -1476,6 +1482,11 @@ Son mensajes emergentes estilizados que reemplazan los `alert()` nativos del nav
 
 * **Confusión**: "La flecha de rentabilidad debería reflejar si el cultivo tuvo pérdidas de sacos o gastos pendientes."
 * **La realidad**: La flecha de rentabilidad (la que acompaña al monto de rentabilidad en la card) depende **únicamente** de `rentabilidadReal`. Si `rentabilidadReal > 0`, la flecha es verde (`--color-success`). Evaluar condiciones cruzadas con pérdidas históricas o fiados causaba que cultivos rentables con pérdidas anteriores (ej: Batata amarilla 2, ganancia +$955) mostraran flecha roja, comunicando pérdida donde hay ganancia.
+
+### Caso 12
+
+* **Confusión**: "Mis Fincas solo debe mostrar cultivos activos porque los finalizados y perdidos ya no interesan."
+* **La realidad**: Una finca es un recurso de tierra con historia completa, no solo un snapshot de cultivos vivos. Las estadísticas por finca (cultivos totales, inversión, ingresos, balance) deben incluir activos, finalizados y perdidos. El agricultor necesita ver la historia productiva completa de cada propiedad para tomar decisiones futuras.
 
 ---
 

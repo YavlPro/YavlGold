@@ -175,6 +175,7 @@ agro-stats-report.js — reportes estadísticos
 agro-trash.js        — papelera de eliminados
 agro-unit-totals.js  — totales por unidad
 agro-wizard.js       — wizard de configuración
+agro-farms.js        — CRUD de fincas, selector, estadísticas por finca, auto-migración
 ```
 
 **Archivos CSS:**
@@ -233,7 +234,7 @@ agro-wizard.js       — wizard de configuración
 - `agro_crop_cycles` - Ciclos productivos
 
 #### Agro — Recursos
-- `agro_farms` - Fincas del agricultor (id, user_id, name, location_text, notes, is_default, deleted_at). Soft-delete.
+- `agro_farms` - Fincas del agricultor (id, user_id, name, location_text, notes, is_default, deleted_at). Soft-delete. RLS owner-only.
 
 #### Agro — Clientes
 - `agro_clients` - Contactos manuales del agricultor (soft-delete con `deleted_at`, RLS owner-only, campo `client_type`)
@@ -427,5 +428,5 @@ git status
 
 ---
 
-**Versión de Ficha:** 1.4
+**Versión de Ficha:** 1.5
 **Última Actualización:** 30/05/2026
