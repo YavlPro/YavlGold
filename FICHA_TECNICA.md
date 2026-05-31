@@ -428,4 +428,4 @@ git status
 ---
 
 **Versión de Ficha:** 1.4
-**Última Actualización:** 15/04/2026
+**Última Actualización:** 30/05/2026
