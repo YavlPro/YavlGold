@@ -11358,6 +11358,18 @@ export async function loadCrops() {
     showCropsLoading(cropsGrid);
     logAgroDebug('[AGRO] loadCrops START', { ts: new Date().toISOString(), seq: requestId });
 
+    // Ensure operational cycles module is loaded (provides expense data for crop cards)
+    if (typeof window !== 'undefined' && !window.YGAgroOperationalCycles) {
+        try {
+            const mod = await import('./agroOperationalCycles.js');
+            if (typeof mod.initAgroOperationalCycles === 'function') {
+                await mod.initAgroOperationalCycles({ initialUserId: currentAgroUserId });
+            }
+        } catch (err) {
+            console.warn('[AGRO] No se pudo cargar AgroOperationalCycles bajo demanda:', err?.message || err);
+        }
+    }
+
     try {
         try {
             await loadCropTemplates();
