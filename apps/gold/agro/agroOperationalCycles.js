@@ -300,17 +300,12 @@ function rebuildPortfolioByCrop(exchangeRates = state.exchangeRates) {
         const outgoingUsd = sumOutgoingMovementsUsd(cycle?.movements, exchangeRates);
         if (!(outgoingUsd > 0)) return;
 
-        const status = normalizeToken(cycle?.status);
-        if (isLossCycle(cycle)) {
+        // Classify by economic_type (nature of the cycle), not by cycle status.
+        // expense/loss/donation are real outgoing costs → expenseIndex.
+        // income cycles have direction='in' so outgoingUsd=0 and never reach here.
+        const economicType = normalizeToken(cycle?.economic_type);
+        if (economicType === 'expense' || economicType === 'loss' || economicType === 'donation') {
             registerAmount(expenseIndex, cropId, outgoingUsd);
-            return;
-        }
-        if (status === 'closed') {
-            registerAmount(expenseIndex, cropId, outgoingUsd);
-            return;
-        }
-        if (ACTIVE_STATUS_VALUES.includes(status)) {
-            registerAmount(pendingIndex, cropId, outgoingUsd);
         }
     };
 
@@ -3599,34 +3594,41 @@ function exposeGlobalApi() {
 }
 
 export async function initAgroOperationalCycles(options = {}) {
-    state.root = document.getElementById(ROOT_ID);
-    if (!state.root) return null;
-
-    if (!state.initialized) {
-        renderShell();
-        bindEvents();
-        state.initialized = true;
-    }
-
+    // 1. Always set userId and expose API (other surfaces need the data)
     if (options.initialUserId) {
         state.userId = normalizeId(options.initialUserId);
     }
-
     exposeGlobalApi();
-    state.currentView = normalizeToken(document.body?.dataset?.agroActiveView || state.currentView);
-    state.currentSubview = normalizeOperationalSubview(document.body?.dataset?.agroSubview || state.currentSubview);
 
-    const initialMode = normalizeToken(document.body?.dataset?.agroMode || 'general');
-    if (initialMode === 'cultivo') state.familyFilter = FAMILY_LINKED;
-    else if (initialMode === 'no-cultivo') state.familyFilter = FAMILY_UNLINKED;
-    else state.familyFilter = FAMILY_ALL;
+    // 2. Always refresh data so operational expenses are available for crop cards
+    const refreshPromise = refreshData({ initialUserId: options.initialUserId });
 
-    syncStandalonePeriodCyclesView();
+    // 3. Only render UI when root element exists and view is active
+    state.root = document.getElementById(ROOT_ID);
+    if (state.root) {
+        if (!state.initialized) {
+            renderShell();
+            bindEvents();
+            state.initialized = true;
+        }
 
-    if (state.currentView === VIEW_NAME) {
-        renderAll();
-        await refreshData({ initialUserId: options.initialUserId });
+        state.currentView = normalizeToken(document.body?.dataset?.agroActiveView || state.currentView);
+        state.currentSubview = normalizeOperationalSubview(document.body?.dataset?.agroSubview || state.currentSubview);
+
+        const initialMode = normalizeToken(document.body?.dataset?.agroMode || 'general');
+        if (initialMode === 'cultivo') state.familyFilter = FAMILY_LINKED;
+        else if (initialMode === 'no-cultivo') state.familyFilter = FAMILY_UNLINKED;
+        else state.familyFilter = FAMILY_ALL;
+
+        syncStandalonePeriodCyclesView();
+
+        if (state.currentView === VIEW_NAME) {
+            renderAll();
+        }
     }
+
+    // 4. Await data so callers get a fully-loaded module
+    await refreshPromise;
 
     return {
         refresh: () => refreshData(),
