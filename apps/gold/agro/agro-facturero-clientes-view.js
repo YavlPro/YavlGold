@@ -2563,13 +2563,6 @@ function renderListViewMarkup(state) {
             aria-label="Cartera de clientes"
             aria-busy="${loading ? 'true' : 'false'}">
             <header class="cartera-viva-view__header">
-                ${renderCommercialFamilyNav(CARTERA_VIVA_VIEW)}
-                <div class="cartera-viva-view__headline">
-                    <div class="cartera-viva-view__copy">
-                        <p class="cartera-viva-view__eyebrow">Facturero de Clientes</p>
-                        <h2 class="cartera-viva-view__title">Cartera de clientes</h2>
-                        <p class="cartera-viva-view__subtitle">Primero vive el cliente; luego sus movimientos.</p>
-                    </div>
                 <div class="cartera-viva-view__actions">
                     <div class="cartera-viva-action-pair" aria-label="Acciones de clientes">
                         <button type="button" class="cartera-viva-refresh" data-cartera-new-client>
@@ -2586,7 +2579,6 @@ function renderListViewMarkup(state) {
                         ${loading ? 'Actualizando…' : 'Actualizar'}
                     </button>
                 </div>
-            </div>
                 <div data-cartera-summary-slot>
                     ${renderHeaderSummary(state.summaryRowsForHeader, { loading: state.shouldBlockInitialLoading })}
                 </div>

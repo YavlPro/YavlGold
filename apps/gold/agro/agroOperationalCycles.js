@@ -1395,14 +1395,6 @@ function renderShell() {
                             </button>
                         </div>
                     </div>
-                    <div class="module-title-group">
-                        <div class="module-icon">💼</div>
-                        <div class="module-heading">
-                            <p class="ops-module-eyebrow">Operación comercial</p>
-                            <h2 class="module-title">Facturero de la Finca</h2>
-                            <p class="module-subtitle">Registra, filtra y exporta con movimientos reales sin salir del módulo.</p>
-                        </div>
-                    </div>
                 </div>
                 <div class="header-actions">
                     <button type="button" class="btn btn-primary" data-operational-action="new-cycle">Nueva cartera operativa</button>
