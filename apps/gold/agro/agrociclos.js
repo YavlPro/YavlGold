@@ -79,7 +79,7 @@ function readBuyerPortfolioState() {
     const snapshot = api.getState();
     return snapshot && typeof snapshot === 'object' ? snapshot : null;
   } catch (error) {
-    console.warn('[agrociclos] No se pudo leer estado global de Cartera Viva:', error);
+    console.warn('[agrociclos] No se pudo leer estado global de Facturero de Clientes:', error);
     return null;
   }
 }
@@ -497,7 +497,7 @@ function renderCard(ciclo, index = 0) {
     ].filter(Boolean).join('')
   }) : ''}
     ${renderBreakdownSection({
-    title: 'Cartera Viva',
+    title: 'Facturero de Clientes',
     subtitle: 'Facturación histórica del ciclo',
     modifierClass: 'is-viva',
     defaultOpen: carteraVivaIsShort,

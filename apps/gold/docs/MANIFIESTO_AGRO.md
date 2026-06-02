@@ -117,8 +117,8 @@ El valor de Agro no está solo en registrar. Está en conectar lo que pasa en el
     * Estadísticas de períodos
     * Comparar períodos
   * Mis finanzas
-    * Cartera Viva
-    * Cartera Operativa
+    * Facturero de Clientes
+    * Facturero de la Finca
     * Mi Carrito
     * Mis Clientes
   * Trabajo y lectura
@@ -172,7 +172,7 @@ No es un módulo de estadísticas. No es un facturero. No es una segunda cuenta 
 
 ### Cómo se conecta con Agro
 
-Todo empieza desde aquí. Cuando abres Agro por primera vez, tu perfil se usa para saludarte. Los datos de contacto ayudan a otros agricultores a localizarte en la red Social. El modo privacidad afecta la visualización de Cartera Viva y Cartera Operativa.
+Todo empieza desde aquí. Cuando abres Agro por primera vez, tu perfil se usa para saludarte. Los datos de contacto ayudan a otros agricultores a localizarte en la red Social. El modo privacidad afecta la visualización de Facturero de Clientes y Facturero de la Finca.
 
 ---
 
@@ -275,7 +275,7 @@ rentabilidadReal = cobradoReal - costosTotales
 #### Interpretación de cada estado
 
 * **Ganado**: El cultivo ya generó utilidad neta en mano. El agricultor recuperó inversión, gastos y pérdidas, y tiene saldo positivo disponible.
-* **Recuperando**: El ciclo tiene rentabilidad real positiva o neutra, pero parte del dinero está en fiados pendientes de cobro. La acción operativa es gestionar cobros en Cartera Viva.
+* **Recuperando**: El ciclo tiene rentabilidad real positiva o neutra, pero parte del dinero está en fiados pendientes de cobro. La acción operativa es gestionar cobros en Facturero de Clientes.
 * **Invirtiendo**: El ciclo está en etapa temprana (ej: día 3 de 92), tiene gastos registrados pero aún no hay ventas. Es el estado natural de un cultivo joven y no representa alarma.
 * **Equilibrio**: El ciclo cerró en punto neutro. No hay ganancia ni pérdida neta.
 
@@ -289,9 +289,9 @@ La flecha del bloque Rentabilidad depende únicamente de `rentabilidadReal`, no 
 | `rentabilidadReal = 0` | → | Gris (`--text-muted`) |
 | `rentabilidadReal < 0` | ↘ | Rojo (`--color-error`) |
 
-#### Gastos operativos de Cartera Operativa
+#### Gastos operativos de Facturero de la Finca
 
-Los gastos registrados en Cartera Operativa asociados a un cultivo específico (ej: abono urea, gramonson) se incluyen en `costosTotales` del ciclo. La fórmula canónica es:
+Los gastos registrados en Facturero de la Finca asociados a un cultivo específico (ej: abono urea, gramonson) se incluyen en `costosTotales` del ciclo. La fórmula canónica es:
 
 ```txt
 costosTotales = inversión + gastos_operativos + pérdidas
@@ -316,7 +316,7 @@ Esto asegura que los reportes individuales, estadísticas globales y rankings re
 
 ### Relación con otros módulos
 
-* Se conecta con Cartera Viva (los movimientos del cultivo aparecen en la cartera).
+* Se conecta con Facturero de Clientes (los movimientos del cultivo aparecen en la cartera).
 * Se conecta con Estadísticas (alimenta los números consolidados).
 * Se conecta con Bitácora (puedes guardar notas sobre el cultivo).
 * Se conecta con Trabajo Diario cuando las tareas pertenecen a una siembra concreta.
@@ -395,8 +395,8 @@ No es el registro de crecimiento de un cultivo ni tu lista de tareas. Es, concre
 
 ### Núcleos incluidos
 
-* Cartera Viva — quién te debe dinero (clientes con fiados)
-* Cartera Operativa — el libro de gastos e ingresos general
+* Facturero de Clientes — quién te debe dinero (clientes con fiados)
+* Facturero de la Finca — el libro de gastos e ingresos general
 * Mi Carrito — lista de compras de insumos
 * Mis Clientes — libreta de contactos (ver §4.5.4)
 
@@ -408,7 +408,7 @@ Registrar y seguir la realidad financiera del agricultor.
 
 Agro trabaja dentro de una realidad donde no todo se mueve en una sola moneda. En el campo, un insumo puede comprarse en pesos, una referencia de mercado puede mirarse en dólares y una parte del negocio puede acordarse o cobrarse en bolívares.
 
-Por eso el contexto multimoneda no es decoración visual. Afecta la lectura del negocio real: cultivos, ciclos de cultivo, Cartera Viva, Cartera Operativa, estadísticas y decisiones pueden depender de cómo se registró cada movimiento y en qué moneda se entendió.
+Por eso el contexto multimoneda no es decoración visual. Afecta la lectura del negocio real: cultivos, ciclos de cultivo, Facturero de Clientes, Facturero de la Finca, estadísticas y decisiones pueden depender de cómo se registró cada movimiento y en qué moneda se entendió.
 
 El canon actual del proyecto reconoce COP, USD y VES como monedas soportadas. Si una superficie específica todavía no cubre todos los casos con el mismo nivel de detalle, debe documentarse y validarse antes de prometer comportamiento técnico exacto. La regla semántica es clara: Agro debe ayudar a registrar y entender esa realidad, no maquillarla como si todo ocurriera siempre en una sola moneda.
 
@@ -420,7 +420,10 @@ El canon actual del proyecto reconoce COP, USD y VES como monedas soportadas. Si
 
 ---
 
-## 4.5.1 Cartera Viva
+## 4.5.1 Facturero de Clientes
+
+> **Nota de transición (2026-06-01):** Anteriormente conocido como "Cartera Viva".
+> El nombre fue actualizado para mayor claridad semántica. La funcionalidad permanece idéntica.
 
 ### Qué es
 
@@ -440,7 +443,7 @@ No es un registro de todas las ventas. No es la cartera bancaria. No es dónde r
 
 ### Estados principales visibles
 
-Cartera Viva debe leerse con tres estados principales:
+Facturero de Clientes debe leerse con tres estados principales:
 
 * **Fiado**: me deben; existe saldo pendiente vivo.
 * **Cobrado/Pagado**: me pagaron; hay cobro y no queda pendiente ni perdida.
@@ -460,13 +463,13 @@ Un cobro parcial no convierte al cliente en pagado si todavia queda pendiente vi
 
 ### Relación con ciclos de cultivo
 
-Los movimientos en Cartera Viva pueden asociarse a un cultivo específico. Cuando registras un fiado, puedes indicar a qué ciclo pertenece.
+Los movimientos en Facturero de Clientes pueden asociarse a un cultivo específico. Cuando registras un fiado, puedes indicar a qué ciclo pertenece.
 
 En `Vista general`, si un cliente aparece por saldos o historia asociada a cultivos, la card debe ayudar a entender la fuente cuando existan datos reales: `Cultivo: Pepino vega` o `Cultivos: Pepino vega · Maiz mio`. No se deben inventar nombres ni mostrar IDs tecnicos al usuario.
 
 ### Flujo de uso
 
-1. Abres Cartera Viva.
+1. Abres Facturero de Clientes.
 2. Ves la lista de clientes con fiados o deudas pendientes.
 3. Para agregar un cliente:
    - **Nuevo cliente** crea un cliente desde cero con nombre, finca, contacto y datos reales.
@@ -477,9 +480,9 @@ En `Vista general`, si un cliente aparece por saldos o historia asociada a culti
 
 ### Corrección segura de clientes
 
-Cartera Viva permite corregir la asignación de cliente de un movimiento cuando fue registrado bajo el cliente equivocado. Esa corrección debe mover el movimiento al cliente correcto sin borrar el historial comercial ni alterar montos, fechas, estados o notas reales.
+Facturero de Clientes permite corregir la asignación de cliente de un movimiento cuando fue registrado bajo el cliente equivocado. Esa corrección debe mover el movimiento al cliente correcto sin borrar el historial comercial ni alterar montos, fechas, estados o notas reales.
 
-Cartera Viva también permite unificar clientes duplicados cuando representan a la misma persona o comprador. La unificación debe mover los movimientos al cliente destino y conservar la memoria del negocio; no debe usarse como borrado encubierto ni como forma de maquillar deudas.
+Facturero de Clientes también permite unificar clientes duplicados cuando representan a la misma persona o comprador. La unificación debe mover los movimientos al cliente destino y conservar la memoria del negocio; no debe usarse como borrado encubierto ni como forma de maquillar deudas.
 
 ### Contacto y cuenta YavlGold vinculada
 
@@ -487,21 +490,21 @@ Correo de contacto y Cuenta YavlGold vinculada son conceptos distintos. Un corre
 
 Una Cuenta YavlGold vinculada no puede escribirse manualmente ni fingirse. Solo debe mostrarse como vinculada cuando exista verificación segura. Guardar un cliente sin vinculación YavlGold es válido y no debe bloquear el trabajo comercial del agricultor.
 
-### Regla de lenguaje humano en Cartera Viva
+### Regla de lenguaje humano en Facturero de Clientes
 
-Cartera Viva no debe exponer identificadores técnicos como UUID o `user_id` en la interfaz visible. Si el sistema necesita vincular un cliente registrado, debe pedir datos humanos como nombre, finca, correo o contacto, y resolver internamente el identificador cuando exista soporte real.
+Facturero de Clientes no debe exponer identificadores técnicos como UUID o `user_id` en la interfaz visible. Si el sistema necesita vincular un cliente registrado, debe pedir datos humanos como nombre, finca, correo o contacto, y resolver internamente el identificador cuando exista soporte real.
 
 Los botones de acción deben usar lenguaje humano reconocible: `Nuevo cliente`, `Cliente existente`, `Actualizar`, `Eliminar cliente`. No deben aparecer términos como `cliente canónico`, `user_id público` ni `UUID` en la UI.
 
 ### Transferencia de historial entre estados
 
-Los registros de Cartera Viva no deben sentirse congelados. Un fiado puede cambiar de estado cuando cambia la realidad: puede pasar a pagado, a pérdida, a donación o a otro estado que corresponda según lo que ocurrió.
+Los registros de Facturero de Clientes no deben sentirse congelados. Un fiado puede cambiar de estado cuando cambia la realidad: puede pasar a pagado, a pérdida, a donación o a otro estado que corresponda según lo que ocurrió.
 
 Transferir historial significa mover un registro desde su estado actual hacia el estado que mejor representa la realidad. Por ejemplo: si un cliente pagó, ya no debe quedar como deuda pendiente; si nunca pagó y el agricultor decide asumirlo como pérdida, debe poder quedar documentado como pérdida; si una parte se entregó como donación, esa parte debe leerse como donación.
 
 Esto vuelve más honesto el libro de cuentas. El agricultor no queda obligado a borrar y volver a escribir la historia para que los números cuadren. Agro debe ayudar a corregir el estado de un movimiento sin perder la memoria de lo que pasó.
 
-`Transferido` y `Revertido` no son estados principales de Cartera Viva. Son trazabilidad secundaria, nota tecnica, evidencia de auditoria o filtro dinamico cuando existan datos reales. No deben competir visualmente con `Fiado`, `Cobrado/Pagado` y `Perdido`.
+`Transferido` y `Revertido` no son estados principales de Facturero de Clientes. Son trazabilidad secundaria, nota tecnica, evidencia de auditoria o filtro dinamico cuando existan datos reales. No deben competir visualmente con `Fiado`, `Cobrado/Pagado` y `Perdido`.
 
 ### Transferencia completa o parcial
 
@@ -524,7 +527,10 @@ Esta regla transmite control. El agricultor puede corregir una transferencia hec
 
 ---
 
-## 4.5.2 Cartera Operativa
+## 4.5.2 Facturero de la Finca
+
+> **Nota de transición (2026-06-01):** Anteriormente conocido como "Cartera Operativa".
+> El nombre fue actualizado para mayor claridad semántica. La funcionalidad permanece idéntica.
 
 ### Qué es
 
@@ -532,7 +538,7 @@ El libro general de cuentas del sistema. Aquí anotas **todos** los movimientos:
 
 ### Qué no es
 
-No es la Cartera Viva (la sección destinada solo a llevar el saldo de quienes te deben). Sirve para todo lo demás.
+No es la Facturero de Clientes (la sección destinada solo a llevar el saldo de quienes te deben). Sirve para todo lo demás.
 
 ### Para qué sirve
 
@@ -546,7 +552,7 @@ No es la Cartera Viva (la sección destinada solo a llevar el saldo de quienes t
 
 * **Gastos**: Todo lo que inviertes o gastas en la finca.
 * **Ingresos (Pagados)**: Dinero que ya cobraste por tus ventas.
-* **Fiados (Pendientes)**: Dinero que te deben (este registro alimenta también la Cartera Viva).
+* **Fiados (Pendientes)**: Dinero que te deben (este registro alimenta también la Facturero de Clientes).
 * **Pérdidas**: Producto que se perdió o dañó.
 * **Donaciones**: Producto que obsequiaste.
 * **Otros**: Cualquier movimiento excepcional.
@@ -554,27 +560,27 @@ No es la Cartera Viva (la sección destinada solo a llevar el saldo de quienes t
 ### Relación con cultivo y no cultivo
 
 * Puedes asociar cada movimiento a un ciclo de cultivo (para saber exactamente qué cultivo generó ese ingreso o gasto).
-* También puedes registrar movimientos generales (sin un cultivo específico), por ejemplo, los gastos de mantenimiento de la finca. Estos «movimientos generales» son financieros y pertenecen a Cartera Operativa; no se asocian al hub de navegación «Mi Granja».
+* También puedes registrar movimientos generales (sin un cultivo específico), por ejemplo, los gastos de mantenimiento de la finca. Estos «movimientos generales» son financieros y pertenecen a Facturero de la Finca; no se asocian al hub de navegación «Mi Granja».
 
 ### Flujo de uso
 
-1. En Cartera Operativa, seleccionas primero el contexto: ¿es un movimiento general o pertenece a un cultivo específico? Desde el hub Mi Granja puedes acceder a Mis cultivos para ver tus ciclos o a Calendario operativo para tus períodos.
+1. En Facturero de la Finca, seleccionas primero el contexto: ¿es un movimiento general o pertenece a un cultivo específico? Desde el hub Mi Granja puedes acceder a Mis cultivos para ver tus ciclos o a Calendario operativo para tus períodos.
 2. Luego eliges el tipo de registro: gasto, ingreso, fiado, pérdida o donación.
 3. Registras el monto, fecha, concepto.
 4. El movimiento aparece en el historial y afecta las estadísticas.
 
 ### Malentendidos históricos ya resueltos
 
-* **Confusión**: "Cartera Viva y Cartera Operativa son lo mismo."
-* **Corrección**: No. Cartera Viva es solo para fiados (pendientes). Cartera Operativa es el facturero completo (todo tipo de movimiento).
+* **Confusión**: "Facturero de Clientes y Facturero de la Finca son lo mismo."
+* **Corrección**: No. Facturero de Clientes es solo para fiados (pendientes). Facturero de la Finca es el facturero completo (todo tipo de movimiento).
 
 ### Relación con transferencias
 
-Cuando un fiado cambia de estado, la Cartera Operativa debe reflejar la historia de forma comprensible: qué se cobró, qué quedó pendiente, qué se perdió o qué se donó. Esa lectura evita que las estadísticas mezclen deuda viva con dinero realmente recibido.
+Cuando un fiado cambia de estado, la Facturero de la Finca debe reflejar la historia de forma comprensible: qué se cobró, qué quedó pendiente, qué se perdió o qué se donó. Esa lectura evita que las estadísticas mezclen deuda viva con dinero realmente recibido.
 
 ### Regla de separación visual
 
-En la navegación hub, Cartera Viva y Cartera Operativa pueden aparecer como accesos hermanos dentro de Granja.
+En la navegación hub, Facturero de Clientes y Facturero de la Finca pueden aparecer como accesos hermanos dentro de Granja.
 Pero cuando una de ellas está abierta como módulo profundo, debe presentarse como superficie dedicada, sin tabs hermanas que mezclen la lectura con la otra cartera.
 
 ---
@@ -587,7 +593,7 @@ Una lista de compras de insumos. Es como una lista del supermercado: vas agregan
 
 ### Qué no es
 
-No es un gasto real. No es Cartera Operativa. Es una **lista de intención de compra**.
+No es un gasto real. No es Facturero de la Finca. Es una **lista de intención de compra**.
 
 ### Para qué sirve
 
@@ -600,12 +606,12 @@ No es un gasto real. No es Cartera Operativa. Es una **lista de intención de co
 
 1. Agregas productos/servicios a la lista con cantidad y precio estimado.
 2. Revisas el total estimado durante el proceso.
-3. Cuando realizas la compra, puedes convertir ese ítem en un gasto real y registrarlo en la Cartera Operativa.
+3. Cuando realizas la compra, puedes convertir ese ítem en un gasto real y registrarlo en la Facturero de la Finca.
 4. También puedes exportar la lista completa.
 
 ### Cómo se relaciona con las finanzas
 
-* Es una herramienta de planificación que alimenta la Cartera Operativa.
+* Es una herramienta de planificación que alimenta la Facturero de la Finca.
 * Los ítems del carrito NO son gastos hasta que los registras como tales.
 
 ---
@@ -614,39 +620,39 @@ No es un gasto real. No es Cartera Operativa. Es una **lista de intención de co
 
 ### Qué es
 
-La libreta de contactos del agricultor dentro de Agro. Es un directorio personal donde se registran, organizan y consultan los clientes — tanto los que ya tienen fiados en Cartera Viva como los que son contactos externos sin historial financiero.
+La libreta de contactos del agricultor dentro de Agro. Es un directorio personal donde se registran, organizan y consultan los clientes — tanto los que ya tienen fiados en Facturero de Clientes como los que son contactos externos sin historial financiero.
 
 ### Qué no es
 
-No es un duplicado de Cartera Viva. No maneja saldos, deudas ni movimientos financieros. No es un módulo de estadísticas ni un facturero. Mis Clientes es la fuente de verdad para contactos; Cartera Viva es la fuente de verdad para deudas.
+No es un duplicado de Facturero de Clientes. No maneja saldos, deudas ni movimientos financieros. No es un módulo de estadísticas ni un facturero. Mis Clientes es la fuente de verdad para contactos; Facturero de Clientes es la fuente de verdad para deudas.
 
 ### Para qué sirve
 
 * Tener un directorio centralizado de todos los clientes.
 * Ver rápidamente quién existe como contacto, independientemente de si tiene deuda.
-* Organizar clientes por tipo: los que provienen de Cartera Viva (derivados, solo lectura) y los externos creados manualmente.
+* Organizar clientes por tipo: los que provienen de Facturero de Clientes (derivados, solo lectura) y los externos creados manualmente.
 * Buscar, filtrar y ordenar contactos por nombre, tipo o fecha.
 
-### Cómo funciona la relación con Cartera Viva
+### Cómo funciona la relación con Facturero de Clientes
 
 Mis Clientes combina dos fuentes:
 
 1. **Clientes de agro_clients**: creados manualmente por el agricultor. Se pueden editar y eliminar.
-2. **Buyers de Cartera Viva (agro_buyers)**: derivados automáticamente. Aparecen como contactos de solo lectura con un badge visual que indica su origen. No se pueden editar ni eliminar desde Mis Clientes.
+2. **Buyers de Facturero de Clientes (agro_buyers)**: derivados automáticamente. Aparecen como contactos de solo lectura con un badge visual que indica su origen. No se pueden editar ni eliminar desde Mis Clientes.
 
 La deduplicación es por nombre canónico normalizado. Si un cliente en `agro_clients` tiene el mismo nombre que un buyer, el cliente manual tiene prioridad y el derivado se descarta.
 
 ### Flujo de uso
 
 1. Abres Mis Clientes desde Mis finanzas en Mi Granja.
-2. Ves la lista completa con tabs: Todos, En Cartera Viva (derivados), No registrados (solo externos).
+2. Ves la lista completa con tabs: Todos, En Facturero de Clientes (derivados), No registrados (solo externos).
 3. Creas un cliente externo nuevo con nombre, teléfono y tipo.
-4. Si un contacto viene de Cartera Viva, lo ves con badge y no puedes modificarlo desde aquí.
+4. Si un contacto viene de Facturero de Clientes, lo ves con badge y no puedes modificarlo desde aquí.
 
 ### Relación con otros módulos
 
-* Se conecta con Cartera Viva (buyers derivados).
-* No se conecta con Cartera Operativa ni con estadísticas financieras.
+* Se conecta con Facturero de Clientes (buyers derivados).
+* No se conecta con Facturero de la Finca ni con estadísticas financieras.
 * Es una vista de contactos, no un registro contable.
 
 ---
@@ -787,7 +793,7 @@ Los reportes detallados por cultivo viven en cada card/ciclo de cultivo mediante
 | Informe Global Agro | `window.exportAgroGlobalMd()` | Perfil del agricultor con resumen de cultivos, totales y clientes principales |
 | Rankings de clientes (Markdown) | `window.exportOpsRankingsMarkdown()` | Rankings de clientes y cultivos desde Ciclos Operativos |
 
-No pertenecen al Centro de Reportes: reporte detallado por cultivo (vive en cada card), Cartera Viva, Cartera Operativa, Mi Carrito, AgroRepo, Trabajo Diario, Mis Clientes, reportes financieros inventados, exportadores internos sueltos.
+No pertenecen al Centro de Reportes: reporte detallado por cultivo (vive en cada card), Facturero de Clientes, Facturero de la Finca, Mi Carrito, AgroRepo, Trabajo Diario, Mis Clientes, reportes financieros inventados, exportadores internos sueltos.
 
 ### Regla de honestidad documental
 
@@ -848,7 +854,7 @@ No conoce nada que no hayas registrado. No tiene intuición mágica. La IA ayuda
 
 ### Requisitos conceptuales para su buen uso
 
-El asistente entiende las herramientas de Agro tal como las usas en la plataforma. Sabe distinguir, por ejemplo, entre el dinero que te deben (Cartera Viva) y las ventas ya cobradas.
+El asistente entiende las herramientas de Agro tal como las usas en la plataforma. Sabe distinguir, por ejemplo, entre el dinero que te deben (Facturero de Clientes) y las ventas ya cobradas.
 
 ### Qué datos utiliza y cuáles no
 
@@ -924,7 +930,7 @@ Una capa de preferencia personal que permite al usuario marcar superficies del s
 #### Para qué sirve
 
 * Acceso rápido a superficies que el usuario consulta con frecuencia.
-* Reducción de fricción: no tiene que recorrer la navegación cada vez que quiere llegar a Rankings o Cartera Viva.
+* Reducción de fricción: no tiene que recorrer la navegación cada vez que quiere llegar a Rankings o Facturero de Clientes.
 * Personalización sin consecuencias: marcar un favorito no afecta al sistema ni a otros usuarios.
 
 #### Cómo se relaciona con el shell
@@ -1014,7 +1020,7 @@ El patrón hub/module organiza Agro en dos estados de experiencia:
 #### Puertas principales del hub
 
 - **Inicio:** entrada rápida, dashboard, nuevo registro y nuevo cultivo.
-- **Granja:** cultivos, períodos, Cartera Viva, Cartera Operativa, Mi Carrito, Mis Clientes, Trabajo Diario, Rankings y Clima Agro.
+- **Granja:** cultivos, períodos, Facturero de Clientes, Facturero de la Finca, Mi Carrito, Mis Clientes, Trabajo Diario, Rankings y Clima Agro.
 - **Memoria:** AgroRepo y Asistente IA.
 - **Menú:** perfil, documentación, feedback, ajustes y soporte.
 
@@ -1031,7 +1037,7 @@ Las puertas principales del shell (`Inicio`, `Granja`, `Memoria`, `Menú`) tiene
 ### Ejemplo de uso de favoritas y búsqueda
 
 **Escenario: acceso rápido en un día lleno**
-El agricultor tiene favoritos marcados: Rankings, Cartera Viva y Clima. Estos aparecen como accesos directos en su shell sin necesidad de tocar la navegación. Quiere consultar algo rápido: abre búsqueda compacta, escribe "rank", aparece "Rankings" como opción, hace clic y llega directo.
+El agricultor tiene favoritos marcados: Rankings, Facturero de Clientes y Clima. Estos aparecen como accesos directos en su shell sin necesidad de tocar la navegación. Quiere consultar algo rápido: abre búsqueda compacta, escribe "rank", aparece "Rankings" como opción, hace clic y llega directo.
 
 **Escenario: ubicación de una superficie sin conocer la navegación**
 El usuario quiere ir a "Ciclos de período" pero no recuerda dónde está. Usa la búsqueda compacta, escribe "per", ve el resultado y llega sin recorrer todo el sidebar.
@@ -1113,11 +1119,11 @@ Las estadísticas por finca (cultivos, inversión, ingresos, balance) se calcula
 
 ### 5.0 Nota sobre «Mi Granja»
 
-En la navegación principal, **Mi Granja** (puerta «Granja» en `Inicio · Granja · Memoria · Menú`) funciona como hub central donde el agricultor organiza cultivos, períodos, finanzas, trabajo, rankings y clima. No es un módulo financiero. No reemplaza a Cartera Operativa.
+En la navegación principal, **Mi Granja** (puerta «Granja» en `Inicio · Granja · Memoria · Menú`) funciona como hub central donde el agricultor organiza cultivos, períodos, finanzas, trabajo, rankings y clima. No es un módulo financiero. No reemplaza a Facturero de la Finca.
 
 Su propósito es concentrar el acceso a **Ciclos de Cultivo** (via Mis cultivos), **Ciclos de Período** (via Calendario operativo), **Mis finanzas** y **Trabajo y lectura** bajo una sola puerta.
 
-**Los movimientos financieros no asociados a un cultivo específico** (gasolina, mantenimiento de infraestructura, etc.) se registran como «movimiento general» dentro de Cartera Operativa (§4.5.2). No pertenecen a Mi Granja. El término «movimiento general» es financiero y vive en Cartera Operativa.
+**Los movimientos financieros no asociados a un cultivo específico** (gasolina, mantenimiento de infraestructura, etc.) se registran como «movimiento general» dentro de Facturero de la Finca (§4.5.2). No pertenecen a Mi Granja. El término «movimiento general» es financiero y vive en Facturero de la Finca.
 
 ### 5.1 Lo productivo
 
@@ -1132,8 +1138,8 @@ Su propósito es concentrar el acceso a **Ciclos de Cultivo** (via Mis cultivos)
 
 ### 5.3 Lo comercial
 
-* Cartera Viva
-* Cartera Operativa
+* Facturero de Clientes
+* Facturero de la Finca
 * Mi Carrito
 * Mis Clientes
 
@@ -1184,7 +1190,7 @@ Su propósito es concentrar el acceso a **Ciclos de Cultivo** (via Mis cultivos)
 
 **Escenario 2: Venta a cliente**
 1. Llega un cliente conocido a comprar producto.
-2. Abres Cartera Viva y verificas su saldo pendiente.
+2. Abres Facturero de Clientes y verificas su saldo pendiente.
 3. Registras el ingreso del pago que te entrega.
 4. Si decide llevar crédito adicional, registras el nuevo fiado.
 5. Si solo paga una parte, dejas esa parte como cobrada y el resto sigue pendiente. Si más adelante decides asumir una parte como pérdida o donación, el historial debe contar esa realidad.
@@ -1264,8 +1270,8 @@ Los reportes detallados por cultivo se acceden directamente desde cada card/cicl
 ### En qué superficies aplican
 
 * Dashboard Agro
-* Cartera Viva
-* Cartera Operativa (tabs de gastos, ingresos, fiados)
+* Facturero de Clientes
+* Facturero de la Finca (tabs de gastos, ingresos, fiados)
 * Estadísticas
 
 ### Privacidad y exportes
@@ -1316,15 +1322,15 @@ Entra a «Estadísticas» y presiona "Exportar Informe Global (MD)". También pu
 
 Un archivo `.md` se abre en cualquier editor de texto, en cualquier equipo, sin necesidad de instalar nada. No busca mostrar fórmulas complejas: busca darte un registro claro y rápido de lo que has facturado.
 
-### 9.8 ¿Qué diferencia hay entre Cartera Viva y Cartera Operativa?
+### 9.8 ¿Qué diferencia hay entre Facturero de Clientes y Facturero de la Finca?
 
-* **Cartera Viva**: El seguimiento completo del crédito a clientes. Sus estados principales son Fiado, Cobrado/Pagado y Perdido. Incluye fiados pendientes, cobros recibidos, pérdidas asumidas y donaciones como historia del crédito. No es solo lo que te deben hoy — es el ciclo de vida entero de cada crédito otorgado.
-* **Cartera Operativa**: Todo movimiento financiero (gastos de finca, compras, cobros, las deudas que luego irán a la cartera viva y ventas perdidas). Es el libro mayor.
+* **Facturero de Clientes**: El seguimiento completo del crédito a clientes. Sus estados principales son Fiado, Cobrado/Pagado y Perdido. Incluye fiados pendientes, cobros recibidos, pérdidas asumidas y donaciones como historia del crédito. No es solo lo que te deben hoy — es el ciclo de vida entero de cada crédito otorgado.
+* **Facturero de la Finca**: Todo movimiento financiero (gastos de finca, compras, cobros, las deudas que luego irán a la cartera viva y ventas perdidas). Es el libro mayor.
 
 ### 9.9 ¿Cómo separo la idea de Ciclo de Cultivo frente al Ciclo de Período?
 
 * **Ciclo de Cultivo:** Acompaña solamente el desarrollo de una siembra específica desde que la plantas en tierra hasta el fin de su venta o consumo.
-* **Ciclo de Período:** Abarca un rango temporal (como "enero a junio") agrupando todos los movimientos operativos de ese lapso, sin importar a qué cultivo correspondían. Los movimientos financieros del período provienen de Cartera Operativa.
+* **Ciclo de Período:** Abarca un rango temporal (como "enero a junio") agrupando todos los movimientos operativos de ese lapso, sin importar a qué cultivo correspondían. Los movimientos financieros del período provienen de Facturero de la Finca.
 
 ### 9.10 ¿El asistente IA auditará la rentabilidad general para aconsejarme opciones de inversión bursátil?
 
@@ -1344,7 +1350,7 @@ La herramienta no sirve para consultas que no tengan respaldo en lo que ya regis
 1. Entras al Dashboard y revisas las condiciones del día.
 2. Si es tu primera vez, usa el botón "Arranque rápido".
 3. Lo primero es crear tu primer cultivo en Ciclos Activos, si tienes una siembra en curso.
-4. Luego registra algún gasto real de insumos en Cartera Operativa. Tu pantalla irá creciendo y notarás la utilidad con el tiempo.
+4. Luego registra algún gasto real de insumos en Facturero de la Finca. Tu pantalla irá creciendo y notarás la utilidad con el tiempo.
 
 ### 9.13 ¿Cómo creo un cultivo?
 
@@ -1368,7 +1374,7 @@ La herramienta no sirve para consultas que no tengan respaldo en lo que ya regis
 ### 9.15 ¿Cuándo un registro va a un cultivo y cuándo queda como movimiento general?
 
 **Cargos a un cultivo**: Corresponden al gasto directamente relacionado con una siembra específica. Por ejemplo: abono para una hectárea de tomate.
-**Movimientos generales**: Un saco de cal para mantenimiento de infraestructura, gasolina para el vehículo de la finca o cualquier gasto que no pertenezca a un cultivo en particular. Estos se registran en Cartera Operativa como movimiento general. No se asocian a Mi Granja, que no es un módulo financiero.
+**Movimientos generales**: Un saco de cal para mantenimiento de infraestructura, gasolina para el vehículo de la finca o cualquier gasto que no pertenezca a un cultivo en particular. Estos se registran en Facturero de la Finca como movimiento general. No se asocian a Mi Granja, que no es un módulo financiero.
 
 ### 9.16 ¿Acaso los inventarios van a saturar el almacenamiento local de mis equipos?
 
@@ -1402,9 +1408,9 @@ Permiten al usuario marcar superficies que consulta con frecuencia para acceder 
 
 Solo busca superficies, vistas y entradas navegables dentro del shell Agro. No busca clientes, facturas, notas de AgroRepo ni ningún registro de la base de datos. El usuario escribe un término corto, ve una lista de resultados relacionados y al elegir va directo a la superficie o vista. El término se limpia al cerrar. Es una herramienta de localización, no un buscador del sistema completo.
 
-### 9.24 ¿Mis Clientes y Cartera Viva son lo mismo?
+### 9.24 ¿Mis Clientes y Facturero de Clientes son lo mismo?
 
-No. Mis Clientes es la libreta de contactos: quién existe, cómo se llama, cómo contactarlo. Cartera Viva es el seguimiento de deudas: quién te debe y cuánto. Un cliente puede estar en Mis Clientes sin tener deuda en Cartera Viva. Los buyers de Cartera Viva aparecen en Mis Clientes como contactos derivados de solo lectura, pero Mis Clientes no maneja saldos ni movimientos financieros.
+No. Mis Clientes es la libreta de contactos: quién existe, cómo se llama, cómo contactarlo. Facturero de Clientes es el seguimiento de deudas: quién te debe y cuánto. Un cliente puede estar en Mis Clientes sin tener deuda en Facturero de Clientes. Los buyers de Facturero de Clientes aparecen en Mis Clientes como contactos derivados de solo lectura, pero Mis Clientes no maneja saldos ni movimientos financieros.
 
 ### 9.25 ¿Los estados de cultivo cambian solos?
 
@@ -1416,7 +1422,7 @@ Es un campo opcional para registrar la cantidad de semilla utilizada en la siemb
 
 ### 9.27 ¿Qué pasa si recargo la página estando en un módulo profundo?
 
-La navegación del shell persiste entre recargas. Al presionar F5 estando en Mis Clientes, Cartera Viva, Calendario operativo o cualquier otro módulo profundo, la aplicación restaura la vista donde estaba el usuario en vez de volver siempre al Dashboard. La ruta activa se conserva en sesión.
+La navegación del shell persiste entre recargas. Al presionar F5 estando en Mis Clientes, Facturero de Clientes, Calendario operativo o cualquier otro módulo profundo, la aplicación restaura la vista donde estaba el usuario en vez de volver siempre al Dashboard. La ruta activa se conserva en sesión.
 
 ### 9.28 ¿Qué son los popups informativos compactos?
 
@@ -1430,8 +1436,8 @@ Son mensajes emergentes estilizados que reemplazan los `alert()` nativos del nav
 
 ### Caso 1
 
-* **Confusión**: "La Cartera Operativa y la Cartera Viva son simplemente dos nombres para un mismo tablero de ventas."
-* **La realidad**: Tienen propósitos distintos. La Cartera Viva sigue específicamente a la gente que te debe dinero. La Cartera Operativa registra todos los movimientos financieros: gastos, cobros, pérdidas y pagos generales de la finca.
+* **Confusión**: "La Facturero de la Finca y la Facturero de Clientes son simplemente dos nombres para un mismo tablero de ventas."
+* **La realidad**: Tienen propósitos distintos. La Facturero de Clientes sigue específicamente a la gente que te debe dinero. La Facturero de la Finca registra todos los movimientos financieros: gastos, cobros, pérdidas y pagos generales de la finca.
 
 ### Caso 2
 
@@ -1456,12 +1462,12 @@ Son mensajes emergentes estilizados que reemplazan los `alert()` nativos del nav
 ### Caso 6
 
 * **Confusión**: "Mi Granja" es un módulo financiero donde se registran los gastos y ganancias generales de la finca.
-* **La realidad**: «Mi Granja» es el **hub central de navegación** accesible desde la puerta «Granja» en `Inicio · Granja · Memoria · Menú`. Agrupa Mis cultivos, Calendario operativo, Mis finanzas y Trabajo y lectura. No es un módulo financiero. Los «movimientos generales» (gastos no asociados a un cultivo específico) se registran en Cartera Operativa. Mi Granja no tiene libro de cuentas propio.
+* **La realidad**: «Mi Granja» es el **hub central de navegación** accesible desde la puerta «Granja» en `Inicio · Granja · Memoria · Menú`. Agrupa Mis cultivos, Calendario operativo, Mis finanzas y Trabajo y lectura. No es un módulo financiero. Los «movimientos generales» (gastos no asociados a un cultivo específico) se registran en Facturero de la Finca. Mi Granja no tiene libro de cuentas propio.
 
 ### Caso 7
 
-* **Confusión**: "Mis Clientes es la misma cosa que Cartera Viva, solo que en otra pantalla."
-* **La realidad**: Mis Clientes es una **libreta de contactos**. No maneja saldos, deudas ni movimientos financieros. Cartera Viva es el seguimiento de **quién te debe dinero y cuánto**. Un cliente puede existir en Mis Clientes sin tener deuda en Cartera Viva, y un buyer de Cartera Viva aparece como contacto derivado de solo lectura. Mis Clientes es la fuente de verdad para contactos; Cartera Viva es la fuente de verdad para deudas.
+* **Confusión**: "Mis Clientes es la misma cosa que Facturero de Clientes, solo que en otra pantalla."
+* **La realidad**: Mis Clientes es una **libreta de contactos**. No maneja saldos, deudas ni movimientos financieros. Facturero de Clientes es el seguimiento de **quién te debe dinero y cuánto**. Un cliente puede existir en Mis Clientes sin tener deuda en Facturero de Clientes, y un buyer de Facturero de Clientes aparece como contacto derivado de solo lectura. Mis Clientes es la fuente de verdad para contactos; Facturero de Clientes es la fuente de verdad para deudas.
 
 ### Caso 8
 
@@ -1518,8 +1524,8 @@ Cualquier cambio visual debe obedecer el ADN Visual V11 y el canon de modales §
 
 ### Pendientes semánticos reales
 
-* [x] Definir con precisión Cartera Viva
-* [x] Definir con precisión Cartera Operativa
+* [x] Definir con precisión Facturero de Clientes
+* [x] Definir con precisión Facturero de la Finca
 * [x] Definir con precisión Ciclos de Período
 * [x] Explicar flujo real completo del agricultor
 * [x] Completar FAQ base
@@ -1543,7 +1549,7 @@ Cualquier cambio visual debe obedecer el ADN Visual V11 y el canon de modales §
 * [ ] Agregar glosario breve
 * [x] Agregar sección "cómo empezar desde cero"
 * [x] Agregar sección "cómo exportar / salir / respaldar"
-* [ ] Cartera Viva Lifecycle — Archivo / Papelera / Restauración: pendiente futuro para archivar/restaurar clientes y, después, registros. Nada que afecte dinero debe desaparecer sin trazabilidad.
+* [ ] Facturero de Clientes Lifecycle — Archivo / Papelera / Restauración: pendiente futuro para archivar/restaurar clientes y, después, registros. Nada que afecte dinero debe desaparecer sin trazabilidad.
 
 ---
 

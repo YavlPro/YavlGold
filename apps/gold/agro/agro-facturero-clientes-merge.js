@@ -1,4 +1,4 @@
-import { normalizeBuyerGroupKey } from './agro-cartera-viva.js';
+import { normalizeBuyerGroupKey } from './agro-facturero-clientes.js';
 
 const MODAL_ID = 'modal-client-merge';
 const MERGE_TABLES = ['agro_pending', 'agro_income', 'agro_losses'];

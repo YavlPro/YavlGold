@@ -7,19 +7,19 @@ import {
     normalizeBuyerGroupKey,
     normalizeBuyerPortfolioSummaryRow,
     normalizeHistorySearchToken
-} from './agro-cartera-viva.js';
-import { downloadBuyerPortfolioExport } from './agro-cartera-viva-export.js';
+} from './agro-facturero-clientes.js';
+import { downloadBuyerPortfolioExport } from './agro-facturero-clientes-export.js';
 import {
     fetchBuyerHistoryTimeline,
     getVisibleBuyerHistoryRows,
     renderBuyerHistoryDetail
-} from './agro-cartera-viva-detail.js';
+} from './agro-facturero-clientes-detail.js';
 import {
     openBuyerProfileById,
     openNewBuyerProfile
 } from './agrocompradores.js';
 import { getPendingTransferToken } from './agro-unit-totals.js';
-import { openCarteraVivaClientMergeModal } from './agro-cartera-viva-client-merge.js';
+import { openCarteraVivaClientMergeModal } from './agro-facturero-clientes-merge.js';
 
 const CARTERA_VIVA_VIEW = 'cartera-viva';
 const CARTERA_VIVA_ROOT_ID = 'agro-cartera-viva-root';
@@ -27,7 +27,7 @@ const CARTERA_VIVA_CATEGORY_KEY = 'YG_AGRO_CARTERA_VIVA_CATEGORY_V1';
 const CARTERA_VIVA_SEARCH_KEY = 'YG_AGRO_CARTERA_VIVA_SEARCH_V1';
 const CARTERA_VIVA_UNIT_FAMILY_KEY = 'YG_AGRO_CARTERA_VIVA_UNIT_FAMILY_V1';
 const CARTERA_VIVA_GENERAL_CROP_ID = '__general__';
-const CARTERA_VIVA_CROP_BLOCK_MESSAGE = 'Este cultivo aún no está en producción. Para registrar ventas o fiados en Cartera Viva, cambia el estado a En producción, Finalizado o Perdido.';
+const CARTERA_VIVA_CROP_BLOCK_MESSAGE = 'Este cultivo aún no está en producción. Para registrar ventas o fiados en Facturero de Clientes, cambia el estado a En producción, Finalizado o Perdido.';
 const CARTERA_VIVA_ALLOWED_CROP_STATUSES = new Set(['produccion', 'finalizado', 'lost']);
 const PORTFOLIO_BALANCE_EPSILON = 0.000001;
 
@@ -1570,8 +1570,8 @@ async function resolveCyclePayloadFromContext(context = {}) {
     return {
         name: String(name || suggestedName).trim() || suggestedName,
         description: historyRow
-            ? `Creado desde Cartera Viva para ${buyerName}. ${historyRow.title || 'Movimiento'}${baseConcept ? ` · ${baseConcept}` : ''}.`
-            : `Creado desde Cartera Viva para ${buyerName}.`,
+            ? `Creado desde Facturero de Clientes para ${buyerName}. ${historyRow.title || 'Movimiento'}${baseConcept ? ` · ${baseConcept}` : ''}.`
+            : `Creado desde Facturero de Clientes para ${buyerName}.`,
         economicType,
         category: 'other',
         cropId: cropId || '',
@@ -1587,7 +1587,7 @@ async function resolveCyclePayloadFromContext(context = {}) {
 async function createOperationalCycleFromCartera(context = {}) {
     const opsApi = typeof window !== 'undefined' ? window.YGAgroOperationalCycles : null;
     if (!opsApi?.createFromPayload || !opsApi?.openView) {
-        setDetailExportState('Cartera Operativa no está disponible en esta sesión.', 'error');
+        setDetailExportState('Facturero de la Finca no está disponible en esta sesión.', 'error');
         renderView();
         return;
     }
@@ -1603,11 +1603,11 @@ async function createOperationalCycleFromCartera(context = {}) {
 
     try {
         const result = await opsApi.createFromPayload(payload);
-        setDetailExportState(String(result?.message || 'Cartera operativa creada desde Cartera Viva.'), 'success');
+        setDetailExportState(String(result?.message || 'Facturero de la Finca creado desde Facturero de Clientes.'), 'success');
         opsApi.openView('active');
     } catch (error) {
         console.error('[CarteraViva] create operational cycle failed:', error?.message || error);
-        setDetailExportState(String(error?.message || 'No se pudo crear la cartera operativa desde Cartera Viva.'), 'error');
+        setDetailExportState(String(error?.message || 'No se pudo crear el facturero de la finca desde Facturero de Clientes.'), 'error');
         renderView();
     }
 }
@@ -1895,7 +1895,7 @@ function renderHeaderSummary(filteredRows, options = {}) {
         return `
             <div class="cartera-viva-summary-strip cartera-viva-summary-strip--loading" aria-live="polite">
                 <div class="cartera-viva-summary-strip__main">
-                        <p class="cartera-viva-summary-strip__label">Cartera Viva</p>
+                        <p class="cartera-viva-summary-strip__label">Facturero de Clientes</p>
                         <div class="cartera-viva-summary-strip__amount-row">
                             <strong class="cartera-viva-summary-strip__amount">Preparando lectura</strong>
                         <p class="cartera-viva-summary-strip__copy">Ordenando clientes, saldos y categorías visibles.</p>
@@ -2082,13 +2082,13 @@ function renderCommercialFamilyNav(activeView = CARTERA_VIVA_VIEW) {
                     type="button"
                     class="agro-commercial-family__tab${activeView === 'cartera-viva' ? ' is-active' : ''}"
                     data-agro-view="cartera-viva">
-                    Cartera Viva
+                    Facturero de Clientes
                 </button>
                 <button
                     type="button"
                     class="agro-commercial-family__tab${activeView === 'operational' ? ' is-active' : ''}"
                     data-agro-view="operational">
-                    Cartera Operativa
+                    Facturero de la Finca
                 </button>
             </div>
         </div>
@@ -2098,9 +2098,9 @@ function renderCommercialFamilyNav(activeView = CARTERA_VIVA_VIEW) {
 function renderScopeNote() {
     const selectedCropId = getSelectedCropId();
     if (selectedCropId) {
-        return `Resumen, lista y detalle filtrados por ${escapeHtml(getSelectedCropShortLabel())}. Los clientes sin historial siguen visibles en Sin registro. Otros pertenece a Cartera Operativa.`;
+        return `Resumen, lista y detalle filtrados por ${escapeHtml(getSelectedCropShortLabel())}. Los clientes sin historial siguen visibles en Sin registro. Otros pertenece a Facturero de la Finca.`;
     }
-    return 'Otros pertenece a Cartera Operativa. Donaciones solo entra cuando la data real la sostiene.';
+    return 'Otros pertenece a Facturero de la Finca. Donaciones solo entra cuando la data real la sostiene.';
 }
 
 function renderCategoryControls(counts) {
@@ -2435,7 +2435,7 @@ function renderPortfolioCards(filteredRows) {
 
 function renderEmptyState(config = {}) {
     const title = escapeHtml(config.title || 'Sin datos para mostrar');
-    const copy = escapeHtml(config.copy || 'Cartera Viva todavia no tiene una lectura disponible para esta vista.');
+    const copy = escapeHtml(config.copy || 'Facturero de Clientes todavia no tiene una lectura disponible para esta vista.');
 
     return `
         <div class="cartera-viva-empty">
@@ -2458,7 +2458,7 @@ function renderLoadingState() {
 
 function renderErrorState(message) {
     return renderEmptyState({
-        title: 'No se pudo cargar Cartera Viva',
+        title: 'No se pudo cargar Facturero de Clientes',
         copy: message || 'La vista no pudo leer los saldos de clientes. Intenta actualizar.'
     });
 }
@@ -2501,7 +2501,7 @@ function getListViewState() {
     } else if (summaryRows.length <= 0) {
         bodyMode = 'empty';
         bodyContent = renderEmptyState({
-            title: 'Todavía no hay clientes en Cartera Viva',
+            title: 'Todavía no hay clientes en Facturero de Clientes',
             copy: 'Crea tu primer cliente para empezar a registrar su historial desde aquí.'
         });
     } else if (filteredRows.length <= 0) {
@@ -2555,7 +2555,7 @@ function renderListViewMarkup(state) {
                 ${renderCommercialFamilyNav('cartera-viva')}
                 <div class="cartera-viva-view__headline">
                     <div class="cartera-viva-view__copy">
-                        <p class="cartera-viva-view__eyebrow">Cartera Viva</p>
+                        <p class="cartera-viva-view__eyebrow">Facturero de Clientes</p>
                         <h2 class="cartera-viva-view__title">Cartera de clientes</h2>
                         <p class="cartera-viva-view__subtitle">Primero vive el cliente; luego sus movimientos.</p>
                     </div>
@@ -2586,7 +2586,7 @@ function renderListViewMarkup(state) {
 
             ${renderToolbarControls()}
 
-            <div class="cartera-viva-category-bar" data-cartera-category-bar role="group" aria-label="Categorias de Cartera Viva">
+            <div class="cartera-viva-category-bar" data-cartera-category-bar role="group" aria-label="Categorias de Facturero de Clientes">
                 ${renderCategoryControls(state.categoryCounts)}
             </div>
 

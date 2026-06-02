@@ -48,10 +48,10 @@
     <link rel="stylesheet" href="./agro-tokens.css">
     <link rel="stylesheet" href="./agrociclos.css">
     <link rel="stylesheet" href="./agro-dashboard.css">
-    <link rel="stylesheet" href="./agro-operations.css">
+    <link rel="stylesheet" href="./agro-facturero-finca.css">
     <link rel="stylesheet" href="./agro-operational-cycles.css">
     <link rel="stylesheet" href="./agro-task-cycles.css">
-    <link rel="stylesheet" href="./agro-cartera-viva.css">
+    <link rel="stylesheet" href="./agro-facturero-clientes.css">
     <link rel="stylesheet" href="./agro-clients.css">
     <link rel="stylesheet" href="./agro-reports-center.css">
     <link rel="stylesheet" href="./agro-farms.css">
@@ -97,7 +97,7 @@
                     <i class="fa-solid fa-seedling" aria-hidden="true"></i>
                     <span>Cultivos</span>
                 </button>
-                <button type="button" class="agro-shell-rail__item" data-agro-view="cartera-viva"
+                <button type="button" class="agro-shell-rail__item" data-agro-view="facturero-clientes"
                     aria-label="Granja" title="Granja">
                     <i class="fa-solid fa-briefcase" aria-hidden="true"></i>
                     <span>Granja</span>
@@ -285,32 +285,32 @@
                         <i class="fa-solid fa-briefcase agro-shell-link__icon" aria-hidden="true"></i>
                         <span class="agro-launcher__tile-copy">
                             <span class="agro-shell-link__label">Operación comercial</span>
-                            <span class="agro-launcher__tile-desc">Cartera viva y operaciones financieras.</span>
+                            <span class="agro-launcher__tile-desc">Facturero de clientes y operaciones financieras.</span>
                         </span>
                     </button>
                     <div class="agro-shell-subnav">
-                        <button type="button" class="agro-shell-sublink" data-agro-view="cartera-viva"
+                        <button type="button" class="agro-shell-sublink" data-agro-view="facturero-clientes"
                             data-agro-mode-scope="non_crop">
                             <i class="fa-solid fa-users agro-shell-link__icon" aria-hidden="true"></i><span
-                                class="agro-shell-link__label">Cartera Viva</span>
+                                class="agro-shell-link__label">Facturero de Clientes</span>
                         </button>
                         <button type="button" class="agro-shell-sublink" data-agro-view="clients"
                             data-agro-mode-scope="non_crop">
                             <i class="fa-solid fa-address-book agro-shell-link__icon" aria-hidden="true"></i><span
                                 class="agro-shell-link__label">Mis Clientes</span>
                         </button>
-                        <button type="button" class="agro-shell-sublink" data-agro-view="operational"
+                        <button type="button" class="agro-shell-sublink" data-agro-view="facturero-finca"
                             data-agro-mode-scope="non_crop">
                             <i class="fa-solid fa-wallet agro-shell-link__icon" aria-hidden="true"></i><span
-                                class="agro-shell-link__label">Cartera Operativa</span>
+                                class="agro-shell-link__label">Facturero de la Finca</span>
                         </button>
                     </div>
                 </div>
-                    <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="cartera-viva"
+                    <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="facturero-clientes"
                         data-agro-mode-scope="non_crop">
                         <i class="fa-solid fa-users agro-shell-link__icon" aria-hidden="true"></i>
                         <span class="agro-launcher__tile-copy">
-                            <span class="agro-shell-link__label">Cartera Viva</span>
+                            <span class="agro-shell-link__label">Facturero de Clientes</span>
                             <span class="agro-launcher__tile-desc">Seguimiento de clientes y fiados activos.</span>
                         </span>
                     </button>
@@ -322,11 +322,11 @@
                             <span class="agro-launcher__tile-desc">Libreta simple de clientes de la finca.</span>
                         </span>
                     </button>
-                    <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="operational"
+                    <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="facturero-finca"
                         data-agro-mode-scope="non_crop">
                         <i class="fa-solid fa-wallet agro-shell-link__icon" aria-hidden="true"></i>
                         <span class="agro-launcher__tile-copy">
-                            <span class="agro-shell-link__label">Cartera Operativa</span>
+                            <span class="agro-shell-link__label">Facturero de la Finca</span>
                             <span class="agro-launcher__tile-desc">Movimientos reales, pagos y exportes.</span>
                         </span>
                     </button>
@@ -615,17 +615,17 @@
                     </button>
 
                     <p class="agro-mobile-hub__section-title">Mis finanzas</p>
-                    <button type="button" class="agro-mobile-hub__item" data-agro-view="cartera-viva">
+                    <button type="button" class="agro-mobile-hub__item" data-agro-view="facturero-clientes">
                         <i class="fa-solid fa-users" aria-hidden="true"></i>
-                        <span>Cartera Viva</span>
+                        <span>Facturero de Clientes</span>
                     </button>
                     <button type="button" class="agro-mobile-hub__item" data-agro-view="clients">
                         <i class="fa-solid fa-address-book" aria-hidden="true"></i>
                         <span>Mis Clientes</span>
                     </button>
-                    <button type="button" class="agro-mobile-hub__item" data-agro-view="operational">
+                    <button type="button" class="agro-mobile-hub__item" data-agro-view="facturero-finca">
                         <i class="fa-solid fa-wallet" aria-hidden="true"></i>
-                        <span>Cartera Operativa</span>
+                        <span>Facturero de la Finca</span>
                     </button>
                     <button type="button" class="agro-mobile-hub__item" data-agro-view="carrito">
                         <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
@@ -1066,7 +1066,7 @@
 
         <section class="agro-cartera-viva-region agro-ops-v10" data-agro-shell-region="cartera-viva" hidden inert>
             <div id="agro-cartera-viva-root" class="agro-cartera-viva-root">
-                <!-- agro-cartera-viva-view.js renders here when Cartera Viva view is active -->
+                <!-- agro-facturero-clientes-view.js renders here when Facturero de Clientes view is active -->
             </div>
         </section>
 
@@ -3180,11 +3180,11 @@
                     }
                 }).catch(err => console.warn('[AGRO] Operational cycles module load error:', err.message));
 
-                import('./agro-cartera-viva-view.js').then((mod) => {
+                import('./agro-facturero-clientes-view.js').then((mod) => {
                     if (typeof mod.initAgroCarteraVivaView === 'function') {
                         mod.initAgroCarteraVivaView({ initialUserId: session.user?.id });
                     }
-                }).catch(err => console.warn('[AGRO] Cartera Viva view module load error:', err.message));
+                }).catch(err => console.warn('[AGRO] Facturero de Clientes view module load error:', err.message));
 
                 import('./agro-clients.js').then((mod) => {
                     if (typeof mod.initAgroClients === 'function') {

@@ -137,7 +137,7 @@ Regla estricta:
 - Dashboard agrícola con clima en tiempo real
 - Centro de Reportes: índice de reportes generales oficiales (estadísticas globales, perfil agricultor, rankings). Los reportes detallados por cultivo viven en cada card/ciclo, no en el Centro.
 - Calendario operativo: los períodos siguen activos si tienen operaciones vivas asociadas (`activeCycleCount > 0`)
-- Cartera Viva: `Fiados` por pendiente vivo, `Pagados` solo con cobro completo sin pendiente/perdida, `Perdidos` por perdida
+- Facturero de Clientes: `Fiados` por pendiente vivo, `Pagados` solo con cobro completo sin pendiente/perdida, `Perdidos` por perdida
 - Rankings y estadísticas financieras
 - Carrito de compras con lista de insumos
 - Planificación y agenda agrícola
@@ -153,10 +153,10 @@ Regla estricta:
 agro.js              — monolito principal (facturero, CRUD, historial)
 agro-agenda.js       — agenda agrícola
 agro-cart.js         — carrito de insumos
-agro-cartera-viva-client-assignment.js — reasignación segura de cliente dentro del editor de movimientos, sin borrar historial
-agro-cartera-viva-client-merge.js — modal seguro para unificar clientes duplicados moviendo movimientos al cliente destino
-agro-cartera-viva-view.js — Cartera Viva: vista de clientes, tabs por saldo vivo, cultivos asociados en cards, wizard de compradores y flujos separados Nuevo cliente / Cliente existente
-agro-clients.js      — Mis Clientes: directorio de contactos (clientes manuales + buyers derivados de Cartera Viva)
+agro-facturero-clientes-assignment.js — reasignación segura de cliente dentro del editor de movimientos, sin borrar historial
+agro-facturero-clientes-merge.js — modal seguro para unificar clientes duplicados moviendo movimientos al cliente destino
+agro-facturero-clientes-view.js — Facturero de Clientes: vista de clientes, tabs por saldo vivo, cultivos asociados en cards, wizard de compradores y flujos separados Nuevo cliente / Cliente existente
+agro-clients.js      — Mis Clientes: directorio de contactos (clientes manuales + buyers derivados de Facturero de Clientes)
 agro-clima.js        — integración meteorológica
 agro-crop-report.js  — reportes detallados por cultivo (se acceden desde cada card/ciclo, no desde el Centro de Reportes)
 agro-exchange.js     — tasas de cambio
@@ -180,9 +180,9 @@ agro-farms.js        — CRUD de fincas, selector, estadísticas por finca, auto
 
 **Archivos CSS:**
 - `agro.css` — estilos principales + papelera + undo toast
-- `agro-cartera-viva.css` — Cartera Viva: vista, cards, estados, acciones separadas y responsive mobile
+- `agro-facturero-clientes.css` — Facturero de Clientes: vista, cards, estados, acciones separadas y responsive mobile
 - `agro-dashboard.css` — dashboard
-- `agro-operations.css` — operaciones financieras
+- `agro-facturero-finca.css` — operaciones financieras
 - `agro-farms.css` — estilos de gestión de fincas (ADN V11)
 - `agro-clients.css` — Mis Clientes
 - `agro-reports-center.css` — Centro de Reportes: vista, cards, estados, botones, nota informativa y responsive mobile
@@ -239,8 +239,8 @@ agro-farms.js        — CRUD de fincas, selector, estadísticas por finca, auto
 #### Agro — Clientes
 - `agro_clients` - Contactos manuales del agricultor (soft-delete con `deleted_at`, RLS owner-only, campo `client_type`)
 
-#### Agro — Operaciones (Cartera Operativa)
-- `agro_operational_cycles` - Ciclos operativos de Cartera Operativa (hard delete, no usan `deleted_at`)
+#### Agro — Operaciones (Facturero de la Finca)
+- `agro_operational_cycles` - Ciclos operativos de Facturero de la Finca (hard delete, no usan `deleted_at`)
 - `agro_operational_movements` - Movimientos de ciclos operativos (hard delete, cascade con ciclo padre)
 
 #### Contenido y Módulos

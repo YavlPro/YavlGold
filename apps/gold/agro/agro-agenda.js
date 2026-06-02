@@ -570,7 +570,7 @@ function createPlanningCalculatorSection() {
 
     const lead = document.createElement('p');
     lead.className = 'aga-calculator-lead';
-    lead.textContent = 'Úsala como soporte de decisión antes de comprar, sembrar o mover gasto hacia Cartera Operativa.';
+    lead.textContent = 'Úsala como soporte de decisión antes de comprar, sembrar o mover gasto hacia Facturero de la Finca.';
 
     const fields = document.createElement('div');
     fields.className = 'aga-calculator-fields';

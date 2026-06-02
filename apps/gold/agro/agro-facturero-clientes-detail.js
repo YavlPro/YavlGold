@@ -3,7 +3,7 @@ import {
     normalizeHistorySearchToken,
     readHistoryItemField,
     renderHistoryDayGroups
-} from './agro-cartera-viva.js';
+} from './agro-facturero-clientes.js';
 import {
     SUPPORTED_CURRENCIES,
     convertFromUSD,
@@ -1551,13 +1551,13 @@ function renderCommercialFamilyNav(activeView = 'cartera-viva') {
                     type="button"
                     class="agro-commercial-family__tab${activeView === 'cartera-viva' ? ' is-active' : ''}"
                     data-agro-view="cartera-viva">
-                    Cartera Viva
+                    Facturero de Clientes
                 </button>
                 <button
                     type="button"
                     class="agro-commercial-family__tab${activeView === 'operational' ? ' is-active' : ''}"
                     data-agro-view="operational">
-                    Cartera Operativa
+                    Facturero de la Finca
                 </button>
             </div>
         </div>

@@ -56,7 +56,7 @@ const TYPE_META = Object.freeze({
     'external-cartera': Object.freeze({
         label: 'No registrado en YavlGold',
         badgeClass: 'agro-clients-badge--external',
-        sourceLabel: 'Cartera Viva'
+        sourceLabel: 'Facturero de Clientes'
     })
 });
 
@@ -236,7 +236,7 @@ async function fetchBuyersAsClients(userId) {
             .order('display_name', { ascending: true });
 
         if (error) {
-            console.warn('[AgroClients] buyer fetch failed, continuing without Cartera Viva data:', error?.message || error);
+            console.warn('[AgroClients] buyer fetch failed, continuing without Facturero de Clientes data:', error?.message || error);
             return [];
         }
         return Array.isArray(data) ? data : [];
@@ -978,7 +978,7 @@ async function handleRootClick(event) {
     }
     if (action === 'edit') {
         if (isDerivedClient(button.dataset.clientId)) {
-            setPageFeedback('Este contacto viene de Cartera Viva. Edítalo desde allí.', 'info');
+            setPageFeedback('Este contacto viene de Facturero de Clientes. Edítalo desde allí.', 'info');
             return;
         }
         openEditModal(button.dataset.clientId);
@@ -986,7 +986,7 @@ async function handleRootClick(event) {
     }
     if (action === 'delete') {
         if (isDerivedClient(button.dataset.clientId)) {
-            setPageFeedback('Este contacto viene de Cartera Viva. Elimínalo desde allí.', 'info');
+            setPageFeedback('Este contacto viene de Facturero de Clientes. Elimínalo desde allí.', 'info');
             return;
         }
         await handleDelete(button.dataset.clientId);

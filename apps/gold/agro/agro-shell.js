@@ -33,12 +33,12 @@ const SHELL_MODE_ALIASES = Object.freeze({
 });
 
 const TAB_TO_VIEW = Object.freeze({
-    gastos: 'operational',
-    ingresos: 'operational',
-    pendientes: 'cartera-viva',
-    perdidas: 'operational',
-    transferencias: 'operational',
-    otros: 'operational',
+    gastos: 'facturero-finca',
+    ingresos: 'facturero-finca',
+    pendientes: 'facturero-clientes',
+    perdidas: 'facturero-finca',
+    transferencias: 'facturero-finca',
+    otros: 'facturero-finca',
     carrito: 'carrito',
     rankings: 'rankings'
 });
@@ -64,12 +64,12 @@ const VIEW_TO_MOBILE_HUB = Object.freeze({
     dashboard: 'inicio',
     ciclos: 'operacion',
     'period-cycles': 'operacion',
-    operational: 'operacion',
+    'facturero-finca': 'operacion',
     carrito: 'operacion',
     clients: 'operacion',
     rankings: 'operacion',
     reportes: 'operacion',
-    'cartera-viva': 'operacion',
+    'facturero-clientes': 'operacion',
     clima: 'operacion',
     'task-cycles': 'operacion',
     agrorepo: 'memoria',
@@ -86,9 +86,9 @@ const ACTION_TO_MOBILE_CONTEXT = Object.freeze({
 
 const VIEW_ALIASES = Object.freeze({
     cultivos: Object.freeze({ view: 'ciclos', subview: 'mis-cultivos' }),
-    'historial-comercial': Object.freeze({ view: 'cartera-viva', subview: '' }),
-    operaciones: Object.freeze({ view: 'operational', subview: 'active' }),
-    facturero: Object.freeze({ view: 'operational', subview: 'active' }),
+    'historial-comercial': Object.freeze({ view: 'facturero-clientes', subview: '' }),
+    operaciones: Object.freeze({ view: 'facturero-finca', subview: 'active' }),
+    facturero: Object.freeze({ view: 'facturero-finca', subview: 'active' }),
     clientes: Object.freeze({ view: 'clients', subview: '' }),
     'mis-clientes': Object.freeze({ view: 'clients', subview: '' }),
     carrito: Object.freeze({ view: 'carrito', subview: 'summary' }),
@@ -98,28 +98,30 @@ const VIEW_ALIASES = Object.freeze({
     'period-cycles-compare': Object.freeze({ view: 'period-cycles', subview: 'comparar' }),
     'period-cycles-stats': Object.freeze({ view: 'period-cycles', subview: 'estadisticas' }),
     'operational-cart': Object.freeze({ view: 'carrito', subview: 'summary' }),
-    'operational-active': Object.freeze({ view: 'operational', subview: 'active' }),
-    'operational-finished': Object.freeze({ view: 'operational', subview: 'finished' }),
-    'operational-donations': Object.freeze({ view: 'operational', subview: 'donations' }),
-    'operational-losses': Object.freeze({ view: 'operational', subview: 'losses' }),
-    'operational-export': Object.freeze({ view: 'operational', subview: 'export' }),
+    'operational-active': Object.freeze({ view: 'facturero-finca', subview: 'active' }),
+    'operational-finished': Object.freeze({ view: 'facturero-finca', subview: 'finished' }),
+    'operational-donations': Object.freeze({ view: 'facturero-finca', subview: 'donations' }),
+    'operational-losses': Object.freeze({ view: 'facturero-finca', subview: 'losses' }),
+    'operational-export': Object.freeze({ view: 'facturero-finca', subview: 'export' }),
     'centro-reportes': Object.freeze({ view: 'reportes', subview: '' }),
     'reports-center': Object.freeze({ view: 'reportes', subview: '' }),
     'reportes-md': Object.freeze({ view: 'reportes', subview: '' })
 });
 
 const LEGACY_VIEW_REDIRECTS = Object.freeze({
-    pagados: 'operational',
-    fiados: 'cartera-viva',
-    perdidas: 'operational',
-    donaciones: 'operational',
-    otros: 'operational'
+    pagados: 'facturero-finca',
+    fiados: 'facturero-clientes',
+    perdidas: 'facturero-finca',
+    donaciones: 'facturero-finca',
+    otros: 'facturero-finca',
+    'cartera-viva': 'facturero-clientes',
+    operational: 'facturero-finca'
 });
 
 const NAV_PARENT_GROUPS = Object.freeze({
     'historial-comercial': Object.freeze({
-        views: Object.freeze(['cartera-viva', 'clients', 'operational']),
-        defaultView: 'cartera-viva'
+        views: Object.freeze(['facturero-clientes', 'clients', 'facturero-finca']),
+        defaultView: 'facturero-clientes'
     }),
     'granja-general': Object.freeze({
         views: Object.freeze(['ciclos', 'period-cycles']),
@@ -131,7 +133,8 @@ const VIEW_SUBNAV_CONFIG = Object.freeze({
     ciclos: Object.freeze({ defaultSubview: 'mis-cultivos', allowed: ['mis-cultivos', 'mis-fincas', 'comparar', 'estadisticas'] }),
     'period-cycles': Object.freeze({ defaultSubview: 'calendario', allowed: ['calendario', 'comparar', 'estadisticas'] }),
     carrito: Object.freeze({ defaultSubview: 'summary', allowed: ['summary', 'planning', 'calculator'] }),
-    operational: Object.freeze({ defaultSubview: 'active', allowed: ['active', 'finished', 'donations', 'losses', 'export'] })
+    operational: Object.freeze({ defaultSubview: 'active', allowed: ['active', 'finished', 'donations', 'losses', 'export'] }),
+    'facturero-finca': Object.freeze({ defaultSubview: 'active', allowed: ['active', 'finished', 'donations', 'losses', 'export'] })
 });
 
 const VIEWS_WITH_SUBNAV = new Set(Object.keys(VIEW_SUBNAV_CONFIG));
@@ -141,13 +144,15 @@ const VIEW_CONFIG = Object.freeze({
     dashboard: { region: 'dashboard', label: 'Dashboard Agro', focusSelector: '[data-agro-shell-region="dashboard"]' },
     ciclos: { region: 'cultivos', label: 'Ciclos de cultivos', focusSelector: '#agro-cycles-finished-view' },
     'period-cycles': { region: 'period-cycles', label: 'Calendario operativo', focusSelector: '#agro-period-cycles-root' },
-    operational: { region: 'operational', label: 'Cartera Operativa', focusSelector: '#agro-operational-root' },
+    operational: { region: 'operational', label: 'Facturero de la Finca', focusSelector: '#agro-operational-root' },
+    'facturero-finca': { region: 'operational', label: 'Facturero de la Finca', focusSelector: '#agro-operational-root' },
     clients: { region: 'clients', label: 'Mis Clientes', focusSelector: '#agro-clients-root' },
     'task-cycles': { region: 'task-cycles', label: 'Ciclos de Tareas', focusSelector: '#agro-task-cycles-root' },
     carrito: { region: 'ops', label: 'Mi Carrito', tab: 'carrito', focusSelector: '#agro-carrito-dedicated', dense: true },
     rankings: { region: 'ops', label: 'Rankings de Clientes', tab: 'rankings', focusSelector: '#agro-rankings-dedicated', dense: true },
     reportes: { region: 'reports-center', label: 'Centro de Reportes', focusSelector: '#agro-reports-center-root' },
-    'cartera-viva': { region: 'cartera-viva', label: 'Cartera Viva', focusSelector: '#agro-cartera-viva-root' },
+    'cartera-viva': { region: 'cartera-viva', label: 'Facturero de Clientes', focusSelector: '#agro-cartera-viva-root' },
+    'facturero-clientes': { region: 'cartera-viva', label: 'Facturero de Clientes', focusSelector: '#agro-cartera-viva-root' },
     clima: { region: 'clima', label: 'Clima Agro', focusSelector: '[data-agro-shell-region="clima"]' },
     herramientas: { region: 'herramientas', label: 'Ayuda y soporte', focusSelector: '#agro-tools-section' },
     agrorepo: { region: 'agrorepo', label: 'AgroRepo', focusSelector: '#agro-repo-section', dense: true },
@@ -160,12 +165,14 @@ const SHELL_VIEW_KEYWORDS = Object.freeze({
     ciclos: Object.freeze(['cultivo', 'cultivos', 'siembra', 'cosecha', 'rendimiento', 'produccion']),
     'period-cycles': Object.freeze(['periodo', 'periodos', 'mes', 'mensual', 'cierre']),
     operational: Object.freeze(['cartera', 'operativa', 'facturero', 'movimiento', 'abono', 'pago']),
+    'facturero-finca': Object.freeze(['cartera', 'operativa', 'facturero', 'finca', 'movimiento', 'abono', 'pago', 'gastos', 'ingresos']),
     clients: Object.freeze(['clientes', 'mis clientes', 'contactos', 'libreta', 'directorio', 'registrados', 'no registrados', 'yavlgold']),
     'task-cycles': Object.freeze(['tareas', 'trabajo diario', 'pendientes', 'agenda']),
     carrito: Object.freeze(['carrito', 'insumos', 'compras', 'lista']),
     rankings: Object.freeze(['ranking', 'rankings', 'clientes', 'estadisticas', 'top', 'comparacion']),
     reportes: Object.freeze(['reportes', 'markdown', 'exportar', 'exportes', 'informes', 'md', 'centro']),
-    'cartera-viva': Object.freeze(['cartera viva', 'clientes', 'fiados', 'deudas', 'pendientes']),
+    'cartera-viva': Object.freeze(['cartera viva', 'facturero clientes', 'clientes', 'fiados', 'deudas', 'pendientes']),
+    'facturero-clientes': Object.freeze(['facturero', 'clientes', 'fiados', 'deudas', 'pendientes', 'cartera viva', 'facturero de clientes']),
     clima: Object.freeze(['clima', 'temperatura', 'lluvia', 'tiempo']),
     herramientas: Object.freeze(['ayuda', 'soporte', 'documentacion', 'privacidad', 'herramientas']),
     agrorepo: Object.freeze(['bitacora', 'agrorepo', 'memoria', 'notas', 'historial']),
@@ -859,7 +866,7 @@ function runAction(action, currentView = '') {
             return clickIfExists('#btn-new-crop');
         case 'new-record':
             if (typeof window.launchAgroWizard === 'function') {
-                if (currentView === 'cartera-viva' && typeof window.openCarteraVivaRecordContext === 'function') {
+                if ((currentView === 'cartera-viva' || currentView === 'facturero-clientes') && typeof window.openCarteraVivaRecordContext === 'function') {
                     return window.openCarteraVivaRecordContext() === true;
                 }
                 window.launchAgroWizard('gastos');

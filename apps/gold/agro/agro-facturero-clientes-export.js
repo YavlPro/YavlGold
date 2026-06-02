@@ -1,7 +1,7 @@
 import {
     formatHistoryAbsoluteDayLabel,
     groupHistoryRowsByDay
-} from './agro-cartera-viva.js';
+} from './agro-facturero-clientes.js';
 
 function formatMoney(value) {
     const amount = Number(value);
@@ -158,7 +158,7 @@ export function buildBuyerPortfolioExportMarkdown({ buyerRow, historyRows, expor
         ...historyLines,
         '',
         '---',
-        'Generado por YavlGold Agro · Cartera Viva'
+        'Generado por YavlGold Agro · Facturero de Clientes'
     ].join('\n');
 }
 

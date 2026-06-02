@@ -371,8 +371,8 @@ Ciclos de períodos
   Comparar períodos
 
 Mis finanzas
-  Cartera Viva
-  Cartera Operativa
+  Facturero de Clientes
+  Facturero de la Finca
   Mi Carrito
 
 Trabajo y lectura
@@ -449,7 +449,7 @@ Los ghost emojis (emojis de fondo con opacidad 0.02–0.05 y `pointer-events: no
 6. **No usar gradientes animados como textura base.** Gradientes solo excepcionales.
 7. **No duplicar botones/entradas.** Un patrón, un componente.
 8. **No crear módulos visuales falsos.** Cada superficie debe tener función real.
-9. **No mezclar Cartera Viva con Cartera Operativa en una vista profunda.** Separación semántica.
+9. **No mezclar Facturero de Clientes con Facturero de la Finca en una vista profunda.** Separación semántica.
 10. **No reabrir `agro.js` para styling.** Estilos en CSS, lógica en JS.
 11. **No usar Tailwind, React, SPA.** Stack V11 = stack V1.
 12. **No animaciones infinitas decorativas.** Solo loaders controlados.

@@ -528,7 +528,7 @@ const PERIOD_SUBVIEW_META = Object.freeze({
         subtitle: 'Base preparada para contraste entre meses',
         overviewEyebrow: 'Comparación mensual',
         overviewTitle: 'Comparar períodos',
-        overviewCopy: 'Esta subvista queda preparada para contrastar meses sin mezclar la familia mensual con cultivos ni con Cartera Operativa.',
+        overviewCopy: 'Esta subvista queda preparada para contrastar meses sin mezclar la familia mensual con cultivos ni con Facturero de la Finca.',
         regionId: 'agro-period-cycles-compare-view'
     }),
     estadisticas: Object.freeze({

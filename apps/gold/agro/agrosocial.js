@@ -1,5 +1,5 @@
 import { applyBuyerPrivacy, applyMoneyPrivacy } from './agro-privacy.js';
-import { normalizeBuyerGroupKey } from './agro-cartera-viva.js';
+import { normalizeBuyerGroupKey } from './agro-facturero-clientes.js';
 import { openPublicFarmerProfile } from './agropublico.js';
 
 const SOCIAL_MODAL_ID = 'modal-agro-social';

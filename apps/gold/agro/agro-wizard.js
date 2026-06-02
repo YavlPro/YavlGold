@@ -5,7 +5,7 @@
  */
 
 import { SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, hasOverride, clearOverride } from './agro-exchange.js';
-import { ensureBuyerIdentityLink, isBuyerIdentityRelevantTab } from './agro-cartera-viva.js';
+import { ensureBuyerIdentityLink, isBuyerIdentityRelevantTab } from './agro-facturero-clientes.js';
 import uxMessages from '../assets/js/ui/uxMessages.js';
 
 // ============================================================
@@ -1733,11 +1733,11 @@ export async function openAgroWizard(tabName, deps) {
                 }
 
                 // BUGFIX: Only set origin_table = 'agro_pending' when wizard comes from
-                // Cartera Viva detail (debtContext flag). This ensures the RPC counts
+                // Facturero de Clientes detail (debtContext flag). This ensures the RPC counts
                 // the movement as debt payment (paid_total / loss_total) instead of
                 // non_debt_income or legacy_review_required.
                 // IMPORTANT: We do NOT apply this globally to all ingresos/perdidas with
-                // buyer match, because manual ingresos/perdidas outside of Cartera Viva
+                // buyer match, because manual ingresos/perdidas outside of Facturero de Clientes
                 // context should NOT be classified as debt-related.
                 if (deps.debtContext === true) {
                     if (tabName === 'ingresos') {
@@ -1919,8 +1919,8 @@ export async function openAgroWizard(tabName, deps) {
                         }
                     }));
                 }
-                // Dispatch portfolio-specific events so Cartera Viva refreshes its RPC summary.
-                // These events are listened by agro-cartera-viva-view → scheduleExternalPortfolioRefresh.
+                // Dispatch portfolio-specific events so Facturero de Clientes refreshes its RPC summary.
+                // These events are listened by agro-facturero-clientes-view → scheduleExternalPortfolioRefresh.
                 if (tabName === 'ingresos') {
                     document.dispatchEvent(new CustomEvent('agro:income:changed'));
                 }
@@ -1930,7 +1930,7 @@ export async function openAgroWizard(tabName, deps) {
                 if (tabName === 'pendientes') {
                     document.dispatchEvent(new CustomEvent('agro:pending:refreshed'));
                 }
-                // Redundant global refresh so Cartera Viva always reloads after wizard submit,
+                // Redundant global refresh so Facturero de Clientes always reloads after wizard submit,
                 // even if the specific event listener has a timing issue.
                 document.dispatchEvent(new CustomEvent('data-refresh'));
             }, 1500);

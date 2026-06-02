@@ -1,4 +1,4 @@
-import { normalizeBuyerGroupKey } from './agro-cartera-viva.js';
+import { normalizeBuyerGroupKey } from './agro-facturero-clientes.js';
 
 const EDIT_HOST_ID = 'edit-client-assignment';
 const RELEVANT_TABS = new Set(['pendientes', 'ingresos', 'perdidas', 'transferencias']);

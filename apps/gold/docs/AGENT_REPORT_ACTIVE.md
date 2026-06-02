@@ -17,15 +17,15 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-04-27__2026-05-05.md`
 
 ## Frentes abiertos
 
-- Agro V1: mantener separación semántica entre Cartera Viva, Cartera Operativa y Mis Clientes.
-- Cartera Viva: corregir UX de creación/vinculación de clientes sin mezclar intención del usuario.
+- Agro V1: mantener separación semántica entre Facturero de Clientes, Facturero de la Finca y Mis Clientes.
+- Facturero de Clientes: corregir UX de creación/vinculación de clientes sin mezclar intención del usuario.
 - Documentación viva: registrar sesiones en este archivo; rotar de nuevo al alcanzar 4000 líneas.
 
 ## Decisiones canónicas vigentes
 
 - No agregar features nuevas en `apps/gold/agro/agro.js`; solo wiring quirúrgico si es inevitable.
 - Nuevas piezas Agro deben vivir como módulos `agro-*.js` o CSS dedicado.
-- Mis Clientes es libreta de contactos; Cartera Viva es seguimiento de créditos/deudas.
+- Mis Clientes es libreta de contactos; Facturero de Clientes es seguimiento de créditos/deudas.
 - No exponer lenguaje de base de datos en UI cuando exista una formulación humana equivalente.
 - Build gate obligatorio tras cambios de código: `pnpm build:gold`.
 
@@ -3786,3 +3786,262 @@ Aplicar fixes finales post-integración: duplicación de header en subvista "Mis
 
 ### Lección aprendida
 Una finca es un recurso de tierra con historia completa, no un snapshot de cultivos vivos. Filtrar por estado `activo` excluye la realidad productiva del agricultor y pierde memoria valiosa para decisiones futuras.
+
+---
+
+## Sesión 2026-05-31 — Fix Crítico de Gastos Operativos + Renombramiento Canónico (fallido)
+
+### Fecha
+2026-05-31 (lunes)
+
+### Objetivo
+1. **Bug crítico**: Corregir regresión donde los gastos registrados en Cartera Operativa no se reflejaban en los costos totales de los cultivos en "Mis Cultivos"
+2. **Renombramiento canónico**: Cambiar nombres "Cartera Viva" → "Facturero de Clientes" y "Cartera Operativa" → "Facturero de la Finca" para mejorar claridad semántica
+
+### Agentes involucrados
+- **GLM 5.1**: Fix crítico de gastos operativos (éxito completo)
+- **MiniMax M3**: Renombramiento canónico (resultado no aceptable, revertido con git reset)
+- **DeepSeek**: Diagnóstico inicial (tabla equivocada)
+- **MiniMax (diagnóstico)**: Identificación del race condition de inicialización
+- **Claude**: Evaluación crítica y refinamiento semántico
+- **Qwen 3.7**: Coordinación, validación y documentación
+
+### Frente 1: Bug Crítico de Gastos Operativos ✅ COMPLETADO
+
+#### Causa raíz identificada (consenso multi-agente)
+1. **Race condition de inicialización**: `agroOperationalCycles.js` solo se importaba cuando el usuario navegaba a Cartera Operativa. Al entrar directamente a "Mis Cultivos" o hacer refresh (F5), el módulo nunca se cargaba, dejando `window.YGAgroOperationalCycles = undefined`.
+2. **Clasificación semántica incorrecta**: `rebuildPortfolioByCrop()` clasificaba movimientos salientes de ciclos activos como "pendientes" (`pendingIndex`) en lugar de "gastos" (`expenseIndex`), asumiendo falsamente que "activo = fiado".
+3. **Tabla consultada equivocada**: En algunos puntos se consultaba `agro_expenses` (tabla legacy vacía) en lugar de `agro_operational_movements`.
+
+#### Archivos modificados
+| Commit | Archivo | Cambio |
+|--------|---------|--------|
+| 6063d8e | `apps/gold/agro/agroOperationalCycles.js` | API global siempre expuesta + `refreshData()` siempre ejecutado + clasificación por `economic_type` del ciclo |
+| 019e5d8 | `apps/gold/agro/agro.js` | Safety net: carga bajo demanda de `agroOperationalCycles.js` en `loadCrops()` |
+
+#### Fix aplicado
+**Commit 6063d8e — `agroOperationalCycles.js`:**
+- Separación de responsabilidades en `initAgroOperationalCycles()`:
+  - Siempre exponer API global (para que otras superficies la usen)
+  - Siempre ejecutar `refreshData()` en background (datos disponibles)
+  - Solo renderizar UI si el root existe y la vista es operational
+- Clasificación por `economic_type` del ciclo operativo:
+  - `expense` → `expenseIndex` (gastos operativos reales)
+  - `loss` → `expenseIndex` (pérdidas)
+  - `donation` → `expenseIndex` (donaciones)
+  - `income` → excluido automáticamente (direction: in)
+
+**Commit 019e5d8 — `agro.js`:**
+- Safety net en `loadCrops()`: si `window.YGAgroOperationalCycles` no existe, importar dinámicamente el módulo y esperar inicialización antes de leer datos
+- Elimina el race condition de inicialización
+
+#### Flujo restaurado
+```
+loadCrops() → 
+  ① Verifica si window.YGAgroOperationalCycles existe
+  ② Si no existe → import dinámico + initAgroOperationalCycles()
+  ③ refreshData() siempre ejecutado (datos disponibles)
+  ④ rebuildPortfolioByCrop() clasifica por economic_type
+  ⑤ getOperationalExpensesByCrop() retorna Map con datos reales
+  ⑥ expenseTotalsByCrop += operationalExpenseTotalsByCrop
+  ⑦ costosTotales = inversión + gastos_operativos + pérdidas ✅
+```
+
+#### Build
+- Resultado: ✅ OK (1m 8s, UTF-8 verificado)
+- Commits: 6063d8e y 019e5d8 en main
+- Push exitoso
+
+#### QA validado por el usuario
+- ✅ Cold start: entrar a "Mis Cultivos" sin pasar por Cartera Operativa → gastos aparecen correctamente
+- ✅ Persistencia tras refresh: gastos no vuelven a cero al hacer F5
+- ✅ Fórmula canónica restaurada: `costosTotales = inversión + gastos_operativos + pérdidas`
+- ✅ Cartera Operativa: gastos siguen visibles y editables
+- ✅ Multi-moneda: conversión correcta COP → USD
+
+#### Consistencia canónica
+| Documento | Sección | Estado |
+|-----------|---------|--------|
+| MANIFIESTO_AGRO.md | §4.3 Fórmula canónica | ✅ Restaurada |
+| MANIFIESTO_AGRO.md | §4.5.2 Cartera Operativa | ✅ Cumplido |
+| AGENTS.md | §3.1 Ediciones quirúrgicas | ✅ Solo safety net mínimo |
+| AGENTS.md | §8.8 Causa raíz primero | ✅ Atacó race condition + semántica |
+| ADN-VISUAL-V11.0.md | §13 Anti-patrones | ✅ Sin violaciones |
+
+### Frente 2: Renombramiento Canónico ❌ FALLIDO — REVERTIDO CON GIT RESET
+
+#### Objetivo
+Renombrar superficies para mejorar claridad semántica:
+- Cartera Viva → Facturero de Clientes
+- Cartera Operativa → Facturero de la Finca
+
+#### Intento de ejecución
+- **Agente**: MiniMax M3 (versión nueva experimental)
+- **Commit original**: `chore(agro): renombrar Cartera Viva/Operativa a Facturero de Clientes/de la Finca`
+- **Resultado**: El cambio fue ejecutado pero rompió Cartera Viva y otras zonas del sistema. El resultado no fue aceptable.
+
+#### Acción correctiva
+**Git reset ejecutado** para revertir el commit fallido, manteniendo intactos los 2 commits del fix de gastos operativos.
+
+**Archivos que fueron renombrados y debieron revertirse:**
+- `agro-cartera-viva-client-assignment.js` → `agro-facturero-clientes-assignment.js`
+- `agro-cartera-viva-detail.js` → `agro-facturero-clientes-detail.js`
+- `agro-cartera-viva-export.js` → `agro-facturero-clientes-export.js`
+- `agro-cartera-viva-client-merge.js` → `agro-facturero-clientes-merge.js`
+- `agro-cartera-viva-view.js` → `agro-facturero-clientes-view.js`
+- `agro-cartera-viva.js` → `agro-facturero-clientes.js`
+- `agro-cartera-viva.css` → `agro-facturero-clientes.css`
+- `agro-operations.css` → `agro-facturero-finca.css`
+
+**Archivos modificados que debieron revertirse:**
+- ~25 archivos JS/CSS (agro.js, agro-shell.js, index.html, MANIFIESTO_AGRO.md, FICHA_TECNICA.md, ADN-VISUAL-V11.0.md, llms.txt, etc.)
+
+#### Estado final del repo
+- Rama: `main`
+- 2 commits válidos del día (fix de gastos operativos): **MANTENIDOS**
+- 1 commit fallido (renombramiento): **REVERTIDO con git reset**
+- Cartera Viva y Cartera Operativa: **Integridad restaurada**
+
+#### Plan para próximo intento
+1. Esperar a que **GLM 5.1** tenga créditos disponibles
+2. Re-ejecutar el renombramiento con GLM usando el prompt completo ya preparado (con fases secuenciales, QA, restricciones canónicas)
+3. **NO usar MiniMax M3** para este cambio (mostró limitaciones en tareas complejas de múltiples archivos)
+4. QA manual completo de Facturero de Clientes y Facturero de la Finca
+5. Build gate obligatorio (`pnpm build:gold`)
+6. Cerrar frente en `AGENT_REPORT_ACTIVE.md`
+
+### Lecciones aprendidas
+
+#### 1. Race conditions en módulos cargados dinámicamente
+**Patrón observado:** Cuando un módulo se importa dinámicamente solo bajo ciertas condiciones (ej: vista activa), otras superficies que dependen de ese módulo fallan silenciosamente.
+
+**Solución canónica aplicada:**
+- Separar responsabilidades: API global siempre expuesta + datos siempre cargados + UI condicional
+- Safety net en consumidores: verificar disponibilidad + import dinámico como fallback
+- `await` antes de usar: esperar a que los datos estén listos antes de renderizar
+
+#### 2. Clasificación por naturaleza, no por estado
+**Error común:** Clasificar movimientos por estado del ciclo padre (activo → pendiente, cerrado → pagado) en lugar de por naturaleza del movimiento (direction + movement_type / economic_type).
+
+**Regla correcta:** Un gasto de abono sigue siendo gasto aunque el ciclo esté activo. Un fiado a cliente sigue siendo fiado aunque el ciclo esté cerrado. La naturaleza es inherente al movimiento, no al contenedor.
+
+#### 3. Evaluación multi-agente como metodología
+**Proceso seguido:**
+- DeepSeek: diagnóstico inicial (tabla equivocada)
+- MiniMax (diagnóstico): identificación del race condition
+- Claude: evaluación crítica y refinamiento semántico
+- GLM 5.1: implementación exitosa del fix
+- MiniMax M3: intento de renombramiento (fallido)
+
+**Conclusión:** La evaluación cruzada entre agentes mejora la calidad del diagnóstico, pero la ejecución final debe ser validada con QA manual antes de declarar completado.
+
+#### 4. Experimentación con versiones nuevas de agentes
+**Observación:** MiniMax M3 (versión nueva) mostró buen desempeño inicial en el renombramiento, pero al final del día (posiblemente por límites de créditos o contexto largo) introdujo errores que rompieron Cartera Viva y otras zonas, requiriendo reversa con git reset.
+
+**Lección:** Las versiones nuevas de agentes pueden ser útiles para tareas exploratorias, pero para cambios canónicos críticos que afectan múltiples archivos y documentación, es preferible usar agentes con historial probado en el proyecto (GLM 5.1 en este caso).
+
+#### 5. Git reset como defensa operativa
+**Patrón validado:** Cuando un agente rompe más de lo que arregla en un cambio masivo, el git reset es una herramienta de defensa operativa válida y canónica para restaurar la integridad del repo sin perder el trabajo válido del día.
+
+### Bloqueos
+- GLM 5.1 sin créditos al final del día (se retoma mañana)
+- Commit de renombramiento fallido requirió reversa manual
+- MiniMax M3 no es confiable para cambios canónicos multi-archivo
+
+### Próximo paso (2026-06-01)
+1. Esperar créditos de GLM
+2. Re-ejecutar renombramiento canónico con GLM usando prompt ya preparado
+3. QA manual completo
+4. Cerrar frente y archivar documentos de diagnóstico según Ley de Archivo por Frente Cerrado (§4.2)
+
+### NO se hizo
+- ❌ No se modificó MANIFIESTO_AGRO.md, AGENTS.md, ADN-VISUAL-V11.0.md, FICHA_TECNICA.md (solo lectura durante diagnóstico)
+- ❌ No se tocó el facturero CRUD (agro_expenses, agro_incomes, etc.)
+- ❌ No se agregaron features nuevas
+- ❌ No se violó ADN Visual V11
+- ❌ No se creció agro.js con features (solo safety net mínimo)
+- ❌ Renombramiento canónico NO se completó satisfactoriamente (revertido)
+
+### Impacto del día
+**✅ Positivo:**
+- Bug crítico de gastos operativos resuelto (fórmula canónica restaurada)
+- 2 commits exitosos en producción
+- Lecciones aprendidas documentadas para futuros módulos dinámicos
+- Proceso multi-agente validado como metodología efectiva
+- Integridad del repo preservada gracias al git reset
+
+**⚠️ Pendiente:**
+- Renombramiento canónico requiere reintento con GLM
+- MiniMax M3 no debe usarse para cambios masivos multi-archivo en este proyecto
+
+---
+
+## Sesión 2026-06-02 — Renombramiento Canónico: Cartera Viva/Operativa → Facturero de Clientes/de la Finca
+
+### Objetivo
+Renombrar superficies "Cartera Viva" y "Cartera Operativa" en todo el ecosistema YavlGold Agro para mejorar claridad semántica. Solo renombramiento — sin features nuevas ni cambios funcionales.
+
+### Causa
+Nombres antiguos eran jerga bancaria, no lenguaje de campo. Cumple MANIFIESTO_AGRO §2.3 ("Cada cosa con su nombre real") y §2.2 ("Menos fatiga, más claridad").
+
+### Archivos Modificados (28 archivos)
+
+**Documentos canónicos:**
+- `apps/gold/docs/MANIFIESTO_AGRO.md` — ~30 cambios (nombres + notas de transición en §4.5.1 y §4.5.2)
+- `apps/gold/docs/ADN-VISUAL-V11.0.md` — 3 cambios (§9 hub, §13 anti-patrones)
+- `FICHA_TECNICA.md` — 8 cambios (nombres, archivos JS/CSS, descripciones)
+- `apps/gold/public/llms.txt` — 6 cambios (nombres en contexto LLM)
+
+**Código JS (navegación + shell):**
+- `apps/gold/agro/agro-shell.js` — VIEW_CONFIG, TAB_TO_VIEW, VIEW_TO_MOBILE_HUB, VIEW_ALIASES, LEGACY_VIEW_REDIRECTS, NAV_PARENT_GROUPS, VIEW_SUBNAV_CONFIG, SHELL_VIEW_KEYWORDS, runAction
+
+**Código JS (index.html):**
+- `apps/gold/agro/index.html` — sidebar, rail, hub mobile, CSS imports, dynamic import, labels
+
+**Código JS (strings en módulos):**
+- `agro.js`, `agro-cart.js`, `agro-clients.js`, `agro-wizard.js`, `agrocompradores.js`, `agroOperationalCycles.js`, `agroTaskCycles.js`, `agro-agenda.js`, `agro-period-cycles.js`, `agrociclos.js`, `agrosocial.js`
+
+**CSS:**
+- `agro-facturero-clientes.css` (renombrado, comentario actualizado)
+
+### Archivos Renombrados (8 archivos)
+
+| Antes | Después |
+|-------|---------|
+| `agro-cartera-viva-view.js` | `agro-facturero-clientes-view.js` |
+| `agro-cartera-viva-client-assignment.js` | `agro-facturero-clientes-assignment.js` |
+| `agro-cartera-viva-client-merge.js` | `agro-facturero-clientes-merge.js` |
+| `agro-cartera-viva-detail.js` | `agro-facturero-clientes-detail.js` |
+| `agro-cartera-viva-export.js` | `agro-facturero-clientes-export.js` |
+| `agro-cartera-viva.js` | `agro-facturero-clientes.js` |
+| `agro-cartera-viva.css` | `agro-facturero-clientes.css` |
+| `agro-operations.css` | `agro-facturero-finca.css` |
+
+### Rutas Hash Actualizadas
+
+| Antes | Después |
+|-------|---------|
+| `#view=cartera-viva` | `#view=facturero-clientes` |
+| `#view=operational` | `#view=facturero-finca` |
+
+Notas: Se mantiene compatibilidad legacy en LEGACY_VIEW_REDIRECTS (`cartera-viva` → `facturero-clientes`, `operational` → `facturero-finca`). Los view keys legacy (`operational`, `cartera-viva`) siguen existiendo en VIEW_CONFIG como aliases para bookmarks antiguos.
+
+### Build
+- Resultado: **OK**
+- Comando: `pnpm build:gold`
+- agent-guard: OK
+- agent-report-check: OK
+- vite build: OK (2.63s)
+- check-llms: OK
+- check-dist-utf8: OK
+
+### NO se hizo
+- ❌ No se modificaron tablas de Supabase
+- ❌ No se cambió lógica funcional
+- ❌ No se agregaron features nuevas
+- ❌ No se tocó ROADMAP_VISION_YAVLGOLD.md
+- ❌ No se cambiaron variables internas como `_source: 'cartera-viva'` ni CSS class names internos
+- ❌ No se tocaron localStorage keys
+
+### Notas de Transición
+Agregadas en MANIFIESTO_AGRO.md §4.5.1 y §4.5.2 para evitar confusión de usuarios y agentes que conozcan los nombres antiguos.

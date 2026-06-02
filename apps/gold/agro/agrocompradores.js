@@ -1,5 +1,5 @@
 import { applyBuyerPrivacy, applyMoneyPrivacy } from './agro-privacy.js';
-import { normalizeBuyerGroupKey } from './agro-cartera-viva.js';
+import { normalizeBuyerGroupKey } from './agro-facturero-clientes.js';
 import { openPublicFarmerProfile } from './agropublico.js';
 
 const BUYER_MODAL_ID = 'modal-agro-buyer';
@@ -633,8 +633,8 @@ function renderWizardStepPanel(step, d) {
                     <p class="buyer-wizard-panel__eyebrow">Paso 1</p>
                     <h4 class="buyer-wizard-panel__title">¿Quién es el cliente?</h4>
                     <p class="buyer-wizard-panel__copy">${isNew
-            ? 'Crea un cliente desde cero para llevar su seguimiento en Cartera Viva.'
-            : 'Elige un cliente existente de Cartera Viva usando nombre, finca, teléfono o redes disponibles.'}</p>
+            ? 'Crea un cliente desde cero para llevar su seguimiento en Facturero de Clientes.'
+            : 'Elige un cliente existente de Facturero de Clientes usando nombre, finca, teléfono o redes disponibles.'}</p>
                 </div>
                 ${isNew ? `
                     <label class="agro-buyer-field">
@@ -1571,7 +1571,7 @@ async function openBuyerProfileInternal({ buyerId = '', displayName = '', groupK
         });
         syncBuyerHeading();
         syncLifecycleButtons();
-        setBuyerStatus('Cliente nuevo. Guarda la ficha para activarlo en Cartera Viva.', 'warn');
+        setBuyerStatus('Cliente nuevo. Guarda la ficha para activarlo en Facturero de Clientes.', 'warn');
     }
 
     const modal = getBuyerModal();
@@ -1649,7 +1649,7 @@ export function initAgroCompradores({ supabase } = {}) {
     syncBuyerHeading();
     syncOpenPublicButton();
     syncLifecycleButtons();
-    setBuyerStatus('Abre una ficha o crea un cliente nuevo desde Cartera Viva.', 'muted');
+    setBuyerStatus('Abre una ficha o crea un cliente nuevo desde Facturero de Clientes.', 'muted');
 }
 
 export { normalizeBuyerGroupKey as normalizeGroupKey };

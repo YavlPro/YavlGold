@@ -868,7 +868,7 @@ function createDatasetSummary(cycles = []) {
 function normalizeOperationalError(error) {
     if (error instanceof Error && error.message) {
         if (isSchemaMissingError(error)) {
-            return 'Falta aplicar la migración de Cartera Operativa en Supabase.';
+            return 'Falta aplicar la migración de Facturero de la Finca en Supabase.';
         }
         return error.message;
     }
@@ -1382,10 +1382,10 @@ function renderShell() {
                     <div class="agro-commercial-family" aria-label="Operación comercial">
                         <div class="agro-commercial-family__tabs" role="group" aria-label="Familia comercial">
                             <button type="button" class="agro-commercial-family__tab" data-agro-view="cartera-viva">
-                                Cartera Viva
+                                Facturero de Clientes
                             </button>
                             <button type="button" class="agro-commercial-family__tab is-active" data-agro-view="operational">
-                                Cartera Operativa
+                                Facturero de la Finca
                             </button>
                         </div>
                     </div>
@@ -1393,7 +1393,7 @@ function renderShell() {
                         <div class="module-icon">💼</div>
                         <div class="module-heading">
                             <p class="ops-module-eyebrow">Operación comercial</p>
-                            <h2 class="module-title">Cartera Operativa</h2>
+                            <h2 class="module-title">Facturero de la Finca</h2>
                             <p class="module-subtitle">Registra, filtra y exporta con movimientos reales sin salir del módulo.</p>
                         </div>
                     </div>
@@ -1401,14 +1401,14 @@ function renderShell() {
                 <div class="header-actions">
                     <button type="button" class="btn btn-primary" data-operational-action="new-cycle">Nueva cartera operativa</button>
                     <button type="button" class="btn" data-agro-view="period-cycles">📆 Ver períodos</button>
-                    <button type="button" class="agro-operational-refresh-btn" data-operational-action="refresh" aria-label="Actualizar Cartera Operativa" title="Actualizar">
+                    <button type="button" class="agro-operational-refresh-btn" data-operational-action="refresh" aria-label="Actualizar Facturero de la Finca" title="Actualizar">
                         <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
                     </button>
                 </div>
             </header>
 
             <div class="agro-operational-feedback agro-operational-feedback--page" id="agro-operational-feedback" data-tone="info"></div>
-            <div class="agro-privacy-strip" aria-label="Controles de privacidad de Cartera Operativa">
+            <div class="agro-privacy-strip" aria-label="Controles de privacidad de Facturero de la Finca">
                 <span class="agro-privacy-strip__label">Privacidad</span>
                 <button type="button" class="btn-privacy-toggle" data-money-privacy-control="toggle" aria-pressed="false">Ocultar montos</button>
             </div>
@@ -2035,7 +2035,7 @@ function getSubviewMeta(subview) {
     if (subview === SUBVIEW_EXPORT) {
         return {
             eyebrow: '📥 Exportar MD',
-            title: '📥 Exportar Cartera Operativa a Markdown',
+            title: '📥 Exportar Facturero de la Finca a Markdown',
             copy: 'Descarga un reporte limpio usando los filtros activos de No pagados y Pagados / pérdidas.'
         };
     }
@@ -2796,7 +2796,7 @@ function buildMarkdownSection(title, datasetKey) {
 
 function buildExportMarkdown() {
     const lines = [
-        '# 💼 Cartera Operativa',
+        '# 💼 Facturero de la Finca',
         '',
         `Generado: ${formatDateLabel(todayLocalIso())}`,
         '',

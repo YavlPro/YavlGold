@@ -17,7 +17,7 @@ import { initClimaWeeklyEmbed } from './agroclima-layout.js';
 import { calcularRentabilidad } from './agro-profit-calculator.js';
 import { formatCurrencyDisplay, SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, hasOverride, clearOverride } from './agro-exchange.js';
 import { ensureBuyerIdentityLink, isBuyerIdentityRelevantTab } from './agro-buyer-identity.js';
-import { resolveClientAssignmentEditor, setupClientAssignmentEditor } from './agro-cartera-viva-client-assignment.js';
+import { resolveClientAssignmentEditor, setupClientAssignmentEditor } from './agro-facturero-clientes-assignment.js';
 import { initCiclos, renderFinishedCycles } from './agrociclos.js';
 import { initAgroShell } from './agro-shell.js';
 import { initFactureroSelection } from './agro-selection.js';
@@ -32,7 +32,7 @@ import {
     readHistoryItemField,
     readHistoryItemFieldWithSource,
     renderHistoryDayGroups
-} from './agro-cartera-viva.js';
+} from './agro-facturero-clientes.js';
 import { clearLegacyAgroCropsCache, readAgroCropsCache, readBestAgroCrops, writeAgroCropsCache } from '../assets/js/utils/agroCropsCache.js';
 import uxMessages from '../assets/js/ui/uxMessages.js';
 import {
@@ -9572,7 +9572,7 @@ async function fetchPendingGeneralTotalUsd(userId, options = {}) {
             .is('crop_id', null);
 
         if (error) {
-            console.warn('[Agro] No se pudo leer fiados generales para badge de Cartera Viva:', error?.message || error);
+            console.warn('[Agro] No se pudo leer fiados generales para badge de Facturero de Clientes:', error?.message || error);
             return null;
         }
 
@@ -9586,7 +9586,7 @@ async function fetchPendingGeneralTotalUsd(userId, options = {}) {
         });
         return total;
     } catch (error) {
-        console.warn('[Agro] Error leyendo fiados generales para badge de Cartera Viva:', error);
+        console.warn('[Agro] Error leyendo fiados generales para badge de Facturero de Clientes:', error);
         return null;
     }
 }
