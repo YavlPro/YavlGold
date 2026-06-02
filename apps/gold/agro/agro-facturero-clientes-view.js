@@ -21,7 +21,18 @@ import {
 import { getPendingTransferToken } from './agro-unit-totals.js';
 import { openCarteraVivaClientMergeModal } from './agro-facturero-clientes-merge.js';
 
-const CARTERA_VIVA_VIEW = 'cartera-viva';
+const CARTERA_VIVA_VIEW = 'facturero-clientes';
+const CARTERA_VIVA_VIEW_LEGACY = 'cartera-viva';
+
+function isCarteraVivaViewActive() {
+    const v = String(document.body?.dataset?.agroActiveView || '').trim().toLowerCase();
+    return v === CARTERA_VIVA_VIEW || v === CARTERA_VIVA_VIEW_LEGACY;
+}
+
+function isCarteraVivaView(viewName) {
+    const v = String(viewName || '').trim().toLowerCase();
+    return v === CARTERA_VIVA_VIEW || v === CARTERA_VIVA_VIEW_LEGACY;
+}
 const CARTERA_VIVA_ROOT_ID = 'agro-cartera-viva-root';
 const CARTERA_VIVA_CATEGORY_KEY = 'YG_AGRO_CARTERA_VIVA_CATEGORY_V1';
 const CARTERA_VIVA_SEARCH_KEY = 'YG_AGRO_CARTERA_VIVA_SEARCH_V1';
@@ -2080,8 +2091,8 @@ function renderCommercialFamilyNav(activeView = CARTERA_VIVA_VIEW) {
             <div class="agro-commercial-family__tabs" role="group" aria-label="Familia comercial">
                 <button
                     type="button"
-                    class="agro-commercial-family__tab${activeView === 'cartera-viva' ? ' is-active' : ''}"
-                    data-agro-view="cartera-viva">
+                    class="agro-commercial-family__tab${isCarteraVivaView(activeView) ? ' is-active' : ''}"
+                    data-agro-view="facturero-clientes">
                     Facturero de Clientes
                 </button>
                 <button
@@ -2552,7 +2563,7 @@ function renderListViewMarkup(state) {
             aria-label="Cartera de clientes"
             aria-busy="${loading ? 'true' : 'false'}">
             <header class="cartera-viva-view__header">
-                ${renderCommercialFamilyNav('cartera-viva')}
+                ${renderCommercialFamilyNav(CARTERA_VIVA_VIEW)}
                 <div class="cartera-viva-view__headline">
                     <div class="cartera-viva-view__copy">
                         <p class="cartera-viva-view__eyebrow">Facturero de Clientes</p>
@@ -3093,7 +3104,7 @@ function resetDetailExportState() {
 }
 
 function scheduleExternalPortfolioRefresh() {
-    if (String(document.body?.dataset?.agroActiveView || '').trim().toLowerCase() !== CARTERA_VIVA_VIEW) return;
+    if (!isCarteraVivaViewActive()) return;
 
     if (externalRefreshTimer) {
         clearTimeout(externalRefreshTimer);
@@ -3113,7 +3124,7 @@ function scheduleExternalPortfolioRefresh() {
 
 function handleShellViewChanged(event) {
     const nextView = String(event?.detail?.view || '').trim().toLowerCase();
-    if (nextView !== CARTERA_VIVA_VIEW) return;
+    if (!isCarteraVivaView(nextView)) return;
 
     if (!hasLoadedSummary) {
         loadSummary();
@@ -3124,7 +3135,7 @@ function handleShellViewChanged(event) {
 }
 
 async function handleCropContextUpdated() {
-    if (String(document.body?.dataset?.agroActiveView || '').trim().toLowerCase() !== CARTERA_VIVA_VIEW) return;
+    if (!isCarteraVivaViewActive()) return;
     await loadSummary();
     if (selectedBuyerId) {
         await loadBuyerDetail(selectedBuyerId);
@@ -3208,7 +3219,7 @@ function handleClientChanged(event) {
 export function initAgroCarteraVivaView() {
     if (initialized) {
         syncCarteraVivaGlobalContext();
-        if (String(document.body?.dataset?.agroActiveView || '').trim().toLowerCase() === CARTERA_VIVA_VIEW) {
+        if (isCarteraVivaViewActive()) {
             loadSummary();
         }
         return;
@@ -3228,7 +3239,7 @@ export function initAgroCarteraVivaView() {
     document.addEventListener('agro:transfers:refreshed', scheduleExternalPortfolioRefresh);
     document.addEventListener('agro:client:changed', handleClientChanged);
 
-    if (String(document.body?.dataset?.agroActiveView || '').trim().toLowerCase() === CARTERA_VIVA_VIEW) {
+    if (isCarteraVivaViewActive()) {
         loadSummary();
     }
 }

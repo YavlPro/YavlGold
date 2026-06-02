@@ -4,6 +4,12 @@ import { assertOperationalPeriodOpen, mountAgroPeriodCycles, unmountAgroPeriodCy
 const ROOT_ID = 'agro-operational-root';
 const PERIOD_ROOT_ID = 'agro-period-cycles-root';
 const VIEW_NAME = 'operational';
+const VIEW_NAME_CANONICAL = 'facturero-finca';
+
+function isOperationalView(viewName) {
+    const v = String(viewName || '').trim().toLowerCase();
+    return v === VIEW_NAME || v === VIEW_NAME_CANONICAL;
+}
 const PERIOD_VIEW_NAME = 'period-cycles';
 const SUBVIEW_ACTIVE = 'active';
 const SUBVIEW_FINISHED = 'finished';
@@ -1384,7 +1390,7 @@ function renderShell() {
                             <button type="button" class="agro-commercial-family__tab" data-agro-view="cartera-viva">
                                 Facturero de Clientes
                             </button>
-                            <button type="button" class="agro-commercial-family__tab is-active" data-agro-view="operational">
+                            <button type="button" class="agro-commercial-family__tab is-active" data-agro-view="facturero-finca">
                                 Facturero de la Finca
                             </button>
                         </div>
@@ -3430,7 +3436,7 @@ function bindEvents() {
 
         syncStandalonePeriodCyclesView();
 
-        if (state.currentView !== VIEW_NAME) {
+        if (!isOperationalView(state.currentView)) {
             closeComposerModal();
             return;
         }
@@ -3443,7 +3449,7 @@ function bindEvents() {
     });
 
     window.addEventListener(CROPS_READY_EVENT, () => {
-        if (state.currentView === VIEW_NAME) {
+        if (isOperationalView(state.currentView)) {
             void refreshData();
         }
     });
@@ -3453,7 +3459,7 @@ function bindEvents() {
         if (mode === 'cultivo') state.familyFilter = FAMILY_LINKED;
         else if (mode === 'no-cultivo') state.familyFilter = FAMILY_UNLINKED;
         else state.familyFilter = FAMILY_ALL;
-        if (state.currentView !== VIEW_NAME) return;
+        if (!isOperationalView(state.currentView)) return;
         renderFamilyToggle();
         renderSubviewSwitch();
         renderOverview();
@@ -3622,7 +3628,7 @@ export async function initAgroOperationalCycles(options = {}) {
 
         syncStandalonePeriodCyclesView();
 
-        if (state.currentView === VIEW_NAME) {
+        if (isOperationalView(state.currentView)) {
             renderAll();
         }
     }

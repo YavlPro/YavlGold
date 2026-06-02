@@ -496,7 +496,7 @@ function readRequestedCartSubview() {
 function isCartShellView(detail = {}) {
     const view = String(detail?.view || '').trim().toLowerCase();
     const subview = String(detail?.subview || '').trim().toLowerCase();
-    return view === 'carrito' || (view === 'operational' && subview === 'cart');
+    return view === 'carrito' || ((view === 'operational' || view === 'facturero-finca') && subview === 'cart');
 }
 
 function formatCartAgendaDateLabel(dateStr) {
