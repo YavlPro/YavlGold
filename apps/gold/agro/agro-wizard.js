@@ -766,6 +766,7 @@ export async function openAgroWizard(tabName, deps) {
     const state = {
         step: 1,
         cropId: initialCropId,
+        farmId: null,
         cropName: 'General / Sin cultivo',
         concepto: String(prefill?.concepto || '').trim(),
         who: String(prefill?.who || '').trim(),
@@ -961,7 +962,71 @@ export async function openAgroWizard(tabName, deps) {
         }
 
         fragment.appendChild(grid);
+
+        // Farm picker: show when crop is "General" and selection is not locked
+        if (!lockCropSelection && !state.cropId) {
+            renderFarmPicker(fragment);
+        }
+
         return fragment;
+    }
+
+    // ============ FARM PICKER (inside Step 1) ============
+    function renderFarmPicker(fragment) {
+        const farms = (typeof window._agroFarms?.getFarms === 'function')
+            ? window._agroFarms.getFarms()
+            : [];
+
+        const question = document.createElement('p');
+        question.className = 'wiz-question';
+        question.style.marginTop = '1rem';
+        question.textContent = farms.length ? '¿A qué finca pertenece?' : 'Crea una finca para asociar gastos generales';
+        fragment.appendChild(question);
+
+        if (!farms.length) return;
+
+        const grid = document.createElement('div');
+        grid.className = 'wiz-crops-grid';
+
+        // "Sin finca específica" option
+        const noneBtn = document.createElement('button');
+        noneBtn.type = 'button';
+        noneBtn.className = `wiz-crop-btn wiz-farm-btn${!state.farmId ? ' selected' : ''}`;
+        noneBtn.dataset.farmId = '';
+
+        const noneIcon = document.createElement('span');
+        noneIcon.className = 'wiz-crop-icon';
+        noneIcon.textContent = '📋';
+        const noneName = document.createElement('span');
+        noneName.className = 'wiz-crop-name';
+        noneName.textContent = 'Sin finca específica';
+        const noneVariety = document.createElement('span');
+        noneVariety.className = 'wiz-crop-variety';
+        noneVariety.textContent = 'Movimiento general';
+        noneBtn.append(noneIcon, noneName, noneVariety);
+        grid.appendChild(noneBtn);
+
+        // Farm buttons
+        farms.forEach(farm => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `wiz-crop-btn wiz-farm-btn${state.farmId === farm.id ? ' selected' : ''}`;
+            btn.dataset.farmId = farm.id;
+
+            const iconSpan = document.createElement('span');
+            iconSpan.className = 'wiz-crop-icon';
+            iconSpan.textContent = '🏠';
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'wiz-crop-name';
+            nameSpan.textContent = farm.name || 'Finca';
+            const varietySpan = document.createElement('span');
+            varietySpan.className = 'wiz-crop-variety';
+            varietySpan.textContent = farm.location_text || '';
+            btn.append(iconSpan, nameSpan, varietySpan);
+            grid.appendChild(btn);
+        });
+
+        fragment.appendChild(grid);
     }
 
     // ============ STEP 2: DETAILS ============
@@ -1300,6 +1365,13 @@ export async function openAgroWizard(tabName, deps) {
         };
 
         addRow('🌱 Cultivo', state.cropName || 'General');
+        if (state.farmId) {
+            const farms = (typeof window._agroFarms?.getFarms === 'function')
+                ? window._agroFarms.getFarms()
+                : [];
+            const farm = farms.find(f => f.id === state.farmId);
+            if (farm) addRow('🏠 Finca', farm.name || 'Finca');
+        }
         addRow('📝 Concepto', state.concepto || '');
         if (meta.hasWho && state.who) addRow(meta.whoLabel || 'Responsable', state.who);
         if (meta.hasUnits && cantidadDisplay !== '-') addRow('📦 Cantidad', cantidadDisplay);
@@ -1360,8 +1432,21 @@ export async function openAgroWizard(tabName, deps) {
                 const crops = Array.isArray(cropsCache) ? cropsCache : [];
                 const match = id ? crops.find(c => String(c.id) === id) : null;
                 state.cropName = match ? (match.name || 'Cultivo') : 'General / Sin cultivo';
+                // Auto-resolve farmId from crop's farm_id
+                if (id && match) {
+                    state.farmId = match.farm_id || null;
+                }
                 // Auto-advance
                 state.step = 2;
+                render();
+            });
+        });
+
+        // Farm selection (step 1)
+        overlay.querySelectorAll('.wiz-farm-btn[data-farm-id]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const farmId = btn.dataset.farmId || null;
+                state.farmId = farmId || null;
                 render();
             });
         });
@@ -1375,6 +1460,8 @@ export async function openAgroWizard(tabName, deps) {
                 const rows = Array.isArray(cropsCache) ? cropsCache : [];
                 const match = cropId ? rows.find((crop) => String(crop.id) === String(cropId)) : null;
                 state.cropName = match ? (match.name || 'Cultivo') : 'General / Sin cultivo';
+                // Sync farmId with crop selection
+                state.farmId = match ? (match.farm_id || null) : null;
             });
         }
 
@@ -1551,6 +1638,7 @@ export async function openAgroWizard(tabName, deps) {
             const rows = Array.isArray(cropsCache) ? cropsCache : [];
             const match = state.cropId ? rows.find((crop) => String(crop.id) === String(state.cropId)) : null;
             state.cropName = match ? (match.name || 'Cultivo') : 'General / Sin cultivo';
+            state.farmId = match ? (match.farm_id || null) : null;
         }
         const fechaEl = overlay.querySelector('#wiz-fecha');
         if (fechaEl) state.fecha = fechaEl.value;
@@ -1673,6 +1761,7 @@ export async function openAgroWizard(tabName, deps) {
             const insertData = {
                 user_id: user.id,
                 crop_id: lockCropSelection ? forcedCropId : (state.cropId || null),
+                farm_id: state.farmId || null,
                 [tabName === 'gastos' ? 'date' : 'fecha']: state.fecha,
                 [tabName === 'gastos' ? 'concept' : 'concepto']: finalConcepto,
                 [tabName === 'gastos' ? 'amount' : 'monto']: montoNum,
@@ -1810,6 +1899,7 @@ export async function openAgroWizard(tabName, deps) {
                 const expenseData = {
                     user_id: user.id,
                     crop_id: linkedCropId,
+                    farm_id: state.farmId || null,
                     date: state.fecha,
                     concept: operatingConcept,
                     amount: montoNum,
@@ -1847,11 +1937,11 @@ export async function openAgroWizard(tabName, deps) {
                 };
             } else {
                 const optionalFieldsByTab = {
-                    ingresos: ['unit_type', 'unit_qty', 'quantity_kg', 'currency', 'exchange_rate', 'monto_usd', 'origin_table', 'transfer_state', 'buyer_id', 'buyer_group_key', 'buyer_match_status'],
-                    pendientes: ['unit_type', 'unit_qty', 'quantity_kg', 'currency', 'exchange_rate', 'monto_usd', 'buyer_id', 'buyer_group_key', 'buyer_match_status'],
-                    gastos: ['currency', 'exchange_rate', 'monto_usd'],
-                    perdidas: ['unit_type', 'unit_qty', 'quantity_kg', 'currency', 'exchange_rate', 'monto_usd', 'origin_table', 'buyer_id', 'buyer_group_key', 'buyer_match_status'],
-                    transferencias: ['unit_type', 'unit_qty', 'quantity_kg', 'currency', 'exchange_rate', 'monto_usd']
+                    ingresos: ['farm_id', 'unit_type', 'unit_qty', 'quantity_kg', 'currency', 'exchange_rate', 'monto_usd', 'origin_table', 'transfer_state', 'buyer_id', 'buyer_group_key', 'buyer_match_status'],
+                    pendientes: ['farm_id', 'unit_type', 'unit_qty', 'quantity_kg', 'currency', 'exchange_rate', 'monto_usd', 'buyer_id', 'buyer_group_key', 'buyer_match_status'],
+                    gastos: ['farm_id', 'currency', 'exchange_rate', 'monto_usd'],
+                    perdidas: ['farm_id', 'unit_type', 'unit_qty', 'quantity_kg', 'currency', 'exchange_rate', 'monto_usd', 'origin_table', 'buyer_id', 'buyer_group_key', 'buyer_match_status'],
+                    transferencias: ['farm_id', 'unit_type', 'unit_qty', 'quantity_kg', 'currency', 'exchange_rate', 'monto_usd']
                 };
                 const insertResult = await insertWizardRowWithFallback(
                     supabase,

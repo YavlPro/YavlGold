@@ -3310,3 +3310,107 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ==========================================================================
+   §FARM-MOVEMENTS — Badges de finca en filas del Facturero
+   Post-inyectado por agro-farm-movements.js sobre filas con farm_id.
+   ========================================================================== */
+
+/* Badge inline junto a .tx-crop */
+.agro-ops-v10 .tx-farm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.1rem 0.4rem;
+  background: color-mix(in srgb, var(--gold-4, #C8A752) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gold-4, #C8A752) 20%, transparent);
+  border-radius: var(--radius-xs, 4px);
+  color: var(--gold-4, #C8A752);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  margin-left: 0.35rem;
+  vertical-align: middle;
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   §WIZARD-FARM — Estilos del picker de fincas en el wizard (Step 1)
+   ========================================================================== */
+
+/* Botón de finca — variante dashed del botón de cultivo */
+.agro-wizard-card .wiz-farm-btn {
+  border-style: dashed;
+  min-height: 56px;
+  opacity: 0.85;
+  transition: all 0.2s ease;
+}
+
+.agro-wizard-card .wiz-farm-btn:hover {
+  opacity: 1;
+}
+
+.agro-wizard-card .wiz-farm-btn .wiz-crop-icon {
+  font-size: 1.2rem;
+}
+
+.agro-wizard-card .wiz-farm-btn .wiz-crop-name {
+  font-size: 0.8rem;
+  color: var(--gold-4, #C8A752);
+}
+
+.agro-wizard-card .wiz-farm-btn.selected {
+  border-color: var(--gold-4, #C8A752);
+  background: rgba(200, 167, 82, 0.12);
+  opacity: 1;
+}
+
+.agro-wizard-card .wiz-farm-btn.selected .wiz-crop-name {
+  color: var(--gold-5, #E8D48B);
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   §FARM-SECTION-DIVIDER — Encabezado de sección para futura separación
+   ========================================================================== */
+
+.agro-farm-section-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.75rem 0 0.5rem;
+  padding: 0.4rem 0.75rem;
+  background: color-mix(in srgb, var(--gold-4, #C8A752) 4%, var(--bg-1, #0a0a0a));
+  border-left: 3px solid var(--gold-4, #C8A752);
+  border-radius: 0 var(--radius-xs, 4px) var(--radius-xs, 4px) 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--gold-4, #C8A752);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.agro-farm-section-divider span {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 500;
+  color: var(--text-secondary, #94A3B8);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.8rem;
+}
+
+/* ==========================================================================
+   §FARM-MOVEMENTS — Responsive
+   ========================================================================== */
+
+@media (max-width: 480px) {
+  .agro-ops-v10 .tx-farm-badge {
+    font-size: 0.6rem;
+    padding: 0.08rem 0.3rem;
+    margin-left: 0.2rem;
+  }
+}

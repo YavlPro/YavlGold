@@ -3204,6 +3204,13 @@
                     }
                 }).catch(err => console.warn('[AGRO] Reports center module load error:', err.message));
 
+                // Farm movements badge post-processing (non-blocking)
+                import('./agro-farm-movements.js').then((mod) => {
+                    if (typeof mod.initFarmMovements === 'function') {
+                        mod.initFarmMovements({ initialUserId: session.user?.id });
+                    }
+                }).catch(err => console.warn('[AGRO] Farm movements module load error:', err.message));
+
                 // Expose unified stats globally for inline scripts
                 window.refreshAgroStats = async function () {
                     const summary = await statsModule.computeAgroFinanceSummaryV1();

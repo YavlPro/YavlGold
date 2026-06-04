@@ -4045,3 +4045,207 @@ Notas: Se mantiene compatibilidad legacy en LEGACY_VIEW_REDIRECTS (`cartera-viva
 
 ### Notas de Transición
 Agregadas en MANIFIESTO_AGRO.md §4.5.1 y §4.5.2 para evitar confusión de usuarios y agentes que conozcan los nombres antiguos.
+
+---
+
+## Sesión 2026-06-02 — Renombramiento Canónico Exitoso (GLM 5.1) + Pulidos Finales
+
+### Fecha
+2026-06-02 (martes)
+
+### Objetivo
+Completar el renombramiento canónico pendiente del día anterior (31 de mayo):
+- **Cartera Viva → Facturero de Clientes**
+- **Cartera Operativa → Facturero de la Finca**
+
+### Agentes involucrados
+- **GLM 5.1**: Renombramiento canónico masivo (éxito completo)
+- **Claude**: Corrección de bug post-renombramiento (vistas que no cargaban)
+- **DeepSeek V4 Flash**: Pulido final de encabezados duplicados
+- **Qwen 3.7**: Coordinación, validación y documentación
+
+### Contexto del día anterior (31 de mayo)
+- MiniMax M3 intentó ejecutar el mismo renombramiento pero rompió Cartera Viva y otras zonas
+- Se ejecutó `git reset` para restaurar integridad del repo
+- Se tomó la decisión operativa de esperar a GLM 5.1 con créditos disponibles
+- **Lección aprendida:** MiniMax M3 no es confiable para cambios canónicos masivos multi-archivo
+
+### Frente 1: Renombramiento Canónico ✅ COMPLETADO
+
+#### Archivos renombrados (8 archivos)
+| Antes | Después |
+|-------|---------|
+| `agro-cartera-viva-client-assignment.js` | `agro-facturero-clientes-assignment.js` |
+| `agro-cartera-viva-detail.js` | `agro-facturero-clientes-detail.js` |
+| `agro-cartera-viva-export.js` | `agro-facturero-clientes-export.js` |
+| `agro-cartera-viva-client-merge.js` | `agro-facturero-clientes-merge.js` |
+| `agro-cartera-viva-view.js` | `agro-facturero-clientes-view.js` |
+| `agro-cartera-viva.js` | `agro-facturero-clientes.js` |
+| `agro-cartera-viva.css` | `agro-facturero-clientes.css` |
+| `agro-operations.css` | `agro-facturero-finca.css` |
+
+#### Archivos modificados (~25 archivos)
+- **JS modules:** agro.js, agro-shell.js, index.html, agro-agenda.js, agro-cart.js, agro-clients.js, agro-period-cycles.js, agro-wizard.js, agroOperationalCycles.js, agroTaskCycles.js, agrociclos.js, agrocompradores.js, agrosocial.js
+- **Archivos renombrados con ajustes internos:** los 8 listados arriba
+- **Documentos canónicos:** MANIFIESTO_AGRO.md, ADN-VISUAL-V11.0.md, FICHA_TECNICA.md, llms.txt
+- **Reporte:** AGENT_REPORT_ACTIVE.md
+
+#### Cambios aplicados
+1. **View IDs actualizados:**
+   - `cartera-viva` → `facturero-clientes`
+   - `operational` → `facturero-finca`
+
+2. **Rutas hash actualizadas:**
+   - `#view=cartera-viva` → `#view=facturero-clientes`
+   - `#view=operational` → `#view=facturero-finca`
+
+3. **Aliases legacy en `VIEW_ALIASES`:**
+   - Retrocompatibilidad para URLs viejas que apunten a los nombres antiguos
+
+4. **Import paths actualizados** en 12+ archivos JS
+
+5. **Strings UX actualizados** (títulos, aria-labels, modals, comentarios) en ~25 archivos
+
+6. **Data attributes de view** (`data-agro-active-view`) actualizados en agro.css
+
+7. **Notas de transición agregadas** en MANIFIESTO_AGRO.md §4.5.1 y §4.5.2
+
+#### Lo que NO se tocó (respetando cánones)
+- ❌ Tablas de Supabase (siguen siendo `agro_pending`, `agro_expenses`, etc.)
+- ❌ Semántica funcional (solo cambiaron nombres, no comportamiento)
+- ❌ CSS class names internos (`.cartera-viva-*`, `.agro-operational-*`) — son implementación, no semántica visible
+- ❌ Estructura de datos y queries
+- ❌ ADN Visual V11 (sin cambios de estilo)
+
+### Frente 2: Corrección Post-Renombramiento ✅ COMPLETADO
+
+#### Problema identificado
+Después del renombramiento canónico, las vistas del Facturero no cargaban correctamente.
+
+#### Causa raíz
+Algún import o referencia interna no se actualizó correctamente durante el renombramiento masivo.
+
+#### Fix aplicado (Claude)
+- **Commit:** `fix(agro): corregir vistas Facturero que no cargaban tras renombramiento canónico`
+- Ajustes quirúrgicos para asegurar que las vistas Facturero de Clientes y Facturero de la Finca carguen correctamente
+- Respetando todos los cánones del proyecto
+
+### Frente 3: Pulido Final de Textos ✅ COMPLETADO
+
+#### Problema identificado
+El usuario reportó textos repetidos en los encabezados de las vistas del Facturero.
+
+#### Fix aplicado (DeepSeek V4 Flash)
+- **Commit:** `fix(agro): eliminar encabezados duplicados en vistas Facturero`
+- Pulido cosmético sin tocar funcionalidad
+- Textos más limpios y profesionales
+
+### QA Manual Validado por el Usuario ✅
+
+| Caso | Resultado |
+|------|-----------|
+| Navegación Hub — "Mis finanzas" muestra Facturero de Clientes y Facturero de la Finca | ✅ PASS |
+| Facturero de Clientes — título, tabs, lista de clientes, datos reales | ✅ PASS |
+| Facturero de la Finca — título, tabs, filtros por cultivo, datos reales (incluyendo los 3 abonos de urea y gramonson del 31 de mayo) | ✅ PASS |
+| Retrocompatibilidad de URLs viejas (`#view=cartera-viva` → `#view=facturero-clientes`) | ✅ PASS |
+| Persistencia tras refresh (F5) en ambas vistas | ✅ PASS |
+| Reportes MD exportados usan nombres nuevos | ✅ PASS |
+| Build gate: `pnpm build:gold` | ✅ PASS |
+
+### Commits del día (2026-06-02)
+```
+[commit] fix(agro): eliminar encabezados duplicados en vistas Facturero (DeepSeek V4 Flash) ✅
+[commit] fix(agro): corregir vistas Facturero que no cargaban tras renombramiento canónico (Claude) ✅
+[commit] refactor(agro): renombramiento canónico Cartera Viva/Operativa → Facturero de Clientes/de la Finca (GLM 5.1) ✅
+```
+
+### Build
+- Resultado: ✅ OK
+- UTF-8 verificado
+- Push exitoso a main
+
+### Consistencia canónica
+| Documento | Sección | Estado |
+|-----------|---------|--------|
+| MANIFIESTO_AGRO.md | §4.5.1 Facturero de Clientes (antes Cartera Viva) | ✅ Actualizado con nota de transición |
+| MANIFIESTO_AGRO.md | §4.5.2 Facturero de la Finca (antes Cartera Operativa) | ✅ Actualizado con nota de transición |
+| MANIFIESTO_AGRO.md | §2.3 Cada cosa con su nombre real | ✅ Cumplido |
+| MANIFIESTO_AGRO.md | §2.2 Menos fatiga, más claridad | ✅ Cumplido |
+| AGENTS.md | §8.8 Simplicidad primero | ✅ Cumplido |
+| ADN-VISUAL-V11.0.md | §9 Navegación hub | ✅ Actualizado |
+| FICHA_TECNICA.md | §4.2 Módulos Agro | ✅ Actualizado |
+
+### Lecciones aprendidas
+
+#### 1. Selección de agente por tipo de tarea (validación empírica)
+**Comparativa GLM 5.1 vs MiniMax M3 para cambios masivos:**
+
+| Aspecto | GLM 5.1 (hoy) | MiniMax M3 (ayer) |
+|---------|---------------|-------------------|
+| Integridad de datos | ✅ Preservada | ❌ Rota (requirió git reset) |
+| Retrocompatibilidad | ✅ Aliases legacy incluidos | ❌ No incluido |
+| Notas de transición | ✅ Agregadas en MANIFIESTO_AGRO | ❌ No agregadas |
+| Respeto a cánones | ✅ Completo | ⚠️ Parcial |
+| Resultado final | 🟢 Aceptable para commit | 🔴 Revertido con git reset |
+| Uso de créditos | 🟢 Eficiente | 🔴 Ineficiente |
+
+**Conclusión operativa:**
+- **GLM 5.1** = agente preferido para cambios canónicos masivos en YavlGold
+- **MiniMax M3** = solo para diagnóstico, análisis semántico y tareas exploratorias
+- **Claude** = excelente para correcciones quirúrgicas post-cambio masivo
+- **DeepSeek V4 Flash** = bueno para pulido final y tareas cosméticas
+
+#### 2. Proceso multi-agente secuencial efectivo
+El día demostró que un flujo multi-agente bien orquestado produce resultados superiores:
+1. **GLM 5.1** → Cambio masivo (renombramiento canónico)
+2. **Claude** → Corrección de bugs post-cambio
+3. **DeepSeek V4 Flash** → Pulido final cosmético
+4. **Qwen 3.7** → Coordinación, validación y documentación
+
+#### 3. Git reset como herramienta de defensa operativa
+La decisión del 31 de mayo de revertir el commit fallido de MiniMax M3 con `git reset` permitió:
+- Preservar la integridad del repo
+- Mantener los 2 commits válidos del bug de gastos operativos
+- Reintentar el renombramiento hoy con el agente correcto (GLM 5.1)
+- Cerrar el frente con éxito
+
+### Bloqueos
+Ninguno. Todos los frentes del día fueron completados exitosamente.
+
+### Impacto del día
+
+#### Positivo
+- ✅ Renombramiento canónico completado exitosamente
+- ✅ Nombres ahora hablan como habla el agricultor: "Facturero de Clientes" y "Facturero de la Finca"
+- ✅ QA manual validado completo por el usuario
+- ✅ Build gate pasado
+- ✅ Retrocompatibilidad de URLs viejas preservada
+- ✅ Integridad de datos del agricultor mantenida
+- ✅ Lección operativa consolidada sobre selección de agentes
+
+#### Métricas del día
+- **Commits:** 3 exitosos
+- **Archivos renombrados:** 8
+- **Archivos modificados:** ~25
+- **Frentes cerrados:** 3 (renombramiento + corrección post + pulido)
+- **Frentes abiertos:** 0
+- **Agentes involucrados:** 4 (GLM, Claude, DeepSeek, Qwen)
+
+### NO se hizo
+- ❌ No se modificaron tablas de Supabase
+- ❌ No se cambió lógica funcional
+- ❌ No se agregaron features nuevas
+- ❌ No se violó ADN Visual V11
+- ❌ No se tocó ROADMAP_VISION_YAVLGOLD.md
+- ❌ No se creció `agro.js` con features
+
+### Cierre del frente
+Este frente queda **cerrado y listo para archivar** según la Ley de Archivo por Frente Cerrado (AGENTS.md §4.2):
+- QA validado por el usuario
+- Build gate pasado
+- Documentación actualizada
+- Commits en main
+
+Los documentos de diagnóstico del bug de gastos operativos (del 31 de mayo) pueden archivarse en `apps/gold/docs/archive/bugs/` cuando corresponda.
+
+---
