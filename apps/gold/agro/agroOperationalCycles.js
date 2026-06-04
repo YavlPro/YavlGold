@@ -358,6 +358,7 @@ function createDraftValues(overrides = {}) {
         economicType: 'expense',
         category: 'other',
         cropId: '',
+        farmId: '',
         amount: '',
         currency: 'COP',
         movementDate: todayLocalIso(),
@@ -1155,6 +1156,7 @@ function normalizePayload(source = {}, options = {}) {
         economicType,
         category,
         cropId: ensureLocalCropSelection(source.cropId || source.crop_id),
+        farmId: normalizeId(source.farmId || source.farm_id),
         amount,
         currency,
         movementDate,
@@ -1189,7 +1191,8 @@ async function deriveMovementPayload(userId, cycleId, payload) {
         concept: derivePrimaryConcept(payload.name, payload.description),
         movement_date: payload.movementDate,
         quantity: payload.quantity,
-        unit_type: payload.unitType
+        unit_type: payload.unitType,
+        farm_id: payload.farmId || null
     };
 }
 
@@ -1248,6 +1251,7 @@ async function createCycleRecord(payload) {
         economic_type: payload.economicType,
         category: payload.category,
         crop_id: cropId,
+        farm_id: payload.farmId || null,
         status: payload.status,
         opened_at: payload.movementDate,
         closed_at: closedAt,
@@ -1305,6 +1309,7 @@ async function updateCycleRecord(cycleId, payload) {
         economic_type: payload.economicType,
         category: payload.category,
         crop_id: cropId,
+        farm_id: payload.farmId || null,
         status: payload.status,
         opened_at: payload.movementDate,
         closed_at: closedAt,
@@ -1529,6 +1534,23 @@ function buildCropOptionsMarkup(selectedValue = '') {
     return options.join('');
 }
 
+function buildFarmOptionsMarkup(selectedValue = '') {
+    const selected = normalizeId(selectedValue);
+    const farms = (typeof window._agroFarms?.getFarms === 'function')
+        ? window._agroFarms.getFarms()
+        : [];
+    const options = ['<option value="">Sin asociar a finca</option>'];
+    farms.forEach((farm) => {
+        const id = normalizeId(farm.id);
+        if (!id) return;
+        const label = farm.name || 'Finca';
+        const suffix = farm.is_default ? ' (Principal)' : '';
+        const isSelected = id === selected ? ' selected' : '';
+        options.push(`<option value="${escapeAttr(id)}"${isSelected}>${escapeHtml(label)}${escapeHtml(suffix)}</option>`);
+    });
+    return options.join('');
+}
+
 function buildSelectOptionsMarkup(options, selectedValue = '') {
     return options.map((option) => {
         const selected = option.value === selectedValue ? ' selected' : '';
@@ -1672,6 +1694,12 @@ function renderEditForm(focusSnapshot) {
                                 ${buildCropOptionsMarkup(values.cropId)}
                             </select>
                         </div>
+                        <div class="input-group input-group--full">
+                            <label class="input-label" for="agro-operational-farm">Finca asociada</label>
+                            <select id="agro-operational-farm" class="styled-input" data-operational-draft="farmId">
+                                ${buildFarmOptionsMarkup(values.farmId)}
+                            </select>
+                        </div>
                         <div class="input-group">
                             <label class="input-label" for="agro-operational-amount">Monto</label>
                             <input type="number" id="agro-operational-amount" class="styled-input" step="any" min="0" placeholder="0.00" data-operational-draft="amount" value="${escapeAttr(values.amount)}">
@@ -1808,6 +1836,12 @@ function renderWizard() {
                                     ${buildCropOptionsMarkup(values.cropId)}
                                 </select>
                             </div>
+                            <div class="input-group input-group--full">
+                                <label class="input-label" for="agro-operational-farm">Finca asociada</label>
+                                <select id="agro-operational-farm" class="styled-input" data-operational-draft="farmId">
+                                    ${buildFarmOptionsMarkup(values.farmId)}
+                                </select>
+                            </div>
                             ${!isEdit ? `
                             <div class="input-group input-group--full">
                                 <label class="input-label">Estado inicial</label>
@@ -1887,6 +1921,10 @@ function renderWizard() {
                         <article class="agro-operational-confirm-item">
                             <span class="agro-operational-confirm-item__label">Cultivo asociado</span>
                             <strong class="agro-operational-confirm-item__value">${escapeHtml(resolveDraftCropLabel(values.cropId))}</strong>
+                        </article>
+                        <article class="agro-operational-confirm-item">
+                            <span class="agro-operational-confirm-item__label">Finca asociada</span>
+                            <strong class="agro-operational-confirm-item__value">${escapeHtml(resolveDraftFarmLabel(values.farmId))}</strong>
                         </article>
                         <article class="agro-operational-confirm-item">
                             <span class="agro-operational-confirm-item__label">${escapeHtml(directionSummaryLabel(direction, values.economicType))}</span>
@@ -1982,6 +2020,16 @@ function resolveDraftCropLabel(cropId) {
     if (!normalizedId) return 'Sin asociar a cultivo';
     const match = getAvailableCrops().find((crop) => buildCropDisplay(crop).id === normalizedId);
     return match ? buildCropDisplay(match).label : 'Cultivo no valido.';
+}
+
+function resolveDraftFarmLabel(farmId) {
+    const id = normalizeId(farmId);
+    if (!id) return 'Sin asociar a finca';
+    const farms = (typeof window._agroFarms?.getFarms === 'function')
+        ? window._agroFarms.getFarms()
+        : [];
+    const farm = farms.find(f => normalizeId(f.id) === id);
+    return farm ? (farm.name || 'Finca') : 'Finca no valida.';
 }
 
 function filterCyclesByFamily(cycles, family) {
@@ -3002,6 +3050,7 @@ function setEditMode(cycle) {
             economicType: cycle.economic_type,
             category: cycle.category,
             cropId: cycle.crop_id,
+            farmId: cycle.farm_id || '',
             amount: cycle.primaryMovement?.amount == null ? '' : String(cycle.primaryMovement.amount),
             currency: cycle.primaryMovement?.currency || 'COP',
             movementDate: cycle.primaryMovement?.movement_date || cycle.opened_at || todayLocalIso(),
@@ -3233,11 +3282,11 @@ function updateDraftFromField(field, value) {
         else if (state.form.values.status === 'lost') setDraftFieldValue('status', 'open');
     }
 
-    if (field === 'economicType' || field === 'status' || field === 'cropId' || field === 'unitType') {
+    if (field === 'economicType' || field === 'status' || field === 'cropId' || field === 'unitType' || field === 'farmId') {
         if (!state.editId) renderWizard();
     }
 
-    if (state.form.step === 4 && ['amount', 'currency', 'movementDate', 'quantity', 'description', 'name', 'category'].includes(field)) {
+    if (state.form.step === 4 && ['amount', 'currency', 'movementDate', 'quantity', 'description', 'name', 'category', 'farmId'].includes(field)) {
         if (!state.editId) renderWizard();
     }
 }
