@@ -121,6 +121,51 @@ async function loadFarms() {
     if (expError) throw expError;
     if (incError) throw incError;
 
+    // 5. Obtener ciclos operativos vinculados a fincas (para mapear cycle_id → farm_id)
+    const { data: opCycles, error: opCyclesError } = await supabase
+      .from('agro_operational_cycles')
+      .select('id, farm_id')
+      .eq('user_id', user.id)
+      .is('deleted_at', null)
+      .not('farm_id', 'is', null);
+
+    if (opCyclesError) throw opCyclesError;
+
+    // 6. Obtener movimientos de ciclos operativos (donde están los montos reales)
+    const cycleIds = (opCycles || []).map(c => c.id);
+    let opMovements = [];
+    if (cycleIds.length > 0) {
+      const { data: movementsData, error: movementsError } = await supabase
+        .from('agro_operational_movements')
+        .select('cycle_id, direction, amount, currency, amount_usd, exchange_rate')
+        .eq('user_id', user.id)
+        .in('cycle_id', cycleIds);
+      if (movementsError) throw movementsError;
+      opMovements = movementsData || [];
+    }
+
+    // 7. Obtener gastos generales de finca (sin crop_id pero con farm_id)
+    const { data: farmExpenses, error: farmExpError } = await supabase
+      .from('agro_expenses')
+      .select('farm_id, amount, currency, exchange_rate, monto_usd')
+      .eq('user_id', user.id)
+      .is('deleted_at', null)
+      .is('crop_id', null)
+      .not('farm_id', 'is', null);
+
+    if (farmExpError) throw farmExpError;
+
+    // 8. Obtener ingresos generales de finca (sin crop_id pero con farm_id)
+    const { data: farmIncomes, error: farmIncError } = await supabase
+      .from('agro_income')
+      .select('farm_id, monto, currency, exchange_rate, monto_usd')
+      .eq('user_id', user.id)
+      .is('deleted_at', null)
+      .is('crop_id', null)
+      .not('farm_id', 'is', null);
+
+    if (farmIncError) throw farmIncError;
+
     // Calcular montos convertidos a USD por crop_id
     const resolveRecordUsd = (row) => {
       if (row.monto_usd !== undefined && row.monto_usd !== null) return Number(row.monto_usd);
@@ -144,7 +189,7 @@ async function loadFarms() {
       incMap.set(i.crop_id, (incMap.get(i.crop_id) || 0) + resolveRecordUsd(i));
     });
 
-    // 5. Agrupar estadísticas por farm_id
+    // 9. Agrupar estadísticas por farm_id (AMPLIADO con ciclos operativos)
     const statsMap = new Map();
     farmsCache.forEach(f => {
       statsMap.set(f.id, {
@@ -152,7 +197,10 @@ async function loadFarms() {
         activeCrops: 0,
         totalExpenses: 0,
         totalIncome: 0,
-        balance: 0
+        balance: 0,
+        operationalCycles: 0,
+        generalExpenses: 0,
+        generalIncomes: 0
       });
     });
 
@@ -177,10 +225,55 @@ async function loadFarms() {
       fStats.balance = fStats.totalIncome - fStats.totalExpenses;
     });
 
-    // 6. Actualizar dropdown de filtros en Mis Cultivos
+    // 10. Sumar ciclos operativos por finca (movimientos → cycle_id → farm_id)
+    const cycleFarmMap = new Map();
+    (opCycles || []).forEach(c => cycleFarmMap.set(c.id, c.farm_id));
+
+    (opMovements || []).forEach(mov => {
+      const farmId = cycleFarmMap.get(mov.cycle_id);
+      if (!farmId || !statsMap.has(farmId)) return;
+      const fStats = statsMap.get(farmId);
+      const amount = resolveRecordUsd(mov);
+      if (mov.direction === 'in') {
+        fStats.totalIncome += amount;
+        fStats.generalIncomes += amount;
+      } else {
+        fStats.totalExpenses += amount;
+        fStats.generalExpenses += amount;
+      }
+      fStats.balance = fStats.totalIncome - fStats.totalExpenses;
+    });
+
+    // Contar ciclos operativos por finca
+    (opCycles || []).forEach(c => {
+      if (!statsMap.has(c.farm_id)) return;
+      statsMap.get(c.farm_id).operationalCycles++;
+    });
+
+    // 11. Sumar gastos generales de finca (sin crop_id)
+    (farmExpenses || []).forEach(expense => {
+      if (!expense.farm_id || !statsMap.has(expense.farm_id)) return;
+      const fStats = statsMap.get(expense.farm_id);
+      const amount = resolveRecordUsd(expense);
+      fStats.totalExpenses += amount;
+      fStats.generalExpenses += amount;
+      fStats.balance = fStats.totalIncome - fStats.totalExpenses;
+    });
+
+    // 12. Sumar ingresos generales de finca (sin crop_id)
+    (farmIncomes || []).forEach(income => {
+      if (!income.farm_id || !statsMap.has(income.farm_id)) return;
+      const fStats = statsMap.get(income.farm_id);
+      const amount = resolveRecordUsd(income);
+      fStats.totalIncome += amount;
+      fStats.generalIncomes += amount;
+      fStats.balance = fStats.totalIncome - fStats.totalExpenses;
+    });
+
+    // 13. Actualizar dropdown de filtros en Mis Cultivos
     populateFilterSelector();
 
-    // 7. Renderizar vista de Fincas
+    // 14. Renderizar vista de Fincas
     renderFarmsView(root, statsMap);
 
   } catch (err) {
@@ -279,7 +372,7 @@ function renderFarmsView(container, statsMap) {
   `;
 
   farmsCache.forEach(farm => {
-    const stats = statsMap.get(farm.id) || { totalCrops: 0, activeCrops: 0, totalExpenses: 0, totalIncome: 0, balance: 0 };
+    const stats = statsMap.get(farm.id) || { totalCrops: 0, activeCrops: 0, totalExpenses: 0, totalIncome: 0, balance: 0, operationalCycles: 0, generalExpenses: 0, generalIncomes: 0 };
     const safeName = escapeHtml(farm.name);
     const safeLocation = escapeHtml(farm.location_text || '');
     html += `
@@ -300,13 +393,20 @@ function renderFarmsView(container, statsMap) {
               <span class="farm-stat-value gold">${stats.totalCrops}</span>
               ${stats.activeCrops < stats.totalCrops ? `<span class="farm-stat-hint">${stats.activeCrops} activos</span>` : ''}
             </div>
+            ${stats.operationalCycles > 0 ? `
+            <div class="farm-stat-item">
+              <span class="farm-stat-label">Ciclos Operativos</span>
+              <span class="farm-stat-value gold">${stats.operationalCycles}</span>
+            </div>` : ''}
             <div class="farm-stat-item">
               <span class="farm-stat-label">Gastos (Inversión)</span>
               <span class="farm-stat-value expense">${formatUsd(stats.totalExpenses)}</span>
+              ${stats.generalExpenses > 0 ? `<span class="farm-stat-hint">${formatUsd(stats.generalExpenses)} generales</span>` : ''}
             </div>
             <div class="farm-stat-item">
               <span class="farm-stat-label">Ingresos</span>
               <span class="farm-stat-value income">${formatUsd(stats.totalIncome)}</span>
+              ${stats.generalIncomes > 0 ? `<span class="farm-stat-hint">${formatUsd(stats.generalIncomes)} generales</span>` : ''}
             </div>
             <div class="farm-stat-item">
               <span class="farm-stat-label">Balance</span>
