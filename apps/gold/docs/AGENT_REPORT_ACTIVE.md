@@ -217,3 +217,24 @@ La migración original `20260603120000_agro_farm_movements.sql` fue modificada d
 
 ### Estado final
 **GREEN** — Fix aplicado y verificado. Columnas creadas en base de datos.
+
+---
+
+## Sesión 2026-06-05 — Facturero de la Finca: asociación finca/cultivo/sin asociar
+
+### Objetivo
+Completar el rediseño operativo del Facturero de la Finca para distinguir ciclos por asociación a cultivo, asociación a finca o ausencia de asociación, y corregir la lectura de `farm_id` al editar ciclos operativos.
+
+### Diagnóstico
+El UPDATE de `agro_operational_cycles` ya incluía `farm_id`, pero la lectura posterior no lo recuperaba: `fetchCycles()` omitía `farm_id` en el SELECT y `buildCycleViewModel()` no lo exponía. Por eso un ciclo podía guardar finca asociada y aun así reabrir el modal sin mostrarla.
+
+### Acciones realizadas
+1. Se agregó `farm_id` al SELECT y al view model de ciclos operativos.
+2. Se reemplazó el filtro binario por 4 chips: Todos, Por cultivo, Por finca y Sin asociar.
+3. Se agregaron badges semánticos en cards: cultivo verde, finca dorado y sin asociar ámbar.
+4. Se actualizó terminología visible de "cartera operativa" a "ciclo operativo" / "Facturero de la Finca".
+5. Se alineó el badge legacy de movimientos de finca para mostrar `🏠 Finca: {name}`.
+6. Se ejecutó `pnpm build:gold` con éxito.
+
+### Estado final
+**GREEN** — Implementación compilada. QA manual de flujo real queda a cargo del usuario.

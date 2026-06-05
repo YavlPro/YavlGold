@@ -3322,10 +3322,10 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
   align-items: center;
   gap: 0.15rem;
   padding: 0.1rem 0.4rem;
-  background: color-mix(in srgb, var(--gold-4, #C8A752) 8%, transparent);
-  border: 1px solid color-mix(in srgb, var(--gold-4, #C8A752) 20%, transparent);
-  border-radius: var(--radius-xs, 4px);
-  color: var(--gold-4, #C8A752);
+  background: color-mix(in srgb, var(--gold-4) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gold-4) 20%, transparent);
+  border-radius: var(--radius-xs);
+  color: var(--gold-4);
   font-family: 'Rajdhani', sans-serif;
   font-size: 0.65rem;
   font-weight: 700;
@@ -3359,17 +3359,17 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 
 .agro-wizard-card .wiz-farm-btn .wiz-crop-name {
   font-size: 0.8rem;
-  color: var(--gold-4, #C8A752);
+  color: var(--gold-4);
 }
 
 .agro-wizard-card .wiz-farm-btn.selected {
-  border-color: var(--gold-4, #C8A752);
-  background: rgba(200, 167, 82, 0.12);
+  border-color: var(--gold-4);
+  background: color-mix(in srgb, var(--gold-4) 12%, transparent);
   opacity: 1;
 }
 
 .agro-wizard-card .wiz-farm-btn.selected .wiz-crop-name {
-  color: var(--gold-5, #E8D48B);
+  color: var(--gold-5);
   font-weight: 700;
 }
 
@@ -3383,13 +3383,13 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
   gap: 0.5rem;
   margin: 0.75rem 0 0.5rem;
   padding: 0.4rem 0.75rem;
-  background: color-mix(in srgb, var(--gold-4, #C8A752) 4%, var(--bg-1, #0a0a0a));
-  border-left: 3px solid var(--gold-4, #C8A752);
-  border-radius: 0 var(--radius-xs, 4px) var(--radius-xs, 4px) 0;
+  background: color-mix(in srgb, var(--gold-4) 4%, var(--bg-1));
+  border-left: 3px solid var(--gold-4);
+  border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
   font-family: 'Orbitron', sans-serif;
   font-size: 0.75rem;
   font-weight: 700;
-  color: var(--gold-4, #C8A752);
+  color: var(--gold-4);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -3397,7 +3397,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 .agro-farm-section-divider span {
   font-family: 'Rajdhani', sans-serif;
   font-weight: 500;
-  color: var(--text-secondary, #94A3B8);
+  color: var(--text-secondary);
   text-transform: none;
   letter-spacing: 0;
   font-size: 0.8rem;

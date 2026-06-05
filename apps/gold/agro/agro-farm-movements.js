@@ -112,8 +112,8 @@ function injectFarmBadge(rowEl, farmName) {
     if (!cropSpan) return;
 
     const badge = document.createElement('span');
-    badge.className = 'tx-farm-badge';
-    badge.textContent = `🏠 ${farmName}`;
+    badge.className = 'tx-farm-badge badge-farm';
+    badge.textContent = `🏠 Finca: ${farmName}`;
     badge.title = 'Movimiento general de finca';
 
     cropSpan.insertAdjacentElement('afterend', badge);

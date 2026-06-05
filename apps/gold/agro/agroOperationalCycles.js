@@ -16,10 +16,11 @@ const SUBVIEW_FINISHED = 'finished';
 const SUBVIEW_DONATIONS = 'donations';
 const SUBVIEW_LOSSES = 'losses';
 const SUBVIEW_EXPORT = 'export';
-const FAMILY_LINKED = 'linked';
-const FAMILY_UNLINKED = 'unlinked';
+const FAMILY_LINKED = 'crop';
+const FAMILY_FARM = 'farm';
+const FAMILY_ORPHAN = 'orphan';
 const FAMILY_ALL = 'all';
-const FAMILY_OPTIONS = Object.freeze([FAMILY_LINKED, FAMILY_UNLINKED, FAMILY_ALL]);
+const FAMILY_OPTIONS = Object.freeze([FAMILY_ALL, FAMILY_LINKED, FAMILY_FARM, FAMILY_ORPHAN]);
 const CROPS_READY_EVENT = 'AGRO_CROPS_READY';
 const VIEW_CHANGED_EVENT = 'agro:shell:view-changed';
 const MODE_CHANGE_EVENT = 'agro:modechange';
@@ -139,7 +140,7 @@ const state = {
     modalOpen: false,
     currentView: '',
     currentSubview: SUBVIEW_ACTIVE,
-    familyFilter: FAMILY_LINKED,
+    familyFilter: FAMILY_ALL,
     editId: '',
     schemaMissing: false,
     cropDeletedAtSupported: true,
@@ -186,7 +187,7 @@ function createClosedPortfolioState(cropId = '') {
         lostCycles: 0,
         status: 'closed',
         tone: 'closed',
-        label: 'Cartera operativa cerrada'
+        label: 'Ciclo operativo cerrado'
     };
 }
 
@@ -202,7 +203,7 @@ function serializePortfolioState(entry) {
         lostCycles: Number(safeEntry.lostCycles || 0),
         status: safeEntry.openCycles > 0 ? 'open' : 'closed',
         tone: safeEntry.openCycles > 0 ? 'active' : 'closed',
-        label: safeEntry.openCycles > 0 ? 'Cartera operativa abierta' : 'Cartera operativa cerrada'
+        label: safeEntry.openCycles > 0 ? 'Ciclo operativo abierto' : 'Ciclo operativo cerrado'
     };
 }
 
@@ -395,7 +396,7 @@ function normalizeOperationalSubview(value) {
 
 function normalizeFamilyFilter(value) {
     const token = normalizeToken(value);
-    return FAMILY_OPTIONS.includes(token) ? token : FAMILY_LINKED;
+    return FAMILY_OPTIONS.includes(token) ? token : FAMILY_ALL;
 }
 
 function escapeHtml(value) {
@@ -815,11 +816,12 @@ function buildCycleViewModel(cycle, movementsByCycle, cropMap) {
 
     return {
         id: cycleId,
-        name: String(cycle?.name || 'Cartera operativa').trim() || 'Cartera operativa',
+        name: String(cycle?.name || 'Ciclo operativo').trim() || 'Ciclo operativo',
         description: toNullableText(cycle?.description),
         economic_type: normalizeToken(cycle?.economic_type),
         category: normalizeToken(cycle?.category),
         crop_id: normalizeId(cycle?.crop_id),
+        farm_id: normalizeId(cycle?.farm_id),
         crop,
         status: normalizeToken(cycle?.status || 'open'),
         opened_at: String(cycle?.opened_at || '').trim(),
@@ -844,12 +846,18 @@ function createDatasetSummary(cycles = []) {
     const incoming = createMoneyBucket();
     const outgoing = createMoneyBucket();
     let linkedCount = 0;
+    let farmCount = 0;
+    let orphanCount = 0;
     let unlinkedCount = 0;
     let movementCount = 0;
 
     cycles.forEach((cycle) => {
         if (cycle.crop_id) linkedCount += 1;
-        else unlinkedCount += 1;
+        else {
+            unlinkedCount += 1;
+            if (cycle.farm_id) farmCount += 1;
+            else orphanCount += 1;
+        }
         movementCount += Number(cycle.movementCount || 0);
         mergeMoneyBuckets(incoming, cycle.summary.incoming);
         mergeMoneyBuckets(outgoing, cycle.summary.outgoing);
@@ -860,6 +868,8 @@ function createDatasetSummary(cycles = []) {
     return {
         count: cycles.length,
         linkedCount,
+        farmCount,
+        orphanCount,
         unlinkedCount,
         movementCount,
         incoming,
@@ -1012,7 +1022,7 @@ function getPeriodRange(period) {
 async function fetchCycles(supabase, userId, filters, statuses) {
     let query = supabase
         .from('agro_operational_cycles')
-        .select('id,user_id,name,description,economic_type,category,crop_id,status,opened_at,closed_at,notes,created_at,updated_at')
+        .select('id,user_id,name,description,economic_type,category,crop_id,farm_id,status,opened_at,closed_at,notes,created_at,updated_at')
         .eq('user_id', userId)
         .in('status', statuses)
         .order('opened_at', { ascending: false })
@@ -1281,8 +1291,8 @@ async function createCycleRecord(payload) {
     return {
         cycleId,
         message: payload.status === 'closed'
-            ? 'Cartera operativa creada y cerrada.'
-            : 'Cartera operativa creada.'
+            ? 'Ciclo operativo creado y cerrado.'
+            : 'Ciclo operativo creado.'
     };
 }
 
@@ -1295,7 +1305,7 @@ async function updateCycleRecord(cycleId, payload) {
     });
     const existingCycle = state.cycleIndex.get(cycleId);
     if (!existingCycle) {
-        throw new Error('No se encontró la cartera operativa a editar.');
+        throw new Error('No se encontró el ciclo operativo a editar.');
     }
 
     const cropId = await validateCropId(supabase, userId, payload.cropId);
@@ -1334,7 +1344,7 @@ async function updateCycleRecord(cycleId, payload) {
 
     return {
         cycleId,
-        message: 'Cambios guardados en la cartera operativa.'
+        message: 'Cambios guardados en el ciclo operativo.'
     };
 }
 
@@ -1343,7 +1353,7 @@ async function deleteCycleRecord(cycleId, options = {}) {
     const userId = await ensureUserId();
     const existingCycle = state.cycleIndex.get(cycleId);
     if (!existingCycle) {
-        throw new Error('No se encontró la cartera operativa a eliminar.');
+        throw new Error('No se encontró el ciclo operativo a eliminar.');
     }
 
     if (!options.skipConfirm) {
@@ -1402,7 +1412,7 @@ function renderShell() {
                     </div>
                 </div>
                 <div class="header-actions">
-                    <button type="button" class="btn btn-primary" data-operational-action="new-cycle">Nueva cartera operativa</button>
+                    <button type="button" class="btn btn-primary" data-operational-action="new-cycle">Nuevo ciclo operativo</button>
                     <button type="button" class="btn" data-agro-view="period-cycles">📆 Ver períodos</button>
                     <button type="button" class="agro-operational-refresh-btn" data-operational-action="refresh" aria-label="Actualizar Facturero de la Finca" title="Actualizar">
                         <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
@@ -1415,17 +1425,17 @@ function renderShell() {
                 <span class="agro-privacy-strip__label">Privacidad</span>
                 <button type="button" class="btn-privacy-toggle" data-money-privacy-control="toggle" aria-pressed="false">Ocultar montos</button>
             </div>
-            <div class="agro-operational-family-toggle" id="agro-operational-family-toggle" role="group" aria-label="Familia de cartera operativa"></div>
-            <div class="agro-operational-subview-switch" id="agro-operational-subview-switch" role="group" aria-label="Lecturas de cartera operativa"></div>
+            <div class="agro-operational-family-toggle" id="agro-operational-family-toggle" role="group" aria-label="Filtros por asociación del Facturero de la Finca"></div>
+            <div class="agro-operational-subview-switch" id="agro-operational-subview-switch" role="group" aria-label="Lecturas del Facturero de la Finca"></div>
 
             <section id="agro-operational-list-section" class="agro-operational-list-section">
                 <div class="agro-operational-list-head">
                     <div>
                         <p class="agro-operational-list-eyebrow" id="agro-operational-list-eyebrow">🟡 Activos</p>
-                        <h3 class="agro-operational-list-title" id="agro-operational-list-title">🟡 Carteras operativas activas</h3>
+                        <h3 class="agro-operational-list-title" id="agro-operational-list-title">🟡 Ciclos operativos activos</h3>
                         <p class="agro-operational-list-copy" id="agro-operational-list-copy">No pagados, en seguimiento o compensándose con lectura operativa.</p>
                     </div>
-                    <button type="button" class="btn" data-operational-action="new-cycle">Nueva cartera operativa</button>
+                    <button type="button" class="btn" data-operational-action="new-cycle">Nuevo ciclo operativo</button>
                 </div>
                 <div id="agro-operational-filters-host"></div>
                 <section id="agro-operational-overview-panel" class="agro-operational-panel agro-operational-overview-panel">
@@ -1438,7 +1448,7 @@ function renderShell() {
                     </div>
                     <div id="agro-operational-overview-body"></div>
                 </section>
-                <p class="agro-operational-list-section__status" id="agro-operational-list-status" aria-live="polite" aria-atomic="true">Cargando cartera operativa...</p>
+                <p class="agro-operational-list-section__status" id="agro-operational-list-status" aria-live="polite" aria-atomic="true">Cargando Facturero de la Finca...</p>
                 <div class="agro-operational-list" id="agro-operational-list"></div>
             </section>
 
@@ -1447,7 +1457,7 @@ function renderShell() {
                     <div class="modal-header agro-operational-modal__header agro-modal-canon__header">
                         <div class="agro-operational-modal__title-group">
                             <p class="agro-operational-modal__eyebrow" id="agro-operational-form-eyebrow">Creación guiada</p>
-                            <h3 class="modal-title agro-operational-modal__title" id="agro-operational-form-title">Nueva cartera operativa</h3>
+                            <h3 class="modal-title agro-operational-modal__title" id="agro-operational-form-title">Nuevo ciclo operativo</h3>
                             <p class="agro-operational-modal__copy" id="agro-operational-form-copy">Describe, clasifica, registra y confirma sin cargar la vista principal.</p>
                         </div>
                         <button type="button" class="modal-close agro-operational-modal__close agro-modal-canon__close" data-operational-action="cancel-form" aria-label="Cerrar modal">&times;</button>
@@ -1660,7 +1670,7 @@ function renderEditForm(focusSnapshot) {
     const values = state.form.values;
 
     state.refs.formEyebrow.textContent = 'Edición directa';
-    state.refs.formTitle.textContent = 'Editar cartera operativa';
+    state.refs.formTitle.textContent = 'Editar ciclo operativo';
     state.refs.formCopy.textContent = 'Modifica los campos necesarios y guarda. Todos los cambios se aplican de una vez.';
 
     state.refs.wizardHost.innerHTML = `
@@ -1770,7 +1780,7 @@ function renderWizard() {
     const effectiveStatus = readLabel(STATUS_OPTIONS, values.status, '🟡 No pagado');
 
     state.refs.formEyebrow.textContent = `Creación guiada · ${currentStepMeta.eyebrow}`;
-    state.refs.formTitle.textContent = 'Nueva cartera operativa';
+    state.refs.formTitle.textContent = 'Nuevo ciclo operativo';
     state.refs.formCopy.textContent = 'Guíate paso a paso para crear el ciclo, registrar el movimiento inicial y decidir si se cierra hoy mismo.';
 
     state.refs.wizardHost.innerHTML = `
@@ -1976,7 +1986,7 @@ function renderWizard() {
                     ${currentStep > 1 ? '<button type="button" class="btn agro-modal-canon__button agro-modal-canon__button--secondary" data-operational-action="wizard-prev">Atrás</button>' : ''}
                     ${currentStep < 4
             ? '<button type="button" class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary" data-operational-action="wizard-next">Siguiente</button>'
-            : `<button type="submit" class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary">${isEdit ? 'Guardar cambios' : 'Guardar cartera operativa'}</button>`}
+            : `<button type="submit" class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary">${isEdit ? 'Guardar cambios' : 'Guardar ciclo operativo'}</button>`}
                 </div>
             </div>
         </form>
@@ -2032,29 +2042,43 @@ function resolveDraftFarmLabel(farmId) {
     return farm ? (farm.name || 'Finca') : 'Finca no valida.';
 }
 
+function getCycleAssociationType(cycle) {
+    if (cycle?.crop_id) return FAMILY_LINKED;
+    if (cycle?.farm_id) return FAMILY_FARM;
+    return FAMILY_ORPHAN;
+}
+
 function filterCyclesByFamily(cycles, family) {
     if (!Array.isArray(cycles)) return [];
-    if (family === FAMILY_LINKED) return cycles.filter((c) => !!c?.crop_id);
-    if (family === FAMILY_UNLINKED) return cycles.filter((c) => !c?.crop_id);
+    if (family === FAMILY_LINKED) return cycles.filter((c) => getCycleAssociationType(c) === FAMILY_LINKED);
+    if (family === FAMILY_FARM) return cycles.filter((c) => getCycleAssociationType(c) === FAMILY_FARM);
+    if (family === FAMILY_ORPHAN) return cycles.filter((c) => getCycleAssociationType(c) === FAMILY_ORPHAN);
     return cycles;
 }
 
 function getFamilyLabel(family) {
-    if (family === FAMILY_UNLINKED) return '\u{1F33E} No asociados al cultivo';
-    if (family === FAMILY_ALL) return '\u{1F4CA} Todos los registros';
-    return '\u{1F331} Asociados al cultivo';
+    if (family === FAMILY_LINKED) return '\u{1F331} Por cultivo';
+    if (family === FAMILY_FARM) return '\u{1F3E0} Por finca';
+    if (family === FAMILY_ORPHAN) return '\u{26A0}\u{FE0F} Sin asociar';
+    return '\u{1F4CA} Todos';
+}
+
+function getFamilyCopy(family) {
+    if (family === FAMILY_LINKED) return 'Ciclos asociados a un cultivo específico para trazabilidad del cultivo.';
+    if (family === FAMILY_FARM) return 'Movimientos generales vinculados a una finca, sin cultivo específico.';
+    if (family === FAMILY_ORPHAN) return 'Registros legacy o incompletos sin cultivo ni finca asociada.';
+    return 'Todos los ciclos visibles, separados por su tipo de asociación.';
 }
 
 function getSubviewMeta(subview) {
     const familyLabel = getFamilyLabel(state.familyFilter);
+    const familyCopy = getFamilyCopy(state.familyFilter);
 
     if (subview === SUBVIEW_FINISHED) {
         return {
             eyebrow: '✅ Pagados',
             title: `✅ Pagados — ${familyLabel}`,
-            copy: state.familyFilter === FAMILY_LINKED
-                ? 'Ciclos ya pagados o cerrados, asociados a un cultivo.'
-                : 'Ciclos ya pagados o cerrados, sin vínculo con cultivo.'
+            copy: `Ciclos ya pagados o cerrados. ${familyCopy}`
         };
     }
 
@@ -2062,9 +2086,7 @@ function getSubviewMeta(subview) {
         return {
             eyebrow: '🤝 Donaciones',
             title: `🤝 Donaciones — ${familyLabel}`,
-            copy: state.familyFilter === FAMILY_LINKED
-                ? 'Donaciones y regalos asociados a un cultivo, incluidos como gastos.'
-                : 'Donaciones y regalos sin vínculo con cultivo, incluidos como gastos.'
+            copy: `Donaciones y regalos incluidos como gastos. ${familyCopy}`
         };
     }
 
@@ -2072,9 +2094,7 @@ function getSubviewMeta(subview) {
         return {
             eyebrow: '💔 Pérdidas',
             title: `💔 Pérdidas — ${familyLabel}`,
-            copy: state.familyFilter === FAMILY_LINKED
-                ? 'Pérdidas o cancelaciones operativas asociadas a un cultivo.'
-                : 'Pérdidas o cancelaciones operativas sin vínculo con cultivo.'
+            copy: `Pérdidas o cancelaciones operativas. ${familyCopy}`
         };
     }
 
@@ -2089,9 +2109,7 @@ function getSubviewMeta(subview) {
     return {
         eyebrow: '🟡 No pagados',
         title: `🟡 No pagados — ${familyLabel}`,
-        copy: state.familyFilter === FAMILY_LINKED
-            ? 'No pagados, en seguimiento o compensándose, asociados a un cultivo.'
-            : 'No pagados, en seguimiento o compensándose, sin vínculo con cultivo.'
+        copy: `No pagados, en seguimiento o compensándose. ${familyCopy}`
     };
 }
 
@@ -2100,16 +2118,16 @@ function renderFamilyToggle() {
     state.refs.familyToggle.hidden = false;
     state.refs.familyToggle.setAttribute('aria-hidden', 'false');
 
-    const allActive = state.datasets[SUBVIEW_ACTIVE]?.cycles || [];
-    const allFinished = state.datasets[SUBVIEW_FINISHED]?.cycles || [];
-    const linkedCount = allActive.filter((c) => !!c?.crop_id).length + allFinished.filter((c) => !!c?.crop_id).length;
-    const unlinkedCount = allActive.filter((c) => !c?.crop_id).length + allFinished.filter((c) => !c?.crop_id).length;
-
-    const totalCount = linkedCount + unlinkedCount;
+    const allCycles = getAllCycles();
+    const totalCount = allCycles.length;
+    const linkedCount = allCycles.filter((c) => getCycleAssociationType(c) === FAMILY_LINKED).length;
+    const farmCount = allCycles.filter((c) => getCycleAssociationType(c) === FAMILY_FARM).length;
+    const orphanCount = allCycles.filter((c) => getCycleAssociationType(c) === FAMILY_ORPHAN).length;
     const options = [
-        { value: FAMILY_LINKED, label: '\u{1F331} Asociados al cultivo', count: linkedCount },
-        { value: FAMILY_UNLINKED, label: '\u{1F33E} No asociados al cultivo', count: unlinkedCount },
-        { value: FAMILY_ALL, label: '\u{1F4CA} Todos los registros', count: totalCount }
+        { value: FAMILY_ALL, label: '\u{1F4CA} Todos', count: totalCount },
+        { value: FAMILY_LINKED, label: '\u{1F331} Por cultivo', count: linkedCount },
+        { value: FAMILY_FARM, label: '\u{1F3E0} Por finca', count: farmCount },
+        { value: FAMILY_ORPHAN, label: '\u{26A0}\u{FE0F} Sin asociar', count: orphanCount }
     ];
 
     state.refs.familyToggle.innerHTML = options.map((option) => `
@@ -2342,16 +2360,57 @@ function buildCycleCropText(cycle) {
     return cycle.crop?.label || '🌱 Cultivo asociado no disponible';
 }
 
+function buildCycleFarmText(cycle) {
+    const farmName = resolveDraftFarmLabel(cycle?.farm_id);
+    if (farmName === 'Sin asociar a finca') return 'Finca asociada no disponible';
+    if (farmName === 'Finca no valida.') return 'Finca asociada';
+    return farmName;
+}
+
+function buildCycleAssociationMeta(cycle) {
+    const type = getCycleAssociationType(cycle);
+    if (type === FAMILY_LINKED) {
+        return {
+            type,
+            className: 'badge-crop',
+            label: `🌱 Cultivo: ${buildCycleCropText(cycle).replace(/^🌱\s*/, '')}`,
+            supportLabel: '🌱 Asociado a cultivo'
+        };
+    }
+    if (type === FAMILY_FARM) {
+        return {
+            type,
+            className: 'badge-farm',
+            label: `🏠 Finca: ${buildCycleFarmText(cycle)}`,
+            supportLabel: '🏠 Asociado a finca'
+        };
+    }
+    return {
+        type,
+        className: 'badge-orphan',
+        label: '⚠️ Sin asociar',
+        supportLabel: '⚠️ Sin asociar'
+    };
+}
+
+function renderCycleAssociationBadge(cycle) {
+    const meta = buildCycleAssociationMeta(cycle);
+    return `<span class="agro-operational-association-badge ${meta.className}" data-association="${escapeAttr(meta.type)}">${escapeHtml(meta.label)}</span>`;
+}
+
 function splitCyclesByAssociation(cycles = []) {
-    const linked = [];
-    const unlinked = [];
+    const crop = [];
+    const farm = [];
+    const orphan = [];
 
     cycles.forEach((cycle) => {
-        if (cycle?.crop_id) linked.push(cycle);
-        else unlinked.push(cycle);
+        const type = getCycleAssociationType(cycle);
+        if (type === FAMILY_LINKED) crop.push(cycle);
+        else if (type === FAMILY_FARM) farm.push(cycle);
+        else orphan.push(cycle);
     });
 
-    return { linked, unlinked };
+    return { crop, farm, orphan };
 }
 
 function buildFamilySummaryChips(cycles) {
@@ -2416,31 +2475,28 @@ function renderCycleFamilySection({ familyKey, title, copy, cycles }) {
 }
 
 function renderGroupedCycleList(cycles = []) {
-    const { linked, unlinked } = splitCyclesByAssociation(cycles);
+    const { crop, farm, orphan } = splitCyclesByAssociation(cycles);
+    const populatedGroups = [
+        { key: FAMILY_LINKED, cycles: crop },
+        { key: FAMILY_FARM, cycles: farm },
+        { key: FAMILY_ORPHAN, cycles: orphan }
+    ].filter((group) => group.cycles.length > 0);
 
-    return [
-        renderCycleFamilySection({
-            familyKey: 'linked',
-            title: '🌱 Asociados al cultivo',
-            copy: 'Conservan crop_id para trazabilidad, pero su lectura oficial vive en Ciclos de Período.',
-            cycles: linked
-        }),
-        linked.length && unlinked.length
-            ? `
-                <div class="agro-operational-family-break" aria-hidden="true">
-                    <span class="agro-operational-family-break__line"></span>
-                    <span class="agro-operational-family-break__label">Movimientos generales fuera del cultivo</span>
-                    <span class="agro-operational-family-break__line"></span>
-                </div>
-            `
-            : '',
-        renderCycleFamilySection({
-            familyKey: 'unlinked',
-            title: '🌾 No asociados al cultivo',
-            copy: 'Son movimientos generales sin crop_id, separados de la lectura del cultivo.',
-            cycles: unlinked
-        })
-    ].filter(Boolean).join('');
+    return populatedGroups.map((group, index) => `
+        ${index > 0 ? `
+            <div class="agro-operational-family-break" aria-hidden="true">
+                <span class="agro-operational-family-break__line"></span>
+                <span class="agro-operational-family-break__label">${escapeHtml(getFamilyLabel(group.key))}</span>
+                <span class="agro-operational-family-break__line"></span>
+            </div>
+        ` : ''}
+        ${renderCycleFamilySection({
+        familyKey: group.key,
+        title: getFamilyLabel(group.key),
+        copy: getFamilyCopy(group.key),
+        cycles: group.cycles
+    })}
+    `).join('');
 }
 
 function renderOverview() {
@@ -2469,14 +2525,14 @@ function renderOverview() {
                     <p class="agro-operational-summary-card__hint">Leyendo ciclos, cultivos y balances visibles.</p>
                 </article>
                 <article class="agro-operational-summary-card agro-operational-summary-card--loading">
-                    <span class="agro-operational-summary-card__label">Asociados al cultivo</span>
+                    <span class="agro-operational-summary-card__label">Por cultivo</span>
                     <strong class="agro-operational-summary-card__value">En lectura</strong>
                     <p class="agro-operational-summary-card__hint">Se ordenan aparte para no mezclar la lectura por cultivo.</p>
                 </article>
                 <article class="agro-operational-summary-card agro-operational-summary-card--loading">
-                    <span class="agro-operational-summary-card__label">No asociados</span>
+                    <span class="agro-operational-summary-card__label">Por finca / sin asociar</span>
                     <strong class="agro-operational-summary-card__value">Ordenando</strong>
-                    <p class="agro-operational-summary-card__hint">Los movimientos generales quedan fuera de la lectura del cultivo.</p>
+                    <p class="agro-operational-summary-card__hint">Los movimientos generales se distinguen de los registros huérfanos.</p>
                 </article>
                 <article class="agro-operational-summary-card agro-operational-summary-card--loading">
                     <span class="agro-operational-summary-card__label">Balance</span>
@@ -2695,6 +2751,7 @@ function renderCyclePhysicalSummary(cycle) {
 
 function renderCycleCard(cycle) {
     const cropText = buildCycleCropText(cycle);
+    const association = buildCycleAssociationMeta(cycle);
     const statusLabel = readLabel(STATUS_OPTIONS, cycle.status, '🟡 No pagado');
     const economicTypeLabel = readLabel(ECONOMIC_TYPE_OPTIONS, cycle.economic_type, 'Operación');
     const primaryAmount = formatAmountLabel(cycle.primaryMovement?.amount, cycle.primaryMovement?.currency);
@@ -2712,6 +2769,7 @@ function renderCycleCard(cycle) {
                     <p class="agro-operational-card__meta">${escapeHtml(cropText)} · ${escapeHtml(dates)}</p>
                 </div>
                 <div class="agro-operational-card__badges">
+                    ${renderCycleAssociationBadge(cycle)}
                     <span class="agro-operational-status ${buildStatusClass(cycle.status)}">${escapeHtml(statusLabel)}</span>
                     <span class="agro-operational-pill ${buildTypeClass(cycle.economic_type)}">${escapeHtml(economicTypeLabel)}</span>
                 </div>
@@ -2743,7 +2801,7 @@ function renderCycleCard(cycle) {
             <div class="agro-operational-card__footer">
                 <div class="agro-operational-card__support">
                     <span class="agro-operational-card__support-item">📜 ${cycle.movementCount} movimiento${cycle.movementCount === 1 ? '' : 's'}</span>
-                    <span class="agro-operational-card__support-item">${escapeHtml(cycle.crop_id ? '🌱 Asociado al cultivo' : '🌾 No asociado al cultivo')}</span>
+                    <span class="agro-operational-card__support-item">${escapeHtml(association.supportLabel)}</span>
                     <span class="agro-operational-card__support-item">${escapeHtml(readLabel(CATEGORY_OPTIONS, cycle.category, '📋 Otro'))}</span>
                 </div>
                 <div class="agro-operational-card__actions">
@@ -2775,9 +2833,9 @@ function renderEmptyState(subview) {
                 ? '✅ Sin pagados con esos filtros'
                 : '🟡 Sin ciclos no pagados con esos filtros';
     const copy = subview === SUBVIEW_DONATIONS
-        ? 'No hay carteras operativas de tipo donación registradas para esta familia.'
+        ? 'No hay ciclos operativos de tipo donación registrados para este filtro.'
         : subview === SUBVIEW_LOSSES
-            ? 'No hay carteras operativas clasificadas como pérdida para esta familia.'
+            ? 'No hay ciclos operativos clasificados como pérdida para este filtro.'
             : subview === SUBVIEW_FINISHED
                 ? 'Ajusta período, categoría o tipo económico para ver ciclos ya pagados o cerrados.'
                 : 'Ajusta período, categoría o tipo económico para ver ciclos no pagados, en seguimiento o compensándose.';
@@ -2788,7 +2846,7 @@ function renderEmptyState(subview) {
             <p class="agro-operational-empty__title">${title}</p>
             <p class="agro-operational-empty__copy">${copy}</p>
             <div class="agro-operational-empty__cta">
-                <button type="button" class="btn btn-primary" data-operational-action="new-cycle">Nueva cartera operativa</button>
+                <button type="button" class="btn btn-primary" data-operational-action="new-cycle">Nuevo ciclo operativo</button>
             </div>
         </div>
     `;
@@ -2817,8 +2875,9 @@ function buildMarkdownSection(title, datasetKey) {
         lines.push(`- Tipo económico: ${readLabel(ECONOMIC_TYPE_OPTIONS, cycle.economic_type, 'Sin tipo')}`);
         lines.push(`- Categoría: ${readLabel(CATEGORY_OPTIONS, cycle.category, 'Sin categoría')}`);
         lines.push(`- Estado: ${readLabel(STATUS_OPTIONS, cycle.status, '🟡 No pagado')}`);
-        lines.push(`- Familia: ${cycle.crop_id ? 'Asociado al cultivo' : 'No asociado al cultivo'}`);
+        lines.push(`- Asociación: ${buildCycleAssociationMeta(cycle).label}`);
         lines.push(`- Cultivo asociado: ${buildCycleCropText(cycle)}`);
+        lines.push(`- Finca asociada: ${cycle.farm_id ? buildCycleFarmText(cycle) : 'Sin asociar a finca'}`);
         lines.push(`- Fechas: ${cycle.closed_at ? `${formatDateLabel(cycle.opened_at)} · Cierre ${formatDateLabel(cycle.closed_at)}` : `${formatDateLabel(cycle.opened_at)} · Sin cierre`}`);
         lines.push(`- ${directionSummaryLabel(cycle.direction, cycle.economic_type)}: ${formatAmountLabel(cycle.primaryMovement?.amount, cycle.primaryMovement?.currency)}`);
         lines.push(`- 📊 Balance del ciclo: ${cycle.balanceText}`);
@@ -2913,7 +2972,7 @@ function renderCurrentSubview() {
 
     if (shouldBlockInitialLoading) {
         syncFiltersHost(state.currentSubview);
-        state.refs.listStatus.textContent = 'Cargando cartera operativa...';
+        state.refs.listStatus.textContent = 'Cargando Facturero de la Finca...';
         state.refs.list.innerHTML = `
             <div class="agro-operational-panel">
                 <div class="agro-operational-loading">
@@ -2962,10 +3021,14 @@ function renderCurrentSubview() {
         }
 
         const familyKey = state.familyFilter;
+        if (familyKey === FAMILY_ALL) {
+            state.refs.list.innerHTML = renderGroupedCycleList(donationCycles);
+            return;
+        }
         state.refs.list.innerHTML = renderCycleFamilySection({
             familyKey,
             title: `🤝 Donaciones — ${getFamilyLabel(familyKey)}`,
-            copy: 'Donaciones y regalos registrados como gastos operativos.',
+            copy: getFamilyCopy(familyKey),
             cycles: donationCycles
         });
         return;
@@ -2982,10 +3045,14 @@ function renderCurrentSubview() {
         }
 
         const familyKey = state.familyFilter;
+        if (familyKey === FAMILY_ALL) {
+            state.refs.list.innerHTML = renderGroupedCycleList(lossCycles);
+            return;
+        }
         state.refs.list.innerHTML = renderCycleFamilySection({
             familyKey,
             title: `💔 Pérdidas — ${getFamilyLabel(familyKey)}`,
-            copy: 'Pérdidas o cancelaciones registradas como lectura operativa real.',
+            copy: getFamilyCopy(familyKey),
             cycles: lossCycles
         });
         return;
@@ -3002,12 +3069,14 @@ function renderCurrentSubview() {
     }
 
     const familyKey = state.familyFilter;
+    if (familyKey === FAMILY_ALL) {
+        state.refs.list.innerHTML = renderGroupedCycleList(familyCycles);
+        return;
+    }
     state.refs.list.innerHTML = renderCycleFamilySection({
         familyKey,
         title: getFamilyLabel(familyKey),
-        copy: familyKey === FAMILY_LINKED
-            ? 'Conservan crop_id para trazabilidad, pero su lectura oficial vive en Ciclos de Período.'
-            : 'Son movimientos generales sin crop_id, separados de la lectura del cultivo.',
+        copy: getFamilyCopy(familyKey),
         cycles: familyCycles
     });
 }
@@ -3498,7 +3567,7 @@ function bindEvents() {
     window.addEventListener(MODE_CHANGE_EVENT, (event) => {
         const mode = normalizeToken(event?.detail?.mode);
         if (mode === 'cultivo') state.familyFilter = FAMILY_LINKED;
-        else if (mode === 'no-cultivo') state.familyFilter = FAMILY_UNLINKED;
+        else if (mode === 'no-cultivo') state.familyFilter = FAMILY_ALL;
         else state.familyFilter = FAMILY_ALL;
         if (!isOperationalView(state.currentView)) return;
         renderFamilyToggle();
@@ -3523,6 +3592,8 @@ function buildDatasetSnapshot(datasetKey) {
         summary: {
             count: dataset.summary.count,
             linkedCount: dataset.summary.linkedCount,
+            farmCount: dataset.summary.farmCount,
+            orphanCount: dataset.summary.orphanCount,
             unlinkedCount: dataset.summary.unlinkedCount,
             movementCount: dataset.summary.movementCount,
             incomingText: dataset.summary.incomingText,
@@ -3537,6 +3608,7 @@ function buildDatasetSnapshot(datasetKey) {
             economic_type: cycle.economic_type,
             category: cycle.category,
             crop_id: cycle.crop_id,
+            farm_id: cycle.farm_id,
             crop_label: buildCycleCropText(cycle),
             status: cycle.status,
             direction: cycle.direction,
@@ -3664,7 +3736,7 @@ export async function initAgroOperationalCycles(options = {}) {
 
         const initialMode = normalizeToken(document.body?.dataset?.agroMode || 'general');
         if (initialMode === 'cultivo') state.familyFilter = FAMILY_LINKED;
-        else if (initialMode === 'no-cultivo') state.familyFilter = FAMILY_UNLINKED;
+        else if (initialMode === 'no-cultivo') state.familyFilter = FAMILY_ALL;
         else state.familyFilter = FAMILY_ALL;
 
         syncStandalonePeriodCyclesView();
