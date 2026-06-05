@@ -54,6 +54,11 @@ function bindFarmsViewActions(container) {
       if (action === 'view') viewFarmCrops(farmId);
       if (action === 'edit') openFarmModal('edit', farmId);
       if (action === 'delete') deleteFarm(farmId);
+      if (action === 'compare') {
+        import('./agro-farm-compare.js').then(mod => mod.renderFarmCompareView()).catch(err => {
+          console.error('[AGRO_FARMS] Error cargando comparador:', err);
+        });
+      }
     });
   });
 }
@@ -368,6 +373,21 @@ function populateFilterSelector() {
  */
 function renderFarmsView(container, statsMap) {
   let html = `
+    <div class="agro-farms-header-bar">
+      <div class="agro-farms-title-group">
+        <h3><i class="fa-solid fa-mountain-sun" aria-hidden="true"></i> Mis Fincas</h3>
+        <p>Gestiona las propiedades donde siembras tus cultivos</p>
+      </div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <button class="btn btn-gold" type="button" data-farm-action="create">
+          <i class="fa-solid fa-plus" aria-hidden="true"></i> Nueva Finca
+        </button>
+        ${farmsCache.length >= 2 ? `
+        <button class="btn btn-gold" type="button" data-farm-action="compare" style="background:color-mix(in srgb, var(--gold-4) 15%, transparent);border-color:color-mix(in srgb, var(--gold-4) 40%, transparent);">
+          <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i> Comparar fincas
+        </button>` : ''}
+      </div>
+    </div>
     <div class="farm-grid">
   `;
 

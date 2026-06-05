@@ -1,0 +1,300 @@
+/* ==========================================================================
+   YAVLGOLD AGRO - COMPARACION DE FINCAS (ADN VISUAL V11.0)
+   ========================================================================== */
+
+/* Header de la vista de comparación */
+.farm-compare-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.farm-compare-back {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  background: color-mix(in srgb, var(--text-primary) 3%, transparent);
+  border: 1px solid color-mix(in srgb, var(--text-primary) 8%, transparent);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.farm-compare-back:hover {
+  background: color-mix(in srgb, var(--gold-4) 12%, transparent);
+  border-color: color-mix(in srgb, var(--gold-4) 30%, transparent);
+  color: var(--gold-4);
+}
+
+.farm-compare-title {
+  margin: 0;
+  color: var(--gold-4);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Selectores de finca */
+.farm-compare-selectors {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.farm-compare-select-wrapper {
+  flex: 1;
+  min-width: 0;
+}
+
+.farm-compare-select-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--text-secondary);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.farm-compare-select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-1);
+  border: 1px solid var(--border-neutral);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.farm-compare-select:focus {
+  outline: none;
+  border-color: var(--gold-4);
+  box-shadow: var(--state-focus-ring);
+}
+
+.farm-compare-select option {
+  background: var(--bg-1);
+  color: var(--text-primary);
+}
+
+.farm-compare-vs {
+  flex: 0 0 auto;
+  padding: 0.5rem 0;
+  color: var(--text-secondary);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Tabla comparativa */
+.farm-compare-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: color-mix(in srgb, var(--gold-4) 2%, var(--bg-2));
+  border: 1px solid color-mix(in srgb, var(--gold-4) 12%, var(--border-neutral));
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  animation: agroCompareFadeIn 200ms ease;
+}
+
+.farm-compare-table th {
+  padding: 0.75rem 1rem;
+  background: color-mix(in srgb, var(--gold-4) 6%, var(--bg-3));
+  color: var(--gold-4);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-align: left;
+  border-bottom: 1px solid color-mix(in srgb, var(--gold-4) 15%, var(--border-neutral));
+}
+
+.farm-compare-table th:not(:first-child) {
+  text-align: right;
+}
+
+.farm-compare-table td {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--text-primary) 5%, transparent);
+  color: var(--text-primary);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.farm-compare-table td:first-child {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.farm-compare-table td:not(:first-child) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.farm-compare-table tr:last-child td {
+  border-bottom: none;
+}
+
+.farm-compare-table tr:hover td {
+  background: color-mix(in srgb, var(--gold-4) 3%, transparent);
+}
+
+/* Highlight del ganador por métrica */
+.farm-compare-winner {
+  color: var(--color-success) !important;
+  font-weight: 700;
+}
+
+.farm-compare-loser {
+  color: var(--color-error) !important;
+}
+
+/* Lectura humana / Insight */
+.farm-compare-insight {
+  margin-top: 1.5rem;
+  padding: 1rem 1.25rem;
+  background: color-mix(in srgb, var(--gold-4) 3%, var(--bg-2));
+  border-left: 3px solid var(--gold-4);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  animation: agroCompareFadeIn 250ms ease;
+}
+
+.farm-compare-insight__title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.5rem;
+  color: var(--gold-4);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Estado vacío */
+.farm-compare-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 500px;
+  margin: 2rem auto;
+  padding: 3rem 2rem;
+  background: color-mix(in srgb, var(--text-primary) 1%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--gold-4) 20%, transparent);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.farm-compare-empty__icon {
+  margin-bottom: 1rem;
+  color: var(--gold-4);
+  font-size: 2.5rem;
+}
+
+.farm-compare-empty__title {
+  margin: 0;
+  color: var(--gold-4);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.farm-compare-empty__copy {
+  margin: 0.5rem 0 0;
+  color: var(--text-secondary);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.9rem;
+}
+
+/* Loading */
+.farm-compare-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 8rem;
+  color: var(--gold-4);
+}
+
+/* Animación de entrada */
+@keyframes agroCompareFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive tablet */
+@media (max-width: 768px) {
+  .farm-compare-selectors {
+    flex-direction: column;
+  }
+
+  .farm-compare-vs {
+    text-align: center;
+  }
+}
+
+/* Responsive mobile */
+@media (max-width: 480px) {
+  .farm-compare-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .farm-compare-table th,
+  .farm-compare-table td {
+    padding: 0.45rem 0.6rem;
+    font-size: 0.85rem;
+  }
+
+  .farm-compare-table td:first-child {
+    font-size: 0.75rem;
+  }
+
+  .farm-compare-insight {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+  }
+}
+
+/* Accesibilidad: movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+  .farm-compare-table,
+  .farm-compare-insight {
+    animation: none;
+  }
+}
