@@ -8776,9 +8776,12 @@ function bindCropRefreshEvents() {
     bindAgroManagedGlobalListener('document:agro:crops:refresh', document, AGRO_CROPS_REFRESH_EVENT, refreshHandler);
     bindAgroManagedGlobalListener('document:agro:income:changed', document, 'agro:income:changed', refreshHandler);
     bindAgroManagedGlobalListener('document:agro:losses:changed', document, 'agro:losses:changed', refreshHandler);
-    if (typeof window !== 'undefined') {
-        bindAgroManagedGlobalListener('window:agro:operational-portfolio-updated', window, AGRO_OPERATIONAL_PORTFOLIO_UPDATED_EVENT, refreshHandler);
-    }
+    // NOTE: agro:operational-portfolio-updated is emitted by agroOperationalCycles *after*
+    // loadCrops() already ran. Listening to it with scheduleCyclesRefresh() creates an
+    // infinite loop: loadCrops → dispatchCropsReady → refreshData → emitPortfolioSnapshot
+    // → scheduleCyclesRefresh → loadCrops → ∞.
+    // UI consumers that need portfolio data should listen to this event directly for
+    // display updates, not use it as a trigger to reload crops.
 }
 
 function handleAgroCropChangedRuntime() {
