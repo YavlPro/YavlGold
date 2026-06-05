@@ -14,14 +14,13 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-05-05__2026-06-03.md`
 - Canon semántico Agro: `apps/gold/docs/MANIFIESTO_AGRO.md` (solo con autorización expresa).
 - Ficha técnica disponible en raíz: `FICHA_TECNICA.md`.
 - Supabase canónico: `supabase/` en raíz.
-- Fase actual aprobada: **Fase 1 completada en código**; **QA manual pendiente**.
+- Fase actual aprobada: **Fase 1 COMPLETADA y validada en producción**; **Fase 2 pendiente**.
 
 ## Frentes abiertos
 
 - Agro V1: mantener separación semántica entre Facturero de Clientes, Facturero de la Finca y Mis Clientes.
 - Facturero de Clientes: corregir UX de creación/vinculación de clientes sin mezclar intención del usuario.
-- Agro V1: validar Fase 1 en producción antes de avanzar a Fase 2.
-- Agro V1: diseñar/implementar Fase 2 — Dashboard de Finca con 3 métricas críticas.
+- Agro V1: diseñar/implementar Fase 2 — Dashboard de Finca con 3 métricas críticas (inversión histórica, ingresos totales, balance + gastos generales).
 - Agro V1: preparar Fase 3 — Comparación de fincas.
 - Agro V1: definir alcance de Fase 4 — Informes MD de finca.
 - Documentación viva: registrar sesiones en este archivo; rotar de nuevo al alcanzar 4000 líneas.
@@ -37,19 +36,21 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-05-05__2026-06-03.md`
 
 ## Deuda técnica viva
 
-- `agro.js` sigue siendo monolito legacy; evitar crecimiento.
+- `agro.js` sigue siendo monolito legacy; evitar crecimiento (excepción justificada del 4 de junio: fix de loop infinito).
 - `agrocompradores.js` contiene el wizard/ficha de compradores de Cartera Viva y requiere cirugía localizada.
 - `index.html` conserva markup legacy del modal de buyer; cualquier copy visible ahí debe seguir humano aunque el wizard lo reemplace dinámicamente.
 - `linked_user_id` existe como campo interno opcional; no se debe guardar correo/nombre/finca en una columna UUID.
-- MutationObservers y listeners en módulos Agro deben revisarse para evitar acumulación en navegación repetida.
+- MutationObservers y listeners en módulos Agro deben revisarse para evitar acumulación en navegación repetida (documentado en Fase 1).
 - CSS de facturero de finca debería migrarse a archivo propio en vez de crecer en `agro-facturero-finca.css`.
 
 ## Últimos cambios importantes todavía relevantes
 
-- **2026-06-03**: Fase 1 completada en código: movimientos generales de finca con badge `🏠 Finca: {name}` en Facturero de la Finca.
-- **2026-06-03**: Migración SQL agrega `farm_id UUID` en tablas de movimientos.
-- **2026-06-03**: Build pasa; commit `a47f3b2` pusheado a `origin/main`.
-- Build gate verificado tras cambios de Fase 1.
+- **2026-06-04**: Fase 1 COMPLETADA y validada en producción con 5 commits pusheados a main.
+- **2026-06-04**: Fix de migración fantasma: nueva migración SQL para ciclos operativos.
+- **2026-06-04**: Rediseño de Facturero: 4 filtros de asociación + 3 badges semánticos + limpieza terminológica.
+- **2026-06-04**: Fix de loop infinito en `bindCropRefreshEvents` (excepción justificada a §3.1 AGENTS.md).
+- **2026-06-03**: Fase 1 implementada inicialmente: movimientos generales de finca con badge `🏠 Finca: {name}`.
+- Build gate verificado tras todos los cambios de Fase 1.
 
 ## Referencias a archivos archivados relevantes
 
@@ -201,40 +202,131 @@ Fase 1 está técnicamente completa pero **NO está validada en producción**. A
 
 ---
 
-## Sesión 2026-06-04 — Fix de Migración Fantasma (Ciclos Operativos)
+## Sesión 2026-06-04 — Fase 1 Completada: Fincas como Entidades Vivas
 
 ### Objetivo
-Corregir la "migración fantasma" que causó que las columnas `farm_id` en las tablas `agro_operational_cycles` y `agro_operational_movements` no se crearan en la base de datos remota debido al tracking de checksums de Supabase.
+Cerrar definitivamente la Fase 1 del plan estratégico de fincas, resolviendo todos los bugs identificados y validando en producción.
 
-### Diagnóstico
-La migración original `20260603120000_agro_farm_movements.sql` fue modificada después de haber sido aplicada en producción. Supabase asumió que la migración ya estaba aplicada por su nombre y omitió los nuevos cambios (la adición de `farm_id` a los ciclos operativos).
+### Contexto del día
+El usuario reportó que en "Mis Fincas", la finca "finca la ladera" mostraba $0.00 en gastos a pesar de tener un ciclo operativo de "kit de sistema para regar" por $220.000. Esto reveló que Fase 1 estaba técnicamente completa pero con bugs de persistencia y loop infinito.
 
-### Acciones realizadas
-1. **Creación de nueva migración**: Se creó el archivo [20260604120000_agro_operational_farm_id.sql](file:///C:/Users/yerik/gold/supabase/migrations/20260604120000_agro_operational_farm_id.sql) con la alteración explícita para las tablas `agro_operational_cycles` y `agro_operational_movements`.
-2. **Ejecución**: Se corrió exitosamente `npx supabase db push`.
-3. **Verificación**: Se ejecutó query SQL remota confirmando la creación exitosa del campo `farm_id` UUID en ambas tablas.
-4. **Build**: Se ejecutó `pnpm build:gold` con éxito pasando todos los checks pre y post build.
+### Problemas identificados y resueltos
+
+#### 1. Migración fantasma (GLM 5.1 en Claude Code)
+**Problema**: La migración original `20260603120000_agro_farm_movements.sql` fue modificada después de haber sido aplicada. Supabase asumió que ya estaba aplicada por su nombre y omitió los nuevos cambios.
+
+**Solución**: Crear nueva migración `20260604120000_agro_operational_farm_id.sql` con fecha actual.
+
+**Lección aprendida**: Nunca editar migraciones ya aplicadas. Si GLM/Gemini necesita ampliar una migración, crear archivo nuevo con fecha actual.
+
+#### 2. Selector de finca en Ciclos Operativos (GLM 5.1)
+**Problema**: Los ciclos operativos no tenían selector de finca asociada.
+
+**Solución**: 
+- Agregado selector "Finca asociada" en formulario de ciclos operativos (+55 líneas en `agroOperationalCycles.js`)
+- `farm_id` en payloads create/update/movement
+- Label en confirmación del wizard
+- Migración SQL ampliada: `farm_id` en `agro_operational_cycles` y `agro_operational_movements`
+
+#### 3. Bug de persistencia de farm_id (Gemini 3.5 Flash)
+**Problema**: Al editar un ciclo operativo y seleccionar "Finca asociada", el cambio no persistía al reabrir el modal.
+
+**Diagnóstico inicial (incorrecto)**: El UPDATE no incluía `farm_id` en el payload.
+
+**Diagnóstico real (correcto)**: El UPDATE sí incluía `farm_id`, pero el SELECT no lo traía desde Supabase. El view model no exponía `farm_id`.
+
+**Solución**:
+- Agregado `farm_id` al SELECT de `agro_operational_cycles`
+- Agregado `farm_id` al view model
+- Fallback corregido para evitar "Finca no válida" si catálogo aún no carga
+
+#### 4. Rediseño completo de Facturero (Gemini 3.5 Flash)
+**Problema**: UI solo distinguía 2 estados (con cultivo / sin cultivo), faltaba el estado intermedio (con finca pero sin cultivo específico).
+
+**Solución**:
+- **4 filtros de asociación**: Todos, 🌱 Por cultivo, 🏠 Por finca, ⚠️ Sin asociar (con contadores dinámicos)
+- **3 badges semánticos** con colores ADN V11:
+  - 🌱 Badge verde (success): "Cultivo: [nombre]"
+  - 🏠 Badge dorado (gold-4): "Finca: [nombre]"
+  - ⚠️ Badge ámbar (warning): "Sin asociar"
+- **Limpieza terminológica**: "cartera operativa" → "ciclo operativo" / "Facturero de la Finca"
+
+**Archivos modificados**:
+- `agroOperationalCycles.js` (+168/-96 líneas)
+- `agro-operational-cycles.css` (+56/-11 líneas)
+- `agro-facturero-finca.css` (+13/-13 líneas)
+- `agro-farm-movements.js` (+2/-2 líneas)
+
+#### 5. Loop infinito en bindCropRefreshEvents (KiroCode Free)
+**Problema**: Logs mostraban loop de 15+ iteraciones de inicialización del módulo Agro, causando `ERR_INSUFFICIENT_RESOURCES` y saturación de navegador.
+
+**Causa raíz**: 
+```javascript
+// Listener en bindCropRefreshEvents escuchaba agro:operational-portfolio-updated
+// para llamar scheduleCyclesRefresh() → loadCrops()
+// Pero agroOperationalCycles emitía ese evento DESPUÉS de procesar datos de loadCrops()
+// Resultado: loadCrops → dispatchCropsReady → refreshData → emitPortfolioSnapshot
+//            → scheduleCyclesRefresh → loadCrops → ∞
+```
+
+**Solución** (excepción justificada a §3.1 AGENTS.md):
+- Eliminar listener específico de `bindCropRefreshEvents` en `agro.js` (3 líneas)
+- El evento `agro:operational-portfolio-updated` sigue existiendo
+- Consumidores reales (`refreshOpsRankingsIfVisible`) lo escuchan directamente
+- Triggers legítimos intactos: `agro:crops:refresh`, `agro:income:changed`, `agro:losses:changed`
+
+**Resultado**: Logs limpios, inicialización única, performance restaurada.
+
+### QA manual exitoso
+Usuario validó en producción:
+- ✅ Persistencia de `farm_id` al editar ciclos operativos
+- ✅ 4 filtros funcionales con contadores dinámicos
+- ✅ 3 badges semánticos visibles (verde/dorado/ámbar)
+- ✅ Limpieza terminológica completa
+- ✅ Sin loops en logs de consola
+- ✅ Build pasa sin errores
+
+### Commits del 4 de junio
+1. `feat(db): nueva migración farm_id en ciclos operativos` (GLM 5.1)
+2. `feat(agro): selector de finca en Ciclos Operativos` (GLM 5.1)
+3. `docs: actualizar reportes de sesión 4 de junio`
+4. `feat(agro): Fase 1 completa - Rediseño de Facturero de la Finca` (Gemini 3.5 Flash)
+5. `fix(agro): eliminar loop infinito en bindCropRefreshEvents` (KiroCode Free)
+6. Merge PR #91 de dependabot
 
 ### Estado final
-**GREEN** — Fix aplicado y verificado. Columnas creadas en base de datos.
+**GREEN** — Fase 1 completamente cerrada y validada en producción.
 
----
+### Consumo de créditos de agentes
+| Agente | Uso | Eficiencia | Observaciones |
+|--------|-----|------------|---------------|
+| GLM 5.1 | Alto | Baja | ~44% créditos por interacción compleja |
+| Gemini 3.5 Flash | Moderado | Media | Mejor que GLM pero aún consume bastante |
+| KiroCode Free | Bajo | Alta | Diagnóstico preciso + fix quirúrgico en 4 min (3.97 créditos) |
+| Qwen (diagnóstico) | N/A | N/A | No consume créditos de coding agent |
 
-## Sesión 2026-06-05 — Facturero de la Finca: asociación finca/cultivo/sin asociar
+**Estrategia optimizada para Fase 2**:
+- Qwen → Diagnóstico + diseño (no consume créditos)
+- KiroCode → Implementación quirúrgica (eficiente en créditos)
+- GLM/Gemini → Solo si KiroCode no puede resolver
 
-### Objetivo
-Completar el rediseño operativo del Facturero de la Finca para distinguir ciclos por asociación a cultivo, asociación a finca o ausencia de asociación, y corregir la lectura de `farm_id` al editar ciclos operativos.
+### Lecciones aprendidas
+1. **Migraciones SQL**: Nunca editar archivos ya aplicados. Crear archivo nuevo con fecha actual.
+2. **Diagnóstico real > hipótesis**: El bug no estaba en el UPDATE (que sí incluía `farm_id`), sino en el SELECT que no lo traía.
+3. **Loop infinito**: Evento que dispara función que emite evento = loop infinito.
+4. **KiroCode eficiente**: Diagnóstico preciso + fix quirúrgico en 4 minutos (3.97 créditos).
+5. **Estrategia de créditos**: Qwen (diagnóstico) + KiroCode (cirugía) = optimización.
 
-### Diagnóstico
-El UPDATE de `agro_operational_cycles` ya incluía `farm_id`, pero la lectura posterior no lo recuperaba: `fetchCycles()` omitía `farm_id` en el SELECT y `buildCycleViewModel()` no lo exponía. Por eso un ciclo podía guardar finca asociada y aun así reabrir el modal sin mostrarla.
+### Próximos pasos
+1. **Arrancar Fase 2**: Dashboard de Finca como Entidad Viva con 3 métricas críticas
+2. **Consolidar estadísticas**: cultivos + ciclos operativos + gastos generales por finca
+3. **Vista de Mis Fincas** con datos completos (ej: "finca la ladera" debe mostrar $220.000 del kit de riego)
 
-### Acciones realizadas
-1. Se agregó `farm_id` al SELECT y al view model de ciclos operativos.
-2. Se reemplazó el filtro binario por 4 chips: Todos, Por cultivo, Por finca y Sin asociar.
-3. Se agregaron badges semánticos en cards: cultivo verde, finca dorado y sin asociar ámbar.
-4. Se actualizó terminología visible de "cartera operativa" a "ciclo operativo" / "Facturero de la Finca".
-5. Se alineó el badge legacy de movimientos de finca para mostrar `🏠 Finca: {name}`.
-6. Se ejecutó `pnpm build:gold` con éxito.
+### Archivos relevantes para Fase 2
+- `apps/gold/agro/agro-farms.js` — CRUD actual de fincas (base para dashboard)
+- `apps/gold/agro/agro-farm-movements.js` — Módulo de Fase 1 (puede extenderse)
+- `apps/gold/agro/agro-operational-cycles.js` — Ciclos operativos con `farm_id`
+- `supabase/migrations/20260604120000_agro_operational_farm_id.sql` — Migración de Fase 1
 
-### Estado final
-**GREEN** — Implementación compilada. QA manual de flujo real queda a cargo del usuario.
+### Nota para agentes futuros
+Fase 1 está **completamente cerrada y validada en producción**. El usuario ya hizo QA manual y confirmó que todo funciona. Antes de arrancar Fase 2, leer este reporte para entender la estrategia de créditos optimizada.
