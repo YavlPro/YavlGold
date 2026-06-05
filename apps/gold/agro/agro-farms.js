@@ -383,7 +383,7 @@ function renderFarmsView(container, statsMap) {
           <i class="fa-solid fa-plus" aria-hidden="true"></i> Nueva Finca
         </button>
         ${farmsCache.length >= 2 ? `
-        <button class="btn btn-gold" type="button" data-farm-action="compare" style="background:color-mix(in srgb, var(--gold-4) 15%, transparent);border-color:color-mix(in srgb, var(--gold-4) 40%, transparent);">
+        <button class="btn btn-gold" type="button" data-farm-action="compare">
           <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i> Comparar fincas
         </button>` : ''}
       </div>
