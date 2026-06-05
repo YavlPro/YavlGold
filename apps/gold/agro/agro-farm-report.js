@@ -155,7 +155,7 @@ async function fetchFarmReportData(userId, farmId) {
   // 8. Ingresos generales de finca (sin crop_id)
   const { data: farmIncomes, error: fIncError } = await supabase
     .from('agro_income')
-    .select('monto, currency, exchange_rate, monto_usd, concept, created_at')
+    .select('monto, currency, exchange_rate, monto_usd, created_at')
     .eq('farm_id', farmId)
     .eq('user_id', userId)
     .is('crop_id', null)
