@@ -85,7 +85,7 @@ async function fetchFarmReportData(userId, farmId) {
   // 2. Cultivos (todos: activos, finalizados, perdidos)
   const { data: crops, error: cropsError } = await supabase
     .from('agro_crops')
-    .select('id, name, variety, status, investment, created_at, finished_at')
+    .select('id, name, variety, status, investment, created_at, actual_harvest_date, lost_at')
     .eq('farm_id', farmId)
     .eq('user_id', userId)
     .is('deleted_at', null)
@@ -336,7 +336,7 @@ function generateMd(data, stats) {
       const inc = stats.cropIncomeMap.get(c.id) || 0;
       const bal = inc - exp - inv;
       const variety = c.variety ? ` (${c.variety})` : '';
-      const fecha = c.finished_at ? ` — Cierre: ${formatDate(c.finished_at)}` : '';
+      const fecha = c.actual_harvest_date ? ` — Cierre: ${formatDate(c.actual_harvest_date)}` : '';
       lines.push(`- **${c.name || 'Sin nombre'}**${variety} — Inversión: ${fmtAmount(inv + exp)} — Ingresos: ${fmtAmount(inc)} — Balance: ${fmtAmount(bal)}${fecha}`);
     });
   }
