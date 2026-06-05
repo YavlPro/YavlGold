@@ -16,7 +16,9 @@ import {
     maskReportMoney,
     maskReportName,
     normalizeReportClientKey,
-    resolvePendingTransferDestination
+    normalizeReportClientName,
+    resolvePendingTransferDestination,
+    sanitizeCropDisplayName
 } from './agro-report-format.js';
 
 // ============================================================
@@ -579,7 +581,7 @@ function buildIncomeTable(items, historyMode = false, privacy = getMarkdownPriva
     let md = '| Cliente | Movimientos | Monedas | Cantidad | Total USD | Última fecha |\n';
     md += '|---------|------------:|---------|----------|----------:|--------------|\n';
     for (const group of rows) {
-        const name = maskReportName(group.client, privacy);
+        const name = maskReportName(normalizeReportClientName(group.client), privacy);
         const currencies = Array.from(group.currencies).join(', ') || 'USD';
         md += `| ${escMd(name)} | ${group.count} | ${escMd(currencies)} | ${escMd(formatUnitTotalsInline(group.rows))} | ${fmtMoneyMd(group.totalUsdCents, 'USD', privacy)} | ${fmtDate(group.lastDate)} |\n`;
     }
@@ -646,7 +648,7 @@ function buildPendingSummaryTable(items, privacy = getMarkdownPrivacyState()) {
     let md = '| Cliente | Fiados | Monedas | Cantidad | Total USD | Última fecha |\n';
     md += '|---------|-------:|---------|----------|----------:|--------------|\n';
     for (const group of rows) {
-        const name = maskReportName(group.client, privacy);
+        const name = maskReportName(normalizeReportClientName(group.client), privacy);
         const currencies = Array.from(group.currencies).join(', ') || 'USD';
         md += `| ${escMd(name)} | ${group.count} | ${escMd(currencies)} | ${escMd(formatUnitTotalsInline(group.rows))} | ${fmtMoneyMd(group.totalUsdCents, 'USD', privacy)} | ${fmtDate(group.lastDate)} |\n`;
     }
@@ -673,7 +675,7 @@ function buildPendingTable(items, historyMode = false, privacy = getMarkdownPriv
         const amtUsd = fmtMoneyMd(toCents(resolveAmountUsd(it)), 'USD', privacy);
         const flag = deletedFlag(it, historyMode);
         const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(parsed.concept || raw)} | ${escMd(maskReportName(client, privacy))} | ${fmtUnits(it)} | ${currency} | ${fmtMoneyMd(toCents(it.monto), currency, privacy)} | ${amtUsd} | ${escMd(state)}`;
+        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(parsed.concept || raw)} | ${escMd(maskReportName(normalizeReportClientName(client), privacy))} | ${fmtUnits(it)} | ${currency} | ${fmtMoneyMd(toCents(it.monto), currency, privacy)} | ${amtUsd} | ${escMd(state)}`;
         md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
@@ -697,7 +699,7 @@ function buildPendingTransferredTable(items, privacy = getMarkdownPrivacyState()
         const amtUsd = fmtMoneyMd(toCents(resolveAmountUsd(it)), 'USD', privacy);
         const dest = resolvePendingTransferDestination(it);
         const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.fecha)} | [TRANSFERIDO] ${escMd(parsed.concept || raw)} | ${escMd(maskReportName(client, privacy))} | ${fmtUnits(it)} | ${currency} | ${fmtMoneyMd(toCents(it.monto), currency, privacy)} | ${amtUsd} | ${escMd(dest)}`;
+        md += `| ${fmtDate(it.fecha)} | [TRANSFERIDO] ${escMd(parsed.concept || raw)} | ${escMd(maskReportName(normalizeReportClientName(client), privacy))} | ${fmtUnits(it)} | ${currency} | ${fmtMoneyMd(toCents(it.monto), currency, privacy)} | ${amtUsd} | ${escMd(dest)}`;
         md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
@@ -737,7 +739,7 @@ function buildTransferTable(items, historyMode = false, privacy = getMarkdownPri
         const amtUsd = fmtMoneyMd(toCents(resolveAmountUsd(it)), 'USD', privacy);
         const flag = deletedFlag(it, historyMode);
         const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
-        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(it.concepto)} | ${escMd(maskReportName(it.destino, privacy, '-'))} | ${fmtUnits(it)} | ${currency} | ${fmtMoneyMd(toCents(it.monto), currency, privacy)} | ${amtUsd}`;
+        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(it.concepto)} | ${escMd(maskReportName(normalizeReportClientName(it.destino), privacy, '-'))} | ${fmtUnits(it)} | ${currency} | ${fmtMoneyMd(toCents(it.monto), currency, privacy)} | ${amtUsd}`;
         md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
@@ -906,7 +908,7 @@ export async function exportCropReport(cropId, opts = {}) {
         const now = new Date();
         const dateStr = now.toISOString().split('T')[0];
         const timeStr = now.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
-        const cropName = String(crop?.name || '').trim() || String(crop?.variety || '').trim() || 'Sin nombre';
+        const cropName = sanitizeCropDisplayName(String(crop?.name || '').trim() || String(crop?.variety || '').trim() || 'Sin nombre');
         const progress = cropExists && hasCropRow ? computeCropProgress(crop) : null;
         const resolvedStatus = cropExists && hasCropRow ? resolveCropStatus(crop, progress) : null;
         const statusFallback = String(crop?.status || '').trim();

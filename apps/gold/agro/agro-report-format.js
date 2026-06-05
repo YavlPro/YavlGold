@@ -55,6 +55,38 @@ export function maskReportMetric(value, privacy = getMarkdownPrivacyState()) {
     return String(value || '');
 }
 
+// ---------------------------------------------------------------------------
+// Problem #3: Normalizar capitalización de nombres de clientes
+// ---------------------------------------------------------------------------
+
+export function normalizeReportClientName(name) {
+    const text = String(name || '').trim();
+    if (!text) return 'Sin cliente';
+    return text.split(/\s+/).map(word => {
+        if (!word) return word;
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    }).join(' ');
+}
+
+// ---------------------------------------------------------------------------
+// Problem #4: Sanitizar emojis acumulados en nombres de cultivos
+// ---------------------------------------------------------------------------
+
+const _CROP_EMOJI_RE = /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u;
+const _CROP_TEXT_RE = /[\p{L}\p{N}]/u;
+
+export function sanitizeCropDisplayName(rawName) {
+    const name = String(rawName || '').trim();
+    if (!name) return 'Sin nombre';
+    const tokens = name.split(/\s+/).filter(Boolean);
+    const clean = [];
+    for (const t of tokens) {
+        if (_CROP_EMOJI_RE.test(t) && !_CROP_TEXT_RE.test(t)) continue;
+        clean.push(t);
+    }
+    return clean.join(' ').trim() || 'Sin nombre';
+}
+
 export function resolvePendingTransferDestination(row) {
     const direct = String(row?.transferred_to || '').trim().toLowerCase();
     if (direct === 'income' || direct === 'ingreso' || direct === 'ingresos' || direct === 'pagado' || direct === 'pagados') {

@@ -2,7 +2,7 @@ import { convertToUSD, getRate, initExchangeRates } from './agro-exchange.js';
 import { getPendingTransferToken } from './agro-unit-totals.js';
 import { filterQARows } from './agro-report-guard.js';
 import { toCents, formatMoney } from './agro-format.js';
-import { normalizeReportClientKey } from './agro-report-format.js';
+import { normalizeReportClientKey, normalizeReportClientName } from './agro-report-format.js';
 
 const CROP_STATUSES = {
     FINALIZED: new Set(['finalizado', 'finalized', 'harvested', 'completed', 'cosechado']),
@@ -471,11 +471,16 @@ export async function getGlobalStats({ supabase: supabaseClient, userId, range }
     ]);
 
     const crops = filterQARows(cropsRows).filter((row) => !row?.deleted_at);
-    const incomes = filterQARows(incomeRows).filter((row) => !row?.deleted_at && !row?.reverted_at);
-    const pending = filterQARows(pendingRows).filter((row) => !row?.deleted_at && isActivePendingRow(row));
-    const expenses = filterQARows(expenseRows).filter((row) => !row?.deleted_at);
-    const losses = filterQARows(lossesRows).filter((row) => !row?.deleted_at);
-    const transfers = filterQARows(transferRows).filter((row) => !row?.deleted_at);
+    const validCropIds = new Set(crops.map((row) => String(row?.id || '').trim()));
+    const filterByValidCrop = (row) => {
+        const cropId = String(row?.crop_id || '').trim();
+        return !cropId || validCropIds.has(cropId);
+    };
+    const incomes = filterQARows(incomeRows).filter((row) => !row?.deleted_at && !row?.reverted_at).filter(filterByValidCrop);
+    const pending = filterQARows(pendingRows).filter((row) => !row?.deleted_at && isActivePendingRow(row)).filter(filterByValidCrop);
+    const expenses = filterQARows(expenseRows).filter((row) => !row?.deleted_at).filter(filterByValidCrop);
+    const losses = filterQARows(lossesRows).filter((row) => !row?.deleted_at).filter(filterByValidCrop);
+    const transfers = filterQARows(transferRows).filter((row) => !row?.deleted_at).filter(filterByValidCrop);
 
     const cropsSummary = crops.reduce((acc, row) => {
         const statusValue = normalizeCropStatus(row?.status_override ?? row?.status);
@@ -545,7 +550,7 @@ export async function getGlobalStats({ supabase: supabaseClient, userId, range }
         if (!(totalUsd > 0)) return;
         const buyer = parseBuyerName(row?.concepto);
         const key = normalizeReportClientKey(row?.buyer_group_key || buyer) || buyer.toLowerCase();
-        const current = buyerTotals.get(key) || { name: buyer, totalUsd: 0, count: 0 };
+        const current = buyerTotals.get(key) || { name: normalizeReportClientName(buyer), totalUsd: 0, count: 0 };
         current.totalUsd += totalUsd;
         current.count += 1;
         buyerTotals.set(key, current);

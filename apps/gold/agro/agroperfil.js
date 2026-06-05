@@ -298,6 +298,24 @@ async function computeProfileGlobalUnitTotals() {
     const user = await resolveSessionUser();
     if (!user?.id) return createUnitTotalsAccumulator();
 
+    // Fetch valid crop IDs (non-deleted crops) to filter orphaned unit records
+    let validCropIds = new Set();
+    try {
+        const { data: cropRows } = await state.supabase
+            .from('agro_crops')
+            .select('id')
+            .eq('user_id', user.id)
+            .is('deleted_at', null);
+        if (Array.isArray(cropRows)) {
+            validCropIds = new Set(cropRows.map(r => String(r.id || '').trim()).filter(Boolean));
+        }
+    } catch { /* ignore — fail open */ }
+
+    const filterByValidCrop = (row) => {
+        const cropId = String(row?.crop_id || '').trim();
+        return !cropId || validCropIds.has(cropId);
+    };
+
     const [incomeRows, expenseRows, pendingRows, lossRows, transferRows] = await Promise.all([
         fetchProfileUnitRows('agro_income', user.id, { excludeReverted: true }),
         fetchProfileUnitRows('agro_expenses', user.id),
@@ -306,14 +324,14 @@ async function computeProfileGlobalUnitTotals() {
         fetchProfileUnitRows('agro_transfers', user.id)
     ]);
 
-    const pendingNotTransferred = pendingRows.filter((row) => getPendingTransferToken(row) !== 'transferred');
-    const pendingTransferred = pendingRows.filter((row) => getPendingTransferToken(row) === 'transferred');
+    const pendingNotTransferred = pendingRows.filter((row) => getPendingTransferToken(row) !== 'transferred').filter(filterByValidCrop);
+    const pendingTransferred = pendingRows.filter((row) => getPendingTransferToken(row) === 'transferred').filter(filterByValidCrop);
 
     const baseTotalsByCrop = mergeUnitTotalsMaps([
-        computeUnitTotalsByCropFromRows(incomeRows),
-        computeUnitTotalsByCropFromRows(expenseRows),
-        computeUnitTotalsByCropFromRows(lossRows),
-        computeUnitTotalsByCropFromRows(transferRows),
+        computeUnitTotalsByCropFromRows(incomeRows.filter(filterByValidCrop)),
+        computeUnitTotalsByCropFromRows(expenseRows.filter(filterByValidCrop)),
+        computeUnitTotalsByCropFromRows(lossRows.filter(filterByValidCrop)),
+        computeUnitTotalsByCropFromRows(transferRows.filter(filterByValidCrop)),
         computeUnitTotalsByCropFromRows(pendingNotTransferred)
     ]);
     const mergedTotalsByCrop = mergeUnitTotalsPreferHigher(

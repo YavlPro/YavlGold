@@ -15,7 +15,8 @@ import {
     maskReportMetric,
     maskReportMoney,
     maskReportName,
-    normalizeReportClientKey
+    normalizeReportClientKey,
+    normalizeReportClientName
 } from './agro-report-format.js';
 
 // ============================================================
@@ -725,7 +726,7 @@ function buildBuyerRanking(incomeRows, pendingRows, privacy = getMarkdownPrivacy
     let md = '| Cliente | Compras | Monedas | Total (USD) | Estado |\n';
     md += '|---------|--------:|---------|------------:|--------|\n';
     for (const [, b] of sorted) {
-        const name = maskReportName(b.displayWho, privacy);
+        const name = maskReportName(normalizeReportClientName(b.displayWho), privacy);
         const estado = b.hasPaid && b.hasPending ? '🔔 Mixto' : b.hasPaid ? '✅ Pagado' : '⏳ Debe';
         const curs = Array.from(b.currencies).join(', ');
         md += `| ${escMd(name)} | ${b.count} | ${curs} | ${fmtMoneyMd(b.totalCents, 'USD', privacy)} | ${estado} |\n`;

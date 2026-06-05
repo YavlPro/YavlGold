@@ -40,6 +40,21 @@ function today() {
   return new Date().toISOString().slice(0, 10);
 }
 
+/** Strip leading emojis from crop name to avoid 🌱 accumulation */
+const _FARM_CROP_EMOJI_RE = /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u;
+const _FARM_CROP_TEXT_RE = /[\p{L}\p{N}]/u;
+function cleanCropName(raw) {
+  const name = String(raw || '').trim();
+  if (!name) return 'Sin nombre';
+  const tokens = name.split(/\s+/).filter(Boolean);
+  const clean = [];
+  for (const t of tokens) {
+    if (_FARM_CROP_EMOJI_RE.test(t) && !_FARM_CROP_TEXT_RE.test(t)) continue;
+    clean.push(t);
+  }
+  return clean.join(' ').trim() || 'Sin nombre';
+}
+
 function slugify(text) {
   return String(text || 'finca')
     .toLowerCase()
@@ -192,6 +207,7 @@ function consolidateStats(data) {
     operationalCycles: opCycles.length,
     generalExpenses: 0,
     generalIncomes: 0,
+    cropInvestmentTotal: 0,
     cropExpensesMap: new Map(),
     cropIncomeMap: new Map(),
     expenseByCategory: new Map()
@@ -205,9 +221,11 @@ function consolidateStats(data) {
   });
 
   // Gastos por cultivo
+  let cropExpensesSum = 0;
   cropExpenses.forEach(e => {
     const usd = resolveRecordUsd(e);
     stats.totalExpenses += usd;
+    cropExpensesSum += usd;
     if (e.crop_id) {
       stats.cropExpensesMap.set(e.crop_id, (stats.cropExpensesMap.get(e.crop_id) || 0) + usd);
     }
@@ -230,6 +248,7 @@ function consolidateStats(data) {
     cropInvestment += Number(c.investment) || 0;
   });
   stats.totalExpenses += cropInvestment;
+  stats.cropInvestmentTotal = cropInvestment + cropExpensesSum;
 
   // Ciclos operativos → movimientos
   opMovements.forEach(mov => {
@@ -260,7 +279,8 @@ function consolidateStats(data) {
   });
 
   stats.balance = stats.totalIncome - stats.totalExpenses;
-  stats.roi = stats.totalExpenses > 0 ? ((stats.totalIncome / stats.totalExpenses) * 100).toFixed(1) : '0.0';
+  const gananciaNeta = stats.totalIncome - stats.totalExpenses;
+  stats.roi = stats.totalExpenses > 0 ? ((gananciaNeta / stats.totalExpenses) * 100).toFixed(1) : '0.0';
 
   return stats;
 }
@@ -290,9 +310,10 @@ function generateMd(data, stats) {
   lines.push('|---------|-------|');
   lines.push(`| Cultivos totales | ${stats.totalCrops} (${stats.activeCrops} activos, ${stats.finalizedCrops} finalizados, ${stats.lostCrops} perdidos) |`);
   lines.push(`| Ciclos operativos | ${stats.operationalCycles} |`);
-  lines.push(`| Inversión total histórica | ${fmtAmount(stats.totalExpenses)} |`);
+  lines.push(`| **Inversión en cultivos** | **${fmtAmount(stats.cropInvestmentTotal)}** |`);
+  lines.push(`| **Gastos generales** | **${fmtAmount(stats.generalExpenses)}** |`);
+  lines.push(`| **Total histórico** | **${fmtAmount(stats.totalExpenses)}** |`);
   lines.push(`| Ingresos totales | ${fmtAmount(stats.totalIncome)} |`);
-  lines.push(`| Gastos generales | ${fmtAmount(stats.generalExpenses)} |`);
   lines.push(`| Balance neto | ${fmtAmount(stats.balance)} |`);
   lines.push(`| ROI aproximado | ${readMoneyValuesHidden() ? '••••' : stats.roi + '%'} |`);
   lines.push('');
@@ -320,7 +341,7 @@ function generateMd(data, stats) {
       const inc = stats.cropIncomeMap.get(c.id) || 0;
       const bal = inc - exp - inv;
       const variety = c.variety ? ` (${c.variety})` : '';
-      lines.push(`- **${c.name || 'Sin nombre'}**${variety} — Inversión: ${fmtAmount(inv + exp)} — Balance: ${fmtAmount(bal)}`);
+      lines.push(`- **${cleanCropName(c.name)}**${variety} — Inversión: ${fmtAmount(inv + exp)} — Balance: ${fmtAmount(bal)}`);
     });
   }
   lines.push('');
@@ -337,7 +358,7 @@ function generateMd(data, stats) {
       const bal = inc - exp - inv;
       const variety = c.variety ? ` (${c.variety})` : '';
       const fecha = c.actual_harvest_date ? ` — Cierre: ${formatDate(c.actual_harvest_date)}` : '';
-      lines.push(`- **${c.name || 'Sin nombre'}**${variety} — Inversión: ${fmtAmount(inv + exp)} — Ingresos: ${fmtAmount(inc)} — Balance: ${fmtAmount(bal)}${fecha}`);
+      lines.push(`- **${cleanCropName(c.name)}**${variety} — Inversión: ${fmtAmount(inv + exp)} — Ingresos: ${fmtAmount(inc)} — Balance: ${fmtAmount(bal)}${fecha}`);
     });
   }
   lines.push('');
@@ -351,7 +372,7 @@ function generateMd(data, stats) {
       const inv = Number(c.investment) || 0;
       const exp = stats.cropExpensesMap.get(c.id) || 0;
       const variety = c.variety ? ` (${c.variety})` : '';
-      lines.push(`- **${c.name || 'Sin nombre'}**${variety} — Inversión perdida: ${fmtAmount(inv + exp)}`);
+      lines.push(`- **${cleanCropName(c.name)}**${variety} — Inversión perdida: ${fmtAmount(inv + exp)}`);
     });
   }
   lines.push('');
@@ -494,10 +515,10 @@ function generateBusinessReading(data, stats) {
     if (bal < worstBalance) { worstBalance = bal; worstCrop = c; }
   });
   if (bestCrop && bestBalance > 0) {
-    parts.push(`El cultivo con mejor rendimiento es **${bestCrop.name}** con un balance de ${fmtAmount(bestBalance)}.`);
+    parts.push(`El cultivo con mejor rendimiento es **${cleanCropName(bestCrop.name)}** con un balance de ${fmtAmount(bestBalance)}.`);
   }
   if (worstCrop && worstBalance < 0 && worstCrop !== bestCrop) {
-    parts.push(`El cultivo con mayor pérdida es **${worstCrop.name}** con ${fmtAmount(worstBalance)}.`);
+    parts.push(`El cultivo con mayor pérdida es **${cleanCropName(worstCrop.name)}** con ${fmtAmount(worstBalance)}.`);
   }
 
   // Ciclos operativos
