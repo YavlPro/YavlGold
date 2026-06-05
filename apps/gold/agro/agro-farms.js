@@ -122,11 +122,11 @@ async function loadFarms() {
     if (incError) throw incError;
 
     // 5. Obtener ciclos operativos vinculados a fincas (para mapear cycle_id → farm_id)
+    //    Nota: agro_operational_cycles usa hard delete, NO tiene deleted_at
     const { data: opCycles, error: opCyclesError } = await supabase
       .from('agro_operational_cycles')
       .select('id, farm_id')
       .eq('user_id', user.id)
-      .is('deleted_at', null)
       .not('farm_id', 'is', null);
 
     if (opCyclesError) throw opCyclesError;
