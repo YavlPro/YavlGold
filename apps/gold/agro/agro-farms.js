@@ -54,6 +54,11 @@ function bindFarmsViewActions(container) {
       if (action === 'view') viewFarmCrops(farmId);
       if (action === 'edit') openFarmModal('edit', farmId);
       if (action === 'delete') deleteFarm(farmId);
+      if (action === 'export-report') {
+        import('./agro-farm-report.js').then(mod => mod.exportFarmReportMd(farmId)).catch(err => {
+          console.error('[AGRO_FARMS] Error exportando informe:', err);
+        });
+      }
       if (action === 'compare') {
         import('./agro-farm-compare.js').then(mod => mod.renderFarmCompareView()).catch(err => {
           console.error('[AGRO_FARMS] Error cargando comparador:', err);
@@ -443,6 +448,9 @@ function renderFarmsView(container, statsMap) {
           </button>
           <button class="btn-delete-farm" type="button" data-farm-action="delete" data-farm-id="${escapeHtml(farm.id)}">
             <i class="fa-solid fa-trash"></i> Eliminar
+          </button>
+          <button class="btn-export-report" type="button" data-farm-action="export-report" data-farm-id="${escapeHtml(farm.id)}">
+            <i class="fa-solid fa-file-export"></i> Informe
           </button>
         </div>
       </div>

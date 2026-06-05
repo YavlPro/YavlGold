@@ -308,6 +308,17 @@
   color: var(--color-error);
 }
 
+.farm-card__actions .btn-export-report {
+  background: color-mix(in srgb, var(--gold-4) 8%, transparent);
+  border-color: color-mix(in srgb, var(--gold-4) 25%, transparent);
+  color: var(--gold-4);
+}
+
+.farm-card__actions .btn-export-report:hover {
+  background: color-mix(in srgb, var(--gold-4) 18%, transparent);
+  border-color: var(--gold-4);
+}
+
 .farm-empty-state {
   display: flex;
   flex-direction: column;
