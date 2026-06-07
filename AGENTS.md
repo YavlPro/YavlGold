@@ -99,7 +99,8 @@ agro-cart.js         — carrito
 | --- | --- | --- |
 | `AGENTS.md` (este archivo) | Instrucciones canónicas para agentes | Solo con aprobación |
 | `apps/gold/docs/MANIFIESTO_AGRO.md` | Verdad semántica canónica del módulo Agro | Solo con autorización expresa |
-| `apps/gold/docs/ROADMAP_VISION_YAVLGOLD.md` | Visión estratégica y roadmap conceptual del producto; no reemplaza `MANIFIESTO_AGRO.md`, `ADN-VISUAL-V11.0.md` ni `FICHA_TECNICA.md` | Solo con autorización expresa |
+| `apps/gold/docs/ROADMAP_VISION_YAVLGOLD.md` | Visión estratégica y roadmap conceptual del producto; no reemplaza `MANIFIESTO_AGRO.md`, `ADN-VISUAL-V11.0.md` ni `apps/gold/docs/FICHA_TECNICA.md` | Solo con autorización expresa |
+| `apps/gold/docs/FICHA_TECNICA.md` | Ficha técnica del proyecto: estructura, stack, módulos y reglas de desarrollo | Solo con cambios mayores del proyecto |
 | `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Reporte operativo activo | Sí — cada sesión agrega sección |
 | `apps/gold/docs/AGENT_REPORT.md` | Histórico legacy | No — solo consulta |
 | `apps/gold/docs/ADN-VISUAL-V11.0.md` | Sistema de diseño canónico activo (V11) | Solo con versionamiento formal |
@@ -222,7 +223,7 @@ Ejemplos:
   - `AGENTS.md`
   - `MANIFIESTO_AGRO.md`
   - `ADN-VISUAL-V11.0.md`
-  - `FICHA_TECNICA.md`
+  - `apps/gold/docs/FICHA_TECNICA.md`
 
 #### Regla de conservación
 - Si el documento conserva valor histórico, técnico o explicativo, NO debe borrarse.
@@ -284,6 +285,49 @@ Próximo paso:
 #### Principio rector
 
 Un archivo por día trabajado. Crónica única al cierre del mes. Limpieza después.
+
+#### 4.3.1 — Convención Estricta de Nombres para Daily Logs
+
+La convención canónica de nombres para archivos de bitácora diaria es:
+
+```
+daily-log-YYYY-MM-DD.md
+```
+
+**Reglas obligatorias:**
+
+- Siempre en **minúsculas**
+- Formato exacto: `daily-log-` seguido de fecha completa ISO 8601
+- Extensión: `.md`
+
+**Anti-patrones prohibidos:**
+
+- `DAILY_LOG_YYYY-MM-DD.md` (mayúsculas)
+- `Daily-Log-YYYY-MM-DD.md` (capitalización mixta)
+- `daily_log_YYYY-MM-DD.md` (guion bajo en lugar de guion)
+- `daily-log-YYYY-M-D.md` (fecha sin ceros a la izquierda)
+
+**Regla de purga robusta:**
+
+Al ejecutar la purga mensual de daily logs, el agente debe:
+
+1. Buscar **todas las variaciones posibles** de nombres:
+   - `daily-log-YYYY-MM-*.md` (minúsculas)
+   - `DAILY_LOG_YYYY-MM-*.md` (mayúsculas)
+   - `Daily-Log-YYYY-MM-*.md` (mixto)
+   - Cualquier otra variación con el patrón de fecha del mes
+
+2. Si encuentra archivos con nombres no canónicos:
+   - Leerlos para extraer información valiosa
+   - Consolidar su contenido en la crónica mensual
+   - Eliminarlos después de validar la consolidación
+   - Reportar al usuario: "Se encontraron X archivos con nombres no canónicos y fueron purgados"
+
+3. **No asumir que todos los agentes siguen la convención**: algunos agentes pueden crear archivos con nombres inconsistentes. La purga debe ser defensiva.
+
+**Lección aprendida (mayo 2026):**
+
+Dos archivos (`DAILY_LOG_2026-05-22.md` y `DAILY_LOG_2026-05-25.md`) fueron creados por agentes que no respetaron la convención canónica. Al ejecutar la purga con el patrón `daily-log-2026-05-*.md` (minúsculas), estos archivos pasaron por alto y quedaron como residuos. La crónica de mayo tuvo que actualizarse posteriormente para incluir sus hitos.
 
 ---
 
@@ -726,7 +770,7 @@ Los documentos canónicos:
 - `AGENTS.md`
 - `MANIFIESTO_AGRO.md`
 - `ADN-VISUAL-V11.0.md`
-- `FICHA_TECNICA.md`
+- `apps/gold/docs/FICHA_TECNICA.md`
 
 no se gobiernan por un límite bruto de líneas, sino por:
 - claridad estructural,

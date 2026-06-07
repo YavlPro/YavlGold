@@ -14,7 +14,7 @@ Actualizado: 2026-05-09.
 | **Ley visual** | ADN-VISUAL-V11.0.md | docs/ | Sistema de diseño canónico activo (V11). V10 es referencia histórica fundacional |
 | **Verdad semantica** | MANIFIESTO_AGRO.md | docs/ | Qué es cada superficie de Agro |
 | **Vision estrategica** | ROADMAP_VISION_YAVLGOLD.md | docs/ | Roadmap conceptual del producto: Agro V1 como base y primitives futuras sin implementar módulos prematuros |
-| **Estructura** | FICHA_TECNICA.md | raiz | Ficha técnica del proyecto |
+| **Estructura** | FICHA_TECNICA.md | docs/ | Ficha técnica del proyecto |
 | **Wiki viva** | AGENT_REPORT_ACTIVE.md | docs/ | Estado operativo acumulativo |
 | **Bitácora diaria** | daily-log-YYYY-MM-DD.md | docs/ops/ | Handoff operativo temporal entre agentes |
 | **Mapa central** | AGENT_CONTEXT_INDEX.md | docs/ | Este archivo |
@@ -31,7 +31,7 @@ Actualizado: 2026-05-09.
 - [ADN-VISUAL-V11.0.md](./ADN-VISUAL-V11.0.md) — Sistema de diseño canónico activo (V11)
 - [ADN-VISUAL-V10.0.md](./ADN-VISUAL-V10.0.md) — Referencia histórica fundacional (V10, ya no rige)
 - [yavlgold-context.md](./yavlgold-context.md) — Contexto consolidado (8K lineas)
-- [FICHA_TECNICA.md](../../FICHA_TECNICA.md) — Ficha técnica estructural
+- [FICHA_TECNICA.md](./FICHA_TECNICA.md) — Ficha técnica estructural
 
 ---
 

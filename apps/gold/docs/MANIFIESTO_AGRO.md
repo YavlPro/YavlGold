@@ -5,7 +5,7 @@
 > Estado: DOCUMENTO CANÓNICO ACTIVO
 > Fecha base: 2026-04-15 · Canonizado: 2026-04-17
 > Release visible: V1
-> Fuente canónica superior: `AGENTS.md` + `ADN-VISUAL-V11.0.md` + `FICHA_TECNICA.md`
+> Fuente canónica superior: `AGENTS.md` + `ADN-VISUAL-V11.0.md` + `apps/gold/docs/FICHA_TECNICA.md`
 
 ---
 
@@ -24,7 +24,7 @@ Cuando exista conflicto entre documentos canónicos, la jerarquía de autoridad 
 
 1. `AGENTS.md` — reglas globales de repo y operación (autoridad suprema del proyecto)
 2. `ADN-VISUAL-V11.0.md` — identidad visual y sistema de diseño
-3. `FICHA_TECNICA.md` — arquitectura y límites técnicos
+3. `apps/gold/docs/FICHA_TECNICA.md` — arquitectura y límites técnicos
 4. `MANIFIESTO_AGRO.md` — semántica funcional de Agro (este documento)
 5. `NAVEGACION.md` — rutas y nombres visibles de navegación (si existe)
 6. `AGENT_REPORT_ACTIVE.md` — bitácora operativa (no es ley, no prevalece en conflictos)
