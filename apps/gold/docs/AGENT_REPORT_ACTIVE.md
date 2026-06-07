@@ -733,4 +733,81 @@ Confirmado que son la misma persona. Requiere consolidación de identidad comerc
 ### Deuda técnica documentada
 - Extracción de Rankings a `agro-rankings.js` eliminaría la necesidad del fix quirúrgico en `agro.js` y resolvería la capitalización inconsistente (Hallazgo #2 de auditoría)
 
+### Acciones manuales del usuario (6 de junio)
+- ✅ **Orlando → Orlando Pineda**: unificación de identidad comercial realizada directamente en Facturero de Clientes
+- ✅ **Fiados de Orlando movidos a Pagados**: saldados manualmente en producción
+- ✅ **Migración `20260606120000` aplicada**: `npx supabase db push` ejecutado por el usuario
+
+### Commit
+`fix(agro): excluir movimientos de cultivos eliminados en toda la capa operativa`
+Commit: `6731d3a6` — pusheado a `origin/main`
+
+### Estado final del día
+**GREEN** ✅ — Bug de integridad de huérfanos completamente cerrado en todas las capas (JS + RPC).
+
 *Fix realizado por Kiro — sesión 2026-06-06.*
+
+## Sesión 2026-06-07 — Validación final post-limpieza de clientes fantasma
+
+### Estado: ✅ GREEN
+
+### Acciones manuales del usuario
+- **David** (cliente vacío, huérfano de Pepino eliminado) → eliminado desde Facturero de Clientes ✅
+- **Reyes** (cliente vacío, huérfano de Pepino eliminado) → eliminado desde Facturero de Clientes ✅
+- **Orlando** (duplicado vacío sin registros, diferente de "Orlando Pineda") → eliminado ✅
+- **Orlando → Orlando Pineda** (unificación de identidad comercial) → realizado en sesión anterior ✅
+
+### Auditoría de 9 reportes del 7 de junio
+
+| Área | Estado |
+|------|--------|
+| David / Reyes en rankings | ✅ ELIMINADOS |
+| Fantasma "🌱 Cultivo" en Top Cultivos | ✅ AUSENTE |
+| Fiados globales | ✅ $0.00 en los 3 reportes globales |
+| Totales financieros | ✅ $2,742.35 · $706.59 · $2,035.75 estables |
+| Unidades 222.5 sacos | ✅ Cuadran entre Perfil Global e individuales |
+| Orlando Pineda (real, 5 compras) | ✅ Presente y correcto |
+| Capitalización Rankings vs Estadísticas | 🟡 Pendiente #9 — deuda técnica conocida |
+| Yony / Yony Chupeto (legacy) | 🟡 Pendiente #8 — cosmético en informe batata |
+
+### Cierre definitivo del BUG A — Huérfanos de Pepino
+El ciclo completo del bug quedó resuelto en 3 capas:
+1. JS (Rankings, section-stats, fetchOperationalProgressMap) — commit `6731d3a6`
+2. RPC Supabase (agro_buyer_portfolio_summary_v1) — migración `20260606120000`
+3. Guard del informe estadístico (guardIncomeRows) — commit `ca1cf7f5`
+4. Limpieza manual de registros vacíos en `agro_buyers` — acción del usuario
+
+### Pendientes documentados (no bloquean operación)
+- **Pendiente #8**: "Yony" (legacy) vs "Yony Chupeto" (canónico) — fragmentación cosmética en informe de cultivo batata
+- **Pendiente #9**: Capitalización inconsistente entre AgroRankings y Estadísticas — requiere extracción de Rankings a `agro-rankings.js`
+
+*Validación realizada por Kiro — sesión 2026-06-07.*
+
+## Cierre formal 2026-06-07 (noche)
+
+### Estado: ✅ GREEN — Paridad UI ↔ Reportes ↔ Realidad operativa restaurada
+
+### Frentes cerrados (4)
+1. **Huérfanos de Pepino** (David/Reyes) — Kiro, commits `6731d3a6` + `ca1cf7f5`, 4 capas JS + migración SQL `20260606120000`
+2. **Guard de reportes asimétrico** — Kiro, commit `ca1cf7f5`, alineación `guardIncomeRows` con `buildPerCropTable`
+3. **Unificación Orlando → Orlando Pineda** — usuario (modal Facturero de Clientes)
+4. **Limpieza de clientes vacíos** (David, Reyes, Orlando vacío) — usuario (UI Mis Clientes)
+
+### Canon reforzado
+- `MANIFIESTO_AGRO.md §7` actualizado con regla de cascada al eliminar cultivos:
+  movimientos preservados para auditoría, excluidos de todas las superficies operativas.
+
+### Métricas del día
+- Commits: 2 (`6731d3a6`, `ca1cf7f5`)
+- Migraciones SQL: 1 (`20260606120000_agro_buyer_portfolio_exclude_deleted_crops.sql`)
+- Reportes auditados: 9 (13 áreas verdes, 3 amarillas — cosméticas, 0 rojas)
+
+### Lección operativa registrada
+Kiro mostró comportamiento clase-Opus con consumo eficiente (~2 créditos/sesión).
+Óptimo para cirugía técnica multi-capa, migraciones SQL y fixes de integridad.
+Posición en orquestación: primera línea para cirugía técnica.
+
+### Pendientes cosméticos (no bloquean)
+- **#8**: "Yony" legacy vs "Yony Chupeto" canónico — fragmentación en informe individual de batata
+- **#9**: Capitalización inconsistente Rankings vs Estadísticas — se resuelve al extraer Rankings a `agro-rankings.js`
+- **Redondeo $0.01** cross-reporte — dentro de EPSILON $1, aceptado permanentemente

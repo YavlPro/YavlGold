@@ -1245,6 +1245,24 @@ Su propósito es concentrar el acceso a **Ciclos de Cultivo** (via Mis cultivos)
 
 Los reportes detallados por cultivo se acceden directamente desde cada card/ciclo de cultivo, no desde el Centro de Reportes.
 
+### Integridad de datos en estadísticas y reportes
+
+**Regla de cascada al eliminar cultivos:**
+Cuando un cultivo se elimina (`deleted_at IS NOT NULL`), sus movimientos asociados (ingresos, gastos, fiados, pérdidas, transferencias) se **preservan en la base de datos para auditoría**, pero quedan **excluidos de todas las superficies operativas**:
+
+- No aparecen en estadísticas ni KPIs globales.
+- No aparecen en rankings de cultivos ni de clientes.
+- No aparecen en el Facturero de Clientes ni en su RPC de portfolio.
+- No aparecen en reportes exportados (Estadísticas Global, Perfil Global, Rankings).
+- Solo son visibles en superficies explícitas de auditoría o histórico, si se implementan en el futuro.
+
+Esta regla se aplica en tres capas del sistema:
+1. **Capa JS** — filtro `validCropIds` antes de computar estadísticas y rankings.
+2. **Capa RPC Supabase** — CTE `valid_crop_ids` en `agro_buyer_portfolio_summary_v1`.
+3. **Capa guard de exportes** — filtro simétrico antes de `validateExportBundle`.
+
+**Principio:** un agricultor no debe ver fiados activos, clientes ni montos de un cultivo que ya decidió eliminar. La eliminación es una decisión operativa que debe reflejarse de inmediato en toda la UI.
+
 ### Por qué utilizamos MD por ahora
 
 * Es un formato de texto limpio que se abre en cualquier editor y no requiere programas de paga.
