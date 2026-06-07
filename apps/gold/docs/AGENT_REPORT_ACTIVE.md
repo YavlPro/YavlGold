@@ -55,7 +55,9 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-05-05__2026-06-03.md`
 ## Referencias a archivos archivados relevantes
 
 - `AGENT_LEGACY_CONTEXT__2026-05-05__2026-06-03.md`
+- `apps/gold/docs/chronicles/2026-05.md` — Crónica de mayo 2026
 - `apps/gold/docs/AGENT_REPORT.md`
+- `apps/gold/docs/ops/` — logs diarios de mayo purgados tras consolidación de crónica
 
 ---
 

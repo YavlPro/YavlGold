@@ -567,3 +567,42 @@ Archivo: [2026-04.md](./2026-04.md)
 
 *Fecha de extensión*: 2026-05-01
 *Generado por*: Historiador Forense de Git — Protocolo Append-Only v1.0
+
+---
+
+# ADDENDUM — Mayo 2026 (Append-only)
+
+> *Esta sección extiende la cobertura de la crónica al mes de mayo 2026.*
+
+## Resumen Ejecutivo — Mayo 2026
+
+Los hechos que marcaron el quinto mes de 2026:
+
+1. **Archivo/Papelera de cultivos (May 1-3)**: Ciclo de vida completo implementado. Regla canónica: el cultivo puede salir de la vista, pero la historia comercial no desaparece.
+2. **Centro de Reportes consolidado (May 4-6)**: Índice de reportes generales oficiales. 3 exportes oficiales en producción. Reportes por cultivo viven en cards/ciclos.
+3. **Campana/notificaciones saneadas (May 7-8)**: Reenrutadas a Cartera Viva y Cartera Operativa. Semántica de CTAs honesta.
+4. **Unificación monetaria en exportes (May 9-11)**: Formato canónico `$XXX.XX USD`. 20 formatters → 1 central en `agro-format.js`.
+5. **Fórmula canónica de costos (May 12-14)**: `costosTotales = inversión + gastos + pérdidas`, sin doble resta. Paridad individual/global restaurada.
+6. **Calculador canónico unificado (May 15-18)**: `agro-profit-calculator.js` consolidó 4 calculadores paralelos en una sola fuente de verdad. 7 bugs críticos resueltos.
+7. **Auditoría cruzada de informes (May 19-22)**: Revisión exhaustiva de 8 informes exportados vs Dashboard en vivo. Normalización de nombres de clientes.
+8. **Cartera Viva alineación semántica (May 23-31)**: Fixes quirúrgicos de Fiado/Cobrado/Perdido. Jerarquía de estados: pérdida > pagado. Frente quedó en RED por regresión revertida.
+
+---
+
+## Anexo I — Mayo 2026
+
+Archivo: [2026-05.md](./2026-05.md)
+
+**Resumen**: Mayo 2026 consolidó la infraestructura financiera y operativa de YavlGold. Con ~180 commits estimados, el mes implementó ciclo de vida completo de cultivos (archivo/papelera), consolidó el Centro de Reportes, unificó 20 formatters monetarios en uno solo, creó el calculador canónico unificado que resolvió 7 bugs críticos de consistencia financiera, y ejecutó auditoría cruzada de informes. Cartera Viva recibió fixes quirúrgicos de alineación semántica pero quedó en RED por regresión que requirió rollback.
+
+**Métricas estimadas**:
+- **~180 commits** (estimación basada en densidad de daily logs)
+- **6 módulos nuevos**: `agro-farms.js`, `agro-farm-movements.js`, `agro-report-format.js`, `agro-report-guard.js`, `agro-format.js`, `agro-profit-calculator.js`
+- **7 bugs críticos resueltos** de consistencia financiera
+- **20 formatters monetarios** consolidados en 1 central
+- **0 PRs mergeados** (trabajo directo en main)
+
+---
+
+*Fecha de extensión*: 2026-06-07
+*Generado por*: Historiador Forense de Git — Protocolo Append-Only v1.0
