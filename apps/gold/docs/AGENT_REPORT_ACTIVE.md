@@ -813,3 +813,69 @@ Posición en orquestación: primera línea para cirugía técnica.
 - **#8**: "Yony" legacy vs "Yony Chupeto" canónico — fragmentación en informe individual de batata
 - **#9**: Capitalización inconsistente Rankings vs Estadísticas — se resuelve al extraer Rankings a `agro-rankings.js`
 - **Redondeo $0.01** cross-reporte — dentro de EPSILON $1, aceptado permanentemente
+
+---
+
+## Sesión 2026-06-07 — Consolidación de Crónica Mayo 2026 y Blindaje Documental
+
+### Estado: ✅ GREEN
+
+### Objetivo
+Consolidar la memoria histórica del mes de mayo 2026, purgar logs diarios temporales y blindar la convención de nombres para evitar residuos futuros.
+
+### Contexto
+El sistema de bitácora operativa diaria (§4.3 AGENTS.md) establece que los `daily-log-YYYY-MM-DD.md` son archivos temporales que deben eliminarse tras validación de la crónica mensual. Al iniciar la sesión existían múltiples logs de mayo pendientes de consolidación.
+
+---
+
+### Acciones realizadas
+
+#### 1. Consolidación de Crónica Mayo 2026
+- **Archivo creado**: `apps/gold/docs/chronicles/2026-05.md`
+- **Contenido**: Hitos principales, decisiones arquitectónicas, estado de módulos, deuda técnica
+- **Hitos documentados**: Calculador canónico unificado, 7 bugs críticos resueltos, auditoría cruzada de informes, normalización de nombres de clientes
+
+#### 2. Addendum a Crónica General
+- **Archivo modificado**: `apps/gold/docs/chronicles/CRONICA-YAVLGOLD.md`
+- **Contenido agregado**: Resumen Ejecutivo Mayo 2026 con 8 hitos principales y referencia al archivo mensual
+
+#### 3. Blindaje de AGENTS.md §4.3.1
+- **Problema detectado**: 2 archivos residuales con nombres en mayúsculas (`DAILY_LOG_2026-05-22.md`, `DAILY_LOG_2026-05-25.md`) no fueron detectados por la purga automática que usaba patrón `daily-log-2026-05-*.md` (minúsculas)
+- **Solución**: Nueva sección §4.3.1 con:
+  - Convención estricta de nombres: siempre minúsculas, formato exacto `daily-log-YYYY-MM-DD.md`
+  - Anti-patrones prohibidos documentados
+  - Regla de purga robusta: buscar todas las variaciones posibles de nombres
+  - Lección aprendida registrada
+
+#### 4. Reorganización Documental
+- **Archivo movido**: `FICHA_TECNICA.md` desde raíz del repo a `apps/gold/docs/FICHA_TECNICA.md`
+- **Archivos actualizados** (referencias corregidas):
+  - `AGENTS.md` — Tabla §4, §4.2, §11.X, ROADMAP
+  - `MANIFIESTO_AGRO.md` — Fuente canónica superior y jerarquía de precedencia
+  - `ROADMAP_VISION_YAVLGOLD.md` — Referencia en §0
+  - `AGENT_CONTEXT_INDEX.md` — Tabla de capas y link relativo
+
+#### 5. Purga de Logs Diarios de Mayo
+- **Archivos eliminados**: Todos los `daily-log-2026-05-*.md` tras validación de crónica
+- **Archivos residuales procesados**: `DAILY_LOG_2026-05-22.md` y `DAILY_LOG_2026-05-25.md` (contenido consolidado en crónica antes de eliminación)
+
+#### 6. Eliminación de Duplicado
+- **Archivo eliminado**: `FICHA_TECNICA.md` duplicado en raíz (commit separado)
+
+---
+
+### Commits del día
+1. `docs: mover FICHA_TECNICA.md a apps/gold/docs/ y actualizar referencias canonicas` (512aad2)
+2. `docs: eliminar FICHA_TECNICA.md duplicado de raiz` (pendiente push)
+3. `docs: consolidacion cronica mayo 2026 y actualizacion reporte activo` (pendiente push)
+4. `docs: addendum mayo 2026 a cronica general` (pendiente push)
+
+### Resultado de build
+- ✅ `pnpm build:gold` pasa sin errores
+- ✅ UTF-8 verification passed
+
+### Lección operativa registrada
+Los agentes que crean archivos con nombres inconsistentes (mayúsculas vs minúsculas) pueden generar residuos que pasan por alto en procesos automatizados. La regla de purga debe ser defensiva: buscar todas las variaciones posibles de nombres, no solo el patrón canónico.
+
+### Estado final del proyecto
+**GREEN** ✅ — Memoria histórica de mayo consolidada, logs diarios purgados, convención de nombres blindada para futuras sesiones.
