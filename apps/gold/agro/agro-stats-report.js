@@ -694,8 +694,15 @@ export async function exportStatsReport() {
         md += `> Generado por YavlGold · yavlgold.com\n`;
 
         // Download with UTF-8 BOM
+        // Filter income rows to only valid (non-deleted) crops before guard check,
+        // matching the same filter applied inside buildPerCropTable.
+        const validCropIdsForGuard = new Set(crops.map((c) => String(c.id || '').trim()).filter(Boolean));
+        const guardIncomeRows = incomeRows.filter((r) => {
+            const cid = String(r?.crop_id || '').trim();
+            return !cid || validCropIdsForGuard.has(cid);
+        });
         const vResult = validateExportBundle({
-            rows: incomeRows,
+            rows: guardIncomeRows,
             totals: { incomeUsd: incomeCents / 100 },
             currency: 'USD'
         });
