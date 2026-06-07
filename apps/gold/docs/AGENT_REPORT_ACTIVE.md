@@ -747,7 +747,7 @@ Commit: `6731d3a6` — pusheado a `origin/main`
 
 *Fix realizado por Kiro — sesión 2026-06-06.*
 
-## Sesión 2026-06-07 — Validación final post-limpieza de clientes fantasma
+## Sesión 2026-06-06 (noche) — Validación final post-limpieza de clientes fantasma
 
 ### Estado: ✅ GREEN
 
@@ -781,9 +781,9 @@ El ciclo completo del bug quedó resuelto en 3 capas:
 - **Pendiente #8**: "Yony" (legacy) vs "Yony Chupeto" (canónico) — fragmentación cosmética en informe de cultivo batata
 - **Pendiente #9**: Capitalización inconsistente entre AgroRankings y Estadísticas — requiere extracción de Rankings a `agro-rankings.js`
 
-*Validación realizada por Kiro — sesión 2026-06-07.*
+*Validación realizada por Kiro — sesión 2026-06-06 (noche).*
 
-## Cierre formal 2026-06-07 (noche)
+## Cierre formal 2026-06-06 (noche)
 
 ### Estado: ✅ GREEN — Paridad UI ↔ Reportes ↔ Realidad operativa restaurada
 
