@@ -13723,6 +13723,8 @@ async function fetchOpsTopCropsCanonical({ userId, rangeDates, cropId, filterRow
         let bucket = buckets.get(key);
         if (bucket) return bucket;
         const crop = cropMap.get(key) || null;
+        // Discard movements from deleted/unknown crops — they must not appear in rankings.
+        if (!crop) return null;
         const investmentSnapshot = crop ? resolveCropInvestmentSnapshot(crop) : { usdEquiv: 0 };
         const display = crop ? getCropDisplayParts(crop) : null;
         bucket = {

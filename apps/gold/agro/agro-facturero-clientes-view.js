@@ -882,6 +882,16 @@ function buildCropScopedSummaryOverlay(row, bucket = null) {
 async function fetchOperationalProgressMap(supabaseClient, cropId = null) {
     const safeCropId = normalizeCropId(cropId);
     const baseColumns = 'buyer_id,buyer_group_key,unit_type,unit_qty,quantity_kg,monto,monto_usd,buyer_match_status';
+
+    // Resolve valid (non-deleted) crop IDs to filter orphaned movements.
+    const { data: activeCropRows } = await supabaseClient
+        .from('agro_crops').select('id').is('deleted_at', null);
+    const validCropIds = new Set((activeCropRows || []).map((r) => String(r.id || '').trim()).filter(Boolean));
+    const isOrphan = (row) => {
+        const cid = String(row?.crop_id || '').trim();
+        return cid && !validCropIds.has(cid);
+    };
+
     const pendingQuery = supabaseClient
         .from('agro_pending')
         .select(`${baseColumns},transfer_state,transferred_at,transferred_to,transferred_income_id,crop_id`)
@@ -917,7 +927,7 @@ async function fetchOperationalProgressMap(supabaseClient, cropId = null) {
     const nextSummaryMap = new Map();
     const nextCropAssociationMap = new Map();
 
-    (Array.isArray(pendingResult?.data) ? pendingResult.data : []).forEach((row) => {
+    (Array.isArray(pendingResult?.data) ? pendingResult.data : []).filter((row) => !isOrphan(row)).forEach((row) => {
         appendPortfolioCropAssociation(nextCropAssociationMap, row);
         const transferToken = getPendingTransferToken(row);
         const isActivePending = transferToken !== 'transferred' && transferToken !== 'reverted';
@@ -944,7 +954,7 @@ async function fetchOperationalProgressMap(supabaseClient, cropId = null) {
         appendOperationalProgressFamilyEntry(nextFamilyMap, scopeKey, 'pending', row);
     });
 
-    (Array.isArray(incomeResult?.data) ? incomeResult.data : []).forEach((row) => {
+    (Array.isArray(incomeResult?.data) ? incomeResult.data : []).filter((row) => !isOrphan(row)).forEach((row) => {
         appendPortfolioCropAssociation(nextCropAssociationMap, row);
         const originTable = String(row?.origin_table || '').trim().toLowerCase();
         const matchStatus = String(row?.buyer_match_status || '').trim().toLowerCase();
@@ -966,7 +976,7 @@ async function fetchOperationalProgressMap(supabaseClient, cropId = null) {
         appendOperationalProgressFamilyEntry(nextFamilyMap, scopeKey, 'paid', row);
     });
 
-    (Array.isArray(lossResult?.data) ? lossResult.data : []).forEach((row) => {
+    (Array.isArray(lossResult?.data) ? lossResult.data : []).filter((row) => !isOrphan(row)).forEach((row) => {
         appendPortfolioCropAssociation(nextCropAssociationMap, row);
         const originTable = String(row?.origin_table || '').trim().toLowerCase();
         const matchStatus = String(row?.buyer_match_status || '').trim().toLowerCase();

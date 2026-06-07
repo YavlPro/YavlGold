@@ -566,3 +566,171 @@ GREEN ✅ — Plan estratégico de 4 fases completamente cerrado y validado en p
 2. Unificar helpers de sanitize en `agro-report-format.js`
 3. Ajustar umbrales de interpretación del ROI
 4. Investigar off-by-one menor en días de progreso (prioridad baja)
+
+## Sesión 2026-06-06 — Auditoría Cruzada de 9 Reportes Exportados
+
+### Estado: 🟡 YELLOW — 8 áreas verdes, 2 hallazgos rojos
+
+### Objetivo
+Auditoría completa cruzada de los 9 informes MD generados el 6 de junio contra los documentos canónicos (MANIFIESTO_AGRO, AGENTS, ADN-VISUAL-V11, FICHA_TECNICA, ROADMAP) y contra los bugs cerrados en sesiones previas.
+
+### Informes auditados (9)
+- 3 globales: `AgroRankings_2026-06-06.md`, `Estadisticas_YavlGold_2026-06-06.md`, `agro_perfil_global_2026-06-06.md`
+- 4 de cultivos: `Informe_batata_amarilla_2_2026-06-06.md`, `Informe_batata_2026-06-06.md`, `Informe_caraota_roja_2026-06-06.md`, `Informe_maiz_2026-06-06.md`
+- 2 de fincas: `Informe_Finca_Los_Higuerones_2026-06-06.md`, `Informe_Finca_la_ladera_2026-06-06.md`
+
+---
+
+### Aciertos verificados (8 áreas GREEN)
+
+| # | Área | Evidencia |
+|---|------|-----------|
+| 1 | Limpieza de emojis duplicados | Todos los cultivos sin duplicados tras fix de SQL del 6/06 |
+| 2 | Formato monetario | `$1,263.25 USD` — punto decimal, moneda explícita, cero coma decimal |
+| 3 | Semántica de costos | Fórmula canónica `costosTotales = inversión + gastos + pérdidas` respetada |
+| 4 | Purga QA | Cero registros de prueba en los 9 informes |
+| 5 | Estados de cartera | `🔔 Mixto` / `⏳ Debe` / `✅ Pagado` correctamente aplicados |
+| 6 | caraota roja | Estado `🌿 Creciendo`, día 13/92 (14%), balance -$22.03 — semántica §4.3 canónica |
+| 7 | Toggles de privacidad | No aparecen en exportes MD (no se filtran a Markdown) |
+| 8 | Refactor de helpers | Output byte-equivalente post-consolidación de `agro-report-format.js` |
+
+---
+
+### Hallazgos rojos (2 — requieren acción)
+
+#### 🔴 Hallazgo #1 — Cultivo fantasma "🌱 Cultivo" en AgroRankings (Top Cultivos #4)
+- **Evidencia**: Fila `4. 🌱 Cultivo · Rentabilidad real $0.00 USD · Ingresos $0.00 · Inversión $0.00` en `AgroRankings_2026-06-06.md`
+- **No aparece** en Estadísticas, Perfil Global ni en ninguno de los 4 informes individuales de cultivo
+- **Diagnóstico probable**: Placeholder legacy — registro creado sin nombre o cultivo soft-deleted omitido por la query de Rankings
+- **Canon violado**: MANIFIESTO_AGRO §7 (honestidad documental — cero placeholders)
+- **Contexto previo**: Documentado el 2026-06-05 como "limitación técnica" porque Rankings vive en `agro.js` (§3.1)
+- **Query SQL de diagnóstico pendiente** (solo lectura, sin riesgo):
+
+```sql
+SELECT id, name, farm_id, status, created_at::date, deleted_at
+FROM agro_crops
+WHERE user_id = '6b2b81ba-1233-49a8-8fe8-bac4eec963dc'
+  AND (LOWER(TRIM(name)) = 'cultivo' OR LOWER(TRIM(name)) LIKE '%cultivo%')
+ORDER BY created_at DESC;
+```
+
+Si aparece un registro con `deleted_at IS NULL` y nombre literal "Cultivo", corresponde soft-delete manual con `UPDATE agro_crops SET deleted_at = NOW() WHERE id = '<id>';`
+
+#### 🔴 Hallazgo #2 — Capitalización inconsistente entre Rankings y Estadísticas
+- **Evidencia**: `AgroRankings` usa `jose luis`, `Yony chupeto`, `Jesús berraco`; `Estadisticas` usa `Jose Luis`, `Yony Chupeto`, `Jesús Berraco` (32 clientes afectados)
+- **Montos idénticos** — es cosmético, no funcional
+- **Causa raíz**: Dos builders diferentes o rutas de normalización distintas entre el módulo de Rankings (`agro.js`) y el de Estadísticas
+- **Pendiente #9** documentado en sesión 2026-06-05
+- **Resolución**: Requiere extracción de Rankings a `agro-rankings.js` + unificación del normalizador de nombres (Pendiente de refactor estructural)
+
+---
+
+### Hallazgos amarillos (3 — no bloquean, baja prioridad)
+
+| # | Hallazgo | Naturaleza |
+|---|----------|------------|
+| A | Fragmentación "Yony" vs "Yony Chupeto" | Pendiente #8 de sesión 2026-06-05 — deduplicación de cliente canónico |
+| B | "caraota roja (roja)" en Estadísticas vs "caraota roja" en Rankings | Cosmético — variedad entre paréntesis no se muestra en Rankings |
+| C | Diferencia $0.01 entre Estadísticas ($706.59) y Perfil Global ($706.60) | Ruido de redondeo, dentro de EPSILON $1 establecido |
+
+---
+
+### Cambios realizados en esta sesión
+- Ninguno — sesión de auditoría / diagnóstico (read-only)
+
+### QA realizado
+- Lectura cruzada de los 9 informes contra canónicos
+- Verificación de aciertos de las sesiones 2026-06-04 y 2026-06-05
+
+### Próximas acciones priorizadas
+
+1. **✅ RESUELTO (Fix 1)**: `agro.js` — `ensureBucket` retorna `null` para crop_id sin cultivo activo → fantasma "Cultivo" en Rankings eliminado
+2. **✅ RESUELTO (Fix 2)**: `agro-section-stats.js` — filtro `validCropIds` aplicado sobre filas antes de `computeStats`
+3. **✅ RESUELTO (Fix 3)**: `agro-facturero-clientes-view.js` — filtro `isOrphan` en `fetchOperationalProgressMap` para pending, income y loss
+4. **🟡 Próxima sesión**: Extraer Rankings a `agro-rankings.js` + unificar normalizador de nombres (resuelve capitalización inconsistente — Hallazgo #2)
+5. **🟡 Próxima sesión**: Unificar helpers de sanitize y deduplicación de clientes canónicos
+6. **🟢 Aceptado**: Diferencia $0.01 — ruido dentro de tolerancia establecida
+
+---
+
+*Auditoría realizada por Kiro (sesión 2026-06-06). Método: lectura cruzada de 9 informes + contraste con MANIFIESTO_AGRO, AGENTS, ADN-VISUAL-V11, FICHA_TECNICA y reportes de sesiones previas.*
+
+## Sesión 2026-06-06 (continuación) — Fix de integridad: movimientos huérfanos de cultivos eliminados
+
+### Estado: ✅ GREEN
+
+### Diagnóstico
+Confirmada la raíz de los fantasmas "David", "Reyes" y "🌱 Cultivo" en Rankings/Facturero:
+
+1. **Bug de integridad estructural**: `agro_pending` (y otras tablas de movimientos) conserva filas con `crop_id` de cultivos que tienen `deleted_at IS NOT NULL`. Esto es correcto para auditoría, pero esas filas no deben participar en operación diaria.
+
+2. **Mecanismo del fantasma**: En `agro.js`, `ensureBucket(crop_id)` creaba un bucket con `crop_name: 'Cultivo'` para cualquier `crop_id` que no estuviera en `cropMap` (incluyendo cultivos eliminados). Esto generaba la fila `🌱 Cultivo · $0.00` en Rankings.
+
+3. **Superficies sin filtro**: `agro-section-stats.js` y `agro-facturero-clientes-view.js` no cruzaban movimientos contra `agro_crops.deleted_at`.
+
+### Módulos auditados (15 archivos con agro_pending)
+| Módulo | Estado previo | Acción |
+|--------|--------------|--------|
+| `agroestadistica.js` | ✅ Ya tenía `filterByValidCrop` | Sin cambios |
+| `agroperfil.js` | ✅ Ya tenía `filterByValidCrop` | Sin cambios |
+| `agro-stats-report.js` | ✅ Movimientos huérfanos van a `unassigned` (descartados) | Sin cambios |
+| `agro.js` (Rankings) | ❌ `ensureBucket` creaba bucket fantasma | Fix 1 |
+| `agro-section-stats.js` | ❌ Sin filtro de cultivos eliminados | Fix 2 |
+| `agro-facturero-clientes-view.js` | ❌ Sin filtro en `fetchOperationalProgressMap` | Fix 3 |
+| Resto (reportes por cultivo, wizard, etc.) | ✅ No aplica — scoped por crop_id específico | Sin cambios |
+
+### Cambios realizados
+
+#### Fix 1 — `apps/gold/agro/agro.js` (+1 línea)
+```javascript
+// En ensureBucket, antes de crear el bucket:
+const crop = cropMap.get(key) || null;
+// Discard movements from deleted/unknown crops — they must not appear in rankings.
+if (!crop) return null;
+```
+Excepción justificada a §3.1 AGENTS.md: bugfix quirúrgico de 1 línea. La regla de cirugía sí aplica.
+
+#### Fix 2 — `apps/gold/agro/agro-section-stats.js` (+6 líneas)
+```javascript
+// En loadSectionStats, después de getCropsMap():
+const validCropIds = new Set(Object.keys(cropsMap));
+const filteredRows = rows.filter((row) => {
+    const cid = String(row?.crop_id || '').trim();
+    return !cid || validCropIds.has(cid);
+});
+// computeStats(sectionKey, filteredRows, cropsMap) — usa filteredRows
+```
+Usa `getCropsMap()` que ya existía. Cero queries adicionales.
+
+#### Fix 3 — `apps/gold/agro/agro-facturero-clientes-view.js` (+8 líneas)
+```javascript
+// En fetchOperationalProgressMap, al inicio:
+const { data: activeCropRows } = await supabaseClient.from('agro_crops').select('id').is('deleted_at', null);
+const validCropIds = new Set((activeCropRows || []).map((r) => String(r.id || '').trim()).filter(Boolean));
+const isOrphan = (row) => { const cid = String(row?.crop_id || '').trim(); return cid && !validCropIds.has(cid); };
+// Aplicado en los 3 forEach: pendingResult, incomeResult, lossResult
+```
+
+### Resultado de build
+- ✅ `pnpm build:gold` pasa sin errores (3.18s, 185 módulos)
+- ✅ UTF-8 verification passed
+- ✅ agent-guard OK, agent-report-check OK
+
+### QA sugerido
+1. Abrir **Rankings** → Top Cultivos — no debe aparecer `🌱 Cultivo` con $0.00
+2. Abrir **Facturero de Clientes** → no deben aparecer "David" ni "Reyes" (huérfanos de Pepino)
+3. Abrir **Sección Stats** (Pendientes/Fiados) → no deben aparecer montos del Pepino eliminado
+4. Abrir Rankings Top Clientes → Wilmer Chapeton y Orlando Pineda deben seguir igual (datos válidos)
+
+### Canon reforzado (propuesta para AGENTS.md o MANIFIESTO)
+> Ninguna consulta de negocio puede considerar movimientos con `crop_id` de cultivos con `deleted_at IS NOT NULL`, salvo superficies explícitas de auditoría o histórico.
+
+Esta regla, si se aprueba, debe registrarse en `MANIFIESTO_AGRO.md §7` o en `AGENTS.md §6`.
+
+### BUG B — Orlando / Orlando Pineda (pendiente)
+Confirmado que son la misma persona. Requiere consolidación de identidad comercial vía `buyer_group_key` o modal de unificación (mismo mecanismo que Yony ↔ Yony Chupeto). **No hay que borrar nada** — solo merge de cliente. Pendiente de próxima sesión.
+
+### Deuda técnica documentada
+- Extracción de Rankings a `agro-rankings.js` eliminaría la necesidad del fix quirúrgico en `agro.js` y resolvería la capitalización inconsistente (Hallazgo #2 de auditoría)
+
+*Fix realizado por Kiro — sesión 2026-06-06.*

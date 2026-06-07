@@ -850,8 +850,14 @@ async function loadSectionStats(sectionKey, range) {
             getCropsMap()
         ]);
         if (sectionLoadSequence[sectionKey] !== requestId) return;
+        // Exclude movements from deleted crops — they must not appear in section stats.
+        const validCropIds = new Set(Object.keys(cropsMap));
+        const filteredRows = rows.filter((row) => {
+            const cid = String(row?.crop_id || '').trim();
+            return !cid || validCropIds.has(cid);
+        });
         const scopeContext = buildScopeContext(sectionKey, cropId, cropsMap);
-        const stats = computeStats(sectionKey, rows, cropsMap);
+        const stats = computeStats(sectionKey, filteredRows, cropsMap);
         Object.assign(stats, scopeContext, {
             emptyText: scopeContext.isGeneral
                 ? 'No hay datos para este periodo en Vista general.'
