@@ -12,7 +12,7 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-05-05__2026-06-03.md`
 - Canon operativo superior: `AGENTS.md`.
 - Canon visual activo: `apps/gold/docs/ADN-VISUAL-V11.0.md`.
 - Canon semántico Agro: `apps/gold/docs/MANIFIESTO_AGRO.md` (solo con autorización expresa).
-- Ficha técnica disponible en raíz: `FICHA_TECNICA.md`.
+- Ficha técnica disponible en: `apps/gold/docs/FICHA_TECNICA.md`.
 - Supabase canónico: `supabase/` en raíz.
 - Fase actual aprobada: **Fase 1 COMPLETADA y validada en producción**; **Fase 2 pendiente**.
 
@@ -879,3 +879,81 @@ Los agentes que crean archivos con nombres inconsistentes (mayúsculas vs minús
 
 ### Estado final del proyecto
 **GREEN** ✅ — Memoria histórica de mayo consolidada, logs diarios purgados, convención de nombres blindada para futuras sesiones.
+
+---
+
+## Auditoría Qwen 3.7 Max — Cierre de sesión 2026-06-07
+
+### Resumen de trabajos ejecutados
+
+| # | Tarea | Estado |
+|---|-------|--------|
+| 1 | Consolidación Crónica Mayo 2026 (`chronicles/2026-05.md`) | COMPLETADO |
+| 2 | Addendum Mayo 2026 a `CRONICA-YAVLGOLD.md` | COMPLETADO |
+| 3 | Blindaje AGENTS.md §4.3.1 — convención estricta de nombres daily-logs | COMPLETADO |
+| 4 | Movimiento de `FICHA_TECNICA.md` a `apps/gold/docs/` | COMPLETADO |
+| 5 | Actualización de referencias canónicas (AGENTS.md, MANIFIESTO, ROADMAP, AGENT_CONTEXT_INDEX) | COMPLETADO |
+| 6 | Purga de logs diarios de mayo (incluyendo 2 residuales en mayúsculas) | COMPLETADO |
+| 7 | Eliminación de `FICHA_TECNICA.md` duplicado de raíz | COMPLETADO |
+
+### Commits pusheados a main
+1. `docs: mover FICHA_TECNICA.md a apps/gold/docs/ y actualizar referencias canonicas` — 512aad2
+2. `docs: eliminar FICHA_TECNICA.md duplicado de raiz`
+3. `docs: consolidacion cronica mayo 2026 y actualizacion reporte activo`
+4. `docs: actualizar reporte activo sesion 2026-06-07 el trabajo de los agentes fin.`
+
+### Archivos residuales eliminados
+- `apps/gold/docs/ops/DAILY_LOG_2026-05-22.md` — eliminado (contenido consolidado en crónica)
+- `apps/gold/docs/ops/DAILY_LOG_2026-05-25.md` — eliminado (contenido consolidado en crónica)
+
+### Reglas operativas confirmadas
+- Los `daily-log-YYYY-MM-DD.md` en `apps/gold/docs/ops/` NUNCA se suben a GitHub
+- Solo la Crónica mensual consolidada (`chronicles/YYYY-MM.md`) se versiona en el repo
+- La carpeta `ops/` está en `.gitignore`
+- Convención estricta de nombres: siempre minúsculas, formato exacto `daily-log-YYYY-MM-DD.md`
+
+### Lección operativa registrada
+Agentes que crean archivos con nombres inconsistentes (mayúsculas vs minúsculas) generan residuos que pasan por alto en procesos automatizados. La regla de purga debe ser defensiva: buscar todas las variaciones posibles de nombres, no solo el patrón canónico. Documentado en AGENTS.md §4.3.1.
+
+### Estado final validado
+**GREEN** — Memoria histórica de mayo consolidada, logs diarios purgados, convención de nombres blindada, referencias canónicas actualizadas. Sesión cerrada limpia.
+
+*Auditoría realizada por Qwen 3.7 Max — sesión 2026-06-07.*
+
+---
+
+## Sesión 2026-06-08 — Auditoría Técnica, Índices de Performance y Hardening de Seguridad
+
+### Estado: ✅ GREEN
+
+### Objetivo
+Resolver los hallazgos de la auditoría técnica de la base de datos de producción y Edge Functions, optimizando el rendimiento de claves foráneas y endureciendo la seguridad de funciones `SECURITY DEFINER`.
+
+### Diagnóstico
+1. **Performance**: Existen 25 claves foráneas en el módulo Agro (relacionadas con Fincas, Cultivos, Compradores y Ciclos) sin índices de cobertura eficaces (los índices existentes eran compuestos comenzando por `user_id`, lo cual no sirve para constreñir las comprobaciones referenciales o consultas que no involucran `user_id` al inicio).
+2. **Seguridad en Funciones**:
+   - `public.log_event(...)` permitía ejecución pública (rol `anon`), lo que exponía la base a inundación de logs.
+   - Las funciones ejecutadas por triggers (`distribute_announcement_to_notifications`, `ensure_profile_exists`, `audit_admin_changes`) carecían de `search_path` explícito y permitían su ejecución a `PUBLIC`.
+3. **Edge Functions**: `agro-assistant` con `verify_jwt = false` es seguro e intencional para permitir solicitudes de preflight OPTIONS de CORS; las llamadas reales son verificadas a mano a nivel de código TypeScript.
+
+### Acciones Realizadas
+
+#### 1. Creación de la Migración
+- **Archivo**: [20260608214500_agro_performance_security_hardening.sql](file:///c:/Users/yerik/gold/supabase/migrations/20260608214500_agro_performance_security_hardening.sql)
+- **Índices de Performance**: Creados 25 índices para todas las FKs de `agro_*` (incluyendo `farm_id`, `crop_id`, `buyer_id`, `cycle_id`).
+- **Hardening de Funciones**:
+  - Recreadas las 5 funciones `SECURITY DEFINER` aplicando `SET search_path = ''` y calificando todas las referencias.
+  - Revocados privilegios de ejecución de `public.log_event` del rol público (`anon` / `PUBLIC`), limitando solo a `authenticated` y `service_role`.
+  - Revocados privilegios de ejecución pública en funciones exclusivas de triggers.
+
+#### 2. Validación y Build
+- **SQL Dry-Run**: Validada la migración en la base activa con un bloque `BEGIN ... ROLLBACK`. Resultado conforme (0 errores).
+- **Vite Build**: Ejecutado `pnpm build:gold` con paso exitoso de todas las comprobaciones y guardrails de UTF-8.
+
+### Commits
+- `feat(db): migración de índices de performance y hardening de seguridad` (creación de la migración `20260608214500_agro_performance_security_hardening.sql`)
+
+### Estado final del proyecto
+**GREEN** ✅ — Optimización de consultas lista y seguridad de la base de datos blindada contra secuestro de ruta de búsqueda.
+
+*Auditoría y corrección realizada por Antigravity — sesión 2026-06-08.*
