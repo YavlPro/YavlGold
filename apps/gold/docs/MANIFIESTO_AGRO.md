@@ -107,9 +107,8 @@ El valor de Agro no está solo en registrar. Está en conectar lo que pasa en el
 * Mi Perfil
 * Dashboard Agro
 * Mi Granja *(agrupador de navegación — no es un módulo financiero)*
-  * Ciclos de cultivos
-    * Mis cultivos (activos, finalizados, perdidos)
-    * Mis Fincas
+  * Mis fincas y cultivos
+    * Mis Fincas (entrada principal — desde cada finca se accede a "Ver cultivos")
     * Estadísticas de ciclos
     * Comparar ciclos
   * Ciclos de períodos
@@ -1495,7 +1494,7 @@ Son mensajes emergentes estilizados que reemplazan los `alert()` nativos del nav
 ### Caso 9
 
 * **Confusión**: "Fincas son perfiles con nombres, y los cultivos van dentro."
-* **La realidad**: Una finca NO es un perfil. El perfil es la identidad del agricultor (uno por usuario). Las fincas son recursos de tierra (una o varias por usuario). Los cultivos pertenecen a una finca mediante `farm_id`, pero la navegación principal sigue siendo "Mis cultivos" con filtro por finca. No anidar cultivos como carpetas dentro de fincas.
+* **La realidad**: Una finca NO es un perfil. El perfil es la identidad del agricultor (uno por usuario). Las fincas son recursos de tierra (una o varias por usuario). Los cultivos pertenecen a una finca mediante `farm_id`. La navegación principal del hub entra por "Mis Fincas" como acceso directo; "Mis cultivos" sigue accesible por el sidebar y URL directa (`#view=ciclos&subview=mis-cultivos`). No anidar cultivos como carpetas dentro de fincas.
 
 ### Caso 10
 

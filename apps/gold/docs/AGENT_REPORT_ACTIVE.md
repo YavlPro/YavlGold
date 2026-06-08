@@ -957,3 +957,39 @@ Resolver los hallazgos de la auditoría técnica de la base de datos de producci
 **GREEN** ✅ — Optimización de consultas lista y seguridad de la base de datos blindada contra secuestro de ruta de búsqueda.
 
 *Auditoría y corrección realizada por Antigravity — sesión 2026-06-08.*
+
+---
+
+## Sesión 2026-06-08 — Fase 1: Reorganización Navegación Hub
+
+**Objetivo**: Reforzar jerarquía canónica Finca → Cultivos removiendo "Mis Cultivos" como acceso directo del hub "Mi Granja".
+
+### Diagnóstico
+- **Hallazgo crítico**: El prompt original apuntaba a `agro-shell.js`, pero las cards del hub son HTML estático en `index.html` (líneas 579-598). `agro-shell.js` es solo router — no necesita cambios.
+- Función que renderiza el hub: HTML estático en `<div data-agro-mobile-panel="operacion">` (index.html línea 572).
+- Líneas modificadas: 579-584 (título + card eliminada).
+
+### Archivos modificados
+
+| Archivo | Tipo | Cambio |
+|---------|------|--------|
+| `apps/gold/agro/index.html` | edición | Título sección "Ciclos de cultivos" → "Mis fincas y cultivos". Eliminada card hub "Mis cultivos" (5 líneas). Sidebar intacto. |
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | edición | §3.1 actualizado (eliminado "Mis cultivos" de lista hub). Caso 9 actualizado (navegación principal ahora entra por "Mis Fincas"). |
+| `apps/gold/docs-agro.html` | edición | Sección "Dentro de Granja encuentras": reemplazado "Mis cultivos" por "Mis Fincas" como entrada principal con acceso a cultivos desde cada finca. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | adición | Documentación de esta sesión. |
+
+### Build
+✅ `pnpm build:gold` — OK (agent-guard OK, agent-report-check OK, vite build OK en 5.13s, UTF-8 OK)
+
+### QA sugerido
+1. Navegar a `yavlgold.com/agro#view=granja` → verificar que NO aparece card "Mis Cultivos" en el hub.
+2. Verificar que la sección se llama "Mis fincas y cultivos".
+3. Verificar que "Mis Fincas", "Estadísticas de ciclos", "Comparar ciclos" están presentes en el hub.
+4. En el sidebar, verificar que "Mis cultivos" sigue como enlace directo.
+5. Navegar a `#view=ciclos&subview=mis-cultivos` → verificar que la vista carga correctamente.
+6. Entrar a una finca y verificar que "Ver cultivos" funciona.
+
+### Scope respetado
+- No se tocaron: `agro-shell.js`, `agro.js`, `agro-farms.js`, `ADN-VISUAL-V11.0.md`, `FICHA_TECNICA.md`.
+- Sidebar "Mis cultivos" intacto (no estaba en scope).
+- Ruta `#view=ciclos&subview=mis-cultivos` sigue operativa (router sin cambios).
