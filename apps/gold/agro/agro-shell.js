@@ -1385,22 +1385,30 @@ export function initAgroShell() {
             event.preventDefault();
             event.stopPropagation();
             if (activeView === 'ciclos') {
-                const backTargets = {
-                    'mis-cultivos': 'mis-fincas',
-                    'estadisticas': 'mis-cultivos',
-                    'comparar': 'mis-cultivos',
-                    'mis-fincas': null
-                };
-                const targetSubview = backTargets[activeSubview];
-                if (targetSubview) {
-                    const targetMeta = resolveCycleSubviewMeta(targetSubview);
-                    setActiveView('ciclos', {
-                        subview: targetSubview,
-                        label: targetMeta.title,
-                        scroll: true
-                    });
+                // Si estamos en Comparar Fincas, volver a Mis Fincas
+                if (document.body.dataset.agroFarmCompare === 'active') {
+                    delete document.body.dataset.agroFarmCompare;
+                    if (window._agroFarms && typeof window._agroFarms.loadFarms === 'function') {
+                        window._agroFarms.loadFarms();
+                    }
                 } else {
-                    setShellGate(activeMobileHub, { focus: true });
+                    const backTargets = {
+                        'mis-cultivos': 'mis-fincas',
+                        'estadisticas': 'mis-cultivos',
+                        'comparar': 'mis-cultivos',
+                        'mis-fincas': null
+                    };
+                    const targetSubview = backTargets[activeSubview];
+                    if (targetSubview) {
+                        const targetMeta = resolveCycleSubviewMeta(targetSubview);
+                        setActiveView('ciclos', {
+                            subview: targetSubview,
+                            label: targetMeta.title,
+                            scroll: true
+                        });
+                    } else {
+                        setShellGate(activeMobileHub, { focus: true });
+                    }
                 }
             } else {
                 setShellGate(activeMobileHub, { focus: true });

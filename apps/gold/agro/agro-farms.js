@@ -286,6 +286,9 @@ async function loadFarms() {
     // 14. Renderizar vista de Fincas
     renderFarmsView(root, statsMap);
 
+    // Limpiar flag de compare al restaurar vista de fincas
+    delete document.body.dataset.agroFarmCompare;
+
   } catch (err) {
     console.error('[AGRO_FARMS] Error al cargar fincas:', err);
     const safeMessage = escapeHtml(err.message || 'No se pudieron recuperar los datos de fincas.');
@@ -358,7 +361,7 @@ function populateFilterSelector() {
   if (!select) return;
 
   const currentVal = select.value;
-  select.innerHTML = '<option value="">Todas las fincas</option>';
+  select.innerHTML = '';
 
   farmsCache.forEach(farm => {
     const option = document.createElement('option');

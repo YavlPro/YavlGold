@@ -328,6 +328,9 @@ export async function renderFarmCompareView() {
   const root = document.getElementById('agro-farms-root');
   if (!root) return;
 
+  // Marcar que compare está activo (para Volver del shell)
+  document.body.dataset.agroFarmCompare = 'active';
+
   root.innerHTML = `
     <div class="farm-compare-loading">
       <i class="fa-solid fa-spinner fa-spin fa-2x" aria-hidden="true"></i>
