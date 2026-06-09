@@ -286,6 +286,14 @@ async function loadFarms() {
     // 14. Renderizar vista de Fincas
     renderFarmsView(root, statsMap);
 
+    // Restaurar header y contextbar al volver desde Comparar Fincas
+    const sectionTitle = document.getElementById('crops-section-title');
+    const sectionSubtitle = document.getElementById('crops-section-subtitle');
+    if (sectionTitle) sectionTitle.textContent = 'Mis Fincas';
+    if (sectionSubtitle) sectionSubtitle.textContent = 'Gestiona las propiedades donde siembras tus cultivos';
+    const contextTitle = document.querySelector('[data-agro-mobile-context-title]');
+    if (contextTitle) contextTitle.textContent = 'Mis Fincas';
+
     // Limpiar flag de compare al restaurar vista de fincas
     delete document.body.dataset.agroFarmCompare;
 
@@ -343,7 +351,7 @@ async function runAutoMigration(user) {
     if (updateError) throw updateError;
 
     notify('success', 'Finca Inicial Creada', `Se creó "${defaultName}" como tu finca principal y se asociaron tus cultivos.`);
-    
+
     // Recargar
     await loadFarms();
 
@@ -457,7 +465,7 @@ function renderFarmSelector(selectEl, selectedId = null) {
   if (!selectEl) return;
 
   selectEl.innerHTML = '';
-  
+
   if (farmsCache.length === 0) {
     selectEl.innerHTML = '<option value="">No hay fincas disponibles</option>';
     return;
@@ -581,7 +589,7 @@ async function saveFarm() {
 
     notify('success', id ? 'Finca Actualizada' : 'Finca Creada', `Se guardó "${name}" exitosamente.`);
     closeFarmModal();
-    
+
     // Recargar fincas y cultivos
     await loadFarms();
     if (typeof window.loadCrops === 'function') {
@@ -634,7 +642,7 @@ async function deleteFarm(id) {
     if (unlinkError) throw unlinkError;
 
     notify('success', 'Finca Eliminada', `Finca "${farm.name}" eliminada.`);
-    
+
     // Recargar fincas y cultivos
     await loadFarms();
     if (typeof window.loadCrops === 'function') {

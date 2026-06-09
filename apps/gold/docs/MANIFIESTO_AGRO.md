@@ -1112,6 +1112,26 @@ Si un usuario nunca creó fincas, al entrar por primera vez se crea automáticam
 
 Las estadísticas por finca (cultivos, inversión, ingresos, balance) se calculan sobre TODOS los cultivos de la finca: activos, finalizados y perdidos. Una finca es un recurso de tierra con historia, no solo un snapshot de cultivos vivos.
 
+### Comparar Fincas
+
+#### Qué es
+
+Una vista de lectura comparativa lado a lado de dos fincas seleccionadas por el agricultor. Muestra estadísticas, inversión, ingresos y balance de cada propiedad en paralelo.
+
+#### Qué no es
+
+No es un módulo de gestión. No permite editar ni crear fincas. No reemplaza la vista de Mis Fincas. Es superficie de lectura, no de operación.
+
+#### Para qué sirve
+
+* Contrastar rendimiento, inversión total y balance entre dos propiedades.
+* Identificar qué finca es más productiva o rentable en un período dado.
+* Tomar decisiones sobre distribución de cultivos entre propiedades.
+
+#### Navegación
+
+Se accede desde Mis Fincas → botón "Comparar Fincas" (visible cuando hay 2 o más fincas). El botón Volver regresa a Mis Fincas con header y contextbar actualizados correctamente a "Mis Fincas".
+
 ---
 
 ## 5. Relaciones canónicas entre módulos

@@ -1,4 +1,4 @@
-# 🏛️ Crónica Definitiva — YavlGold (2025-09-24 → 2025-12-31)
+# 🏛️ Crónica Definitiva — YavlGold (2025-09-24 → presente)
 
 > *"Una auditoría narrativa forjada con disciplina: del primer commit al Stack Dorado."*
 
@@ -8,10 +8,10 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Período cubierto** | 2025-09-24 00:00 UTC → 2025-12-31 23:59 UTC |
+| **Período cubierto** | 2025-09-24 00:00 UTC → 2026-06-09 (activo) |
 | **Timezone principal** | UTC (notas en UTC-4 cuando aplica, ej: release report) |
-| **Duración total** | 99 días |
-| **Fuentes primarias** | 4 crónicas mensuales + RELEASE-V9.2-REPORT.md |
+| **Duración total** | ~258 días (activo, se extiende con el proyecto) |
+| **Fuentes primarias** | Crónicas mensuales + RELEASE-V9.2-REPORT.md + entradas directas |
 | **Métodos de verificación** | GitHub API, Git CLI local, Testimonio del desarrollador |
 
 ### Fuentes y Origen de Datos
@@ -606,3 +606,15 @@ Archivo: [2026-05.md](./2026-05.md)
 
 *Fecha de extensión*: 2026-06-07
 *Generado por*: Historiador Forense de Git — Protocolo Append-Only v1.0
+
+---
+
+## 2026-06-09 — Corrección header Comparar Fincas
+
+**Contexto:** Durante QA de cierre de Fase 2, se detectó que al volver desde "Comparar Fincas" a "Mis Fincas", el header y la contextbar mobile mantenían el título incorrecto "Comparar Fincas".
+
+**Cambio:** Actualización explícita de shell header (`#crops-section-title`, `#crops-section-subtitle`) y contextbar (`[data-agro-mobile-context-title]`) en `loadFarms()` de `agro-farms.js`, inmediatamente después de `renderFarmsView()`.
+
+**Impacto:** Navegación profunda (Mis Fincas → Comparar Fincas → Volver) ahora mantiene coherencia visual en headers en desktop y mobile.
+
+**Archivos:** `agro-farms.js`, `MANIFIESTO_AGRO.md`, `docs-agro.html`, `AGENT_REPORT_ACTIVE.md`

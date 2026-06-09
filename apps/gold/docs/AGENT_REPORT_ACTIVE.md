@@ -1067,3 +1067,62 @@ Resolver los hallazgos de la auditoría técnica de la base de datos de producci
 ### Scope respetado
 - No se tocaron: `agro.js`, `agro-farms.js`, `index.html`, `ADN-VISUAL-V11.0.md`, `FICHA_TECNICA.md`.
 - No se necesitó restaurar header en loadFarms() (shell lo maneja via syncCultivosSubview).
+
+---
+
+## Sesión 2026-06-08 — Iteración Post-Fase 2: Pulir Navegación y UI
+
+**Objetivo**: 4 ajustes de UX menores para cerrar Fase 2.
+
+### Archivos modificados
+
+| Archivo | Tipo | Cambio |
+|---------|------|--------|
+| `apps/gold/agro/agro-farms.js` | edición | Eliminada opción "Todas las fincas" de `populateFilterSelector()`. Limpieza de flag `agroFarmCompare` al restaurar vista de fincas. |
+| `apps/gold/agro/index.html` | edición | Eliminado footer informativo (Soporte, Acceso por usuario, Agro V1 · 2026-03-08). Botón Feedback intacto (cargado vía agro-feedback.js). |
+| `apps/gold/agro/agro-shell.js` | edición | Handler Volver detecta flag `agroFarmCompare` en body para redirigir Comparar Fincas → Mis Fincas via `loadFarms()`. |
+| `apps/gold/agro/agro-farm-compare.js` | edición | Agregado flag `document.body.dataset.agroFarmCompare = 'active'` al entrar a compare. |
+
+### Build
+✅ `pnpm build:gold` — OK (agent-guard OK, agent-report-check OK, vite build OK en 3.39s, UTF-8 OK)
+
+### QA sugerido
+1. Selector de fincas en Mis Cultivos: NO muestra "Todas las fincas", solo fincas específicas
+2. Footer del hub eliminado: no aparece "Soporte/Acceso por usuario/Agro V1"
+3. Botón Feedback sigue visible y funcional
+4. Comparar Fincas → Volver → Mis Fincas (con grid de fincas visible)
+
+### Scope respetado
+- No se tocaron: `agro.js`, `MANIFIESTO_AGRO.md`, `ADN-VISUAL-V11.0.md`, `FICHA_TECNICA.md`.
+
+---
+
+## Sesión 2026-06-09 — Corrección header Comparar Fincas + actualización documental
+
+**Estado:** GREEN — corrección quirúrgica aplicada y build pasado.
+
+**Objetivo:** Corregir bug donde al volver desde "Comparar Fincas" a "Mis Fincas", el header/contextbar mantenía el título incorrecto. Actualizar documentación canónica y crónica.
+
+**Diagnóstico:**
+- Archivo responsable: `agro-farms.js`, función `loadFarms()`
+- Causa raíz: `loadFarms()` renderizaba la vista pero no actualizaba `#crops-section-title`, `#crops-section-subtitle` ni `[data-agro-mobile-context-title]`. `syncCultivosSubview()` en agro-shell.js se dispara solo cuando setActiveView cambia la subview, no cuando loadFarms() restaura la vista internamente desde el botón Volver de agro-farm-compare.js.
+- Líneas modificadas en agro-farms.js: tras `renderFarmsView(root, statsMap)` (~línea 287)
+
+**Cambios realizados:**
+
+| Archivo | Tipo | Cambio |
+|---------|------|--------|
+| `apps/gold/agro/agro-farms.js` | edición | Añadir restore explícito de `#crops-section-title`, `#crops-section-subtitle` y `[data-agro-mobile-context-title]` a "Mis Fincas" tras `renderFarmsView()` |
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | adición | Subsección "Comparar Fincas" en §4.13 — qué es, qué no es, para qué sirve, navegación |
+| `apps/gold/docs-agro.html` | edición | Mención a botón Comparar Fincas y navegación de retorno en ítem de Mis Fincas |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | adición | Esta sección |
+| `apps/gold/docs/chronicles/CRONICA-YAVLGOLD.md` | adición | Entrada 2026-06-09 |
+
+**Build:** ✅ `pnpm build:gold` sin errores
+
+**QA verificado (post-build):**
+- Header tras volver desde Comparar Fincas: ✅ se actualiza a "Mis Fincas"
+- Contextbar mobile: ✅ se actualiza a "Mis Fincas"
+- Grid de fincas visible: ✅ sin cambios en renderizado
+
+**No se tocó:** `agro.js`, `ADN-VISUAL-V11.0.md`, `FICHA_TECNICA.md`, `agro-shell.js`, `agro-farm-compare.js`
