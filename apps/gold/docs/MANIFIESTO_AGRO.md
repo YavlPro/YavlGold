@@ -108,9 +108,9 @@ El valor de Agro no está solo en registrar. Está en conectar lo que pasa en el
 * Dashboard Agro
 * Mi Granja *(agrupador de navegación — no es un módulo financiero)*
   * Mis fincas y cultivos
-    * Mis Fincas (entrada principal — desde cada finca se accede a "Ver cultivos")
-    * Estadísticas de ciclos
-    * Comparar ciclos
+    * Mis Fincas (entrada principal del hub)
+    * Mis cultivos (accesible por sidebar y URL directa) — contiene:
+      + Nuevo cultivo / Estadísticas de cultivos / Comparar cultivos
   * Ciclos de períodos
     * Calendario operativo (activos, finalizados)
     * Estadísticas de períodos
@@ -240,8 +240,8 @@ No es cartera operativa. No es historial administrativo abstracto. No es bitáco
   * Finalizados — los que ya se cosecharon o vendieron completo
   * Perdidos — los que se perdieron o dañaron
 * Mis Fincas — gestión de propiedades de tierra asociadas a los cultivos
-* Comparar ciclos — elegir dos ciclos y verlos lado a lado
-* Estadísticas de ciclos — consolidado histórico de todos los ciclos
+* Comparar cultivos — elegir dos ciclos y verlos lado a lado (botón dentro de Mis cultivos)
+* Estadísticas de cultivos — consolidado histórico de todos los ciclos (botón dentro de Mis cultivos)
 
 ### Estados manuales de cultivo
 
@@ -1494,7 +1494,7 @@ Son mensajes emergentes estilizados que reemplazan los `alert()` nativos del nav
 ### Caso 9
 
 * **Confusión**: "Fincas son perfiles con nombres, y los cultivos van dentro."
-* **La realidad**: Una finca NO es un perfil. El perfil es la identidad del agricultor (uno por usuario). Las fincas son recursos de tierra (una o varias por usuario). Los cultivos pertenecen a una finca mediante `farm_id`. La navegación principal del hub entra por "Mis Fincas" como acceso directo; "Mis cultivos" sigue accesible por el sidebar y URL directa (`#view=ciclos&subview=mis-cultivos`). No anidar cultivos como carpetas dentro de fincas.
+* **La realidad**: Una finca NO es un perfil. El perfil es la identidad del agricultor (uno por usuario). Las fincas son recursos de tierra (una o varias por usuario). Los cultivos pertenecen a una finca mediante `farm_id`. La navegación principal del hub entra por "Mis Fincas" como acceso directo; "Mis cultivos" sigue accesible por el sidebar y URL directa (`#view=ciclos&subview=mis-cultivos`) y contiene los botones de acción "Estadísticas de cultivos" y "Comparar cultivos". No anidar cultivos como carpetas dentro de fincas.
 
 ### Caso 10
 

@@ -993,3 +993,43 @@ Resolver los hallazgos de la auditoría técnica de la base de datos de producci
 - No se tocaron: `agro-shell.js`, `agro.js`, `agro-farms.js`, `ADN-VISUAL-V11.0.md`, `FICHA_TECNICA.md`.
 - Sidebar "Mis cultivos" intacto (no estaba en scope).
 - Ruta `#view=ciclos&subview=mis-cultivos` sigue operativa (router sin cambios).
+
+---
+
+## Sesión 2026-06-08 — Fase 2: Reorganización Mis Cultivos y Mis Fincas
+
+**Objetivo**: Mover acciones estadísticas/comparación al interior de Mis Cultivos, corregir duplicados en Mis Fincas, ajustar Volver para jerarquía Finca → Cultivos.
+
+### Diagnóstico
+- **Hub cards**: "Estadísticas de ciclos" y "Comparar ciclos" eran HTML estático en index.html (ex-líneas 585-594).
+- **Botones header**: El `<div class="header-actions">` (línea 1090) es compartido por todas las subvistas de ciclos. Visibilidad controlada por `syncCultivosSubview`.
+- **Volver**: Handler en agro-shell.js (línea 1372) siempre navegaba al hub. Modificado para subview-aware back (mis-cultivos → mis-fincas).
+- **Duplicados Mis Fincas**: `renderFarmsView` en agro-farms.js (líneas 380-395) renderizaba header bar EXTRA con título/subtítulo/botón duplicados. El shell ya proveía estos elementos.
+
+### Archivos modificados
+
+| Archivo | Tipo | Cambio |
+|---------|------|--------|
+| `apps/gold/agro/index.html` | edición | Eliminadas cards "Estadísticas" y "Comparar" del hub. Agregados botones "Estadísticas de cultivos", "Comparar cultivos" y "Comparar fincas" en header compartido. |
+| `apps/gold/agro/agro-shell.js` | edición | `syncCultivosSubview`: visibilidad de nuevos botones según subview activa. Handler Volver: desde mis-cultivos navega a mis-fincas. |
+| `apps/gold/agro/agro-farms.js` | edición | Eliminado header bar duplicado en `renderFarmsView`. Expuesto `compareFarms()` en `window._agroFarms`. |
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | edición | §3.1 reestructurado con Mis Cultivos conteniendo botones de acción. §4.3 renombrado a "Estadísticas/Comparar cultivos". Caso 9 actualizado. |
+| `apps/gold/docs-agro.html` | edición | Referencia "Estadisticas y comparadores" actualizada para reflejar nueva ubicación. |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | adición | Documentación de esta sesión. |
+
+### Build
+✅ `pnpm build:gold` — OK (agent-guard OK, agent-report-check OK, vite build OK en 3.63s, UTF-8 OK)
+
+### QA sugerido
+1. Navegar a `yavlgold.com/agro#view=granja` → sección "Mis fincas y cultivos" solo tiene card "Mis Fincas".
+2. Navegar a mis-cultivos → verificar 3 botones: "+ Nuevo Cultivo", "Estadísticas de cultivos", "Comparar cultivos".
+3. Click "Estadísticas de cultivos" → subview estadísticas carga correctamente.
+4. Click "Comparar cultivos" → subview comparar carga correctamente.
+5. Click "Volver" desde mis-cultivos → llega a mis-fincas (NO al hub).
+6. Navegar a mis-fincas → verificar UN solo título, UN solo "Nueva Finca", botón "Comparar fincas" visible.
+7. Sidebar mantiene enlaces a todas las subvistas incluyendo mis-cultivos.
+
+### Scope respetado
+- No se tocaron: `agro.js`, `ADN-VISUAL-V11.0.md`, `FICHA_TECNICA.md`.
+- Sidebar mantiene enlaces a todas las subvistas.
+- Rutas `#view=ciclos&subview=estadisticas` y `#view=ciclos&subview=comparar` siguen operativas.

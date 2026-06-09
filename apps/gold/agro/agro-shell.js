@@ -835,6 +835,13 @@ function syncCultivosSubview(view, subview) {
     if (btnNewCrop) btnNewCrop.style.display = isFarmsView ? 'none' : '';
     if (btnNewFarm) btnNewFarm.style.display = isFarmsView ? '' : 'none';
 
+    const btnCycleStats = document.getElementById('btn-cycle-stats');
+    const btnCycleCompare = document.getElementById('btn-cycle-compare');
+    const btnFarmCompare = document.getElementById('btn-farm-compare-header');
+    if (btnCycleStats) btnCycleStats.style.display = isFarmsView ? 'none' : '';
+    if (btnCycleCompare) btnCycleCompare.style.display = isFarmsView ? 'none' : '';
+    if (btnFarmCompare) btnFarmCompare.style.display = isFarmsView ? '' : 'none';
+
     syncCycleStatsPanel(isCyclesView ? subview : '');
 }
 
@@ -1373,7 +1380,11 @@ export function initAgroShell() {
         if (mobileBackButton) {
             event.preventDefault();
             event.stopPropagation();
-            setShellGate(activeMobileHub, { focus: true });
+            if (activeView === 'ciclos' && activeSubview === 'mis-cultivos') {
+                setActiveView('ciclos', { subview: 'mis-fincas', scroll: true, label: 'Ciclos de cultivos' });
+            } else {
+                setShellGate(activeMobileHub, { focus: true });
+            }
             closeSidebar();
             return;
         }

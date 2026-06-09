@@ -378,21 +378,6 @@ function populateFilterSelector() {
  */
 function renderFarmsView(container, statsMap) {
   let html = `
-    <div class="agro-farms-header-bar">
-      <div class="agro-farms-title-group">
-        <h3><i class="fa-solid fa-mountain-sun" aria-hidden="true"></i> Mis Fincas</h3>
-        <p>Gestiona las propiedades donde siembras tus cultivos</p>
-      </div>
-      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-        <button class="btn btn-gold" type="button" data-farm-action="create">
-          <i class="fa-solid fa-plus" aria-hidden="true"></i> Nueva Finca
-        </button>
-        ${farmsCache.length >= 2 ? `
-        <button class="btn btn-gold" type="button" data-farm-action="compare">
-          <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i> Comparar fincas
-        </button>` : ''}
-      </div>
-    </div>
     <div class="farm-grid">
   `;
 
@@ -689,7 +674,12 @@ if (typeof window !== 'undefined') {
     viewFarmCrops,
     renderFarmSelector,
     getSelectedFarmId,
-    getFarms: () => [...farmsCache]
+    getFarms: () => [...farmsCache],
+    compareFarms: () => {
+      import('./agro-farm-compare.js').then(mod => mod.renderFarmCompareView()).catch(err => {
+        console.error('[AGRO_FARMS] Error cargando comparador:', err);
+      });
+    }
   };
 
   // También exponer wrappers globales simples para eventos inline
