@@ -1033,3 +1033,37 @@ Resolver los hallazgos de la auditoría técnica de la base de datos de producci
 - No se tocaron: `agro.js`, `ADN-VISUAL-V11.0.md`, `FICHA_TECNICA.md`.
 - Sidebar mantiene enlaces a todas las subvistas.
 - Rutas `#view=ciclos&subview=estadisticas` y `#view=ciclos&subview=comparar` siguen operativas.
+
+---
+
+## Sesión 2026-06-08 — Corrección de Headers Duplicados en Subvistas
+
+**Objetivo**: Corregir contextbar con títulos incorrectos, eliminar header duplicado en Comparar Fincas, extender Volver subview-aware a todas las subvistas.
+
+### Diagnóstico (confirmado por usuario)
+- Contextbar siempre mostraba "Ciclos de cultivos" (config.label hardcodeado) en vez del título de subview
+- CYCLE_SUBVIEW_META usaba nombres viejos "Comparar ciclos" / "Estadísticas de ciclos"
+- agro-farm-compare.js renderizaba header propio duplicado con su botón Volver
+- Handler Volver solo cubría mis-cultivos→mis-fincas
+
+### Archivos modificados
+
+| Archivo | Tipo | Cambio |
+|---------|------|--------|
+| `apps/gold/agro/agro-shell.js` | edición | CYCLE_SUBVIEW_META renombrado. Contextbar usa `resolveCycleSubviewMeta` para título. Volver extendido: estadisticas/comparar→mis-cultivos, mis-cultivos→mis-fincas, mis-fincas→hub. |
+| `apps/gold/agro/agro-farm-compare.js` | edición | Eliminado header duplicado (farm-compare-header + listener). Agregada actualización de contextbar a "Comparar Fincas". |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | adición | Documentación de esta corrección. |
+
+### Build
+✅ `pnpm build:gold` — OK (agent-guard OK, agent-report-check OK, vite build OK en 3.17s, UTF-8 OK)
+
+### QA sugerido
+1. Mis Fincas: contextbar dice "Mis Fincas", Volver → hub
+2. Mis Cultivos: contextbar dice "Mis cultivos", Volver → Mis Fincas
+3. Estadísticas: contextbar dice "Estadísticas de cultivos", Volver → Mis Cultivos
+4. Comparar cultivos: contextbar dice "Comparar cultivos", Volver → Mis Cultivos
+5. Comparar Fincas: contextbar dice "Comparar Fincas", no hay header duplicado
+
+### Scope respetado
+- No se tocaron: `agro.js`, `agro-farms.js`, `index.html`, `ADN-VISUAL-V11.0.md`, `FICHA_TECNICA.md`.
+- No se necesitó restaurar header en loadFarms() (shell lo maneja via syncCultivosSubview).

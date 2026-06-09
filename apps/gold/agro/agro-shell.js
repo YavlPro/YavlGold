@@ -760,12 +760,12 @@ const CYCLE_SUBVIEW_META = Object.freeze({
         focusSelector: '#agro-farms-root'
     }),
     comparar: Object.freeze({
-        title: 'Comparar ciclos',
+        title: 'Comparar cultivos',
         copy: 'Cruza rendimiento, duracion y resultado entre dos ciclos',
         focusSelector: '#agro-cycle-compare-root'
     }),
     estadisticas: Object.freeze({
-        title: 'Estadisticas de ciclos',
+        title: 'Estadísticas de cultivos',
         copy: 'Lectura global del portafolio con insights y exportes',
         focusSelector: '#agro-global-stats-panel'
     })
@@ -1240,7 +1240,11 @@ export function initAgroShell() {
         applyViewEffects(view, options);
         if (options.preserveDepth !== true) {
             setMobileHub(options.mobileHub || VIEW_TO_MOBILE_HUB[view] || activeMobileHub);
-            setShellDepth('module', { title: options.label || config.label });
+            const subMeta = (view === 'ciclos' && activeSubview)
+                ? resolveCycleSubviewMeta(activeSubview) : null;
+            setShellDepth('module', {
+                title: options.label || (subMeta ? subMeta.title : null) || config.label
+            });
         }
         window.dispatchEvent(new CustomEvent('agro:shell:view-changed', {
             detail: {
@@ -1380,8 +1384,24 @@ export function initAgroShell() {
         if (mobileBackButton) {
             event.preventDefault();
             event.stopPropagation();
-            if (activeView === 'ciclos' && activeSubview === 'mis-cultivos') {
-                setActiveView('ciclos', { subview: 'mis-fincas', scroll: true, label: 'Ciclos de cultivos' });
+            if (activeView === 'ciclos') {
+                const backTargets = {
+                    'mis-cultivos': 'mis-fincas',
+                    'estadisticas': 'mis-cultivos',
+                    'comparar': 'mis-cultivos',
+                    'mis-fincas': null
+                };
+                const targetSubview = backTargets[activeSubview];
+                if (targetSubview) {
+                    const targetMeta = resolveCycleSubviewMeta(targetSubview);
+                    setActiveView('ciclos', {
+                        subview: targetSubview,
+                        label: targetMeta.title,
+                        scroll: true
+                    });
+                } else {
+                    setShellGate(activeMobileHub, { focus: true });
+                }
             } else {
                 setShellGate(activeMobileHub, { focus: true });
             }

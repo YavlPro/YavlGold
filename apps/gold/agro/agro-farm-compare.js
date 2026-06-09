@@ -362,13 +362,6 @@ export async function renderFarmCompareView() {
     const defaultId2 = farms[1]?.id || '';
 
     root.innerHTML = `
-      <div class="farm-compare-header">
-        <button type="button" class="farm-compare-back" id="farm-compare-back-btn">
-          <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Volver
-        </button>
-        <h3 class="farm-compare-title">Comparar Fincas</h3>
-      </div>
-
       <div class="farm-compare-selectors">
         <div class="farm-compare-select-wrapper">
           <label class="farm-compare-select-label" for="farm-compare-sel-1">Finca A</label>
@@ -393,12 +386,9 @@ export async function renderFarmCompareView() {
     sel1.value = defaultId1;
     sel2.value = defaultId2;
 
-    // Botón volver
-    document.getElementById('farm-compare-back-btn').addEventListener('click', () => {
-      if (window._agroFarms && typeof window._agroFarms.loadFarms === 'function') {
-        window._agroFarms.loadFarms();
-      }
-    });
+    // Actualizar contextbar
+    const contextTitle = document.querySelector('[data-agro-mobile-context-title]');
+    if (contextTitle) contextTitle.textContent = 'Comparar Fincas';
 
     // Función de renderizado al cambiar selectores
     const renderResults = () => {
