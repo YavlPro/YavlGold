@@ -133,7 +133,7 @@ Regla estricta:
 
 **Funcionalidades:**
 - Facturero financiero: gastos, ingresos (pagados), fiados, pérdidas, donaciones, otros
-- Gestión de cultivos con ciclos productivos y balance humano (`Vas ganando`, `Vas perdiendo`, `Punto de equilibrio`)
+- Gestión de cultivos con ciclos productivos y balance operativo con cuatro estados semánticos (`Ganado`, `Recuperando`, `Invirtiendo`, `Equilibrio`) según MANIFIESTO_AGRO.md §4.3
 - Dashboard agrícola con clima en tiempo real
 - Centro de Reportes: índice de reportes generales oficiales (estadísticas globales, perfil agricultor, rankings). Los reportes detallados por cultivo viven en cada card/ciclo, no en el Centro.
 - Calendario operativo: los períodos siguen activos si tienen operaciones vivas asociadas (`activeCycleCount > 0`)
@@ -145,7 +145,7 @@ Regla estricta:
 - Feedback y encuestas
 - Interacciones sociales
 - Notificaciones
-- Papelera de eliminados (soft-delete con restore)
+- Papelera de cultivos eliminados (soft-delete con restore). Alcance real: solo aplica a cultivos. Factureros, clientes, movimientos financieros y demás superficies NO tienen papelera (ver MANIFIESTO_AGRO.md §12 Pendientes — "Facturero de Clientes Lifecycle" es futuro, no implementado)
 - Geolocalización con prioridad: Manual > GPS > IP
 
 **Módulos JS (carga dinámica):**

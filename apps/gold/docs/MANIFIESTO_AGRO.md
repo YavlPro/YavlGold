@@ -145,7 +145,7 @@ Agro responde a una necesidad fundamental:
 
 ### Qué es
 
-La ficha personal del agricultor dentro de Agro. Es donde guardas tu nombre, los datos de tu finca, cómo contactarte y tu presencia pública en la red Social de Agro.
+La ficha personal del agricultor dentro de Agro. Es donde guardas tu nombre, los datos de tu finca, cómo contactarte y tu perfil público opcional dentro de Agro.
 
 ### Qué no es
 
@@ -156,7 +156,7 @@ No es un módulo de estadísticas. No es un facturero. No es una segunda cuenta 
 * Tener actualizada tu información de contacto.
 * Definir tu ubicación y el nombre de tu finca.
 * Controlar qué información es pública (perfil visible para otros usuarios) y qué es privada.
-* Activar tu presencia en la comunidad Social de Agro.
+* Controlar qué información de tu perfil es visible para otros usuarios dentro de Agro (perfil público, no red social).
 * Gestionar tu privacidad: ocultar nombres de clientes y montos en la pantalla cuando trabajas con otras personas presentes.
 
 ### Qué datos maneja
@@ -171,7 +171,7 @@ No es un módulo de estadísticas. No es un facturero. No es una segunda cuenta 
 
 ### Cómo se conecta con Agro
 
-Todo empieza desde aquí. Cuando abres Agro por primera vez, tu perfil se usa para saludarte. Los datos de contacto ayudan a otros agricultores a localizarte en la red Social. El modo privacidad afecta la visualización de Facturero de Clientes y Facturero de la Finca.
+Todo empieza desde aquí. Cuando abres Agro por primera vez, tu perfil se usa para saludarte. Los datos de contacto son para tu uso personal y para que otros agricultores puedan comunicarse contigo si tú decides compartirlos. El modo privacidad afecta la visualización de Facturero de Clientes y Facturero de la Finca.
 
 ---
 
@@ -1031,7 +1031,7 @@ Esto reduce ruido visual y evita que la navegación compita con la tarea princip
 
 #### Persistencia de navegación
 
-Las puertas principales del shell (`Inicio`, `Granja`, `Memoria`, `Menú`) tienen rutas canónicas propias mediante hash: `#view=inicio`, `#view=granja`, `#view=memoria`, `#view=menu`. La URL refleja siempre la puerta o módulo visible, de modo que al refrescar la página (F5) el usuario permanece en el mismo lugar. Las rutas profundas como `#view=reportes`, `#view=cartera-viva` o `#view=ciclos&subview=mis-cultivos` también se preservan. La UI visible y la URL ya no quedan desincronizadas.
+Las puertas principales del shell (`Inicio`, `Granja`, `Memoria`, `Menú`) tienen rutas canónicas propias mediante hash: `#view=inicio`, `#view=granja`, `#view=memoria`, `#view=menu`. La URL refleja siempre la puerta o módulo visible, de modo que al refrescar la página (F5) el usuario permanece en el mismo lugar. Las rutas profundas como `#view=reportes`, `#view=cartera-viva (ruta legacy de compatibilidad — el nombre vigente es Facturero de Clientes)` o `#view=ciclos&subview=mis-cultivos` también se preservan. La UI visible y la URL ya no quedan desincronizadas.
 
 ### Ejemplo de uso de favoritas y búsqueda
 
@@ -1362,7 +1362,7 @@ Un archivo `.md` se abre en cualquier editor de texto, en cualquier equipo, sin 
 ### 9.8 ¿Qué diferencia hay entre Facturero de Clientes y Facturero de la Finca?
 
 * **Facturero de Clientes**: El seguimiento completo del crédito a clientes. Sus estados principales son Fiado, Cobrado/Pagado y Perdido. Incluye fiados pendientes, cobros recibidos, pérdidas asumidas y donaciones como historia del crédito. No es solo lo que te deben hoy — es el ciclo de vida entero de cada crédito otorgado.
-* **Facturero de la Finca**: Todo movimiento financiero (gastos de finca, compras, cobros, las deudas que luego irán a la cartera viva y ventas perdidas). Es el libro mayor.
+* **Facturero de la Finca**: Todo movimiento financiero (gastos de finca, compras, cobros, las deudas que luego irán al Facturero de Clientes y ventas perdidas). Es el libro mayor.
 
 ### 9.9 ¿Cómo separo la idea de Ciclo de Cultivo frente al Ciclo de Período?
 

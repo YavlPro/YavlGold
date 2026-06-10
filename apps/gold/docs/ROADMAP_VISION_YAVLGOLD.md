@@ -126,7 +126,7 @@ Cada nueva sección de Agro debe diseñarse con esta pregunta:
 
 Ejemplos orientativos:
 
-- Cartera Viva → pendientes, deudas, contactos.
+- Facturero de Clientes (antes Cartera Viva) → pendientes, deudas, contactos.
 - Mi Carrito → recursos, intención de compra.
 - AgroRepo → memoria operativa.
 - Centro de Reportes → evidencias y exportes.
