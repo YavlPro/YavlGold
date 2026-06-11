@@ -614,13 +614,28 @@ function renderModuleHeader() {
                     <p class="module-subtitle">${escapeHtml(meta.subtitle)}</p>
                 </div>
         `;
+    const actionsMarkup = isCalendario
+        ? `
+                <button type="button" class="btn btn-primary" data-period-action="toggle-form">${state.formOpen ? 'Cerrar creación' : 'Crear ciclo del mes'}</button>
+                <button type="button" class="btn btn-outline" data-period-action="go-subview" data-target-subview="estadisticas">
+                    <i class="fa-solid fa-chart-column" aria-hidden="true"></i> Estadísticas de períodos
+                </button>
+                <button type="button" class="btn btn-outline" data-period-action="go-subview" data-target-subview="comparar">
+                    <i class="fa-solid fa-code-compare" aria-hidden="true"></i> Comparar períodos
+                </button>
+        `
+        : `
+                <button type="button" class="btn btn-outline" data-period-action="go-subview" data-target-subview="calendario">
+                    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Volver a Operaciones
+                </button>
+        `;
     return `
         <header class="module-header animate-in delay-3">
             <div class="module-title-group">
                 ${headingMarkup}
             </div>
             <div class="header-actions">
-                <button type="button" class="btn btn-primary" data-period-action="toggle-form">${state.formOpen ? 'Cerrar creación' : 'Crear ciclo del mes'}</button>
+                ${actionsMarkup}
             </div>
         </header>
     `;
@@ -1306,6 +1321,15 @@ function bindRootEvents() {
             if (action === 'toggle-form') {
                 state.formOpen = !state.formOpen;
                 renderRoot();
+                return;
+            }
+
+            if (action === 'go-subview') {
+                const target = button.dataset.targetSubview;
+                if (target && PERIOD_SUBVIEW_OPTIONS.includes(target)) {
+                    state.currentSubview = target;
+                    renderRoot();
+                }
                 return;
             }
 
