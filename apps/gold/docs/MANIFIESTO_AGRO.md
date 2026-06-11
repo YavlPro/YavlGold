@@ -112,7 +112,7 @@ El valor de Agro no está solo en registrar. Está en conectar lo que pasa en el
     * Mis cultivos (accesible por sidebar y URL directa) — contiene:
       + Nuevo cultivo / Estadísticas de cultivos / Comparar cultivos
   * Ciclos de períodos
-    * Calendario operativo (activos, finalizados)
+    * Operaciones de la Finca (activos, finalizados)
     * Estadísticas de períodos
     * Comparar períodos
   * Mis finanzas
@@ -357,7 +357,7 @@ No es un ciclo de cultivo. No representa la vida biológica/productiva de una si
 
 ### Subsuperficies
 
-* Calendario operativo — entrada única con tabs internas:
+* Operaciones de la Finca — entrada única con tabs internas:
   * Activos — los períodos que están en curso
   * Finalizados — los períodos ya cerrados
 * Comparar períodos — elegir dos períodos y verlos lado a lado
@@ -563,7 +563,7 @@ No es la Facturero de Clientes (la sección destinada solo a llevar el saldo de 
 
 ### Flujo de uso
 
-1. En Facturero de la Finca, seleccionas primero el contexto: ¿es un movimiento general o pertenece a un cultivo específico? Desde el hub Mi Granja puedes acceder a Mis cultivos para ver tus ciclos o a Calendario operativo para tus períodos.
+1. En Facturero de la Finca, seleccionas primero el contexto: ¿es un movimiento general o pertenece a un cultivo específico? Desde el hub Mi Granja puedes acceder a Mis cultivos para ver tus ciclos o a Operaciones de la Finca para tus períodos.
 2. Luego eliges el tipo de registro: gasto, ingreso, fiado, pérdida o donación.
 3. Registras el monto, fecha, concepto.
 4. El movimiento aparece en el historial y afecta las estadísticas.
@@ -1140,7 +1140,7 @@ Se accede desde Mis Fincas → botón "Comparar Fincas" (visible cuando hay 2 o 
 
 En la navegación principal, **Mi Granja** (puerta «Granja» en `Inicio · Granja · Memoria · Menú`) funciona como hub central donde el agricultor organiza cultivos, períodos, finanzas, trabajo, rankings y clima. No es un módulo financiero. No reemplaza a Facturero de la Finca.
 
-Su propósito es concentrar el acceso a **Ciclos de Cultivo** (via Mis cultivos), **Ciclos de Período** (via Calendario operativo), **Mis finanzas** y **Trabajo y lectura** bajo una sola puerta.
+Su propósito es concentrar el acceso a **Ciclos de Cultivo** (via Mis cultivos), **Ciclos de Período** (via Operaciones de la Finca), **Mis finanzas** y **Trabajo y lectura** bajo una sola puerta.
 
 **Los movimientos financieros no asociados a un cultivo específico** (gasolina, mantenimiento de infraestructura, etc.) se registran como «movimiento general» dentro de Facturero de la Finca (§4.5.2). No pertenecen a Mi Granja. El término «movimiento general» es financiero y vive en Facturero de la Finca.
 
@@ -1459,7 +1459,7 @@ Es un campo opcional para registrar la cantidad de semilla utilizada en la siemb
 
 ### 9.27 ¿Qué pasa si recargo la página estando en un módulo profundo?
 
-La navegación del shell persiste entre recargas. Al presionar F5 estando en Mis Clientes, Facturero de Clientes, Calendario operativo o cualquier otro módulo profundo, la aplicación restaura la vista donde estaba el usuario en vez de volver siempre al Dashboard. La ruta activa se conserva en sesión.
+La navegación del shell persiste entre recargas. Al presionar F5 estando en Mis Clientes, Facturero de Clientes, Operaciones de la Finca o cualquier otro módulo profundo, la aplicación restaura la vista donde estaba el usuario en vez de volver siempre al Dashboard. La ruta activa se conserva en sesión.
 
 ### 9.28 ¿Qué son los popups informativos compactos?
 
@@ -1499,7 +1499,7 @@ Son mensajes emergentes estilizados que reemplazan los `alert()` nativos del nav
 ### Caso 6
 
 * **Confusión**: "Mi Granja" es un módulo financiero donde se registran los gastos y ganancias generales de la finca.
-* **La realidad**: «Mi Granja» es el **hub central de navegación** accesible desde la puerta «Granja» en `Inicio · Granja · Memoria · Menú`. Agrupa Mis cultivos, Calendario operativo, Mis finanzas y Trabajo y lectura. No es un módulo financiero. Los «movimientos generales» (gastos no asociados a un cultivo específico) se registran en Facturero de la Finca. Mi Granja no tiene libro de cuentas propio.
+* **La realidad**: «Mi Granja» es el **hub central de navegación** accesible desde la puerta «Granja» en `Inicio · Granja · Memoria · Menú`. Agrupa Mis cultivos, Operaciones de la Finca, Mis finanzas y Trabajo y lectura. No es un módulo financiero. Los «movimientos generales» (gastos no asociados a un cultivo específico) se registran en Facturero de la Finca. Mi Granja no tiene libro de cuentas propio.
 
 ### Caso 7
 

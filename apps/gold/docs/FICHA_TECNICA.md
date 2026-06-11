@@ -136,7 +136,7 @@ Regla estricta:
 - Gestión de cultivos con ciclos productivos y balance operativo con cuatro estados semánticos (`Ganado`, `Recuperando`, `Invirtiendo`, `Equilibrio`) según MANIFIESTO_AGRO.md §4.3
 - Dashboard agrícola con clima en tiempo real
 - Centro de Reportes: índice de reportes generales oficiales (estadísticas globales, perfil agricultor, rankings). Los reportes detallados por cultivo viven en cada card/ciclo, no en el Centro.
-- Calendario operativo: los períodos siguen activos si tienen operaciones vivas asociadas (`activeCycleCount > 0`)
+- Operaciones de la Finca: los períodos siguen activos si tienen operaciones vivas asociadas (`activeCycleCount > 0`)
 - Facturero de Clientes: `Fiados` por pendiente vivo, `Pagados` solo con cobro completo sin pendiente/perdida, `Perdidos` por perdida
 - Rankings y estadísticas financieras
 - Carrito de compras con lista de insumos
@@ -169,7 +169,7 @@ agro-planning.js     — planificación
 agro-privacy.js      — privacidad de datos
 agro-reports-center.js — Centro de Reportes: índice de reportes generales oficiales (estadísticas globales, perfil agricultor, rankings). No consulta Supabase, no selecciona cultivos, no inventa Markdown.
 agro-selection.js    — selección de cultivos
-agro-shell.js        — shell UI de Agro: gestiona navegación hub/module con puertas Inicio · Granja · Memoria · Menú con persistencia por hash, hub central Mi Granja con Mis cultivos y Calendario operativo, barra inferior mobile, topbar contextual con Volver en módulos profundos, launcher/favoritos/búsqueda compacta cuando aplican, y entrada inicial al Dashboard Agro
+agro-shell.js        — shell UI de Agro: gestiona navegación hub/module con puertas Inicio · Granja · Memoria · Menú con persistencia por hash, hub central Mi Granja con Mis cultivos y Operaciones de la Finca, barra inferior mobile, topbar contextual con Volver en módulos profundos, launcher/favoritos/búsqueda compacta cuando aplican, y entrada inicial al Dashboard Agro
 agro-stats.js        — estadísticas financieras
 agro-stats-report.js — reportes estadísticos
 agro-trash.js        — papelera de eliminados

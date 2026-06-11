@@ -143,7 +143,7 @@ const VIEW_CONFIG = Object.freeze({
     perfil: { region: 'perfil', label: 'Mi Perfil', focusSelector: '[data-agro-shell-region="perfil"]' },
     dashboard: { region: 'dashboard', label: 'Dashboard Agro', focusSelector: '[data-agro-shell-region="dashboard"]' },
     ciclos: { region: 'cultivos', label: 'Ciclos de cultivos', focusSelector: '#agro-cycles-finished-view' },
-    'period-cycles': { region: 'period-cycles', label: 'Calendario operativo', focusSelector: '#agro-period-cycles-root' },
+    'period-cycles': { region: 'period-cycles', label: 'Operaciones de la Finca', focusSelector: '#agro-period-cycles-root' },
     operational: { region: 'operational', label: 'Facturero de la Finca', focusSelector: '#agro-operational-root' },
     'facturero-finca': { region: 'operational', label: 'Facturero de la Finca', focusSelector: '#agro-operational-root' },
     clients: { region: 'clients', label: 'Mis Clientes', focusSelector: '#agro-clients-root' },
@@ -773,7 +773,7 @@ const CYCLE_SUBVIEW_META = Object.freeze({
 
 const PERIOD_CYCLE_SUBVIEW_META = Object.freeze({
     calendario: Object.freeze({
-        title: 'Calendario operativo',
+        title: 'Operaciones de la Finca',
         copy: 'Períodos activos y finalizados en una sola vista',
         focusSelector: '#agro-period-cycles-root'
     }),

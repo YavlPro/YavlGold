@@ -74,7 +74,7 @@ This file contains the current product, architecture and routing policy for `app
 - Share monolith functions via `window._agroXxx` bridge
 - Supabase tables use soft-delete (`deleted_at`) as standard pattern
 - Supported currencies: COP, USD, VES
-- Agro navigation: hub/module pattern with Inicio, Granja, Memoria, Menu; Granja contains Mi Granja: Mis cultivos, Calendario operativo, estadisticas/comparadores, Mis finanzas (Facturero de Clientes, Facturero de la Finca, Mi Carrito, Mis Clientes), Trabajo Diario, Rankings de Clientes, Clima Agro, Centro de Reportes. Deep modules use contextual Volver and hide global navigation. Shell gates (Inicio/Granja/Memoria/Menu) use canonical hash routes and persist across F5 refresh.
+- Agro navigation: hub/module pattern with Inicio, Granja, Memoria, Menu; Granja contains Mi Granja: Mis cultivos, Operaciones de la Finca, estadisticas/comparadores, Mis finanzas (Facturero de Clientes, Facturero de la Finca, Mi Carrito, Mis Clientes), Trabajo Diario, Rankings de Clientes, Clima Agro, Centro de Reportes. Deep modules use contextual Volver and hide global navigation. Shell gates (Inicio/Granja/Memoria/Menu) use canonical hash routes and persist across F5 refresh.
 - Centro de Reportes: índice de reportes generales oficiales (Informe estadístico global, Informe Global Agro, Rankings de clientes). No es selector de cultivos, no consulta Supabase, no inventa Markdown. Los reportes detallados por cultivo viven en cada card/ciclo, no en el Centro.
 - `#view=operaciones` is legacy/compatibility, not a primary functional destination. Notifications route to modern surfaces (Facturero de Clientes, Facturero de la Finca), not to Operaciones.
 - Archivar/eliminar un cultivo NO borra clientes ni movimientos comerciales. La historia económica permanece.
@@ -88,7 +88,7 @@ Crop cycle balance uses four semantic states per MANIFIESTO_AGRO.md §4.3:
 - Invirtiendo (balanceActual < 0 sin fiados, gray) — ciclo en etapa temprana, sin ventas aún; estado natural de cultivo joven, no alarma
 - Equilibrio (balanceActual = 0, gray) — punto neutro
 Formula: balanceActual = rentabilidadReal - fiadosPendientes; rentabilidadReal = cobradoReal - costosTotales
-- Calendario operativo: a period remains active when `activeCycleCount > 0`, even if the calendar month/range has expired.
+- Operaciones de la Finca: a period remains active when `activeCycleCount > 0`, even if the calendar month/range has expired.
 - Future only: `Facturero de Clientes Lifecycle — Archivo / Papelera / Restauracion` is pending/proposed, not implemented. Money-affecting records must not disappear without traceability.
 - Mis Clientes: contact directory combining `agro_clients` (manual, editable) with `agro_buyers` (derived from Facturero de Clientes, read-only). Deduplication by canonical name. Mis Clientes does NOT handle debts, balances or financial data — that is Facturero de Clientes' domain.
 - Crop states are manual: active, finalizado, perdido. No automatic transitions. The farmer decides when to change state.

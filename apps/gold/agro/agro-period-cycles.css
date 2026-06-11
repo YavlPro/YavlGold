@@ -874,7 +874,7 @@ details[open] > .agro-period-cycle-card__groups-toggle::before {
   }
 }
 
-/* Internal tabs for Calendario operativo */
+/* Internal tabs for Operaciones de la Finca */
 .agro-period-cycles .agro-internal-tabs {
   display: flex;
   gap: 0.35rem;

@@ -366,7 +366,7 @@ Ciclos de cultivos
   Comparar ciclos
 
 Ciclos de períodos
-  Calendario operativo (Activos · Finalizados)
+  Operaciones de la Finca (Activos · Finalizados)
   Estadísticas de períodos
   Comparar períodos
 
@@ -386,7 +386,7 @@ Trabajo y lectura
 - Barra inferior mobile: visible en hub, oculta en módulos profundos.
 - Topbar contextual: `Volver + título` en módulos profundos.
 - Botón Dashboard: chip sobrio, no botón gigante.
-- Tabs internas (Mis cultivos, Calendario operativo): chips tipo tabbar mobile, dark/gold, sin glow.
+- Tabs internas (Mis cultivos, Operaciones de la Finca): chips tipo tabbar mobile, dark/gold, sin glow.
 - Desktop: hub central con sidebar. Módulos profundos ocultan sidebar.
 
 ### Memoria

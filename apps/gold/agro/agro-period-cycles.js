@@ -494,11 +494,11 @@ function buildSummary(cycles) {
 
 const PERIOD_SUBVIEW_META = Object.freeze({
     calendario: Object.freeze({
-        title: 'Calendario operativo',
-        subtitle: 'Períodos activos y finalizados para seguir tu operación.',
-        overviewEyebrow: 'Calendario operativo',
+        title: 'Operaciones de la Finca',
+        subtitle: 'Operaciones de tu finca agrupadas por período. Incluye movimientos vinculados a cultivos y movimientos generales.',
+        overviewEyebrow: 'Operaciones de la Finca',
         overviewTitle: 'Períodos en calendario',
-        overviewCopy: 'Meses activos y finalizados concentrados en una sola vista para seguimiento del calendario operativo.',
+        overviewCopy: 'Meses activos y finalizados concentrados en una sola vista para seguimiento de las operaciones de la finca.',
         emptyTitle: 'No hay períodos visibles.',
         emptyCopy: 'Cuando existan períodos activos o finalizados, aparecerán aquí.',
         regionId: 'agro-period-cycles-calendario-view'
@@ -816,7 +816,7 @@ function buildCompareMetrics(leftCycle, rightCycle) {
             rightSub: 'Impactan cultivos'
         },
         {
-            label: 'Generales del período',
+            label: 'Generales de la finca',
             left: String(unlinkedLeft),
             right: String(unlinkedRight),
             delta: formatSignedCount(unlinkedLeft - unlinkedRight),
@@ -963,13 +963,13 @@ function renderCycleCard(cycle) {
                 <div class="agro-period-cycle-card__groups">
                     ${renderGroupCard(
         'Vinculados a cultivo',
-        'Movimientos operativos que impactan un cultivo. El período es dueño del registro; el cultivo refleja el costo.',
+        'Gastos e ingresos asociados a un cultivo específico. El período los agrupa temporalmente.',
         cycle.linked,
         'linked'
     )}
                     ${renderGroupCard(
-        'Generales del período',
-        'Movimientos operativos sin vínculo a un cultivo específico. Pertenecen exclusivamente al período.',
+        'Generales de la finca',
+        'Gastos e ingresos sin vínculo a un cultivo específico. Registrados en la finca y mostrados en este período.',
         cycle.unlinked,
         'unlinked'
     )}
@@ -1105,7 +1105,7 @@ function renderCalendarioSubview() {
         : `<div class="agro-period-cycles__grid">${cycles.map((cycle) => renderCycleCard(cycle)).join('')}</div>`;
 
     return `
-        <div class="agro-internal-tabs" role="tablist" aria-label="Tabs de Calendario operativo">
+        <div class="agro-internal-tabs" role="tablist" aria-label="Tabs de Operaciones de la Finca">
             <button type="button" class="agro-internal-tab ${activeTab === 'activos' ? 'is-active' : ''}" role="tab" data-period-calendario-tab="activos" aria-selected="${activeTab === 'activos'}">Activos</button>
             <button type="button" class="agro-internal-tab ${activeTab === 'finalizados' ? 'is-active' : ''}" role="tab" data-period-calendario-tab="finalizados" aria-selected="${activeTab === 'finalizados'}">Finalizados</button>
         </div>

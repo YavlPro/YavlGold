@@ -1126,3 +1126,59 @@ Resolver los hallazgos de la auditoría técnica de la base de datos de producci
 - Grid de fincas visible: ✅ sin cambios en renderizado
 
 **No se tocó:** `agro.js`, `ADN-VISUAL-V11.0.md`, `FICHA_TECNICA.md`, `agro-shell.js`, `agro-farm-compare.js`
+
+---
+
+## Sesión 2026-06-08 — Auditoría técnica, índices/seguridad y reorganización de navegación
+
+### Objetivo
+Ejecutar auditoría completa de Supabase productiva, resolver deudas críticas de performance/seguridad, y reorganizar la navegación del módulo Agro para reforzar la jerarquía canónica Finca → Cultivo.
+
+### Contexto
+La instancia productiva necesitaba una revisión de performance (25 FKs sin índices) y hardening de seguridad (funciones SECURITY DEFINER sin blindaje, verify_jwt=false pendiente de confirmar). Además, la navegación del hub Agro mostraba una jerarquía confusa: "Mis Cultivos" aparecía al mismo nivel que "Mis Fincas", cuando debería estar jerárquicamente debajo.
+
+### Agentes participantes
+- **Qwen 3.7 Max**: supervisión, validación canónica, prompts quirúrgicos.
+- **GPT 5.5**: auditoría inicial de Supabase productiva (8.5/10).
+- **Gemini 3.5 Flash**: implementación de índices y hardening (9.3/10).
+- **KiroCode**: verificación post-despliegue, corrección de headers, actualización documental (9.5/10).
+- **GLM 5.1**: Fases 1 y 2 de reorganización de navegación (9.5/10).
+
+### Logros del día
+
+#### Infraestructura
+- 25 índices especializados en FKs de Agro (parciales con `WHERE deleted_at IS NULL`).
+- 5 funciones SECURITY DEFINER blindadas (`search_path = ''`, `pg_catalog.`, revocación PUBLIC).
+- Edge Function `agro-assistant` auditada: `verify_jwt=false` confirmado seguro (CORS preflight + `requireUser()` interno).
+
+#### Producto
+- Jerarquía Finca → Cultivo reforzada: eliminada card "Mis Cultivos" del hub.
+- Botones de estadísticas/comparación movidos a Mis Cultivos (donde semánticamente pertenecen).
+- Navegación coherente en subvistas profundas: headers, contextbars y Volver respetan jerarquía.
+- Headers duplicados corregidos en subvistas profundas.
+
+#### Documentación
+- MANIFIESTO_AGRO.md actualizado (§3.1, §4.3, §4.13, Caso 9).
+- docs-agro.html actualizado.
+- CRONICA-YAVLGOLD.md actualizada.
+- AGENT_REPORT_ACTIVE.md actualizado.
+
+### Commits del día
+| # | Commit |
+|---|--------|
+| 1 | feat: performance indexes and security hardening |
+| 2 | feat: reorganización navegación hub — Fase 1 |
+| 3 | feat: fase 2 — reorganización Mis Cultivos y Mis Fincas |
+| 4 | fix: corrección headers duplicados en subvistas profundas |
+| 5 | fix: iteración post-fase 2 |
+| 6 | fix: corrección header al volver desde Comparar Fincas |
+
+### Estado final del día
+**GREEN** — Cero breakage funcional, todos los builds pasaron, documentación actualizada. Pendientes locales no bloquean producción.
+
+### Lecciones del día
+1. **Verificar después de reportar**: Gemini reportó "finalizado" pero la migración no llegó a producción; KiroCode detectó la brecha.
+2. **Separación semántica antes de diagnosticar**: la navegación confusa se resolvió reubicando elementos, no añadiendo código.
+3. **Guardas como defensa activa**: el guard de reportes detectó asimetrías; nunca silenciarlo.
+4. **QA humano como gate final**: el usuario detectó lo que los agentes omitieron.
+
