@@ -1410,6 +1410,24 @@ export function initAgroShell() {
                         setShellGate(activeMobileHub, { focus: true });
                     }
                 }
+            } else if (activeView === 'period-cycles') {
+                const periodBackTargets = {
+                    'estadisticas': 'calendario',
+                    'comparar': 'calendario',
+                    'calendario': null,
+                    'activos': null,
+                    'finalizados': null
+                };
+                const targetSubview = periodBackTargets[activeSubview];
+                if (targetSubview) {
+                    setActiveView('period-cycles', {
+                        subview: targetSubview,
+                        label: 'Operaciones de la Finca',
+                        scroll: true
+                    });
+                } else {
+                    setShellGate(activeMobileHub, { focus: true });
+                }
             } else {
                 setShellGate(activeMobileHub, { focus: true });
             }

@@ -616,16 +616,16 @@ function renderModuleHeader() {
         `;
     const actionsMarkup = isCalendario
         ? `
-                <button type="button" class="btn btn-primary" data-period-action="toggle-form">${state.formOpen ? 'Cerrar creación' : 'Crear ciclo del mes'}</button>
-                <button type="button" class="btn btn-outline" data-period-action="go-subview" data-target-subview="estadisticas">
+                <button type="button" class="btn btn-gold" data-period-action="toggle-form">${state.formOpen ? 'Cerrar creación' : 'Crear ciclo del mes'}</button>
+                <button type="button" class="btn btn-gold" data-period-action="go-subview" data-target-subview="estadisticas">
                     <i class="fa-solid fa-chart-column" aria-hidden="true"></i> Estadísticas de períodos
                 </button>
-                <button type="button" class="btn btn-outline" data-period-action="go-subview" data-target-subview="comparar">
+                <button type="button" class="btn btn-gold" data-period-action="go-subview" data-target-subview="comparar">
                     <i class="fa-solid fa-code-compare" aria-hidden="true"></i> Comparar períodos
                 </button>
         `
         : `
-                <button type="button" class="btn btn-outline" data-period-action="go-subview" data-target-subview="calendario">
+                <button type="button" class="btn btn-gold" data-period-action="go-subview" data-target-subview="calendario">
                     <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Volver a Operaciones
                 </button>
         `;
@@ -1024,23 +1024,23 @@ function renderStatsSubview(meta) {
     const latestCycles = state.cycles.slice(0, 3);
     return `
         <section class="agro-period-cycles__stats" id="${escapeAttr(meta.regionId)}">
-            <div class="agro-period-cycle-card__summary agro-period-cycles__stats-grid">
-                <div class="agro-period-cycle-card__summary-cell">
-                    <span class="agro-period-cycle-card__summary-label">Períodos visibles</span>
-                    <strong class="agro-period-cycle-card__summary-value">${summary.total}</strong>
-                </div>
-                <div class="agro-period-cycle-card__summary-cell">
-                    <span class="agro-period-cycle-card__summary-label">Activos</span>
-                    <strong class="agro-period-cycle-card__summary-value">${summary.active}</strong>
-                </div>
-                <div class="agro-period-cycle-card__summary-cell">
-                    <span class="agro-period-cycle-card__summary-label">Finalizados</span>
-                    <strong class="agro-period-cycle-card__summary-value">${summary.finalized}</strong>
-                </div>
-                <div class="agro-period-cycle-card__summary-cell">
-                    <span class="agro-period-cycle-card__summary-label">Open / Closed</span>
-                    <strong class="agro-period-cycle-card__summary-value">${summary.open} / ${summary.closed}</strong>
-                </div>
+            <div class="agro-period-family__overview-grid">
+                <article class="agro-period-family__overview-card">
+                    <span class="agro-period-family__overview-label">Períodos visibles</span>
+                    <strong class="agro-period-family__overview-value">${summary.total}</strong>
+                </article>
+                <article class="agro-period-family__overview-card">
+                    <span class="agro-period-family__overview-label">Activos</span>
+                    <strong class="agro-period-family__overview-value">${summary.active}</strong>
+                </article>
+                <article class="agro-period-family__overview-card">
+                    <span class="agro-period-family__overview-label">Finalizados</span>
+                    <strong class="agro-period-family__overview-value">${summary.finalized}</strong>
+                </article>
+                <article class="agro-period-family__overview-card">
+                    <span class="agro-period-family__overview-label">Open / Closed</span>
+                    <strong class="agro-period-family__overview-value">${summary.open} / ${summary.closed}</strong>
+                </article>
             </div>
             ${latestCycles.length
             ? `
