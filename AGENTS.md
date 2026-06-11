@@ -991,4 +991,83 @@ Quedó validado que:
 
 ---
 
+## §14 — Skills Universales
+
+Las skills universales son documentos reutilizables que capturan patrones, lecciones o procedimientos aplicables a todo el proyecto YavlGold.
+
+### Ubicación canónica
+Las skills viven en la carpeta `SKILLS/` en la raíz del repo (al mismo nivel que `apps/`, `supabase/`, etc.).
+
+### Convención de nombres
+El nombre del archivo debe incluir:
+- Fecha de creación en formato ISO 8601: `YYYY-MM-DD`
+- Nombre descriptivo en mayúsculas con guiones
+- Extensión `.md`
+
+Ejemplo: `SKILLS/2026-06-11-PATRONES-ERROR-YAVLGOLD.md`
+
+### Estructura interna obligatoria
+Cada skill debe incluir al inicio del archivo:
+- Fecha de creación
+- Fecha de última actualización
+- Autor (sesión o agente que la creó)
+- Alcance (universal para todo el proyecto, o específico a un módulo)
+- Descripción clara de cuándo usar y cuándo NO usar la skill
+
+### Propósito
+Las skills existen para evitar que futuros agentes repitan errores ya documentados o para estandarizar procedimientos recurrentes.
+
+**No son:**
+- Guías de features del producto
+- Documentación de arquitectura
+- Manifiestos semánticos
+- Reportes de sesión
+
+**Son:**
+- Listas de verificación defensivas
+- Patrones de error documentados
+- Procedimientos estandarizados
+- Lecciones aprendidas reutilizables
+
+### Regla de crecimiento
+Las skills solo se crean cuando una lección o patrón es:
+- Reutilizable en múltiples sesiones futuras
+- No obvia para agentes nuevos
+- Documentada con evidencia real (ejemplos de sesiones previas)
+
+No crear skills para:
+- Obviedades técnicas
+- Patrones que solo aplican a una sesión específica
+- Documentación que ya existe en otros archivos canónicos
+
+### Skill activa
+La primera skill creada es `SKILLS/2026-06-11-PATRONES-ERROR-YAVLGOLD.md`, que documenta 10 patrones de error recurrentes identificados durante la reorganización de navegación de Operaciones de la Finca.
+
+Los agentes deben consultar esta skill antes de ejecutar:
+- Renames masivos
+- Reorganizaciones de navegación
+- Modificaciones de botones de acción
+- Ajustes de rutas hash o subvistas
+- Cualquier cambio de UI
+
+### Regla de mantenimiento
+Cuando un agente identifique un nuevo patrón de error reutilizable:
+1. Verificar que no esté ya documentado en una skill existente
+2. Si es nuevo, agregarlo a la skill correspondiente o crear una nueva skill
+3. Actualizar la fecha de "Última actualización" en el archivo
+4. Documentar la creación en AGENT_REPORT_ACTIVE.md
+
+### Jerarquía canónica
+Las skills están por debajo de los documentos canónicos principales:
+1. AGENTS.md (ley operativa)
+2. ADN-VISUAL-V11.0.md (ley visual)
+3. MANIFIESTO_AGRO.md (verdad semántica)
+4. FICHA_TECNICA.md (estructura técnica)
+5. SKILLS/ (lecciones reutilizables)
+6. AGENT_REPORT_ACTIVE.md (bitácora operativa)
+
+Las skills no pueden contradecir documentos canónicos superiores.
+
+---
+
 © 2026 YavlGold · AGENTS.md — Instrucciones Canónicas

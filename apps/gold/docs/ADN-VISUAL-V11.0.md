@@ -357,23 +357,24 @@ Inicio · Granja · Memoria · Menú
 
 ### Hub Mi Granja
 
-Contiene cuatro grupos:
+Contiene tres grupos:
 
 ```
-Ciclos de cultivos
-  Mis cultivos (Activos · Finalizados · Perdidos)
-  Estadísticas de ciclos
-  Comparar ciclos
-
-Ciclos de períodos
-  Operaciones de la Finca (Activos · Finalizados)
-  Estadísticas de períodos
-  Comparar períodos
+Mis fincas y cultivos
+  Mis Fincas
+  Mis cultivos (Activos · Finalizados · Perdidos) — contiene:
+    Estadísticas de cultivos
+    Comparar cultivos
+  Operaciones de la Finca (Activos · Finalizados) — contiene:
+    Crear ciclo del mes
+    Estadísticas de períodos
+    Comparar períodos
 
 Mis finanzas
   Facturero de Clientes
   Facturero de la Finca
   Mi Carrito
+  Mis Clientes
 
 Trabajo y lectura
   Trabajo Diario

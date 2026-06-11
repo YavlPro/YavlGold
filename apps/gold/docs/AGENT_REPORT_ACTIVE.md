@@ -1182,3 +1182,57 @@ La instancia productiva necesitaba una revisión de performance (25 FKs sin índ
 3. **Guardas como defensa activa**: el guard de reportes detectó asimetrías; nunca silenciarlo.
 4. **QA humano como gate final**: el usuario detectó lo que los agentes omitieron.
 
+---
+
+## Sesión 2026-06-11 — Reorganización de navegación + creación de skill universal
+
+### Objetivo
+Mover "Operaciones de la Finca" junto a "Mis Fincas" y "Mis cultivos" en el hub Mi Granja, integrar "Estadísticas de períodos" y "Comparar períodos" como botones internos de Operaciones, y crear una skill universal reutilizable que capture patrones de error recurrentes.
+
+### Contexto
+El hub Mi Granja tenía una categoría "Ciclos de períodos" con 3 items (Operaciones, Estadísticas, Comparar) que debía consolidarse bajo "Mis fincas y cultivos". Adicionalmente, se identificó la necesidad de documentar lecciones aprendidas para evitar que futuros agentes repitan errores.
+
+### Agentes participantes
+- Qwen (diagnóstico y planificación)
+- GLM (ejecución de cambios)
+
+### Logros
+- Eliminada categoría "Ciclos de períodos" del hub
+- Movido "Operaciones de la Finca" junto a "Mis Fincas" y "Mis cultivos"
+- Integrados "Estadísticas de períodos" y "Comparar períodos" como botones internos de Operaciones
+- Ajustado botón "Volver" en Stats/Compare para regresar a Operaciones de la Finca
+- Eliminado botón "Crear ciclo del mes" de Stats y Compare (solo vive en Operaciones)
+- Corregido estilo de botones (btn-outline → btn-gold) para consistencia con Mis cultivos
+- Corregido layout de Estadísticas de períodos (usando clases overview-* en lugar de clases de card)
+- Corregida sincronización hash ↔ estado interno en agro-period-cycles.js y agro-shell.js
+- Actualizada documentación canónica (MANIFIESTO_AGRO, ADN-VISUAL-V11.0, FICHA_TECNICA, llms.txt)
+- Creada carpeta SKILLS/ en raíz del repo
+- Creada skill universal SKILLS/2026-06-11-PATRONES-ERROR-YAVLGOLD.md con 10 lecciones aprendidas
+- Actualizado AGENTS.md con nueva sección §14 — Skills Universales
+- Build OK en 2.86s
+
+### Commits
+- `feat: reorganizar Operaciones de la Finca bajo Mis fincas y cultivos`
+- `fix: sincronizar URL con estado interno de Operaciones de la Finca para Volver correcto`
+- `fix: eliminar duplicación de botón Volver en Operaciones de la Finca`
+- `docs: actualizar documentación canónica con nueva estructura de navegación`
+- `feat: crear skill universal de patrones de error recurrentes`
+
+### Estado
+Frente cerrado. Navegación reorganizada, documentación actualizada, skill universal creada.
+
+### Lecciones aprendidas
+- Residuos de rename que cruzan múltiples líneas HTML no son detectados por grep simple
+- Botones en superficies hermanas deben usar el mismo patrón de estilo
+- Módulos con subvistas internas deben sincronizar hash con history.replaceState
+- Copy visible debe reflejar verdad semántica del modelo de datos, no falsa propiedad
+- Categorías vacías del hub deben eliminarse completamente
+- AGENT_REPORT_ACTIVE.md solo debe crecer por adición de entradas al final
+- Explorar código antes de planificar cambios, no asumir estructura de archivos
+- Build gate obligatorio antes de cualquier commit
+- Preservar rutas hash aunque cambien nombres visibles
+- Verificar manualmente botones Volver después de reorganización de navegación
+
+### Próximo paso
+Ninguno. Frente cerrado completamente.
+

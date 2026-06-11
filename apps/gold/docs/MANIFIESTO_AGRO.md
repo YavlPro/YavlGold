@@ -111,10 +111,8 @@ El valor de Agro no está solo en registrar. Está en conectar lo que pasa en el
     * Mis Fincas (entrada principal del hub)
     * Mis cultivos (accesible por sidebar y URL directa) — contiene:
       + Nuevo cultivo / Estadísticas de cultivos / Comparar cultivos
-  * Ciclos de períodos
-    * Operaciones de la Finca (activos, finalizados)
-    * Estadísticas de períodos
-    * Comparar períodos
+    * Operaciones de la Finca (activos, finalizados) — contiene:
+      + Crear ciclo del mes / Estadísticas de períodos / Comparar períodos
   * Mis finanzas
     * Facturero de Clientes
     * Facturero de la Finca
@@ -357,11 +355,12 @@ No es un ciclo de cultivo. No representa la vida biológica/productiva de una si
 
 ### Subsuperficies
 
-* Operaciones de la Finca — entrada única con tabs internas:
+* Operaciones de la Finca — entrada única con tabs internas y botones de acción:
   * Activos — los períodos que están en curso
   * Finalizados — los períodos ya cerrados
-* Comparar períodos — elegir dos períodos y verlos lado a lado
-* Estadísticas de períodos — consolidado por período
+  * Crear ciclo del mes — botón de acción principal
+  * Estadísticas de períodos — botón de acción (subvista interna)
+  * Comparar períodos — botón de acción (subvista interna)
 
 ### Vigencia operativa
 
@@ -1140,7 +1139,7 @@ Se accede desde Mis Fincas → botón "Comparar Fincas" (visible cuando hay 2 o 
 
 En la navegación principal, **Mi Granja** (puerta «Granja» en `Inicio · Granja · Memoria · Menú`) funciona como hub central donde el agricultor organiza cultivos, períodos, finanzas, trabajo, rankings y clima. No es un módulo financiero. No reemplaza a Facturero de la Finca.
 
-Su propósito es concentrar el acceso a **Ciclos de Cultivo** (via Mis cultivos), **Ciclos de Período** (via Operaciones de la Finca), **Mis finanzas** y **Trabajo y lectura** bajo una sola puerta.
+Su propósito es concentrar el acceso a **Ciclos de Cultivo** (via Mis cultivos), **Operaciones de la Finca** (via Mis fincas y cultivos), **Mis finanzas** y **Trabajo y lectura** bajo una sola puerta.
 
 **Los movimientos financieros no asociados a un cultivo específico** (gasolina, mantenimiento de infraestructura, etc.) se registran como «movimiento general» dentro de Facturero de la Finca (§4.5.2). No pertenecen a Mi Granja. El término «movimiento general» es financiero y vive en Facturero de la Finca.
 
@@ -1367,7 +1366,7 @@ Un archivo `.md` se abre en cualquier editor de texto, en cualquier equipo, sin 
 ### 9.9 ¿Cómo separo la idea de Ciclo de Cultivo frente al Ciclo de Período?
 
 * **Ciclo de Cultivo:** Acompaña solamente el desarrollo de una siembra específica desde que la plantas en tierra hasta el fin de su venta o consumo.
-* **Ciclo de Período:** Abarca un rango temporal (como "enero a junio") agrupando todos los movimientos operativos de ese lapso, sin importar a qué cultivo correspondían. Los movimientos financieros del período provienen de Facturero de la Finca.
+* **Ciclo de Período (Operaciones de la Finca):** Abarca un rango temporal (como "enero a junio") agrupando todos los movimientos operativos de ese lapso, sin importar a qué cultivo correspondían. Los movimientos financieros del período provienen de Facturero de la Finca. Se accede desde el hub Mi Granja bajo "Mis fincas y cultivos".
 
 ### 9.10 ¿El asistente IA auditará la rentabilidad general para aconsejarme opciones de inversión bursátil?
 
