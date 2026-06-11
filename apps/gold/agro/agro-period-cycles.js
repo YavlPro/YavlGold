@@ -624,11 +624,7 @@ function renderModuleHeader() {
                     <i class="fa-solid fa-code-compare" aria-hidden="true"></i> Comparar períodos
                 </button>
         `
-        : `
-                <button type="button" class="btn btn-gold" data-period-action="go-subview" data-target-subview="calendario">
-                    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Volver a Operaciones
-                </button>
-        `;
+        : '';
     return `
         <header class="module-header animate-in delay-3">
             <div class="module-title-group">
