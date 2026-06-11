@@ -1411,6 +1411,12 @@ export function initAgroShell() {
                     }
                 }
             } else if (activeView === 'period-cycles') {
+                let actualSubview = activeSubview;
+                try {
+                    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+                    const hashSubview = hashParams.get('subview');
+                    if (hashSubview) actualSubview = hashSubview;
+                } catch (_) {}
                 const periodBackTargets = {
                     'estadisticas': 'calendario',
                     'comparar': 'calendario',
@@ -1418,7 +1424,7 @@ export function initAgroShell() {
                     'activos': null,
                     'finalizados': null
                 };
-                const targetSubview = periodBackTargets[activeSubview];
+                const targetSubview = periodBackTargets[actualSubview];
                 if (targetSubview) {
                     setActiveView('period-cycles', {
                         subview: targetSubview,

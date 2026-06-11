@@ -1325,6 +1325,11 @@ function bindRootEvents() {
                 if (target && PERIOD_SUBVIEW_OPTIONS.includes(target)) {
                     state.currentSubview = target;
                     renderRoot();
+                    try {
+                        const url = new URL(window.location.href);
+                        url.hash = `view=period-cycles&subview=${encodeURIComponent(target)}`;
+                        history.replaceState(null, '', url.href);
+                    } catch (_) {}
                 }
                 return;
             }
