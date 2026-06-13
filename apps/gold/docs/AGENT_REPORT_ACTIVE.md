@@ -1236,3 +1236,236 @@ Frente cerrado. Navegación reorganizada, documentación actualizada, skill univ
 ### Próximo paso
 Ninguno. Frente cerrado completamente.
 
+
+---
+
+## Sesión 2026-06-10 — Sincronización canónica, renombrado “Operaciones de la Finca” y skill universal
+
+**Estado:** GREEN — 4 frentes cerrados completamente, skill universal creada.
+
+### Objetivo
+Ejecutar sincronización canónica completa del proyecto YavlGold Agro:
+1. Alinear documentación canónica con código activo.
+2. Renombrar “Calendario operativo” → “Operaciones de la Finca”.
+3. Reorganizar navegación del hub Mi Granja.
+4. Corregir bugs de UI (Volver, estilos de botones, layout stats).
+5. Actualizar docs canónicos.
+6. Crear skill universal reutilizable para errores recurrentes.
+
+### Diagnóstico inicial
+
+1. **Desalineaciones semánticas**
+   - Estados de balance: 3 estados viejos en FICHA_TECNICA.md/llms.txt vs 4 estados canónicos en MANIFIESTO_AGRO.md §4.3.
+   - Ruta de FICHA_TECNICA.md en llms.txt apuntaba a repo root en vez de `apps/gold/docs/FICHA_TECNICA.md`.
+   - Papelera: documentación sugería usarse para todo, pero solo existe para cultivos.
+   - Red Social de Agro: lenguaje aspiracional en MANIFIESTO_AGRO.md §4.1, sin feature real.
+   - Naming público viejo: landing con “Cartera Viva/Operativa” en vez de “Facturero de Clientes/Facturero de la Finca”.
+
+2. **Metáfora visual falsa**
+   - “Calendario operativo” no muestra eventos/fechas; es vista transversal de operaciones por período.
+   - Competía semánticamente con Agenda/Trabajo Diario.
+   - Copy falsa propiedad semántica: “El período es dueño del registro”.
+
+3. **Navegación ineficiente**
+   - Hub Mi Granja con “Ciclos de períodos” en lugar de consolidarlo bajo “Mis fincas y cultivos”.
+   - Estadísticas y Comparar períodos como items del hub en vez de botones internos.
+
+4. **Bugs de UI**
+   - Volver en Stats/Compare iba al hub en vez de a Operaciones de la Finca.
+   - Estilos inconsistentes entre botones de Operaciones y Mis Cultivos.
+   - Layout roto en Estadísticas de períodos por clases incorrectas.
+   - Hash ↔ estado interno rota en subvistas.
+
+### Cambios realizados
+
+| Frente | Archivo(s) | Cambio |
+|--------|-----------|--------|
+| Alineación semántica V1 | `apps/gold/docs/FICHA_TECNICA.md`, `apps/gold/public/llms.txt`, `apps/gold/docs/MANIFIESTO_AGRO.md`, `apps/gold/docs/ROADMAP_VISION_YAVLGOLD.md`, landing | Sincronizar estados de balance, corregir rutas, eliminar copy Social, actualizar naming público Cartera → Facturero |
+| Renombrado Calendario → Operaciones de la Finca | módulo/views operativas | Cambio de nombre, rutas y copy alineado a realidad semántica |
+| Reorganización navegación hub | hub Mi Granja | Consolidar períodos bajo Mis fincas y cultivos; mover stats/comparación como botones internos |
+| Bugs UI | vistas Stats/Compare/Operaciones | Corregir Volver, unificar estilos de botones y arreglar layout/classes |
+| Skill universal | skill reutilizable | Patrón para errores recurrentes documentado |
+
+### Resultado
+- **Build:** `pnpm build:gold` limpio.
+- **QA:** headings, navegación Volver, estilos de botones, rutas y copy revisados.
+- **Documentación canónica actualizada:** MANIFIESTO, FICHA_TECNICA, llms.txt, landing, roadmap.
+- **Semántica alineada** entre lo que el usuario ve y lo que el sistema realmente hace.
+
+### Estado final del día
+**GREEN** — 4 frentes cerrados completamente, skill universal creada, build pasado, documentación canónica alineada.
+
+
+---
+
+## Sesión 2026-06-10 — Sincronización canónica completa, renombrado a “Operaciones de la Finca” y skill universal
+
+**Estado:** GREEN — 4 frentes cerrados completamente, skill universal creada.
+
+### Objetivo
+Ejecutar sincronización canónica completa del proyecto YavlGold Agro, incluyendo:
+1. Alinear documentación canónica con código activo
+2. Renombrar “Calendario operativo” → “Operaciones de la Finca”
+3. Reorganizar navegación del hub Mi Granja
+4. Corregir bugs de UI (botones Volver, estilo de botones, layout de stats)
+5. Actualizar documentación canónica
+6. Crear skill universal reutilizable para patrones de error recurrentes
+
+### Cambios realizados
+
+#### Frente 1: Alineación Semántica V1
+
+| Archivo | Tipo | Cambio |
+|---------|------|--------|
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | Texto | §3.1, §4.4, §4.5.2, §5.0, §10 Caso 6, §9.9, §9.27: Renombrado |
+| `apps/gold/docs/ADN-VISUAL-V11.0.md` | Texto | §9 hub Mi Granja, tabs internas: Renombrado |
+| `apps/gold/docs/FICHA_TECNICA.md` | Texto | §4.2 funcionalidades, descripción agro-shell.js: Renombrado |
+| `apps/gold/agro/agro-shell.js` | Código | Label visible de navegación, breadcrumbs: Renombrado |
+| `apps/gold/agro/agro-period-cycles.js` | Código | Título UI, subtítulo, copy de secciones, label “Generales del período” → “Generales de la finca” |
+| `apps/gold/agro/agro-period-cycles.css` | CSS | Comentario interno: Renombrado |
+| `apps/gold/docs-agro.html` | HTML | Lista de navegación: Renombrado |
+| `apps/gold/public/llms.txt` | Texto | Navegación y regla de vigencia: Renombrado |
+| `apps/gold/agro/index.html` | HTML | Launcher tile y mobile hub: Renombrado |
+| `apps/gold/index.html (sidebar)` | HTML | Residuo corregido (cruzaba 2 líneas HTML) |
+
+Agentes participantes: Qwen 3.7 max, GLM 5.1, GPT 5.5, Yerikson Varela
+Commits: varios (renombrado, reorganización, docs, fixes)
+
+#### Frente 2: Reorganización de navegación del hub Mi Granja
+
+| Archivo | Tipo | Cambio |
+|---------|------|--------|
+| `apps/gold/index.html (sidebar desktop)` | HTML | Eliminada categoría “Ciclos de períodos”, movido Operaciones bajo “Mis fincas y cultivos” |
+| `apps/gold/index.html (mobile hub)` | HTML | Eliminada sección “Ciclos de períodos”, movido Operaciones bajo “Mis fincas y cultivos” |
+| `apps/gold/agro/agro-period-cycles.js` | Código | Agregados botones Estadísticas y Comparar en header de Operaciones |
+| `apps/gold/agro/agro-period-cycles.js` | Código | Ajustado botón Volver en Stats/Compare para regresar a Operaciones |
+| `apps/gold/agro/agro-period-cycles.js` | Código | Eliminado botón “Crear ciclo del mes” de Stats y Compare |
+| `apps/gold/agro/agro-period-cycles.js` | Código | Corregido estilo de botones |
+| `apps/gold/agro/agro-period-cycles.js` | Código | Corregido layout de Stats |
+| `apps/gold/agro/agro-period-cycles.js` | Código | Sincronización hash ↔ estado interno |
+| `apps/gold/agro/agro-shell.js` | Código | Back handler lee subview del hash en vez de activeSubview estancado |
+| `apps/gold/agro/agro-shell.js` | Código | Eliminada duplicación de botón “Volver a Operaciones” |
+
+#### Frente 3: Actualización canónica completa + creación de skill universal
+
+| Archivo | Tipo | Cambio |
+|---------|------|--------|
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | Texto | §3.1 mapa, §4.4 subsuperficies, §4.5.2 flujo, §5.0 nota Mi Granja, §9.9 FAQ, §10 Caso 6, §9.27 FAQ: Actualizado |
+| `apps/gold/docs/ADN-VISUAL-V11.0.md` | Texto | §9 hub Mi Granja (4 grupos → 3 grupos), §9 tabs internas: Actualizado |
+| `apps/gold/docs/FICHA_TECNICA.md` | Texto | §4.2 descripción agro-shell.js, §4.2 funcionalidades: Actualizado |
+| `apps/gold/public/llms.txt` | Texto | Estructura de navegación reescrita con 3 grupos |
+| `apps/gold/index.html (landing)` | Verificación | Confirmado sin residuos |
+| `apps/gold/docs-agro.html` | Verificación | Confirmado sin residuos |
+| `SKILLS/2026-06-11-PATRONES-ERROR-YAVLGOLD.md` | Nuevo | Skill universal con 10 lecciones aprendidas |
+| `apps/gold/docs/AGENTS.md` | Texto | §14 — Skills Universales: Nueva sección |
+
+### Resultado de build
+- `pnpm build:gold`: OK
+- Build final: OK (185 modules, ~3.4s)
+- Residuos pendientes: 0 en canon activo
+
+### QA realizado
+- ✅ Hub Mi Granja sin categoría “Ciclos de períodos”
+- ✅ Operaciones de la Finca junto a Mis Fincas y Mis Cultivos
+- ✅ 3 botones en header de Operaciones
+- ✅ Botón Volver en Stats/Compare regresa a Operaciones de la Finca
+- ✅ Estilo de botones consistente
+- ✅ Layout de Estadísticas de períodos corregido
+- ✅ Rutas hash preservadas
+- ✅ 0 residuos de “Calendario operativo” en código activo
+
+### Commits
+1. docs: alineación semántica V1 - sincroniza canon con llms.txt, landing y roadmap
+2. refactor: Calendario operativo pasa a Operaciones de la Finca
+3. feat: reorganizar navegación — Operaciones de la Finca bajo Mis fincas y cultivos
+4. feat: reorganizar Operaciones de la Finca bajo Mis fincas y cultivos, corregir Volver/estilo/stats
+5. fix: eliminar duplicación de botón Volver en Operaciones de la Finca
+6. fix: sincronizar URL con estado interno de Operaciones de la Finca para Volver correcto
+7. docs+feat: actualización canónica completa + skill universal de patrones de error
+
+Total: 7 commits
+
+### NO se hizo (scope respetado)
+- No se tocaron tablas de base de datos
+- No se cambió lógica de cálculo de períodos, estadísticas ni comparaciones
+- No se agregaron features nuevas
+- No se cambiaron rutas hash existentes (solo labels visibles)
+- No se tocaron archivos en chronicles/, ops/, archive/, supabase/
+- No se instalaron dependencias nuevas
+- No se modificaron vite.config.js, vercel.json ni turbo.json
+
+### Trabajo de agentes
+- Qwen 3.7 max: diagnóstico, planificación, validación semántica
+- Nemotron 3 Ultra (NVIDIA): análisis de modelo de datos y recomendación semántica
+- GLM 5.1: ejecución quirúrgica
+- GPT 5.5: validación como Product Owner proxy
+- Yerikson Varela: decisiones finales, commits, validación visual
+
+### Próximos pasos
+- Validar alcance funcional exacto de multimoneda (COP/USD/VES)
+- Definir reglas de conversión monetaria
+- Validar alcance exacto de reversión segura por superficie
+- Facturero de Clientes Lifecycle — Archivo / Papelera / Restauración (pendiente futuro)
+- Reorganización futura del hub Mi Granja (prioridad baja): definir si es necesaria
+
+### Estado final
+**GREEN** — Frente cerrado definitivamente. Canon limpio, UI alineada, documentación actualizada y lecciones capturadas.
+
+---
+
+## Sesión 2026-06-12 — Refactor Factureros: Separación Semántica Estructural
+
+**Estado:** GREEN — Build pasa, documentación actualizada.
+
+**Objetivo:** Separar el Facturero de la Finca en 3 módulos independientes (Finca / Cultivo / Personal) con separación semántica estructural, nueva categoría hub "MIS FACTUREROS", limpieza de labels obsoletos y wizard contextual.
+
+### Diagnóstico (archivos inspeccionados)
+- `agroOperationalCycles.js` (~2900 líneas) — motor único del Facturero de la Finca
+- `agro-shell.js` — routing y configuración de vistas
+- `index.html` — hub mobile y sidebar desktop
+- `agro-facturero-clientes-view.js`, `agro-period-cycles.js`, `agrociclos.js` — labels obsoletos
+- Schema `agro_operational_cycles`: asociación derivada de `crop_id`/`farm_id` (no existe campo `association_type`)
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---------|------|--------|
+| `agroOperationalCycles.js` | edición | VIEW_CONTEXTS con 3 configuraciones (farm/crop/orphan), `viewContext` en state, wizard contextual (oculta selects según preset), family toggle oculto cuando hay contexto, ~20 labels "ciclo operativo" → "registro" |
+| `agro-shell.js` | edición | 2 nuevas vistas (`facturero-cultivo`, `facturero-personal`) en VIEW_CONFIG, VIEW_TO_MOBILE_HUB, VIEW_SUBNAV_CONFIG, VIEW_ALIASES, SHELL_VIEW_KEYWORDS. Keywords "cartera viva" eliminados |
+| `index.html` | edición | Hub mobile: nueva sección "Mis factureros" con 4 tiles, "Mis finanzas" reducida a Mis Clientes + Mi Carrito. Sidebar desktop: "Operación comercial" → "Mis factureros" (4 tiles) + "Mis finanzas" (2 tiles) |
+| `agro-facturero-clientes-view.js` | edición | "cartera operativa" → "Facturero de la Finca" (2 líneas) |
+| `agro-period-cycles.js` | edición | "cartera viva" → "Facturero de Clientes" (2 líneas) |
+| `agrociclos.js` | edición | 6 labels "cartera viva" → "Facturero de Clientes" |
+| `MANIFIESTO_AGRO.md` | edición | §3.1 mapa: "Mis factureros" con 4 factureros separados + "Mis finanzas" reducida. §4.5 núcleos: lista de 4 factureros con regla de separación |
+| `FICHA_TECNICA.md` | edición | §4.2: 3 nuevas rutas hash para los factureros separados |
+| `AGENT_REPORT_ACTIVE.md` | adición | Esta sección |
+
+### Build resultado
+✅ `pnpm build:gold` — OK (agent-guard OK, agent-report-check OK, vite build OK en 2.89s, UTF-8 OK, 185 módulos)
+
+### QA sugerido
+1. Hub Mi Granja → sección "Mis factureros" con 4 tiles (Facturero de Clientes, Finca, Cultivo, Personal)
+2. "Mis finanzas" solo con Mis Clientes y Mi Carrito
+3. `#view=facturero-finca` → solo registros POR FINCA, sin toggle de filtros
+4. `#view=facturero-cultivo` → solo registros POR CULTIVO
+5. `#view=facturero-personal` → solo registros SIN ASOCIAR
+6. Wizard desde cada facturero → selects de cultivo/finca ocultos según tipo
+7. Ningún texto visible dice "Cartera Operativa", "Cartera Viva", ni "ciclo operativo" en los factureros
+8. "Operaciones de la Finca" NO fue afectado
+9. F5 restaura la vista activa (persistencia de URL)
+10. Stats globales siguen consolidadas
+
+### Lo que NO se hizo (scope respetado)
+- No se crearon archivos JS ni CSS nuevos (1 motor reutilizado con contexto)
+- No se modificó `agro.js` (monolito intacto)
+- No se tocaron tablas Supabase
+- No se modificó "Operaciones de la Finca"
+- No se cambió lógica financiera ni cálculos
+- No se creó vista "Todos"/General/FAMILY_ALL (prohibido por decisión canónica)
+
+### Comandos git sugeridos
+```bash
+git add apps/gold/agro/agroOperationalCycles.js apps/gold/agro/agro-shell.js apps/gold/agro/index.html apps/gold/agro/agro-facturero-clientes-view.js apps/gold/agro/agro-period-cycles.js apps/gold/agro/agrociclos.js apps/gold/docs/MANIFIESTO_AGRO.md apps/gold/docs/FICHA_TECNICA.md apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "feat(agro): refactor factureros — separación semántica estructural (3 contextos + hub MIS FACTUREROS)"
+```
+

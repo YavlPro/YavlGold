@@ -138,6 +138,9 @@ Regla estricta:
 - Centro de Reportes: índice de reportes generales oficiales (estadísticas globales, perfil agricultor, rankings). Los reportes detallados por cultivo viven en cada card/ciclo, no en el Centro.
 - Operaciones de la Finca: los períodos siguen activos si tienen operaciones vivas asociadas (`activeCycleCount > 0`). Incluye botones internos para Estadísticas de períodos y Comparar períodos.
 - Facturero de Clientes: `Fiados` por pendiente vivo, `Pagados` solo con cobro completo sin pendiente/perdida, `Perdidos` por perdida
+- Facturero de la Finca: registros POR FINCA (farm_id ✓, crop_id ✗) — ruta `#view=facturero-finca`
+- Facturero del Cultivo: registros POR CULTIVO (crop_id ✓) — ruta `#view=facturero-cultivo`
+- Facturero Personal: registros SIN ASOCIAR (ambos null) — ruta `#view=facturero-personal`
 - Rankings y estadísticas financieras
 - Carrito de compras con lista de insumos
 - Planificación y agenda agrícola

@@ -113,11 +113,14 @@ El valor de Agro no está solo en registrar. Está en conectar lo que pasa en el
       + Nuevo cultivo / Estadísticas de cultivos / Comparar cultivos
     * Operaciones de la Finca (activos, finalizados) — contiene:
       + Crear ciclo del mes / Estadísticas de períodos / Comparar períodos
+  * Mis factureros
+    * Facturero de Clientes (ver §4.5.1)
+    * Facturero de la Finca — registros POR FINCA (farm_id ✓, crop_id ✗)
+    * Facturero del Cultivo — registros POR CULTIVO (crop_id ✓)
+    * Facturero Personal — registros SIN ASOCIAR (ambos null)
   * Mis finanzas
-    * Facturero de Clientes
-    * Facturero de la Finca
-    * Mi Carrito
-    * Mis Clientes
+    * Mis Clientes (ver §4.5.4)
+    * Mi Carrito (ver §4.5.3)
   * Trabajo y lectura
     * Trabajo Diario
     * Rankings de Clientes
@@ -393,10 +396,21 @@ No es el registro de crecimiento de un cultivo ni tu lista de tareas. Es, concre
 
 ### Núcleos incluidos
 
-* Facturero de Clientes — quién te debe dinero (clientes con fiados)
-* Facturero de la Finca — el libro de gastos e ingresos general
-* Mi Carrito — lista de compras de insumos
+**Mis factureros** — Separación semántica obligatoria (no es un filtro, es estructural):
+
+* Facturero de Clientes — quién te debe dinero (clientes con fiados) (ver §4.5.1)
+* Facturero de la Finca — registros asociados a una finca (farm_id ✓, crop_id ✗)
+* Facturero del Cultivo — registros asociados a un cultivo (crop_id ✓)
+* Facturero Personal — registros sin asociación (farm_id null, crop_id null)
+
+**Mis finanzas:**
+
 * Mis Clientes — libreta de contactos (ver §4.5.4)
+* Mi Carrito — lista de compras de insumos (ver §4.5.3)
+
+### Regla de separación
+
+NO existe Facturero General, vista "Todos", ni toggles que mezclen contextos dentro de los factureros. La separación es estructural, no un filtro. Cada facturero muestra exclusivamente los registros de su tipo.
 
 ### Misión
 

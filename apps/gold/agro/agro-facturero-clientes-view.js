@@ -1565,9 +1565,9 @@ async function resolveCyclePayloadFromContext(context = {}) {
         ? `${buyerName} · ${baseConcept || 'Seguimiento'}`
         : `${buyerName} · Seguimiento comercial`;
     const name = typeof window !== 'undefined' && typeof window.showPromptModal === 'function'
-        ? await window.showPromptModal({ title: 'Nueva cartera operativa', label: 'Nombre de la cartera operativa', defaultValue: suggestedName })
+        ? await window.showPromptModal({ title: 'Nuevo Facturero de la Finca', label: 'Nombre del facturero', defaultValue: suggestedName })
         : (typeof window !== 'undefined' && typeof window.prompt === 'function'
-            ? window.prompt('Nombre de la cartera operativa', suggestedName)
+            ? window.prompt('Nombre del facturero', suggestedName)
             : suggestedName);
     const unitType = normalizeOperationalUnitType(historyRow?.unit_type || '');
     const quantityRaw = Number(historyRow?.unit_qty);

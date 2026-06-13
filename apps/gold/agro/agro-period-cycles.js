@@ -815,8 +815,8 @@ function buildCompareMetrics(leftCycle, rightCycle) {
             left: String(leftCycle?.activeCycleCount || 0),
             right: String(rightCycle?.activeCycleCount || 0),
             delta: formatSignedCount(Number(leftCycle?.activeCycleCount || 0) - Number(rightCycle?.activeCycleCount || 0)),
-            leftSub: leftCycle?.portfolioStatus === 'open' ? 'Mes con cartera viva' : 'Mes sin cartera viva',
-            rightSub: rightCycle?.portfolioStatus === 'open' ? 'Mes con cartera viva' : 'Mes sin cartera viva'
+            leftSub: leftCycle?.portfolioStatus === 'open' ? 'Mes con Facturero de Clientes' : 'Mes sin Facturero de Clientes',
+            rightSub: rightCycle?.portfolioStatus === 'open' ? 'Mes con Facturero de Clientes' : 'Mes sin Facturero de Clientes'
         },
         {
             label: 'Vinculados a cultivo',

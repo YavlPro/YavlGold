@@ -59,15 +59,15 @@ function resolveCarteraVivaStatus(fiadosUsd) {
   const globalState = readBuyerPortfolioState();
   if (globalState?.known === true) {
     return globalState.hasActivePending
-      ? { label: 'Cartera viva abierta', tone: 'active' }
-      : { label: 'Cartera viva cerrada', tone: 'closed' };
+      ? { label: 'Facturero de Clientes abierto', tone: 'active' }
+      : { label: 'Facturero de Clientes cerrado', tone: 'closed' };
   }
 
   const pending = Number(fiadosUsd);
   if (!Number.isFinite(pending)) return null;
   return pending > 0
-    ? { label: 'Cartera viva abierta', tone: 'active' }
-    : { label: 'Cartera viva cerrada', tone: 'closed' };
+    ? { label: 'Facturero de Clientes abierto', tone: 'active' }
+    : { label: 'Facturero de Clientes cerrado', tone: 'closed' };
 }
 
 function readBuyerPortfolioState() {
@@ -463,10 +463,10 @@ function renderCard(ciclo, index = 0) {
   const carteraVivaRows = [
     renderBreakdownUsdRow('Base inversión multimoneda', baseInvestmentUsd, desgloseBase),
     renderBreakdownUsdRow('Gastos directos del cultivo', directGastosUsd, desgloseGastosDirectos),
-    renderBreakdownUsdRow('Pagados cartera viva', pagadosUsd, desglosePagados),
-    renderBreakdownUsdRow('Fiados cartera viva', fiadosUsd, desgloseFiados),
+    renderBreakdownUsdRow('Pagados Facturero de Clientes', pagadosUsd, desglosePagados),
+    renderBreakdownUsdRow('Fiados Facturero de Clientes', fiadosUsd, desgloseFiados),
     hasFiadosPendientes ? renderBreakdownUsdRow('Si cobra todo', potencialNetoUsd, potentialIfCollectedText) : '',
-    renderBreakdownUsdRow('Pérdidas cartera viva', perdidasUsd, desglosePerdidasCarteraViva)
+    renderBreakdownUsdRow('Pérdidas Facturero de Clientes', perdidasUsd, desglosePerdidasCarteraViva)
   ].filter(Boolean);
   if (globalBreakdownMarkup) {
     carteraVivaRows.push(globalBreakdownMarkup);

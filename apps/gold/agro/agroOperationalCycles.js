@@ -5,10 +5,23 @@ const ROOT_ID = 'agro-operational-root';
 const PERIOD_ROOT_ID = 'agro-period-cycles-root';
 const VIEW_NAME = 'operational';
 const VIEW_NAME_CANONICAL = 'facturero-finca';
+const VIEW_NAME_CULTIVO = 'facturero-cultivo';
+const VIEW_NAME_PERSONAL = 'facturero-personal';
+
+const VIEW_CONTEXTS = Object.freeze({
+    [VIEW_NAME_CANONICAL]: { family: FAMILY_FARM, preset: 'farm', title: 'Facturero de la Finca' },
+    [VIEW_NAME_CULTIVO]: { family: FAMILY_LINKED, preset: 'crop', title: 'Facturero del Cultivo' },
+    [VIEW_NAME_PERSONAL]: { family: FAMILY_ORPHAN, preset: 'orphan', title: 'Facturero Personal' }
+});
 
 function isOperationalView(viewName) {
     const v = String(viewName || '').trim().toLowerCase();
-    return v === VIEW_NAME || v === VIEW_NAME_CANONICAL;
+    return v === VIEW_NAME || v === VIEW_NAME_CANONICAL || v === VIEW_NAME_CULTIVO || v === VIEW_NAME_PERSONAL;
+}
+
+function resolveViewContext(viewName) {
+    const v = String(viewName || '').trim().toLowerCase();
+    return VIEW_CONTEXTS[v] || null;
 }
 const PERIOD_VIEW_NAME = 'period-cycles';
 const SUBVIEW_ACTIVE = 'active';
@@ -141,6 +154,7 @@ const state = {
     currentView: '',
     currentSubview: SUBVIEW_ACTIVE,
     familyFilter: FAMILY_ALL,
+    viewContext: null,
     editId: '',
     schemaMissing: false,
     cropDeletedAtSupported: true,
@@ -187,7 +201,7 @@ function createClosedPortfolioState(cropId = '') {
         lostCycles: 0,
         status: 'closed',
         tone: 'closed',
-        label: 'Ciclo operativo cerrado'
+        label: 'Registro cerrado'
     };
 }
 
@@ -203,7 +217,7 @@ function serializePortfolioState(entry) {
         lostCycles: Number(safeEntry.lostCycles || 0),
         status: safeEntry.openCycles > 0 ? 'open' : 'closed',
         tone: safeEntry.openCycles > 0 ? 'active' : 'closed',
-        label: safeEntry.openCycles > 0 ? 'Ciclo operativo abierto' : 'Ciclo operativo cerrado'
+        label: safeEntry.openCycles > 0 ? 'Registro abierto' : 'Registro cerrado'
     };
 }
 
@@ -816,7 +830,7 @@ function buildCycleViewModel(cycle, movementsByCycle, cropMap) {
 
     return {
         id: cycleId,
-        name: String(cycle?.name || 'Ciclo operativo').trim() || 'Ciclo operativo',
+        name: String(cycle?.name || 'Registro').trim() || 'Registro',
         description: toNullableText(cycle?.description),
         economic_type: normalizeToken(cycle?.economic_type),
         category: normalizeToken(cycle?.category),
@@ -1291,8 +1305,8 @@ async function createCycleRecord(payload) {
     return {
         cycleId,
         message: payload.status === 'closed'
-            ? 'Ciclo operativo creado y cerrado.'
-            : 'Ciclo operativo creado.'
+            ? 'Registro creado y cerrado.'
+            : 'Registro creado.'
     };
 }
 
@@ -1305,7 +1319,7 @@ async function updateCycleRecord(cycleId, payload) {
     });
     const existingCycle = state.cycleIndex.get(cycleId);
     if (!existingCycle) {
-        throw new Error('No se encontró el ciclo operativo a editar.');
+        throw new Error('No se encontró el registro a editar.');
     }
 
     const cropId = await validateCropId(supabase, userId, payload.cropId);
@@ -1344,7 +1358,7 @@ async function updateCycleRecord(cycleId, payload) {
 
     return {
         cycleId,
-        message: 'Cambios guardados en el ciclo operativo.'
+        message: 'Cambios guardados en el registro.'
     };
 }
 
@@ -1353,7 +1367,7 @@ async function deleteCycleRecord(cycleId, options = {}) {
     const userId = await ensureUserId();
     const existingCycle = state.cycleIndex.get(cycleId);
     if (!existingCycle) {
-        throw new Error('No se encontró el ciclo operativo a eliminar.');
+        throw new Error('No se encontró el registro a eliminar.');
     }
 
     if (!options.skipConfirm) {
@@ -1412,7 +1426,7 @@ function renderShell() {
                     </div>
                 </div>
                 <div class="header-actions">
-                    <button type="button" class="btn btn-primary" data-operational-action="new-cycle">Nuevo ciclo operativo</button>
+                    <button type="button" class="btn btn-primary" data-operational-action="new-cycle">Nuevo registro</button>
                     <button type="button" class="btn" data-agro-view="period-cycles">📆 Ver períodos</button>
                     <button type="button" class="agro-operational-refresh-btn" data-operational-action="refresh" aria-label="Actualizar Facturero de la Finca" title="Actualizar">
                         <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
@@ -1432,10 +1446,10 @@ function renderShell() {
                 <div class="agro-operational-list-head">
                     <div>
                         <p class="agro-operational-list-eyebrow" id="agro-operational-list-eyebrow">🟡 Activos</p>
-                        <h3 class="agro-operational-list-title" id="agro-operational-list-title">🟡 Ciclos operativos activos</h3>
+                        <h3 class="agro-operational-list-title" id="agro-operational-list-title">🟡 Registros activos</h3>
                         <p class="agro-operational-list-copy" id="agro-operational-list-copy">No pagados, en seguimiento o compensándose con lectura operativa.</p>
                     </div>
-                    <button type="button" class="btn" data-operational-action="new-cycle">Nuevo ciclo operativo</button>
+                    <button type="button" class="btn" data-operational-action="new-cycle">Nuevo registro</button>
                 </div>
                 <div id="agro-operational-filters-host"></div>
                 <section id="agro-operational-overview-panel" class="agro-operational-panel agro-operational-overview-panel">
@@ -1457,7 +1471,7 @@ function renderShell() {
                     <div class="modal-header agro-operational-modal__header agro-modal-canon__header">
                         <div class="agro-operational-modal__title-group">
                             <p class="agro-operational-modal__eyebrow" id="agro-operational-form-eyebrow">Creación guiada</p>
-                            <h3 class="modal-title agro-operational-modal__title" id="agro-operational-form-title">Nuevo ciclo operativo</h3>
+                            <h3 class="modal-title agro-operational-modal__title" id="agro-operational-form-title">Nuevo registro</h3>
                             <p class="agro-operational-modal__copy" id="agro-operational-form-copy">Describe, clasifica, registra y confirma sin cargar la vista principal.</p>
                         </div>
                         <button type="button" class="modal-close agro-operational-modal__close agro-modal-canon__close" data-operational-action="cancel-form" aria-label="Cerrar modal">&times;</button>
@@ -1670,7 +1684,7 @@ function renderEditForm(focusSnapshot) {
     const values = state.form.values;
 
     state.refs.formEyebrow.textContent = 'Edición directa';
-    state.refs.formTitle.textContent = 'Editar ciclo operativo';
+    state.refs.formTitle.textContent = 'Editar registro';
     state.refs.formCopy.textContent = 'Modifica los campos necesarios y guarda. Todos los cambios se aplican de una vez.';
 
     state.refs.wizardHost.innerHTML = `
@@ -1679,7 +1693,7 @@ function renderEditForm(focusSnapshot) {
                 <div class="agro-operational-edit-form">
                     <div class="agro-operational-form-grid">
                         <div class="input-group input-group--full">
-                            <label class="input-label" for="agro-operational-name">Nombre del ciclo</label>
+                            <label class="input-label" for="agro-operational-name">Nombre del registro</label>
                             <input type="text" id="agro-operational-name" class="styled-input" maxlength="140" placeholder="Ej: Botas de cuero Titan" required data-operational-draft="name" value="${escapeAttr(values.name)}">
                         </div>
                         <div class="input-group input-group--full">
@@ -1780,8 +1794,8 @@ function renderWizard() {
     const effectiveStatus = readLabel(STATUS_OPTIONS, values.status, '🟡 No pagado');
 
     state.refs.formEyebrow.textContent = `Creación guiada · ${currentStepMeta.eyebrow}`;
-    state.refs.formTitle.textContent = 'Nuevo ciclo operativo';
-    state.refs.formCopy.textContent = 'Guíate paso a paso para crear el ciclo, registrar el movimiento inicial y decidir si se cierra hoy mismo.';
+    state.refs.formTitle.textContent = 'Nuevo registro';
+    state.refs.formCopy.textContent = 'Guíate paso a paso para crear el registro, registrar el movimiento inicial y decidir si se cierra hoy mismo.';
 
     state.refs.wizardHost.innerHTML = `
         <form id="agro-operational-form" class="agro-operational-form agro-operational-form--modal" novalidate>
@@ -1807,11 +1821,11 @@ function renderWizard() {
                         <div class="agro-operational-step-panel__head">
                             <p class="agro-operational-step-panel__eyebrow">Paso 1</p>
                             <h4 class="agro-operational-step-panel__title">¿Qué pasó?</h4>
-                            <p class="agro-operational-step-panel__copy">Ponle nombre claro al ciclo y deja la descripción principal si hace falta contexto.</p>
+                            <p class="agro-operational-step-panel__copy">Ponle nombre claro al registro y deja la descripción principal si hace falta contexto.</p>
                         </div>
                         <div class="agro-operational-form-grid">
                             <div class="input-group input-group--full">
-                                <label class="input-label" for="agro-operational-name">Nombre del ciclo</label>
+                                <label class="input-label" for="agro-operational-name">Nombre del registro</label>
                                 <input type="text" id="agro-operational-name" class="styled-input" maxlength="140" placeholder="Ej: Botas de cuero Titan" required data-operational-draft="name" value="${escapeAttr(values.name)}">
                             </div>
                             <div class="input-group input-group--full">
@@ -1840,18 +1854,22 @@ function renderWizard() {
                                     ${buildSelectOptionsMarkup(CATEGORY_OPTIONS, values.category)}
                                 </select>
                             </div>
+                            ${(!state.viewContext || state.viewContext.preset === 'crop') ? `
                             <div class="input-group input-group--full">
                                 <label class="input-label" for="agro-operational-crop">Cultivo asociado</label>
                                 <select id="agro-operational-crop" class="styled-input" data-operational-draft="cropId">
                                     ${buildCropOptionsMarkup(values.cropId)}
                                 </select>
                             </div>
+                            ` : ''}
+                            ${(!state.viewContext || state.viewContext.preset === 'farm') ? `
                             <div class="input-group input-group--full">
                                 <label class="input-label" for="agro-operational-farm">Finca asociada</label>
                                 <select id="agro-operational-farm" class="styled-input" data-operational-draft="farmId">
                                     ${buildFarmOptionsMarkup(values.farmId)}
                                 </select>
                             </div>
+                            ` : ''}
                             ${!isEdit ? `
                             <div class="input-group input-group--full">
                                 <label class="input-label">Estado inicial</label>
@@ -1928,20 +1946,24 @@ function renderWizard() {
                             <span class="agro-operational-confirm-item__label">Categoría</span>
                             <strong class="agro-operational-confirm-item__value">${escapeHtml(readLabel(CATEGORY_OPTIONS, values.category, 'Sin categoría'))}</strong>
                         </article>
+                        ${(!state.viewContext || state.viewContext.preset === 'crop') ? `
                         <article class="agro-operational-confirm-item">
                             <span class="agro-operational-confirm-item__label">Cultivo asociado</span>
                             <strong class="agro-operational-confirm-item__value">${escapeHtml(resolveDraftCropLabel(values.cropId))}</strong>
                         </article>
+                        ` : ''}
+                        ${(!state.viewContext || state.viewContext.preset === 'farm') ? `
                         <article class="agro-operational-confirm-item">
                             <span class="agro-operational-confirm-item__label">Finca asociada</span>
                             <strong class="agro-operational-confirm-item__value">${escapeHtml(resolveDraftFarmLabel(values.farmId))}</strong>
                         </article>
+                        ` : ''}
                         <article class="agro-operational-confirm-item">
                             <span class="agro-operational-confirm-item__label">${escapeHtml(directionSummaryLabel(direction, values.economicType))}</span>
                             <strong class="agro-operational-confirm-item__value">${escapeHtml(formatAmountLabel(parsedAmount, values.currency))}</strong>
                         </article>
                         <article class="agro-operational-confirm-item">
-                            <span class="agro-operational-confirm-item__label">Balance del ciclo</span>
+                            <span class="agro-operational-confirm-item__label">Balance</span>
                             <strong class="agro-operational-confirm-item__value">${escapeHtml(parsedAmount == null ? EMPTY_BALANCE_LABEL : formatSignedCurrencyValue(direction === 'in' ? parsedAmount : -parsedAmount, values.currency))}</strong>
                         </article>
                         <article class="agro-operational-confirm-item">
@@ -1986,7 +2008,7 @@ function renderWizard() {
                     ${currentStep > 1 ? '<button type="button" class="btn agro-modal-canon__button agro-modal-canon__button--secondary" data-operational-action="wizard-prev">Atrás</button>' : ''}
                     ${currentStep < 4
             ? '<button type="button" class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary" data-operational-action="wizard-next">Siguiente</button>'
-            : `<button type="submit" class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary">${isEdit ? 'Guardar cambios' : 'Guardar ciclo operativo'}</button>`}
+            : `<button type="submit" class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary">${isEdit ? 'Guardar cambios' : 'Guardar registro'}</button>`}
                 </div>
             </div>
         </form>
@@ -2067,7 +2089,7 @@ function getFamilyCopy(family) {
     if (family === FAMILY_LINKED) return 'Ciclos asociados a un cultivo específico para trazabilidad del cultivo.';
     if (family === FAMILY_FARM) return 'Movimientos generales vinculados a una finca, sin cultivo específico.';
     if (family === FAMILY_ORPHAN) return 'Registros legacy o incompletos sin cultivo ni finca asociada.';
-    return 'Todos los ciclos visibles, separados por su tipo de asociación.';
+    return 'Todos los registros visibles, separados por su tipo de asociación.';
 }
 
 function getSubviewMeta(subview) {
@@ -2115,6 +2137,12 @@ function getSubviewMeta(subview) {
 
 function renderFamilyToggle() {
     if (!state.refs?.familyToggle) return;
+    if (state.viewContext) {
+        state.refs.familyToggle.hidden = true;
+        state.refs.familyToggle.setAttribute('aria-hidden', 'true');
+        state.refs.familyToggle.innerHTML = '';
+        return;
+    }
     state.refs.familyToggle.hidden = false;
     state.refs.familyToggle.setAttribute('aria-hidden', 'false');
 
@@ -2289,7 +2317,7 @@ function renderCompactOverview({ label, summary, familyLabel, balanceLabel = 'Ba
             </summary>
             <div class="agro-operational-summary-grid">
                 <article class="agro-operational-summary-card">
-                    <span class="agro-operational-summary-card__label">Ciclos visibles</span>
+                    <span class="agro-operational-summary-card__label">Registros visibles</span>
                     <strong class="agro-operational-summary-card__value">${count}</strong>
                     <p class="agro-operational-summary-card__hint">${escapeHtml(safeFamilyLabel || 'Registros visibles')} en esta subvista.</p>
                 </article>
@@ -2460,7 +2488,7 @@ function renderCycleFamilySection({ familyKey, title, copy, cycles }) {
         <section class="agro-operational-family-section" data-family="${escapeAttr(familyKey)}">
             <div class="agro-operational-family-section__head">
                 <div>
-                    <p class="agro-operational-family-section__eyebrow">Ciclos visibles</p>
+                    <p class="agro-operational-family-section__eyebrow">Registros visibles</p>
                     <h4 class="agro-operational-family-section__title">${escapeHtml(title)}</h4>
                     <p class="agro-operational-family-section__copy">${escapeHtml(copy)}</p>
                     ${renderFamilySummaryChips(cycles)}
@@ -2793,7 +2821,7 @@ function renderCycleCard(cycle) {
                     ${renderMoneyNode(cycle.outgoingText, { tag: 'strong', className: 'agro-operational-money-cell__value' })}
                 </div>
                 <div class="agro-operational-money-cell" data-tone="${escapeAttr(cycle.balanceTone)}">
-                    <span class="agro-operational-money-cell__label">📊 Balance del ciclo</span>
+                    <span class="agro-operational-money-cell__label">📊 Balance</span>
                     ${renderMoneyNode(cycle.balanceText, { tag: 'strong', className: 'agro-operational-money-cell__value' })}
                 </div>
             </div>
@@ -2833,9 +2861,9 @@ function renderEmptyState(subview) {
                 ? '✅ Sin pagados con esos filtros'
                 : '🟡 Sin ciclos no pagados con esos filtros';
     const copy = subview === SUBVIEW_DONATIONS
-        ? 'No hay ciclos operativos de tipo donación registrados para este filtro.'
+        ? 'No hay registros de tipo donación para este filtro.'
         : subview === SUBVIEW_LOSSES
-            ? 'No hay ciclos operativos clasificados como pérdida para este filtro.'
+            ? 'No hay registros clasificados como pérdida para este filtro.'
             : subview === SUBVIEW_FINISHED
                 ? 'Ajusta período, categoría o tipo económico para ver ciclos ya pagados o cerrados.'
                 : 'Ajusta período, categoría o tipo económico para ver ciclos no pagados, en seguimiento o compensándose.';
@@ -2846,7 +2874,7 @@ function renderEmptyState(subview) {
             <p class="agro-operational-empty__title">${title}</p>
             <p class="agro-operational-empty__copy">${copy}</p>
             <div class="agro-operational-empty__cta">
-                <button type="button" class="btn btn-primary" data-operational-action="new-cycle">Nuevo ciclo operativo</button>
+                <button type="button" class="btn btn-primary" data-operational-action="new-cycle">Nuevo registro</button>
             </div>
         </div>
     `;
@@ -2861,11 +2889,11 @@ function buildMarkdownSection(title, datasetKey) {
     const lines = [`## ${title}`, ''];
     lines.push(`Filtros: ${readLabel(PERIOD_OPTIONS, dataset.filters.period, '📅 Todo')} · ${readLabel(CATEGORY_FILTER_OPTIONS, dataset.filters.category, '📁 Todas las categorías')} · ${readLabel(TYPE_FILTER_OPTIONS, dataset.filters.economicType, '💰 Todos los tipos')}`);
     lines.push(`Balance: ${dataset.summary.balanceText}`);
-    lines.push(`Ciclos visibles: ${dataset.summary.count}`);
+    lines.push(`Registros visibles: ${dataset.summary.count}`);
     lines.push('');
 
     if (dataset.cycles.length === 0) {
-        lines.push('- Sin ciclos con los filtros actuales.');
+        lines.push('- Sin registros con los filtros actuales.');
         lines.push('');
         return lines;
     }
@@ -2880,7 +2908,7 @@ function buildMarkdownSection(title, datasetKey) {
         lines.push(`- Finca asociada: ${cycle.farm_id ? buildCycleFarmText(cycle) : 'Sin asociar a finca'}`);
         lines.push(`- Fechas: ${cycle.closed_at ? `${formatDateLabel(cycle.opened_at)} · Cierre ${formatDateLabel(cycle.closed_at)}` : `${formatDateLabel(cycle.opened_at)} · Sin cierre`}`);
         lines.push(`- ${directionSummaryLabel(cycle.direction, cycle.economic_type)}: ${formatAmountLabel(cycle.primaryMovement?.amount, cycle.primaryMovement?.currency)}`);
-        lines.push(`- 📊 Balance del ciclo: ${cycle.balanceText}`);
+        lines.push(`- 📊 Balance: ${cycle.balanceText}`);
         lines.push(`- Descripción principal: ${cycle.description || 'Sin descripción principal'}`);
         if (cycle.notes) {
             lines.push(`- Observaciones posteriores: ${cycle.notes}`);
@@ -3538,6 +3566,15 @@ function bindEvents() {
         state.currentView = normalizeToken(event?.detail?.view);
         state.currentSubview = normalizeOperationalSubview(event?.detail?.subview || state.currentSubview);
 
+        // Apply view context for facturero-* views (structural separation)
+        const context = resolveViewContext(state.currentView);
+        if (context) {
+            state.viewContext = context;
+            state.familyFilter = context.family;
+        } else {
+            state.viewContext = null;
+        }
+
         if (state.currentView === PERIOD_VIEW_NAME) {
             closeComposerModal();
             syncStandalonePeriodCyclesView();
@@ -3734,10 +3771,17 @@ export async function initAgroOperationalCycles(options = {}) {
         state.currentView = normalizeToken(document.body?.dataset?.agroActiveView || state.currentView);
         state.currentSubview = normalizeOperationalSubview(document.body?.dataset?.agroSubview || state.currentSubview);
 
-        const initialMode = normalizeToken(document.body?.dataset?.agroMode || 'general');
-        if (initialMode === 'cultivo') state.familyFilter = FAMILY_LINKED;
-        else if (initialMode === 'no-cultivo') state.familyFilter = FAMILY_ALL;
-        else state.familyFilter = FAMILY_ALL;
+        // Apply view context for facturero-* views (structural separation)
+        const initContext = resolveViewContext(state.currentView);
+        if (initContext) {
+            state.viewContext = initContext;
+            state.familyFilter = initContext.family;
+        } else {
+            const initialMode = normalizeToken(document.body?.dataset?.agroMode || 'general');
+            if (initialMode === 'cultivo') state.familyFilter = FAMILY_LINKED;
+            else if (initialMode === 'no-cultivo') state.familyFilter = FAMILY_ALL;
+            else state.familyFilter = FAMILY_ALL;
+        }
 
         syncStandalonePeriodCyclesView();
 

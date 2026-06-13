@@ -175,7 +175,7 @@
         </div>
         <div class="docs-card docs-card--feature">
           <i class="fas fa-users docs-card__icon" aria-hidden="true"></i>
-          <h3 class="docs-card__title">Cartera de clientes</h3>
+          <h3 class="docs-card__title">Facturero de Clientes</h3>
           <p class="docs-card__text">Sabe quien te debe, quien ya pago completo y que deuda se perdio. Registra cobros
             parciales sin confundirlos con clientes pagados.</p>
         </div>
@@ -267,14 +267,14 @@
         </article>
         <article class="docs-case">
           <h3 class="docs-case__title"><i class="fas fa-handshake" aria-hidden="true"></i> Venta a cliente</h3>
-          <p class="docs-case__text">Un cliente llega a comprar. Abres la cartera, verificas si debe algo. Registra el
+          <p class="docs-case__text">Un cliente llega a comprar. Abres el Facturero de Clientes, verificas si debe algo. Registra el
             pago que te entrega. Si lleva credito adicional, anotas el nuevo fiado. Si solo paga una parte, queda claro
             cuanto sigue pendiente.</p>
         </article>
         <article class="docs-case">
           <h3 class="docs-case__title"><i class="fas fa-clipboard-check" aria-hidden="true"></i> Revision de pendientes
           </h3>
-          <p class="docs-case__text">Abres la cartera de clientes y ves rapidamente quien te debe y cuanto. Revisas tus
+          <p class="docs-case__text">Abres el Facturero de Clientes y ves rapidamente quien te debe y cuanto. Revisas tus
             tareas del dia y marcas las que ya completaste. Todo centralizado sin buscar en varias partes.</p>
         </article>
         <article class="docs-case">
@@ -320,8 +320,8 @@
           <span class="docs-step__number">3</span>
           <div class="docs-step__content">
             <h3 class="docs-step__title">Registrar tu primer movimiento</h3>
-            <p class="docs-step__text">En Cartera Operativa, registra un gasto real (insumos, mano de obra) o un ingreso
-              cobrado. Si es para un cultivo especifico, lo asocias. Si no, queda como movimiento general.</p>
+            <p class="docs-step__text">En el Facturero correspondiente (Finca, Cultivo o Personal), registra un gasto real (insumos, mano de obra) o un ingreso
+              cobrado. Si es para un cultivo especifico, usa Facturero del Cultivo. Si es de la finca, usa Facturero de la Finca. Si es personal, usa Facturero Personal.</p>
           </div>
         </div>
         <div class="docs-step">
@@ -377,13 +377,14 @@
             periodo sigue activo si conserva operaciones vivas.</li>
           <li class="docs-list__item"><strong>Estadisticas y comparadores</strong> — de ciclos (dentro de Mis cultivos)
             y de periodos (dentro de Operaciones de la Finca).</li>
-          <li class="docs-list__item"><strong>Mis finanzas</strong> — Cartera Viva, Cartera Operativa, Mi Carrito y Mis
-            Clientes.</li>
+          <li class="docs-list__item"><strong>Mis factureros</strong> — Facturero de Clientes (fiados y cobros),
+            Facturero de la Finca (registros de finca), Facturero del Cultivo (registros de cultivo) y Facturero Personal (gastos personales).</li>
+          <li class="docs-list__item"><strong>Mis finanzas</strong> — Mis Clientes y Mi Carrito.</li>
           <li class="docs-list__item"><strong>Trabajo y lectura</strong> — Trabajo Diario, Rankings de Clientes y Clima
             Agro.</li>
         </ul>
         <p>Cuando estas en una puerta principal, ves la navegacion general. Cuando entras a un modulo como AgroRepo,
-          Cartera Viva o Cartera Operativa, la pantalla se enfoca en esa tarea y aparece un boton
+          Facturero de Clientes, Facturero de la Finca o cualquier otro módulo, la pantalla se enfoca en esa tarea y aparece un boton
           <strong>Volver</strong> para regresar al hub.</p>
         <p>En mobile usas la barra inferior. En desktop usas el hub central. Asi siempre sabes donde elegir camino,
           donde trabajar y como regresar.</p>
@@ -420,11 +421,13 @@
             es texto abierto y se abre en cualquier editor.</p>
         </details>
         <details class="docs-faq__item">
-          <summary class="docs-faq__question">Cual es la diferencia entre Cartera Viva y Cartera Operativa?</summary>
-          <p class="docs-faq__answer">Cartera Viva sigue el credito a clientes con tres lecturas principales: Fiado
-            cuando te deben, Cobrado/Pagado cuando ya pagaron completo y Perdido cuando asumiste la perdida. Cartera
-            Operativa es el libro mayor donde registras todos los movimientos: gastos, cobros, perdidas, donaciones y
-            ventas.</p>
+          <summary class="docs-faq__question">Cual es la diferencia entre los factureros?</summary>
+          <p class="docs-faq__answer"><strong>Facturero de Clientes</strong> sigue el credito a clientes con tres lecturas principales: Fiado
+            cuando te deben, Cobrado/Pagado cuando ya pagaron completo y Perdido cuando asumiste la perdida.
+            <strong>Facturero de la Finca</strong> registra movimientos asociados a una finca especifica (gastos, cobros, perdidas, donaciones).
+            <strong>Facturero del Cultivo</strong> registra movimientos asociados a un cultivo especifico.
+            <strong>Facturero Personal</strong> registra gastos y movimientos que no pertenecen a una finca ni a un cultivo.
+            Cada facturero es independiente: no se mezclan registros entre ellos.</p>
         </details>
         <details class="docs-faq__item">
           <summary class="docs-faq__question">Ciclo de cultivo y Ciclo de periodo son lo mismo?</summary>
@@ -470,7 +473,7 @@
         <h3 class="docs-block__subtitle">Controles de privacidad</h3>
         <p>Agro incluye controles para ocultar nombres de clientes y montos financieros en la pantalla. Esto es util
           cuando trabajas con otras personas presentes y no quieres que vean informacion sensible.</p>
-        <p>Estos controles aplican en el Dashboard, la Cartera Viva, la Cartera Operativa y las Estadisticas.</p>
+        <p>Estos controles aplican en el Dashboard, los Factureros y las Estadisticas.</p>
       </div>
       <div class="docs-block">
         <h3 class="docs-block__subtitle">Que pasa si borro mi cuenta</h3>
