@@ -2777,54 +2777,45 @@ function renderCycleCard(cycle) {
         ? `${formatDateLabel(cycle.opened_at)} · Cierre: ${formatDateLabel(cycle.closed_at)}`
         : `${formatDateLabel(cycle.opened_at)} · Sin cierre`;
 
+    const metrics = [
+        { label: directionSummaryLabel(cycle.direction, cycle.economic_type), value: primaryAmount },
+        { label: 'Recibí / Cobré', value: cycle.incomingText },
+        { label: 'Balance', value: cycle.balanceText, tone: cycle.balanceTone }
+    ];
+
     return `
         <article class="agro-operational-card" data-cycle-id="${escapeAttr(cycle.id)}">
-            <div class="agro-operational-card__head">
-                <div class="agro-operational-card__stack">
-                    <p class="agro-operational-card__eyebrow">${escapeHtml(readLabel(CATEGORY_OPTIONS, cycle.category, 'Categoría'))}</p>
+            <header class="agro-operational-card__head">
+                <div class="agro-operational-card__identity">
                     <h3 class="agro-operational-card__title">${escapeHtml(cycle.name)}</h3>
-                    <p class="agro-operational-card__meta">${escapeHtml(cropText)} · ${escapeHtml(dates)}</p>
+                    <p class="agro-operational-card__subtitle">${escapeHtml(cropText)} · ${escapeHtml(dates)}</p>
                 </div>
-                <div class="agro-operational-card__badges">
-                    ${renderCycleAssociationBadge(cycle)}
+                <div class="agro-operational-card__head-side">
                     <span class="agro-operational-status ${buildStatusClass(cycle.status)}">${escapeHtml(statusLabel)}</span>
                     <span class="agro-operational-pill ${buildTypeClass(cycle.economic_type)}">${escapeHtml(economicTypeLabel)}</span>
                 </div>
-            </div>
+            </header>
 
-            ${cycle.description ? `<p class="agro-operational-card__description"><strong>Descripción:</strong> ${escapeHtml(cycle.description)}</p>` : ''}
-            ${cycle.notes ? `<p class="agro-operational-card__notes"><strong>Observaciones:</strong> ${escapeHtml(cycle.notes)}</p>` : ''}
             ${renderCyclePhysicalSummary(cycle)}
 
-            <div class="agro-operational-money-grid">
-                <div class="agro-operational-money-cell" data-tone="gold">
-                    <span class="agro-operational-money-cell__label">${escapeHtml(directionSummaryLabel(cycle.direction, cycle.economic_type))}</span>
-                    ${renderMoneyNode(primaryAmount, { tag: 'strong', className: 'agro-operational-money-cell__value' })}
-                </div>
-                <div class="agro-operational-money-cell">
-                    <span class="agro-operational-money-cell__label">Recibí / Cobré</span>
-                    ${renderMoneyNode(cycle.incomingText, { tag: 'strong', className: 'agro-operational-money-cell__value' })}
-                </div>
-                <div class="agro-operational-money-cell">
-                    <span class="agro-operational-money-cell__label">Pagué / Gasté</span>
-                    ${renderMoneyNode(cycle.outgoingText, { tag: 'strong', className: 'agro-operational-money-cell__value' })}
-                </div>
-                <div class="agro-operational-money-cell" data-tone="${escapeAttr(cycle.balanceTone)}">
-                    <span class="agro-operational-money-cell__label">Balance</span>
-                    ${renderMoneyNode(cycle.balanceText, { tag: 'strong', className: 'agro-operational-money-cell__value' })}
-                </div>
+            <dl class="agro-operational-card__metrics">
+                ${metrics.map((m) => `
+                    <div class="agro-operational-card__metric"${m.tone ? ` data-tone="${escapeAttr(m.tone)}"` : ''}>
+                        <dt>${escapeHtml(m.label)}</dt>
+                        <dd>${escapeHtml(m.value)}</dd>
+                    </div>
+                `).join('')}
+            </dl>
+
+            <div class="agro-operational-card__chips">
+                <span class="agro-operational-chip">${escapeHtml(association.supportLabel)}</span>
+                <span class="agro-operational-chip">${escapeHtml(readLabel(CATEGORY_OPTIONS, cycle.category, 'Otro'))}</span>
+                <span class="agro-operational-chip">${cycle.movementCount} movimiento${cycle.movementCount === 1 ? '' : 's'}</span>
             </div>
 
             <div class="agro-operational-card__footer">
-                <div class="agro-operational-card__support">
-                    <span class="agro-operational-card__support-item">${cycle.movementCount} movimiento${cycle.movementCount === 1 ? '' : 's'}</span>
-                    <span class="agro-operational-card__support-item">${escapeHtml(association.supportLabel)}</span>
-                    <span class="agro-operational-card__support-item">${escapeHtml(readLabel(CATEGORY_OPTIONS, cycle.category, 'Otro'))}</span>
-                </div>
-                <div class="agro-operational-card__actions">
-                    <button type="button" class="btn" data-operational-action="edit" data-cycle-id="${escapeAttr(cycle.id)}">Editar</button>
-                    <button type="button" class="btn btn-primary" data-operational-action="delete" data-cycle-id="${escapeAttr(cycle.id)}">Eliminar</button>
-                </div>
+                <button type="button" class="agro-operational-link" data-operational-action="edit" data-cycle-id="${escapeAttr(cycle.id)}">Editar registro</button>
+                <button type="button" class="agro-operational-link agro-operational-link--danger" data-operational-action="delete" data-cycle-id="${escapeAttr(cycle.id)}">Eliminar registro</button>
             </div>
 
             <details
