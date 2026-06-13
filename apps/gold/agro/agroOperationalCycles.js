@@ -7,6 +7,16 @@ const VIEW_NAME = 'operational';
 const VIEW_NAME_CANONICAL = 'facturero-finca';
 const VIEW_NAME_CULTIVO = 'facturero-cultivo';
 const VIEW_NAME_PERSONAL = 'facturero-personal';
+const PERIOD_VIEW_NAME = 'period-cycles';
+const SUBVIEW_ACTIVE = 'active';
+const SUBVIEW_FINISHED = 'finished';
+const SUBVIEW_DONATIONS = 'donations';
+const SUBVIEW_LOSSES = 'losses';
+const SUBVIEW_EXPORT = 'export';
+const FAMILY_LINKED = 'crop';
+const FAMILY_FARM = 'farm';
+const FAMILY_ORPHAN = 'orphan';
+const FAMILY_ALL = 'all';
 
 const VIEW_CONTEXTS = Object.freeze({
     [VIEW_NAME_CANONICAL]: { family: FAMILY_FARM, preset: 'farm', title: 'Facturero de la Finca' },
@@ -23,16 +33,6 @@ function resolveViewContext(viewName) {
     const v = String(viewName || '').trim().toLowerCase();
     return VIEW_CONTEXTS[v] || null;
 }
-const PERIOD_VIEW_NAME = 'period-cycles';
-const SUBVIEW_ACTIVE = 'active';
-const SUBVIEW_FINISHED = 'finished';
-const SUBVIEW_DONATIONS = 'donations';
-const SUBVIEW_LOSSES = 'losses';
-const SUBVIEW_EXPORT = 'export';
-const FAMILY_LINKED = 'crop';
-const FAMILY_FARM = 'farm';
-const FAMILY_ORPHAN = 'orphan';
-const FAMILY_ALL = 'all';
 const FAMILY_OPTIONS = Object.freeze([FAMILY_ALL, FAMILY_LINKED, FAMILY_FARM, FAMILY_ORPHAN]);
 const CROPS_READY_EVENT = 'AGRO_CROPS_READY';
 const VIEW_CHANGED_EVENT = 'agro:shell:view-changed';
