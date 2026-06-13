@@ -38,45 +38,45 @@ const CROPS_READY_EVENT = 'AGRO_CROPS_READY';
 const VIEW_CHANGED_EVENT = 'agro:shell:view-changed';
 const MODE_CHANGE_EVENT = 'agro:modechange';
 const OPERATIONAL_PORTFOLIO_UPDATED_EVENT = 'agro:operational-portfolio-updated';
-const EMPTY_AMOUNT_LABEL = '📝 Monto no anotado';
-const EMPTY_BALANCE_LABEL = '📝 Sin balance monetario';
+const EMPTY_AMOUNT_LABEL = 'Monto no anotado';
+const EMPTY_BALANCE_LABEL = 'Sin balance monetario';
 
 const ACTIVE_STATUS_VALUES = Object.freeze(['open', 'in_progress', 'compensating']);
 const FINISHED_STATUS_VALUES = Object.freeze(['closed', 'lost']);
 const SUBVIEW_OPTIONS = Object.freeze([SUBVIEW_ACTIVE, SUBVIEW_FINISHED, SUBVIEW_DONATIONS, SUBVIEW_LOSSES, SUBVIEW_EXPORT]);
 const CURRENCY_OPTIONS = Object.freeze(['COP', 'USD', 'VES']);
-const CROP_DISPLAY_FALLBACK_ICON = '🌱';
+const CROP_DISPLAY_FALLBACK_ICON = '';
 const CROP_DISPLAY_FALLBACK_NAME = 'Cultivo';
 const CROP_EMOJI_TOKEN_RE = /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u;
 const CROP_TEXT_TOKEN_RE = /[\p{L}\p{N}]/u;
 
 const ECONOMIC_TYPE_OPTIONS = Object.freeze([
-    { value: 'expense', label: '💸 Gasto' },
-    { value: 'income', label: '💰 Ingreso' },
-    { value: 'donation', label: '🤝 Donación / Regalo' },
-    { value: 'loss', label: '💔 Pérdida' }
+    { value: 'expense', label: 'Gasto' },
+    { value: 'income', label: 'Ingreso' },
+    { value: 'donation', label: 'Donación / Regalo' },
+    { value: 'loss', label: 'Pérdida' }
 ]);
 
 const CATEGORY_OPTIONS = Object.freeze([
-    { value: 'tools', label: '🔧 Herramientas' },
-    { value: 'maintenance', label: '🛠️ Mantenimiento' },
-    { value: 'labor', label: '👷 Mano de obra' },
-    { value: 'transport', label: '🚛 Transporte' },
-    { value: 'supplies', label: '📦 Insumos' },
-    { value: 'other', label: '📋 Otro' }
+    { value: 'tools', label: 'Herramientas' },
+    { value: 'maintenance', label: 'Mantenimiento' },
+    { value: 'labor', label: 'Mano de obra' },
+    { value: 'transport', label: 'Transporte' },
+    { value: 'supplies', label: 'Insumos' },
+    { value: 'other', label: 'Otro' }
 ]);
 
 const STATUS_OPTIONS = Object.freeze([
-    { value: 'open', label: '🟡 No pagado' },
-    { value: 'in_progress', label: '🟠 En seguimiento' },
-    { value: 'compensating', label: '🟠 Compensándose' },
-    { value: 'closed', label: '✅ Pagado' },
-    { value: 'lost', label: '🔴 Perdido' }
+    { value: 'open', label: 'No pagado' },
+    { value: 'in_progress', label: 'En seguimiento' },
+    { value: 'compensating', label: 'Compensándose' },
+    { value: 'closed', label: 'Pagado' },
+    { value: 'lost', label: 'Perdido' }
 ]);
 
 const CREATE_STATUS_OPTIONS = Object.freeze([
-    { value: 'open', label: '🟡 No pagado' },
-    { value: 'closed', label: '✅ Pagado' }
+    { value: 'open', label: 'No pagado' },
+    { value: 'closed', label: 'Pagado' }
 ]);
 
 const UNIT_TYPE_OPTIONS = Object.freeze([
@@ -87,20 +87,20 @@ const UNIT_TYPE_OPTIONS = Object.freeze([
 ]);
 
 const PERIOD_OPTIONS = Object.freeze([
-    { value: 'week', label: '📅 Esta semana' },
-    { value: 'month', label: '📅 Este mes' },
-    { value: 'quarter', label: '📅 Este trimestre' },
-    { value: 'year', label: '📅 Este año' },
-    { value: 'all', label: '📅 Todo' }
+    { value: 'week', label: 'Esta semana' },
+    { value: 'month', label: 'Este mes' },
+    { value: 'quarter', label: 'Este trimestre' },
+    { value: 'year', label: 'Este año' },
+    { value: 'all', label: 'Todo' }
 ]);
 
 const CATEGORY_FILTER_OPTIONS = Object.freeze([
-    { value: 'all', label: '📁 Todas las categorías' },
+    { value: 'all', label: 'Todas las categorías' },
     ...CATEGORY_OPTIONS
 ]);
 
 const TYPE_FILTER_OPTIONS = Object.freeze([
-    { value: 'all', label: '💰 Todos los tipos' },
+    { value: 'all', label: 'Todos los tipos' },
     ...ECONOMIC_TYPE_OPTIONS
 ]);
 
@@ -702,15 +702,15 @@ function sortMovementsAscending(left, right) {
 }
 
 function directionSummaryLabel(direction, economicType) {
-    if (direction === 'in') return '💰 Recibí / Cobré';
-    if (normalizeToken(economicType) === 'donation') return '🤝 Donación / Regalo';
-    return '💸 Pagué / Gasté';
+    if (direction === 'in') return 'Recibí / Cobré';
+    if (normalizeToken(economicType) === 'donation') return 'Donación / Regalo';
+    return 'Pagué / Gasté';
 }
 
 function directionDetailLabel(direction, economicType) {
-    if (direction === 'in') return '💰 Entrada de dinero';
-    if (normalizeToken(economicType) === 'donation') return '🤝 Donación / Regalo';
-    return '💸 Salida de dinero';
+    if (direction === 'in') return 'Entrada de dinero';
+    if (normalizeToken(economicType) === 'donation') return 'Donación / Regalo';
+    return 'Salida de dinero';
 }
 
 function formatAmountLabel(amount, currency) {
@@ -1402,8 +1402,8 @@ async function deleteCycleRecord(cycleId, options = {}) {
         cycleId,
         cascadeVerified,
         message: cascadeVerified === true
-            ? '🗑️ Ciclo eliminado y cascade verificado.'
-            : '🗑️ Ciclo eliminado.'
+            ? 'Ciclo eliminado y cascade verificado.'
+            : 'Ciclo eliminado.'
     };
 }
 
@@ -1441,8 +1441,8 @@ function renderShell() {
             <section id="agro-operational-list-section" class="agro-operational-list-section">
                 <div class="agro-operational-list-head">
                     <div>
-                        <p class="agro-operational-list-eyebrow" id="agro-operational-list-eyebrow">🟡 Activos</p>
-                        <h3 class="agro-operational-list-title" id="agro-operational-list-title">🟡 Registros activos</h3>
+                        <p class="agro-operational-list-eyebrow" id="agro-operational-list-eyebrow">Activos</p>
+                        <h3 class="agro-operational-list-title" id="agro-operational-list-title">Registros activos</h3>
                         <p class="agro-operational-list-copy" id="agro-operational-list-copy">No pagados, en seguimiento o compensándose con lectura operativa.</p>
                     </div>
                     <button type="button" class="btn" data-operational-action="new-cycle">Nuevo registro</button>
@@ -1451,7 +1451,7 @@ function renderShell() {
                 <section id="agro-operational-overview-panel" class="agro-operational-panel agro-operational-overview-panel">
                     <div class="agro-operational-panel__head">
                         <div>
-                            <p class="agro-operational-panel__eyebrow" id="agro-operational-overview-eyebrow">🟡 Activos</p>
+                            <p class="agro-operational-panel__eyebrow" id="agro-operational-overview-eyebrow">Activos</p>
                             <h3 class="agro-operational-panel__title" id="agro-operational-overview-title">Vista organizada por estado</h3>
                             <p class="agro-operational-panel__copy" id="agro-operational-overview-copy">Cada subvista recalcula balance y conserva filtros compactos.</p>
                         </div>
@@ -1780,7 +1780,7 @@ function renderWizard() {
     const direction = deriveMovementDirection(values.economicType);
     const parsedAmount = toNullableNumber(values.amount, 'El monto');
     const parsedQuantity = toNullableNumber(values.quantity, 'La cantidad');
-    const effectiveStatus = readLabel(STATUS_OPTIONS, values.status, '🟡 No pagado');
+    const effectiveStatus = readLabel(STATUS_OPTIONS, values.status, 'No pagado');
 
     state.refs.formEyebrow.textContent = `Creación guiada · ${currentStepMeta.eyebrow}`;
     state.refs.formTitle.textContent = 'Nuevo registro';
@@ -2068,10 +2068,10 @@ function filterCyclesByFamily(cycles, family) {
 }
 
 function getFamilyLabel(family) {
-    if (family === FAMILY_LINKED) return '\u{1F331} Por cultivo';
-    if (family === FAMILY_FARM) return '\u{1F3E0} Por finca';
-    if (family === FAMILY_ORPHAN) return '\u{26A0}\u{FE0F} Sin asociar';
-    return '\u{1F4CA} Todos';
+    if (family === FAMILY_LINKED) return 'Por cultivo';
+    if (family === FAMILY_FARM) return 'Por finca';
+    if (family === FAMILY_ORPHAN) return 'Sin asociar';
+    return 'Todos';
 }
 
 function getFamilyCopy(family) {
@@ -2087,39 +2087,39 @@ function getSubviewMeta(subview) {
 
     if (subview === SUBVIEW_FINISHED) {
         return {
-            eyebrow: '✅ Pagados',
-            title: `✅ Pagados — ${familyLabel}`,
+            eyebrow: 'Pagados',
+            title: `Pagados — ${familyLabel}`,
             copy: `Ciclos ya pagados o cerrados. ${familyCopy}`
         };
     }
 
     if (subview === SUBVIEW_DONATIONS) {
         return {
-            eyebrow: '🤝 Donaciones',
-            title: `🤝 Donaciones — ${familyLabel}`,
+            eyebrow: 'Donaciones',
+            title: `Donaciones — ${familyLabel}`,
             copy: `Donaciones y regalos incluidos como gastos. ${familyCopy}`
         };
     }
 
     if (subview === SUBVIEW_LOSSES) {
         return {
-            eyebrow: '💔 Pérdidas',
-            title: `💔 Pérdidas — ${familyLabel}`,
+            eyebrow: 'Pérdidas',
+            title: `Pérdidas — ${familyLabel}`,
             copy: `Pérdidas o cancelaciones operativas. ${familyCopy}`
         };
     }
 
     if (subview === SUBVIEW_EXPORT) {
         return {
-            eyebrow: '📥 Exportar MD',
-            title: '📥 Exportar Facturero de la Finca a Markdown',
+            eyebrow: 'Exportar MD',
+            title: 'Exportar a Markdown',
             copy: 'Descarga un reporte limpio usando los filtros activos de No pagados y Pagados / pérdidas.'
         };
     }
 
     return {
-        eyebrow: '🟡 No pagados',
-        title: `🟡 No pagados — ${familyLabel}`,
+        eyebrow: 'No pagados',
+        title: `No pagados — ${familyLabel}`,
         copy: `No pagados, en seguimiento o compensándose. ${familyCopy}`
     };
 }
@@ -2208,11 +2208,11 @@ function renderSubviewSwitch() {
     const lossCount = lossCycles.length;
     const totalCount = activeCount + paidCount + donationCount + lossCount;
     const options = [
-        { value: SUBVIEW_ACTIVE, label: '🟡 No pagados', count: activeCount },
-        { value: SUBVIEW_FINISHED, label: '✅ Pagados', count: paidCount },
-        { value: SUBVIEW_DONATIONS, label: '🤝 Donaciones', count: donationCount },
-        { value: SUBVIEW_LOSSES, label: '💔 Pérdidas', count: lossCount },
-        { value: SUBVIEW_EXPORT, label: '📥 Exportar', count: totalCount }
+        { value: SUBVIEW_ACTIVE, label: 'No pagados', count: activeCount },
+        { value: SUBVIEW_FINISHED, label: 'Pagados', count: paidCount },
+        { value: SUBVIEW_DONATIONS, label: 'Donaciones', count: donationCount },
+        { value: SUBVIEW_LOSSES, label: 'Pérdidas', count: lossCount },
+        { value: SUBVIEW_EXPORT, label: 'Exportar', count: totalCount }
     ];
 
     state.refs.subviewHost.innerHTML = options.map((option) => `
@@ -2245,9 +2245,9 @@ function syncStandalonePeriodCyclesView() {
 
 function renderFilterPills(filters) {
     const pills = [
-        readLabel(PERIOD_OPTIONS, filters.period, '📅 Todo'),
-        readLabel(CATEGORY_FILTER_OPTIONS, filters.category, '📁 Todas las categorías'),
-        readLabel(TYPE_FILTER_OPTIONS, filters.economicType, '💰 Todos los tipos')
+        readLabel(PERIOD_OPTIONS, filters.period, 'Todo'),
+        readLabel(CATEGORY_FILTER_OPTIONS, filters.category, 'Todas las categorías'),
+        readLabel(TYPE_FILTER_OPTIONS, filters.economicType, 'Todos los tipos')
     ];
 
     return `
@@ -2373,8 +2373,8 @@ function buildTypeClass(economicType) {
 }
 
 function buildCycleCropText(cycle) {
-    if (!cycle?.crop_id) return '🌾 Sin asociar a cultivo';
-    return cycle.crop?.label || '🌱 Cultivo asociado no disponible';
+    if (!cycle?.crop_id) return 'Sin asociar a cultivo';
+    return cycle.crop?.label || 'Cultivo asociado no disponible';
 }
 
 function buildCycleFarmText(cycle) {
@@ -2390,23 +2390,23 @@ function buildCycleAssociationMeta(cycle) {
         return {
             type,
             className: 'badge-crop',
-            label: `🌱 Cultivo: ${buildCycleCropText(cycle).replace(/^🌱\s*/, '')}`,
-            supportLabel: '🌱 Asociado a cultivo'
+            label: `Cultivo: ${buildCycleCropText(cycle)}`,
+            supportLabel: 'Asociado a cultivo'
         };
     }
     if (type === FAMILY_FARM) {
         return {
             type,
             className: 'badge-farm',
-            label: `🏠 Finca: ${buildCycleFarmText(cycle)}`,
-            supportLabel: '🏠 Asociado a finca'
+            label: `Finca: ${buildCycleFarmText(cycle)}`,
+            supportLabel: 'Asociado a finca'
         };
     }
     return {
         type,
         className: 'badge-orphan',
-        label: '⚠️ Sin asociar',
-        supportLabel: '⚠️ Sin asociar'
+        label: 'Sin asociar',
+        supportLabel: 'Sin asociar'
     };
 }
 
@@ -2720,7 +2720,7 @@ function renderMovementRows(cycle) {
         return `
             <div class="agro-operational-empty">
                 <div class="agro-operational-empty__icon"><i class="fa-solid fa-file-circle-question" aria-hidden="true"></i></div>
-                <p class="agro-operational-empty__title">📜 Sin historial todavía</p>
+                <p class="agro-operational-empty__title">Sin historial todavía</p>
                 <p class="agro-operational-empty__copy">Este ciclo aún no tiene movimientos visibles.</p>
             </div>
         `;
@@ -2769,7 +2769,7 @@ function renderCyclePhysicalSummary(cycle) {
 function renderCycleCard(cycle) {
     const cropText = buildCycleCropText(cycle);
     const association = buildCycleAssociationMeta(cycle);
-    const statusLabel = readLabel(STATUS_OPTIONS, cycle.status, '🟡 No pagado');
+    const statusLabel = readLabel(STATUS_OPTIONS, cycle.status, 'No pagado');
     const economicTypeLabel = readLabel(ECONOMIC_TYPE_OPTIONS, cycle.economic_type, 'Operación');
     const primaryAmount = formatAmountLabel(cycle.primaryMovement?.amount, cycle.primaryMovement?.currency);
     const detailsKey = buildCardDetailsKey(cycle.id);
@@ -2792,8 +2792,8 @@ function renderCycleCard(cycle) {
                 </div>
             </div>
 
-            ${cycle.description ? `<p class="agro-operational-card__description"><strong>📝 Descripción:</strong> ${escapeHtml(cycle.description)}</p>` : ''}
-            ${cycle.notes ? `<p class="agro-operational-card__notes"><strong>📌 Observaciones:</strong> ${escapeHtml(cycle.notes)}</p>` : ''}
+            ${cycle.description ? `<p class="agro-operational-card__description"><strong>Descripción:</strong> ${escapeHtml(cycle.description)}</p>` : ''}
+            ${cycle.notes ? `<p class="agro-operational-card__notes"><strong>Observaciones:</strong> ${escapeHtml(cycle.notes)}</p>` : ''}
             ${renderCyclePhysicalSummary(cycle)}
 
             <div class="agro-operational-money-grid">
@@ -2802,28 +2802,28 @@ function renderCycleCard(cycle) {
                     ${renderMoneyNode(primaryAmount, { tag: 'strong', className: 'agro-operational-money-cell__value' })}
                 </div>
                 <div class="agro-operational-money-cell">
-                    <span class="agro-operational-money-cell__label">💰 Recibí / Cobré</span>
+                    <span class="agro-operational-money-cell__label">Recibí / Cobré</span>
                     ${renderMoneyNode(cycle.incomingText, { tag: 'strong', className: 'agro-operational-money-cell__value' })}
                 </div>
                 <div class="agro-operational-money-cell">
-                    <span class="agro-operational-money-cell__label">💸 Pagué / Gasté</span>
+                    <span class="agro-operational-money-cell__label">Pagué / Gasté</span>
                     ${renderMoneyNode(cycle.outgoingText, { tag: 'strong', className: 'agro-operational-money-cell__value' })}
                 </div>
                 <div class="agro-operational-money-cell" data-tone="${escapeAttr(cycle.balanceTone)}">
-                    <span class="agro-operational-money-cell__label">📊 Balance</span>
+                    <span class="agro-operational-money-cell__label">Balance</span>
                     ${renderMoneyNode(cycle.balanceText, { tag: 'strong', className: 'agro-operational-money-cell__value' })}
                 </div>
             </div>
 
             <div class="agro-operational-card__footer">
                 <div class="agro-operational-card__support">
-                    <span class="agro-operational-card__support-item">📜 ${cycle.movementCount} movimiento${cycle.movementCount === 1 ? '' : 's'}</span>
+                    <span class="agro-operational-card__support-item">${cycle.movementCount} movimiento${cycle.movementCount === 1 ? '' : 's'}</span>
                     <span class="agro-operational-card__support-item">${escapeHtml(association.supportLabel)}</span>
-                    <span class="agro-operational-card__support-item">${escapeHtml(readLabel(CATEGORY_OPTIONS, cycle.category, '📋 Otro'))}</span>
+                    <span class="agro-operational-card__support-item">${escapeHtml(readLabel(CATEGORY_OPTIONS, cycle.category, 'Otro'))}</span>
                 </div>
                 <div class="agro-operational-card__actions">
-                    <button type="button" class="btn" data-operational-action="edit" data-cycle-id="${escapeAttr(cycle.id)}">✏️ Editar</button>
-                    <button type="button" class="btn btn-primary" data-operational-action="delete" data-cycle-id="${escapeAttr(cycle.id)}">🗑️ Eliminar</button>
+                    <button type="button" class="btn" data-operational-action="edit" data-cycle-id="${escapeAttr(cycle.id)}">Editar</button>
+                    <button type="button" class="btn btn-primary" data-operational-action="delete" data-cycle-id="${escapeAttr(cycle.id)}">Eliminar</button>
                 </div>
             </div>
 
@@ -2832,7 +2832,7 @@ function renderCycleCard(cycle) {
                 data-operational-card-details
                 data-operational-details-key="${escapeAttr(detailsKey)}"${renderDetailsOpenAttribute(detailsKey)}>
                 <summary>
-                    <span>📜 Historial (${cycle.movementCount} movimiento${cycle.movementCount === 1 ? '' : 's'})</span>
+                    <span>Historial (${cycle.movementCount} movimiento${cycle.movementCount === 1 ? '' : 's'})</span>
                     <span>${escapeHtml(statusLabel)}</span>
                 </summary>
                 ${renderMovementRows(cycle)}
@@ -2843,12 +2843,12 @@ function renderCycleCard(cycle) {
 
 function renderEmptyState(subview) {
     const title = subview === SUBVIEW_DONATIONS
-        ? '🤝 Sin donaciones en esta familia'
+        ? 'Sin donaciones en esta familia'
         : subview === SUBVIEW_LOSSES
-            ? '💔 Sin pérdidas en esta familia'
+            ? 'Sin pérdidas en esta familia'
             : subview === SUBVIEW_FINISHED
-                ? '✅ Sin pagados con esos filtros'
-                : '🟡 Sin ciclos no pagados con esos filtros';
+                ? 'Sin pagados con esos filtros'
+                : 'Sin registros no pagados con esos filtros';
     const copy = subview === SUBVIEW_DONATIONS
         ? 'No hay registros de tipo donación para este filtro.'
         : subview === SUBVIEW_LOSSES
@@ -2876,7 +2876,7 @@ function buildExportFileName() {
 function buildMarkdownSection(title, datasetKey) {
     const dataset = getDataset(datasetKey);
     const lines = [`## ${title}`, ''];
-    lines.push(`Filtros: ${readLabel(PERIOD_OPTIONS, dataset.filters.period, '📅 Todo')} · ${readLabel(CATEGORY_FILTER_OPTIONS, dataset.filters.category, '📁 Todas las categorías')} · ${readLabel(TYPE_FILTER_OPTIONS, dataset.filters.economicType, '💰 Todos los tipos')}`);
+    lines.push(`Filtros: ${readLabel(PERIOD_OPTIONS, dataset.filters.period, 'Todo')} · ${readLabel(CATEGORY_FILTER_OPTIONS, dataset.filters.category, 'Todas las categorías')} · ${readLabel(TYPE_FILTER_OPTIONS, dataset.filters.economicType, 'Todos los tipos')}`);
     lines.push(`Balance: ${dataset.summary.balanceText}`);
     lines.push(`Registros visibles: ${dataset.summary.count}`);
     lines.push('');
@@ -2891,18 +2891,18 @@ function buildMarkdownSection(title, datasetKey) {
         lines.push(`### ${cycle.name}`);
         lines.push(`- Tipo económico: ${readLabel(ECONOMIC_TYPE_OPTIONS, cycle.economic_type, 'Sin tipo')}`);
         lines.push(`- Categoría: ${readLabel(CATEGORY_OPTIONS, cycle.category, 'Sin categoría')}`);
-        lines.push(`- Estado: ${readLabel(STATUS_OPTIONS, cycle.status, '🟡 No pagado')}`);
+        lines.push(`- Estado: ${readLabel(STATUS_OPTIONS, cycle.status, 'No pagado')}`);
         lines.push(`- Asociación: ${buildCycleAssociationMeta(cycle).label}`);
         lines.push(`- Cultivo asociado: ${buildCycleCropText(cycle)}`);
         lines.push(`- Finca asociada: ${cycle.farm_id ? buildCycleFarmText(cycle) : 'Sin asociar a finca'}`);
         lines.push(`- Fechas: ${cycle.closed_at ? `${formatDateLabel(cycle.opened_at)} · Cierre ${formatDateLabel(cycle.closed_at)}` : `${formatDateLabel(cycle.opened_at)} · Sin cierre`}`);
         lines.push(`- ${directionSummaryLabel(cycle.direction, cycle.economic_type)}: ${formatAmountLabel(cycle.primaryMovement?.amount, cycle.primaryMovement?.currency)}`);
-        lines.push(`- 📊 Balance: ${cycle.balanceText}`);
+        lines.push(`- Balance: ${cycle.balanceText}`);
         lines.push(`- Descripción principal: ${cycle.description || 'Sin descripción principal'}`);
         if (cycle.notes) {
             lines.push(`- Observaciones posteriores: ${cycle.notes}`);
         }
-        lines.push('- 📜 Historial:');
+        lines.push('- Historial:');
         if (cycle.movements.length === 0) {
             lines.push('  - Sin movimientos visibles.');
         } else {
@@ -2918,20 +2918,20 @@ function buildMarkdownSection(title, datasetKey) {
 
 function buildExportMarkdown() {
     const lines = [
-        '# 💼 Facturero de la Finca',
+        '# Facturero de la Finca',
         '',
         `Generado: ${formatDateLabel(todayLocalIso())}`,
         '',
-        '## 📊 Resumen',
+        '## Resumen',
         '',
-        `- 🟡 Activos exportados: ${state.datasets[SUBVIEW_ACTIVE].summary.count}`,
-        `- ✅ Pagados / pérdidas exportados: ${state.datasets[SUBVIEW_FINISHED].summary.count}`,
-        `- 📊 Balance combinado: ${mergeSummaryBalanceText(state.datasets[SUBVIEW_ACTIVE].summary, state.datasets[SUBVIEW_FINISHED].summary)}`,
+        `- Activos exportados: ${state.datasets[SUBVIEW_ACTIVE].summary.count}`,
+        `- Pagados / pérdidas exportados: ${state.datasets[SUBVIEW_FINISHED].summary.count}`,
+        `- Balance combinado: ${mergeSummaryBalanceText(state.datasets[SUBVIEW_ACTIVE].summary, state.datasets[SUBVIEW_FINISHED].summary)}`,
         ''
     ];
 
-    buildMarkdownSection('🟡 Activos', SUBVIEW_ACTIVE).forEach((line) => lines.push(line));
-    buildMarkdownSection('✅ Pagados / pérdidas', SUBVIEW_FINISHED).forEach((line) => lines.push(line));
+    buildMarkdownSection('Activos', SUBVIEW_ACTIVE).forEach((line) => lines.push(line));
+    buildMarkdownSection('Pagados / pérdidas', SUBVIEW_FINISHED).forEach((line) => lines.push(line));
 
     return lines.join('\n');
 }
@@ -2960,7 +2960,7 @@ function renderExportView() {
     return `
         <div class="agro-operational-export-panel">
             <div class="agro-operational-export-actions">
-                <button type="button" class="btn btn-primary" data-operational-action="download-markdown">📥 Exportar MD</button>
+                <button type="button" class="btn btn-primary" data-operational-action="download-markdown">Exportar MD</button>
                 <span class="agro-operational-export-filename">${escapeHtml(buildExportFileName())}</span>
             </div>
             <div class="agro-operational-export-preview">
@@ -3044,7 +3044,7 @@ function renderCurrentSubview() {
         }
         state.refs.list.innerHTML = renderCycleFamilySection({
             familyKey,
-            title: `🤝 Donaciones — ${getFamilyLabel(familyKey)}`,
+            title: `Donaciones — ${getFamilyLabel(familyKey)}`,
             copy: getFamilyCopy(familyKey),
             cycles: donationCycles
         });
@@ -3068,7 +3068,7 @@ function renderCurrentSubview() {
         }
         state.refs.list.innerHTML = renderCycleFamilySection({
             familyKey,
-            title: `💔 Pérdidas — ${getFamilyLabel(familyKey)}`,
+            title: `Pérdidas — ${getFamilyLabel(familyKey)}`,
             copy: getFamilyCopy(familyKey),
             cycles: lossCycles
         });
@@ -3473,7 +3473,7 @@ async function handleRootClick(event) {
 
     if (action === 'download-markdown') {
         const result = downloadMarkdownFile();
-        const message = `📥 Export listo: ${result.filename}`;
+        const message = `Export listo: ${result.filename}`;
         setFeedback(message, 'success');
         notify(message, 'success');
         return;
