@@ -905,14 +905,13 @@ body.agro-operational-modal-open {
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 4%, transparent), transparent 28%),
     var(--bg-0);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.02);
-  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  transition: border-color 180ms ease, opacity 180ms ease, transform 180ms ease;
 }
 
 .agro-operational-card:hover {
   border-color: var(--border-gold);
-  box-shadow: var(--shadow-gold-sm), inset 0 1px 0 rgba(255, 255, 255, 0.035);
-  transform: translateY(-2px);
+  opacity: 0.92;
+  transform: translateY(-1px);
 }
 
 .agro-operational-card__head {
