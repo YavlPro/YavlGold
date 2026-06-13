@@ -1440,6 +1440,15 @@ Total: 7 commits
 | `FICHA_TECNICA.md` | edición | §4.2: 3 nuevas rutas hash para los factureros separados |
 | `AGENT_REPORT_ACTIVE.md` | adición | Esta sección |
 
+### Emoji cleanup (post-refactor)
+
+| Commit | Cambio |
+|--------|--------|
+| `e895dc5` | Hotfix TDZ: `FAMILY_*` constants movidos antes de `VIEW_CONTEXTS` |
+| `050ba63` | Header: `.agro-ops-header` con título dinámico, eliminados pills redundantes |
+| `33eb1ea` | Eliminación total de emojis de `agroOperationalCycles.js` (0 restantes): constantes, labels, filtros, cards, empty states, export markdown, wizard, getFamilyLabel |
+| `572aba2` | **Rediseño de cards** alineado con Facturero de Clientes: grid de métricas 3 columnas, chips de contexto, acciones text-link, hover lift con gold border, background dual-gradient |
+
 ### Build resultado
 ✅ `pnpm build:gold` — OK (agent-guard OK, agent-report-check OK, vite build OK en 2.89s, UTF-8 OK, 185 módulos)
 
@@ -1468,4 +1477,153 @@ Total: 7 commits
 git add apps/gold/agro/agroOperationalCycles.js apps/gold/agro/agro-shell.js apps/gold/agro/index.html apps/gold/agro/agro-facturero-clientes-view.js apps/gold/agro/agro-period-cycles.js apps/gold/agro/agrociclos.js apps/gold/docs/MANIFIESTO_AGRO.md apps/gold/docs/FICHA_TECNICA.md apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "feat(agro): refactor factureros — separación semántica estructural (3 contextos + hub MIS FACTUREROS)"
 ```
+
+---
+
+## Sesión 2026-06-13 — Consistencia Visual Factureros + Alineación ADN V11
+
+**Estado:** GREEN — Build pasa, cards alineadas con Facturero de Clientes, hover corregido a canon V11.
+
+**Objetivo:** Unificar el diseño visual de los 3 factureros (Finca, Cultivo, Personal) con el estándar de Facturero de Clientes, y corregir violación de ADN Visual V11 (gold glow en hover).
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---------|------|--------|
+| `agroOperationalCycles.js` | edición | Rediseño de cards: grid de métricas 3 columnas (`<dl>` dirección/recibí/balance), chips compactos de contexto (asociación, categoría, movimientos), acciones text-link ("Editar registro" + pill danger "Eliminar registro"), head reestructurado (título+subtitle izquierda, status/type pills derecha), hover con `translateY(-2px)` + border dorado |
+| `agro-facturero-finca.css` | edición | Hover corregido: eliminado gold glow (`box-shadow` dorado), reemplazado por `opacity` + `transform` según ADN V11 §3 y §13. Cards con `--shadow-dark` en reposo, `--shadow-gold-xs` en hover máximo |
+
+### Commits del día
+
+| Commit | Descripción |
+|--------|-------------|
+| `572aba2` | feat(facturero): align card design with facturero clientes — consistent metrics grid, chips, text-link actions, hover lift |
+| Merge PR #92 | fix(facturero): remove gold glow hover, use ADN V11 opacity+transform only |
+| Dependabot | chore(deps-dev): bump esbuild |
+
+### Build resultado
+✅ `pnpm build:gold` — OK (agent-guard OK, agent-report-check OK, vite build OK, UTF-8 OK)
+
+### QA sugerido
+1. Verificar que los 3 factureros (Finca, Cultivo, Personal) comparten el mismo diseño de card que Facturero de Clientes
+2. Hover sobre cards: debe mostrar `translateY(-2px)` + border dorado sutil, **sin glow dorado**
+3. Inspeccionar CSS: confirmar ausencia de `--shadow-gold-md`, `--shadow-gold-lg`, `--shadow-gold-xl` en hover de cards
+4. Responsive mobile (≤480px): métricas en 1 columna, head en grid
+
+### Lo que NO se hizo (scope respetado)
+- No se modificó lógica financiera ni cálculos
+- No se tocaron tablas Supabase
+- No se modificó `agro.js` (monolito intacto)
+- No se alteró "Operaciones de la Finca"
+- No se crearon archivos JS ni CSS nuevos
+
+### Lección capturada
+**ADN V11 §3 y §13 prohíben glow dorado en hover.** Cards y superficies usan `--shadow-dark` en reposo y `--shadow-gold-xs` o `--shadow-gold-sm` máximo en hover. El dorado no necesita brillar para ser valioso. Todo agente que toque CSS de cards debe verificar esta regla antes de commit.
+
+
+---
+
+## Sesión 2026-06-12/13 — Refactor Factureros YavlGold Agro
+
+**Estado:** ✅ CERRADO Y VALIDADO
+
+### Resumen ejecutivo
+Se ejecutó el Refactor de Factureros completo, separando semánticamente el antiguo "Facturero de la Finca" en 3 contextos independientes (Finca, Cultivo, Personal), reestructurando el hub Mi Granja, limpiando labels obsoletos y alineando el diseño de cards con el canon ADN Visual V11.
+
+Resultado: 6 commits exitosos, build passing, documentación actualizada, cero deuda técnica pendiente.
+
+### Agentes participantes y contribuciones
+
+#### GLM 5.1 — Refactor Principal
+- Implementó la separación estructural de factureros con VIEW_CONTEXTS (3 presets: farm/crop/orphan).
+- Reestructuró hub Mi Granja: nueva categoría "MIS FACTUREROS" con 4 tiles.
+- Actualizó agro-shell.js con 2 nuevas rutas hash (#view=facturero-cultivo, #view=facturero-personal).
+- Limpieza de labels obsoletos: "cartera operativa" → "Facturero de la Finca", "cartera viva" → "Facturero de Clientes".
+- Reemplazó ~20 ocurrencias de "ciclo operativo" → "registro" en UI de factureros.
+- Actualizó documentación canónica (MANIFIESTO_AGRO.md §3.1 y §4.5, FICHA_TECNICA.md §4.2).
+- Limpió docs-agro.html de referencias obsoletas.
+
+#### Kimi K2.6 — Hotfix Crítico TDZ
+- Diagnosticó y corrigió bug de Temporal Dead Zone (TDZ) en agroOperationalCycles.js.
+- Causa raíz: constants FAMILY_FARM, FAMILY_LINKED, FAMILY_ORPHAN se usaban en VIEW_CONTEXTS antes de definirse.
+- Fix: reordenó declaraciones moviendo las constantes FAMILY al principio del archivo.
+
+#### MimO 2.5 — Limpieza y Consistencia Visual
+- Limpieza de emojis: eliminó TODOS los emojis de agroOperationalCycles.js (~40 ocurrencias).
+- Header dinámico: agregó .agro-ops-header con título según contexto (Finca/Cultivo/Personal).
+- Rediseño de cards: alineó diseño con Facturero de Clientes.
+- Fix ADN V11: removió "gold glow hover" prohibido, reemplazó por opacity + transform.
+- Responsive: ajustó breakpoints para métricas en 1 columna en mobile.
+
+#### Qwen 3.7 Max — Diagnóstico y Gobernanza
+- Diagnóstico inicial: identificó 5 problemas críticos (contrato de init, estadísticas, rutas, FAMILY_ALL, terminología).
+- Validó que docs-agro.html quedó limpio de referencias obsoletas.
+- Confirmó que landing page (index.html) NO debía actualizarse.
+- Creó daily log y actualizó AGENT_REPORT_ACTIVE.md.
+
+### Commits del día
+1. (GLM) Implementación inicial del refactor de factureros
+2. (GLM) Reestructuración del hub Mi Granja y nuevas rutas hash
+3. (Kimi) Hotfix TDZ en agroOperationalCycles.js
+4. (MimO) Limpieza de emojis y header dinámico
+5. (MimO) Rediseño de cards y fix ADN V11
+6. (MimO) Merge PR #92 — limpieza final y consistencia visual
+
+### Cambios clave
+- VIEW_CONTEXTS con 3 presets: farm/crop/orphan.
+- Hub Mi Granja: nueva categoría "MIS FACTUREROS" con 4 tiles.
+- Rutas hash nuevas: #view=facturero-cultivo, #view=facturero-personal.
+- Labels obsoletos eliminados y normalizados a naming canónico.
+- Cero deuda técnica pendiente.
+
+### QA y build
+- Build passing: OK
+- Documentación actualizada: OK
+- Cero residuos de "cartera operativa" / "cartera viva" en código activo.
+- Cero violaciones ADN V11 en hover/glow.
+
+### Lecciones capturadas
+- TDZ con const requiere declarar constantes antes de usarlas en objetos congelados.
+- ADN V11 §3 y §13 prohíben glow dorado en hover; usar opacity + transform.
+- Limpiar emojis de UI para mantener canon visual limpio.
+
+---
+
+## Sesión 2026-06-13 — Fix pérdida de contexto de vista en Factureros
+
+### Objetivo
+Corregir 3 bugs críticos de QA (4 síntomas) sobre el refactor de factureros, todos causados por pérdida del contexto de vista (`preset`) en wizard de edición, tabs/subvistas y matriz de visibilidad Finca/Cultivo.
+
+### Diagnóstico (archivo único: `apps/gold/agro/agroOperationalCycles.js`)
+- **Bug 1 (edición muestra "Cultivo asociado" en Facturero de la Finca):** `renderEditForm()` (`:1672`) renderizaba ambos selectores de forma incondicional, sin leer `state.viewContext.preset`. El wizard de creación sí tenía guards, pero la edición los ignoraba.
+- **Bug 2 & 3 (tabs de Cultivo/Personal redirigen a Finca):** el handler `set-subview` (`:3411`) disparaba `view: VIEW_NAME` con `VIEW_NAME = 'operational'` (alias hardcodeado). El shell resuelve ese alias → `facturero-finca`, perdiendo el contexto. No eran links hash hardcodeados: tabs usan `data-operational-action="set-subview"`.
+- **Bug 4 (wizard del Cultivo incompleto):** decisión de diseño confirmada por el usuario → Facturero del Cultivo debe mostrar **ambos** selectores (Finca + Cultivo). Matriz unificada: farm→solo Finca; crop→Finca+Cultivo; orphan→ninguno; sin contexto→ambos.
+- `state.viewContext` ya se setea fiablemente en init (`:3755`) y view-change (`:3550`); no requería reparo, solo consumo donde faltaba.
+
+### Cambios realizados
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agroOperationalCycles.js` | refactor | Añadidos helpers `shouldRenderCropSelector()` y `shouldRenderFarmSelector()` (`:37`, `:42`) que centralizan la matriz de visibilidad por preset. |
+| `agroOperationalCycles.js` | bugfix | `renderEditForm()` (`:1714`, `:1722`): selectores Cultivo/Finca ahora envueltos en guards contextuales (Bug 1). |
+| `agroOperationalCycles.js` | bugfix | Wizard creación paso 2 (`:1860`, `:1868`): guards sustituidos por los helpers; Finca ahora visible para preset `crop` (Bug 4). |
+| `agroOperationalCycles.js` | bugfix | Wizard creación confirmación paso 4 (`:1952`, `:1958`): misma unificación de guards. |
+| `agroOperationalCycles.js` | bugfix | Handler `set-subview` (`:3429`): `view` ahora usa `state.currentView` con fallback a `VIEW_NAME_CANONICAL` en vez del alias `VIEW_NAME` (Bug 2 & 3). |
+
+### Resultado de build
+`pnpm build:gold` — **OK**. agent-guard OK · agent-report-check OK · vite build 185 módulos en 3.60s · check-llms OK · UTF-8 OK.
+
+### QA sugerido (pendiente de validación humana, AGENTS.md §5)
+Por cada facturero (Finca / Cultivo / Personal), en desktop y mobile (≤480px):
+1. Editar registro → selectores según matriz (Finca: solo Finca; Cultivo: ambos; Personal: ninguno).
+2. Crear registro paso 2 y paso 4 (confirmación) → misma matriz.
+3. Click en tabs (No pagados / Pagados / Donaciones / Pérdidas / Exportar) → URL se mantiene en el facturero activo, sin salto a `facturero-finca`.
+4. Botón Volver → regresa a la superficie padre correcta (Skill Lección 10).
+
+### NO se hizo (scope respetado)
+- No se tocó el monolito `agro.js`.
+- No se refactorizó `renderEditForm`/`renderWizard` más allá de los guards.
+- No se cambiaron rutas hash (`facturero-*` preservadas — Skill Lección 9).
+- No se modificaron documentos canónicos (`AGENTS.md`, `MANIFIESTO_AGRO.md`, `ADN-VISUAL-V11.0.md`, `FICHA_TECNICA.md`).
+- No se crearon archivos nuevos (la skill `2026-06-11-PATRONES-ERROR-YAVLGOLD.md` ya cubre esta familia de bugs vía Lecciones 3/9/10; no se añadió lección nueva).
+
 

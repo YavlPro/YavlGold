@@ -33,6 +33,16 @@ function resolveViewContext(viewName) {
     const v = String(viewName || '').trim().toLowerCase();
     return VIEW_CONTEXTS[v] || null;
 }
+
+function shouldRenderCropSelector() {
+    const preset = state.viewContext?.preset;
+    return !state.viewContext || preset === 'crop';
+}
+
+function shouldRenderFarmSelector() {
+    const preset = state.viewContext?.preset;
+    return !state.viewContext || preset === 'farm' || preset === 'crop';
+}
 const FAMILY_OPTIONS = Object.freeze([FAMILY_ALL, FAMILY_LINKED, FAMILY_FARM, FAMILY_ORPHAN]);
 const CROPS_READY_EVENT = 'AGRO_CROPS_READY';
 const VIEW_CHANGED_EVENT = 'agro:shell:view-changed';
@@ -1701,18 +1711,22 @@ function renderEditForm(focusSnapshot) {
                                 ${buildSelectOptionsMarkup(CATEGORY_OPTIONS, values.category)}
                             </select>
                         </div>
+                        ${shouldRenderCropSelector() ? `
                         <div class="input-group input-group--full">
                             <label class="input-label" for="agro-operational-crop">Cultivo asociado</label>
                             <select id="agro-operational-crop" class="styled-input" data-operational-draft="cropId">
                                 ${buildCropOptionsMarkup(values.cropId)}
                             </select>
                         </div>
+                        ` : ''}
+                        ${shouldRenderFarmSelector() ? `
                         <div class="input-group input-group--full">
                             <label class="input-label" for="agro-operational-farm">Finca asociada</label>
                             <select id="agro-operational-farm" class="styled-input" data-operational-draft="farmId">
                                 ${buildFarmOptionsMarkup(values.farmId)}
                             </select>
                         </div>
+                        ` : ''}
                         <div class="input-group">
                             <label class="input-label" for="agro-operational-amount">Monto</label>
                             <input type="number" id="agro-operational-amount" class="styled-input" step="any" min="0" placeholder="0.00" data-operational-draft="amount" value="${escapeAttr(values.amount)}">
@@ -1843,7 +1857,7 @@ function renderWizard() {
                                     ${buildSelectOptionsMarkup(CATEGORY_OPTIONS, values.category)}
                                 </select>
                             </div>
-                            ${(!state.viewContext || state.viewContext.preset === 'crop') ? `
+                            ${shouldRenderCropSelector() ? `
                             <div class="input-group input-group--full">
                                 <label class="input-label" for="agro-operational-crop">Cultivo asociado</label>
                                 <select id="agro-operational-crop" class="styled-input" data-operational-draft="cropId">
@@ -1851,7 +1865,7 @@ function renderWizard() {
                                 </select>
                             </div>
                             ` : ''}
-                            ${(!state.viewContext || state.viewContext.preset === 'farm') ? `
+                            ${shouldRenderFarmSelector() ? `
                             <div class="input-group input-group--full">
                                 <label class="input-label" for="agro-operational-farm">Finca asociada</label>
                                 <select id="agro-operational-farm" class="styled-input" data-operational-draft="farmId">
@@ -1935,13 +1949,13 @@ function renderWizard() {
                             <span class="agro-operational-confirm-item__label">Categoría</span>
                             <strong class="agro-operational-confirm-item__value">${escapeHtml(readLabel(CATEGORY_OPTIONS, values.category, 'Sin categoría'))}</strong>
                         </article>
-                        ${(!state.viewContext || state.viewContext.preset === 'crop') ? `
+                        ${shouldRenderCropSelector() ? `
                         <article class="agro-operational-confirm-item">
                             <span class="agro-operational-confirm-item__label">Cultivo asociado</span>
                             <strong class="agro-operational-confirm-item__value">${escapeHtml(resolveDraftCropLabel(values.cropId))}</strong>
                         </article>
                         ` : ''}
-                        ${(!state.viewContext || state.viewContext.preset === 'farm') ? `
+                        ${shouldRenderFarmSelector() ? `
                         <article class="agro-operational-confirm-item">
                             <span class="agro-operational-confirm-item__label">Finca asociada</span>
                             <strong class="agro-operational-confirm-item__value">${escapeHtml(resolveDraftFarmLabel(values.farmId))}</strong>
@@ -3412,7 +3426,7 @@ async function handleRootClick(event) {
         const nextSubview = normalizeOperationalSubview(button.dataset.subview);
         window.dispatchEvent(new CustomEvent('agro:shell:set-view', {
             detail: {
-                view: VIEW_NAME,
+                view: state.viewContext ? state.currentView : VIEW_NAME_CANONICAL,
                 subview: nextSubview,
                 scroll: false
             }
