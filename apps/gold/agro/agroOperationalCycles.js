@@ -1410,25 +1410,21 @@ async function deleteCycleRecord(cycleId, options = {}) {
 function renderShell() {
     if (!state.root) return;
 
+    // Determine initial title from context
+    const ctx = state.viewContext || {};
+    const initialTitle = ctx.title || 'Facturero';
+
     state.root.innerHTML = `
         <div class="agro-operational-shell agro-ops-v10">
-            <header class="module-header animate-in delay-3">
-                <div class="module-title-group agro-operational-shell__heading">
-                    <div class="agro-commercial-family" aria-label="Operación comercial">
-                        <div class="agro-commercial-family__tabs" role="group" aria-label="Familia comercial">
-                            <button type="button" class="agro-commercial-family__tab" data-agro-view="cartera-viva">
-                                Facturero de Clientes
-                            </button>
-                            <button type="button" class="agro-commercial-family__tab is-active" data-agro-view="facturero-finca">
-                                Facturero de la Finca
-                            </button>
-                        </div>
-                    </div>
+            <header class="agro-ops-header animate-in delay-3">
+                <div class="agro-ops-header__title-group">
+                    <span class="agro-ops-header__eyebrow">Facturero</span>
+                    <h2 class="agro-ops-header__title" data-ops-header-title>${escapeHtml(initialTitle)}</h2>
                 </div>
-                <div class="header-actions">
+                <div class="agro-ops-header__actions">
                     <button type="button" class="btn btn-primary" data-operational-action="new-cycle">Nuevo registro</button>
-                    <button type="button" class="btn" data-agro-view="period-cycles">📆 Ver períodos</button>
-                    <button type="button" class="agro-operational-refresh-btn" data-operational-action="refresh" aria-label="Actualizar Facturero de la Finca" title="Actualizar">
+                    <button type="button" class="btn" data-agro-view="period-cycles">Ver períodos</button>
+                    <button type="button" class="agro-operational-refresh-btn" data-operational-action="refresh" aria-label="Actualizar" title="Actualizar">
                         <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
                     </button>
                 </div>
@@ -1512,20 +1508,13 @@ function renderShell() {
     syncModalVisibility();
 }
 
-function syncCommercialFamilyTabs() {
+function syncHeaderTitle() {
     if (!state.root) return;
-    const currentView = normalizeToken(document.body?.dataset?.agroActiveView || state.currentView);
-
-    state.root.querySelectorAll('.agro-commercial-family__tab[data-agro-view]').forEach((button) => {
-        const buttonView = normalizeToken(button.dataset.agroView);
-        const isActive = buttonView === currentView;
-        button.classList.toggle('is-active', isActive);
-        if (isActive) {
-            button.setAttribute('aria-current', 'page');
-        } else {
-            button.removeAttribute('aria-current');
-        }
-    });
+    const ctx = resolveViewContext(state.currentView);
+    const titleEl = state.root.querySelector('[data-ops-header-title]');
+    if (titleEl && ctx?.title) {
+        titleEl.textContent = ctx.title;
+    }
 }
 
 function syncModalVisibility() {
@@ -3111,7 +3100,7 @@ function renderCurrentSubview() {
 
 function renderAll() {
     renderWizard();
-    syncCommercialFamilyTabs();
+    syncHeaderTitle();
     renderFamilyToggle();
     renderOverview();
     renderCurrentSubview();
@@ -3588,7 +3577,7 @@ function bindEvents() {
             return;
         }
 
-        syncCommercialFamilyTabs();
+        syncHeaderTitle();
         renderFamilyToggle();
         renderOverview();
         renderCurrentSubview();
