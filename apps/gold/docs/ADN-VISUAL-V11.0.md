@@ -134,6 +134,8 @@ Las siguientes animaciones de V10 ya no se usan como patrón recomendado:
 
 Si alguna existe en CSS legacy, no se elimina sin migración, pero no se promueve ni replica.
 
+**Nota de identidad (2026-06-14):** `metallicShift`, `ghostFloat` y `btnShimmer` fueron recuperadas como excepciones canónicas de identidad en §19. Las demás permanecen retiradas.
+
 ---
 
 ## §5 — Tipografía
@@ -537,6 +539,8 @@ Los ghost emojis (emojis de fondo con opacidad 0.02–0.05 y `pointer-events: no
 2. Versionar si es cambio mayor.
 3. Implementar después de documento.
 
+**Excepciones canónicas:** Cualquier excepción al canon visual vive exclusivamente en §19. Ningún otro documento, comentario de código ni decisión de sesión puede autorizar excepciones sin pasar por §19.
+
 ---
 
 ## §18 — Nota histórica
@@ -544,6 +548,120 @@ Los ghost emojis (emojis de fondo con opacidad 0.02–0.05 y `pointer-events: no
 ADN Visual V10.0 fue la base fundacional metálica del proyecto. Definió la identidad dark/gold, la paleta 5-tone, la tipografía, los tokens y la arquitectura visual completa. Sin V10 no existiría V11.
 
 ADN Visual V11.0 consolida lo que ya quedó vivo en el producto: superficies más sobrias, menos brillo decorativo, mejor separación semántica, modales alineados al canon del asistente IA, y una identidad visual agrícola real que prioriza claridad sobre espectáculo.
+
+---
+
+## §19 — Excepciones Canónicas de Identidad
+
+Las siguientes animaciones están permitidas como parte de la identidad visual del proyecto YavlGold. Deben implementarse en versión **sutil y elegante**, nunca agresiva.
+
+Regla general: si la animación distrae, compite con el contenido o es perceptiblemente agresiva, **NO es V11**. La identidad dorada debe sentirse apenas perceptible, como un latido de fondo.
+
+### 19.1 metallicShift (identidad de marca)
+
+Gradiente dorado con desplazamiento muy lento, apenas perceptible. Refuerza la identidad metálica fundacional sin gritar.
+
+```css
+@keyframes metallicShift {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+.elemento-identidad {
+  background: linear-gradient(
+    135deg,
+    var(--gold-4) 0%,
+    var(--gold-3) 25%,
+    var(--gold-4) 50%,
+    var(--gold-3) 75%,
+    var(--gold-4) 100%
+  );
+  background-size: 400% 100%;
+  animation: metallicShift 30s linear infinite;
+}
+```
+
+**Reglas de uso:**
+- Solo en elementos de identidad de marca (logo, header principal, hero de landing).
+- Duración mínima: 30 segundos. Nunca menos.
+- Prohibido en cards, botones, inputs, modales y elementos interactivos.
+- Prohibido en superficies profundas de trabajo (Agro modules).
+
+### 19.2 ghostFloat (decoración sutil)
+
+Flotación muy lenta del ghost emoji decorativo de empty states. Movimiento casi imperceptible que aporta vida sin distraer.
+
+```css
+@keyframes ghostFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
+}
+
+.agro-ghost-emoji {
+  animation: ghostFloat 8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agro-ghost-emoji { animation: none; }
+}
+```
+
+**Reglas de uso:**
+- Solo en ghost emoji decorativo de empty states (opacidad 0.02–0.05, `pointer-events: none`).
+- Duración: 8–10 segundos.
+- Rango de movimiento: máximo ±3px.
+- Respetar `prefers-reduced-motion` siempre.
+- Prohibido en elementos interactivos, botones, cards funcionales o iconos de UI.
+
+### 19.3 btnShimmer (hover elegante)
+
+Shimmer dorado que solo se activa en hover de botones primarios gold. Nunca en reposo.
+
+```css
+@keyframes btnShimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.btn-gold:hover {
+  background: linear-gradient(
+    90deg,
+    var(--gold-4) 0%,
+    var(--gold-3) 50%,
+    var(--gold-4) 100%
+  );
+  background-size: 200% 100%;
+  animation: btnShimmer 1.5s ease-in-out;
+}
+```
+
+**Reglas de uso:**
+- Solo en botones primarios gold (`.btn-gold`), solo al hover.
+- Duración: 1.5 segundos, una sola vez por hover.
+- Prohibido en reposo (sin hover).
+- Prohibido en botones outline, secundarios, de texto o destructivos.
+- Respetar `prefers-reduced-motion`: si activo, usar el hover canónico de §7 (opacity 0.9).
+
+### 19.4 Regla de precedencia
+
+Cuando una excepción de §19 entre en conflicto con una regla general del canon:
+
+- §19 prevalece **solo** en el caso de uso específico que autoriza.
+- Fuera de ese caso, aplica la regla general del canon.
+- Ninguna otra animación infinita o shimmer está autorizado por extensión.
+
+### 19.5 Anti-patrón de extensión
+
+Prohibido usar §19 como justificación para:
+
+- Agregar nuevas animaciones infinitas sin autorización.
+- Aumentar duración más allá de los límites definidos.
+- Aplicar metallicShift a cards o superficies de trabajo.
+- Aplicar ghostFloat a iconos funcionales.
+- Aplicar btnShimmer en reposo o en botones no primarios.
+- Crear variantes "más visibles" de las excepciones.
+
+Si una excepción necesita ampliarse, debe pasar por autorización expresa del usuario y documentarse aquí con nueva subsección numerada.
 
 ---
 

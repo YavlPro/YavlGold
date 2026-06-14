@@ -43,6 +43,14 @@ function shouldRenderFarmSelector() {
     const preset = state.viewContext?.preset;
     return !state.viewContext || preset === 'farm' || preset === 'crop';
 }
+
+function getNamePlaceholder() {
+    const preset = state.viewContext?.preset;
+    if (preset === 'farm') return 'Ej: Bomba de riego para la finca';
+    if (preset === 'crop') return 'Ej: Fertilizante NPK — lote norte';
+    if (preset === 'orphan') return 'Ej: Botas de cuero Titan';
+    return 'Ej: Gasto operativo del día';
+}
 const FAMILY_OPTIONS = Object.freeze([FAMILY_ALL, FAMILY_LINKED, FAMILY_FARM, FAMILY_ORPHAN]);
 const CROPS_READY_EVENT = 'AGRO_CROPS_READY';
 const VIEW_CHANGED_EVENT = 'agro:shell:view-changed';
@@ -1455,17 +1463,9 @@ function renderShell() {
                         <h3 class="agro-operational-list-title" id="agro-operational-list-title">Registros activos</h3>
                         <p class="agro-operational-list-copy" id="agro-operational-list-copy">No pagados, en seguimiento o compensándose con lectura operativa.</p>
                     </div>
-                    <button type="button" class="btn" data-operational-action="new-cycle">Nuevo registro</button>
                 </div>
                 <div id="agro-operational-filters-host"></div>
                 <section id="agro-operational-overview-panel" class="agro-operational-panel agro-operational-overview-panel">
-                    <div class="agro-operational-panel__head">
-                        <div>
-                            <p class="agro-operational-panel__eyebrow" id="agro-operational-overview-eyebrow">Activos</p>
-                            <h3 class="agro-operational-panel__title" id="agro-operational-overview-title">Vista organizada por estado</h3>
-                            <p class="agro-operational-panel__copy" id="agro-operational-overview-copy">Cada subvista recalcula balance y conserva filtros compactos.</p>
-                        </div>
-                    </div>
                     <div id="agro-operational-overview-body"></div>
                 </section>
                 <p class="agro-operational-list-section__status" id="agro-operational-list-status" aria-live="polite" aria-atomic="true">Cargando Facturero de la Finca...</p>
@@ -1496,9 +1496,6 @@ function renderShell() {
         modalFeedback: document.getElementById('agro-operational-modal-feedback'),
         modalOverlay: document.getElementById('agro-operational-modal'),
         wizardHost: document.getElementById('agro-operational-wizard-host'),
-        overviewEyebrow: document.getElementById('agro-operational-overview-eyebrow'),
-        overviewTitle: document.getElementById('agro-operational-overview-title'),
-        overviewCopy: document.getElementById('agro-operational-overview-copy'),
         overviewBody: document.getElementById('agro-operational-overview-body'),
         overviewSection: document.getElementById('agro-operational-overview-panel'),
         familyToggle: document.getElementById('agro-operational-family-toggle'),
@@ -1693,7 +1690,7 @@ function renderEditForm(focusSnapshot) {
                     <div class="agro-operational-form-grid">
                         <div class="input-group input-group--full">
                             <label class="input-label" for="agro-operational-name">Nombre del registro</label>
-                            <input type="text" id="agro-operational-name" class="styled-input" maxlength="140" placeholder="Ej: Botas de cuero Titan" required data-operational-draft="name" value="${escapeAttr(values.name)}">
+                            <input type="text" id="agro-operational-name" class="styled-input" maxlength="140" placeholder="${escapeAttr(getNamePlaceholder())}" required data-operational-draft="name" value="${escapeAttr(values.name)}">
                         </div>
                         <div class="input-group input-group--full">
                             <label class="input-label" for="agro-operational-description">Descripción</label>
@@ -1829,7 +1826,7 @@ function renderWizard() {
                         <div class="agro-operational-form-grid">
                             <div class="input-group input-group--full">
                                 <label class="input-label" for="agro-operational-name">Nombre del registro</label>
-                                <input type="text" id="agro-operational-name" class="styled-input" maxlength="140" placeholder="Ej: Botas de cuero Titan" required data-operational-draft="name" value="${escapeAttr(values.name)}">
+                                <input type="text" id="agro-operational-name" class="styled-input" maxlength="140" placeholder="${escapeAttr(getNamePlaceholder())}" required data-operational-draft="name" value="${escapeAttr(values.name)}">
                             </div>
                             <div class="input-group input-group--full">
                                 <label class="input-label" for="agro-operational-description">Descripción principal</label>
@@ -2303,21 +2300,16 @@ function renderCompactOverview({ label, summary, familyLabel, balanceLabel = 'Ba
     const cycleWord = count === 1 ? 'ciclo' : 'ciclos';
     const movementWord = movementCount === 1 ? 'movimiento' : 'movimientos';
     const safeFamilyLabel = String(familyLabel || '').trim();
-    const safeDetailsKey = normalizeDetailsKey(detailsKey) || buildOverviewDetailsKey();
 
     return `
-        <details
-            class="agro-operational-overview-details"
-            data-operational-summary-details
-            data-operational-details-key="${escapeAttr(safeDetailsKey)}"${renderDetailsOpenAttribute(safeDetailsKey)}>
-            <summary class="agro-operational-overview-summary">
-                <span class="agro-operational-overview-summary__label">${escapeHtml(label || 'Resumen de esta vista')}</span>
-                <span class="agro-operational-overview-summary__meta">
+        <section class="agro-operational-overview-hero">
+            <div class="agro-operational-overview-hero__head">
+                <span class="agro-operational-overview-hero__label">${escapeHtml(label || 'Resumen de esta vista')}</span>
+                <span class="agro-operational-overview-hero__meta">
                     ${count} ${cycleWord} · ${movementCount} ${movementWord} · ${escapeHtml(balanceLabel)}:
                     ${renderMoneyNode(summary?.balanceText)}
                 </span>
-                <span class="agro-operational-overview-summary__action">Ver detalles <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></span>
-            </summary>
+            </div>
             <div class="agro-operational-summary-grid">
                 <article class="agro-operational-summary-card">
                     <span class="agro-operational-summary-card__label">Registros visibles</span>
@@ -2335,27 +2327,22 @@ function renderCompactOverview({ label, summary, familyLabel, balanceLabel = 'Ba
                     <p class="agro-operational-summary-card__hint">${balanceHint || `Recibí / Cobré: ${renderMoneyNode(summary?.incomingText)} · Pagué / Gasté: ${renderMoneyNode(summary?.outgoingText)}`}</p>
                 </article>
             </div>
-        </details>
+        </section>
     `;
 }
 
 function renderExportCompactOverview(activeSummary, finishedSummary, totalCount, detailsKey = '') {
     const combinedBalance = mergeSummaryBalanceText(activeSummary, finishedSummary);
-    const safeDetailsKey = normalizeDetailsKey(detailsKey) || buildOverviewDetailsKey(SUBVIEW_EXPORT);
 
     return `
-        <details
-            class="agro-operational-overview-details"
-            data-operational-summary-details
-            data-operational-details-key="${escapeAttr(safeDetailsKey)}"${renderDetailsOpenAttribute(safeDetailsKey)}>
-            <summary class="agro-operational-overview-summary">
-                <span class="agro-operational-overview-summary__label">Resumen de exportación</span>
-                <span class="agro-operational-overview-summary__meta">
+        <section class="agro-operational-overview-hero">
+            <div class="agro-operational-overview-hero__head">
+                <span class="agro-operational-overview-hero__label">Resumen de exportación</span>
+                <span class="agro-operational-overview-hero__meta">
                     ${totalCount} ciclo${totalCount === 1 ? '' : 's'} · Balance combinado:
                     ${renderMoneyNode(combinedBalance)}
                 </span>
-                <span class="agro-operational-overview-summary__action">Ver detalles <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></span>
-            </summary>
+            </div>
             <div class="agro-operational-summary-grid">
                 <article class="agro-operational-summary-card">
                     <span class="agro-operational-summary-card__label">Activos exportables</span>
@@ -2378,7 +2365,7 @@ function renderExportCompactOverview(activeSummary, finishedSummary, totalCount,
                     <p class="agro-operational-summary-card__hint">Respeta filtros activos y finalizados por separado.</p>
                 </article>
             </div>
-        </details>
+        </section>
     `;
 }
 
@@ -2505,6 +2492,15 @@ function renderCycleFamilySection({ familyKey, title, copy, cycles }) {
     `;
 }
 
+function renderFlatCycleList(cycles) {
+    if (!Array.isArray(cycles) || cycles.length === 0) return '';
+    return `
+        <div class="agro-operational-list__grid">
+            ${cycles.map((cycle) => renderCycleCard(cycle)).join('')}
+        </div>
+    `;
+}
+
 function renderGroupedCycleList(cycles = []) {
     const { crop, farm, orphan } = splitCyclesByAssociation(cycles);
     const populatedGroups = [
@@ -2536,9 +2532,6 @@ function renderOverview() {
     renderSubviewSwitch();
     const meta = getSubviewMeta(state.currentSubview);
     const isSoftRefreshing = state.loading && state.loadedOnce;
-    state.refs.overviewEyebrow.textContent = meta.eyebrow;
-    state.refs.overviewTitle.textContent = meta.title;
-    state.refs.overviewCopy.textContent = meta.copy;
     state.refs.overviewSection?.classList.toggle('is-refreshing', isSoftRefreshing);
 
     if (isSoftRefreshing) {
@@ -2810,8 +2803,6 @@ function renderCycleCard(cycle) {
                 </div>
             </header>
 
-            ${renderCyclePhysicalSummary(cycle)}
-
             <dl class="agro-operational-card__metrics">
                 ${metrics.map((m) => `
                     <div class="agro-operational-card__metric"${m.tone ? ` data-tone="${escapeAttr(m.tone)}"` : ''}>
@@ -2836,10 +2827,8 @@ function renderCycleCard(cycle) {
                 class="agro-operational-card__details"
                 data-operational-card-details
                 data-operational-details-key="${escapeAttr(detailsKey)}"${renderDetailsOpenAttribute(detailsKey)}>
-                <summary>
-                    <span>Historial (${cycle.movementCount} movimiento${cycle.movementCount === 1 ? '' : 's'})</span>
-                    <span>${escapeHtml(statusLabel)}</span>
-                </summary>
+                <summary>Historial (${cycle.movementCount} movimiento${cycle.movementCount === 1 ? '' : 's'})</summary>
+                ${renderCyclePhysicalSummary(cycle)}
                 ${renderMovementRows(cycle)}
             </details>
         </article>
@@ -3047,12 +3036,7 @@ function renderCurrentSubview() {
             state.refs.list.innerHTML = renderGroupedCycleList(donationCycles);
             return;
         }
-        state.refs.list.innerHTML = renderCycleFamilySection({
-            familyKey,
-            title: `Donaciones — ${getFamilyLabel(familyKey)}`,
-            copy: getFamilyCopy(familyKey),
-            cycles: donationCycles
-        });
+        state.refs.list.innerHTML = renderFlatCycleList(donationCycles);
         return;
     }
 
@@ -3071,12 +3055,7 @@ function renderCurrentSubview() {
             state.refs.list.innerHTML = renderGroupedCycleList(lossCycles);
             return;
         }
-        state.refs.list.innerHTML = renderCycleFamilySection({
-            familyKey,
-            title: `Pérdidas — ${getFamilyLabel(familyKey)}`,
-            copy: getFamilyCopy(familyKey),
-            cycles: lossCycles
-        });
+        state.refs.list.innerHTML = renderFlatCycleList(lossCycles);
         return;
     }
 
@@ -3095,12 +3074,7 @@ function renderCurrentSubview() {
         state.refs.list.innerHTML = renderGroupedCycleList(familyCycles);
         return;
     }
-    state.refs.list.innerHTML = renderCycleFamilySection({
-        familyKey,
-        title: getFamilyLabel(familyKey),
-        copy: getFamilyCopy(familyKey),
-        cycles: familyCycles
-    });
+    state.refs.list.innerHTML = renderFlatCycleList(familyCycles);
 }
 
 function renderAll() {

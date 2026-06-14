@@ -1626,4 +1626,88 @@ Por cada facturero (Finca / Cultivo / Personal), en desktop y mobile (≤480px):
 - No se modificaron documentos canónicos (`AGENTS.md`, `MANIFIESTO_AGRO.md`, `ADN-VISUAL-V11.0.md`, `FICHA_TECNICA.md`).
 - No se crearon archivos nuevos (la skill `2026-06-11-PATRONES-ERROR-YAVLGOLD.md` ya cubre esta familia de bugs vía Lecciones 3/9/10; no se añadió lección nueva).
 
+---
+
+## Sesión 2026-06-14 — Excepciones canónicas de identidad (ADN Visual V11 §19)
+
+### Objetivo
+Anexar 3 animaciones recuperadas (`metallicShift`, `ghostFloat`, `btnShimmer`) como **excepciones canónicas de identidad** al ADN Visual V11.0, en versión sutil y elegante. Cambio solo documental; autoriza el canon para una fase posterior de implementación.
+
+### Cambios realizados
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/docs/ADN-VISUAL-V11.0.md` | canon | §4 Motion: nota de identidad (2026-06-14) indicando recuperación parcial de 3 animaciones en §19. Las demás permanecen retiradas. |
+| `apps/gold/docs/ADN-VISUAL-V11.0.md` | canon | §17 Gobernanza: nota de que toda excepción al canon vive exclusivamente en §19. |
+| `apps/gold/docs/ADN-VISUAL-V11.0.md` | canon | §19 (nueva) — Excepciones Canónicas de Identidad, con 5 subsecciones: 19.1 metallicShift (marca, ≥30s), 19.2 ghostFloat (empty states, ±3px/8–10s, con `prefers-reduced-motion`), 19.3 btnShimmer (solo hover de `.btn-gold`, 1.5s), 19.4 precedencia, 19.5 anti-patrón de extensión. |
+
+### Resultado de build
+`pnpm build:gold` — **OK** (docs-only). agent-guard OK · agent-report-check OK · vite 185 módulos · check-llms OK · UTF-8 OK.
+
+### Validación canónica
+- §4 nota de identidad presente (1 match).
+- §17 menciona §19 como única fuente de excepciones.
+- §19 con 5 subsecciones (19.1–19.5).
+- Los 3 bloques CSS de §19 usan tokens V11 (`var(--gold-4)`, `var(--gold-3)`), sin hex hardcodeados.
+- `ghostFloat` incluye fallback `prefers-reduced-motion`; `btnShimmer` remite al hover canónico de §7.
+
+### QA sugerido (no realizado)
+Abrir un showcase de motion y validar que las 3 animaciones se perciben sutiles (no agresivas) y respetan `prefers-reduced-motion`.
+
+### NO se hizo (scope respetado)
+- No se tocaron componentes, CSS de producto ni factureros.
+- **No se implementaron las 3 animaciones en CSS de los factureros** (tarea separada, autorizada después).
+- No se modificaron otras secciones del canon (§0–3, §5–16, §18 intactas); solo se añadieron notas/§19.
+
+
+---
+
+## Sesión 2026-06-13 — Pulido ADN Visual V11 de Factureros (Finca / Cultivo / Personal)
+
+### Objetivo
+Pulir los 3 factureros operacionales con ADN Visual V11, acercándolos visual/UX al Facturero de Clientes (referencia "espectacular") sin tocar este. Resolver: demasiado texto, mezcla de registros sin aire, placeholders idénticos ("Botas de cuero Titan") y deuda de tokens.
+
+### Diagnóstico (evidencia de `agroOperationalCycles.js` + `agro-operational-cycles.css` + comparación con `agro-facturero-clientes-view.js/css`)
+- **Texto redundante**: 3 capas de eyebrow/título/copy (header + list-head + overview-panel-head muerto + family-section copy por grupo). La descripción `getFamilyCopy` repetida por cada familia aunque el usuario ya está dentro del facturero.
+- **Mezcla/sin aire**: en presets single-family (Finca/Cultivo/Personal), `renderCurrentSubview` envolvía todo en `renderCycleFamilySection` con chrome verboso + doble padding. La tarjeta tenía panel "Base operativa" en la cara (caja dentro de caja con frase completa) y status duplicado en `<summary>`.
+- **Hover regresivo**: tarjeta atenuaba (`opacity: 0.92`) en vez de elevarse.
+- **KPI oculto**: resumen en `<details>` colapsado; Clientes lo muestra como hero.
+- **Placeholders**: "Ej: Botas de cuero Titan" en crear/editar, sabor personal.
+- **Tokens**: hex/rgba hardcodeados en overlay, borde modal, focus input, derived-status, danger block, divisor detalle.
+
+### Cambios realizados
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agroOperationalCycles.js` | refactor | Helper `getNamePlaceholder()` por preset (`:37`): farm→"Bomba de riego...", crop→"Fertilizante NPK...", orphan→"Botas de cuero Titan" (se mantiene), default→"Gasto operativo...". |
+| `agroOperationalCycles.js` | bugfix | Placeholders en edición (`:1712`) y crear paso 1 (`:1848`) usan `getNamePlaceholder()`. |
+| `agroOperationalCycles.js` | refactor | Eliminado CTA duplicado "Nuevo registro" del `list-head` (`:1466`). |
+| `agroOperationalCycles.js` | refactor | Eliminado `overview-panel__head` muerto (DOM `:1469-1475`, refs `:1507-1509`, `textContent` `:2547-2549`). |
+| `agroOperationalCycles.js` | refactor | Helper `renderFlatCycleList(cycles)` (`:2495`) y sustitución de las 3 ramas single-family en `renderCurrentSubview` (`:3039, :3058, :3077`) → grid plano SIN chrome de family-section. Ruta `FAMILY_ALL` conserva `renderGroupedCycleList`. |
+| `agroOperationalCycles.js` | refactor | Tarjeta: `renderCyclePhysicalSummary` movido al `<details>` (`:2831`), status duplicado en `<summary>` eliminado. |
+| `agroOperationalCycles.js` | refactor | `renderCompactOverview` (`:2297`) y `renderExportCompactOverview` (`:2339`) convertidas de `<details>` a `<section class="agro-operational-overview-hero">` siempre visible (KPI hero). |
+| `agro-operational-cycles.css` | style | `.agro-operational-list__grid` (grid plano 2-col gap 0.9rem, colapsa a 1fr en ≤1024px). |
+| `agro-operational-cycles.css` | style | `.agro-operational-overview-hero` + `__head/__label/__meta` + `::before` línea dorada sutil (tokens). |
+| `agro-operational-cycles.css` | style | Hover tarjeta: elimina `opacity:0.92`, añade lift `translateY(-2px)` + bg sutil (alineado a Clientes). |
+| `agro-operational-cycles.css` | style | Aire: card gap `0.55rem`, padding `0.72rem 0.8rem`, metrics gap `0.4rem`, metric interno `0.16rem`. |
+| `agro-operational-cycles.css` | token | Overlay modal `rgba(0,0,0,0.85)`; borde modal `var(--border-neutral)`; focus input `var(--bg-4)`; derived-status border/bg tokens; danger block `color-mix(var(--color-error)...)`; divisor detalle token. |
+| `agro-operational-cycles.css` | detail | `.agro-operational-card__details .agro-operational-physical-summary { margin: 0 0 0.2rem; }` para aire en desplegable. |
+
+### Resultado de build
+`pnpm build:gold` — **OK** (6.87s). agent-guard OK · agent-report-check OK · vite 185 módulos · check-llms OK · UTF-8 OK.
+
+### QA sugerido (pendiente validación humana, AGENTS.md §5)
+Por cada facturero (Finca / Cultivo / Personal), desktop + mobile (≤480px):
+1. Header correcto; un solo "Nuevo registro".
+2. KPI hero visible sin desplegar.
+3. Crear/editar → placeholder contextual; completar wizard hasta paso 4 y guardar.
+4. Lista: grid plano, sin chrome family-section; hover eleva.
+5. Abrir detalles de tarjeta → "Base operativa" + movimientos ahí.
+6. Subvistas (No pagados/Pagados/Donaciones/Pérdidas/Exportar) → URL se mantiene.
+7. Ruta legacy `operational` (si aplica): agrupación por familia intacta.
+
+### NO se hizo (scope respetado)
+- No se tocó `agro-facturero-clientes*` (referencia intacta).
+- No se implementaron animaciones `metallicShift`/`ghostFloat`/`btnShimmer` en factureros (prohibido por prompt; solo autorizado canon §19).
+- No se cambió rutas hash ni handler `set-subview` (ya corregido en sesión previa).
+- No se introdujo React/Tailwind/SPA; no se creció `agro.js`.
+
 
