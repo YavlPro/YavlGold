@@ -1382,51 +1382,64 @@ Commits: varios (renombrado, reorganización, docs, fixes)
 
 ---
 
-## Sesión 2026-06-15 — Bug navegación finca→cultivos + higiene CodeQL
+## Sesión 2026-06-15 — Bug navegación finca→cultivos + CodeQL (2 intentos)
 
-**Objetivo:** Corregir bug crítico de navegación (al entrar a una finca y clickear "Ver cultivos" se mostraban cultivos de OTRA finca) y revisar 1 alerta CodeQL HIGH + 4 Dependabot.
+**Objetivo:** Corregir bug crítico de navegación (al entrar a una finca y clickear "Ver cultivos" se mostraban cultivos de OTRA finca) y la alerta CodeQL HIGH #73 (insecure randomness).
 
-### Diagnóstico del bug de navegación
+> **Nota de proceso:** El primer intento de fix (sección original de esta sesión) **no funcionó** — el usuario reportó el mismo bug y CodeQL #73 seguía abierto. Se aplicó la skill `systematic-debugging`: vuelta a Fase 1, re-investigación con evidencia nueva, hipótesis previas descartadas. La sección de abajo documenta la causa raíz **real** y verificada.
 
-**Causa raíz confirmada (2 defectos combinados, ambos en `agro-farms.js`):**
+### Causa raíz REAL del bug de navegación (verificada con evidencia)
 
-1. **`populateFilterSelector()` (líneas 367-385):** ejecutaba `select.innerHTML = ''`, destruyendo la opción estática `<option value="">Todas las fincas</option>`. Al repoblar solo con fincas reales ordenadas `is_default DESC`, el browser seleccionaba implícitamente la **finca Principal** como valor por defecto. La lógica "conservar selección previa" solo cubría el caso `currentVal` válido, sin rama `else`.
-2. **`viewFarmCrops()` (líneas 661-675):** disparaba `change` (→ `loadCrops()`) **ANTES** de navegar a `mis-cultivos`. Durante esa ventana de carrera, si `loadFarms()` (async, gatillada por `applyViewEffects` en `agro-shell.js:1221` solo para `activeSubview === 'mis-fincas'`) reentraba y reejecutaba `populateFilterSelector`, el select saltaba a la finca Principal antes de que `loadCrops()` leyera `getSelectedFarmId()`.
+**Hipótesis previa (INCORRECTA):** "race condition entre `loadFarms()` reentrante y `loadCrops()`".
+**Realidad:** `loadFarms()` solo corre en `activeSubview === 'mis-fincas'` (`agro-shell.js:1221-1223`); al navegar a `mis-cultivos` **no reentra**. La reorganización de `viewFarmCrops` no cambió nada.
 
-**Agravante estructural (fuera de scope quirúrgico):** el `farm_id` vive solo en el DOM `<select>` — no en URL hash ni estado. La solución robusta a largo plazo sería llevarlo en el hash (`#view=ciclos&sub=mis-cultivos&farm=<id>`), pero eso toca `agro-shell.js` routing y queda como deuda técnica documentada.
+**Causa raíz REAL — evento sintético `change` no burbujea:**
 
-### Cambios realizados
+El listener del filtro está delegado en `document` en **fase burbuja** (`agro.js:8540-8544`):
+```js
+document.addEventListener('change', (e) => {
+    if (e.target?.id === 'agro-farm-filter-select') { window.loadCrops?.(); }
+});
+```
 
-| Archivo | Tipo | Cambio |
-|---------|------|--------|
-| `apps/gold/agro/agro-farms.js` | Código (Fix A) | `populateFilterSelector`: preserva opción "Todas las fincas" + restauración de selección correcta (rama else → "Todas") |
-| `apps/gold/agro/agro-farms.js` | Código (Fix B) | `viewFarmCrops`: navega primero a mis-cultivos, setea filtro después — cierra ventana de carrera |
-| `apps/gold/agro/agro-facturero-clientes-assignment.js` | Código | Línea 238: `Math.random()` → `crypto.randomUUID()` con fallback defensivo (higiene de escáner, no fix de seguridad real) |
+Pero `viewFarmCrops` disparaba `new Event('change')` — y por spec DOM, `Event` tiene `bubbles: false` por defecto. Un evento no-burbujeante disparado en el `<select>` **nunca llega** al listener de `document`. Consecuencia: `loadCrops()` jamás se invocaba desde el botón "Ver cultivos". Lo que el usuario veía era el último render — el `loadCrops()` de app-init (`agro.js:16345`), que leyó el select cuando `populateFilterSelector` lo había dejado en la finca Principal (primer `<option>` tras `innerHTML=''`).
 
-### CodeQL HIGH — alerta falsa positiva
+**Por qué el click manual del usuario en el `<select>` sí funciona:** el browser dispara un `change` nativo con `bubbles:true`.
 
-**Hallazgo clave:** la alerta cita `agro-facturero-clientes-view.js:238`, pero ese archivo **no tiene** `Math.random()`. El `Math.random()` real estaba en el archivo hermano `agro-facturero-clientes-assignment.js:238` (mismo número de línea, mismo patrón) — residuo del refactor de commit `6f75e1ca`. **Nombre de archivo en la alerta está mal.**
+### Cambios realizados (intentos 1+2)
 
-**Severidad real: LOW (no HIGH).** El `sessionKey` solo se guarda en `host.dataset.clientAssignmentSession` (atributo DOM) y se compara consigo mismo como guard de staleness en líneas 250/259. No se persiste en Supabase, no es PK, no es token/auth. El swap a `crypto.randomUUID()` es por **higiene del escáner**, no porque el código fuera explotable.
+| Archivo | Intento | Cambio | ¿Funcionó? |
+|---------|---------|--------|------------|
+| `agro-farms.js` `populateFilterSelector` | 1 | Preservar `<option value="">Todas` + rama else correcta | Mejora correcta pero no era la causa del bug reportado |
+| `agro-farms.js` `viewFarmCrops` | 1 | Reordenar: navegar primero, setear filtro después | **No** — el evento `change` seguía sin burbujear |
+| `agro-farms.js` `viewFarmCrops` | **2 (FIX REAL)** | `new Event('change', { bubbles: true })` + comentario explicando la raíz | **Sí** — el listener delegado ahora recibe el evento |
+| `agro-facturero-clientes-assignment.js` `:238` | 1 | `crypto.randomUUID() ?? Math.random()...` | **No** — `Math.random()` seguía en el fallback; CodeQL #73 reabrió |
+| `agro-facturero-clientes-assignment.js` `:238` | **2 (FIX REAL)** | `crypto.getRandomValues` puro; sin `Math.random()` en ningún camino | **Sí** — ninguna llamada a `Math.random()` queda |
+
+### CodeQL HIGH #73 — insecure randomness
+
+**Nombre de archivo en la alerta ambiguo:** CodeQL cita `agro-facturero-clientes-...:241`. El `Math.random()` real estaba en `agro-facturero-clientes-assignment.js:238` (el `??` fallback). Tras el intento 1 la línea se movió a 242 pero `Math.random()` siguió presente — por eso la alerta reapareció.
+
+**Severidad real: LOW.** `sessionKey` es un guard de staleness DOM (se guarda en `host.dataset.clientAssignmentSession` y se compara consigo mismo en líneas posteriores). No se persiste, no es auth/token/PK. Aún así, el fix 2 elimina `Math.random()` por completo vía `crypto.getRandomValues` con fallback a timestamp monotónico (no criptográfico, pero suficiente para staleness; **sin** `Math.random()` en ningún camino → la alerta no reaparece).
 
 ### Dependabot — `ws` MODERATE
-
-**`pnpm why ws`:** viene de `@supabase/supabase-js → @supabase/realtime-js → ws@8.19.0`. Marcada como producción, pero en este SPA browser `@supabase/realtime-js` usa `WebSocket` nativo — `ws` es código muerto en el bundle. **Decisión:** esperar PRs automáticos de Dependabot; no agregar `pnpm.overrides`. Las otras 3 alertas (esbuild x2 dev, brace-expansion transitiva) también esperan PR automático.
+**`pnpm why ws`:** `@supabase/supabase-js → @supabase/realtime-js → ws@8.19.0`. En este SPA browser `@supabase/realtime-js` usa `WebSocket` nativo; `ws` es código muerto en el bundle. **Decisión:** esperar PRs automáticos de Dependabot. Las otras 3 alertas (esbuild x2 dev, brace-expansion transitiva) también esperan PR automático.
 
 ### Resultado de build
-- `pnpm build:gold`: **OK**
-- agent-guard: OK · agent-report-check: OK · vite build: 185 modules, 3.32s · check-llms: OK · check-dist-utf8: ✅
-- Warning preexistente (chunk `agro-*.js` > 500kB = monolito) — no relacionado a este cambio.
+- `pnpm build:gold` (intento 2): **OK** — agent-guard OK · agent-report-check OK · vite 185 modules 2.71s · check-llms OK · check-dist-utf8 ✅
+- Warning preexistente (chunk `agro-*.js` > 500kB = monolito) — no relacionado.
 
 ### QA sugerido (no ejecutado — rol de cirugía §7.2)
-1. Crear/verificar 2 fincas (Finca A, Finca B) cada una con cultivos propios.
-2. Mis Fincas → Finca A → "Ver cultivos" → deben aparecer **solo** cultivos de A.
-3. Volver → Finca B → "Ver cultivos" → **solo** cultivos de B.
-4. Refrescar navegador en `mis-cultivos` → el filtro "Todas las fincas" vuelve a estar presente y no salta a Principal.
-5. Facturero Clientes: crear/editar cliente → sin errores en consola; `sessionKey` se sigue generando.
+1. Mis Fincas → finca NO principal → "Ver cultivos" → **deben aparecer SOLO los cultivos de esa finca** (caso que fallaba).
+2. Volver → otra finca → "Ver cultivos" → SOLO sus cultivos.
+3. Click manual en el `<select>` "Todas las fincas" → muestra todos (regresión: el camino nativo sigue funcionando).
+4. Facturero Clientes: abrir editor de asignación → sin errores en consola; `sessionKey` se genera vía `crypto.getRandomValues`.
+
+### Lección aprendida (§8.4 — reutilizable)
+**Hipótesis de un subagente ≠ causa raíz verificada.** El Explore agent del intento 1 hipotetizó una race condition plausible; el agente principal la aceptó sin trazar el flujo de eventos DOM en runtime. Resultado: un fix que no tocaba el bug real. Regla derivada: cuando un bug de UI implica eventos sintéticos (`dispatchEvent`) y listeners delegados, **siempre** verificar (a) `bubbles`/`capture` del evento y (b) la fase del listener, antes de proponer cualquier fix de ordenamiento o timing.
 
 ### Scope respetado (NO se hizo)
-- No se tocó `agro-shell.js` routing (URL hash hardening queda como deuda documentada).
+- No se tocó `agro-shell.js` routing (URL hash hardening queda como deuda documentada — la solución robusta a largo plazo es `#view=ciclos&sub=mis-cultivos&farm=<id>`).
 - No se tocaron migraciones Supabase ni infraestructura.
 - No se ejecutaron comandos git.
 - No se mergearon PRs de Dependabot (esperar automáticos).
@@ -1435,11 +1448,11 @@ Commits: varios (renombrado, reorganización, docs, fixes)
 ### Git sugerido (NO ejecutado — §7)
 ```bash
 git add apps/gold/agro/agro-farms.js apps/gold/agro/agro-facturero-clientes-assignment.js apps/gold/docs/AGENT_REPORT_ACTIVE.md
-git commit -m "fix(agro): preservar farm_id en navegación finca→cultivos + silenciar CodeQL randomUUID"
+git commit -m "fix(agro): dispatch change con bubbles:true en viewFarmCrops + eliminar Math.random() del sessionKey"
 git push origin main
 ```
 
-**Agente:** GLM-5.2 (plan) · **Modo:** cirugía quirúrgica, scope estricto.
+**Agente:** GLM-5.2 · **Proceso:** systematic-debugging (Fase 1 re-investigación tras fallo del intento 1).
 5. fix: eliminar duplicación de botón Volver en Operaciones de la Finca
 6. fix: sincronizar URL con estado interno de Operaciones de la Finca para Volver correcto
 7. docs+feat: actualización canónica completa + skill universal de patrones de error

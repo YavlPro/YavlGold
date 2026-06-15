@@ -663,22 +663,27 @@ async function deleteFarm(id) {
  * Direcciona a la vista de Mis Cultivos filtrando por esta finca
  */
 function viewFarmCrops(farmId) {
-  // Navegar PRIMERO a mis-cultivos: el gatillo de loadFarms() solo corre en
-  // activeSubview === 'mis-fincas' (agro-shell.js), así que al estar ya en
-  // mis-cultivos no puede reentrar y resetear el select con populateFilterSelector.
+  // Navegar a mis-cultivos y luego setear el filtro.
+  //
+  // RAÍZ DEL BUG (2026-06-15): el listener de cambio del filtro está delegado
+  // en `document` en FASE BURBUJA (agro.js:8540, sin capture). Un Event('change')
+  // sintético tiene bubbles:false por defecto → NUNCA llegaba al listener →
+  // loadCrops() no se disparaba y la vista quedaba con el último render (app-init,
+  // que leyó el select cuando populateFilterSelector lo había dejado en la finca
+  // Principal). El usuario veía los cultivos de la finca Principal, no la elegida.
+  //
+  // FIX: usar { bubbles: true } para que el evento alcance el listener delegado.
   const sublink = document.querySelector('.agro-shell-sublink[data-agro-view="ciclos"][data-agro-subview="mis-cultivos"]')
     || document.querySelector('.agro-mobile-hub__item[data-agro-view="ciclos"][data-agro-subview="mis-cultivos"]');
   if (sublink) {
     sublink.click();
   }
 
-  // Setear el filtro y disparar la recarga DESPUÉS de navegar, para evitar la
-  // ventana de carrera donde loadCrops() leería un farm_id ya reseteado.
   const select = document.getElementById('agro-farm-filter-select');
   if (select) {
     select.value = farmId;
-    // Disparar evento change para que agro.js filtre y recargue los cultivos en memoria
-    select.dispatchEvent(new Event('change'));
+    // bubbles:true es OBLIGATORIO: agro.js:8540 escucha en document (fase burbuja).
+    select.dispatchEvent(new Event('change', { bubbles: true }));
   }
 }
 

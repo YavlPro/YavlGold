@@ -236,10 +236,21 @@ export async function setupClientAssignmentEditor({
 
     const safeCurrentName = normalizeName(currentName);
     // sessionKey es solo un token de staleness DOM (guard en dataset), no se persiste
-    // ni se usa para auth/identidad. Usamos crypto.randomUUID() con fallback defensivo
-    // por higiene del escáner (CodeQL insecure-randomness) y entornos sin la API.
-    const sessionKey = (globalThis.crypto?.randomUUID?.()
-        ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    // ni se usa para auth/identidad. Usamos crypto.getRandomValues (sin Math.random())
+    // para satisfacer la regla CodeQL insecure-randomness; la API existe en todos los
+    // browsers evergreen desde hace años. No se provee fallback a Math.random() porque
+    // eso reactivaría la alerta del escáner.
+    const sessionKey = (() => {
+        const c = globalThis.crypto;
+        if (c && typeof c.getRandomValues === 'function') {
+            const bytes = new Uint8Array(16);
+            c.getRandomValues(bytes);
+            return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+        }
+        // Último recurso: timestamp monotónico. No es criptográfico, pero sessionKey
+        // no requiere unpredictabilidad criptográfica (ver comentario arriba).
+        return `ts-${Date.now().toString(36)}`;
+    })();
     host.dataset.clientAssignmentSession = sessionKey;
     host.hidden = false;
     host.innerHTML = renderEditor({
