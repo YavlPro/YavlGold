@@ -2072,4 +2072,40 @@ Por cada facturero (Finca / Cultivo / Personal), desktop + mobile (≤480px):
 - Hoy: Arreglar CodeQL insecure randomness (15-30 min).
 - Esta semana: Mergear PRs de Dependabot cuando estén listos.
 
+---
+
+## 2026-06-15 — Corrección documentación obsoleta (Operación Comercial, flujo arranque, eliminación cuenta)
+
+**Objetivo:** Corregir información incorrecta/obsoleta en la documentación oficial de Agro detectada por el usuario.
+
+**Diagnóstico:**
+- "Operación Comercial" como nombre de card en docs-agro.html (obsoleto, ya no existe como concepto)
+- Flujo "Cómo empezar" incorrecto: decía crear cultivo primero, pero el flujo real es Finca → Cultivos
+- Eliminación de cuenta prometida en docs pero no implementada en código (feature "aun esta en desarrollo")
+
+**Archivos tocados:**
+
+| Archivo | Tipo de cambio |
+|---------|----------------|
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | FAQ 9.12: corregido flujo arranque (Finca → Cultivos); FAQ 9.13: agregado paso previo crear finca; FAQ 9.5: aclarado que eliminación NO está disponible; Sección 7: mismo cambio |
+| `apps/gold/docs-agro.html` | Tarjeta "Operación Comercial" → "Mis factureros"; Paso 2 flujo: "Crear tu primera finca"; FAQ datos: aclarado que eliminación NO está disponible; Privacidad: mismo cambio |
+
+**Resultado:** Build OK (`pnpm build:gold` sin errores)
+
+**QA sugerido:**
+- Leer §9.12 y §9.13 de MANIFIESTO_AGRO.md → confirmar que menciona "Mis Fincas" como primer paso
+- Leer §9.5 y sección 7 → confirmar que dice "no está disponible como función self-service"
+- Verificar docs-agro.html: tarjeta "Mis factureros", flujo correcto, FAQ y privacidad corregidos
+
+**NO se hizo:**
+- No se tocaron definiciones semánticas de módulos
+- No se modificó código JS
+- No se editaron referencias históricas a "Operación Comercial" en chronicles/ o documentos legacy
+- No se actualizaron ARIA labels en JS (baja prioridad, pendiente futuro)
+
+**Validación:**
+- `grep "Operación Comercial" docs/` → solo 1 resultado en MANIFIESTO_AGRO.md línea 1593 (referencia histórica marcando pendiente como DONE, correcto)
+- `grep "Operación Comercial" docs-agro.html` → 0 resultados
+- Build gate: OK
+
 

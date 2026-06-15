@@ -1306,7 +1306,7 @@ Esta regla se aplica en tres capas del sistema:
 
 * Tu historial exportado en formato MD es tu respaldo definitivo. Si alguna vez dejas la plataforma, lo que hayas guardado localmente sigue siendo tuyo.
 * Te recomendamos exportar tus informes con regularidad, como rutina, para no depender solo del servidor.
-* IMPORTANTE: Antes de solicitar el borrado de tu cuenta, exporta tus informes. Según la política vigente, el borrado puede dejar tu información fuera de recuperación desde la plataforma. Si en el futuro cambian las reglas de retención, recuperación o papelera de gracia, esta parte debe actualizarse.
+* IMPORTANTE: Actualmente (V1), la eliminación de cuenta no está disponible como función self-service. Si necesitas eliminar tu cuenta o tus datos, contacta al soporte oficial. Exporta tus informes antes de solicitar cualquier eliminación. Según la política vigente, los datos exportados localmente son tu respaldo definitivo.
 
 ---
 
@@ -1362,7 +1362,7 @@ Hoy Agro depende principalmente de conexión a internet para guardar datos, actu
 
 ### 9.5 ¿A quién le pertenecen mis apuntes o qué pasa con los datos de las bitácoras y registros si borro mi usuario?
 
-Los registros y resúmenes que generes son tuyos. Por eso existe la exportación en formato MD. Si decides eliminar tu cuenta, primero exporta tus informes. Según la política vigente, el borrado puede hacer que esa información deje de estar disponible desde la plataforma.
+Los registros y resúmenes que generes son tuyos. Por eso existe la exportación en formato MD. Actualmente (V1), la eliminación de cuenta no está disponible como función self-service. Si necesitas eliminar tu cuenta o tus datos, contacta al soporte oficial. Antes de solicitar cualquier eliminación, exporta tus informes y respaldos mediante el Centro de Reportes y los exportes Markdown de cada cultivo. Según la política vigente, los datos exportados localmente son tu respaldo definitivo.
 
 ### 9.6 ¿Cómo ejecuto un respaldo manual normal?
 
@@ -1398,20 +1398,27 @@ La herramienta no sirve para consultas que no tengan respaldo en lo que ya regis
 ### 9.12 ¿Cómo arranca YavlGold Agro el primer día?
 
 1. Entras al Dashboard y revisas las condiciones del día.
-2. Si es tu primera vez, usa el botón "Arranque rápido".
-3. Lo primero es crear tu primer cultivo en Ciclos Activos, si tienes una siembra en curso.
-4. Luego registra algún gasto real de insumos en Facturero de la Finca. Tu pantalla irá creciendo y notarás la utilidad con el tiempo.
+2. Si es tu primera vez, entra a "Mis Fincas" (la entrada principal del hub).
+3. Si no tienes fincas creadas, crea tu primera finca con nombre y ubicación.
+4. Desde la finca, usa el botón "Ver cultivos" para crear tu primer cultivo con nombre, variedad, área, inversión y fecha de siembra.
+5. Luego registra algún gasto real de insumos en el Facturero correspondiente. Tu pantalla irá creciendo y notarás la utilidad con el tiempo.
 
 ### 9.13 ¿Cómo creo un cultivo?
 
-1. Botón "+ Nuevo Cultivo" (en Dashboard o en Ciclos de cultivos).
-2. Nombre del cultivo (ej: "Tomate Cherry").
-3. Variedad (opcional, ej: "Roma").
-4. Área (hectáreas).
-5. Inversión inicial (monto estimado).
-6. Fecha de siembra (obligatoria).
-7. Fecha de cosecha esperada (opcional, calculable).
-8. Guardar.
+**Primer paso:** Crea una finca en "Mis Fincas" si no tienes ninguna.
+
+1. Entra a "Mis Fincas" y crea tu primera finca con nombre y ubicación.
+2. Desde la finca, usa el botón "Ver cultivos".
+3. Haz clic en "+ Nuevo Cultivo".
+4. Nombre del cultivo (ej: "Tomate Cherry").
+5. Variedad (opcional, ej: "Roma").
+6. Área (hectáreas).
+7. Inversión inicial (monto estimado).
+8. Fecha de siembra (obligatoria).
+9. Fecha de cosecha esperada (opcional, calculable).
+10. Guardar.
+
+**Nota:** Los cultivos pertenecen a una finca mediante `farm_id`. No se puede crear un cultivo sin una finca destino.
 
 ### 9.14 ¿Cómo creo un registro o movimiento comercial?
 
