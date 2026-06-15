@@ -1379,6 +1379,67 @@ Commits: varios (renombrado, reorganización, docs, fixes)
 2. refactor: Calendario operativo pasa a Operaciones de la Finca
 3. feat: reorganizar navegación — Operaciones de la Finca bajo Mis fincas y cultivos
 4. feat: reorganizar Operaciones de la Finca bajo Mis fincas y cultivos, corregir Volver/estilo/stats
+
+---
+
+## Sesión 2026-06-15 — Bug navegación finca→cultivos + higiene CodeQL
+
+**Objetivo:** Corregir bug crítico de navegación (al entrar a una finca y clickear "Ver cultivos" se mostraban cultivos de OTRA finca) y revisar 1 alerta CodeQL HIGH + 4 Dependabot.
+
+### Diagnóstico del bug de navegación
+
+**Causa raíz confirmada (2 defectos combinados, ambos en `agro-farms.js`):**
+
+1. **`populateFilterSelector()` (líneas 367-385):** ejecutaba `select.innerHTML = ''`, destruyendo la opción estática `<option value="">Todas las fincas</option>`. Al repoblar solo con fincas reales ordenadas `is_default DESC`, el browser seleccionaba implícitamente la **finca Principal** como valor por defecto. La lógica "conservar selección previa" solo cubría el caso `currentVal` válido, sin rama `else`.
+2. **`viewFarmCrops()` (líneas 661-675):** disparaba `change` (→ `loadCrops()`) **ANTES** de navegar a `mis-cultivos`. Durante esa ventana de carrera, si `loadFarms()` (async, gatillada por `applyViewEffects` en `agro-shell.js:1221` solo para `activeSubview === 'mis-fincas'`) reentraba y reejecutaba `populateFilterSelector`, el select saltaba a la finca Principal antes de que `loadCrops()` leyera `getSelectedFarmId()`.
+
+**Agravante estructural (fuera de scope quirúrgico):** el `farm_id` vive solo en el DOM `<select>` — no en URL hash ni estado. La solución robusta a largo plazo sería llevarlo en el hash (`#view=ciclos&sub=mis-cultivos&farm=<id>`), pero eso toca `agro-shell.js` routing y queda como deuda técnica documentada.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---------|------|--------|
+| `apps/gold/agro/agro-farms.js` | Código (Fix A) | `populateFilterSelector`: preserva opción "Todas las fincas" + restauración de selección correcta (rama else → "Todas") |
+| `apps/gold/agro/agro-farms.js` | Código (Fix B) | `viewFarmCrops`: navega primero a mis-cultivos, setea filtro después — cierra ventana de carrera |
+| `apps/gold/agro/agro-facturero-clientes-assignment.js` | Código | Línea 238: `Math.random()` → `crypto.randomUUID()` con fallback defensivo (higiene de escáner, no fix de seguridad real) |
+
+### CodeQL HIGH — alerta falsa positiva
+
+**Hallazgo clave:** la alerta cita `agro-facturero-clientes-view.js:238`, pero ese archivo **no tiene** `Math.random()`. El `Math.random()` real estaba en el archivo hermano `agro-facturero-clientes-assignment.js:238` (mismo número de línea, mismo patrón) — residuo del refactor de commit `6f75e1ca`. **Nombre de archivo en la alerta está mal.**
+
+**Severidad real: LOW (no HIGH).** El `sessionKey` solo se guarda en `host.dataset.clientAssignmentSession` (atributo DOM) y se compara consigo mismo como guard de staleness en líneas 250/259. No se persiste en Supabase, no es PK, no es token/auth. El swap a `crypto.randomUUID()` es por **higiene del escáner**, no porque el código fuera explotable.
+
+### Dependabot — `ws` MODERATE
+
+**`pnpm why ws`:** viene de `@supabase/supabase-js → @supabase/realtime-js → ws@8.19.0`. Marcada como producción, pero en este SPA browser `@supabase/realtime-js` usa `WebSocket` nativo — `ws` es código muerto en el bundle. **Decisión:** esperar PRs automáticos de Dependabot; no agregar `pnpm.overrides`. Las otras 3 alertas (esbuild x2 dev, brace-expansion transitiva) también esperan PR automático.
+
+### Resultado de build
+- `pnpm build:gold`: **OK**
+- agent-guard: OK · agent-report-check: OK · vite build: 185 modules, 3.32s · check-llms: OK · check-dist-utf8: ✅
+- Warning preexistente (chunk `agro-*.js` > 500kB = monolito) — no relacionado a este cambio.
+
+### QA sugerido (no ejecutado — rol de cirugía §7.2)
+1. Crear/verificar 2 fincas (Finca A, Finca B) cada una con cultivos propios.
+2. Mis Fincas → Finca A → "Ver cultivos" → deben aparecer **solo** cultivos de A.
+3. Volver → Finca B → "Ver cultivos" → **solo** cultivos de B.
+4. Refrescar navegador en `mis-cultivos` → el filtro "Todas las fincas" vuelve a estar presente y no salta a Principal.
+5. Facturero Clientes: crear/editar cliente → sin errores en consola; `sessionKey` se sigue generando.
+
+### Scope respetado (NO se hizo)
+- No se tocó `agro-shell.js` routing (URL hash hardening queda como deuda documentada).
+- No se tocaron migraciones Supabase ni infraestructura.
+- No se ejecutaron comandos git.
+- No se mergearon PRs de Dependabot (esperar automáticos).
+- No se modificaron documentos canónicos (AGENTS.md, MANIFIESTO_AGRO.md, ADN-VISUAL-V11.0.md, FICHA_TECNICA.md).
+
+### Git sugerido (NO ejecutado — §7)
+```bash
+git add apps/gold/agro/agro-farms.js apps/gold/agro/agro-facturero-clientes-assignment.js apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(agro): preservar farm_id en navegación finca→cultivos + silenciar CodeQL randomUUID"
+git push origin main
+```
+
+**Agente:** GLM-5.2 (plan) · **Modo:** cirugía quirúrgica, scope estricto.
 5. fix: eliminar duplicación de botón Volver en Operaciones de la Finca
 6. fix: sincronizar URL con estado interno de Operaciones de la Finca para Volver correcto
 7. docs+feat: actualización canónica completa + skill universal de patrones de error
@@ -1709,5 +1770,77 @@ Por cada facturero (Finca / Cultivo / Personal), desktop + mobile (≤480px):
 - No se implementaron animaciones `metallicShift`/`ghostFloat`/`btnShimmer` en factureros (prohibido por prompt; solo autorizado canon §19).
 - No se cambió rutas hash ni handler `set-subview` (ya corregido en sesión previa).
 - No se introdujo React/Tailwind/SPA; no se creció `agro.js`.
+
+---
+
+## Sesión 2026-06-13 (continuación) — Excepciones canónicas ADN V11 §19 + Fix de contexto en factureros
+
+### Objetivo
+1. Anexar 3 animaciones como excepciones canónicas de identidad al ADN Visual V11 (decisión de producto: metallicShift, ghostFloat, btnShimmer son parte de la identidad YavlGold, implementar en versión sutil y elegante).
+2. Corregir 4 bugs QA de pérdida de contexto de vista en factureros.
+
+### Cambios realizados
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `ADN-VISUAL-V11.0.md` | docs | §4 — Nota de identidad (2026-06-14): metallicShift, ghostFloat, btnShimmer recuperadas como excepciones canónicas en §19. |
+| `ADN-VISUAL-V11.0.md` | docs | §17 — Nota de gobernanza: excepciones canónicas viven exclusivamente en §19. |
+| `ADN-VISUAL-V11.0.md` | docs | §19 — Nueva sección "Excepciones Canónicas de Identidad" con 5 subsecciones (19.1 metallicShift, 19.2 ghostFloat, 19.3 btnShimmer, 19.4 Regla de precedencia, 19.5 Anti-patrón de extensión). |
+| `agroOperationalCycles.js` | bugfix | Cambio A — Helpers `shouldRenderCropSelector()` / `shouldRenderFarmSelector()` centralizan matriz de visibilidad por preset (DRY para 6 sitios). |
+| `agroOperationalCycles.js` | bugfix | Cambio B — `renderEditForm()` (:1714, :1722): selectores Cultivo/Finca con guards contextuales → Bug 1 corregido (Finca deja de mostrar "Cultivo asociado"). |
+| `agroOperationalCycles.js` | bugfix | Cambio C — Wizard creación paso 2 (:1860, :1868): guards vía helpers; Finca visible para preset crop. |
+| `agroOperationalCycles.js` | bugfix | Cambio D — Wizard confirmación paso 4 (:1952, :1958): misma unificación. |
+| `agroOperationalCycles.js` | bugfix | Cambio E — Handler `set-subview` (:3429): usa `state.currentView` (con fallback a `VIEW_NAME_CANONICAL`) en vez del alias `VIEW_NAME` → Bug 2 & 3 corregidos (tabs preservan el facturero activo). |
+
+### Matriz de visibilidad resultante
+| preset (`viewContext.preset`) | Selector Cultivo | Selector Finca |
+| --- | --- | --- |
+| (sin contexto — ruta `operational` legacy) | ✅ | ✅ |
+| `farm` (Facturero de la Finca) | ❌ | ✅ |
+| `crop` (Facturero del Cultivo) | ✅ | ✅ |
+| `orphan` (Facturero Personal) | ❌ | ❌ |
+
+### Resultado de build
+`pnpm build:gold` — **OK** (agent-guard OK · agent-report-check OK · vite 185 módulos · check-llms OK · UTF-8 OK).
+
+### QA sugerido (pendiente validación humana)
+1. Facturero de la Finca: crear/editar → solo mostrar "Finca asociada" (sin "Cultivo asociado").
+2. Facturero del Cultivo: crear/editar → mostrar "Finca asociada" + "Cultivo asociado".
+3. Facturero Personal: crear/editar → sin selectores de asociación.
+4. Click en tabs (Pagados, No pagados, etc.) → URL debe mantenerse en el facturero activo.
+5. Botón Volver → regresa a superficie padre correcta.
+
+### NO se hizo (scope respetado)
+- No se implementaron las animaciones §19 en CSS de factureros (solo se anexaron al canon).
+- No se tocó `agro-facturero-clientes*`.
+- No se cambió rutas hash ni estructura de navegación.
+- No se introdujo React/Tailwind/SPA; no se creció `agro.js`.
+
+### Pendientes críticos (prioridad #1 para 2026-06-14)
+**Alertas de seguridad detectadas:**
+
+1. **CodeQL: Insecure randomness (HIGH)** — `agro-facturero-clientes-view.js:238`
+   - Uso de `Math.random()` donde debería ser `crypto.getRandomValues()` para generación de valores aleatorios seguros.
+   - Riesgo: Vulnerabilidad de seguridad en producción.
+   - Acción: Reemplazar con `crypto.getRandomValues()` si es para seguridad (tokens, nonces, IDs únicos).
+
+2. **ws: Uninitialized memory disclosure (MODERATE)**
+   - Dependencia transitiva (probablemente de Vite o tooling de desarrollo).
+   - Acción: Verificar con `pnpm why ws` si está en producción. Si es solo dev, esperar PR de Dependabot.
+
+3. **esbuild: Missing binary integrity verification (HIGH, Development only)**
+   - Solo afecta desarrollo local (Deno, Windows dev server).
+   - Acción: Esperar PR de Dependabot.
+
+4. **esbuild: Arbitrary file read on Windows dev server (LOW, Development only)**
+   - Solo afecta desarrollo local.
+   - Acción: Esperar PR de Dependabot.
+
+5. **brace-expansion: Large numeric range DoS (MODERATE)**
+   - Dependencia transitiva común en tooling de Node.js.
+   - Acción: Esperar PR de Dependabot.
+
+**Plan de acción:**
+- Hoy: Arreglar CodeQL insecure randomness (15-30 min).
+- Esta semana: Mergear PRs de Dependabot cuando estén listos.
 
 

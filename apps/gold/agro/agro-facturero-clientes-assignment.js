@@ -235,7 +235,11 @@ export async function setupClientAssignmentEditor({
     if (!RELEVANT_TABS.has(safeTab)) return;
 
     const safeCurrentName = normalizeName(currentName);
-    const sessionKey = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    // sessionKey es solo un token de staleness DOM (guard en dataset), no se persiste
+    // ni se usa para auth/identidad. Usamos crypto.randomUUID() con fallback defensivo
+    // por higiene del escáner (CodeQL insecure-randomness) y entornos sin la API.
+    const sessionKey = (globalThis.crypto?.randomUUID?.()
+        ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`);
     host.dataset.clientAssignmentSession = sessionKey;
     host.hidden = false;
     host.innerHTML = renderEditor({

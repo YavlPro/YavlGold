@@ -369,7 +369,9 @@ function populateFilterSelector() {
   if (!select) return;
 
   const currentVal = select.value;
-  select.innerHTML = '';
+  // Conservar la opción estática "Todas las fincas" para no resetear el filtro
+  // silenciosamente a la finca Principal al repoblar el select.
+  select.innerHTML = '<option value="">Todas las fincas</option>';
 
   farmsCache.forEach(farm => {
     const option = document.createElement('option');
@@ -378,9 +380,11 @@ function populateFilterSelector() {
     select.appendChild(option);
   });
 
-  // Intentar conservar selección previa
-  if (currentVal && farmsCache.some(f => f.id === currentVal)) {
+  // Conservar selección previa solo si sigue existiendo; si no, volver a "Todas las fincas"
+  if (currentVal && (currentVal === '' || farmsCache.some(f => f.id === currentVal))) {
     select.value = currentVal;
+  } else {
+    select.value = '';
   }
 }
 
@@ -659,18 +663,22 @@ async function deleteFarm(id) {
  * Direcciona a la vista de Mis Cultivos filtrando por esta finca
  */
 function viewFarmCrops(farmId) {
+  // Navegar PRIMERO a mis-cultivos: el gatillo de loadFarms() solo corre en
+  // activeSubview === 'mis-fincas' (agro-shell.js), así que al estar ya en
+  // mis-cultivos no puede reentrar y resetear el select con populateFilterSelector.
+  const sublink = document.querySelector('.agro-shell-sublink[data-agro-view="ciclos"][data-agro-subview="mis-cultivos"]')
+    || document.querySelector('.agro-mobile-hub__item[data-agro-view="ciclos"][data-agro-subview="mis-cultivos"]');
+  if (sublink) {
+    sublink.click();
+  }
+
+  // Setear el filtro y disparar la recarga DESPUÉS de navegar, para evitar la
+  // ventana de carrera donde loadCrops() leería un farm_id ya reseteado.
   const select = document.getElementById('agro-farm-filter-select');
   if (select) {
     select.value = farmId;
     // Disparar evento change para que agro.js filtre y recargue los cultivos en memoria
     select.dispatchEvent(new Event('change'));
-  }
-
-  // Navegar a la subvista de mis-cultivos
-  const sublink = document.querySelector('.agro-shell-sublink[data-agro-view="ciclos"][data-agro-subview="mis-cultivos"]')
-    || document.querySelector('.agro-mobile-hub__item[data-agro-view="ciclos"][data-agro-subview="mis-cultivos"]');
-  if (sublink) {
-    sublink.click();
   }
 }
 
