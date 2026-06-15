@@ -1532,6 +1532,77 @@ git push origin main
 ```
 
 **Agente:** GLM-5.2 · **Proceso:** verificación en runtime (lockfile + node_modules + advisories) antes de proponer overrides.
+
+---
+
+## Sesión 2026-06-15 — Dependabot ciclo 2: 4 alertas nuevas (vite/launch-editor/ws/form-data)
+
+**Objetivo:** Cerrar las 4 alertas Dependabot que aparecieron tras el re-scan del commit anterior (#21 ws, #22 vite, #23 launch-editor, #24 form-data).
+
+### Contexto: por qué aparecieron alertas nuevas
+Mi commit del ciclo 1 disparó un re-scan de Dependabot. GitHub publicó advisories **nuevos** que no existían cuando hice los overrides anteriores (CVE-2026-48779 de ws, CVE-2026-53632 de launch-editor). Es la misma dinámica que brace-expansion el ciclo anterior: versiones que creías parchadas dejan de estarlo cuando sale un CVE nuevo.
+
+### Diagnóstico verificado (lockfile + advisories oficiales)
+
+| # | Paquete | Origen | Versión antes | CVE/GHSA | Rango afectado | Parche | Acción |
+|---|---------|--------|---------------|----------|----------------|--------|--------|
+| **#21** | ws | `@supabase/realtime-js` (transitiva) | `8.20.1` | CVE-2026-48779 / [GHSA-96hv-2xvq-fx4p](https://github.com/advisories/GHSA-96hv-2xvq-fx4p) | `>= 8.0.0, < 8.21.0` | **8.21.0** | Bump override |
+| **#22** | vite (Direct) | dep directa (root + apps/gold) | `7.3.2` | CVE-2025-62522 / [GHSA-93m4-6634-74q7](https://github.com/advisories/GHSA-93m4-6634-74q7) + launch-editor | `>= 7.0.0, <= 7.3.4` | **7.3.5** | Bump directo |
+| **#23** | launch-editor (Direct, vía vite) | vite 7.3.2 | transitivo | CVE-2026-53632 / [GHSA-v6wh-96g9-6wx3](https://github.com/advisories/GHSA-v6wh-96g9-6wx3) | vite `<= 7.3.4` | vite 7.3.5 | Se cierra con #22 |
+| **#24** | form-data | jsdom (dev-only) | `4.0.5` | CRLF injection | **incierto** | ? | Ver nota abajo |
+
+**Hallazgo clave:** `launch-editor` **no aparece en el lockfile** — Dependabot lo reporta por metadata de vite, no porque esté instalado como paquete separado. Se cierra bumpando vite a 7.3.5 (que trae launch-editor parchado).
+
+### Cambios realizados
+
+1. **`apps/gold/package.json`** — `vite: ^7.3.2` → `^7.3.5`
+2. **`package.json` (root)** — `vite: ^7.3.2` → `^7.3.5` (el root también declaraba vite; era necesario bumpar ambos para que no quedara 7.3.2 residual)
+3. **`package.json` (root) → `pnpm.overrides`** — `ws: 8.20.1` → `8.21.0`
+
+### Incidente durante el install
+El primer `pnpm install` dejó **dos versiones de vite** en el lockfile (`7.3.2` del root + `7.3.5` de apps/gold) porque solo había bumpado apps/gold. Fix: bumpar también el root. Tras eso, vite 7.3.2 fue removida y quedó solo 7.3.5.
+
+### Verificación en el lockfile (post-install)
+```
+vite@7.3.5          (única versión — antes 7.3.2 + 7.3.5)
+ws@8.21.0           (antes 8.20.1)
+esbuild@0.28.1      (sin regresión del override del ciclo 1)
+form-data@4.0.5     (sin cambio)
+```
+
+### Resultado de build
+- `pnpm build:gold`: **OK** — banner confirma `vite v7.3.5` · agent-guard OK · agent-report-check OK · vite 185 modules 3.11s · check-llms OK · check-dist-utf8 ✅
+- Los hashes de los assets de la app son **idénticos** a los del build anterior → el bump de vite no cambió el bundle de producción (solo afecta al dev server y a la tooling de build).
+
+### #24 form-data — estado incierto (no resuelto en esta sesión)
+`form-data@4.0.5` viene de **jsdom** (dev-only, para tests). El CVE de CRLF injection que encontré (CVE-2025-7783 / [GHSA-fjxv-7rqg-78g4](https://github.com/advisories/GHSA-fjxv-7rqg-78g4)) se parcha en **`4.0.4`**, así que mi `4.0.5` **debería** estar parchada. Sin embargo, Dependabot reporta la alerta abierta — puede ser (a) un advisory distinto al que encontré, o (b) stale del scan. **No se bumpó** porque no pude confirmar el GHSA exacto desde aquí. El usuario debe hacer clic en la alerta #24 y verificar el GHSA-ID + rango afectado. Si `4.0.5` está en rango afectado, se bumpará en un ciclo siguiente.
+
+### Impacto real (honesto)
+- **#21 ws:** código muerto en bundle browser (Supabase usa `WebSocket` nativo). Riesgo runtime ≈ 0.
+- **#22 vite fs.deny:** dev-only, Windows. Permite leer archivos negados por `server.fs.deny` (ej: `.env`) si la URL termina en `\`. Solo explotable en `pnpm dev` local.
+- **#23 launch-editor NTLMv2:** dev-only, Windows. **El más relevante para el usuario**: puede filtrar el hash NTLMv2 si una petición maliciosa al dev server fuerza autenticación SMB a un host atacante. Solo en `pnpm dev` local en Windows.
+- **#24 form-data:** dev-only (jsdom para tests). Si es el CVE conocido, ya está parchada.
+- Ninguna toca producción ni datos de usuario.
+
+### Lección aprendida (§8.4 — reutilizable)
+**Bumpar vite en un workspace pnpm requiere bumpar TODOS los package.json que la declaran**, no solo el de la app. Si el root tiene `vite: ^7.3.2` y apps/gold tiene `^7.3.5`, pnpm resuelve ambas versiones y la vulnerable persiste. Regla: `Select-String -Path pnpm-lock.yaml -Pattern '^  vite@'` debe devolver **una sola** entrada tras un bump.
+
+### Scope respetado (NO se hizo)
+- No se bumpó `vitest`, `turbo`, `terser`, `jsdom`, `sharp` (sus versiones actuales son compatibles).
+- No se modificó código de la aplicación.
+- No se ejecutaron comandos git.
+- No se modificaron documentos canónicos.
+- No se bumpó form-data (estado incierto, ver nota arriba).
+
+### Git sugerido (NO ejecutado — §7)
+```bash
+git add package.json pnpm-lock.yaml apps/gold/package.json apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(deps): bump vite 7.3.5 (fs.deny + launch-editor NTLMv2) + ws override 8.21.0 (DoS)"
+git push origin main
+```
+Tras el push: Dependabot re-escanea. #21, #22, #23 deberían cerrar automáticamente. #24 form-data requiere verificación manual del GHSA.
+
+**Agente:** GLM-5.2 · **Proceso:** verificación en runtime (lockfile + advisories oficiales) antes de bumpar. Detección de dual-version vite en lockfile tras primer install.
 5. fix: eliminar duplicación de botón Volver en Operaciones de la Finca
 6. fix: sincronizar URL con estado interno de Operaciones de la Finca para Volver correcto
 7. docs+feat: actualización canónica completa + skill universal de patrones de error
