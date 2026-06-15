@@ -1422,8 +1422,8 @@ Pero `viewFarmCrops` disparaba `new Event('change')` — y por spec DOM, `Event`
 
 **Severidad real: LOW.** `sessionKey` es un guard de staleness DOM (se guarda en `host.dataset.clientAssignmentSession` y se compara consigo mismo en líneas posteriores). No se persiste, no es auth/token/PK. Aún así, el fix 2 elimina `Math.random()` por completo vía `crypto.getRandomValues` con fallback a timestamp monotónico (no criptográfico, pero suficiente para staleness; **sin** `Math.random()` en ningún camino → la alerta no reaparece).
 
-### Dependabot — `ws` MODERATE
-**`pnpm why ws`:** `@supabase/supabase-js → @supabase/realtime-js → ws@8.19.0`. En este SPA browser `@supabase/realtime-js` usa `WebSocket` nativo; `ws` es código muerto en el bundle. **Decisión:** esperar PRs automáticos de Dependabot. Las otras 3 alertas (esbuild x2 dev, brace-expansion transitiva) también esperan PR automático.
+### Dependabot — `ws` MODERATE (sección parcial; ver actualización abajo)
+**`pnpm why ws` (primer diagnóstico):** `@supabase/supabase-js → @supabase/realtime-js → ws@8.19.0`. En este SPA browser `@supabase/realtime-js` usa `WebSocket` nativo; `ws` es código muerto en el bundle. **Decisión inicial:** esperar PRs automáticos. **ACTUALIZACIÓN:** esta decisión resultó incorrecta — ver sección "Dependabot — cierre de las 4 alertas (override manual)" más abajo.
 
 ### Resultado de build
 - `pnpm build:gold` (intento 2): **OK** — agent-guard OK · agent-report-check OK · vite 185 modules 2.71s · check-llms OK · check-dist-utf8 ✅
@@ -1453,6 +1453,85 @@ git push origin main
 ```
 
 **Agente:** GLM-5.2 · **Proceso:** systematic-debugging (Fase 1 re-investigación tras fallo del intento 1).
+
+---
+
+## Sesión 2026-06-15 — Dependabot: cierre de las 4 alertas (override manual)
+
+**Objetivo:** Cerrar las 4 alertas Dependabot restantes (#14, #17, #19, #20).
+
+### Diagnóstico: por qué "esperar PRs automáticos" era incorrecto
+
+La recomendación inicial de "esperar PRs automáticos" se verificó como **incorrecta** mediante `gh pr list --author dependabot` → `[]` (**cero PRs abiertos**). La razón técnica: Dependabot no puede bumpar dependencias **transitivas** que el usuario no controla directamente. Verificación en `pnpm-lock.yaml` + advisories oficiales:
+
+| # | Paquete | Alerta | Versión instalada (antes) | Versión parchada | Origen de la versión vulnerable |
+|---|---------|--------|---------------------------|------------------|---------------------------------|
+| **#20** | esbuild | Deno RCE (HIGH, dev) | `0.27.7` | `0.28.1` (GHSA-gv7w-rqvm-qjhr) | **vite@7.3.2** arrastraba `0.27.7` como transitiva |
+| **#19** | esbuild | Windows file read (LOW, dev) | `0.27.7` | `0.28.1` (GHSA-g7r4-m6w7-qqqr, rango `>=0.27.3,<0.28.1`) | mismo — transitiva de vite |
+| **#14** | brace-expansion | DoS (MODERATE) | `5.0.5` (override existente) | `5.0.6` (CVE-2026-45149) | override a `5.0.5` quedó obsoleto tras nuevo CVE |
+| **#17** | ws | Memory disclosure (MODERATE) | `8.19.0` | `8.20.1` (CVE-2026-45736, GHSA-58qx-3vcg-4xpx) | `@supabase/realtime-js` pide `^8.18.2`; resolvió `8.19.0` |
+
+**Hallazgo clave:** el `package.json` ya declaraba `esbuild: 0.28.1` (directa, parchada), pero `vite@7.3.2` resolvía `esbuild@0.27.7` por separado (`pnpm-lock.yaml:2240`). Esa transitiva era la que disparaba #19 y #20. Sin un `pnpm.overrides` para `esbuild`, la versión parchada directa no ayudaba.
+
+### Cambios realizados
+
+`package.json` → bloque `pnpm.overrides` (3 cambios):
+```json
+"pnpm": {
+  "overrides": {
+    "@isaacs/brace-expansion": "5.0.6",   // BUMP (era 5.0.1)
+    "brace-expansion": "5.0.6",           // BUMP (era 5.0.5) — cierra #14
+    "esbuild": "0.28.1",                  // NUEVO — cierra #19 y #20 (vite transitivo)
+    "minimatch": "10.2.4",                // sin cambio
+    "picomatch": "4.0.4",                 // sin cambio
+    "rollup": "4.59.0",                   // sin cambio
+    "ws": "8.20.1"                        // NUEVO — cierra #17
+  }
+}
+```
+
+### Verificación en el lockfile (post-install)
+```
+esbuild@0.28.1      (única versión; antes había 0.27.7 + 0.28.1)
+ws@8.20.1           (antes 8.19.0)
+brace-expansion@5.0.6  (antes 5.0.5)
+vite deps esbuild: 0.28.1  (pnpm-lock.yaml:1974 — antes 0.27.7)
+```
+Las 4 versiones vulnerables **ya no se resuelven** en el lockfile.
+
+### Incidente durante el install (resuelto)
+El primer `pnpm install` dejó `apps/gold/node_modules/.bin` vacío y rompió el build (`vite no se reconoce`). **Causa raíz:** el entorno tiene `NODE_ENV=production`, así que pnpm omitió las devDependencies. Fix: reinstalar con `--config.production=false`. Tras eso, build OK.
+
+### Resultado de build
+- `pnpm build:gold`: **OK** — agent-guard OK · agent-report-check OK · vite 185 modules 2.78s · check-llms OK · check-dist-utf8 ✅
+- El override de esbuild 0.27.7 → 0.28.1 **no rompió vite** (compatibilidad semver dentro del mismo minor, mismo patrón que rollup/minimatch/picomatch ya presentes).
+
+### Impacto real (honesto)
+- **#19/#20 esbuild:** dev-only (build de Vite). No afecta producción. #19 es específico de Windows (tu dev env), #20 requiere control de `NPM_CONFIG_REGISTRY` en Deno (no aplica).
+- **#17 ws:** código muerto en el bundle browser (Supabase usa `WebSocket` nativo). Riesgo runtime ≈ 0.
+- **#14 brace-expansion:** transitiva de tooling de Node. Riesgo runtime ≈ 0.
+- Ninguna toca producción ni datos de usuario. El cierre es por higiene del árbol de dependencias y para dejar el dashboard de security alerts limpio.
+
+### Estado de las alertas tras el próximo push
+Las 4 alertas cerrarán **automáticamente** cuando GitHub re-escanee el `pnpm-lock.yaml` tras el push a `main` ( Dependabot valida contra el lockfile, no en tiempo real). No requiere acción manual adicional.
+
+### Scope respetado (NO se hizo)
+- No se bumpó `vite`, `vitest`, `turbo`, `terser`, `jsdom`, `sharp` (sus versiones actuales son compatibles con los overrides).
+- No se tocó código de la aplicación.
+- No se ejecutaron comandos git.
+- No se modificaron documentos canónicos.
+
+### Lección aprendida (§8.4)
+**"Esperar PRs automáticos" no es una decisión segura por defecto para dependencias transitivas.** Dependabot solo abre PRs para deps directas en `package.json`. Las transitivas (vía vite, supabase, etc.) requieren `pnpm.overrides` manual. Verificación obligatoria antes de recomendar "esperar": `gh pr list --author dependabot` — si devuelve `[]`, no hay nada que esperar.
+
+### Git sugerido (NO ejecutado — §7)
+```bash
+git add package.json pnpm-lock.yaml apps/gold/agro/agro-farms.js apps/gold/agro/agro-facturero-clientes-assignment.js apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(agro+deps): navegacion finca→cultivos + CodeQL randomUUID + overrides Dependabot (esbuild/ws/brace-expansion)"
+git push origin main
+```
+
+**Agente:** GLM-5.2 · **Proceso:** verificación en runtime (lockfile + node_modules + advisories) antes de proponer overrides.
 5. fix: eliminar duplicación de botón Volver en Operaciones de la Finca
 6. fix: sincronizar URL con estado interno de Operaciones de la Finca para Volver correcto
 7. docs+feat: actualización canónica completa + skill universal de patrones de error
