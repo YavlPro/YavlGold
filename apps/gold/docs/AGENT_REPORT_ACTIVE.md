@@ -1603,6 +1603,72 @@ git push origin main
 Tras el push: Dependabot re-escanea. #21, #22, #23 deberían cerrar automáticamente. #24 form-data requiere verificación manual del GHSA.
 
 **Agente:** GLM-5.2 · **Proceso:** verificación en runtime (lockfile + advisories oficiales) antes de bumpar. Detección de dual-version vite en lockfile tras primer install.
+
+---
+
+## Sesión 2026-06-15 — Dependabot ciclo 3: form-data #24 (última alerta)
+
+**Objetivo:** Cerrar la única alerta restante — #24 form-data CRLF injection.
+
+### Diagnóstico: mi hipótesis del ciclo 2 era incorrecta
+En el ciclo 2 dejé form-data como "estado incierto" porque encontré CVE-2025-7783 (Math.random en boundary, parchado en 4.0.4) y asumí que mi `4.0.5` lo cubría. **Era el CVE equivocado.** La alerta #24 es **CVE-2026-12143** (CRLF injection via unescaped field names/filenames) — un advisory **distinto y más nuevo**:
+
+| Campo | Valor |
+|---|---|
+| **Alerta** | #24 — form-data CRLF injection |
+| **CVE/GHSA** | CVE-2026-12143 / [GHSA-hmw2-7cc7-3qxx](https://github.com/advisories/GHSA-hmw2-7cc7-3qxx) |
+| **Descripción** | El argumento `field` de los métodos `FormData` no escapa CR/LF/`"`, permitiendo inyección de headers y partes multipart fantasma. El fix escapa como `%0D`, `%0A`, `%22` (WHATWG). |
+| **Versión afectada** | `<= 4.0.5` (mi versión actual SÍ estaba afectada) |
+| **Parche** | **`4.0.6`** (también 3.0.5, 2.5.6) |
+| **Origen** | `jsdom` (dev-only, para tests) |
+
+### Cambios realizados
+`package.json` (root) → `pnpm.overrides` — añadido `"form-data": "4.0.6"`.
+
+### Verificación previa al bump
+Antes de editar, verifiqué que **4.0.6 existe en npm** (`npm view form-data versions --json` lo lista). Mi lectura previa del registry (que mostraba "latest: 4.0.5") estaba cacheada/stale.
+
+### Verificación en el lockfile (post-install)
+```
+form-data@4.0.6        (antes 4.0.5)
+ws@8.21.0              (sin regresión — ciclo 2)
+vite@7.3.5             (sin regresión — ciclo 2)
+esbuild@0.28.1         (sin regresión — ciclo 1)
+brace-expansion@5.0.6  (sin regresión — ciclo 1)
+```
+
+### Resultado de build
+- `pnpm build:gold`: **OK** — vite v7.3.5 · 185 modules 2.90s · check-llms OK · check-dist-utf8 ✅
+- Assets de producción **idénticos** a los builds anteriores → form-data es dev-only (vía jsdom), no afecta el bundle.
+
+### Impacto real (honesto)
+- **#24 form-data:** dev-only (jsdom para tests). jsdom no procesa input multipart externo en runtime de este proyecto. Riesgo runtime ≈ 0. La app no usa `form-data` directamente ni expone endpoints que la consuman. Parche por higiene del árbol de dependencias.
+- No toca producción ni datos de usuario.
+
+### Lección aprendida (§8.4 — reutilizable)
+**Un paquete puede tener múltiples CVEs activos simultáneamente, cada uno con su propio rango afectado y versión parchada.** Asumir "ya está parchado" porque cubres un CVE conocido es un error — hay que verificar el **CVE exacto de la alerta**, no el primero que aparece al buscar. Procedimiento correcto: buscar por el título exacto de la alerta ("CRLF injection in form-data via unescaped multipart field names and filenames") en lugar de por nombre de paquete genérico.
+
+### Estado final de todas las alertas Dependabot de hoy
+- **Ciclo 1:** #14 (brace-expansion), #17 (ws 8.19), #19 (esbuild Windows), #20 (esbuild Deno) — **cerradas** (overrides).
+- **Ciclo 2:** #21 (ws 8.20 DoS), #22 (vite fs.deny), #23 (launch-editor NTLMv2) — **cerradas** (vite 7.3.5 + ws 8.21.0). #24 quedó pendiente.
+- **Ciclo 3 (esta sesión):** #24 (form-data CRLF) — **cerrada** (form-data 4.0.6).
+
+Todas las alertas Dependabot de la sesión quedan resueltas tras el próximo push a main.
+
+### Scope respetado (NO se hizo)
+- No se bumpó `jsdom` (su versión actual es compatible con form-data 4.0.6).
+- No se modificó código de la aplicación.
+- No se ejecutaron comandos git.
+- No se modificaron documentos canónicos.
+
+### Git sugerido (NO ejecutado — §7)
+```bash
+git add package.json pnpm-lock.yaml apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(deps): override form-data 4.0.6 (CRLF injection CVE-2026-12143)"
+git push origin main
+```
+
+**Agente:** GLM-5.2 · **Proceso:** identificación del CVE exacto (CVE-2026-12143, no el 2025-7783 que asumí antes) + verificación de existencia de 4.0.6 en npm antes de bumpar.
 5. fix: eliminar duplicación de botón Volver en Operaciones de la Finca
 6. fix: sincronizar URL con estado interno de Operaciones de la Finca para Volver correcto
 7. docs+feat: actualización canónica completa + skill universal de patrones de error
