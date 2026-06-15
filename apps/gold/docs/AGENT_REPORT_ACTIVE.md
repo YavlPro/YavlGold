@@ -2108,4 +2108,41 @@ Por cada facturero (Finca / Cultivo / Personal), desktop + mobile (≤480px):
 - `grep "Operación Comercial" docs-agro.html` → 0 resultados
 - Build gate: OK
 
+---
+
+## 2026-06-15 — Ampliar casos de uso en docs-agro.html
+
+**Objetivo:** La sección "Casos de uso" solo cubría 6 casos de flujo financiero clásico. Faltaban los casos operativos fundamentales: fincas, cultivos, 3 factureros, libreta de clientes y carrito.
+
+**Archivo tocado:**
+- `apps/gold/docs-agro.html` — sección "Casos de uso"
+
+**Casos agregados (7):**
+1. Gestión de fincas — crear y administrar propiedades en "Mis Fincas"
+2. Crear un cultivo — flujo real: finca primero → cultivo después
+3. Facturero de la Finca — gastos POR FINCA (infraestructura, mantenimiento)
+4. Facturero del Cultivo — gastos POR CULTIVO (insumos específicos)
+5. Facturero Personal — gastos SIN ASOCIAR (personales)
+6. Libreta de clientes — "Mis Clientes" como directorio de contactos
+7. Carrito de insumos — lista de intención de compra en "Mi Carrito"
+
+**Resultado:** Build OK (`pnpm build:gold` sin errores)
+
+**QA sugerido:**
+- Abrir `docs-agro.html` en navegador y verificar que los 13 casos (6 existentes + 7 nuevos) se renderizan correctamente
+- Verificar que "Mis Fincas" aparece como primer paso en el caso "Crear un cultivo"
+- Verificar que no hay "Operación Comercial" ni "Cartera Viva/Operativa" en los nuevos casos
+
+**NO se hizo:**
+- No se modificaron los 6 casos existentes
+- No se tocaron otras secciones del archivo
+- No se cambiaron estilos CSS
+
+**Comandos git sugeridos:**
+```bash
+git add apps/gold/docs-agro.html apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "docs(agro): ampliar casos de uso — fincas, cultivos, 3 factureros, libreta, carrito"
+git push origin main
+```
+
 
