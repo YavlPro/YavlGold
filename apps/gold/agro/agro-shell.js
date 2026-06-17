@@ -1444,10 +1444,13 @@ export function initAgroShell() {
                 } else {
                     setShellGate(activeMobileHub, { focus: true });
                 }
+            } else if (activeView === 'rankings') {
+                // Rankings is reached from Mis Clientes (via the header action button),
+                // so its "Volver" returns there instead of the granja hub.
+                setActiveView('clients', { scroll: true });
             } else {
                 setShellGate(activeMobileHub, { focus: true });
             }
-            closeSidebar();
             return;
         }
 

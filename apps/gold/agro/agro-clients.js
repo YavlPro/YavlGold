@@ -658,6 +658,10 @@ function renderModule() {
                     <button type="button" class="agro-clients-refresh" data-client-action="refresh" title="Actualizar clientes" aria-label="Actualizar clientes">
                         <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
                     </button>
+                    <button type="button" class="btn btn-gold" data-agro-view="rankings" title="Rankings de Clientes">
+                        <i class="fa-solid fa-chart-column" aria-hidden="true"></i>
+                        <span>Rankings de Clientes</span>
+                    </button>
                     <button type="button" class="btn btn-gold" data-client-action="new">
                         <i class="fa-solid fa-plus" aria-hidden="true"></i>
                         <span>Nuevo cliente</span>

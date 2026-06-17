@@ -456,20 +456,20 @@ body[data-agro-active-view='rankings'] .ops-header-rankings {
 .agro-ops-v10 .ops-cultivos-title,
 .agro-ops-v10 .ops-cultivos-history-title {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
-  font-size: var(--type-eyebrow);
-  letter-spacing: 0.14em;
+  font-family: inherit;
+  font-size: var(--type-eyebrow, 0.72rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(200, 167, 82, 0.72);
 }
 
 .agro-ops-v10 .ops-step-title {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
-  font-size: var(--type-body-sm);
+  font-family: inherit;
+  font-size: var(--type-body-sm, 0.8rem);
   font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: normal;
   color: rgba(255, 255, 255, 0.88);
 }
 
@@ -512,13 +512,13 @@ body[data-agro-active-view='rankings'] .ops-header-rankings {
 }
 
 .agro-ops-v10 .ops-cultivo-chip {
-  border: 1px solid rgba(200, 167, 82, 0.22);
-  background: rgba(12, 12, 12, 0.82);
-  color: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bg-0, #050505);
+  color: var(--text-secondary, #cccccc);
   border-radius: 999px;
-  min-height: 39px;
-  min-width: 112px;
-  padding: 0.34rem 0.64rem;
+  min-height: 2rem;
+  min-width: auto;
+  padding: 0.3rem 0.62rem;
   display: inline-flex;
   flex-direction: column;
   justify-content: center;
@@ -526,24 +526,25 @@ body[data-agro-active-view='rankings'] .ops-header-rankings {
   gap: 0.05rem;
   cursor: pointer;
   white-space: nowrap;
-  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+  font: inherit;
+  transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
 }
 
 .agro-ops-v10 .ops-cultivo-chip:hover {
-  border-color: rgba(200, 167, 82, 0.46);
+  border-color: rgba(200, 167, 82, 0.22);
   color: #fff;
 }
 
 .agro-ops-v10 .ops-cultivo-chip.is-active {
-  color: #0a0a0a;
-  border-color: transparent;
-  background: linear-gradient(135deg, var(--gold-primary, #C8A752), var(--gold-dark, #9a7f3c));
-  box-shadow: 0 6px 16px rgba(200, 167, 82, 0.16);
+  color: var(--gold-4, #C8A752);
+  border-color: rgba(200, 167, 82, 0.28);
+  background: rgba(200, 167, 82, 0.09);
+  box-shadow: none;
 }
 
 .agro-ops-v10 .ops-cultivo-chip-name {
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 0.78rem;
+  font-family: inherit;
+  font-size: 0.76rem;
   font-weight: 700;
   line-height: 1.05;
 }
