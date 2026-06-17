@@ -2146,3 +2146,139 @@ git push origin main
 ```
 
 
+
+---
+
+## Sesión 2026-06-15 — Bugs críticos + Seguridad + Documentación obsoleta
+
+**Estado:** ✅ TODOS LOS FRENTES CERRADOS
+
+### Resumen ejecutivo
+Día productivo con resolución completa de bugs críticos, vulnerabilidades de seguridad y corrección de documentación obsoleta. Se cerraron múltiples commits sin deuda técnica pendiente.
+
+### Trabajo completado
+
+#### 1. Bug crítico de navegación Finca→Cultivos
+- Fix A: Preservar opción "Todas las fincas" y restaurar selección correctamente.
+- Fix B: `new Event('change', { bubbles: true })` en `viewFarmCrops()` para listeners delegados.
+
+#### 2. CodeQL HIGH (insecure randomness)
+- Swap a `crypto.getRandomValues()` puro en `agro-facturero-clientes-assignment.js`.
+- Decisión: cambio por higiene del escáner, no por riesgo real en producción.
+
+#### 3. Dependabot alerts (9 alertas)
+- Overrides manuales en `pnpm.overrides`.
+- Dependabot no abre PRs para dependencias transitivas; solución canónica: overrides en root.
+- Bump de `vite` y overrides de `ws`, `form-data`, `brace-expansion`, `esbuild`.
+
+#### 4. Documentación obsoleta corregida
+- "Operación Comercial" → "MIS FACTUREROS".
+- Flujo de arranque corregido: finca primero, luego cultivo.
+- Eliminación de cuenta clarificada como no disponible en V1.
+
+#### 5. Ampliación de casos de uso
+- De 6 a 13 casos, cubriendo todo el flujo operativo real.
+
+### Agentes participantes
+- GLM 5.2: fixes críticos + seguridad.
+- Mimo 2.5: documentación + casos de uso.
+- Qwen 3.7 Max: diagnóstico y gobernanza.
+- Yerikson: decisiones canónicas.
+
+### Commits
+- Varios commits de fix, docs y dependencias.
+- Build passing con guardrails verdes.
+
+
+---
+
+## Sesión 2026-06-16 — Consistencia de Selectores Finca/Cultivo + Rediseño Cards Trabajo Diario
+
+**Estado:** 🟡 YELLOW — Trabajo en progreso. Sin commits. Build no ejecutado. QA visual pendiente.
+
+### Objetivo de la sesión
+Aplicar consistencia visual y funcional en selectores de fincas y cultivos a través de los factureros Agro, eliminar un artefacto visual no canónico (zanja dorada), y rediseñar las cards de Trabajo Diario a formato tipo todo-list compacto.
+
+### Alcance final confirmado (refinado por el usuario)
+- **Clientes:** selector de finca + chips de cultivo dinámicos + filtrado estricto.
+- **Finca:** selector de finca + chips de cultivo dinámicos.
+- **Cultivo:** selector de finca + chips de cultivo dinámicos.
+- **Personal:** solo eliminación de zanja (sin selectores, sin switch).
+- **Trabajo Diario:** selector de finca + cards todo-list compactas.
+- **Centro de Reportes:** sin selector (decisión previa).
+
+### Diagnóstico realizado
+- Los factureros Finca / Cultivo / Personal = un solo módulo `agroOperationalCycles.js` diferenciado por `viewContext.preset` (farm/crop/orphan).
+- La zanja dorada = `.agro-ops-header::after` en `agro-facturero-finca.css:201-211`.
+- Tareas no tienen `farm_id`; se deriva vía `crop_id → crop.farm_id`.
+
+### Cambios realizados (según log de GLM5.2)
+- `apps/gold/agro/agro-facturero-finca.css`: eliminación de `.agro-ops-header::after` (zanja dorada).
+- `apps/gold/agro/agro-operational-cycles.css`: estilos del context picker con `__group`, `__eyebrow`, `__strip`.
+- `apps/gold/agro/agroOperationalCycles.js`: ampliación de `renderContextPicker` a 2 dimensiones (finca + cultivo) y handlers split (`set-context-farm` / `set-context-crop`).
+- `apps/gold/agro/agro-facturero-clientes-view.js`: selector de finca + filtrado cruzado finca→cultivo.
+- `apps/gold/agro/agro-facturero-clientes.css`: layout toolbar_row para 2 selectores apilados.
+- `apps/gold/agro/agroTaskCycles.js`: selector de finca derivado + rediseño `renderTaskCard`.
+- `apps/gold/agro/agro-task-cycles.css`: cards compactas + head de grupo compacto.
+
+Estimado: +177 líneas añadidas, -94 líneas eliminadas (pendiente de verificación exacta).
+
+### Resultado de build
+❌ No ejecutado. GLM5.2 fue cortado por límite de créditos antes de correr `pnpm build:gold`.
+
+### QA
+❌ QA visual pendiente en desktop y mobile (≤480px). Requiere runtime de Playwright o validación humana con browser real.
+
+### Puntos críticos a verificar
+1. Los 3 factureros operacionales pierden el glow dorado del header.
+2. Clientes: selector de finca antes del de cultivo; al elegir finca, los chips de cultivo se reducen dinámicamente.
+3. Finca y Cultivo: chips dinámicos cruzados funcionan.
+4. Trabajo Diario: cards más compactas con indicador de estado a la izquierda; selector de finca funciona.
+5. Responsive ≤480px: consistencia en todos los factureros.
+
+### NO se hizo (scope respetado)
+- No se tocó `agro.js` con features nuevas.
+- No se creó "Facturero General" ni switch en Personal.
+- No se modificaron documentos canónicos.
+- No se hicieron DDL/migraciones Supabase.
+- No se crecieron `AGENT_REPORT_ACTIVE.md` ni daily logs (esperando commits del usuario).
+- No se agregó selector en Centro de Reportes.
+
+### Bloqueos activos
+1. GLM5.2 sin créditos — Reset programado: 11:37:36 del 17 de junio 2026.
+2. Build no ejecutado — No se puede confirmar que las ediciones compilan.
+3. QA visual pendiente.
+
+### Próximos pasos
+1. Esperar reset de créditos de GLM5.2.
+2. GLM5.2 diagnostica estado actual de las ediciones en JS (¿completas o truncadas?).
+3. GLM5.2 completa wiring faltante del filtrado cruzado finca→cultivo.
+4. GLM5.2 ejecuta `pnpm build:gold` y confirma que pasa.
+5. Usuario hace QA visual en desktop y mobile (≤480px).
+6. Usuario hace commit cuando confirme funcionamiento.
+
+### Prompt listo para GLM5.2 (cuando tenga créditos)
+```
+GLM, te quedaste sin créditos mientras implementabas selectores dinámicos en agroOperationalCycles.js. Necesito que:
+1. Verifiques el estado actual de las ediciones en JS.
+2. Completes cualquier wiring faltante del filtrado cruzado finca→cultivo.
+3. Ejecutes `pnpm build:gold` y confirmes que pasa sin errores.
+4. Me informes el estado final con lista de archivos modificados.
+NO hagas commit. Solo diagnostica, completa y haz build.
+```
+
+### Métricas de sesión
+- Agentes involucrados: GLM5.2 (ejecución), Qwen3.7 (diagnóstico, planificación, reporte).
+- Commits generados: 0.
+- Build ejecutados: 0.
+- Archivos tocados (estimado): 8.
+- Líneas añadidas (estimado): ~177.
+- Líneas eliminadas (estimado): ~94.
+
+### Advertencia de gobernanza
+**NO hacer commit todavía.** Las ediciones están sin verificar. Según la Regla de Confiabilidad Operativa: "Ninguna tarea se marca como cerrada sin demostrar funcionamiento."
+
+### Archivos generados en sesión
+- `apps/gold/docs/ops/daily-log-2026-06-16.md` (daily log temporal, no subir a GitHub).
+- Este informe final (registrado en `AGENT_REPORT_ACTIVE.md`).
+

@@ -122,7 +122,8 @@ function createDefaultListFilters() {
         range: 'all',
         taskType: 'all',
         effect: 'all',
-        cropId: 'all'
+        cropId: 'all',
+        farmId: 'all'
     };
 }
 
@@ -537,7 +538,8 @@ async function ensureUserId(initialUserId = '') {
 async function fetchCrops(userId) {
     let query = supabase
         .from('agro_crops')
-        .select(state.cropDeletedAtSupported ? 'id,name,variety,icon,deleted_at' : 'id,name,variety,icon')
+        // farm_id included so the finca selector can derive a task's finca from its crop.
+        .select(state.cropDeletedAtSupported ? 'id,name,variety,icon,farm_id,deleted_at' : 'id,name,variety,icon,farm_id')
         .eq('user_id', userId)
         .order('name');
 
@@ -734,11 +736,25 @@ function buildSearchHaystack(task) {
     ].filter(Boolean).join(' '));
 }
 
+function buildCropFarmMap() {
+    const map = new Map();
+    (Array.isArray(state.crops) ? state.crops : []).forEach((crop) => {
+        const cid = normalizeId(crop?.id);
+        if (cid) map.set(cid, normalizeId(crop?.farm_id));
+    });
+    return map;
+}
+
 function filterTasks(tasks = state.tasks, filters = state.listFilters, options = {}) {
     const search = normalizeSearchToken(filters.search);
     const taskType = normalizeTaskType(filters.taskType === 'all' ? '' : filters.taskType) || 'all';
     const effect = normalizeEconomicEffect(filters.effect === 'all' ? '' : filters.effect) || 'all';
     const cropId = normalizeId(filters.cropId);
+    const farmId = normalizeId(filters.farmId);
+    // A finca filter is resolved through the task's cultivo (crop_id → farm_id),
+    // since tasks have no direct farm_id column. Tasks without a cultivo never
+    // belong to a specific finca (only visible under "Vista general").
+    const cropFarmMap = farmId && farmId !== 'all' ? buildCropFarmMap() : null;
 
     return tasks.filter((task) => {
         if (!isDateWithinRange(task.task_date, filters.range)) return false;
@@ -748,6 +764,10 @@ function filterTasks(tasks = state.tasks, filters = state.listFilters, options =
         if (cropId === 'cropped' && !task.crop_id) return false;
         if (cropId === 'uncropped' && task.crop_id) return false;
         if (cropId && cropId !== 'all' && cropId !== 'uncropped' && cropId !== 'cropped' && task.crop_id !== cropId) return false;
+        if (cropFarmMap) {
+            const taskFarm = cropFarmMap.get(normalizeId(task.crop_id)) || '';
+            if (taskFarm !== farmId) return false;
+        }
         if (search && !buildSearchHaystack(task).includes(search)) return false;
         return true;
     });
@@ -1183,6 +1203,7 @@ function renderListFilters() {
     if (!state.refs?.listFilters) return;
     const statusCounts = buildTaskStatusCounts();
     const currentCropFilter = state.listFilters.cropId;
+    const currentFarmFilter = state.listFilters.farmId;
     const cropOptions = [
         `<option value="all"${currentCropFilter === 'all' ? ' selected' : ''}>Todos los cultivos</option>`,
         `<option value="cropped"${currentCropFilter === 'cropped' ? ' selected' : ''}>Con cultivo</option>`,
@@ -1194,8 +1215,44 @@ function renderListFilters() {
         })
     ];
 
+    // Finca selector: chips tipo tabbar. A task's finca is derived from its cultivo
+    // (crop_id → farm_id). "Vista general" shows everything. Strict rule (brief):
+    // never mix crops/tasks of another finca.
+    const farms = (typeof window._agroFarms?.getFarms === 'function')
+        ? window._agroFarms.getFarms()
+        : [];
+    const farmPills = [
+        `<button
+            type="button"
+            class="agro-task-range-pill${currentFarmFilter === 'all' ? ' is-active' : ''}"
+            data-task-action="filter-farm"
+            data-farm="all"
+        ><span>Vista general</span></button>`,
+        ...farms.map((farm) => {
+            const id = normalizeId(farm?.id);
+            if (!id) return '';
+            const label = String(farm?.name || '').trim() || 'Finca';
+            return `<button
+                type="button"
+                class="agro-task-range-pill${currentFarmFilter === id ? ' is-active' : ''}"
+                data-task-action="filter-farm"
+                data-farm="${escapeAttr(id)}"
+            ><span>${escapeHtml(label)}</span></button>`;
+        }).filter(Boolean)
+    ];
+
     state.refs.listFilters.innerHTML = `
         <div class="agro-task-filter-stack">
+            <div class="agro-task-filter-group">
+                <div class="agro-task-filter-group__head">
+                    <p class="agro-task-filter-group__eyebrow">Finca</p>
+                    <p class="agro-task-filter-group__copy">Enfoca las tareas por propiedad. Las tareas sin cultivo solo aparecen en Vista general.</p>
+                </div>
+                <div class="agro-task-range-pills" role="group" aria-label="Filtro de finca">
+                    ${farmPills.join('')}
+                </div>
+            </div>
+
             <div class="agro-task-filter-group">
                 <div class="agro-task-filter-group__head">
                     <p class="agro-task-filter-group__eyebrow">Estado</p>
@@ -1252,71 +1309,54 @@ function renderListFilters() {
     `;
 }
 
-function renderTaskMeta(task) {
-    const crop = resolveCropInfo(task.crop_id);
-    const effectLabel = readLabel(ECONOMIC_EFFECT_OPTIONS, task.economic_effect, task.economic_effect);
-    const amountText = task.economic_effect !== 'none' && task.amount != null
-        ? formatCurrencyValue(task.amount, task.currency || 'COP')
-        : 'Sin monto';
-    const durationText = task.duration_label || formatDurationMinutes(task.duration_minutes);
-    const typeLabel = readLabel(TASK_TYPE_OPTIONS, task.task_type, task.task_type);
-    const statusLabel = readLabel(TASK_STATUS_OPTIONS, task.task_status, task.task_status);
-
-    return `
-        <div class="agro-task-card__meta">
-            <span>${escapeHtml(typeLabel)}</span>
-            <span>${escapeHtml(statusLabel)}</span>
-            <span>${escapeHtml(durationText)}</span>
-            <span>${escapeHtml(crop.shortLabel)}</span>
-            <span>${escapeHtml(effectLabel)}${task.economic_effect !== 'none' ? ` · ${renderMoneyNode(amountText)}` : ''}</span>
-        </div>
-    `;
+function renderTaskStatusIndicator(taskStatus) {
+    const statusClass = TASK_STATUS_TONE_CLASS[taskStatus] || TASK_STATUS_TONE_CLASS.completed;
+    // Completed → checkmark; not_executed → strikethrough dash; active → dot; pending → empty ring.
+    const glyph = taskStatus === 'completed'
+        ? '<i class="fa-solid fa-check" aria-hidden="true"></i>'
+        : taskStatus === 'not_executed'
+            ? '<i class="fa-solid fa-minus" aria-hidden="true"></i>'
+            : taskStatus === 'active'
+                ? '<i class="fa-solid fa-circle" aria-hidden="true"></i>'
+                : '';
+    const label = readLabel(TASK_STATUS_OPTIONS, taskStatus, taskStatus);
+    return `<span class="agro-task-card__status-dot ${escapeAttr(statusClass)}" aria-label="${escapeAttr(label)}" title="${escapeAttr(label)}">${glyph}</span>`;
 }
 
 function renderTaskCard(task) {
     const crop = resolveCropInfo(task.crop_id);
+    const typeLabel = readLabel(TASK_TYPE_OPTIONS, task.task_type, task.task_type);
     const effectLabel = readLabel(ECONOMIC_EFFECT_OPTIONS, task.economic_effect, task.economic_effect);
-    const effectClass = EFFECT_TONE_CLASS[task.economic_effect] || EFFECT_TONE_CLASS.none;
-    const statusLabel = readLabel(TASK_STATUS_OPTIONS, task.task_status, task.task_status);
-    const statusClass = TASK_STATUS_TONE_CLASS[task.task_status] || TASK_STATUS_TONE_CLASS.completed;
-    const amountText = task.economic_effect !== 'none' && task.amount != null
+    const hasImpact = task.economic_effect && task.economic_effect !== 'none';
+    const amountText = hasImpact && task.amount != null
         ? formatCurrencyValue(task.amount, task.currency || 'COP')
-        : 'Sin impacto económico';
+        : '';
+    const durationText = task.duration_label || formatDurationMinutes(task.duration_minutes);
+
+    // Compact one-line metadata: cultivo · tipo · duración · impacto (si existe)
+    const metaParts = [
+        crop.shortLabel ? escapeHtml(crop.shortLabel) : '',
+        escapeHtml(typeLabel),
+        escapeHtml(durationText),
+        hasImpact ? `${escapeHtml(effectLabel)}${amountText ? ` · ${renderMoneyNode(amountText)}` : ''}` : ''
+    ].filter(Boolean).join(' · ');
 
     return `
-        <article class="agro-task-card">
-            <div class="agro-task-card__head">
-                <div>
-                    <p class="agro-task-card__eyebrow">${escapeHtml(formatDateLabel(task.task_date))}</p>
-                    <h4 class="agro-task-card__title">${escapeHtml(task.title)}</h4>
-                    ${renderTaskMeta(task)}
-                </div>
-                <div class="agro-task-card__actions">
-                    <button type="button" class="btn btn-sm" data-task-action="edit-task" data-task-id="${escapeAttr(task.id)}">Editar</button>
-                    <button type="button" class="btn btn-sm btn-danger" data-task-action="delete-task" data-task-id="${escapeAttr(task.id)}">Eliminar</button>
-                </div>
+        <article class="agro-task-card" data-task-id="${escapeAttr(task.id)}">
+            ${renderTaskStatusIndicator(task.task_status)}
+            <div class="agro-task-card__main">
+                <h4 class="agro-task-card__title">${escapeHtml(task.title)}</h4>
+                ${metaParts ? `<p class="agro-task-card__meta">${metaParts}</p>` : ''}
+                ${task.notes ? `<p class="agro-task-card__notes">${escapeHtml(task.notes)}</p>` : ''}
             </div>
-            <div class="agro-task-card__pills">
-                <span class="agro-task-pill ${escapeAttr(statusClass)}">${escapeHtml(statusLabel)}</span>
-                <span class="agro-task-pill">${escapeHtml(readLabel(TASK_TYPE_OPTIONS, task.task_type, task.task_type))}</span>
-                <span class="agro-task-pill ${escapeAttr(effectClass)}">${escapeHtml(effectLabel)}</span>
-                <span class="agro-task-pill ${crop.missing ? 'is-warn' : ''}">${escapeHtml(crop.label)}</span>
+            <div class="agro-task-card__actions">
+                <button type="button" class="agro-task-card__action" data-task-action="edit-task" data-task-id="${escapeAttr(task.id)}" aria-label="Editar tarea" title="Editar">
+                    <i class="fa-solid fa-pen" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="agro-task-card__action agro-task-card__action--danger" data-task-action="delete-task" data-task-id="${escapeAttr(task.id)}" aria-label="Eliminar tarea" title="Eliminar">
+                    <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                </button>
             </div>
-            <div class="agro-task-card__body">
-                <div class="agro-task-card__fact">
-                    <small>Estado</small>
-                    <strong class="${escapeAttr(statusClass)}">${escapeHtml(statusLabel)}</strong>
-                </div>
-                <div class="agro-task-card__fact">
-                    <small>Duración</small>
-                    <strong>${escapeHtml(task.duration_label || formatDurationMinutes(task.duration_minutes))}</strong>
-                </div>
-                <div class="agro-task-card__fact">
-                    <small>Impacto</small>
-                    <strong>${renderMoneyNode(amountText)}</strong>
-                </div>
-            </div>
-            ${task.notes ? `<p class="agro-task-card__notes">${escapeHtml(task.notes)}</p>` : ''}
         </article>
     `;
 }
@@ -1381,10 +1421,7 @@ function renderList() {
     state.refs.list.innerHTML = groups.map((group) => `
         <section class="agro-task-day-group">
             <header class="agro-task-day-group__head">
-                <div>
-                    <p class="agro-task-day-group__eyebrow">${escapeHtml(group.label)}</p>
-                    <h4 class="agro-task-day-group__title">${escapeHtml(formatDateLabel(group.date))}</h4>
-                </div>
+                <span class="agro-task-day-group__label">${escapeHtml(formatDateLabel(group.date))}</span>
                 <span class="agro-task-day-group__count">${group.items.length} tarea${group.items.length === 1 ? '' : 's'}</span>
             </header>
             <div class="agro-task-day-group__list">
@@ -1769,6 +1806,10 @@ function handleFilterChange(field, value) {
         const normalizedCrop = normalizeId(value);
         state.listFilters.cropId = !normalizedCrop ? 'all' : normalizedCrop;
         shouldRerenderFilters = true;
+    } else if (field === 'farmId') {
+        const normalizedFarm = normalizeId(value);
+        state.listFilters.farmId = !normalizedFarm ? 'all' : normalizedFarm;
+        shouldRerenderFilters = true;
     }
     if (shouldRerenderFilters) {
         renderListFilters();
@@ -1824,6 +1865,10 @@ async function handleRootClick(event) {
     }
     if (action === 'filter-status') {
         handleFilterChange('status', button.dataset.status);
+        return;
+    }
+    if (action === 'filter-farm') {
+        handleFilterChange('farmId', button.dataset.farm);
         return;
     }
     if (action === 'stats-range') {

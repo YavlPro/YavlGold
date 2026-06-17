@@ -2053,8 +2053,8 @@
   }
 
   .cartera-viva-toolbar__row {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: end;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
   }
 
   .cartera-viva-toolbar__row .cartera-viva-action-pair {

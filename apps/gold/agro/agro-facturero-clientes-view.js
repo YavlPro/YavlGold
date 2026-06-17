@@ -37,7 +37,9 @@ const CARTERA_VIVA_ROOT_ID = 'agro-cartera-viva-root';
 const CARTERA_VIVA_CATEGORY_KEY = 'YG_AGRO_CARTERA_VIVA_CATEGORY_V1';
 const CARTERA_VIVA_SEARCH_KEY = 'YG_AGRO_CARTERA_VIVA_SEARCH_V1';
 const CARTERA_VIVA_UNIT_FAMILY_KEY = 'YG_AGRO_CARTERA_VIVA_UNIT_FAMILY_V1';
+const CARTERA_VIVA_FARM_KEY = 'YG_AGRO_CARTERA_VIVA_FARM_V1';
 const CARTERA_VIVA_GENERAL_CROP_ID = '__general__';
+const CARTERA_VIVA_GENERAL_FARM_ID = '__general__';
 const CARTERA_VIVA_CROP_BLOCK_MESSAGE = 'Este cultivo aún no está en producción. Para registrar ventas o fiados en Facturero de Clientes, cambia el estado a En producción, Finalizado o Perdido.';
 const CARTERA_VIVA_ALLOWED_CROP_STATUSES = new Set(['produccion', 'finalizado', 'lost']);
 const PORTFOLIO_BALANCE_EPSILON = 0.000001;
@@ -79,6 +81,7 @@ let rootNode = null;
 let activeCategory = readStoredCategory();
 let searchQuery = readStoredSearch();
 let activeOperationalFamily = readStoredOperationalFamily();
+let selectedFarmId = readStoredFarm();
 let summaryRows = [];
 let loading = false;
 let hasLoadedSummary = false;
@@ -412,6 +415,86 @@ function getSelectedCropShortLabel() {
     const selectedCrop = getSelectedCrop();
     if (!selectedCrop) return 'este cultivo';
     return resolveCropDisplay(selectedCrop).shortLabel || 'este cultivo';
+}
+
+function readStoredFarm() {
+    try {
+        return String(localStorage.getItem(CARTERA_VIVA_FARM_KEY) || '').trim();
+    } catch (_error) {
+        return '';
+    }
+}
+
+function writeStoredFarm(value) {
+    try {
+        localStorage.setItem(CARTERA_VIVA_FARM_KEY, String(value || '').trim());
+    } catch (_error) {
+        // Ignore storage failures.
+    }
+}
+
+function normalizeFarmId(value) {
+    return String(value || '').trim();
+}
+
+function getSelectedFarmId() {
+    return normalizeFarmId(selectedFarmId);
+}
+
+function isGeneralFarmSelected() {
+    return !getSelectedFarmId();
+}
+
+function getAvailableFarms() {
+    if (typeof window === 'undefined' || typeof window._agroFarms?.getFarms !== 'function') return [];
+    const farms = window._agroFarms.getFarms();
+    return Array.isArray(farms) ? farms : [];
+}
+
+function resolveFarmDisplay(farm) {
+    const rawName = String(farm?.name || '').trim() || 'Finca';
+    return {
+        id: normalizeFarmId(farm?.id),
+        label: rawName
+    };
+}
+
+/**
+ * Returns the set of crop ids that belong to the currently selected finca.
+ * If no finca is selected ("Vista general"), returns null (meaning: all crops).
+ * Derivation: crop.farm_id === selectedFarmId, using the global crops snapshot
+ * (which already carries farm_id, since agro_crops is loaded with select('*')).
+ */
+function getCropIdsForSelectedFarm() {
+    const farmId = getSelectedFarmId();
+    if (!farmId) return null;
+    const crops = getAvailableCrops();
+    const ids = new Set();
+    crops.forEach((crop) => {
+        if (normalizeFarmId(crop?.farm_id) === farmId) {
+            const cid = normalizeCropId(crop?.id);
+            if (cid) ids.add(cid);
+        }
+    });
+    return ids;
+}
+
+/**
+ * Crops visible in the current scope (respecting the selected finca).
+ * Used to render the cultivo chips so they never show crops of another finca.
+ */
+function getVisibleCropsForCurrentScope() {
+    const farmCropIds = getCropIdsForSelectedFarm();
+    if (!farmCropIds) return getAvailableCrops();
+    return getAvailableCrops().filter((crop) => farmCropIds.has(normalizeCropId(crop?.id)));
+}
+
+function setSelectedFarmId(nextId) {
+    const normalized = normalizeFarmId(nextId);
+    if (normalized === selectedFarmId) return false;
+    selectedFarmId = normalized;
+    writeStoredFarm(selectedFarmId);
+    return true;
 }
 
 function normalizeLiveWalletCropStatus(value) {
@@ -879,7 +962,7 @@ function buildCropScopedSummaryOverlay(row, bucket = null) {
     });
 }
 
-async function fetchOperationalProgressMap(supabaseClient, cropId = null) {
+async function fetchOperationalProgressMap(supabaseClient, cropId = null, options = {}) {
     const safeCropId = normalizeCropId(cropId);
     const baseColumns = 'buyer_id,buyer_group_key,unit_type,unit_qty,quantity_kg,monto,monto_usd,buyer_match_status';
 
@@ -890,6 +973,20 @@ async function fetchOperationalProgressMap(supabaseClient, cropId = null) {
     const isOrphan = (row) => {
         const cid = String(row?.crop_id || '').trim();
         return cid && !validCropIds.has(cid);
+    };
+
+    // Scope resolution priority:
+    //   1. A specific cultivo selected (cropId) → .eq('crop_id', cropId).
+    //   2. A finca selected (options.cropIds) → .in('crop_id', cropIds) over the
+    //      crops of that finca. Strict rule (brief): never mix crops of other fincas.
+    //   3. Neither → no crop scoping (global).
+    const scopeCropIds = Array.isArray(options.cropIds)
+        ? options.cropIds.map((id) => String(id || '').trim()).filter(Boolean)
+        : [];
+    const applyCropScope = (query) => {
+        if (safeCropId) return query.eq('crop_id', safeCropId);
+        if (scopeCropIds.length) return query.in('crop_id', scopeCropIds);
+        return query;
     };
 
     const pendingQuery = supabaseClient
@@ -908,9 +1005,9 @@ async function fetchOperationalProgressMap(supabaseClient, cropId = null) {
         .is('deleted_at', null)
         .is('reverted_at', null);
 
-    const scopedPendingQuery = safeCropId ? pendingQuery.eq('crop_id', safeCropId) : pendingQuery;
-    const scopedIncomeQuery = safeCropId ? incomeQuery.eq('crop_id', safeCropId) : incomeQuery;
-    const scopedLossQuery = safeCropId ? lossQuery.eq('crop_id', safeCropId) : lossQuery;
+    const scopedPendingQuery = applyCropScope(pendingQuery);
+    const scopedIncomeQuery = applyCropScope(incomeQuery);
+    const scopedLossQuery = applyCropScope(lossQuery);
 
     const [pendingResult, incomeResult, lossResult] = await Promise.all([
         scopedPendingQuery,
@@ -1983,6 +2080,47 @@ function renderSearchBar() {
     `;
 }
 
+function renderFarmSelector() {
+    const farms = getAvailableFarms();
+    const selectedId = getSelectedFarmId();
+
+    // Always show the selector for layout consistency (even with a single finca,
+    // per brief). When there are no fincas yet, show only "Vista general" —
+    // matches the crop selector's loaded-but-empty behavior (no perpetual skeleton).
+    const buttons = [
+        `
+            <button
+                type="button"
+                class="cartera-viva-crop-chip${!selectedId ? ' is-active' : ''}"
+                data-cartera-farm="${CARTERA_VIVA_GENERAL_FARM_ID}">
+                Vista general
+            </button>
+        `
+    ];
+
+    farms.forEach((farm) => {
+        const display = resolveFarmDisplay(farm);
+        if (!display.id) return;
+        buttons.push(`
+            <button
+                type="button"
+                class="cartera-viva-crop-chip${selectedId === display.id ? ' is-active' : ''}"
+                data-cartera-farm="${escapeHtml(display.id)}">
+                ${escapeHtml(display.label)}
+            </button>
+        `);
+    });
+
+    return `
+        <div class="cartera-viva-crop-picker">
+            <span class="cartera-viva-crop-picker__label">Finca</span>
+            <div class="cartera-viva-crop-strip" role="group" aria-label="Contexto de finca para filtrar clientes">
+                ${buttons.join('')}
+            </div>
+        </div>
+    `;
+}
+
 function renderCropSelector() {
     const crops = getAvailableCrops();
     const snapshot = getCropSnapshot();
@@ -1998,6 +2136,10 @@ function renderCropSelector() {
         `;
     }
 
+    // When a finca is selected, the cultivo chips only show crops of that finca.
+    // Strict rule (brief): never mix crops of different fincas.
+    const scopedCrops = getVisibleCropsForCurrentScope();
+
     const buttons = [
         `
             <button
@@ -2009,7 +2151,7 @@ function renderCropSelector() {
         `
     ];
 
-    crops.forEach((crop) => {
+    scopedCrops.forEach((crop) => {
         const cropId = normalizeCropId(crop?.id);
         if (!cropId) return;
         const display = resolveCropDisplay(crop);
@@ -2086,6 +2228,9 @@ function renderToolbarControls() {
         <div class="cartera-viva-toolbar">
             ${renderSearchBar()}
             <div class="cartera-viva-toolbar__row">
+                <div data-cartera-farm-picker-slot>
+                    ${renderFarmSelector()}
+                </div>
                 <div data-cartera-crop-picker-slot>
                     ${renderCropSelector()}
                 </div>
@@ -2703,6 +2848,11 @@ function patchListView(root, state) {
         searchInput.value = searchQuery;
     }
 
+    const farmSlot = viewNode.querySelector('[data-cartera-farm-picker-slot]');
+    if (farmSlot) {
+        farmSlot.innerHTML = renderFarmSelector();
+    }
+
     const cropSlot = viewNode.querySelector('[data-cartera-crop-picker-slot]');
     if (cropSlot) {
         cropSlot.innerHTML = renderCropSelector();
@@ -2845,13 +2995,19 @@ async function loadSummary() {
 
     try {
         const selectedCropId = getSelectedCropId();
+        // Finca scope: the set of crop ids belonging to the selected finca (or null
+        // when "Vista general"). Only used when no specific cultivo is selected.
+        const farmCropIds = getCropIdsForSelectedFarm();
+        const operationalScope = !selectedCropId && farmCropIds
+            ? { cropIds: Array.from(farmCropIds) }
+            : {};
         const [nextSummaryRows, nextBuyerDirectoryRows, nextOperationalProgress] = await Promise.all([
             fetchBuyerPortfolioSummary(supabase),
             fetchBuyerDirectorySummaryRows().catch((error) => {
                 console.warn('[CarteraViva] buyer directory fallback unavailable:', error?.message || error);
                 return [];
             }),
-            fetchOperationalProgressMap(supabase, selectedCropId).catch((error) => {
+            fetchOperationalProgressMap(supabase, selectedCropId, operationalScope).catch((error) => {
                 console.warn('[CarteraViva] operational progress load failed:', error?.message || error);
                 return {
                     aggregateMap: new Map(),
@@ -3044,6 +3200,27 @@ function bindListViewEvents(root) {
                 if (!user?.id) return;
                 openCarteraVivaClientMergeModal({ supabase, userId: user.id });
             })();
+            return;
+        }
+
+        const farmButton = target.closest('[data-cartera-farm]');
+        if (farmButton) {
+            const farmId = farmButton.getAttribute('data-cartera-farm') === CARTERA_VIVA_GENERAL_FARM_ID
+                ? ''
+                : normalizeFarmId(farmButton.getAttribute('data-cartera-farm'));
+            if (!setSelectedFarmId(farmId)) return;
+
+            // Strict cross-filter: if the currently selected crop no longer belongs
+            // to the chosen finca, reset it to "Vista general" so the cultivo chips
+            // never imply a crop of another finca.
+            const selectedCropId = getSelectedCropId();
+            const farmCropIds = getCropIdsForSelectedFarm();
+            if (selectedCropId && farmCropIds && !farmCropIds.has(selectedCropId)) {
+                if (typeof window.setSelectedCropId === 'function') {
+                    window.setSelectedCropId(null, { silent: true });
+                }
+            }
+            void loadSummary();
             return;
         }
 

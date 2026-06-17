@@ -235,6 +235,44 @@ body.agro-operational-modal-open {
   background: transparent;
 }
 
+/* Context selector (finca + cultivo chips) for the specific factureros.
+   Reuses .agro-operational-family-toggle__btn for chip styling consistency. */
+.agro-operational-context-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin: 0 0 0.35rem;
+  padding: 0.45rem;
+  border: 1px solid var(--border-neutral);
+  border-radius: var(--radius-md);
+  background: transparent;
+}
+
+.agro-operational-context-picker[hidden] {
+  display: none;
+}
+
+.agro-operational-context-picker__group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.agro-operational-context-picker__eyebrow {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding-left: 0.1rem;
+}
+
+.agro-operational-context-picker__strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
 .agro-operational-family-toggle__btn {
   display: inline-flex;
   align-items: center;

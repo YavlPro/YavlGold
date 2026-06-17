@@ -172,6 +172,10 @@ const state = {
     currentView: '',
     currentSubview: SUBVIEW_ACTIVE,
     familyFilter: FAMILY_ALL,
+    // Context selector state (header chips): a specific finca or cultivo chosen
+    // by the user to narrow the visible cycles. '' = "Vista general".
+    selectedContextFarmId: '',
+    selectedContextCropId: '',
     viewContext: null,
     editId: '',
     schemaMissing: false,
@@ -1008,7 +1012,8 @@ async function ensureUserId(initialUserId = '') {
 async function fetchCrops(supabase, userId) {
     let query = supabase
         .from('agro_crops')
-        .select(state.cropDeletedAtSupported ? 'id,name,variety,icon,deleted_at' : 'id,name,variety,icon')
+        // farm_id included so context selectors can map crop → finca consistently.
+        .select(state.cropDeletedAtSupported ? 'id,name,variety,icon,farm_id,deleted_at' : 'id,name,variety,icon,farm_id')
         .eq('user_id', userId)
         .order('name');
 
@@ -1454,6 +1459,7 @@ function renderShell() {
                 <button type="button" class="btn-privacy-toggle" data-money-privacy-control="toggle" aria-pressed="false">Ocultar montos</button>
             </div>
             <div class="agro-operational-family-toggle" id="agro-operational-family-toggle" role="group" aria-label="Filtros por asociación del Facturero de la Finca"></div>
+            <div class="agro-operational-context-picker" id="agro-operational-context-picker" role="group" aria-label="Selector de contexto del Facturero"></div>
             <div class="agro-operational-subview-switch" id="agro-operational-subview-switch" role="group" aria-label="Lecturas del Facturero de la Finca"></div>
 
             <section id="agro-operational-list-section" class="agro-operational-list-section">
@@ -1499,6 +1505,7 @@ function renderShell() {
         overviewBody: document.getElementById('agro-operational-overview-body'),
         overviewSection: document.getElementById('agro-operational-overview-panel'),
         familyToggle: document.getElementById('agro-operational-family-toggle'),
+        contextPicker: document.getElementById('agro-operational-context-picker'),
         subviewHost: document.getElementById('agro-operational-subview-switch'),
         listEyebrow: document.getElementById('agro-operational-list-eyebrow'),
         listTitle: document.getElementById('agro-operational-list-title'),
@@ -2070,12 +2077,28 @@ function getCycleAssociationType(cycle) {
     return FAMILY_ORPHAN;
 }
 
+function filterCyclesByContext(cycles) {
+    if (!Array.isArray(cycles)) return [];
+    const farmId = normalizeId(state.selectedContextFarmId);
+    const cropId = normalizeId(state.selectedContextCropId);
+    if (!farmId && !cropId) return cycles;
+    return cycles.filter((cycle) => {
+        const matchesFarm = !farmId || normalizeId(cycle?.farm_id) === farmId;
+        const matchesCrop = !cropId || normalizeId(cycle?.crop_id) === cropId;
+        return matchesFarm && matchesCrop;
+    });
+}
+
 function filterCyclesByFamily(cycles, family) {
     if (!Array.isArray(cycles)) return [];
-    if (family === FAMILY_LINKED) return cycles.filter((c) => getCycleAssociationType(c) === FAMILY_LINKED);
-    if (family === FAMILY_FARM) return cycles.filter((c) => getCycleAssociationType(c) === FAMILY_FARM);
-    if (family === FAMILY_ORPHAN) return cycles.filter((c) => getCycleAssociationType(c) === FAMILY_ORPHAN);
-    return cycles;
+    let result = cycles;
+    if (family === FAMILY_LINKED) result = result.filter((c) => getCycleAssociationType(c) === FAMILY_LINKED);
+    else if (family === FAMILY_FARM) result = result.filter((c) => getCycleAssociationType(c) === FAMILY_FARM);
+    else if (family === FAMILY_ORPHAN) result = result.filter((c) => getCycleAssociationType(c) === FAMILY_ORPHAN);
+    // Apply the context selector (specific finca/cultivo from the header chip)
+    // on top of the family partition. This is the strict rule (brief): selecting
+    // finca A never shows cycles of finca B.
+    return filterCyclesByContext(result);
 }
 
 function getFamilyLabel(family) {
@@ -2169,6 +2192,107 @@ function renderFamilyToggle() {
             <span class="agro-operational-family-toggle__count">${option.count}</span>
         </button>
     `).join('');
+}
+
+function buildCropChipLabel(crop) {
+    const display = buildCropDisplay(crop);
+    return display.label || display.name || 'Cultivo';
+}
+
+// Crops available for the cultivo chips, narrowed by the selected finca when one
+// is active. Strict rule (brief): never show cultivos of another finca.
+function getScopedCropsForContext() {
+    const allCrops = Array.isArray(state.crops) ? state.crops : [];
+    const farmId = normalizeId(state.selectedContextFarmId);
+    if (!farmId) return allCrops;
+    return allCrops.filter((crop) => normalizeId(crop?.farm_id) === farmId);
+}
+
+function renderContextPicker() {
+    if (!state.refs?.contextPicker) return;
+    const host = state.refs.contextPicker;
+    const preset = state.viewContext?.preset;
+
+    // Only render for the specific factureros (Finca / Cultivo). Personal (orphan)
+    // has no finca/cultivo to filter by, so the picker stays hidden — consistent
+    // with its semantic definition (MANIFIESTO §4.5: orphan = no association).
+    if (!preset || preset === 'orphan') {
+        host.hidden = true;
+        host.setAttribute('aria-hidden', 'true');
+        host.innerHTML = '';
+        return;
+    }
+
+    host.hidden = false;
+    host.setAttribute('aria-hidden', 'false');
+
+    const GENERAL_VALUE = '__general__';
+    const farms = (typeof window._agroFarms?.getFarms === 'function')
+        ? window._agroFarms.getFarms()
+        : [];
+    const scopedCrops = getScopedCropsForContext();
+
+    const farmButtons = [`
+        <button
+            type="button"
+            class="agro-operational-family-toggle__btn${!state.selectedContextFarmId ? ' is-active' : ''}"
+            data-operational-action="set-context-farm"
+            data-context-value="${GENERAL_VALUE}"
+            aria-pressed="${!state.selectedContextFarmId ? 'true' : 'false'}">
+            <span class="agro-operational-family-toggle__label">Vista general</span>
+        </button>
+    `];
+    farms.forEach((farm) => {
+        const id = normalizeId(farm?.id);
+        if (!id) return;
+        const label = String(farm?.name || '').trim() || 'Finca';
+        farmButtons.push(`
+            <button
+                type="button"
+                class="agro-operational-family-toggle__btn${state.selectedContextFarmId === id ? ' is-active' : ''}"
+                data-operational-action="set-context-farm"
+                data-context-value="${escapeAttr(id)}"
+                aria-pressed="${state.selectedContextFarmId === id ? 'true' : 'false'}">
+                <span class="agro-operational-family-toggle__label">${escapeHtml(label)}</span>
+            </button>
+        `);
+    });
+
+    const cropButtons = [`
+        <button
+            type="button"
+            class="agro-operational-family-toggle__btn${!state.selectedContextCropId ? ' is-active' : ''}"
+            data-operational-action="set-context-crop"
+            data-context-value="${GENERAL_VALUE}"
+            aria-pressed="${!state.selectedContextCropId ? 'true' : 'false'}">
+            <span class="agro-operational-family-toggle__label">Vista general</span>
+        </button>
+    `];
+    scopedCrops.forEach((crop) => {
+        const id = normalizeId(crop?.id);
+        if (!id) return;
+        cropButtons.push(`
+            <button
+                type="button"
+                class="agro-operational-family-toggle__btn${state.selectedContextCropId === id ? ' is-active' : ''}"
+                data-operational-action="set-context-crop"
+                data-context-value="${escapeAttr(id)}"
+                aria-pressed="${state.selectedContextCropId === id ? 'true' : 'false'}">
+                <span class="agro-operational-family-toggle__label">${escapeHtml(buildCropChipLabel(crop))}</span>
+            </button>
+        `);
+    });
+
+    host.innerHTML = `
+        <div class="agro-operational-context-picker__group" role="group" aria-label="Filtrar por finca">
+            <span class="agro-operational-context-picker__eyebrow">Finca</span>
+            <div class="agro-operational-context-picker__strip">${farmButtons.join('')}</div>
+        </div>
+        <div class="agro-operational-context-picker__group" role="group" aria-label="Filtrar por cultivo">
+            <span class="agro-operational-context-picker__eyebrow">Cultivo</span>
+            <div class="agro-operational-context-picker__strip">${cropButtons.join('')}</div>
+        </div>
+    `;
 }
 
 function getDonationCycles() {
@@ -3081,6 +3205,7 @@ function renderAll() {
     renderWizard();
     syncHeaderTitle();
     renderFamilyToggle();
+    renderContextPicker();
     renderOverview();
     renderCurrentSubview();
 }
@@ -3278,6 +3403,7 @@ async function refreshData(options = {}) {
         }
 
         renderFamilyToggle();
+        renderContextPicker();
         renderOverview();
         renderCurrentSubview();
     } catch (error) {
@@ -3290,6 +3416,7 @@ async function refreshData(options = {}) {
         rebuildCycleIndex();
         renderWizard();
         renderFamilyToggle();
+        renderContextPicker();
         renderOverview();
         renderCurrentSubview();
         setFeedback(normalizeOperationalError(error), 'error');
@@ -3297,6 +3424,7 @@ async function refreshData(options = {}) {
         state.loading = false;
         setControlsDisabled(state.schemaMissing || state.saving);
         renderFamilyToggle();
+        renderContextPicker();
         renderCurrentSubview();
         renderOverview();
         emitPortfolioSnapshot();
@@ -3390,6 +3518,36 @@ async function handleRootClick(event) {
     if (action === 'set-family') {
         state.familyFilter = normalizeFamilyFilter(button.dataset.family);
         renderFamilyToggle();
+        renderSubviewSwitch();
+        renderOverview();
+        renderCurrentSubview();
+        return;
+    }
+
+    if (action === 'set-context-farm') {
+        const rawValue = String(button.dataset.contextValue || '').trim();
+        const GENERAL_VALUE = '__general__';
+        state.selectedContextFarmId = rawValue === GENERAL_VALUE ? '' : normalizeId(rawValue);
+        // Strict cross-filter: if the selected cultivo no longer belongs to the
+        // chosen finca, reset it to "Vista general" so the cultivo chips never
+        // imply a cultivo of another finca.
+        if (state.selectedContextCropId) {
+            const stillInScope = getScopedCropsForContext()
+                .some((crop) => normalizeId(crop?.id) === state.selectedContextCropId);
+            if (!stillInScope) state.selectedContextCropId = '';
+        }
+        renderContextPicker();
+        renderSubviewSwitch();
+        renderOverview();
+        renderCurrentSubview();
+        return;
+    }
+
+    if (action === 'set-context-crop') {
+        const rawValue = String(button.dataset.contextValue || '').trim();
+        const GENERAL_VALUE = '__general__';
+        state.selectedContextCropId = rawValue === GENERAL_VALUE ? '' : normalizeId(rawValue);
+        renderContextPicker();
         renderSubviewSwitch();
         renderOverview();
         renderCurrentSubview();
@@ -3542,6 +3700,10 @@ function bindEvents() {
         } else {
             state.viewContext = null;
         }
+        // Reset the context selector state on every view change so a finca/cultivo
+        // filter chosen in one facturero never leaks into another surface.
+        state.selectedContextFarmId = '';
+        state.selectedContextCropId = '';
 
         if (state.currentView === PERIOD_VIEW_NAME) {
             closeComposerModal();
@@ -3558,6 +3720,7 @@ function bindEvents() {
 
         syncHeaderTitle();
         renderFamilyToggle();
+        renderContextPicker();
         renderOverview();
         renderCurrentSubview();
         void refreshData();
@@ -3744,11 +3907,17 @@ export async function initAgroOperationalCycles(options = {}) {
         if (initContext) {
             state.viewContext = initContext;
             state.familyFilter = initContext.family;
+            // Reset the context selector state when entering a facturero so a
+            // finca filter chosen in one facturero never leaks into another.
+            state.selectedContextFarmId = '';
+            state.selectedContextCropId = '';
         } else {
             const initialMode = normalizeToken(document.body?.dataset?.agroMode || 'general');
             if (initialMode === 'cultivo') state.familyFilter = FAMILY_LINKED;
             else if (initialMode === 'no-cultivo') state.familyFilter = FAMILY_ALL;
             else state.familyFilter = FAMILY_ALL;
+            state.selectedContextFarmId = '';
+            state.selectedContextCropId = '';
         }
 
         syncStandalonePeriodCyclesView();
