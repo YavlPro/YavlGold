@@ -20,13 +20,15 @@ Modulo operativo principal de YavlGold. Herramienta agricola digital construida 
 - Tasas de cambio (COP, USD, VES).
 - Notificaciones, feedback, interacciones.
 - Papelera de eliminados con restore (soft-delete via Supabase).
+- Trabajo Diario con selector de finca y cards compactas.
+- Mis Contactos (libreta de contactos).
 
 ## Stack
 
 - Vanilla JS (ES6+ Modules) con carga dinamica de submodulos.
 - Vite MPA.
 - Supabase (Auth, DB, Storage).
-- CSS con tokens del ADN Visual V10.
+- CSS con tokens del ADN Visual V11.
 
 ## Estructura
 
@@ -37,7 +39,7 @@ agro/
   agro-*.js            — submodulos (feedback, market, planning, etc.)
   agro.css             — estilos principales
   agro-dashboard.css   — estilos del dashboard
-  agro-operations.css  — estilos de operaciones financieras
+  agro-facturero-finca.css — estilos de factureros operacionales
 ```
 
 ## Submodulos
@@ -45,22 +47,25 @@ agro/
 | Archivo | Funcion |
 | --- | --- |
 | `agro.js` | Monolito: facturero, CRUD, historial |
-| `agro-feedback.js` | Feedback y encuestas |
-| `agro-market.js` | Inteligencia de mercado |
-| `agro-planning.js` | Planificacion |
-| `agro-interactions.js` | Interacciones |
-| `agro-stats.js` | Estadisticas financieras |
-| `agro-notifications.js` | Notificaciones |
-| `agro-trash.js` | Papelera de eliminados |
-| `agro-cart.js` | Carrito de insumos |
-| `agro-agenda.js` | Agenda agricola |
+| `agro-clients.js` | Mis Clientes: directorio de contactos |
 | `agro-clima.js` | Integracion meteorologica |
 | `agro-crop-report.js` | Reportes por cultivo |
 | `agro-exchange.js` | Tasas de cambio |
+| `agro-facturero-clientes-view.js` | Facturero de Clientes: vista, tabs, wizard |
+| `agro-farms.js` | CRUD de fincas, selector, estadisticas |
+| `agro-feedback.js` | Feedback y encuestas |
+| `agro-interactions.js` | Interacciones |
+| `agro-market.js` | Inteligencia de mercado |
+| `agro-notifications.js` | Notificaciones |
+| `agroOperationalCycles.js` | Factureros Finca/Cultivo/Personal |
+| `agro-planning.js` | Planificacion |
 | `agro-privacy.js` | Privacidad de datos |
-| `agro-selection.js` | Seleccion de cultivos |
-| `agro-shell.js` | Shell UI |
+| `agro-reports-center.js` | Centro de Reportes |
+| `agro-shell.js` | Shell UI: navegacion hub/module |
+| `agro-stats.js` | Estadisticas financieras |
 | `agro-stats-report.js` | Reportes estadisticos |
+| `agro-task-cycles.js` | Trabajo Diario: tareas y ciclos |
+| `agro-trash.js` | Papelera de eliminados |
 | `agro-unit-totals.js` | Totales por unidad |
 | `agro-wizard.js` | Wizard de configuracion |
 
@@ -69,5 +74,5 @@ agro/
 - No agregar features nuevas al monolito `agro.js`; crear submodulos separados.
 - Imports dinamicos en el bootstrap de `index.html`.
 - Para compartir funciones del monolito con submodulos, usar `window._agroXxx` como puente.
-- Estilos en CSS separados con tokens V10.
+- Estilos en CSS separados con tokens V11.
 - Build obligatorio: `pnpm build:gold`.

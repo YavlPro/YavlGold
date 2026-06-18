@@ -45,6 +45,7 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-05-05__2026-06-03.md`
 
 ## Últimos cambios importantes todavía relevantes
 
+- **2026-06-18**: Auditoría y corrección de documentación: README.md, agro/README.md (tokens V11, módulos actualizados), FICHA_TECNICA.md (hub structure, duplicados), llms.txt (navegación actualizada).
 - **2026-06-18**: Actualización de documentación canónica: MANIFIESTO_AGRO.md §4.6 (selector finca + cards) y docs-agro.html (hub reorganizado, Rankings movido).
 - **2026-06-04**: Fase 1 COMPLETADA y validada en producción con 5 commits pusheados a main.
 - **2026-06-04**: Fix de migración fantasma: nueva migración SQL para ciclos operativos.

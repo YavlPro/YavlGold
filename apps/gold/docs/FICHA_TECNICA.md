@@ -141,7 +141,7 @@ Regla estricta:
 - Facturero de la Finca: registros POR FINCA (farm_id ✓, crop_id ✗) — ruta `#view=facturero-finca`
 - Facturero del Cultivo: registros POR CULTIVO (crop_id ✓) — ruta `#view=facturero-cultivo`
 - Facturero Personal: registros SIN ASOCIAR (ambos null) — ruta `#view=facturero-personal`
-- Rankings y estadísticas financieras
+- Rankings y estadísticas financieras (Rankings se accede desde Mis Clientes)
 - Carrito de compras con lista de insumos
 - Planificación y agenda agrícola
 - Inteligencia de mercado
@@ -172,13 +172,12 @@ agro-planning.js     — planificación
 agro-privacy.js      — privacidad de datos
 agro-reports-center.js — Centro de Reportes: índice de reportes generales oficiales (estadísticas globales, perfil agricultor, rankings). No consulta Supabase, no selecciona cultivos, no inventa Markdown.
 agro-selection.js    — selección de cultivos
-agro-shell.js        — shell UI de Agro: gestiona navegación hub/module con puertas Inicio · Granja · Memoria · Menú con persistencia por hash, hub central Mi Granja con Mis fincas y cultivos (Mis Fincas, Mis cultivos, Operaciones de la Finca), Mis finanzas y Trabajo y lectura, barra inferior mobile, topbar contextual con Volver en módulos profundos, launcher/favoritos/búsqueda compacta cuando aplican, y entrada inicial al Dashboard Agro
+agro-shell.js        — shell UI de Agro: gestiona navegación hub/module con puertas Inicio · Granja · Memoria · Menú con persistencia por hash, hub central Mi Granja con Mis fincas y cultivos (Mis Fincas, Mis cultivos, Operaciones de la Finca), Mi Planificación (Mi Carrito, Clima Agro) y Trabajo y lectura (Mis Clientes, Trabajo Diario, Centro de Reportes), barra inferior mobile, topbar contextual con Volver en módulos profundos, launcher/favoritos/búsqueda compacta cuando aplican, y entrada inicial al Dashboard Agro
 agro-stats.js        — estadísticas financieras
 agro-stats-report.js — reportes estadísticos
 agro-trash.js        — papelera de eliminados
 agro-unit-totals.js  — totales por unidad
 agro-wizard.js       — wizard de configuración
-agro-farms.js        — CRUD de fincas, selector, estadísticas por finca, auto-migración
 ```
 
 **Archivos CSS:**
@@ -431,5 +430,5 @@ git status
 
 ---
 
-**Versión de Ficha:** 1.5
-**Última Actualización:** 30/05/2026
+**Versión de Ficha:** 1.6
+**Última Actualización:** 18/06/2026
