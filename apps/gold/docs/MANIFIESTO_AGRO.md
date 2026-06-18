@@ -114,18 +114,19 @@ El valor de Agro no está solo en registrar. Está en conectar lo que pasa en el
     * Operaciones de la Finca (activos, finalizados) — contiene:
       + Crear ciclo del mes / Estadísticas de períodos / Comparar períodos
   * Mis factureros
-    * Facturero de Clientes (ver §4.5.1)
-    * Facturero de la Finca — registros POR FINCA (farm_id ✓, crop_id ✗)
-    * Facturero del Cultivo — registros POR CULTIVO (crop_id ✓)
+    * Facturero de Clientes (ver §4.5.1) — selectores dinámicos de finca y cultivo
+    * Facturero de la Finca — registros POR FINCA (farm_id ✓, crop_id ✗) — selectores dinámicos de finca y cultivo
+    * Facturero del Cultivo — registros POR CULTIVO (crop_id ✓) — selectores dinámicos de finca y cultivo
     * Facturero Personal — registros SIN ASOCIAR (ambos null)
-  * Mis finanzas
-    * Mis Clientes (ver §4.5.4)
+  * Mi Planificación
     * Mi Carrito (ver §4.5.3)
+    * Clima Agro (ver §4.8)
   * Trabajo y lectura
-    * Trabajo Diario
-    * Rankings de Clientes
-    * Clima Agro
-    * Centro de Reportes
+    * Mis Clientes (ver §4.5.4)
+    * Trabajo Diario (ver §4.6)
+    * Centro de Reportes (ver §4.9)
+
+> **Nota (2026-06-17):** Rankings de Clientes ya no aparece en el hub. Se accede desde el botón "Rankings de Clientes" dentro de la vista Mis Clientes.
 
 ### 3.2 Pregunta central del sistema
 
@@ -412,6 +413,18 @@ No es el registro de crecimiento de un cultivo ni tu lista de tareas. Es, concre
 
 NO existe Facturero General, vista "Todos", ni toggles que mezclen contextos dentro de los factureros. La separación es estructural, no un filtro. Cada facturero muestra exclusivamente los registros de su tipo.
 
+### Selectores dinámicos de finca y cultivo
+
+**Facturero de Clientes, Facturero de la Finca y Facturero del Cultivo** incluyen selectores de finca y cultivo que funcionan de manera dinámica:
+
+1. **Selector de finca**: muestra todas las fincas del agricultor como chips seleccionables. La primera opción siempre es "Vista general" (todas las fincas).
+2. **Selector de cultivo**: se actualiza dinámicamente según la finca seleccionada. Solo muestra los cultivos que pertenecen a esa finca (`crop.farm_id === selectedFarmId`). La primera opción siempre es "Vista general" (todos los cultivos de la finca).
+3. **Filtrado de registros**: los registros mostrados se filtran por la finca y cultivo seleccionados. Si seleccionas finca X y cultivo Y, solo ves los registros asociados a ese cultivo específico.
+4. **Regla estricta de no mezcla**: nunca se muestran cultivos de otra finca. Si cambias de finca, los chips de cultivo se actualizan inmediatamente para reflejar solo los cultivos de la nueva finca.
+5. **Comportamiento de "Vista general"**: si seleccionas "Vista general" de finca, ves todos los registros de todas las fincas. Si seleccionas una finca específica pero "Vista general" de cultivo, ves todos los registros de esa finca (todos sus cultivos).
+
+**Facturero Personal** no tiene selectores de finca/cultivo porque trabaja exclusivamente con registros sin asociación (`farm_id null, crop_id null`).
+
 ### Misión
 
 Registrar y seguir la realidad financiera del agricultor.
@@ -689,6 +702,12 @@ No es el registro de la cartera financiera. No es tu ciclo productivo. No es un 
 * Marcar actividades como completadas.
 * Ver qué tareas tienes pendientes.
 * Mantener una organización centralizada sin depender del papel.
+
+### Selector de finca y cards compactas
+
+Trabajo Diario incluye un selector de finca derivado del cultivo de cada tarea (`crop_id → crop.farm_id`). Las tareas sin cultivo solo aparecen en "Vista general". Las cards muestran un formato compacto tipo todo-list con indicador de estado a la izquierda, título, metadata en una línea (cultivo, tipo, duración, impacto) y acciones de editar/eliminar.
+
+> **Nota (2026-06-17):** Las tareas no tienen campo `farm_id` directo. La finca de cada tarea se deriva del lookup en `state.crops` mediante el `crop_id` de la tarea.
 
 ---
 
@@ -1032,9 +1051,11 @@ El patrón hub/module organiza Agro en dos estados de experiencia:
 #### Puertas principales del hub
 
 - **Inicio:** entrada rápida, dashboard, nuevo registro y nuevo cultivo.
-- **Granja:** cultivos, períodos, Facturero de Clientes, Facturero de la Finca, Mi Carrito, Mis Clientes, Trabajo Diario, Rankings y Clima Agro.
+- **Granja:** cultivos, períodos, Facturero de Clientes, Facturero de la Finca, Mi Carrito, Mis Clientes, Trabajo Diario y Clima Agro.
 - **Memoria:** AgroRepo y Asistente IA.
 - **Menú:** perfil, documentación, feedback, ajustes y soporte.
+
+> **Nota (2026-06-17):** Rankings de Clientes ya no aparece en el hub. Se accede desde el botón "Rankings de Clientes" dentro de la vista Mis Clientes.
 
 #### Regla de módulos profundos
 
@@ -1151,11 +1172,18 @@ Se accede desde Mis Fincas → botón "Comparar Fincas" (visible cuando hay 2 o 
 
 ### 5.0 Nota sobre «Mi Granja»
 
-En la navegación principal, **Mi Granja** (puerta «Granja» en `Inicio · Granja · Memoria · Menú`) funciona como hub central donde el agricultor organiza cultivos, períodos, finanzas, trabajo, rankings y clima. No es un módulo financiero. No reemplaza a Facturero de la Finca.
+En la navegación principal, **Mi Granja** (puerta «Granja» en `Inicio · Granja · Memoria · Menú`) funciona como hub central donde el agricultor organiza cultivos, períodos, factureros, planificación, trabajo y clima. No es un módulo financiero. No reemplaza a Facturero de la Finca.
 
-Su propósito es concentrar el acceso a **Ciclos de Cultivo** (via Mis cultivos), **Operaciones de la Finca** (via Mis fincas y cultivos), **Mis finanzas** y **Trabajo y lectura** bajo una sola puerta.
+Su propósito es concentrar el acceso a:
+- **Ciclos de Cultivo** (via Mis cultivos)
+- **Operaciones de la Finca** (via Mis fincas y cultivos)
+- **Mis factureros** (Facturero de Clientes, Facturero de la Finca)
+- **Mi Planificación** (Mi Carrito, Clima Agro)
+- **Trabajo y lectura** (Mis Clientes, Trabajo Diario, Centro de Reportes)
 
 **Los movimientos financieros no asociados a un cultivo específico** (gasolina, mantenimiento de infraestructura, etc.) se registran como «movimiento general» dentro de Facturero de la Finca (§4.5.2). No pertenecen a Mi Granja. El término «movimiento general» es financiero y vive en Facturero de la Finca.
+
+> **Nota (2026-06-17):** Rankings de Clientes ya no aparece en el hub de Mi Granja. Se accede desde el botón "Rankings de Clientes" dentro de la vista Mis Clientes.
 
 ### 5.1 Lo productivo
 

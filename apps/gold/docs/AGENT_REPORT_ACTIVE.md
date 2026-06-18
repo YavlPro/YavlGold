@@ -45,6 +45,7 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-05-05__2026-06-03.md`
 
 ## Últimos cambios importantes todavía relevantes
 
+- **2026-06-18**: Actualización de documentación canónica: MANIFIESTO_AGRO.md §4.6 (selector finca + cards) y docs-agro.html (hub reorganizado, Rankings movido).
 - **2026-06-04**: Fase 1 COMPLETADA y validada en producción con 5 commits pusheados a main.
 - **2026-06-04**: Fix de migración fantasma: nueva migración SQL para ciclos operativos.
 - **2026-06-04**: Rediseño de Facturero: 4 filtros de asociación + 3 badges semánticos + limpieza terminológica.
@@ -2281,4 +2282,54 @@ NO hagas commit. Solo diagnostica, completa y haz build.
 ### Archivos generados en sesión
 - `apps/gold/docs/ops/daily-log-2026-06-16.md` (daily log temporal, no subir a GitHub).
 - Este informe final (registrado en `AGENT_REPORT_ACTIVE.md`).
+
+---
+
+## Sesión 2026-06-18 — Actualización de Documentación Canónica (MANIFIESTO_AGRO + docs-agro.html)
+
+### Objetivo
+Actualizar la documentación canónica y la documentación HTML visible para reflejar los cambios de los frentes de selectores dinámicos (16 junio) y reorganización del hub Mi Granja (17 junio).
+
+### Contexto
+En las últimas 24 horas se ejecutaron dos frentes de trabajo que cambiaron la verdad semántica y de navegación de Agro:
+1. **Selectores dinámicos de finca y cultivo** en factureros (GLM5.2, 16 junio).
+2. **Reorganización del hub Mi Granja** (GLM5.2, 17 junio): renombramiento de "Mis finanzas" a "Mi Planificación", movimiento de Clima Agro, eliminación de Rankings del hub.
+
+La documentación canónica y HTML visible no reflejaban estos cambios.
+
+### Archivos modificados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | §4.6 Trabajo Diario: agregada subsección "Selector de finca y cards compactas" con nota sobre derivación `crop_id → crop.farm_id` |
+| `apps/gold/docs-agro.html` | Descripción de "Granja" actualizada (línea 400) |
+| `apps/gold/docs-agro.html` | Lista interior de Granja reorganizada (líneas 422-426): "Mis finanzas" → "Mi Planificación", "Trabajo y lectura" simplificado |
+| `apps/gold/docs-agro.html` | Card de Rankings actualizada con nota de acceso desde Mis Clientes (línea 190) |
+
+### Secciones del MANIFIESTO verificadas (ya estaban actualizadas)
+- §3.1 Superficies principales: ✅ Ya reflejaba Mi Planificación, Trabajo y lectura, nota de Rankings
+- §4.5 Selectores dinámicos: ✅ Ya existía la subsección completa
+- §4.12.4 Puertas del hub: ✅ Ya tenía la nota de Rankings
+- §5.0 Nota sobre Mi Granja: ✅ Ya reflejaba estructura actualizada
+
+### Resultado de build
+✅ `pnpm build:gold` — Pasa sin errores (3.75s)
+
+### QA
+✅ Verificación de que docs-agro.html se incluye en dist (36.71 kB)
+
+### NO se hizo (scope respetado)
+- No se modificaron archivos JS de implementación
+- No se modificaron archivos CSS
+- No se modificaron AGENTS.md, ADN-VISUAL-V11.0.md ni ROADMAP_VISION_YAVLGOLD.md
+- No se agregaron detalles técnicos de implementación
+- No se crearon archivos nuevos
+
+### Métricas de sesión
+- Agente: Mimo 2.5 (documentación canónica)
+- Commits generados: 0
+- Build ejecutados: 1
+- Archivos modificados: 2
+- Líneas añadidas (estimado): ~10
+- Líneas eliminadas (estimado): ~6
 
