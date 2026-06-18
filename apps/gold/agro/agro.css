@@ -4431,10 +4431,10 @@ body[data-agro-active-view="rankings"] .ops-cultivos-finished-picker {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4, 1rem);
+  gap: var(--space-2, 0.5rem);
   border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
   border-radius: var(--radius-md, 12px);
-  padding: var(--layout-card-padding, 1.5rem);
+  padding: 0.8rem;
   background: var(--bg-2, #0B0C0F);
   box-shadow: none;
 }
@@ -4612,15 +4612,15 @@ body[data-agro-active-view="rankings"] .ops-cultivos-finished-picker {
 
 .ops-rankings-grid {
   display: grid;
-  gap: var(--layout-card-gap, 1.5rem);
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.6rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
 .ops-ranking-card {
   position: relative;
   overflow: hidden;
-  min-height: 220px;
-  padding: var(--layout-card-padding, 1.5rem);
+  min-height: 0;
+  padding: 0.8rem;
   border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
   border-radius: var(--radius-md, 12px);
   background: var(--bg-3, #111113);

@@ -765,8 +765,9 @@ body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
 .agro-ops-v10 .agro-pagados-dedicated__hero {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 0.6rem;
+  flex-wrap: wrap;
   padding: 0;
   border: none;
   border-radius: 0;
