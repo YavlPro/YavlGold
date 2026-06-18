@@ -1560,33 +1560,25 @@
 
             <div class="ops-context-steps" id="ops-context-steps">
                 <div class="ops-step-block ops-step-block--selector" aria-label="Paso 1 Seleccionar cultivo">
-                    <div class="ops-step-head">
-                        <p class="ops-step-label">PASO 1 · Seleccionar cultivo</p>
-                        <div class="ops-step-copy">
-                            <p class="ops-step-title">Elegir contexto</p>
-                            <p class="ops-step-note">Vista general, ciclo activo o ciclo cerrado para enfocar la
-                                lectura.</p>
-                        </div>
-                    </div>
+                    <p class="ops-step-label">Elegir contexto</p>
+                    <p class="ops-step-note">Vista general, ciclo activo o ciclo cerrado para enfocar la lectura.</p>
                     <div class="ops-cultivos-panel" id="ops-cultivos-panel" hidden inert>
-                        <div class="ops-cultivos-header">
-                            <p class="ops-cultivos-title">Seleccionar cultivo</p>
-                            <p class="ops-cultivos-subtitle">Usa Vista General o filtra por ciclo activo o cerrado.</p>
-                        </div>
+                        <p class="ops-cultivos-title">Seleccionar cultivo</p>
                         <div class="ops-cultivos-chip-row" id="ops-cultivos-active-row" role="group"
                             aria-label="Cultivos activos y vista general"></div>
 
                         <div class="ops-cultivos-finished" id="ops-cultivos-finished">
-                            <div class="ops-cultivos-history-copy">
+                            <div class="ops-cultivos-finished-head">
                                 <p class="ops-cultivos-history-title">Ciclos cerrados</p>
                                 <p class="ops-cultivos-history-subtitle" id="ops-cultivos-finished-note">Selecciona un
-                                    ciclo cerrado para filtrar Rankings; el historial es acceso secundario.</p>
+                                    ciclo cerrado para filtrar Rankings.</p>
                             </div>
                             <div class="ops-cultivos-chip-row ops-cultivos-finished-picker"
                                 id="ops-cultivos-finished-picker" role="group"
                                 aria-label="Ciclos finalizados como contexto de rankings"></div>
                             <button type="button" class="ops-cultivos-history-btn" id="ops-cultivos-history-btn"
                                 data-agro-view="ciclos" data-agro-subview="finalizados">
+                                <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
                                 <span>Ver historial</span>
                                 <span class="ops-cultivos-count" id="ops-cultivos-finished-count">0</span>
                             </button>
@@ -1850,18 +1842,6 @@
                 <div class="tab-panel is-hidden" id="tab-panel-rankings" role="tabpanel"
                     aria-labelledby="tab-btn-rankings" aria-hidden="true" data-tab="rankings">
                     <div class="ops-rankings-panel" id="ops-rankings-panel">
-                        <div class="ops-rankings-header">
-                            <div>
-                                <h4 class="ops-rankings-title">Rankings de Clientes</h4>
-                                <p class="ops-rankings-subtitle">Vista rápida de clientes cobrados, pendientes y
-                                    comportamiento por cultivo.</p>
-                            </div>
-                            <button type="button" class="ops-rankings-export-btn" id="ops-rankings-export-btn">
-                                <i class="fa-solid fa-file-export" aria-hidden="true"></i>
-                                Exportar Markdown
-                            </button>
-                        </div>
-
                         <div class="ops-rankings-toolbar">
                             <div class="ops-rankings-range" id="ops-rankings-range" role="group"
                                 aria-label="Filtro de rango rankings">
@@ -1872,16 +1852,18 @@
                                 <button type="button" class="ops-rankings-range-btn" data-range="12m">12m</button>
                                 <button type="button" class="ops-rankings-range-btn" data-range="all">Todo</button>
                             </div>
-                            <label class="ops-rankings-privacy">
-                                <input type="checkbox" id="ops-rankings-hide-names" checked
-                                    data-buyer-privacy-control="checkbox">
-                                Ocultar nombres
-                            </label>
+                            <div class="ops-rankings-toolbar__actions">
+                                <label class="ops-rankings-privacy">
+                                    <input type="checkbox" id="ops-rankings-hide-names" checked
+                                        data-buyer-privacy-control="checkbox">
+                                    Ocultar nombres
+                                </label>
+                                <button type="button" class="ops-rankings-export-btn" id="ops-rankings-export-btn">
+                                    <i class="fa-solid fa-file-export" aria-hidden="true"></i>
+                                    Exportar Markdown
+                                </button>
+                            </div>
                         </div>
-
-                        <p class="ops-rankings-privacy-hint" id="ops-rankings-privacy-hint">
-                            Privacidad activa: se ocultan nombres de clientes (••••).
-                        </p>
 
                         <p class="ops-rankings-status" id="ops-rankings-status">Listo para cargar.</p>
 

@@ -424,9 +424,9 @@ body[data-agro-active-view='rankings'] .ops-header-rankings {
   gap: var(--gap-internal);
   min-width: 0;
   padding: var(--pad-card-compact);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: var(--radius-md);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+  border: none;
+  border-radius: 0;
+  background: transparent;
 }
 
 .agro-ops-v10 .ops-step-block--viewer {
@@ -437,14 +437,16 @@ body[data-agro-active-view='rankings'] .ops-header-rankings {
 .agro-ops-v10 .ops-step-head,
 .agro-ops-v10 .ops-step-copy,
 .agro-ops-v10 .ops-cultivos-header,
-.agro-ops-v10 .ops-cultivos-history-copy {
+.agro-ops-v10 .ops-cultivos-history-copy,
+.agro-ops-v10 .ops-cultivos-finished-head {
   display: flex;
   flex-direction: column;
 }
 
 .agro-ops-v10 .ops-step-head,
 .agro-ops-v10 .ops-cultivos-header,
-.agro-ops-v10 .ops-cultivos-history-copy {
+.agro-ops-v10 .ops-cultivos-history-copy,
+.agro-ops-v10 .ops-cultivos-finished-head {
   gap: 0.12rem;
 }
 
@@ -485,10 +487,10 @@ body[data-agro-active-view='rankings'] .ops-header-rankings {
 }
 
 .agro-ops-v10 .ops-cultivos-panel {
-  border: 1px solid rgba(229, 213, 160, 0.16);
-  border-radius: var(--radius-md);
-  padding: var(--pad-card-compact);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015));
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
@@ -557,50 +559,48 @@ body[data-agro-active-view='rankings'] .ops-header-rankings {
 }
 
 .agro-ops-v10 .ops-cultivos-finished {
-  border: 1px solid rgba(229, 213, 160, 0.14);
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.018);
-  padding: 0.42rem 0.54rem;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
 }
 
 .agro-ops-v10 .ops-cultivos-history-btn {
   cursor: pointer;
-  padding: 0.4rem 0.56rem;
+  padding: 0.3rem 0.62rem;
   display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.48rem;
-  min-height: 32px;
-  border: 1px solid rgba(200, 167, 82, 0.22);
+  gap: 0.4rem;
+  min-height: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 999px;
-  background: rgba(200, 167, 82, 0.05);
-  font-family: 'Orbitron', sans-serif;
-  font-size: 0.64rem;
-  letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.78);
-  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease;
+  background: var(--bg-0, #050505);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: normal;
+  color: var(--text-secondary, #cccccc);
+  transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
 }
 
 .agro-ops-v10 .ops-cultivos-history-btn:hover,
 .agro-ops-v10 .ops-cultivos-history-btn:focus-visible {
-  transform: translateY(-1px);
-  border-color: rgba(229, 213, 160, 0.3);
-  background: rgba(200, 167, 82, 0.08);
-  color: rgba(243, 222, 176, 0.94);
+  border-color: rgba(200, 167, 82, 0.22);
+  color: var(--text-primary, #ffffff);
 }
 
 .agro-ops-v10 .ops-cultivos-count {
-  border: 1px solid rgba(200, 167, 82, 0.4);
+  border: none;
   border-radius: 999px;
   padding: 0.04rem 0.38rem;
   font-size: 0.64rem;
-  color: rgba(229, 213, 160, 0.88);
+  color: var(--gold-4, #C8A752);
   font-weight: 700;
-  background: rgba(200, 167, 82, 0.06);
+  background: rgba(200, 167, 82, 0.14);
 }
 
 .agro-ops-v10 .financial-tabs {

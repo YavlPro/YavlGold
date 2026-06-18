@@ -4469,25 +4469,24 @@ body[data-agro-active-view="rankings"] .ops-cultivos-finished-picker {
   align-items: center;
   justify-content: center;
   gap: var(--comp-icon-gap, 0.5rem);
-  min-height: var(--a11y-touch-recommended, 48px);
-  padding: var(--comp-btn-py, 0.75rem) var(--comp-btn-px, 1.5rem);
-  border: 1px solid var(--border-gold, rgba(200, 167, 82, 0.25));
-  border-radius: var(--radius-sm, 8px);
-  background: color-mix(in srgb, var(--gold-4) 10%, var(--bg-3));
+  min-height: 2rem;
+  padding: 0.3rem 0.62rem;
+  border: 1px solid rgba(200, 167, 82, 0.25);
+  border-radius: var(--radius-pill, 9999px);
+  background: rgba(200, 167, 82, 0.09);
   color: var(--gold-4, #C8A752);
-  font-family: var(--font-body, 'Rajdhani', sans-serif);
-  font-size: 0.78rem;
+  font: inherit;
+  font-size: 0.76rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: normal;
   cursor: pointer;
   box-shadow: none;
-  transition: border-color 180ms ease, background 180ms ease, color 180ms ease, transform 180ms ease;
+  transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
 }
 
 .ops-rankings-export-btn:hover {
-  transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--gold-4) 40%, var(--border-neutral));
-  background: color-mix(in srgb, var(--gold-4) 14%, var(--bg-3));
+  border-color: rgba(200, 167, 82, 0.32);
+  background: rgba(200, 167, 82, 0.14);
   box-shadow: none;
 }
 
@@ -4498,6 +4497,13 @@ body[data-agro-active-view="rankings"] .ops-cultivos-finished-picker {
 .ops-rankings-export-btn:focus-visible {
   outline: none;
   box-shadow: var(--state-focus-ring, 0 0 0 2px var(--bg-1), 0 0 0 4px var(--gold-4));
+}
+
+.ops-rankings-toolbar__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
 }
 
 .ops-rankings-toolbar {
@@ -4708,11 +4714,12 @@ body[data-agro-active-view="rankings"] .ops-cultivos-finished-picker {
 
 .ops-ranking-position {
   min-width: 26px;
-  color: var(--gold-4, #C8A752);
+  color: var(--text-muted, #94A3B8);
   font-family: inherit;
-  font-size: 0.76rem;
+  font-size: 0.78rem;
   font-weight: 700;
-  letter-spacing: normal;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
 }
 
 .ops-ranking-name {
@@ -4732,13 +4739,16 @@ body[data-agro-active-view="rankings"] .ops-cultivos-finished-picker {
   font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: normal;
+  font-variant-numeric: tabular-nums;
 }
 
 .ops-ranking-meta {
-  color: var(--text-secondary, #cccccc);
+  color: var(--text-muted, #94A3B8);
+  font-family: inherit;
   font-size: var(--text-xs, 0.75rem);
-  line-height: 1.35;
-  opacity: 0.94;
+  line-height: 1.4;
+  opacity: 0.9;
+  font-variant-numeric: tabular-nums;
 }
 
 .ops-ranking-empty {
@@ -4747,12 +4757,43 @@ body[data-agro-active-view="rankings"] .ops-cultivos-finished-picker {
   border: none;
   border-radius: 0;
   background: transparent;
-  color: var(--text-secondary, #cccccc);
+  color: var(--text-muted, #94A3B8);
   font-family: inherit;
   font-size: 0.78rem;
   line-height: 1.5;
   text-align: center;
-  opacity: 0.94;
+  opacity: 0.7;
+}
+
+.ops-ranking-empty .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Replace the injected emoji with a minimalist Font Awesome icon */
+.ops-ranking-empty .empty-state-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  font-size: 0;
+  color: rgba(200, 167, 82, 0.4);
+}
+
+.ops-ranking-empty .empty-state-icon::before {
+  content: "\f07b"; /* fa-folder-open */
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  font-size: 0.9rem;
+}
+
+.ops-ranking-empty .empty-state-text {
+  margin: 0;
+  color: var(--text-muted, #94A3B8);
+  font-size: 0.74rem;
 }
 
 .ops-rankings-note {

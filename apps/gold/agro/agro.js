@@ -13634,7 +13634,7 @@ function renderOpsRankings() {
             index,
             name: resolveOpsRankingCropLabel(row),
             value: formatOpsRankingCurrency(profit),
-            meta: `Ingresos cobrados: ${formatOpsRankingCurrency(row?.ingresos)} · Inversión + gastos + pérdidas: ${formatOpsRankingCurrency(row?.costos)}`,
+            meta: `Ingresos: ${formatOpsRankingCurrency(row?.ingresos)} · Costos: ${formatOpsRankingCurrency(row?.costos)}`,
             valueColor: profitColor,
             maskMetaMoney: true
         });

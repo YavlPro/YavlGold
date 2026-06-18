@@ -2334,3 +2334,39 @@ La documentación canónica y HTML visible no reflejaban estos cambios.
 - Líneas añadidas (estimado): ~10
 - Líneas eliminadas (estimado): ~6
 
+
+---
+
+## Sesión 2026-06-17 — Selectores dinámicos Finca/Cultivo + rediseño Cards Trabajo Diario + rediseño CSS Rankings
+
+**Estado:** GREEN — 4 frentes cerrados con build passing y QA visual; 1 subfrente no bloqueante pausado (rediseño estructural de Rankings).
+**Gobernanza:** respetada en lo principal; queda una excepción temporal de higiene en raíz (`PLAN_RANKINGS_REDESIGN.md`) pendiente de eliminación al cerrar Rankings.
+
+### Objetivo de la sesión
+Consistencia visual y funcional en selectores de fincas y cultivos en los factureros Agro, eliminación de la zanja dorada y rediseño de cards de Trabajo Diario.
+
+### Trabajo completado
+- Selectores dinámicos en Facturero de Clientes, Finca, Cultivo, Personal y Trabajo Diario.
+- Homologación CSS de chips/badges.
+- Reestructuración del hub Mi Granja.
+- Rediseño CSS Fase 1 de Rankings.
+- Documentación canónica y operativa actualizada.
+
+### Agentes participantes
+- GLM 5.2: ejecución técnica.
+- Mimo 2.5: auditoría documental.
+- Gemini 3.5 Flash: apoyo multimodal.
+- Qwen 3.7 Max: gobernanza y planificación.
+- Yerikson Varela: QA visual y decisiones.
+
+### Commits
+- 4 commits subidos.
+- Build passing.
+- QA visual validado por el usuario.
+
+### Próximo paso condicional
+- Rediseño estructural de Rankings pendiente de créditos de GLM 5.2; plan preservado en `PLAN_RANKINGS_REDESIGN.md` (pendiente de eliminar de raíz al cerrar).
+
+### Observación operativa
+- Se detectó confusión de fechas en bitácoras por parte de agentes; se mantiene como recordatorio: no duplicar ni pisar logs existentes sin confirmación del usuario.
+
