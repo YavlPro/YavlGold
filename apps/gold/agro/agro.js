@@ -13831,7 +13831,7 @@ async function fetchOpsRankingsData(options = {}) {
         supabase.rpc('agro_rank_pending_clients', params),
         fetchOpsTopCropsCanonical({
             userId: userData.user.id,
-            rangeDates: { from: null, to: null },
+            rangeDates: rangeDates,
             cropId: scopedCropId || null,
             filterRows: filterQARows,
             resolveUsd: _resolveUsd

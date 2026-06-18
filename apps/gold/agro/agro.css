@@ -4614,11 +4614,13 @@ body[data-agro-active-view="rankings"] .ops-cultivos-finished-picker {
   display: grid;
   gap: 0.6rem;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  align-items: start;
 }
 
 .ops-ranking-card {
   position: relative;
   overflow: hidden;
+  align-self: start;
   min-height: 0;
   padding: 0.8rem;
   border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
@@ -5241,7 +5243,7 @@ body[data-agro-active-view="rankings"] .ops-cultivos-finished-picker {
   }
 
   .ops-ranking-card {
-    min-height: 170px;
+    min-height: auto;
   }
 
   .financial-operations-card .facturero-grid {
