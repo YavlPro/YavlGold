@@ -13410,6 +13410,14 @@ function pickOpsBuyerName(row) {
         if (isOpsRankingMissingBuyerName(candidate)) continue;
         return candidate;
     }
+    const concepto = String(row?.concepto || '').trim();
+    if (concepto) {
+        const m = concepto.match(/^Venta a\s+(.+?)\s+-\s+(.+)$/i);
+        if (m?.[1]) {
+            const parsed = m[1].trim();
+            if (parsed && !isOpsRankingMissingBuyerName(parsed)) return parsed;
+        }
+    }
     return '';
 }
 

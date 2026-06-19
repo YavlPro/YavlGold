@@ -58,6 +58,7 @@ DECLARE
     v_has_deleted_at boolean;
     v_has_reverted_at boolean;
     v_has_crop_id boolean;
+    v_has_buyer_id boolean := false;
     v_sql text;
 BEGIN
     IF v_uid IS NULL THEN
@@ -154,6 +155,20 @@ BEGIN
         WHERE table_schema = 'public' AND table_name = 'agro_income' AND column_name = 'customer_name'
     ) THEN
         v_buyer_expr := 'COALESCE(NULLIF(TRIM(customer_name), ''''), ''Sin nombre'')';
+    ELSIF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'agro_income' AND column_name = 'buyer_id'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'agro_buyers'
+    ) THEN
+        v_has_buyer_id := true;
+        v_buyer_expr := 'COALESCE(NULLIF(TRIM(b.name), ''''),regexp_replace(COALESCE(i.concepto, ''''), ''^Venta a\\s+(.+?)\\s+-\\s+(.+$)'', ''\\1''), ''Sin nombre'')';
+    ELSIF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'agro_income' AND column_name = 'concepto'
+    ) THEN
+        v_buyer_expr := 'COALESCE(NULLIF(TRIM(regexp_replace(COALESCE(concepto, ''''), ''^Venta a\\s+(.+?)\\s+-\\s+(.+$)'', ''\\1''), ''''), ''Sin nombre'')';
     END IF;
 
     v_sql := format('
@@ -162,20 +177,22 @@ BEGIN
             SUM(%2$s)::numeric AS total,
             COUNT(*)::bigint AS operations,
             MAX(%3$I)::date AS last_date
-        FROM public.agro_income
-        WHERE user_id = $1
-          AND ($2::date IS NULL OR %3$I >= $2::date)
-          AND ($3::date IS NULL OR %3$I <= $3::date)
-    ', v_buyer_expr, v_amount_expr, v_date_field);
+        FROM public.agro_income i
+        %4$s
+        WHERE i.user_id = $1
+          AND ($2::date IS NULL OR i.%3$I >= $2::date)
+          AND ($3::date IS NULL OR i.%3$I <= $3::date)
+    ', v_buyer_expr, v_amount_expr, v_date_field,
+    CASE WHEN v_has_buyer_id THEN 'LEFT JOIN public.agro_buyers b ON b.id = i.buyer_id' ELSE '' END);
 
     IF v_has_deleted_at THEN
-        v_sql := v_sql || ' AND deleted_at IS NULL';
+        v_sql := v_sql || ' AND i.deleted_at IS NULL';
     END IF;
     IF v_has_reverted_at THEN
-        v_sql := v_sql || ' AND reverted_at IS NULL';
+        v_sql := v_sql || ' AND i.reverted_at IS NULL';
     END IF;
     IF v_has_crop_id THEN
-        v_sql := v_sql || ' AND ($4::uuid IS NULL OR crop_id = $4::uuid)';
+        v_sql := v_sql || ' AND ($4::uuid IS NULL OR i.crop_id = $4::uuid)';
     END IF;
 
     v_sql := v_sql || '
