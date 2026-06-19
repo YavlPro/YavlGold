@@ -13829,17 +13829,20 @@ async function fetchOpsRankingsData(options = {}) {
     const scopedCropId = Object.prototype.hasOwnProperty.call(options || {}, 'cropId')
         ? normalizeCropId(options.cropId)
         : selectedCropId;
-    const params = {
+    const baseParams = {
         p_from: rangeDates.from,
         p_to: rangeDates.to,
         p_limit: OPS_RANKINGS_LIMIT,
-        p_crop_id: scopedCropId || null,
+        p_crop_id: scopedCropId || null
+    };
+    const topClientsParams = {
+        ...baseParams,
         p_farm_id: opsRankingsState.selectedFarmId || null
     };
 
     const [topClientsRes, pendingRes, topCropsRows] = await Promise.all([
-        supabase.rpc('agro_rank_top_clients', params),
-        supabase.rpc('agro_rank_pending_clients', params),
+        supabase.rpc('agro_rank_top_clients', topClientsParams),
+        supabase.rpc('agro_rank_pending_clients', baseParams),
         fetchOpsTopCropsCanonical({
             userId: userData.user.id,
             rangeDates: rangeDates,
