@@ -73,7 +73,23 @@ function bindFarmsViewActions(container) {
  */
 async function loadFarms() {
   const root = document.getElementById('agro-farms-root');
-  if (!root) return;
+  if (!root) {
+    // Still load farms into cache for other modules (Rankings selector, etc.)
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: farms } = await supabase
+        .from('agro_farms')
+        .select('*')
+        .eq('user_id', user.id)
+        .is('deleted_at', null)
+        .order('is_default', { ascending: false })
+        .order('name', { ascending: true });
+      farmsCache = farms || [];
+      document.dispatchEvent(new CustomEvent('agro:farms-loaded', { detail: { farms: [...farmsCache] } }));
+    } catch (_) { /* silent */ }
+    return;
+  }
 
   root.innerHTML = `
     <div class="farm-loading-state">
