@@ -286,6 +286,9 @@ async function loadFarms() {
     // 14. Renderizar vista de Fincas
     renderFarmsView(root, statsMap);
 
+    // 15. Notify other modules (Rankings farm selector, etc.)
+    document.dispatchEvent(new CustomEvent('agro:farms-loaded', { detail: { farms: [...farmsCache] } }));
+
     // Restaurar header y contextbar al volver desde Comparar Fincas
     const sectionTitle = document.getElementById('crops-section-title');
     const sectionSubtitle = document.getElementById('crops-section-subtitle');

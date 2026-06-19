@@ -14141,6 +14141,10 @@ function initOpsRankingsPanel() {
         document.addEventListener('agro:income:changed', refreshOpsRankingsIfVisible);
         document.addEventListener('agro:crop:changed', refreshOpsRankingsIfVisible);
         window.addEventListener(AGRO_OPERATIONAL_PORTFOLIO_UPDATED_EVENT, refreshOpsRankingsIfVisible);
+        document.addEventListener('agro:farms-loaded', () => {
+            renderOpsRankingsFarmSelector();
+            renderOpsRankings();
+        });
     }
 
     opsRankingsState.range = readOpsRankingsRange();
