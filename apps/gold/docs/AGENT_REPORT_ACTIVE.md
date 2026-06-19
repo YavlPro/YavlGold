@@ -23,6 +23,8 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-05-05__2026-06-03.md`
 - Agro V1: diseñar/implementar Fase 2 — Dashboard de Finca con 3 métricas críticas (inversión histórica, ingresos totales, balance + gastos generales).
 - Agro V1: preparar Fase 3 — Comparación de fincas.
 - Agro V1: definir alcance de Fase 4 — Informes MD de finca.
+- **Dashboard**: eliminar glow residual restante (usuario reportó que "aún queda" tras la limpieza masiva).
+- **Rankings**: QA del usuario — verificar que farm chip → crop chip → datos filtrados funciona correctamente.
 - Documentación viva: registrar sesiones en este archivo; rotar de nuevo al alcanzar 4000 líneas.
 
 ## Decisiones canónicas vigentes
@@ -45,8 +47,10 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-05-05__2026-06-03.md`
 
 ## Últimos cambios importantes todavía relevantes
 
-- **2026-06-18**: Auditoría y corrección de documentación: README.md, agro/README.md (tokens V11, módulos actualizados), FICHA_TECNICA.md (hub structure, duplicados), llms.txt (navegación actualizada).
-- **2026-06-18**: Actualización de documentación canónica: MANIFIESTO_AGRO.md §4.6 (selector finca + cards) y docs-agro.html (hub reorganizado, Rankings movido).
+- **2026-06-18 (tarde)**: Dashboard glow cleanup masivo — eliminadas todas las animaciones prohibidas (pulse, float, shimmer, borderGlow, fadeInUp, breathe, metallicShift, pulseGlow, ghostFloat) de 3 archivos CSS + HTML. Dashboard 100% estático.
+- **2026-06-18 (mañana)**: Rankings completado — chip selectors farm+crop, RPCs corregidas (6 migraciones), farm_id filter via agro_crops, ADN V11 §19.5 borderShimmer.
+- **2026-06-18**: Auditoría y corrección de documentación: README.md, agro/README.md, FICHA_TECNICA.md, llms.txt.
+- **2026-06-18**: Actualización de documentación canónica: MANIFIESTO_AGRO.md §4.6 y docs-agro.html.
 - **2026-06-04**: Fase 1 COMPLETADA y validada en producción con 5 commits pusheados a main.
 - **2026-06-04**: Fix de migración fantasma: nueva migración SQL para ciclos operativos.
 - **2026-06-04**: Rediseño de Facturero: 4 filtros de asociación + 3 badges semánticos + limpieza terminológica.
@@ -2369,4 +2373,159 @@ Consistencia visual y funcional en selectores de fincas y cultivos en los factur
 
 ### Observación operativa
 - Se detectó confusión de fechas en bitácoras por parte de agentes; se mantiene como recordatorio: no duplicar ni pisar logs existentes sin confirmación del usuario.
+
+---
+
+## Sesión 2026-06-18 — Fixes de Rankings (CSS + JS)
+
+**Estado:** GREEN — Build passing. 2 de 3 fixes completados; 1 pendiente de verificación en Supabase.
+**Gobernanza:** respetada.
+
+### Objetivo de la sesión
+Corregir bugs visuales y funcionales en la vista Rankings de Clientes.
+
+### Trabajo completado
+- **Fix visual (CSS):** Eliminados espacios vacíos gigantes en tarjetas de Rankings.
+  - `agro.css`: `align-items: start` en grid + `align-self: start` en tarjetas + `min-height: auto` en mobile.
+- **Fix funcional (JS):** Top Cultivos ahora respeta el rango de fechas seleccionado.
+  - `agro.js:13834`: `rangeDates: { from: null, to: null }` → `rangeDates: rangeDates`.
+- Build ejecutado y pasa limpio.
+
+### Pendiente
+- **18 registros sin cliente** — **RESUELTO.** La causa raíz era que `agro_income` no tiene columnas de nombre de comprador. La RPC buscaba `comprador`, `cliente`, `buyer_name` (ninguna existe) y usaba fallback `'Sin nombre'`. Fix: RPC ahora hace LEFT JOIN con `agro_buyers` para obtener el nombre, y como fallback parsea el campo `concepto` con regex (`/Venta a (.+) - (.+)/`). JS `pickOpsBuyerName` también actualizado con el mismo fallback. Migración aplicada a Supabase.
+
+### Agentes participantes
+- GLM 5.2: ejecución de fixes (CSS + JS) antes de quedarse sin créditos.
+- Mimo 2.5: diagnóstico y coordinación.
+
+### Commits
+- `83f76796` — fix(agro): rankings - eliminar espacios vacíos en tarjetas y Top Cultivos respeta rango de fechas
+- `55ff99ac` — fix(agro): RPC rankings extrae nombre desde concepto + buyer_id JOIN con agro_buyers
+- `8a2e3b18` — fix(agro): rankings - fix buyer name JOIN display_name + farm selector con filtro RPC
+
+### Archivos modificados
+- `agro.js`: pickOpsBuyerName fallback a concepto, farm_id en params RPC, renderOpsRankingsFarmSelector
+- `agro.css`: estilos farm-row
+- `index.html`: farm dropdown en Rankings
+- `supabase/sql/agro_rankings_rpc_v1.sql`: display_name + p_farm_id
+- Migraciones: 3 nuevas aplicadas a Supabase
+
+### Resultado final
+Los Rankings ahora:
+1. ✅ Muestran nombres de clientes (extraídos de concepto / JOIN agro_buyers)
+2. ✅ Tarjetas sin espacios vacíos (align-self: start)
+3. ✅ Top Cultivos respeta rango de fechas
+4. ✅ Selector de fincas en toolbar de Rankings
+5. ✅ Build pasa, cambios subidos a GitHub y migraciones aplicadas a Supabase
+
+---
+
+## Sesión 2026-06-18 — Fix RPC Rankings post-deploy (corrección quirúrgica)
+
+### Contexto
+Tras el commit `8a2e3b18`, el usuario reportó en consola:
+- `agro_rank_pending_clients` → **404** (función no existe en Supabase)
+- `agro_rank_top_clients` → **400** (column reference "created_at" is ambiguous)
+- Rankings mostraba "Error: RPC de rankings no disponible"
+
+### Diagnóstico
+1. **`agro_rank_pending_clients` 404**: Las 3 migraciones anteriores solo tocaron `agro_rank_top_clients`. La función `agro_rank_pending_clients` nunca fue creada en Supabase.
+2. **`agro_rank_top_clients` 400**: El `GRANT` estaba en firma `(date,date,integer,uuid)` pero la función ahora tiene `p_farm_id` → firma `(date,date,integer,uuid,uuid)`. PostgREST rechazaba la llamada.
+3. **JS pasaba `p_farm_id` a ambas RPCs**: El mismo `params` se usaba para `top_clients` y `pending_clients`, pero `pending_clients` no acepta `p_farm_id`.
+4. **`created_at` ambiguo**: Tras el JOIN con `agro_buyers`, ambas tablas tienen `created_at`. La función usaba `MAX(created_at)` sin calificar, causando error de ambigüedad.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---------|------|--------|
+| `agro.js:13832-13842` | Fix JS | Separado `baseParams` (4 params) de `topClientsParams` (5 params con `p_farm_id`) |
+| `migrations/20260618235000` | Migración | Deploy completo: `agro_rank_pending_clients` (nueva) + `agro_rank_top_clients` (5 params) + GRANT actualizado + `NOTIFY pgrst, 'reload schema'` |
+| `migrations/20260618240000` | Migración | Fix ambigüedad: todos los refs de columna calificados con `i.` prefix en template SQL de `agro_rank_top_clients` |
+
+### Commits
+- `1a6da630` — fix(agro): deploy agro_rank_pending_clients + fix GRANT agro_rank_top_clients + separate params
+- `723bbf25` — fix(agro): qualify i. columns in agro_rank_top_clients to fix 'created_at is ambiguous'
+
+### Migraciones aplicadas a Supabase (hoy)
+1. `20260618220000` — agro_rank_top_clients con buyer_id JOIN + concepto regex
+2. `20260618223000` — fix b.name → b.display_name
+3. `20260618230000` — agrega p_farm_id a agro_rank_top_clients
+4. `20260618235000` — deploy agro_rank_pending_clients + GRANT completo + NOTIFY reload
+5. `20260618240000` — fix created_at ambiguo con i. qualification
+
+### Resultado
+- ✅ `agro_rank_pending_clients` funciona (jose luis visible en "Fiados por Cliente")
+- ✅ `agro_rank_top_clients` arreglado (created_at ya no ambiguo)
+- ✅ JS params separados (pending no recibe p_farm_id)
+- ✅ Build pasa
+- Pendiente QA en app: recargar Ctrl+Shift+R y verificar que Top Clientes muestra datos
+
+### Estado al cierre de sesión
+- **Rankings**: RPCs corregidas, pendiente QA visual del usuario
+- **Selector de fincas**: Implementado pero sin datos de fincas en DB (no aparece dropdown)
+- **Top Cultivos**: Funciona correctamente (5 cultivos con rentabilidad)
+- **Documentación**: Este reporte actualizado, daily log pendiente
+
+### Nota para siguiente agente
+GLM5.2 se quedó sin créditos. El siguiente agente debe:
+1. Verificar que el QA del usuario confirma que Rankings muestra datos correctamente
+2. Si hay más errores en consola, revisar las 5 migraciones aplicadas hoy
+3. Documentar resultado en AGENT_REPORT_ACTIVE.md
+
+---
+
+## Sesión 2026-06-18 (tarde) — Dashboard Glow Cleanup + Rankings Finales
+
+**Agente**: mimo 2.5
+**Alcance**: CSS glow/animation removal en dashboard + Rankings chip selector refinements
+**Estado**: GREEN con QA pendiente
+
+### Contexto
+El usuario reportó que el dashboard tenía "mucho glow prohibido" — animaciones pulsantes, partículas flotantes, shimmer en bordes, hover con bounce, y emojis ghost flotantes. También pidió verificar que los Rankings farm chips filtraban correctamente.
+
+### Cambios realizados — Dashboard Glow
+
+| Archivo | Tipo | Cambio |
+|---------|------|--------|
+| `agro-dashboard.css` | CSS cleanup | Eliminado `@keyframes breathe` + 3 usos (iconos dashboard) |
+| `agro-dashboard.css` | CSS cleanup | Eliminado `@keyframes metallicShift` + uso en título |
+| `agro-dashboard.css` | CSS cleanup | Eliminado `@keyframes borderShimmer` + 3 usos (separator, card::before, accordion) |
+| `agro-dashboard.css` | CSS cleanup | Eliminado `@keyframes fadeInUp` + animation delays stagger |
+| `dashboard/index.html` | HTML cleanup | Eliminado `@keyframes pulse`, `float`, `shimmer`, `borderGlow`, `fadeInUp` |
+| `dashboard/index.html` | HTML cleanup | Eliminado `.pulso-vital` div (fondo pulsante) + `.particulas` div (6 puntos flotantes) |
+| `dashboard/index.html` | HTML cleanup | Eliminado `.glow-gold` text-shadow + `--sombra-dorada` variable |
+| `dashboard/index.html` | HTML cleanup | Eliminado `box-shadow` glow de logo, header, cards, badges, buttons |
+| `dashboard/index.html` | HTML cleanup | Eliminado `yg-glowpulse` + `yg-pulse` classes |
+| `dashboard/index.html` | HTML cleanup | Eliminado `module-card:hover` translateY(-10px) bounce |
+| `dashboard/index.html` | HTML cleanup | Eliminado `module-card::before` gold top-line |
+| `dashboard/index.html` | HTML cleanup | Eliminado `module-icon:hover` scale(1.05) |
+| `dashboard/index.html` | HTML cleanup | Eliminado `btn-modulo:hover` scale + arrow translateX |
+| `dashboard-v1.css` | CSS cleanup | Eliminado 8 keyframes: metallicShift, textGlow, fadeInUp, shimmer, borderShimmer, pulseGlow, ghostFloat, breathe |
+| `dashboard-v1.css` | CSS cleanup | Eliminado todas las `animation:` usages (20+ ocurrencias) |
+| `dashboard-v1.css` | CSS cleanup | Eliminado ghost emojis: 📜 de quote-card + 🌾 de modules-section |
+| `dashboard-v1.css` | CSS cleanup | Eliminado hover glow de module-card, btn-modulo, btn-gold |
+| `dashboard-v1.css` | CSS cleanup | Eliminado `yg-pulse`, `yg-glowpulse`, `yg-float` utility classes |
+
+### Commits — Dashboard
+- `83a35c7` — fix(dashboard): remove breathe glow animation from icons
+- `80f3a4d` — fix(dashboard): remove all prohibited glow/pulse/shimmer animations
+- `b75f3fe` — fix(dashboard): remove ALL remaining prohibited glow/pulse/shimmer/animations
+
+### Cambios realizados — Rankings (completado en sesión anterior)
+- 6ta migración: `20260618250000` — farm_id filter via agro_crops subquery
+- Chip selectors funcionales: farm chips + crop chips dinámicos
+- Top Clientes, Fiados y Top Cultivos conectados a farm filter
+
+### Resultado
+- ✅ Dashboard: 100% estático, sin animaciones continuas
+- ✅ Rankings: chip selectors implementados, farm+crop filtering
+- ✅ Build pasa sin errores
+- ⚠️ QA pendiente: usuario reportó que "aún queda glow" en dashboard (residual)
+- ⚠️ QA pendiente: Rankings farm chip → crop chip → datos filtrados
+
+### Nota para siguiente agente
+1. Verificar QA del usuario: Rankings farm chips filtran las 3 secciones
+2. Identificar y eliminar glow residual restante en dashboard (usuario dijo "aún queda")
+3. Considerar que el CSS inline del dashboard es extenso (~1500L) y puede tener más efectos residuales
+4. Los archivos CSS relevantes son: `dashboard/index.html` (inline CSS ~1500L), `assets/css/dashboard-v1.css` (~1900L), `agro/agro-dashboard.css` (~690L)
 

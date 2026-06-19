@@ -137,7 +137,7 @@ BEGIN
         WHERE table_schema = 'public' AND table_name = 'agro_buyers'
     ) THEN
         v_has_buyer_id := true;
-        v_buyer_expr := 'COALESCE(NULLIF(TRIM(b.name), ''''), regexp_replace(COALESCE(i.concepto, ''''), ''^Venta a\\s+(.+?)\\s+-\\s+(.+$)'', ''\\1''), ''Sin nombre'')';
+        v_buyer_expr := 'COALESCE(NULLIF(TRIM(b.display_name), ''''), regexp_replace(COALESCE(i.concepto, ''''), ''^Venta a\\s+(.+?)\\s+-\\s+(.+$)'', ''\\1''), ''Sin nombre'')';
     ELSIF EXISTS (
         SELECT 1 FROM information_schema.columns
         WHERE table_schema = 'public' AND table_name = 'agro_income' AND column_name = 'concepto'
