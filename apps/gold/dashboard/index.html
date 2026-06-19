@@ -473,25 +473,15 @@
     }
 
     .module-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, transparent, var(--dorado-yavl), transparent);
-      opacity: 0;
-      transition: opacity 0.3s ease;
+      display: none;
     }
 
     .module-card:hover {
-      transform: translateY(-10px);
-      border-color: rgba(200, 167, 82, 0.6);
-      box-shadow: none;
+      border-color: rgba(200, 167, 82, 0.4);
     }
 
     .module-card:hover::before {
-      opacity: 1;
+      opacity: 0.5;
     }
 
     /* Ícono del Módulo */
@@ -510,8 +500,7 @@
     }
 
     .module-card:hover .module-icon {
-      background: rgba(200, 167, 82, 0.2);
-      transform: scale(1.05);
+      background: rgba(200, 167, 82, 0.15);
     }
 
     /* Header de Tarjeta */
@@ -630,20 +619,16 @@
     }
 
     .btn-modulo:hover {
-      transform: scale(1.02);
-      box-shadow: none;
     }
 
     .btn-modulo svg,
     .btn-modulo i {
       width: 18px;
       height: 18px;
-      transition: transform 0.3s ease;
     }
 
     .btn-modulo:hover svg,
     .btn-modulo:hover i {
-      transform: translateX(5px);
     }
 
     /* Botón Deshabilitado */
