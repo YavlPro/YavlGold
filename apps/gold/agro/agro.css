@@ -10348,8 +10348,7 @@ body[data-agro-active-view="rankings"] .finances-section.agro-ops-v10 .financial
 }
 
 body[data-agro-active-view="rankings"] .finances-section.agro-ops-v10 .ops-context-steps {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  display: none;
 }
 
 body[data-agro-active-view="rankings"] .finances-section.agro-ops-v10 .ops-step-block--selector {
