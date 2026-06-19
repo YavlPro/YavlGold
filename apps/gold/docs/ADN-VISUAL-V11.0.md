@@ -129,12 +129,14 @@ Las siguientes animaciones de V10 ya no se usan como patrón recomendado:
 
 - `metallicShift`, `metallicRotate`, `logoSheen`, `badgeSheen` — exceso de brillo metálico.
 - `textGlow`, `pulseGlow` — glows pulsantes.
-- `borderShimmer`, `btnShimmer` — shimmer decorativo.
+- `btnShimmer` — shimmer decorativo en botones (retirado, ver §19.3 para hover例外).
 - `breathe`, `float` — movimiento decorativo constante.
 
 Si alguna existe en CSS legacy, no se elimina sin migración, pero no se promueve ni replica.
 
 **Nota de identidad (2026-06-14):** `metallicShift`, `ghostFloat` y `btnShimmer` fueron recuperadas como excepciones canónicas de identidad en §19. Las demás permanecen retiradas.
+
+**Nota de identidad (2026-06-18):** `borderShimmer` fue recuperada como excepción canónica de identidad en §19.5. Se usa en headers de módulo, tarjetas de ranking y separadores de sección dorada.
 
 ---
 
@@ -455,8 +457,8 @@ Los ghost emojis (emojis de fondo con opacidad 0.02–0.05 y `pointer-events: no
 9. **No mezclar Facturero de Clientes con Facturero de la Finca en una vista profunda.** Separación semántica.
 10. **No reabrir `agro.js` para styling.** Estilos en CSS, lógica en JS.
 11. **No usar Tailwind, React, SPA.** Stack V11 = stack V1.
-12. **No animaciones infinitas decorativas.** Solo loaders controlados.
-13. **No shimmer/metallic como patrón general.** Solo excepciones justificadas.
+12. **No animaciones infinitas decorativas.** Solo loaders controlados y excepciones de §19.
+13. **No shimmer/metallic como patrón general.** Solo excepciones justificadas en §19 (metallicShift, ghostFloat, btnShimmer, borderShimmer).
 14. **No `animation-duration` > 220ms en interacciones de estado.**
 
 ---
@@ -650,7 +652,66 @@ Cuando una excepción de §19 entre en conflicto con una regla general del canon
 - Fuera de ese caso, aplica la regla general del canon.
 - Ninguna otra animación infinita o shimmer está autorizado por extensión.
 
-### 19.5 Anti-patrón de extensión
+### 19.5 borderShimmer (brillo metálico de borde)
+
+Shimmer dorado que recorre un borde o separador de forma continua. Crea el efecto de "brillo metálico recorriendo la línea" que refuerza la identidad dorada del proyecto. Usado en headers de módulo, tarjetas de ranking y separadores de sección.
+
+```css
+@keyframes borderShimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Separador dorado bajo header de módulo */
+.modulo-header::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 1px;
+  background: var(--metallic-border);
+  background-size: 200% 100%;
+  animation: borderShimmer 3s linear infinite;
+}
+
+/* Tarjeta de ranking con borde brillante */
+.ops-ranking-card {
+  border: 1px solid var(--border-neutral);
+  position: relative;
+}
+.ops-ranking-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: var(--metallic-border);
+  background-size: 200% 100%;
+  animation: borderShimmer 4s linear infinite;
+  z-index: -1;
+  opacity: 0.4;
+}
+```
+
+**Token requerido:**
+```css
+--metallic-border: linear-gradient(90deg, transparent, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e, transparent);
+```
+
+**Reglas de uso:**
+- Solo en separadores de borde (1px), headers de módulo y tarjetas de ranking/vista.
+- Duración: 3–4 segundos para separadores, 4–5 segundos para tarjetas más anchas.
+- Opacidad máxima del pseudo-elemento: 0.4 en tarjetas (nunca opaco total).
+- El gradiente debe ser sutil: colores intermedios (`#6b5a3e`, `#E8D48B`) con transparencia en los extremos.
+- Prohibido en botones, inputs, modales interactivos, dropdowns o elementos de formulario.
+- Prohibido en superficies donde el shimmer compita con el contenido (listas densas, tablas de datos).
+- Respetar `prefers-reduced-motion`: si activo, usar solo `border: 1px solid var(--border-gold)` estático.
+- Nunca combinar con `pulseGold` o `textGlow` en el mismo elemento.
+
+**Ejemplos en el código:**
+- `agro-facturero-finca.css:58` — header de módulo Agro (3s)
+- `agro.css:12189` — keyframe global
+- `agro.css:9118` — guide border shimmer
+
+### 19.6 Anti-patrón de extensión
 
 Prohibido usar §19 como justificación para:
 
@@ -659,6 +720,7 @@ Prohibido usar §19 como justificación para:
 - Aplicar metallicShift a cards o superficies de trabajo.
 - Aplicar ghostFloat a iconos funcionales.
 - Aplicar btnShimmer en reposo o en botones no primarios.
+- Aplicar borderShimmer en botones, inputs, modales o dropdowns.
 - Crear variantes "más visibles" de las excepciones.
 
 Si una excepción necesita ampliarse, debe pasar por autorización expresa del usuario y documentarse aquí con nueva subsección numerada.
