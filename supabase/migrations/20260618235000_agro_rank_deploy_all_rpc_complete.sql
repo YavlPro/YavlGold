@@ -214,7 +214,7 @@ BEGIN
             %1$s AS buyer_name,
             SUM(%2$s)::numeric AS total,
             COUNT(*)::bigint AS operations,
-            MAX(%3$I)::date AS last_date
+            MAX(i.%3$I)::date AS last_date
         FROM public.agro_income i
         %4$s
         WHERE i.user_id = $1
