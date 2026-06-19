@@ -12722,6 +12722,7 @@ let opsRankingsState = {
     pendingClients: [],
     topCrops: [],
     selectedFarmId: null,
+    selectedCropId: null,
     farms: []
 };
 let opsRankingsInitBound = false;
@@ -13828,7 +13829,7 @@ async function fetchOpsRankingsData(options = {}) {
 
     const scopedCropId = Object.prototype.hasOwnProperty.call(options || {}, 'cropId')
         ? normalizeCropId(options.cropId)
-        : selectedCropId;
+        : (opsRankingsState.selectedCropId || selectedCropId);
     const baseParams = {
         p_from: rangeDates.from,
         p_to: rangeDates.to,
@@ -14145,6 +14146,43 @@ function initOpsRankingsPanel() {
             renderOpsRankingsFarmSelector();
             renderOpsRankings();
         });
+
+        // Farm chip click handler (delegated)
+        const farmChipsEl = document.getElementById('ops-rankings-farm-chips');
+        if (farmChipsEl && !farmChipsEl._opsRankingsBound) {
+            farmChipsEl._opsRankingsBound = true;
+            farmChipsEl.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-ops-rank-farm]');
+                if (!btn) return;
+                const farmId = btn.dataset.opsRankFarm || null;
+                if (farmId === opsRankingsState.selectedFarmId) return;
+                opsRankingsState.selectedFarmId = farmId;
+                opsRankingsState.selectedCropId = null;
+                renderOpsRankingsFarmSelector();
+                renderOpsRankings();
+                refreshOpsRankings().catch(err => {
+                    console.warn('[AGRO] Rankings farm chip refresh failed:', err?.message || err);
+                });
+            });
+        }
+
+        // Crop chip click handler (delegated)
+        const cropChipsEl = document.getElementById('ops-rankings-crop-chips');
+        if (cropChipsEl && !cropChipsEl._opsRankingsBound) {
+            cropChipsEl._opsRankingsBound = true;
+            cropChipsEl.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-ops-rank-crop]');
+                if (!btn) return;
+                const cropId = btn.dataset.opsRankCrop || null;
+                if (cropId === opsRankingsState.selectedCropId) return;
+                opsRankingsState.selectedCropId = cropId;
+                renderOpsRankingsCropSelector();
+                renderOpsRankings();
+                refreshOpsRankings().catch(err => {
+                    console.warn('[AGRO] Rankings crop chip refresh failed:', err?.message || err);
+                });
+            });
+        }
     }
 
     opsRankingsState.range = readOpsRankingsRange();
@@ -14155,46 +14193,52 @@ function initOpsRankingsPanel() {
 
 function renderOpsRankingsFarmSelector() {
     const farmRow = document.getElementById('ops-rankings-farm-row');
-    const farmSelect = document.getElementById('ops-rankings-farm-select');
-    if (!farmRow || !farmSelect) return;
+    const farmChips = document.getElementById('ops-rankings-farm-chips');
+    if (!farmRow || !farmChips) return;
 
     const farms = (typeof window._agroFarms !== 'undefined' && window._agroFarms?.getFarms()) || [];
-    if (farms.length === 0) {
-        farmRow.style.display = 'none';
-        opsRankingsState.selectedFarmId = null;
+    opsRankingsState.farms = farms;
+
+    farmRow.style.display = '';
+    const selectedId = opsRankingsState.selectedFarmId;
+
+    let html = `<button type="button" class="ops-rankings-chip${!selectedId ? ' is-active' : ''}" data-ops-rank-farm="">Vista general</button>`;
+    farms.forEach(farm => {
+        const name = farm.name || farm.farm_name || 'Finca';
+        html += `<button type="button" class="ops-rankings-chip${selectedId === farm.id ? ' is-active' : ''}" data-ops-rank-farm="${farm.id}">${name}</button>`;
+    });
+    farmChips.innerHTML = html;
+
+    renderOpsRankingsCropSelector();
+}
+
+function renderOpsRankingsCropSelector() {
+    const cropRow = document.getElementById('ops-rankings-crop-row');
+    const cropChips = document.getElementById('ops-rankings-crop-chips');
+    if (!cropRow || !cropChips) return;
+
+    const allCrops = Array.isArray(cropsCache) ? cropsCache : [];
+    const farmId = opsRankingsState.selectedFarmId;
+
+    const scopedCrops = farmId
+        ? allCrops.filter(c => c.farm_id === farmId)
+        : allCrops;
+
+    if (scopedCrops.length === 0) {
+        cropRow.style.display = 'none';
+        opsRankingsState.selectedCropId = null;
         return;
     }
 
-    farmRow.style.display = '';
-    const currentVal = farmSelect.value;
-    farmSelect.innerHTML = '<option value="">Todas las fincas</option>';
-    farms.forEach(farm => {
-        const opt = document.createElement('option');
-        opt.value = farm.id;
-        opt.textContent = farm.name || farm.farm_name || 'Finca';
-        farmSelect.appendChild(opt);
+    cropRow.style.display = '';
+    const selectedCropId = opsRankingsState.selectedCropId;
+
+    let html = `<button type="button" class="ops-rankings-chip ops-rankings-chip--crop${!selectedCropId ? ' is-active' : ''}" data-ops-rank-crop="">Vista general</button>`;
+    scopedCrops.forEach(crop => {
+        const display = getCropDisplayParts(crop, { fallbackIcon: '🌱', fallbackName: 'Cultivo' });
+        html += `<button type="button" class="ops-rankings-chip ops-rankings-chip--crop${selectedCropId === crop.id ? ' is-active' : ''}" data-ops-rank-crop="${crop.id}">${display.label}</button>`;
     });
-
-    if (currentVal && farms.some(f => f.id === currentVal)) {
-        farmSelect.value = currentVal;
-    } else {
-        farmSelect.value = '';
-        opsRankingsState.selectedFarmId = null;
-    }
-
-    // Farm selection handler (bound once)
-    if (!farmSelect._opsRankingsFarmBound) {
-        farmSelect._opsRankingsFarmBound = true;
-        farmSelect.addEventListener('change', () => {
-            const farmId = farmSelect.value || null;
-            if (farmId === opsRankingsState.selectedFarmId) return;
-            opsRankingsState.selectedFarmId = farmId;
-            renderOpsRankings();
-            refreshOpsRankings().catch(err => {
-                console.warn('[AGRO] Rankings farm refresh failed:', err?.message || err);
-            });
-        });
-    }
+    cropChips.innerHTML = html;
 }
 
 function refreshOpsRankingsIfVisible() {

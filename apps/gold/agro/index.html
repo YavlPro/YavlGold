@@ -1843,10 +1843,14 @@
                     aria-labelledby="tab-btn-rankings" aria-hidden="true" data-tab="rankings">
                     <div class="ops-rankings-panel" id="ops-rankings-panel">
                         <div class="ops-rankings-farm-row" id="ops-rankings-farm-row" style="display:none">
-                            <label for="ops-rankings-farm-select">Finca:</label>
-                            <select id="ops-rankings-farm-select" class="ops-rankings-farm-select">
-                                <option value="">Todas las fincas</option>
-                            </select>
+                            <div class="ops-rankings-farm-chips" id="ops-rankings-farm-chips" role="group"
+                                aria-label="Filtro de finca para rankings">
+                            </div>
+                        </div>
+                        <div class="ops-rankings-crop-row" id="ops-rankings-crop-row" style="display:none">
+                            <div class="ops-rankings-crop-chips" id="ops-rankings-crop-chips" role="group"
+                                aria-label="Filtro de cultivo para rankings">
+                            </div>
                         </div>
                         <div class="ops-rankings-toolbar">
                             <div class="ops-rankings-range" id="ops-rankings-range" role="group"
