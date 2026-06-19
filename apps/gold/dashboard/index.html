@@ -68,72 +68,8 @@
       --font-cuerpo: 'Rajdhani', sans-serif;
 
       /* Efectos */
-      --sombra-dorada: 0 0 30px rgba(200, 167, 82, 0.3);
       --sombra-tarjeta: 0 10px 40px rgba(0, 0, 0, 0.5);
       --borde-dorado: 1px solid rgba(200, 167, 82, 0.3);
-    }
-
-    /* ============================================
-           🌟 ANIMACIONES - PULSO DORADO
-        ============================================ */
-    @keyframes pulse {
-
-      0%,
-      100% {
-        opacity: 0.15;
-        transform: translate(-50%, -50%) scale(1);
-      }
-
-      50% {
-        opacity: 0.25;
-        transform: translate(-50%, -50%) scale(1.1);
-      }
-    }
-
-    @keyframes float {
-
-      0%,
-      100% {
-        transform: translateY(0px);
-      }
-
-      50% {
-        transform: translateY(-10px);
-      }
-    }
-
-    @keyframes shimmer {
-      0% {
-        background-position: -200% center;
-      }
-
-      100% {
-        background-position: 200% center;
-      }
-    }
-
-    @keyframes borderGlow {
-
-      0%,
-      100% {
-        border-color: rgba(200, 167, 82, 0.3);
-      }
-
-      50% {
-        border-color: rgba(200, 167, 82, 0.6);
-      }
-    }
-
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
     }
 
     /* ============================================
@@ -156,48 +92,6 @@
       min-height: 100vh;
       overflow-x: hidden;
       position: relative;
-    }
-
-    /* ============================================
-           🎆 FONDO DORADO - GRADIENTE QUE RESPIRA
-        ============================================ */
-    .pulso-vital {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      width: 150vmax;
-      height: 150vmax;
-      background: radial-gradient(circle,
-          rgba(200, 167, 82, 0.4) 0%,
-          rgba(200, 167, 82, 0.15) 25%,
-          rgba(200, 167, 82, 0.05) 50%,
-          transparent 70%);
-      transform: translate(-50%, -50%);
-      animation: pulse 8s ease-in-out infinite;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* Partículas sutiles */
-    .particulas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 1;
-      overflow: hidden;
-    }
-
-    .particula {
-      position: absolute;
-      width: 4px;
-      height: 4px;
-      background: var(--dorado-yavl);
-      border-radius: 50%;
-      opacity: 0.3;
-      animation: float 6s ease-in-out infinite;
     }
 
     /* ============================================
@@ -225,7 +119,6 @@
       border-radius: 20px;
       backdrop-filter: blur(20px);
       margin-bottom: 3rem;
-      animation: borderGlow 4s ease-in-out infinite;
     }
 
     .logo-section {
@@ -243,7 +136,7 @@
       align-items: center;
       justify-content: center;
       font-size: 1.5rem;
-      box-shadow: var(--sombra-dorada);
+      box-shadow: none;
     }
 
     .logo-icon img {
@@ -355,7 +248,7 @@
       justify-content: center;
       font-size: 1.2rem;
       cursor: pointer;
-      box-shadow: var(--sombra-dorada);
+      box-shadow: none;
       backdrop-filter: blur(5px);
       transition: all 0.3s ease;
     }
@@ -382,7 +275,6 @@
       text-align: center;
       margin-bottom: 4rem;
       padding: 2rem;
-      animation: fadeInUp 0.6s ease-out;
     }
 
     .welcome-section h2 {
@@ -465,7 +357,6 @@
       outline: none;
       border-color: var(--dorado-yavl, #C8A752);
       background: rgba(10, 10, 10, 0.95);
-      box-shadow: 0 0 20px rgba(200, 167, 82, 0.25), inset 0 0 10px rgba(200, 167, 82, 0.05);
     }
 
     #moduleSearch::placeholder {
@@ -579,31 +470,6 @@
       text-decoration: none;
       color: inherit;
       display: block;
-      animation: fadeInUp 0.6s ease-out both;
-    }
-
-    .module-card:nth-child(1) {
-      animation-delay: 0.1s;
-    }
-
-    .module-card:nth-child(2) {
-      animation-delay: 0.15s;
-    }
-
-    .module-card:nth-child(3) {
-      animation-delay: 0.2s;
-    }
-
-    .module-card:nth-child(4) {
-      animation-delay: 0.25s;
-    }
-
-    .module-card:nth-child(5) {
-      animation-delay: 0.3s;
-    }
-
-    .module-card:nth-child(6) {
-      animation-delay: 0.35s;
     }
 
     .module-card::before {
@@ -621,7 +487,7 @@
     .module-card:hover {
       transform: translateY(-10px);
       border-color: rgba(200, 167, 82, 0.6);
-      box-shadow: var(--sombra-dorada);
+      box-shadow: none;
     }
 
     .module-card:hover::before {
@@ -682,8 +548,7 @@
     /* Badge Dorado - Producto Estrella / Activo */
     .badge-estrella {
       background: var(--badge-dorado);
-      box-shadow: 0 4px 15px rgba(200, 167, 82, 0.4);
-      animation: shimmer 3s ease-in-out infinite;
+      box-shadow: none;
       background-size: 200% auto;
       background-image: linear-gradient(90deg,
           var(--dorado-oscuro) 0%,
@@ -694,13 +559,13 @@
     /* Badge Azul - En Desarrollo */
     .badge-desarrollo {
       background: var(--badge-azul);
-      box-shadow: 0 4px 15px rgba(200, 167, 82, 0.3);
+      box-shadow: none;
     }
 
     /* Badge Morado - Próximamente */
     .badge-proximo {
       background: var(--badge-morado);
-      box-shadow: 0 4px 15px rgba(200, 167, 82, 0.3);
+      box-shadow: none;
     }
 
     /* Badge Activo (Dorado sutil) */
@@ -766,7 +631,7 @@
 
     .btn-modulo:hover {
       transform: scale(1.02);
-      box-shadow: 0 10px 30px rgba(200, 167, 82, 0.4);
+      box-shadow: none;
     }
 
     .btn-modulo svg,
@@ -821,23 +686,6 @@
       padding: 1.5rem;
       text-align: center;
       backdrop-filter: blur(10px);
-      animation: fadeInUp 0.6s ease-out both;
-    }
-
-    .stat-card:nth-child(1) {
-      animation-delay: 0.05s;
-    }
-
-    .stat-card:nth-child(2) {
-      animation-delay: 0.1s;
-    }
-
-    .stat-card:nth-child(3) {
-      animation-delay: 0.15s;
-    }
-
-    .stat-card:nth-child(4) {
-      animation-delay: 0.2s;
     }
 
     .stat-number {
@@ -891,10 +739,6 @@
         ============================================ */
     .text-gold {
       color: var(--dorado-yavl);
-    }
-
-    .glow-gold {
-      text-shadow: 0 0 20px rgba(200, 167, 82, 0.5);
     }
 
     /* ============================================
@@ -1494,7 +1338,6 @@
       border-radius: 16px;
       padding: 1.5rem;
       backdrop-filter: blur(10px);
-      animation: fadeInUp 0.6s ease-out both;
     }
 
     .insight-title {
@@ -1646,18 +1489,6 @@
     </div>
   </div>
   <a href="#main-content" class="sr-only-focusable">Saltar al contenido principal</a>
-  <!-- 🎆 FONDO DORADO -->
-  <div class="pulso-vital"></div>
-
-  <!-- ✨ PARTÍCULAS DECORATIVAS -->
-  <div class="particulas">
-    <div class="particula" style="top: 10%; left: 20%; animation-delay: 0s;"></div>
-    <div class="particula" style="top: 20%; left: 80%; animation-delay: 1s;"></div>
-    <div class="particula" style="top: 60%; left: 10%; animation-delay: 2s;"></div>
-    <div class="particula" style="top: 80%; left: 70%; animation-delay: 3s;"></div>
-    <div class="particula" style="top: 40%; left: 90%; animation-delay: 4s;"></div>
-    <div class="particula" style="top: 70%; left: 40%; animation-delay: 5s;"></div>
-  </div>
 
   <!-- 📦 CONTENEDOR PRINCIPAL -->
   <div class="dashboard-container">
@@ -1684,7 +1515,7 @@
           <button id="notification-bell" class="topbar-icon-btn btn-notification notification-bell"
             title="Notificaciones">
             <i class="fas fa-bell"></i>
-            <span id="notification-badge" class="notification-badge notif-dot yg-glowpulse"
+            <span id="notification-badge" class="notification-badge notif-dot"
               style="display: none;">0</span>
           </button>
           <button id="feedback-btn" class="topbar-icon-btn btn-feedback feedback-btn" title="Feedback">
@@ -1723,15 +1554,15 @@
     <!-- 📊 ESTADÍSTICAS RÁPIDAS (Dynamic) -->
     <section class="stats-section">
       <div class="stat-card">
-        <span class="stat-number yg-pulse" id="stat-modules">-</span>
+        <span class="stat-number" id="stat-modules">-</span>
         <span class="stat-label">Área activa</span>
       </div>
       <div class="stat-card">
-        <span class="stat-number yg-pulse" id="stat-stars">0</span>
+        <span class="stat-number" id="stat-stars">0</span>
         <span class="stat-label">Favoritos</span>
       </div>
       <div class="stat-card">
-        <span class="stat-number yg-pulse">AGRO</span>
+        <span class="stat-number">AGRO</span>
         <span class="stat-label">Producto real</span>
       </div>
     </section>
