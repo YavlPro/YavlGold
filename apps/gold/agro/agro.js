@@ -12720,7 +12720,9 @@ let opsRankingsState = {
     updatedAt: null,
     topClients: [],
     pendingClients: [],
-    topCrops: []
+    topCrops: [],
+    selectedFarmId: null,
+    farms: []
 };
 let opsRankingsInitBound = false;
 let opsRankingsInFlight = null;
@@ -13831,7 +13833,8 @@ async function fetchOpsRankingsData(options = {}) {
         p_from: rangeDates.from,
         p_to: rangeDates.to,
         p_limit: OPS_RANKINGS_LIMIT,
-        p_crop_id: scopedCropId || null
+        p_crop_id: scopedCropId || null,
+        p_farm_id: opsRankingsState.selectedFarmId || null
     };
 
     const [topClientsRes, pendingRes, topCropsRows] = await Promise.all([
@@ -14139,7 +14142,52 @@ function initOpsRankingsPanel() {
 
     opsRankingsState.range = readOpsRankingsRange();
     opsRankingsState.hideNames = readOpsRankingsPrivacy();
+    renderOpsRankingsFarmSelector();
     renderOpsRankings();
+}
+
+function renderOpsRankingsFarmSelector() {
+    const farmRow = document.getElementById('ops-rankings-farm-row');
+    const farmSelect = document.getElementById('ops-rankings-farm-select');
+    if (!farmRow || !farmSelect) return;
+
+    const farms = (typeof window._agroFarms !== 'undefined' && window._agroFarms?.getFarms()) || [];
+    if (farms.length === 0) {
+        farmRow.style.display = 'none';
+        opsRankingsState.selectedFarmId = null;
+        return;
+    }
+
+    farmRow.style.display = '';
+    const currentVal = farmSelect.value;
+    farmSelect.innerHTML = '<option value="">Todas las fincas</option>';
+    farms.forEach(farm => {
+        const opt = document.createElement('option');
+        opt.value = farm.id;
+        opt.textContent = farm.name || farm.farm_name || 'Finca';
+        farmSelect.appendChild(opt);
+    });
+
+    if (currentVal && farms.some(f => f.id === currentVal)) {
+        farmSelect.value = currentVal;
+    } else {
+        farmSelect.value = '';
+        opsRankingsState.selectedFarmId = null;
+    }
+
+    // Farm selection handler (bound once)
+    if (!farmSelect._opsRankingsFarmBound) {
+        farmSelect._opsRankingsFarmBound = true;
+        farmSelect.addEventListener('change', () => {
+            const farmId = farmSelect.value || null;
+            if (farmId === opsRankingsState.selectedFarmId) return;
+            opsRankingsState.selectedFarmId = farmId;
+            renderOpsRankings();
+            refreshOpsRankings().catch(err => {
+                console.warn('[AGRO] Rankings farm refresh failed:', err?.message || err);
+            });
+        });
+    }
 }
 
 function refreshOpsRankingsIfVisible() {

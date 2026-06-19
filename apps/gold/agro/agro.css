@@ -4518,6 +4518,31 @@ body[data-agro-active-view="rankings"] .ops-cultivos-finished-picker {
   background: transparent;
 }
 
+.ops-rankings-farm-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  margin-bottom: var(--space-2, 0.5rem);
+  font-size: 0.82rem;
+}
+
+.ops-rankings-farm-row label {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ops-rankings-farm-select {
+  min-height: 2rem;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--border-neutral, rgba(255,255,255,0.08));
+  border-radius: var(--radius-md, 8px);
+  background: var(--bg-1, #0a0a0a);
+  color: inherit;
+  font-size: 0.82rem;
+  font-family: inherit;
+  max-width: 220px;
+}
+
 .ops-rankings-range {
   display: inline-flex;
   align-items: center;

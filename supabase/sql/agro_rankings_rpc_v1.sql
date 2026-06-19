@@ -37,7 +37,8 @@ CREATE OR REPLACE FUNCTION public.agro_rank_top_clients(
     p_from date DEFAULT NULL,
     p_to date DEFAULT NULL,
     p_limit integer DEFAULT 5,
-    p_crop_id uuid DEFAULT NULL
+    p_crop_id uuid DEFAULT NULL,
+    p_farm_id uuid DEFAULT NULL
 )
 RETURNS TABLE (
     buyer_name text,
@@ -58,6 +59,7 @@ DECLARE
     v_has_deleted_at boolean;
     v_has_reverted_at boolean;
     v_has_crop_id boolean;
+    v_has_farm_id boolean := false;
     v_has_buyer_id boolean := false;
     v_sql text;
 BEGIN
@@ -83,6 +85,11 @@ BEGIN
         SELECT 1 FROM information_schema.columns
         WHERE table_schema = 'public' AND table_name = 'agro_income' AND column_name = 'crop_id'
     ) INTO v_has_crop_id;
+
+    SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'agro_income' AND column_name = 'farm_id'
+    ) INTO v_has_farm_id;
 
     IF EXISTS (
         SELECT 1 FROM information_schema.columns
@@ -163,7 +170,7 @@ BEGIN
         WHERE table_schema = 'public' AND table_name = 'agro_buyers'
     ) THEN
         v_has_buyer_id := true;
-        v_buyer_expr := 'COALESCE(NULLIF(TRIM(b.name), ''''),regexp_replace(COALESCE(i.concepto, ''''), ''^Venta a\\s+(.+?)\\s+-\\s+(.+$)'', ''\\1''), ''Sin nombre'')';
+        v_buyer_expr := 'COALESCE(NULLIF(TRIM(b.display_name), ''''),regexp_replace(COALESCE(i.concepto, ''''), ''^Venta a\\s+(.+?)\\s+-\\s+(.+$)'', ''\\1''), ''Sin nombre'')';
     ELSIF EXISTS (
         SELECT 1 FROM information_schema.columns
         WHERE table_schema = 'public' AND table_name = 'agro_income' AND column_name = 'concepto'
@@ -194,13 +201,16 @@ BEGIN
     IF v_has_crop_id THEN
         v_sql := v_sql || ' AND ($4::uuid IS NULL OR i.crop_id = $4::uuid)';
     END IF;
+    IF v_has_farm_id THEN
+        v_sql := v_sql || ' AND ($5::uuid IS NULL OR i.farm_id = $5::uuid)';
+    END IF;
 
     v_sql := v_sql || '
         GROUP BY 1
         ORDER BY total DESC NULLS LAST, operations DESC NULLS LAST
         LIMIT ' || v_limit;
 
-    RETURN QUERY EXECUTE v_sql USING v_uid, p_from, p_to, p_crop_id;
+    RETURN QUERY EXECUTE v_sql USING v_uid, p_from, p_to, p_crop_id, p_farm_id;
 END;
 $$;
 
