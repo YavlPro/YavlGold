@@ -13693,7 +13693,7 @@ function isOpsRankingActivePending(row) {
     return true;
 }
 
-async function fetchOpsTopCropsCanonical({ userId, rangeDates, cropId, filterRows, resolveUsd }) {
+async function fetchOpsTopCropsCanonical({ userId, rangeDates, cropId, farmId, filterRows, resolveUsd }) {
     const fetchRows = async (table, selectFields, opts = {}) => {
         try {
             let q = supabase.from(table).select(selectFields).eq('user_id', userId);
@@ -13723,7 +13723,9 @@ async function fetchOpsTopCropsCanonical({ userId, rangeDates, cropId, filterRow
 
     const cropRows = cropRowsRaw.filter((crop) => {
         if (!crop || isCropDeleted(crop) || isCropArchived(crop)) return false;
-        return cropId ? normalizeCropId(crop.id) === cropId : true;
+        if (cropId && normalizeCropId(crop.id) !== cropId) return false;
+        if (farmId && crop.farm_id !== farmId) return false;
+        return true;
     });
     const cropMap = new Map(cropRows.map((crop) => [normalizeCropId(crop.id), crop]));
     const buckets = new Map();
@@ -13848,6 +13850,7 @@ async function fetchOpsRankingsData(options = {}) {
             userId: userData.user.id,
             rangeDates: rangeDates,
             cropId: scopedCropId || null,
+            farmId: opsRankingsState.selectedFarmId || null,
             filterRows: filterQARows,
             resolveUsd: _resolveUsd
         })
@@ -14140,7 +14143,10 @@ function initOpsRankingsPanel() {
 
         document.addEventListener('data-refresh', refreshOpsRankingsIfVisible);
         document.addEventListener('agro:income:changed', refreshOpsRankingsIfVisible);
-        document.addEventListener('agro:crop:changed', refreshOpsRankingsIfVisible);
+        document.addEventListener('agro:crop:changed', () => {
+            renderOpsRankingsCropSelector();
+            refreshOpsRankingsIfVisible();
+        });
         window.addEventListener(AGRO_OPERATIONAL_PORTFOLIO_UPDATED_EVENT, refreshOpsRankingsIfVisible);
         document.addEventListener('agro:farms-loaded', () => {
             renderOpsRankingsFarmSelector();

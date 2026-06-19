@@ -10339,6 +10339,8 @@ body[data-agro-active-view="operational"] .agro-operational-region .agro-commerc
 
 body[data-agro-active-view="rankings"] .finances-section.agro-ops-v10 .financial-operations-card {
   display: block;
+  padding-top: 0;
+  margin-top: 0;
 }
 
 body[data-agro-active-view="rankings"] .finances-section.agro-ops-v10 .financial-operations-header,
