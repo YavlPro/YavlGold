@@ -13,17 +13,6 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes breathe {
-  0%, 100% {
-    transform: scale(1);
-    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--gold-4) 15%, transparent));
-  }
-  50% {
-    transform: scale(1.04);
-    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--gold-4) 35%, transparent));
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -89,7 +78,6 @@
   display: inline-flex;
   margin-right: 0.35rem;
   font-size: 1.05rem;
-  animation: breathe 3s ease-in-out infinite;
 }
 
 .agro-dashboard-v10 .agro-dash-controls {
@@ -197,7 +185,6 @@
 
 .agro-dashboard-v10 .agro-dash-card__icon {
   font-size: var(--text-base);
-  animation: breathe 3s ease-in-out infinite;
 }
 
 .agro-dashboard-v10 .agro-dash-card__label {
@@ -517,7 +504,6 @@
     radial-gradient(circle at 35% 35%, rgba(232, 212, 139, 0.18), rgba(200, 167, 82, 0.04) 50%, rgba(10, 10, 10, 0.94) 72%);
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22);
   font-size: 1.7rem;
-  animation: breathe 3s ease-in-out infinite;
 }
 
 .agro-dashboard-v10 .agro-lunar-phase {
