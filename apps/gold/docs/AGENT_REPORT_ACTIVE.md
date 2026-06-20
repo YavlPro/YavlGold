@@ -23,8 +23,8 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-05-05__2026-06-03.md`
 - Agro V1: diseñar/implementar Fase 2 — Dashboard de Finca con 3 métricas críticas (inversión histórica, ingresos totales, balance + gastos generales).
 - Agro V1: preparar Fase 3 — Comparación de fincas.
 - Agro V1: definir alcance de Fase 4 — Informes MD de finca.
-- **Dashboard**: eliminar glow residual restante (usuario reportó que "aún queda" tras la limpieza masiva).
-- **Rankings**: QA del usuario — verificar que farm chip → crop chip → datos filtrados funciona correctamente.
+- **Dashboard**: glow residual restante (tokens neutralizados pero usuario puede ver más efectos).
+- **Rankings**: QA del usuario — verificar que Fiados ahora respeta farm filter.
 - Documentación viva: registrar sesiones en este archivo; rotar de nuevo al alcanzar 4000 líneas.
 
 ## Decisiones canónicas vigentes
@@ -47,10 +47,10 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-05-05__2026-06-03.md`
 
 ## Últimos cambios importantes todavía relevantes
 
-- **2026-06-18 (tarde)**: Dashboard glow cleanup masivo — eliminadas todas las animaciones prohibidas (pulse, float, shimmer, borderGlow, fadeInUp, breathe, metallicShift, pulseGlow, ghostFloat) de 3 archivos CSS + HTML. Dashboard 100% estático.
+- **2026-06-19**: Glow residual reducido (tokens neutralizados, scales reducidos, metallic-btn→gold-4) + farm filter agregado a `agro_rank_pending_clients` (7ma migración). Fiados ahora respeta filtro de finca.
+- **2026-06-18 (tarde)**: Dashboard glow cleanup masivo — eliminadas todas las animaciones prohibidas de 3 archivos CSS + HTML. Dashboard 100% estático.
 - **2026-06-18 (mañana)**: Rankings completado — chip selectors farm+crop, RPCs corregidas (6 migraciones), farm_id filter via agro_crops, ADN V11 §19.5 borderShimmer.
 - **2026-06-18**: Auditoría y corrección de documentación: README.md, agro/README.md, FICHA_TECNICA.md, llms.txt.
-- **2026-06-18**: Actualización de documentación canónica: MANIFIESTO_AGRO.md §4.6 y docs-agro.html.
 - **2026-06-04**: Fase 1 COMPLETADA y validada en producción con 5 commits pusheados a main.
 - **2026-06-04**: Fix de migración fantasma: nueva migración SQL para ciclos operativos.
 - **2026-06-04**: Rediseño de Facturero: 4 filtros de asociación + 3 badges semánticos + limpieza terminológica.
@@ -2528,4 +2528,52 @@ El usuario reportó que el dashboard tenía "mucho glow prohibido" — animacion
 2. Identificar y eliminar glow residual restante en dashboard (usuario dijo "aún queda")
 3. Considerar que el CSS inline del dashboard es extenso (~1500L) y puede tener más efectos residuales
 4. Los archivos CSS relevantes son: `dashboard/index.html` (inline CSS ~1500L), `assets/css/dashboard-v1.css` (~1900L), `agro/agro-dashboard.css` (~690L)
+
+---
+
+## Sesión 2026-06-19 — Glow Residual + Farm Filter en Fiados
+
+**Agentes**: GLM5.2 (Windsurf, ejecución) + mimo 2.5 (OpenCode, commit/push/docs)
+**Alcance**: CSS glow residual reduction + farm filter para pending clients RPC
+**Estado**: GREEN
+
+### Contexto
+El usuario reportó que tras la limpieza masiva del 18 de junio, "aún queda glow" en el dashboard. GLM5.2 ejecutó las correcciones de CSS y la adición del farm filter a pending clients, pero se quedó sin créditos antes de commitear. mimo 2.5 completó el commit, push y documentación.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---------|------|--------|
+| `dashboard-v1.css` | CSS | Tokens `--shadow-gold-*` neutralizados a `none` (conservar definición para consumers legacy) |
+| `dashboard-v1.css` | CSS | `--sombra-dorada` neutralizado a `none` |
+| `dashboard-v1.css` | CSS | `star-toggle:hover` scale 1.2→1.08, `module-icon:hover` scale 1.03→1.02 |
+| `dashboard-v1.css` | CSS | `.btn-modulo` y `.btn-gold`: `var(--metallic-btn)` → `var(--gold-4)` (fondo plano) |
+| `unificacion.css` | CSS | `.btn-register:hover`: eliminar translateY + box-shadow glow |
+| `unificacion.css` | CSS | `.btn:hover`: eliminar translateY + box-shadow → opacity 0.92 |
+| `unificacion.css` | CSS | `.tool-card:hover`: bounce reducido -8px→-2px |
+| `agro.js` | JS | `pendingParams` con `p_farm_id` para llamada a pending RPC |
+| `agro_rankings_rpc_v1.sql` | SQL | SQL canónico: pending clients con `p_farm_id` + probe farm_id + filtro dinámico |
+| `agro_rankings_rpc_v1.sql` | SQL | GRANT/REVOKE fix: firmas correctas `(date,date,integer,uuid,uuid)` |
+| `20260619090000` | Migración | Recreate pending con farm_id + GRANT fix → aplicada a Supabase |
+
+### Commits
+- `6d298d4` — fix(dashboard): reduce residual glow + add farm filter to pending clients RPC
+
+### Migraciones aplicadas a Supabase
+1. `20260619090000` — agro_rank_pending_clients con p_farm_id + GRANT fix
+
+### Resultado
+- ✅ Migration aplicada exitosamente
+- ✅ Build pasa (warning CSS pre-existe en main, no causado por estos cambios)
+- ✅ Commit + push completado
+- ✅ Todos los 3 rankings ahora respetan farm filter (top_clients, pending_clients, top_crops)
+- ⚠️ QA pendiente: Fiados ahora debe filtrar por finca
+- ⚠️ QA pendiente: glow residual restante en dashboard
+- ⚠️ Dashboard Agro "Cómo empezar": se editó el guide en index.html para alinearlo con Manifiesto §9.12 pero usuario reporta que no ve cambios visibles (puede ser cache de build o deployment)
+
+### Nota para siguiente agente
+1. QA: verificar que Fiados respeta filtro de finca tras la migración
+2. Investigar si queda glow residual en dashboard general (el usuario dijo "aún queda")
+3. Dashboard Agro "Cómo empezar": verificar por qué los cambios no son visibles — puede ser cache, deployment o que el build no se subió
+4. Warning CSS pre-existe: `Unexpected "}" at <stdin>:1472` — no rompe build pero indica desbalance en algún CSS legacy
 
