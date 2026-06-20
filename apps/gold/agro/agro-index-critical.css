@@ -226,30 +226,13 @@
             align-items: center;
             justify-content: center;
             font-size: 1.5rem;
-            box-shadow: 0 4px 20px rgba(200, 167, 82, 0.3);
         }
 
         .logo-img {
             width: 48px;
             height: 48px;
             object-fit: contain;
-            filter: drop-shadow(0 0 2px rgba(200, 167, 82, 0.2));
-            animation: logoBreathe 4s ease-in-out infinite;
             border-radius: var(--radius-md);
-        }
-
-        @keyframes logoBreathe {
-
-            0%,
-            100% {
-                transform: scale(1);
-                filter: drop-shadow(0 0 2px rgba(200, 167, 82, 0.2));
-            }
-
-            50% {
-                transform: scale(1.01);
-                filter: drop-shadow(0 0 4px rgba(200, 167, 82, 0.3));
-            }
         }
 
         .logo-text {
@@ -261,19 +244,7 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            animation: textGlow 4s ease-in-out infinite, shimmerText 3s linear infinite;
-        }
-
-        @keyframes textGlow {
-
-            0%,
-            100% {
-                filter: drop-shadow(0 0 2px rgba(200, 167, 82, 0.1));
-            }
-
-            50% {
-                filter: drop-shadow(0 0 4px rgba(200, 167, 82, 0.2));
-            }
+            animation: shimmerText 3s linear infinite;
         }
 
         @keyframes shimmerText {
@@ -326,7 +297,6 @@
 
         .user-profile:hover {
             border-color: rgba(200, 167, 82, 0.3);
-            box-shadow: 0 4px 20px rgba(200, 167, 82, 0.1);
         }
 
         .user-avatar {
@@ -414,7 +384,6 @@
         .notification-bell--agro:focus-visible {
             background: rgba(200, 167, 82, 0.2);
             border-color: var(--gold-primary);
-            box-shadow: 0 0 15px rgba(200, 167, 82, 0.3);
         }
 
         .agro-header-bell-icon {
@@ -525,7 +494,6 @@
         .agro-modal-inline-close:focus-visible {
             background: rgba(200, 167, 82, 0.25);
             border-color: var(--gold-primary);
-            box-shadow: 0 0 15px rgba(200, 167, 82, 0.3);
             transform: scale(1.05);
         }
 
@@ -820,7 +788,6 @@
             display: flex;
             align-items: center;
             gap: var(--spacing-sm);
-            animation: textGlow 4s ease-in-out infinite;
         }
 
         .section-title::before {
@@ -829,7 +796,6 @@
             height: 18px;
             background: linear-gradient(180deg, var(--gold-light), var(--gold-primary), var(--gold-dark));
             border-radius: 2px;
-            box-shadow: 0 0 8px rgba(200, 167, 82, 0.4);
         }
 
         .section-title .icon {
@@ -863,7 +829,7 @@
 
         .card:hover {
             border-color: rgba(200, 167, 82, 0.25);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 60px rgba(200, 167, 82, 0.08), inset 0 1px 0 rgba(200, 167, 82, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             transform: translateY(-2px);
         }
 
@@ -1008,22 +974,6 @@
             align-items: center;
             justify-content: center;
             font-size: 1.75rem;
-            animation: breathe 5s ease-in-out infinite;
-            box-shadow: 0 4px 15px rgba(200, 167, 82, 0.1);
-        }
-
-        @keyframes breathe {
-
-            0%,
-            100% {
-                transform: scale(1);
-                box-shadow: 0 4px 15px rgba(200, 167, 82, 0.1);
-            }
-
-            50% {
-                transform: scale(1.08);
-                box-shadow: 0 6px 25px rgba(200, 167, 82, 0.25);
-            }
         }
 
         .kpi-content {
@@ -1115,19 +1065,6 @@
             align-items: center;
             justify-content: center;
             font-size: 1.75rem;
-            animation: breathe 5s ease-in-out infinite;
-        }
-
-        .crop-icon:nth-child(1) {
-            animation-delay: 0s;
-        }
-
-        .crop-card:nth-child(2) .crop-icon {
-            animation-delay: -1.5s;
-        }
-
-        .crop-card:nth-child(3) .crop-icon {
-            animation-delay: -3s;
         }
 
         .crop-details-header {
@@ -1391,7 +1328,7 @@
 
         .btn-primary:hover {
             transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 8px 30px rgba(200, 167, 82, 0.4), 0 0 40px rgba(200, 167, 82, 0.2);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
         }
 
         .btn-primary:active {
@@ -1409,7 +1346,6 @@
         .btn-outline:hover {
             background: var(--gold-primary);
             color: var(--bg-base);
-            box-shadow: 0 4px 20px rgba(200, 167, 82, 0.3);
         }
 
         /* ROI Result */
@@ -1471,7 +1407,6 @@
             font-family: 'Orbitron', sans-serif;
             font-weight: 900;
             font-size: 1.4rem;
-            animation: textGlow 4s ease-in-out infinite;
         }
 
         .roi-value.gold {
