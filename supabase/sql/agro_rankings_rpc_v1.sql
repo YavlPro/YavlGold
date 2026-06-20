@@ -218,7 +218,8 @@ CREATE OR REPLACE FUNCTION public.agro_rank_pending_clients(
     p_from date DEFAULT NULL,
     p_to date DEFAULT NULL,
     p_limit integer DEFAULT 5,
-    p_crop_id uuid DEFAULT NULL
+    p_crop_id uuid DEFAULT NULL,
+    p_farm_id uuid DEFAULT NULL
 )
 RETURNS TABLE (
     client_name text,
@@ -238,6 +239,7 @@ DECLARE
     v_date_field text := 'fecha';
     v_due_field text := 'fecha';
     v_client_expr text := '''Sin nombre''';
+    v_has_farm_id boolean := false;
     v_sql text;
 BEGIN
     IF v_uid IS NULL THEN
@@ -251,6 +253,11 @@ BEGIN
     ELSE
         RETURN;
     END IF;
+
+    SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = v_table_name AND column_name = 'farm_id'
+    ) INTO v_has_farm_id;
 
     IF EXISTS (
         SELECT 1 FROM information_schema.columns
@@ -388,12 +395,16 @@ BEGIN
         v_sql := v_sql || ' AND ($4::uuid IS NULL OR crop_id = $4::uuid)';
     END IF;
 
+    IF v_has_farm_id THEN
+        v_sql := v_sql || ' AND ($5::uuid IS NULL OR farm_id = $5::uuid)';
+    END IF;
+
     v_sql := v_sql || '
         GROUP BY 1
         ORDER BY total_pending DESC NULLS LAST, pending_count DESC NULLS LAST
         LIMIT ' || v_limit;
 
-    RETURN QUERY EXECUTE v_sql USING v_uid, p_from, p_to, p_crop_id;
+    RETURN QUERY EXECUTE v_sql USING v_uid, p_from, p_to, p_crop_id, p_farm_id;
 END;
 $$;
 
@@ -606,14 +617,14 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.agro_rank_top_clients(date, date, integer, uuid) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.agro_rank_pending_clients(date, date, integer, uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.agro_rank_top_clients(date, date, integer, uuid, uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.agro_rank_pending_clients(date, date, integer, uuid, uuid) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.agro_rank_top_crops_profit(date, date, integer, uuid) FROM PUBLIC;
 
-GRANT EXECUTE ON FUNCTION public.agro_rank_top_clients(date, date, integer, uuid) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.agro_rank_pending_clients(date, date, integer, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.agro_rank_top_clients(date, date, integer, uuid, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.agro_rank_pending_clients(date, date, integer, uuid, uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.agro_rank_top_crops_profit(date, date, integer, uuid) TO authenticated;
 
-GRANT EXECUTE ON FUNCTION public.agro_rank_top_clients(date, date, integer, uuid) TO service_role;
-GRANT EXECUTE ON FUNCTION public.agro_rank_pending_clients(date, date, integer, uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.agro_rank_top_clients(date, date, integer, uuid, uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.agro_rank_pending_clients(date, date, integer, uuid, uuid) TO service_role;
 GRANT EXECUTE ON FUNCTION public.agro_rank_top_crops_profit(date, date, integer, uuid) TO service_role;

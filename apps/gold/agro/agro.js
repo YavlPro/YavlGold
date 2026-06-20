@@ -13842,10 +13842,14 @@ async function fetchOpsRankingsData(options = {}) {
         ...baseParams,
         p_farm_id: opsRankingsState.selectedFarmId || null
     };
+    const pendingParams = {
+        ...baseParams,
+        p_farm_id: opsRankingsState.selectedFarmId || null
+    };
 
     const [topClientsRes, pendingRes, topCropsRows] = await Promise.all([
         supabase.rpc('agro_rank_top_clients', topClientsParams),
-        supabase.rpc('agro_rank_pending_clients', baseParams),
+        supabase.rpc('agro_rank_pending_clients', pendingParams),
         fetchOpsTopCropsCanonical({
             userId: userData.user.id,
             rangeDates: rangeDates,

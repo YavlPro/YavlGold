@@ -121,8 +121,6 @@ body {
 
 .btn-register:hover {
   opacity: 0.9;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(200, 167, 82, 0.4);
 }
 
 /* Botones */
@@ -130,7 +128,7 @@ body {
 .btn-primary { background: var(--gradient-gold); color: var(--bg-darker); }
 .btn-secondary { background: transparent; color: var(--color-secondary); border: 2px solid var(--color-secondary); backdrop-filter: blur(10px); }
 .btn-outline { background: transparent; color: var(--text-light); border: 1px solid rgba(255,255,255,0.3); }
-.btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(200, 167, 82, 0.25); }
+.btn:hover { opacity: 0.92; }
 
 /* Secciones y tarjetas genéricas */
 .section { padding: 100px 5% 60px; }
@@ -139,7 +137,7 @@ body {
 .section-title p { color: var(--text-muted); max-width: 600px; margin: 0 auto; }
 .tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-top: 30px; }
 .tool-card { background: var(--card-bg); padding: 24px; border-radius: var(--border-radius); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); backdrop-filter: blur(10px); transition: var(--transition); text-align: center; display: flex; flex-direction: column; height: 100%; }
-.tool-card:hover { transform: translateY(-8px); box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4); border-color: var(--color-secondary); }
+.tool-card:hover { transform: translateY(-2px); box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4); border-color: var(--color-secondary); }
 .tool-card h3 { font-size: 1.4rem; margin-bottom: 12px; color: var(--text-light); }
 .tool-card p { color: var(--text-muted); margin-bottom: 16px; flex-grow: 1; }
 .tool-icon { font-size: 2.6rem; color: var(--color-secondary); margin-bottom: 16px; }
