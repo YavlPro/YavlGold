@@ -192,23 +192,25 @@ No es un reemplazo de los módulos profundos ni un simple panel decorativo. No e
 * Orientar al usuario al entrar.
 * Resumir el estado actual del día: clima, mercados, fase lunar.
 * Servir como punto de acceso rápido a herramientas, ciclos, finanzas y contexto.
-* Dar una ruta sugerida de arranque rápido ("Arranque rápido del día").
+* Dar una ruta sugerida de arranque rápido ("Cómo empezar").
 
 ### Componentes actuales
 
-* Guía de arranque rápido (5 pasos sugeridos)
+* Guía "Cómo empezar" (3 pasos seguros: crear finca, ver clima, ayuda)
 * Clima local (temperatura, condición)
 * Mercados (crypto y divisas)
 * Fase lunar
-* Atajos a crear finca, crear cultivo, registrar gasto, ver clima, ayuda y soporte
+* Tarjetas de acceso directo: Mi Perfil, Dashboard Agro, Crear Finca
 
 ### Cómo se usa
 
 1. Al entrar a Agro ves el Dashboard automáticamente.
 2. Consultas las condiciones climáticas del día y el estado de los mercados en tiempo real.
-3. Si es tu primer ingreso, hay una guía de arranque con pasos sugeridos.
-4. Los atajos te llevan directamente a las herramientas que necesitas.
+3. Si es tu primer ingreso, la guía "Cómo empezar" te muestra los primeros pasos seguros (crear finca, consultar clima, buscar ayuda).
+4. Las tarjetas del hub te llevan directamente a las herramientas que necesitas.
 5. Desde esta pantalla también puedes consultar al Asistente IA para ayuda.
+
+> **Nota (2026-06-20):** La guía del Dashboard muestra solo pasos que no requieren infraestructura previa (fincas o cultivos). Si el usuario intenta crear un cultivo o registrar un movimiento sin tener fincas, el sistema lo redirige automáticamente a Mis Fincas con un aviso informativo.
 
 ### Cómo se conecta con el resto
 
@@ -1050,7 +1052,7 @@ El patrón hub/module organiza Agro en dos estados de experiencia:
 
 #### Puertas principales del hub
 
-- **Inicio:** entrada rápida, dashboard, nuevo registro y nuevo cultivo.
+- **Inicio:** Mi Perfil, Dashboard Agro y Crear Finca (acceso directo a Mis Fincas).
 - **Granja:** cultivos, períodos, Facturero de Clientes, Facturero de la Finca, Mi Carrito, Mis Clientes, Trabajo Diario y Clima Agro.
 - **Memoria:** AgroRepo y Asistente IA.
 - **Menú:** perfil, documentación, feedback, ajustes y soporte.
@@ -1450,11 +1452,12 @@ La herramienta no sirve para consultas que no tengan respaldo en lo que ya regis
 
 ### 9.14 ¿Cómo creo un registro o movimiento comercial?
 
-1. En el Dashboard: botón "Nuevo registro".
-2. Seleccionas el tipo: gasto, ingreso recibido, fiado, pérdida u otro.
-3. Si el registro pertenece a un cultivo específico, lo seleccionas. Si no, queda como movimiento general.
-4. Indicas el monto, la fecha y el concepto.
-5. Guardar.
+1. En el Dashboard o sidebar, usa "Nuevo registro".
+2. Si no tienes fincas creadas, el sistema te redirige a Mis Fincas con un aviso (2026-06-20).
+3. Seleccionas el tipo: gasto, ingreso recibido, fiado, pérdida u otro.
+4. Si el registro pertenece a un cultivo específico, lo seleccionas. Si no, queda como movimiento general.
+5. Indicas el monto, la fecha y el concepto.
+6. Guardar.
 
 ### 9.15 ¿Cuándo un registro va a un cultivo y cuándo queda como movimiento general?
 
