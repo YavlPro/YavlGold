@@ -477,11 +477,11 @@
     }
 
     .module-card:hover {
-      border-color: rgba(200, 167, 82, 0.4);
+      border-color: rgba(255, 255, 255, 0.12);
     }
 
     .module-card:hover::before {
-      opacity: 0.5;
+      opacity: 0;
     }
 
     /* Ícono del Módulo */
@@ -500,7 +500,7 @@
     }
 
     .module-card:hover .module-icon {
-      background: rgba(200, 167, 82, 0.15);
+      background: rgba(200, 167, 82, 0.10);
     }
 
     /* Header de Tarjeta */
@@ -536,13 +536,9 @@
 
     /* Badge Dorado - Producto Estrella / Activo */
     .badge-estrella {
-      background: var(--badge-dorado);
-      box-shadow: none;
-      background-size: 200% auto;
-      background-image: linear-gradient(90deg,
-          var(--dorado-oscuro) 0%,
-          var(--dorado-claro) 50%,
-          var(--dorado-oscuro) 100%);
+      background: rgba(16, 185, 129, 0.1);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.2);
     }
 
     /* Badge Azul - En Desarrollo */
