@@ -870,12 +870,33 @@ function clickIfExists(selector) {
     return true;
 }
 
+function hasFarmsAvailable() {
+    return Array.isArray(window._agroFarms?.getFarms?.())
+        && window._agroFarms.getFarms().length > 0;
+}
+
+function redirectToFarmsWithNotice() {
+    if (typeof window.showToast === 'function') {
+        window.showToast('Necesitas crear una finca antes de sembrar un cultivo o registrar movimientos.', 'info');
+    }
+    window.dispatchEvent(new CustomEvent('agro:shell:set-view', {
+        detail: { view: 'ciclos', subview: 'mis-fincas', scroll: true }
+    }));
+}
+
 function runAction(action, currentView = '') {
     const token = String(action || '').trim().toLowerCase();
     switch (token) {
         case 'profile':
             return clickIfExists('#agro-profile-button');
         case 'new-crop':
+            // Each crop belongs to a farm (MANIFIESTO §4.3). Without a farm the
+            // crop modal would open empty and silently fail to save. Redirect to
+            // Mis Fincas instead of stranding the user in an orphaned module.
+            if (!hasFarmsAvailable()) {
+                redirectToFarmsWithNotice();
+                return false;
+            }
             if (typeof window.openCropModal === 'function') {
                 window.openCropModal();
                 return true;
@@ -885,6 +906,10 @@ function runAction(action, currentView = '') {
             if (typeof window.launchAgroWizard === 'function') {
                 if ((currentView === 'cartera-viva' || currentView === 'facturero-clientes') && typeof window.openCarteraVivaRecordContext === 'function') {
                     return window.openCarteraVivaRecordContext() === true;
+                }
+                if (!hasFarmsAvailable()) {
+                    redirectToFarmsWithNotice();
+                    return false;
                 }
                 window.launchAgroWizard('gastos');
                 return true;

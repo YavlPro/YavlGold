@@ -2531,54 +2531,130 @@ El usuario reportó que el dashboard tenía "mucho glow prohibido" — animacion
 
 ---
 
+
 ## Sesión 2026-06-19 — Glow Residual + Farm Filter en Fiados + Cambios en Agro “Cómo empezar”
 
-**Agentes**: GLM5.2 (Windsurf, ejecución) + mimo 2.5 (OpenCode, commit/push/docs)
-**Alcance**: reducción de glow residual, farm filter en Rankings y actualización del onboarding de Agro.
-**Estado**: YELLOW
-**Producción**: cambios de glow y Rankings subidos; “Cómo empezar” aplicado en código pero NO confirmado visible por el usuario.
+**Agentes**: GLM 5.2 (Windsurf, ejecución inicial) + mimo 2.5 (OpenCode, takeover operativo, commit/push/docs)
+**Alcance**: reducción de glow residual, filtro por finca en Rankings/Fiados y actualización del onboarding de Agro.
+**Estado**: YELLOW ALTO
+**Producción**: cambios de glow y Rankings subidos; cambios de “Cómo empezar” aplicados localmente pero no confirmados visualmente y no commiteados.
+
+### Contexto operativo de la sesión
+GLM 5.2 avanzó la implementación, pero quedó sin créditos de forma prematura antes de cerrar completamente el frente. mimo 2.5 tomó el relevo, consolidó parte del trabajo y dejó trazabilidad suficiente, pero la sesión no cierra en verde porque todavía hay trabajo pendiente de validación y remate.
 
 ### Resultado por frente
-
 | Frente | Estado | Detalle |
 |--------|--------|---------|
-| **Dashboard Glow** | YELLOW | Tokens neutralizados y efectos reducidos, pero el usuario reporta glow residual visible |
-| **Rankings** | GREEN técnico | Top Clientes, Fiados y Top Cultivos con filtro de finca; migración aplicada |
-| **Agro “Cómo empezar”** | YELLOW | Cambios aplicados y build pasa, pero no confirmados visualmente por el usuario |
+| **Dashboard Glow** | YELLOW | Se neutralizaron tokens y se redujeron efectos, pero el usuario sigue reportando glow residual visible |
+| **Rankings / Fiados** | GREEN técnico | Top Clientes, Fiados y Top Cultivos ya respetan filtro por finca; migración aplicada; pendiente QA funcional en producción |
+| **Agro “Cómo empezar”** | YELLOW | Cambios aplicados en código y build passing, pero no confirmados visualmente por el usuario ni commiteados |
 
 ### Cambios realizados
-
 | Archivo | Tipo | Cambio |
 |---------|------|--------|
 | `dashboard-v1.css` | CSS | Neutralizados `--shadow-gold-*` y `--sombra-dorada` a `none` |
-| `dashboard-v1.css` | CSS | Reducidos escalas en `star-toggle` y `module-icon` |
+| `dashboard-v1.css` | CSS | Reducidas escalas en `star-toggle` y `module-icon` |
 | `dashboard-v1.css` | CSS | Reemplazado `var(--metallic-btn)` por `var(--gold-4)` en botones principales |
-| `unificacion.css` | CSS | Eliminados translateY, box-shadow glow y bounce excesivo en hover |
+| `unificacion.css` | CSS | Eliminados translateY, glow por box-shadow y bounce excesivo en hover |
 | `agro.js` | JS | `pendingParams` ahora incluye `p_farm_id` |
-| `agro_rankings_rpc_v1.sql` | SQL | `agro_rank_pending_clients` con `p_farm_id`, probe de `farm_id` y filtro dinámico |
-| `agro_rankings_rpc_v1.sql` | SQL | Fix GRANT/REVOKE para firmas `(date,date,integer,uuid,uuid)` |
-| `20260619090000` | Migración | Recreate de `agro_rank_pending_clients` + GRANT fix; aplicada a Supabase |
-| `apps/gold/agro/index.html` | HTML | “Cómo empezar” renombrado y reordenado según Manifiesto §9.12 |
-| `apps/gold/docs/MANIFIESTO_AGRO.md` | Docs | “6 pasos” → “5 pasos” alineado con onboarding actual |
+| `agro_rankings_rpc_v1.sql` | SQL | `agro_rank_pending_clients` recibe `p_farm_id`, detecta `farm_id` y filtra dinámicamente |
+| `agro_rankings_rpc_v1.sql` | SQL | Fix de GRANT/REVOKE para firmas `(date,date,integer,uuid,uuid)` |
+| `20260619090000` | Migración | Recreate de `agro_rank_pending_clients` + fix de grants; aplicada en Supabase |
+| `apps/gold/agro/index.html` | HTML | “Cómo empezar” renombrado y reordenado según `MANIFIESTO_AGRO.md` §9.12 |
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | Docs | “6 pasos” → “5 pasos”, alineado con onboarding actual |
 
 ### Commits
 - `6d298d4` — fix(dashboard): reduce residual glow + add farm filter to pending clients RPC
-- Nota: cambios de “Cómo empezar” quedaron en working tree y no fueron commiteados por decisión del usuario.
+- **Nota importante**: los cambios de “Cómo empezar” quedaron en working tree y no fueron commiteados por decisión del usuario. No deben tratarse como parte cerrada de producción hasta nueva validación.
 
 ### Migraciones aplicadas
-- `20260619090000` — `agro_rank_pending_clients` con `p_farm_id` y GRANT fix
+- `20260619090000` — recreate de `agro_rank_pending_clients` con `p_farm_id` + fix de grants
 
 ### Build
-- Build pasa.
-- Warning pre-existente: `Unexpected "}" at <stdin>:1472` en CSS legacy. No bloquea, pero conviene revisarlo en una pasada de limpieza.
+- Build passing.
+- Warning preexistente: `Unexpected "}" at <stdin>:1472`.
+  - No bloquea build.
+  - Origen exacto del warning aún no trazado a archivo fuente.
+
+### Razones del estado YELLOW
+1. GLM 5.2 quedó sin créditos antes del cierre total.
+2. El usuario sigue viendo glow residual en dashboard.
+3. El bloque “Cómo empezar” no está confirmado visualmente y quedó sin commit.
 
 ### Próximo agente — acciones recomendadas
-1. **QA Rankings**: confirmar que Fiados respeta filtro de finca.
-2. **Glow residual dashboard**: identificar por qué el usuario sigue viendo glow después de la limpieza de hoy.
-3. **“Cómo empezar” no visible**: investigar causa raíz (cache, deployment, CDN, build no reflejado o falta de push).
-4. **CSS warning**: rastrear origen del desbalance en CSS legacy (`Unexpected "}" at <stdin>:1472`).
+1. **QA Rankings / Fiados**
+   - Confirmar que el filtro por finca realmente afecta:
+     - Top Clientes
+     - Fiados
+     - Top Cultivos
+2. **Glow residual del dashboard**
+   - Identificar qué estilo sigue produciendo glow visible tras la limpieza de hoy.
+3. **“Cómo empezar” no visible / no confirmado**
+   - Investigar si el problema es:
+     - cache,
+     - deployment,
+     - working tree sin commit,
+     - o variante no reflejada en la superficie correcta.
+4. **Warning CSS legacy**
+   - Rastrear el origen real del `Unexpected "}" at <stdin>:1472`.
 
 ### Lecciones operativas
-- Cuando el usuario valida cambios de UI, verificar también si la variante quedó efectivamente desplegada y no solo en working tree o local.
-- No marcar como “cerrado” un frente cuyo resultado no fue confirmado visualmente por el usuario.
+- Cuando el usuario valida UI, confirmar también si la variante está realmente desplegada y no solo aplicada localmente.
+- No marcar un frente como “cerrado” si no fue confirmado visualmente.
+- Cuando un agente queda sin créditos a mitad de sesión, el takeover debe dejar claro qué quedó: subido, local, pendiente y sin verificar.
+
+### Lectura final de la sesión
+La sesión dejó avance real en los tres frentes, pero solo Rankings / Fiados se acerca a cierre técnico sólido. Dashboard Glow y “Cómo empezar” todavía requieren verificación y remate, por lo que el estado correcto sigue siendo YELLOW ALTO.
+
+---
+
+## Sesión 2026-06-20 — Fix fuga de estado del router + atajos sin infraestructura
+
+**Estado:** GREEN técnico · YELLOW hasta QA visual del usuario
+
+### Objetivo de la sesión
+Corregir dos fallas críticas de UX en el shell de navegación de Agro:
+1. Fuga de estado visual: la topbar contextual “Volver + título” no desaparecía al volver a vistas tipo hub.
+2. Violación de dependencias: atajos del hub Inicio y del Dashboard intentaban crear cultivos/registros sin verificar la existencia de fincas base.
+
+### Diagnóstico (fase 1, antes de tocar código)
+Se investigó el router completo (`agro-shell.js`) y se **corrigió el diagnóstico del prompt original** con evidencia del código:
+
+- **Falla 1 — causa real distinta a la descrita:** `setShellGate()` SÍ llama `setShellDepth('hub')` (L1044) y el botón Volver SÍ llama `setShellGate()` (L1420/1445/1452). El router base funciona. La fuga real venía por el path de action buttons (L1487–1501): al pulsar `new-crop`/`new-record` sin fincas, `runAction()` devolvía `true` y el handler forzaba `setShellDepth('module')`, pero el modal/wizard abortaba silenciosamente, dejando al usuario en un módulo huérfano con la topbar contextual visible. → Fix = guard en `runAction()`, NO reescribir el router.
+- **Discrepancia de ruta:** el prompt pedía `#view=granja&subview=mis-fincas`, pero `granja` es un SHELL GATE (resetea a dashboard e ignora subview). La ruta funcional correcta —usada en toda la app— es `ciclos&subview=mis-fincas`. Confirmado con el usuario.
+- **Dashboard es un módulo** (VIEW_CONFIG.dashboard), no un hub. Se dejó intacto.
+- **“Arranque rápido del día” no existe con ese nombre:** es el bloque “Cómo empezar” en `index.html` L936–969.
+
+### Cambios realizados
+| Archivo | Tipo | Cambio |
+|---------|------|--------|
+| `agro-shell.js` | JS | Nuevo helper `hasFarmsAvailable()` (usa `window._agroFarms?.getFarms()`, patrón ya usado en 7+ archivos) |
+| `agro-shell.js` | JS | Nuevo helper `redirectToFarmsWithNotice()` (toast vía `window.showToast` + dispatch de `agro:shell:set-view` a `ciclos&subview=mis-fincas`) |
+| `agro-shell.js` | JS | `runAction('new-crop')` y `runAction('new-record')` ahora validan fincas antes de abrir modal/wizard; sin fincas → redirige y devuelve `false` (evita forzar `module` depth) |
+| `index.html` | HTML | Hub Inicio: eliminadas tarjetas “Nuevo registro” y “Nuevo cultivo”; agregada tarjeta “Crear Finca” → `ciclos&subview=mis-fincas` (icon `fa-mountain-sun`, coherente con sidebar) |
+| `index.html` | HTML | “Cómo empezar”: reducido de 5 a 3 pasos (Crear mi finca · Ver clima · Ayuda y soporte); eliminados pasos que requerían fincas previas; copy actualizada |
+| `AGENT_REPORT_ACTIVE.md` | Docs | Esta sección (append, sin tocar contenido previo) |
+
+### Scope respetado (NO se hizo)
+- NO se reescribió `setShellGate()`, `setActiveView()` ni el listener del botón Volver (funcionaban correctamente).
+- NO se modificó `agro.js` (el guard vive en `agro-shell.js`; respeta §3.1).
+- NO se eliminó `ACTION_TO_MOBILE_CONTEXT` (sigue válido para sidebar/search/favorites; protegido por el mismo guard).
+- NO se tocó el sidebar desktop “Nuevo cultivo” (index.html:258); quedó protegido por el guard de `runAction`.
+- NO se forzó Dashboard a profundidad hub (rompería el patrón hub/module §4.12.4).
+- NO se usó la ruta literal `granja&subview=mis-fincas` del prompt (rompía navegación).
+- No se commiteó ni pusheó (pendiente autorización del usuario).
+
+### Build
+- Pendiente de ejecutar al cierre de esta sesión (`pnpm build:gold`).
+
+### QA sugerido
+1. `#view=inicio` → solo 3 tarjetas: Mi Perfil, Dashboard Agro, Crear Finca.
+2. Sin fincas: pulsar “Nuevo cultivo” (sidebar o vía search) → redirige a Mis Fincas + toast; topbar NO queda corrupta.
+3. Con ≥1 finca: “Nuevo cultivo” → abre modal normalmente (sin regresión).
+4. Tap “Crear Finca” → Mis Fincas; botón Volver → hub; topbar desaparece.
+5. F5 en cada vista → estado preservado.
+6. Consola sin errores JS.
+
+### Lección operativa
+- El diagnóstico del prompt original era parcialmente incorrecto (apuntaba a `setShellGate` cuando el router base funcionaba). Investigar el código antes de aplicar la prescripción evitó reescribir un router sano y enfocó el fix en la causa raíz real (el path de action buttons). Coherente con §8.2 “diagnóstico antes de tocar código”.
 

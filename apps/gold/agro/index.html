@@ -540,13 +540,10 @@
                         <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
                         <span>Dashboard Agro</span>
                     </button>
-                    <button type="button" class="agro-mobile-hub__item" data-agro-action="new-record">
-                        <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
-                        <span>Nuevo registro</span>
-                    </button>
-                    <button type="button" class="agro-mobile-hub__item" data-agro-action="new-crop">
-                        <i class="fa-solid fa-plus" aria-hidden="true"></i>
-                        <span>Nuevo cultivo</span>
+                    <button type="button" class="agro-mobile-hub__item" data-agro-view="ciclos"
+                        data-agro-subview="mis-fincas">
+                        <i class="fa-solid fa-mountain-sun" aria-hidden="true"></i>
+                        <span>Crear Finca</span>
                     </button>
                 </div>
             </div>
@@ -938,31 +935,22 @@
                     <div class="agro-dash-guide__head">
                         <div class="agro-dash-guide__copyblock">
                             <p class="agro-dash-guide__eyebrow">Ruta sugerida</p>
-                            <h3 class="agro-dash-guide__title">Arranque rápido del día</h3>
+                            <h3 class="agro-dash-guide__title">Cómo empezar</h3>
                         </div>
-                        <p class="agro-dash-guide__copy">Seis atajos breves para abrir cultivo, validar contexto y pasar
-                            a la acción sin salir del dashboard.</p>
+                        <p class="agro-dash-guide__copy">Tres pasos breves para crear tu primera finca, consultar el clima y encontrar ayuda cuando la necesites.</p>
                     </div>
                     <div class="agro-dash-guide__steps">
-                        <button type="button" class="agro-guide-step" data-agro-action="new-crop">
-                            <span class="agro-guide-step__index">1</span>
-                            <span class="agro-guide-step__text">Crear cultivo</span>
-                        </button>
                         <button type="button" class="agro-guide-step" data-agro-view="ciclos"
-                            data-agro-subview="activos">
-                            <span class="agro-guide-step__index">2</span>
-                            <span class="agro-guide-step__text">Elegir ciclo</span>
-                        </button>
-                        <button type="button" class="agro-guide-step" data-agro-action="new-record">
-                            <span class="agro-guide-step__index">3</span>
-                            <span class="agro-guide-step__text">Nuevo registro</span>
+                            data-agro-subview="mis-fincas" data-agro-mode-scope="crop">
+                            <span class="agro-guide-step__index">1</span>
+                            <span class="agro-guide-step__text">Crear mi finca</span>
                         </button>
                         <button type="button" class="agro-guide-step" data-agro-view="clima">
-                            <span class="agro-guide-step__index">4</span>
+                            <span class="agro-guide-step__index">2</span>
                             <span class="agro-guide-step__text">Ver clima</span>
                         </button>
                         <button type="button" class="agro-guide-step" data-agro-view="herramientas">
-                            <span class="agro-guide-step__index">5</span>
+                            <span class="agro-guide-step__index">3</span>
                             <span class="agro-guide-step__text">Ayuda y soporte</span>
                         </button>
                     </div>
