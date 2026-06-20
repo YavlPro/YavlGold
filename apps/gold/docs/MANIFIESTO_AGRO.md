@@ -196,11 +196,11 @@ No es un reemplazo de los módulos profundos ni un simple panel decorativo. No e
 
 ### Componentes actuales
 
-* Guía de arranque rápido (6 pasos sugeridos)
+* Guía de arranque rápido (5 pasos sugeridos)
 * Clima local (temperatura, condición)
 * Mercados (crypto y divisas)
 * Fase lunar
-* Atajos a crear cultivo, elegir ciclo, nuevo registro, ver clima, más herramientas
+* Atajos a crear finca, crear cultivo, registrar gasto, ver clima, ayuda y soporte
 
 ### Cómo se usa
 
