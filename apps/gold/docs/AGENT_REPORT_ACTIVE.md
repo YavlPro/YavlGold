@@ -2658,3 +2658,71 @@ Se investigó el router completo (`agro-shell.js`) y se **corrigió el diagnóst
 ### Lección operativa
 - El diagnóstico del prompt original era parcialmente incorrecto (apuntaba a `setShellGate` cuando el router base funcionaba). Investigar el código antes de aplicar la prescripción evitó reescribir un router sano y enfocó el fix en la causa raíz real (el path de action buttons). Coherente con §8.2 “diagnóstico antes de tocar código”.
 
+
+---
+
+## Sesion 2026-06-20 (tarde) - Landing + Agro docs + glow + auth + profile + onboarding
+
+**Estado:** GREEN tecnico · QA pendiente solo para onboarding (requiere cuenta nueva)
+
+### Resumen ejecutivo
+12 commits en un solo dia. Covers: landing page, agro docs, glow eradication, auth, profile editor, onboarding gate, naming fixes. QA green en todo excepto onboarding (pendiente cuenta nueva).
+
+### Commits del dia (2026-06-20)
+| Hash | Descripcion |
+|------|-------------|
+| 5f8084b | fix(profile): shrink guided editor from near-fullscreen to sober modal |
+| d228582 | docs(AGENTS): add lesson - verify HTML imports before declaring files orphaned |
+| f89f092 | fix(agro,dashboard): remove redundant export banner + disable onboarding auto-launch |
+| 8f7be71 | fix(auth): remove native confirm() on logout for direct sign-out |
+| 70e6db8 | fix(agro): rename 'Operativa vinculada' -> 'Facturero de cultivos' |
+| c0d715b | fix(agro): rename facturero labels + canonical gold style for Nueva tarea buttons |
+| 211558b | fix(agro): eradicate gold glow on hover + always-on pulse animations |
+| 2173ac3 | feat(landing): agregar cards Mis Fincas y Facturero Personal |
+| 0ee5953 | fix(landing): renombrar 'Comercial' -> 'Mis Factureros' en chip y tags |
+| 9ce7fce | docs(agro): actualizar Manifiesto y docs-agro con cambios 2026-06-20 |
+| a567d33 | fix(shell): guard farm-dependency in runAction + safer hub/dashboard shortcuts |
+
+### Frente: Landing Page
+- "Comercial" renombrado a "Mis Factureros" (chip + 2 tags)
+- Agregadas 2 cards faltantes: Mis Fincas (Productivo) y Facturero Personal (Mis Factureros)
+- Total: 6 cards (Ciclos, Mis Fincas, Facturero de Clientes, Facturero de la Finca, Facturero Personal, Bitacora & IA)
+
+### Frente: Agro Docs
+- Manifiesto 4.2: guide "Como empezar" ahora 3 pasos seguros
+- Manifiesto 4.12.4: hub Inicio = Mi Perfil, Dashboard Agro, Crear Finca
+- Manifiesto 9.14: nota sobre redireccion automatica a Mis Fincas
+- docs-agro.html: secciones alineadas
+
+### Frente: Glow Agro
+- Root cause real: glow estaba en agro-index-critical.css, NO en dashboard-v1.css
+- 68 lineas eliminadas: logo breathe, card hover glow, bell glow, btn glow, kpi/crop breathe, section-title textGlow
+- Quedan refs pre-existentes en agro.css y agro-facturero-finca.css (futuro candidato)
+
+### Frente: Auth
+- Logout: eliminado confirm() nativo -> cierre directo
+- Login/register/logout ya usaban toast canonico uxMessages
+
+### Frente: Onboarding
+- Gate automatico comentado en dashboard/index.html (post-login -> dashboard directo)
+- Wizard + tabla + modulos preservados (reversibles)
+- QA pendiente: requiere cuenta nueva para verificar
+
+### Frente: Profile Editor
+- Modal reducido de 1020x760px a ~760px con altura natural
+- Paddings, gaps, inputs compactados
+- Mobile media queries intactos
+
+### Frente: Naming
+- "Operativa vinculada" -> "Facturero de cultivos"
+- "Gastos operativos asociados/pagados" -> "Factureros de cultivos asociados/pagados"
+- Boton "Nueva tarea": scoped gold style en agro-task-cycles.css
+
+### Leccion operativa
+- Un filtro de glob con exclusion de extension puede dar falsos "huerfanos" - los imports viven en .html, no en .js. Siempre buscar referencias sin filtro de extension antes de declarar codigo muerto. Ejecutar pnpm build:gold como gate final.
+
+### Proximo agente (2026-06-21)
+1. Dashboard principal (no agro): rediseno desde cero - el glow restante se resolvera con reescritura completa
+2. Onboarding QA: verificar con cuenta nueva que el wizard ya no se abre automaticamente
+3. Glow pre-existente en agro.css: candidatos para futura limpieza (.kpi-tag breathe, icono breathe)
+4. Warning CSS pre-existe: Unexpected "}" at stdin:1472 sigue sin resolverse
