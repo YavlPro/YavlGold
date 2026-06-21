@@ -635,10 +635,8 @@ const AuthUI = {
 
   handleLogout() {
     console.log('[AuthUI] 👋 Cerrando sesión...');
-    if (confirm('¿Estás seguro de cerrar sesión?')) {
-      window.AuthClient.logout();
-      if (this.elements.userDropdown) this.elements.userDropdown.style.display = 'none';
-    }
+    window.AuthClient.logout();
+    if (this.elements.userDropdown) this.elements.userDropdown.style.display = 'none';
   },
 
   showError(type, message) {
