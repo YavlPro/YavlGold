@@ -484,7 +484,7 @@ function renderCard(ciclo, index = 0) {
     </div>
     ${operationalGastosUsd > 0 || operationalPendingUsd > 0 ? renderBreakdownSection({
     title: 'Operativa vinculada',
-    subtitle: 'Gastos operativos asociados a este cultivo',
+    subtitle: 'Factureros de cultivos asociados a este cultivo',
     modifierClass: 'is-operativa',
     defaultOpen: true,
     summaryItems: [
@@ -492,7 +492,7 @@ function renderCard(ciclo, index = 0) {
       { label: 'Pendiente', usdValue: operationalPendingUsd }
     ],
     bodyMarkup: [
-      operationalGastosUsd > 0 ? renderBreakdownUsdRow('Gastos operativos pagados', operationalGastosUsd, desgloseGastosOperativos) : '',
+      operationalGastosUsd > 0 ? renderBreakdownUsdRow('Factureros de cultivos pagados', operationalGastosUsd, desgloseGastosOperativos) : '',
       operationalPendingUsd > 0 ? renderBreakdownUsdRow('Gastos operativos pendientes', operationalPendingUsd, desglosePendientesOperativos) : ''
     ].filter(Boolean).join('')
   }) : ''}

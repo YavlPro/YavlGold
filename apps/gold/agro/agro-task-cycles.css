@@ -770,6 +770,34 @@ body.agro-task-cycles-modal-open {
   }
 }
 
+/* Canonical primary action button for "Nueva tarea" (header + registered work section).
+   Solid gold surface, pure-black text, no glow at rest or hover (ADN V11 §0/§19.6).
+   Scoped to the task shell so global .btn/.btn-primary rules stay untouched. */
+.agro-task-shell .btn[data-task-action="new-task"] {
+  background: var(--gold-4, #C8A752);
+  color: #0a0a0a;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.55rem 1.1rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm, 8px);
+  box-shadow: none;
+  text-shadow: none;
+  opacity: 1;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.agro-task-shell .btn[data-task-action="new-task"]:hover,
+.agro-task-shell .btn[data-task-action="new-task"]:focus-visible {
+  background: var(--gold-5, #E8D48B);
+  color: #0a0a0a;
+  box-shadow: none;
+  text-shadow: none;
+  opacity: 1;
+  outline: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .agro-task-refresh-btn,
   .agro-task-range-pill,
