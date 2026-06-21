@@ -314,7 +314,8 @@ async function runReportExport(reportId) {
 
     try {
         await handler(report, category);
-        setFeedback(`${report.name}: exportación iniciada.`, 'success');
+        // Success feedback intentionally omitted: the browser's download
+        // already confirms the export. Only errors/warnings surface a banner.
     } catch (err) {
         console.warn('[AgroReportsCenter] Export error:', err);
         downloadHonestReport({

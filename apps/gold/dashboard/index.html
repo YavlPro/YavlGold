@@ -2162,19 +2162,25 @@
       const onboardingResult = await OnboardingManager.getOnboardingContext(user.id);
       let onboardingContext = onboardingResult?.context || null;
 
-      if (!onboardingContext?.onboardingCompleted) {
-        const wizardResult = await openOnboardingWizard({
-          initialData: {
-            ...onboardingContext,
-            displayName: onboardingContext?.displayName || profile?.username || emailName
-          },
-          draftKey: `YG_ONBOARDING_DRAFT_V1:${user.id}`,
-          onSubmit: (payload) => OnboardingManager.saveOnboardingContext(payload, user.id),
-          onRequestLogout: performDashboardLogout
-        });
-
-        onboardingContext = wizardResult?.context || onboardingContext;
-      }
+      // Onboarding wizard auto-launch disabled by product decision (2026-06-20):
+      // post-login goes straight to the dashboard. The wizard module, the
+      // getOnboardingContext() lookup and the user_onboarding_context table are
+      // all preserved — only the automatic open is skipped. Existing context
+      // (if any) still flows to applyDashboardIdentity and downstream consumers,
+      // which already tolerate null context via their fallbacks.
+      // To re-enable: uncomment the block below.
+      // if (!onboardingContext?.onboardingCompleted) {
+      //   const wizardResult = await openOnboardingWizard({
+      //     initialData: {
+      //       ...onboardingContext,
+      //       displayName: onboardingContext?.displayName || profile?.username || emailName
+      //     },
+      //     draftKey: `YG_ONBOARDING_DRAFT_V1:${user.id}`,
+      //     onSubmit: (payload) => OnboardingManager.saveOnboardingContext(payload, user.id),
+      //     onRequestLogout: performDashboardLogout
+      //   });
+      //   onboardingContext = wizardResult?.context || onboardingContext;
+      // }
 
       applyDashboardIdentity({
         profile,
