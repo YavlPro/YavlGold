@@ -485,6 +485,12 @@ Solo si la lección es reutilizable y de valor real, debe registrarse en la docu
 **No convertir esto en ritual vacío.**
 No documentar obviedades ni ruido.
 
+#### Lección: no declarar código muerto sin verificar imports en HTML
+
+**Problema recurrente:** un agente busca `import` o `require` de un archivo `.js` con filtros de código fuente y no encuentra referencias. Concluye erróneamente que el archivo es "huérfano" o "código muerto" y lo archive o elimina. El build falla porque **los imports viven en los `.html`**, no en `.js`.
+
+**Regla:** Antes de declarar un archivo como huérfano, buscar referencias **sin filtro de extensión** (todos los archivos, incluyendo `.html`). Un `import` en un `index.html` es tan válido como un `import` en un `.js`. Si hay duda, ejecutar `pnpm build:gold` **antes** de mover o borrar cualquier archivo — el build gate confirma o niega la dependencia de forma infalible.
+
 ---
 
 ### 8.5 — Verificación antes de declarar "completado"
