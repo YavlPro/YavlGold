@@ -483,7 +483,7 @@ function renderCard(ciclo, index = 0) {
       ${renderBreakdownUsdRow('Costos combinados del ciclo', costosUsd, desgloseCostos)}
     </div>
     ${operationalGastosUsd > 0 || operationalPendingUsd > 0 ? renderBreakdownSection({
-    title: 'Operativa vinculada',
+    title: 'Facturero de cultivos',
     subtitle: 'Factureros de cultivos asociados a este cultivo',
     modifierClass: 'is-operativa',
     defaultOpen: true,
