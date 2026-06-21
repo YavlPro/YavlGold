@@ -74,11 +74,10 @@ function ensureStyles() {
 
       /* ── Shell ── */
       .yg-profile-edit-shell {
-        width: min(1020px, 100%);
-        min-height: min(760px, calc(100vh - 36px));
+        width: min(760px, 100%);
         display: grid;
-        grid-template-columns: minmax(280px, 330px) minmax(0, 1fr);
-        gap: 18px;
+        grid-template-columns: minmax(230px, 260px) minmax(0, 1fr);
+        gap: 14px;
         margin: auto 0;
         animation: none;
       }
@@ -108,10 +107,10 @@ function ensureStyles() {
 
       /* ── Side panel ── */
       .yg-profile-edit-side {
-        padding: 28px 24px;
+        padding: 18px 16px;
         display: flex;
         flex-direction: column;
-        gap: 18px;
+        gap: 14px;
         animation: none;
       }
 
@@ -252,7 +251,7 @@ function ensureStyles() {
 
       /* ── Card (main content) ── */
       .yg-profile-edit-card {
-        padding: 30px;
+        padding: 20px;
         display: flex;
         flex-direction: column;
         min-height: 0;
@@ -260,7 +259,7 @@ function ensureStyles() {
       }
 
       .yg-profile-edit-card header {
-        margin-bottom: 20px;
+        margin-bottom: 14px;
       }
 
       .yg-profile-edit-kicker {
@@ -330,12 +329,12 @@ function ensureStyles() {
       }
 
       .yg-profile-edit-input {
-        padding: 16px 18px;
+        padding: 11px 14px;
       }
 
       .yg-profile-edit-textarea {
-        min-height: 140px;
-        padding: 14px 18px;
+        min-height: 96px;
+        padding: 11px 14px;
         resize: vertical;
       }
 
