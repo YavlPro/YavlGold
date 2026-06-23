@@ -2872,3 +2872,48 @@ Widget afectado: AgroRepo (`agro-repo-app.js` + `agro-repo-storage.js` + `agro-r
 7. Recargar pagina tras eliminar -> el nodo sigue en papelera (persistio) y lo >30 dias ya no aparece (purgado al cargar).
 
 **Scope respetado:** no se toco `agro.js` ni archivos canonicos. No se hicieron commits (pendiente de revision del usuario).
+
+---
+
+## Sesion 2026-06-23 — AgroRepo Phase 3 Papelera + Rebrand Naming
+
+**Objetivo:** Cerrar AgroRepo Phase 3 (papelera) y unificar naming "Bitácora" → "AgroRepo" en UI pública.
+
+### Hecho
+
+| Hash | Tipo | Cambio |
+|---|---|---|
+| `24c633cd` | fix | AgroRepo CSS cascade: `.agrp-tree-icon` rule restaurada (corrompida desde Phase 2) |
+| `770f3960` | feat | AgroRepo Phase 3: papelera (soft-delete + restaurar + purge 30d + badge + vista completa) |
+| `07c8c1d8` | fix | Rebrand "Bitácora" → "AgroRepo" en 5 archivos HTML UI pública |
+
+### Hallazgo critico (papelera)
+`normalizeRepo()` reconstruye nodos desde cero via `build*Node`. Un `deletedAt` añadido "manualmente" no sobreviviría al primer guardado. Solucion: propagar `deletedAt`/`deletedFromParentId` en los normalizers.
+
+### QA validado
+- `pnpm build:gold` OK (4.12s)
+- Carpetas de usuario arrastrables ✓ (system roots no, no bloqueante)
+- Naming "bitácora" removido de UI pública ✓
+- Documentos internos (AGENTS.md, MANIFIESTO) conservan "bitácora" como concepto ✓
+
+### QA pendiente (papelera)
+1. Crear archivo → eliminar → papelera → restaurar → ubicacion original
+2. Carpeta con archivos → eliminar → jerarquia completa en papelera → restaurar
+3. X individual → hard-delete permanente
+4. Vaciar → solo purga >30 dias
+5. System root → papelera → restaurar → props canonicas
+6. Smoke no-regresion: drag/rename/copy/duplicar
+7. Reload → persistencia + purga automatica
+
+### Archivos tocados
+- `apps/gold/agro/agro-repo-app.js` — soft-delete, vista papelera, restaurar, purge, badge
+- `apps/gold/agro/agro-repo-storage.js` — normalizers con deletedAt, softDeleteNodeInRepo, restoreNodeFromTrash, purgeExpiredTrash
+- `apps/gold/agro/agro-repo.css` — estilos papelera (133 lineas)
+- `apps/gold/index.html` — rebrand Bitácora → AgroRepo
+- `apps/gold/agro/index.html` — rebrand
+- `apps/gold/docs-agro.html` — rebrand
+- `apps/gold/terms.html` — rebrand
+- `apps/gold/privacy.html` — rebrand
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md` — esta entrada
+
+**Scope respetado:** no se toco `agro.js` ni archivos canonicos.
