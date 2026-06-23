@@ -2917,3 +2917,31 @@ Widget afectado: AgroRepo (`agro-repo-app.js` + `agro-repo-storage.js` + `agro-r
 - `apps/gold/docs/AGENT_REPORT_ACTIVE.md` — esta entrada
 
 **Scope respetado:** no se toco `agro.js` ni archivos canonicos.
+
+---
+
+## Sesion 2026-06-23 (tarde) — Bug fixes AgroRepo + QA Full Green
+
+**Objetivo:** Corregir 2 bugs reportados y confirmar QA completo de AgroRepo.
+
+### Bug 1 — SVG cubo en sidebar
+- **Causa:** `<svg>` con cubo isométrico en `agrp-brand-icon` del sidebar.
+- **Fix:** eliminado `<div class="agrp-brand-icon">` + SVG en `agro-repo-app.js:1362`, regla CSS `.agrp-brand-icon` eliminada.
+
+### Bug 2 — "Mis Fincas" sobreescribe título (race condition)
+- **Causa raíz:** `agro-farms.js` `loadFarms()` fuerza título "Mis Fincas" incondicionalmente. Se ejecuta desde múltiples sitios asíncronos (bootstrap, rankings, refresh) y solo verifica existencia del nodo `#agro-farms-root` (no si está visible). En `agro#view=agrorepo`, el nodo existe en DOM oculto → `loadFarms` pisa el título "AgroRepo".
+- **Fix:** guard `document.body.dataset.agroActiveView !== 'ciclos'` → early return. Título solo se fuerza en vista de ciclos/fincas.
+
+### Commits
+| Hash | Descripción |
+|---|---|
+| `31328e66` | fix(agro-repo): remove SVG brand icon + fix race condition title overwrite |
+
+### QA Full Green (todos los escenarios)
+- Papelera: crear→eliminar→restaurar, jerarquías, vaciar, system roots, reload
+- Drag & drop, rename, copy/paste, duplicar
+- Brand icon limpio
+- Título estable sin race condition
+- Build OK (4.34s)
+
+**Scope respetado:** cambios quirúrgicos en 3 archivos (`agro-farms.js`, `agro-repo-app.js`, `agro-repo.css`).
