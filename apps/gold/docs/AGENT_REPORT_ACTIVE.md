@@ -2763,3 +2763,52 @@ Widget afectado: AgroRepo (`agro-repo-app.js` + `agro-repo-storage.js` + `agro-r
 4. Importar un `.md` -> aparece dentro de carpeta "Importados" (no en Mi Finca).
 
 **Scope respetado:** no se tocaron archivos fuera de `agro-repo-app.js`. No se hicieron commits (pendiente de revision del usuario).
+
+---
+
+## Sesion 2026-06-22 (Fase 2) — AgroRepo: 6 cambios (modulo dedicado, sin sync, system roots editables, duplicar, drag&drop, identidad)
+
+**Objetivo:** Convertir AgroRepo en modulo dedicado, eliminar la sincronizacion con Supabase (rota - apuntaba a tabla inexistente), permitir renombrar/eliminar system roots, duplicar manteniendo el mismo nombre, anyadir drag&drop para mover archivos/carpetas, y consolidar la identidad del modulo.
+
+**Diagnostico (root cause confirmada via 3 agentes Explore + verificacion directa):**
+- "Mis Fincas" en el header venia de la contextbar movil (`agro-mobile-contextbar`), mobile-only. Para `agrorepo`, `config.label === 'AgroRepo'` ya estaba bien; la confusion visual venia del acordeon neutralizado que daba apariencia de widget embebido.
+- No existia drag&drop (cero coincidencias `draggable`/`dragstart`/`drop`). Mover solo era posible via copy+paste (que copia, no mueve).
+- System roots bloqueadas en 3-4 puntos (`updateContextMenuState`, `openRenameModal`, `openDeleteModal`, `deleteNodeFromRepo`).
+- Duplicar anyadia sufijo `-N` por `ensureUniqueNodeTitle` (`agro-repo-storage.js`).
+- Sync Supabase tenia ~15 puntos de anclaje pero **no existia migracion** `agrorepo_sync` en `supabase/` (feature media rota).
+
+**Cambios realizados:**
+
+| Archivo | Cambio | Detalle |
+|---|---|---|
+| `apps/gold/agro/index.html` | Cambio 1 | Eliminado `<details>`/`<summary>`/`<div class="yg-accordion-content">` que envolvia al widget. Seccion `#agro-repo-section` ahora con contenido plano (modulo dedicado). |
+| `apps/gold/agro/index.html` | Cambio 6 | Copy del launcher cambiado de "Bitacora y memoria del trabajo agricola." a "Repositorio de notas y memoria del trabajo agricola." (evita confusion con "Mi Bitacora"). |
+| `apps/gold/agro/agro-repo-app.js` | Cambio 1 | Eliminadas `neutralizeAccordionChrome()`, `setupAccordionListener()`. `initAgroRepo()` simplificado: bootstrap directo sin logica de acordeon. |
+| `apps/gold/agro/agro-shell.js` | Cambio 1 | Quitadas llamadas `updateAccordionState('yg-acc-agrorepo', ...)` en `applyViewEffects` (orphanas tras eliminar el `<details>`). |
+| `apps/gold/agro/agro-repo-app.js` | Cambio 2 | Eliminada feature Sync Supabase completa: `openSyncModal`, `testConnection`, `syncToSupabase`, `saveSyncConfig`, modal `#agrpSyncModal`, boton sidebar, cases `open-sync-modal`/`toggle-auto-sync`/`test-sync`, submit handler, imports `loadSyncConfig`/`persistSyncConfig`, `state.syncConfig`. `updateStatusBar` simplificado (solo counts). Status bar HTML sin `#agrpSyncDot`/`#agrpSyncStatus`. |
+| `apps/gold/agro/agro-repo-storage.js` | Cambio 2 | Borrados `AGRO_REPO_SYNC_STORAGE_KEY`, `loadSyncConfig`, `persistSyncConfig`. |
+| `apps/gold/agro/agro-repo.css` | Cambio 2 | Borrados `.agrp-sidebar-footer .sync`, `.agrp-sync-toggle-row`, `.agrp-toggle*`. |
+| `apps/gold/agro/agro-repo-storage.js` | Cambio 3 | Schema del repo ampliado: `deletedSystemFolders: []` (tumbas) + `renamedSystemFolders: {}` (titulos custom). `ensureSystemRoots` respeta ambas (no recrea tumbadas, no revierte renombradas). `deleteNodeFromRepo` registra tumba al eliminar system root (quito bloqueo `isSystemFolder`). `updateNodeInRepo` registra rename de system root + soporta `parentId` (para drag&drop) con ciclo-guard. `normalizeTreeRepo` propaga overrides al draft. `persistRepoState` persiste los nuevos campos. |
+| `apps/gold/agro/agro-repo-app.js` | Cambio 3 | Quitadas todas las guardas `isSystemFolder` en `updateContextMenuState`, `openRenameModal`, `openDeleteModal`, `confirmDelete`, y cases `rename`/`copy`/`duplicate`/`delete` de `handleContextAction`. Import `isSystemFolder` retirado (ya no se usa). |
+| `apps/gold/agro/agro-repo-storage.js` | Cambio 5 | Flag `skipUniqueness` en `buildFolderNode`, `buildFileNode`, `pasteNodeSnapshotIntoRepo`, `pasteSnapshotChildren`. Cuando es `true`, el titulo se sanitiza pero NO pasa por `ensureUniqueNodeTitle` (permite duplicados exactos). |
+| `apps/gold/agro/agro-repo-app.js` | Cambio 5 | Case `duplicate` ahora pasa `{ skipUniqueness: true }` a `pasteNodeSnapshotIntoRepo`. El duplicado mantiene el mismo nombre que el original (distincion por id). |
+| `apps/gold/agro/agro-repo-app.js` | Cambio 4 | Drag & Drop nativo HTML5: `renderTreeNode` anyade `draggable="true"` a archivos y carpetas no-system (system roots son destino valido pero no origen). Nuevas funciones `moveNodeToParent`, `clearDragState`, `handleDragStart`, `handleDragOver`, `handleDragLeave`, `handleDrop`, `handleDragEnd`. Listeners delegados en `state.root`. `state.dragNodeId` anyadido. |
+| `apps/gold/agro/agro-repo.css` | Cambio 4 | CSS drag&drop: `[draggable="true"]{cursor:grab}`, `.is-dragging{opacity:0.4}`, `.is-drop-target{background+outline dashed gold}`, `.is-drop-denied{outline muted}`, bloque `prefers-reduced-motion`. Tokens `--agrp-bg-active`/`--agrp-gold` (sin hex hardcoded). |
+
+**No se toco:** `agro.js` (monolito), `agro-repo-templates.js` (catalogo de 7 system roots intacto - solo cambia si se recrean), `agro-repo-search.js`, migraciones, archivos canonicos.
+
+**Resultado de build:** `pnpm build:gold` OK en 3.40s. UTF-8 check OK. Sin errores nuevos.
+
+**QA pendiente (sugerido para validacion manual):**
+1. Vista AgroRepo: contenido plano sin acordeon, titulo "AgroRepo" en contextbar movil.
+2. Renombrar una system root (ej: "Cultivos" -> "Mis Cultivos") -> persiste tras recarga (no revierte).
+3. Eliminar una system root (ej: "Mercado") -> desaparece y NO reaparece tras recarga (tumba persistente).
+4. Renombrar/eliminar archivos default (ej: `finca.md` seed) funciona.
+5. Duplicar archivo -> el duplicado tiene el MISMO nombre que el original.
+6. Drag&drop: arrastrar un archivo de una carpeta a otra lo mueve. Arrastrar una carpeta dentro de otra funciona. No permite soltar un nodo dentro de si mismo o un descendiente (muestra toast "No se puede mover dentro de si mismo"). System roots no son arrastrables pero si destino.
+7. No aparece boton ni modal "Sincronizar con Supabase". Status bar sigue mostrando counts (caracteres/lineas).
+8. Launcher lateral: descripcion ahora dice "Repositorio de notas..." (sin "Bitacora").
+
+**Leccion operativa (reutilizable):** Cuando una feature apunta a una tabla/endpoint que no tiene migracion (`agrorepo_sync`), la feature esta media rota en produccion. Antes de anyadir features que dependan de backend, verificar que la migracion existe en `supabase/`. Si no se va a usar, eliminar la feature por completo (no dejar UI huerfana apuntando a la nada).
+
+**Scope respetado:** no se toco `agro.js` ni archivos canonicos. No se hicieron commits (pendiente de revision del usuario).

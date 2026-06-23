@@ -356,7 +356,7 @@
                         <i class="fa-solid fa-book-open agro-shell-link__icon" aria-hidden="true"></i>
                         <span class="agro-launcher__tile-copy">
                             <span class="agro-shell-link__label">AgroRepo</span>
-                            <span class="agro-launcher__tile-desc">Bitácora y memoria del trabajo agrícola.</span>
+                            <span class="agro-launcher__tile-desc">Repositorio de notas y memoria del trabajo agrícola.</span>
                         </span>
                     </button>
                     <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="asistente"
@@ -1979,28 +1979,16 @@
 
 
     <!-- ═══════════════════════════════════════════════════════════════════════
-         AGROREPO WIDGET ACCORDION (Lazy Load)
+         AGROREPO MODULE (Lazy Load)
          ═══════════════════════════════════════════════════════════════════════ -->
     <section class="agro-repo-section agrorepo-section agro-ops-v10 animate-in delay-6" id="agro-repo-section"
         style="margin-top: 2rem;" data-agro-section="agroRepo" data-agro-shell-region="agrorepo" hidden inert>
-        <details class="yg-accordion" id="yg-acc-agrorepo">
-            <summary class="yg-accordion-summary agrorepo-header" aria-controls="agrorepo-content"
-                aria-expanded="false">
-                <span class="yg-accordion-icon agrorepo-icon-box">🌾</span>
-                <span class="yg-accordion-title agrorepo-title">AgroRepo
-                    <small class="agrorepo-subtitle">Memoria local de AgroRepo</small>
-                </span>
-                <span class="yg-accordion-chevron agrorepo-toggle"><i class="fa-solid fa-chevron-down"></i></span>
-            </summary>
-            <div class="yg-accordion-content agrorepo-body" id="agrorepo-content">
-                <div id="agro-widget-root">
-                    <!-- Widget DOM will be injected here on first open -->
-                    <div class="arw-loading">
-                        <span>Cargando AgroRepo...</span>
-                    </div>
-                </div>
+        <div id="agro-widget-root">
+            <!-- Widget DOM will be injected here on first open -->
+            <div class="arw-loading">
+                <span>Cargando AgroRepo...</span>
             </div>
-        </details>
+        </div>
     </section>
 
     <!-- AgroRepo Ultimate Template: NOT rendered until first accordion open -->

@@ -324,13 +324,36 @@
   color: var(--agrp-text-muted);
 }
 
-#agro-widget-root .agrp-tree-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--agrp-gold);
-  opacity: 0.9;
+/* Drag & Drop — move files/folders between parents. */
+#agro-widget-root .agrp-tree-item[draggable="true"] {
+  cursor: grab;
 }
+
+#agro-widget-root .agrp-tree-item.is-dragging {
+  opacity: 0.4;
+}
+
+#agro-widget-root .agrp-tree-item.is-drop-target {
+  background: var(--agrp-bg-active);
+  outline: 1px dashed var(--agrp-gold);
+  outline-offset: -1px;
+}
+
+#agro-widget-root .agrp-tree-item.is-drop-denied {
+  outline: 1px dashed var(--agrp-text-muted);
+  outline-offset: -1px;
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #agro-widget-root .agrp-tree-item.is-dragging,
+  #agro-widget-root .agrp-tree-item.is-drop-target,
+  #agro-widget-root .agrp-tree-item.is-drop-denied {
+    transition: none;
+  }
+}
+
+#agro-widget-root .agrp-tree-icon {
 
 #agro-widget-root .agrp-tree-item .label,
 #agro-widget-root .agrp-tab-label {
@@ -364,10 +387,6 @@
   display: flex;
   gap: 6px;
   flex-shrink: 0;
-}
-
-#agro-widget-root .agrp-sidebar-footer .sync {
-  margin-left: auto;
 }
 
 #agro-widget-root .agrp-editor-tabs {
@@ -806,43 +825,6 @@
 #agro-widget-root .agrp-delete-copy {
   color: var(--agrp-text-dim);
   font-size: 0.92rem;
-}
-
-#agro-widget-root .agrp-sync-toggle-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-
-#agro-widget-root .agrp-toggle {
-  position: relative;
-  width: 38px;
-  height: 22px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--agrp-border);
-  cursor: pointer;
-}
-
-#agro-widget-root .agrp-toggle::after {
-  content: '';
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 16px;
-  height: 16px;
-  border-radius: 999px;
-  background: #fff;
-  transition: transform 180ms ease;
-}
-
-#agro-widget-root .agrp-toggle.on {
-  background: var(--agrp-gold);
-}
-
-#agro-widget-root .agrp-toggle.on::after {
-  transform: translateX(16px);
 }
 
 #agro-widget-root .agrp-search-results {

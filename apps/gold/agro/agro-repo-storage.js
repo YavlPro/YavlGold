@@ -16,7 +16,6 @@ export const AGRO_REPO_LEGACY_TREE_KEY = 'agrorepo_virtual_v3';
 export const AGRO_REPO_LEGACY_FLAT_KEY = 'agrorepo_ultimate_v2';
 export const AGRO_REPO_TABS_STORAGE_KEY = 'agrorepo_tabs';
 export const AGRO_REPO_ACTIVE_FILE_STORAGE_KEY = 'agrorepo_active';
-export const AGRO_REPO_SYNC_STORAGE_KEY = 'agrorepo_sync';
 export const AGRO_REPO_VERSION = '1.1.0';
 
 function randomBase36(length = 8) {
@@ -128,7 +127,12 @@ export function createEmptyRepo() {
         activeNodeId: null,
         expandedIds: [],
         lastSaved: null,
-        migratedFrom: null
+        migratedFrom: null,
+        // User-driven overrides on system roots (persisted across sessions):
+        //  - deletedSystemFolders: folderKeys the user deleted (ensureSystemRoots must NOT recreate them)
+        //  - renamedSystemFolders: { folderKey: customTitle } the user renamed (ensureSystemRoots must respect them)
+        deletedSystemFolders: [],
+        renamedSystemFolders: {}
     };
 }
 
@@ -195,11 +199,17 @@ export function ensureUniqueNodeTitle(title, parentId, type, nodes, ignoreId = n
 }
 
 export function buildFolderNode(nodes, overrides = {}) {
+    const rawTitle = overrides.title || 'Nueva carpeta';
+    // skipUniqueness lets duplicates keep the exact source title (used by the
+    // "duplicate" action). Nodes are still distinguished by id, not by title.
+    const title = overrides.skipUniqueness
+        ? sanitizeTitle(rawTitle) || 'Nueva carpeta'
+        : ensureUniqueNodeTitle(rawTitle, overrides.parentId || null, 'folder', nodes, overrides.id || null);
     return {
         id: String(overrides.id || buildId('agrpf')),
         type: 'folder',
         parentId: overrides.parentId || null,
-        title: ensureUniqueNodeTitle(overrides.title || 'Nueva carpeta', overrides.parentId || null, 'folder', nodes, overrides.id || null),
+        title,
         folderKey: String(overrides.folderKey || ''),
         system: Boolean(overrides.system),
         createdAt: overrides.createdAt || safeNow(),
@@ -210,11 +220,17 @@ export function buildFolderNode(nodes, overrides = {}) {
 
 export function buildFileNode(nodes, overrides = {}) {
     const templateKey = normalizeTemplateKey(overrides.templateKey);
+    const rawTitle = overrides.title || getTemplate(templateKey).defaultTitle;
+    // skipUniqueness lets duplicates keep the exact source title (used by the
+    // "duplicate" action). Nodes are still distinguished by id, not by title.
+    const title = overrides.skipUniqueness
+        ? ensureNoteFileTitle(rawTitle, 'nota')
+        : ensureUniqueNodeTitle(rawTitle, overrides.parentId || null, 'file', nodes, overrides.id || null);
     return {
         id: String(overrides.id || buildId('agrpn')),
         type: 'file',
         parentId: overrides.parentId || null,
-        title: ensureUniqueNodeTitle(overrides.title || getTemplate(templateKey).defaultTitle, overrides.parentId || null, 'file', nodes, overrides.id || null),
+        title,
         templateKey,
         content: String(overrides.content ?? getTemplateSeed(templateKey)),
         createdAt: overrides.createdAt || safeNow(),
@@ -253,6 +269,14 @@ export function updateNodeInRepo(repoLike, nodeId, updates = {}) {
     if (node.type === 'folder') {
         if (typeof updates.title !== 'undefined') {
             node.title = ensureUniqueNodeTitle(updates.title || node.title, node.parentId || null, 'folder', repo.nodes, node.id);
+            // Persist user-driven renames of system roots so ensureSystemRoots
+            // doesn't revert them on the next normalize cycle.
+            if (node.system && node.folderKey) {
+                repo.renamedSystemFolders = {
+                    ...(repo.renamedSystemFolders || {}),
+                    [node.folderKey]: node.title
+                };
+            }
         }
     }
 
@@ -268,6 +292,23 @@ export function updateNodeInRepo(repoLike, nodeId, updates = {}) {
         }
     }
 
+    // Support moving a node to another parent (used by drag & drop). Cycle guard:
+    // a node cannot become its own descendant. System roots stay pinned to null.
+    if (typeof updates.parentId !== 'undefined') {
+        const nextParentId = updates.parentId || null;
+        if (node.system) {
+            // System roots must remain at the root level.
+        } else if (nextParentId === null) {
+            node.parentId = null;
+        } else {
+            const target = getNode(repo.nodes, nextParentId);
+            if (target?.type === 'folder' && !collectDescendantIds(repo.nodes, nodeId).includes(nextParentId) && nextParentId !== nodeId) {
+                node.parentId = nextParentId;
+                if (!repo.expandedIds.includes(nextParentId)) repo.expandedIds = [...repo.expandedIds, nextParentId];
+            }
+        }
+    }
+
     if (typeof updates.legacyPath !== 'undefined') {
         node.legacyPath = String(updates.legacyPath || '');
     }
@@ -280,8 +321,14 @@ export function deleteNodeFromRepo(repoLike, nodeId) {
     const repo = normalizeRepo(repoLike);
     const node = getNode(repo.nodes, nodeId);
 
-    if (!node || isSystemFolder(node)) {
+    if (!node) {
         return { repo, removedIds: [], removed: false };
+    }
+
+    // Record a tombstone when the user deletes a system root so ensureSystemRoots
+    // doesn't recreate it on the next normalize cycle.
+    if (isSystemFolder(node) && node.folderKey) {
+        repo.deletedSystemFolders = Array.from(new Set([...(repo.deletedSystemFolders || []), node.folderKey]));
     }
 
     const removedIds = [];
@@ -343,10 +390,10 @@ export function snapshotNodeTree(nodes, nodeId) {
     };
 }
 
-function pasteSnapshotChildren(repo, snapshotChildren, parentId) {
+function pasteSnapshotChildren(repo, snapshotChildren, parentId, options = {}) {
     const created = [];
     snapshotChildren.forEach((child) => {
-        const result = pasteNodeSnapshotIntoRepo(repo, child, parentId);
+        const result = pasteNodeSnapshotIntoRepo(repo, child, parentId, options);
         repo.nodes = result.repo.nodes;
         repo.expandedIds = result.repo.expandedIds;
         created.push(result.node);
@@ -354,20 +401,22 @@ function pasteSnapshotChildren(repo, snapshotChildren, parentId) {
     return created;
 }
 
-export function pasteNodeSnapshotIntoRepo(repoLike, snapshot, parentId = null) {
+export function pasteNodeSnapshotIntoRepo(repoLike, snapshot, parentId = null, options = {}) {
     const repo = normalizeRepo(repoLike);
     if (!snapshot?.type) return { repo, node: null };
+    const skipUniqueness = Boolean(options.skipUniqueness);
 
     if (snapshot.type === 'folder') {
         const folder = buildFolderNode(repo.nodes, {
             parentId,
             title: snapshot.title || 'Nueva carpeta',
-            legacyPath: snapshot.legacyPath || ''
+            legacyPath: snapshot.legacyPath || '',
+            skipUniqueness
         });
         repo.nodes = [...repo.nodes, folder];
         if (parentId && !repo.expandedIds.includes(parentId)) repo.expandedIds = [...repo.expandedIds, parentId];
         if (!repo.expandedIds.includes(folder.id)) repo.expandedIds = [...repo.expandedIds, folder.id];
-        pasteSnapshotChildren(repo, Array.isArray(snapshot.children) ? snapshot.children : [], folder.id);
+        pasteSnapshotChildren(repo, Array.isArray(snapshot.children) ? snapshot.children : [], folder.id, options);
         return { repo, node: folder };
     }
 
@@ -376,7 +425,8 @@ export function pasteNodeSnapshotIntoRepo(repoLike, snapshot, parentId = null) {
         title: snapshot.title || 'nota.md',
         templateKey: snapshot.templateKey || 'nota-libre',
         content: snapshot.content || '',
-        legacyPath: snapshot.legacyPath || ''
+        legacyPath: snapshot.legacyPath || '',
+        skipUniqueness
     });
     repo.nodes = [...repo.nodes, file];
     repo.activeNodeId = file.id;
@@ -423,8 +473,14 @@ function ensureSystemRoots(repoLike, options = {}) {
     const repo = repoLike || createEmptyRepo();
     const seedMiFinca = options.seedMiFinca !== false;
     const draftNodes = Array.isArray(repo.nodes) ? [...repo.nodes] : [];
+    const deletedKeys = Array.isArray(repo.deletedSystemFolders) ? repo.deletedSystemFolders : [];
+    const renamedMap = repo.renamedSystemFolders && typeof repo.renamedSystemFolders === 'object' ? repo.renamedSystemFolders : {};
 
     AGRO_REPO_ROOT_FOLDERS.forEach((folderDef) => {
+        // Respect user-driven deletions: if the user deleted this system root,
+        // do NOT recreate it (the tombstone is persisted in repo.deletedSystemFolders).
+        if (deletedKeys.includes(folderDef.key)) return;
+
         const existing = draftNodes.find((node) =>
             node?.type === 'folder'
             && node?.parentId === null
@@ -432,14 +488,16 @@ function ensureSystemRoots(repoLike, options = {}) {
         );
 
         if (existing) {
-            existing.title = folderDef.label;
+            // Respect user-driven renames: only force the canonical title when the
+            // user hasn't stored a custom one for this folderKey.
+            existing.title = renamedMap[folderDef.key] || folderDef.label;
             existing.folderKey = folderDef.key;
             existing.system = true;
             return;
         }
 
         draftNodes.push(buildFolderNode(draftNodes, {
-            title: folderDef.label,
+            title: renamedMap[folderDef.key] || folderDef.label,
             parentId: null,
             folderKey: folderDef.key,
             system: true
@@ -503,6 +561,12 @@ function normalizeTreeRepo(repoLike) {
     const draft = createEmptyRepo();
     const rawNodes = Array.isArray(repoLike?.nodes) ? repoLike.nodes : [];
 
+    // Propagate user-driven system-root overrides so ensureSystemRoots honors them.
+    draft.deletedSystemFolders = Array.isArray(repoLike?.deletedSystemFolders)
+        ? Array.from(new Set(repoLike.deletedSystemFolders.filter((key) => typeof key === 'string' && key)))
+        : [];
+    draft.renamedSystemFolders = normalizeRenamedSystemFolders(repoLike?.renamedSystemFolders);
+
     rawNodes
         .filter((node) => node?.type === 'folder')
         .forEach((node) => {
@@ -528,11 +592,25 @@ function normalizeTreeRepo(repoLike) {
 
     draft.lastSaved = repoLike?.lastSaved || null;
     draft.migratedFrom = repoLike?.migratedFrom || null;
+    draft.deletedSystemFolders = Array.isArray(repoLike?.deletedSystemFolders)
+        ? Array.from(new Set(repoLike.deletedSystemFolders.filter((key) => typeof key === 'string' && key)))
+        : [];
+    draft.renamedSystemFolders = normalizeRenamedSystemFolders(repoLike?.renamedSystemFolders);
 
     const activeNode = getNode(draft.nodes, repoLike?.activeNodeId);
     draft.activeNodeId = activeNode?.id || getAllFiles(draft.nodes)[0]?.id || getRootFolders(draft.nodes)[0]?.id || null;
 
     return draft;
+}
+
+function normalizeRenamedSystemFolders(raw) {
+    const safe = raw && typeof raw === 'object' ? raw : {};
+    const result = {};
+    Object.keys(safe).forEach((key) => {
+        const title = String(safe[key] || '').trim();
+        if (key && title) result[key] = title;
+    });
+    return result;
 }
 
 function deriveTargetLocation(title, templateKey, legacyPath) {
@@ -720,7 +798,9 @@ export function persistRepoState(repoLike) {
         activeNodeId: repo.activeNodeId,
         expandedIds: repo.expandedIds,
         lastSaved: repo.lastSaved,
-        migratedFrom: repo.migratedFrom
+        migratedFrom: repo.migratedFrom,
+        deletedSystemFolders: repo.deletedSystemFolders || [],
+        renamedSystemFolders: repo.renamedSystemFolders || {}
     });
     return repo;
 }
@@ -755,27 +835,6 @@ export function persistTabState(openTabs = [], activeFileId = null) {
         openTabs: safeTabs,
         activeFileId: activeFileId || null
     };
-}
-
-export function loadSyncConfig() {
-    const raw = readStorage(AGRO_REPO_SYNC_STORAGE_KEY);
-    return {
-        url: String(raw?.url || ''),
-        key: String(raw?.key || ''),
-        autoSync: Boolean(raw?.autoSync),
-        lastSyncAt: String(raw?.lastSyncAt || '')
-    };
-}
-
-export function persistSyncConfig(configLike = {}) {
-    const config = {
-        url: String(configLike?.url || '').trim(),
-        key: String(configLike?.key || '').trim(),
-        autoSync: Boolean(configLike?.autoSync),
-        lastSyncAt: String(configLike?.lastSyncAt || '')
-    };
-    writeStorage(AGRO_REPO_SYNC_STORAGE_KEY, config);
-    return config;
 }
 
 function getRootFolderForNode(nodes, nodeId) {

@@ -13,13 +13,10 @@ import {
   getNode,
   getPathNodes,
   getRootFolders,
-  isSystemFolder,
   loadRepoState,
-  loadSyncConfig,
   loadTabState,
   pasteNodeSnapshotIntoRepo,
   persistRepoState,
-  persistSyncConfig,
   persistTabState,
   snapshotNodeTree,
   updateNodeInRepo
@@ -39,7 +36,7 @@ const state = {
   clipboard: null,
   contextTargetId: null,
   modal: null,
-  syncConfig: null,
+  dragNodeId: null,
   saveTimer: null,
   viewportBound: false,
   documentBound: false
@@ -467,26 +464,18 @@ function updateHeader() {
 }
 
 function updateStatusBar() {
-  const dot = qs('#agrpSyncDot');
-  const label = qs('#agrpSyncStatus');
   const file = getActiveFile();
   const editor = qs('#agrpEditor');
   const text = editor && !editor.hidden && editor.dataset.fileId === file?.id ? editor.value : (file?.content || '');
-
-  if (dot && label) {
-    const configured = Boolean(state.syncConfig?.url && state.syncConfig?.key);
-    dot.classList.toggle('offline', !configured);
-    label.textContent = configured ? (state.syncConfig.autoSync ? 'Auto-sync' : 'Supabase') : 'Local';
-    label.title = state.syncConfig?.lastSyncAt
-      ? `Último sync: ${new Date(state.syncConfig.lastSyncAt).toLocaleString('es-VE')}`
-      : label.textContent;
-  }
 
   updateCounts(text);
 }
 
 function renderTreeNode(node, visibleIds, depth = 0) {
   if (visibleIds && !visibleIds.has(node.id)) return '';
+  // System roots stay pinned to the root level: they act as drop targets but
+  // cannot be dragged out of the root. All other nodes are fully draggable.
+  const isSystemRoot = node.type === 'folder' && node.system === true;
 
   if (node.type === 'folder') {
     const children = getSortedChildren(node.id).filter((child) => !visibleIds || visibleIds.has(child.id));
@@ -494,7 +483,7 @@ function renderTreeNode(node, visibleIds, depth = 0) {
     const isOpen = state.treeQuery ? hasChildren : state.repo.expandedIds.includes(node.id);
     return `
       <div class="agrp-tree-node" data-depth="${depth}">
-        <div class="agrp-tree-item folder ${isOpen ? 'open' : ''} ${hasChildren ? 'has-children' : 'is-empty'}" data-node-id="${node.id}" data-node-type="folder" title="${escapeHtml(node.title)}" aria-expanded="${hasChildren ? String(isOpen) : 'false'}" role="button">
+        <div class="agrp-tree-item folder ${isOpen ? 'open' : ''} ${hasChildren ? 'has-children' : 'is-empty'}" data-node-id="${node.id}" data-node-type="folder" data-draggable="${isSystemRoot ? 'false' : 'true'}" ${isSystemRoot ? '' : 'draggable="true"'} title="${escapeHtml(node.title)}" aria-expanded="${hasChildren ? String(isOpen) : 'false'}" role="button">
           <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
           <span class="agrp-tree-icon"><i class="${getNodeIconClass(node)}" aria-hidden="true"></i></span>
           <span class="label" title="${escapeHtml(node.title)}">${escapeHtml(node.title)}</span>
@@ -508,7 +497,7 @@ function renderTreeNode(node, visibleIds, depth = 0) {
 
   return `
     <div class="agrp-tree-node" data-depth="${depth}">
-      <div class="agrp-tree-item ${node.id === state.activeFileId ? 'active' : ''}" data-node-id="${node.id}" data-node-type="file" title="${escapeHtml(node.title)}" role="button">
+      <div class="agrp-tree-item ${node.id === state.activeFileId ? 'active' : ''}" data-node-id="${node.id}" data-node-type="file" data-draggable="true" draggable="true" title="${escapeHtml(node.title)}" role="button">
         <span class="agrp-tree-spacer"></span>
         <span class="agrp-tree-icon"><i class="${getNodeIconClass(node)}" aria-hidden="true"></i></span>
         <span class="label" title="${escapeHtml(node.title)}">${escapeHtml(node.title)}</span>
@@ -623,14 +612,15 @@ function updateContextMenuState() {
 
   const node = state.contextTargetId ? getNode(state.repo.nodes, state.contextTargetId) : null;
   const isRoot = !node;
-  const disallowManage = !node || isSystemFolder(node);
   const isFile = node?.type === 'file';
 
   qsa('[data-ctx-action]', menu).forEach((item) => {
     const action = item.dataset.ctxAction;
     let disabled = false;
 
-    if ((action === 'rename' || action === 'copy' || action === 'duplicate' || action === 'delete') && disallowManage) {
+    // System roots are now fully manageable (rename/delete) per user request;
+    // the only hard block is interacting with the empty background (isRoot).
+    if ((action === 'rename' || action === 'copy' || action === 'duplicate' || action === 'delete') && !node) {
       disabled = true;
     }
     if (action === 'paste' && !state.clipboard) disabled = true;
@@ -739,7 +729,7 @@ function openCreateModal(type, parentId = null) {
 
 function openRenameModal(nodeId) {
   const node = getNode(state.repo.nodes, nodeId);
-  if (!node || isSystemFolder(node)) return;
+  if (!node) return;
 
   persistAll(false);
   state.modal = {
@@ -760,7 +750,7 @@ function openRenameModal(nodeId) {
 
 function openDeleteModal(nodeId) {
   const node = getNode(state.repo.nodes, nodeId);
-  if (!node || isSystemFolder(node)) return;
+  if (!node) return;
 
   persistAll(false);
   state.modal = {
@@ -776,21 +766,6 @@ function openDeleteModal(nodeId) {
   const copy = qs('#agrpDeleteMsg');
   if (copy) copy.innerHTML = message;
   setModalVisible('#agrpDeleteModal', true);
-}
-
-function openSyncModal() {
-  persistAll(false);
-  state.modal = {
-    id: 'sync'
-  };
-
-  const url = qs('#agrpSupaUrl');
-  const key = qs('#agrpSupaKey');
-  const toggle = qs('#agrpAutoSyncToggle');
-  if (url) url.value = state.syncConfig.url || '';
-  if (key) key.value = state.syncConfig.key || '';
-  if (toggle) toggle.classList.toggle('on', Boolean(state.syncConfig.autoSync));
-  setModalVisible('#agrpSyncModal', true);
 }
 
 function openSearchModal() {
@@ -965,7 +940,7 @@ function confirmDelete() {
   if (state.modal?.id !== 'delete') return;
   const nodeId = state.modal.nodeId;
   const node = getNode(state.repo.nodes, nodeId);
-  if (!node || isSystemFolder(node)) {
+  if (!node) {
     closeModal();
     return;
   }
@@ -992,6 +967,96 @@ function resolveClipboardPasteParent(node) {
   return node.type === 'folder' ? node.id : (node.parentId || null);
 }
 
+// ---------------------------------------------------------------------------
+// Drag & Drop: move files and folders between parents.
+// System roots are valid drop targets but cannot be dragged out of the root.
+// ---------------------------------------------------------------------------
+
+function moveNodeToParent(nodeId, targetId) {
+  const node = getNode(state.repo.nodes, nodeId);
+  if (!node) return false;
+  const target = targetId ? getNode(state.repo.nodes, targetId) : null;
+  // Resolve the destination parentId: drop on a folder → into it; drop on a
+  // file → next to it (its parent); drop on empty area → root (null).
+  const nextParentId = !targetId ? null : (target.type === 'folder' ? target.id : (target.parentId || null));
+
+  if (nextParentId === (node.parentId || null)) return false;
+  // Cycle guard: cannot drop a node into itself or one of its descendants.
+  if (nextParentId && (nextParentId === nodeId || collectDescendantIds(state.repo.nodes, nodeId).includes(nextParentId))) {
+    pushToast('No se puede mover dentro de sí mismo', 'error');
+    return false;
+  }
+  const beforeParent = node.parentId || null;
+  state.repo = updateNodeInRepo(state.repo, nodeId, { parentId: nextParentId }).repo;
+  persistAll(false);
+  renderTree();
+  renderTabs();
+  renderEditor();
+  pushToast(nextParentId === null && beforeParent !== null ? 'Movido a la raíz' : 'Movido', 'success');
+  return true;
+}
+
+function clearDragState() {
+  qsa('.is-dragging, .is-drop-target, .is-drop-denied').forEach((el) => {
+    el.classList.remove('is-dragging', 'is-drop-target', 'is-drop-denied');
+  });
+}
+
+function handleDragStart(event) {
+  const item = event.target.closest('.agrp-tree-item');
+  if (!item || item.dataset.draggable !== 'true') {
+    event.preventDefault();
+    return;
+  }
+  const nodeId = item.dataset.nodeId;
+  state.dragNodeId = nodeId;
+  item.classList.add('is-dragging');
+  event.dataTransfer.effectAllowed = 'move';
+  event.dataTransfer.setData('text/plain', nodeId);
+}
+
+function handleDragOver(event) {
+  if (!state.dragNodeId) return;
+  const item = event.target.closest('.agrp-tree-item');
+  if (!item) return;
+  const targetId = item.dataset.nodeId;
+  // Deny dropping a node onto itself or into one of its descendants.
+  const wouldCycle = targetId === state.dragNodeId
+    || collectDescendantIds(state.repo.nodes, state.dragNodeId).includes(targetId);
+  event.preventDefault();
+  event.dataTransfer.dropEffect = wouldCycle ? 'none' : 'move';
+  qsa('.is-drop-target, .is-drop-denied').forEach((el) => {
+    if (el !== item) el.classList.remove('is-drop-target', 'is-drop-denied');
+  });
+  item.classList.toggle('is-drop-target', !wouldCycle);
+  item.classList.toggle('is-drop-denied', wouldCycle);
+}
+
+function handleDragLeave(event) {
+  const item = event.target.closest('.agrp-tree-item');
+  if (!item) return;
+  // Only clear if the pointer truly left the item (not entering a child element).
+  if (!item.contains(event.relatedTarget)) {
+    item.classList.remove('is-drop-target', 'is-drop-denied');
+  }
+}
+
+function handleDrop(event) {
+  if (!state.dragNodeId) return;
+  event.preventDefault();
+  const item = event.target.closest('.agrp-tree-item');
+  const targetId = item?.dataset.nodeId || null;
+  const dragId = state.dragNodeId;
+  state.dragNodeId = null;
+  clearDragState();
+  moveNodeToParent(dragId, targetId);
+}
+
+function handleDragEnd() {
+  state.dragNodeId = null;
+  clearDragState();
+}
+
 function handleContextAction(action) {
   const node = state.contextTargetId ? getNode(state.repo.nodes, state.contextTargetId) : null;
   hideContextMenu();
@@ -1004,10 +1069,10 @@ function handleContextAction(action) {
       openCreateModal('folder', getTargetParentId(state.contextTargetId));
       break;
     case 'rename':
-      if (node && !isSystemFolder(node)) openRenameModal(node.id);
+      if (node) openRenameModal(node.id);
       break;
     case 'copy':
-      if (node && !isSystemFolder(node)) {
+      if (node) {
         state.clipboard = snapshotNodeTree(state.repo.nodes, node.id);
         pushToast('Copiado al portapapeles', 'info');
       }
@@ -1029,9 +1094,11 @@ function handleContextAction(action) {
       }
       break;
     case 'duplicate':
-      if (node && !isSystemFolder(node)) {
+      if (node) {
         const snapshot = snapshotNodeTree(state.repo.nodes, node.id);
-        const result = pasteNodeSnapshotIntoRepo(state.repo, snapshot, node.parentId || null);
+        // skipUniqueness: the duplicate keeps the exact same name as the original
+        // (per user request). The two nodes are distinguished by id, not by title.
+        const result = pasteNodeSnapshotIntoRepo(state.repo, snapshot, node.parentId || null, { skipUniqueness: true });
         state.repo = result.repo;
         if (result.node?.id) expandPathToNode(result.node.id, { includeSelf: result.node.type === 'folder' });
         if (result.node?.type === 'file') {
@@ -1049,7 +1116,7 @@ function handleContextAction(action) {
       if (node?.type === 'file') exportFile(node);
       break;
     case 'delete':
-      if (node && !isSystemFolder(node)) openDeleteModal(node.id);
+      if (node) openDeleteModal(node.id);
       break;
     default:
       break;
@@ -1128,82 +1195,6 @@ async function handleImport(fileList) {
   pushToast(`${files.length} archivo(s) importado(s)`, 'success');
 }
 
-async function testConnection() {
-  const url = String(qs('#agrpSupaUrl')?.value || '').trim();
-  const key = String(qs('#agrpSupaKey')?.value || '').trim();
-  if (!url || !key) {
-    pushToast('URL y key requeridos', 'error');
-    return;
-  }
-
-  try {
-    const response = await fetch(`${url}/rest/v1/`, {
-      headers: {
-        apikey: key,
-        Authorization: `Bearer ${key}`
-      }
-    });
-    if (response.ok) {
-      pushToast('Conexión exitosa', 'success');
-    } else {
-      pushToast(`Error: ${response.status}`, 'error');
-    }
-  } catch {
-    pushToast('Error de conexión', 'error');
-  }
-}
-
-async function syncToSupabase() {
-  const config = state.syncConfig;
-  if (!config?.url || !config?.key) return;
-
-  try {
-    const payload = {
-      id: 'agrorepo_main',
-      data: JSON.stringify(state.repo.nodes),
-      updated_at: nowIso()
-    };
-    const response = await fetch(`${config.url}/rest/v1/agrorepo_sync`, {
-      method: 'POST',
-      headers: {
-        apikey: config.key,
-        Authorization: `Bearer ${config.key}`,
-        'Content-Type': 'application/json',
-        Prefer: 'resolution=merge-duplicates'
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      pushToast(`Error sync: ${response.status}`, 'error');
-      return;
-    }
-
-    state.syncConfig = persistSyncConfig({
-      ...state.syncConfig,
-      lastSyncAt: nowIso()
-    });
-    updateStatusBar();
-    pushToast('Sincronizado', 'success');
-  } catch {
-    pushToast('Error de sync', 'error');
-  }
-}
-
-function saveSyncConfig() {
-  state.syncConfig = persistSyncConfig({
-    url: qs('#agrpSupaUrl')?.value || '',
-    key: qs('#agrpSupaKey')?.value || '',
-    autoSync: qs('#agrpAutoSyncToggle')?.classList.contains('on')
-  });
-  updateStatusBar();
-  closeModal();
-  pushToast('Configuración guardada', 'success');
-  if (state.syncConfig.url && state.syncConfig.key && state.syncConfig.autoSync) {
-    syncToSupabase();
-  }
-}
-
 function renderFrame() {
   state.root.innerHTML = `
     <div class="agrp-app">
@@ -1245,7 +1236,6 @@ function renderFrame() {
           <button type="button" class="agrp-btn-icon" title="Nueva carpeta" data-action="open-create-folder"><i class="fa-solid fa-folder-plus" aria-hidden="true"></i></button>
           <button type="button" class="agrp-btn-icon" title="Importar .md" data-action="import-files"><i class="fa-solid fa-file-import" aria-hidden="true"></i></button>
           <button type="button" class="agrp-btn-icon" title="Exportar todo" data-action="export-all"><i class="fa-solid fa-file-export" aria-hidden="true"></i></button>
-          <button type="button" class="agrp-btn-icon sync" title="Supabase Sync" data-action="open-sync-modal"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i></button>
         </div>
       </aside>
 
@@ -1272,8 +1262,6 @@ function renderFrame() {
         </div>
 
         <div class="agrp-statusbar">
-          <span class="dot" id="agrpSyncDot"></span>
-          <span id="agrpSyncStatus">Local</span>
           <span class="agrp-status-spacer" id="agrpCharCount"></span>
           <span id="agrpLineCount"></span>
         </div>
@@ -1339,27 +1327,6 @@ function renderFrame() {
       </div>
     </div>
 
-    <div class="agrp-modal-overlay" id="agrpSyncModal">
-      <div class="agrp-modal">
-        <form id="agrpSyncForm">
-          <h2><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>Sincronizar con Supabase</h2>
-          <label for="agrpSupaUrl">URL del proyecto</label>
-          <input type="url" id="agrpSupaUrl" placeholder="URL del proyecto">
-          <label for="agrpSupaKey">Clave publishable</label>
-          <input type="password" id="agrpSupaKey" placeholder="Ingresa tu clave publishable">
-          <div class="agrp-sync-toggle-row">
-            <label>Auto-sync</label>
-            <button type="button" class="agrp-toggle" id="agrpAutoSyncToggle" data-action="toggle-auto-sync" aria-pressed="false"></button>
-          </div>
-          <div class="agrp-modal-actions">
-            <button type="button" class="agrp-btn agrp-btn-ghost" data-action="close-modal">Cancelar</button>
-            <button type="button" class="agrp-btn agrp-btn-ghost" data-action="test-sync">Probar</button>
-            <button type="submit" class="agrp-btn agrp-btn-primary">Guardar</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
     <div class="agrp-modal-overlay" id="agrpSearchModal">
       <div class="agrp-modal search">
         <div>
@@ -1411,9 +1378,6 @@ function handleAction(action, target) {
     case 'export-all':
       exportAll();
       break;
-    case 'open-sync-modal':
-      openSyncModal();
-      break;
     case 'open-search-modal':
       openSearchModal();
       break;
@@ -1429,12 +1393,6 @@ function handleAction(action, target) {
     case 'open-search-result':
       closeModal();
       openFile(target.dataset.fileId);
-      break;
-    case 'toggle-auto-sync':
-      target.classList.toggle('on');
-      break;
-    case 'test-sync':
-      testConnection();
       break;
     default:
       break;
@@ -1511,11 +1469,6 @@ function handleSubmit(event) {
   if (event.target.id === 'agrpRenameForm') {
     event.preventDefault();
     confirmRename();
-  }
-
-  if (event.target.id === 'agrpSyncForm') {
-    event.preventDefault();
-    saveSyncConfig();
   }
 }
 
@@ -1595,6 +1548,14 @@ function bindEvents() {
   state.root.addEventListener('focusout', handleFocusOut);
   state.root.addEventListener('contextmenu', handleContextMenu);
 
+  // Drag & Drop — move nodes between folders. Delegated on the tree container
+  // so dynamically re-rendered items keep working without rebinding.
+  state.root.addEventListener('dragstart', handleDragStart);
+  state.root.addEventListener('dragover', handleDragOver);
+  state.root.addEventListener('dragleave', handleDragLeave);
+  state.root.addEventListener('drop', handleDrop);
+  state.root.addEventListener('dragend', handleDragEnd);
+
   if (!state.documentBound) {
     document.addEventListener('click', handleDocumentClick);
     document.addEventListener('keydown', handleKeydown);
@@ -1618,7 +1579,6 @@ function initWidget() {
   state.root = root;
   const { repo, notice } = loadRepoState();
   state.repo = repo;
-  state.syncConfig = loadSyncConfig();
 
   const tabs = loadTabState(repo);
   state.openTabs = tabs.openTabs;
@@ -1650,47 +1610,6 @@ function isAgroRepoShellActive() {
   return document.body?.dataset?.agroActiveView === 'agrorepo';
 }
 
-function neutralizeAccordionChrome(accordion) {
-  if (!accordion) return;
-  accordion.open = true;
-  accordion.classList.add('agrp-accordion-removed');
-
-  const summary = accordion.querySelector('summary');
-  if (summary) {
-    summary.hidden = true;
-    summary.setAttribute('aria-hidden', 'true');
-    summary.tabIndex = -1;
-  }
-}
-
-function setupAccordionListener() {
-  const accordion = document.getElementById('yg-acc-agrorepo');
-  if (!accordion) {
-    console.warn('[AgroRepo] Accordion not found');
-    return;
-  }
-  if (accordion.dataset.listenerBound === '1') return;
-  accordion.dataset.listenerBound = '1';
-  neutralizeAccordionChrome(accordion);
-
-  accordion.addEventListener('toggle', () => {
-    if (!accordion.open) accordion.open = true;
-    neutralizeAccordionChrome(accordion);
-    ensureWidgetReady();
-  });
-
-  window.addEventListener('agro:shell:view-changed', (event) => {
-    if (event.detail?.view !== 'agrorepo') return;
-    neutralizeAccordionChrome(accordion);
-    ensureWidgetReady();
-  });
-
-  if (accordion.open || isAgroRepoShellActive()) {
-    neutralizeAccordionChrome(accordion);
-    ensureWidgetReady();
-  }
-}
-
 export function initAgroRepo() {
   if (!AGROREPO_ENABLED) {
     const section = document.getElementById('agro-repo-section');
@@ -1699,9 +1618,15 @@ export function initAgroRepo() {
   }
 
   window.ensureAgroRepoReady = ensureWidgetReady;
+
+  // The module now renders as a flat dedicated view (no accordion wrapper).
+  // Initialize as soon as the DOM is ready, or immediately if it already is.
+  const bootstrap = () => {
+    if (isAgroRepoShellActive()) ensureWidgetReady();
+  };
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupAccordionListener, { once: true });
+    document.addEventListener('DOMContentLoaded', bootstrap, { once: true });
     return;
   }
-  setupAccordionListener();
+  bootstrap();
 }
