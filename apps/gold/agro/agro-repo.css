@@ -354,6 +354,12 @@
 }
 
 #agro-widget-root .agrp-tree-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--agrp-gold);
+  opacity: 0.9;
+}
 
 #agro-widget-root .agrp-tree-item .label,
 #agro-widget-root .agrp-tab-label {
