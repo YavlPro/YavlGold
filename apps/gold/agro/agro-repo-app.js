@@ -1362,9 +1362,6 @@ function renderFrame() {
 
       <aside class="agrp-sidebar" id="agrpSidebar">
         <div class="agrp-brand">
-          <div class="agrp-brand-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/></svg>
-          </div>
           <h1>Agro<em>Repo</em></h1>
           <span class="brand-date">${escapeHtml(formatBrandDate())}</span>
         </div>

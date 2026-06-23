@@ -305,7 +305,20 @@ async function loadFarms() {
     // 15. Notify other modules (Rankings farm selector, etc.)
     document.dispatchEvent(new CustomEvent('agro:farms-loaded', { detail: { farms: [...farmsCache] } }));
 
-    // Restaurar header y contextbar al volver desde Comparar Fincas
+    // Restaurar header y contextbar al volver desde Comparar Fincas.
+    // IMPORTANT: only rewrite the shell title when the user is actually on the
+    // Mis Fincas view. loadFarms() can be invoked from many call sites (initial
+    // bootstrap, rankings selectors, data refresh) even while another view
+    // (e.g. AgroRepo) is active. Forcing "Mis Fincas" unconditionally would
+    // overwrite the active view's title — the race condition where the banner
+    // briefly shows the right title and then flips to "Mis Fincas".
+    const activeView = document.body?.dataset?.agroActiveView || '';
+    if (activeView !== 'ciclos') {
+      // Not on the cycles/farms surface — leave the active view's title alone.
+      delete document.body.dataset.agroFarmCompare;
+      return;
+    }
+
     const sectionTitle = document.getElementById('crops-section-title');
     const sectionSubtitle = document.getElementById('crops-section-subtitle');
     if (sectionTitle) sectionTitle.textContent = 'Mis Fincas';

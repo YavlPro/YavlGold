@@ -181,17 +181,6 @@
   flex-shrink: 0;
 }
 
-#agro-widget-root .agrp-brand-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, var(--agrp-gold), var(--agrp-gold-light));
-  color: var(--bg-0, #050505);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
 #agro-widget-root .agrp-brand h1 {
   font-size: 1rem;
   letter-spacing: -0.02em;
