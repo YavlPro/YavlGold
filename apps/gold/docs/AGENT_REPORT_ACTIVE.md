@@ -2726,3 +2726,40 @@ Se investigó el router completo (`agro-shell.js`) y se **corrigió el diagnóst
 2. Onboarding QA: verificar con cuenta nueva que el wizard ya no se abre automaticamente
 3. Glow pre-existente en agro.css: candidatos para futura limpieza (.kpi-tag breathe, icono breathe)
 4. Warning CSS pre-existe: Unexpected "}" at stdin:1472 sigue sin resolverse
+
+---
+
+## Sesion 2026-06-22 — AgroRepo: 4 fixes (contenido, guardar, iconos, importados)
+
+**Objetivo:** Diagnostico y fix del bug reportado por el usuario: al crear un nuevo `.md` en AgroRepo aparecia el contenido del ultimo md editado, y todos los md parecian compartir el mismo contenido. Ademas: anyadir boton Guardar, unificar iconos y carpeta para importados.
+
+**Diagnostico (root cause confirmada en codigo):**
+
+Widget afectado: AgroRepo (`agro-repo-app.js` + `agro-repo-storage.js` + `agro-repo-templates.js`). Persistencia en localStorage (`agrorepo_mvp_v1`). Un unico `<textarea id="agrpEditor">` compartido; archivo activo por `state.activeFileId`.
+
+- **Bug 1 (contenido compartido):** error de orden de operaciones en `confirmCreate()`. La linea 918 cambiaba `activeFileId` al archivo nuevo, pero el textarea seglia mostrando el texto del archivo anterior; en la linea 921 `persistAll()` llamaba `syncActiveFileDraft()` que leia ese texto residual y lo escribia en el archivo recien creado. Recien en la 925 `renderEditor()` sincronizaba (demasiado tarde). Cada archivo creado en la sesion repetia el ciclo, por eso "todos" heredaban el ultimo texto.
+- **Bug 2 (iconos distintos):** comportamiento esperado por diseno - el icono derivaba de `templateKey`, no del origen. Imports siempre a `nota-libre` (icono distinto al de `finca.md`).
+- **Bug 3 (sin boton Guardar):** el header solo tenia menu, titulo, preview y busqueda. El guardado era puramente automatico (debounced 180ms + al cambiar archivo). Ctrl+S ya existlia y llamaba `persistAll(true)`.
+- **Bug 4 (importados mezclados):** `handleImport()` usaba `parentId: null`, pero el fallback de `normalizeFileNode` reubicaba los archivos en "Mi Finca".
+
+**Cambios realizados:**
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro-repo-app.js` | Fix bug | `confirmCreate()`: reordenado - `renderEditor()` ahora va ANTES de `persistAll()` para que el textarea se sincronice con el nuevo archivo antes de persistir |
+| `apps/gold/agro/agro-repo-app.js` | Defensa | `syncActiveFileDraft()`: validacion de `editor.dataset.fileId === file.id` antes de escribir el draft (evita regresiones del invariant) |
+| `apps/gold/agro/agro-repo-app.js` | Feature | Boton "Guardar" (`#agrpSaveBtn`) en header del editor + `case 'save-file'` en `handleAction` + visibilidad en `updateHeader` (hidden cuando no hay archivo activo) |
+| `apps/gold/agro/agro-repo-app.js` | UX | `getNodeIconClass()`: todos los `.md` ahora usan `fa-regular fa-file-lines` (unificado). Carpetas conservan su icono por tipo |
+| `apps/gold/agro/agro-repo-app.js` | UX | `handleImport()`: archivos importados ahora van a carpeta dedicada "Importados" (raiz custom, se crea si no existe, se reutiliza si ya esta). Evita mezcla con Mi Finca |
+
+**No se toco:** `agro.js` (monolito), `agro-repo-storage.js`, `agro-repo-templates.js`, archivos canonicos, migraciones, CSS. Cambios puramente quirurgicos en `agro-repo-app.js`.
+
+**Resultado de build:** `pnpm build:gold` OK en 3.60s. UTF-8 check OK. Sin errores nuevos.
+
+**QA pendiente (sugerido para validacion manual):**
+1. Editar un `.md` (escribir "hola"), crear uno nuevo -> el nuevo debe aparecer con su seed/vacio (NO con "hola"). Abrir el anterior -> sigue con "hola". Abrir otros -> cada uno conserva su contenido.
+2. Boton "Guardar" visible solo con archivo activo; al pulsar muestra toast "Guardado local". Ctrl+S hace lo mismo.
+3. Todos los `.md` en el arbol muestran el mismo icono `fa-file-lines`.
+4. Importar un `.md` -> aparece dentro de carpeta "Importados" (no en Mi Finca).
+
+**Scope respetado:** no se tocaron archivos fuera de `agro-repo-app.js`. No se hicieron commits (pendiente de revision del usuario).

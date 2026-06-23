@@ -143,7 +143,9 @@ function getNodeIconClass(node) {
       ? getRootFolder(node.folderKey || 'mi-finca').iconClass
       : 'fa-regular fa-folder-open';
   }
-  return getTemplate(node.templateKey).iconClass || 'fa-regular fa-file-lines';
+  // All .md files share the same icon regardless of templateKey/origin so the
+  // tree stays visually uniform. Folders keep their per-type icon above.
+  return 'fa-regular fa-file-lines';
 }
 
 function compareByTitle(left, right) {
@@ -384,6 +386,13 @@ function syncActiveFileDraft() {
   const editor = qs('#agrpEditor');
   if (!file || !editor) return false;
 
+  // Defense: only flush the draft if the <textarea> is actually bound to the
+  // active file. This protects against windows where activeFileId has just
+  // changed but renderEditor() hasn't repainted yet (prevents cross-file
+  // content bleed like the confirmCreate bug).
+  const boundId = editor.dataset.fileId;
+  if (boundId && boundId !== file.id) return false;
+
   const nextContent = editor.value;
   if (nextContent === file.content) return false;
 
@@ -438,6 +447,7 @@ function updateSidebarVisibility() {
 function updateHeader() {
   const title = qs('#agrpHeaderTitle');
   const previewBtn = qs('#agrpPreviewToggle');
+  const saveBtn = qs('#agrpSaveBtn');
   const file = getActiveFile();
 
   if (!title || !previewBtn) return;
@@ -446,12 +456,14 @@ function updateHeader() {
     title.innerHTML = '<span>AgroRepo</span> — Selecciona un archivo';
     previewBtn.hidden = true;
     previewBtn.classList.remove('is-active');
+    if (saveBtn) saveBtn.hidden = true;
     return;
   }
 
   title.innerHTML = `<span>${escapeHtml(file.title)}</span> — ${escapeHtml(getNodePath(file.id))}`;
   previewBtn.hidden = false;
   previewBtn.classList.toggle('is-active', state.preview);
+  if (saveBtn) saveBtn.hidden = false;
 }
 
 function updateStatusBar() {
@@ -918,11 +930,15 @@ function confirmCreate() {
   state.activeFileId = result.node.id;
   state.preview = false;
   if (isMobileViewport()) state.sidebarVisible = false;
-  persistAll(false);
   closeModal();
   renderTree();
   renderTabs();
+  // IMPORTANT: render the editor BEFORE persisting so the <textarea> syncs with
+  // the freshly created file's seed content. Otherwise syncActiveFileDraft()
+  // (called by persistAll) would read the stale text from the previously active
+  // file and overwrite the new file's content with it.
   renderEditor();
+  persistAll(false);
   updateSidebarVisibility();
   pushToast('Archivo creado', 'success');
 }
@@ -1071,11 +1087,26 @@ async function handleImport(fileList) {
   const files = Array.from(fileList || []);
   if (!files.length) return;
 
+  // Land imported files into a dedicated "Importados" root folder so they don't
+  // get mixed into "Mi Finca" (which is where parentId:null falls back to during
+  // normalizeRepo). Reuse the folder if it already exists from a previous import.
+  let importedFolderId = null;
+  const existing = getRootFolders(state.repo.nodes).find(
+    (folder) => folder.title.toLowerCase() === 'importados'
+  );
+  if (existing) {
+    importedFolderId = existing.id;
+  } else {
+    const folderResult = createFolderInRepo(state.repo, { title: 'Importados', parentId: null });
+    state.repo = folderResult.repo;
+    importedFolderId = folderResult.node.id;
+  }
+
   let lastImportedId = null;
   for (const file of files) {
     const content = await file.text();
     const result = createFileInRepo(state.repo, {
-      parentId: null,
+      parentId: importedFolderId,
       title: file.name,
       content,
       templateKey: 'nota-libre'
@@ -1222,6 +1253,7 @@ function renderFrame() {
         <div class="agrp-header">
           <button type="button" class="agrp-btn-icon" id="agrpHamburger" title="Menú" data-action="toggle-sidebar"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>
           <div class="agrp-header-title" id="agrpHeaderTitle"><span>AgroRepo</span> — Selecciona un archivo</div>
+          <button type="button" class="agrp-btn-icon" id="agrpSaveBtn" title="Guardar (Ctrl+S)" data-action="save-file" hidden><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i></button>
           <button type="button" class="agrp-btn-icon" id="agrpPreviewToggle" title="Vista previa" data-action="toggle-preview" hidden><i class="fa-regular fa-eye" aria-hidden="true"></i></button>
           <button type="button" class="agrp-btn-icon" id="agrpSearchGlobal" title="Buscar global (Ctrl+K)" data-action="open-search-modal"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></button>
         </div>
@@ -1363,6 +1395,9 @@ function handleAction(action, target) {
       break;
     case 'toggle-preview':
       togglePreview();
+      break;
+    case 'save-file':
+      persistAll(true);
       break;
     case 'open-create-file':
       openCreateModal('file', getDefaultParentId('file'));
