@@ -7,18 +7,22 @@ import {
   collectDescendantIds,
   createFileInRepo,
   createFolderInRepo,
-  deleteNodeFromRepo,
   getAllFiles,
   getChildren,
   getNode,
   getPathNodes,
   getRootFolders,
+  getTrashedNodes,
   loadRepoState,
   loadTabState,
   pasteNodeSnapshotIntoRepo,
   persistRepoState,
   persistTabState,
+  purgeExpiredTrash,
+  purgeNodeFromTrash,
+  restoreNodeFromTrash,
   snapshotNodeTree,
+  softDeleteNodeInRepo,
   updateNodeInRepo
 } from './agro-repo-storage.js';
 
@@ -37,6 +41,7 @@ const state = {
   contextTargetId: null,
   modal: null,
   dragNodeId: null,
+  view: 'tree',
   saveTimer: null,
   viewportBound: false,
   documentBound: false
@@ -73,7 +78,7 @@ function formatBrandDate() {
 
 function getActiveFile() {
   const node = getNode(state.repo?.nodes, state.activeFileId);
-  return node?.type === 'file' ? node : null;
+  return node?.type === 'file' && !node.deletedAt ? node : null;
 }
 
 function getNodePath(nodeId) {
@@ -153,7 +158,7 @@ function compareByTitle(left, right) {
 }
 
 function getSortedChildren(parentId) {
-  const children = getChildren(state.repo?.nodes || [], parentId);
+  const children = getChildren(state.repo?.nodes || [], parentId).filter((node) => !node.deletedAt);
   const folders = children.filter((node) => node.type === 'folder').sort(compareByTitle);
   const files = children.filter((node) => node.type === 'file').sort(compareByTitle);
 
@@ -172,18 +177,19 @@ function getSortedChildren(parentId) {
 
 function getVisibleNodeIds() {
   const query = normalizeSearchText(state.treeQuery);
-  if (!query) return new Set((state.repo?.nodes || []).map((node) => node.id));
+  // Active (non-trashed) nodes only — the trash bin is rendered separately.
+  if (!query) return new Set((state.repo?.nodes || []).filter((node) => !node.deletedAt).map((node) => node.id));
 
   const visible = new Set();
 
   function mark(node) {
-    if (!node) return false;
+    if (!node || node.deletedAt) return false;
     const directMatch = nodeMatchesQuery(node, query, (entry) => getTemplate(entry.templateKey).label);
     const childMatch = getChildren(state.repo.nodes, node.id).some((child) => mark(child));
 
     if (directMatch || childMatch) {
       visible.add(node.id);
-      getPathNodes(state.repo.nodes, node.id).forEach((entry) => visible.add(entry.id));
+      getPathNodes(state.repo.nodes, node.id).forEach((entry) => !entry.deletedAt && visible.add(entry.id));
       return true;
     }
     return false;
@@ -422,8 +428,13 @@ function schedulePersist() {
 }
 
 function sanitizeOpenTabs() {
-  state.openTabs = state.openTabs.filter((id) => getNode(state.repo.nodes, id)?.type === 'file');
-  if (state.activeFileId && !getNode(state.repo.nodes, state.activeFileId)) {
+  // A trashed file shouldn't stay open as a tab — it lives in the trash bin now.
+  const isLiveFile = (id) => {
+    const node = getNode(state.repo.nodes, id);
+    return node?.type === 'file' && !node.deletedAt;
+  };
+  state.openTabs = state.openTabs.filter(isLiveFile);
+  if (state.activeFileId && !isLiveFile(state.activeFileId)) {
     state.activeFileId = state.openTabs[state.openTabs.length - 1] || null;
   }
   if (!state.activeFileId && state.openTabs.length) {
@@ -507,6 +518,13 @@ function renderTreeNode(node, visibleIds, depth = 0) {
 }
 
 function renderTree() {
+  // When the trash view is active, delegate to the trash renderer so all the
+  // existing call sites (create/delete/restore/drag) refresh the right surface.
+  if (state.view === 'trash') {
+    renderTrash();
+    return;
+  }
+
   const container = qs('#agrpTreeContainer');
   if (!container) return;
 
@@ -519,6 +537,77 @@ function renderTree() {
   }
 
   container.innerHTML = roots.map((node) => renderTreeNode(node, visibleIds)).join('');
+}
+
+// Relative date for trash entries — mirrors the agro-trash.js style ("hace N días").
+function formatTrashDate(iso) {
+  const ts = Date.parse(iso);
+  if (!iso || Number.isNaN(ts)) return '';
+  const diffMs = Date.now() - ts;
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'hace un momento';
+  if (mins < 60) return `hace ${mins} min`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `hace ${hours} h`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'ayer';
+  if (days < 30) return `hace ${days} días`;
+  return new Date(ts).toLocaleDateString('es', { day: 'numeric', month: 'short' });
+}
+
+function updateTrashBadge() {
+  const badge = qs('#agrpTrashBadge');
+  if (!badge) return;
+  const count = getTrashedNodes(state.repo?.nodes || []).length;
+  badge.textContent = String(count);
+  badge.hidden = count === 0;
+}
+
+function renderTrash() {
+  const container = qs('#agrpTreeContainer');
+  if (!container) return;
+
+  const items = getTrashedNodes(state.repo.nodes);
+
+  const headerHtml = `
+    <div class="agrp-trash-header">
+      <div class="agrp-trash-title"><i class="fa-solid fa-trash-can" aria-hidden="true"></i><span>Papelera</span></div>
+      <div class="agrp-trash-actions">
+        ${items.length ? `<button type="button" class="agrp-btn agrp-btn-ghost agrp-trash-empty-btn" data-action="purge-expired" title="Eliminar permanentemente lo expirado (>30 días)">Vaciar</button>` : ''}
+        <button type="button" class="agrp-btn-icon" title="Volver" data-action="close-trash"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
+      </div>
+    </div>
+  `;
+
+  if (!items.length) {
+    container.innerHTML = `${headerHtml}<div class="agrp-tree-empty">La papelera está vacía</div>`;
+    return;
+  }
+
+  const itemsHtml = items.map((node) => {
+    const isFolder = node.type === 'folder';
+    const iconClass = isFolder ? 'fa-solid fa-folder' : 'fa-regular fa-file-lines';
+    const typeLabel = isFolder ? 'Carpeta' : 'Archivo';
+    const descendants = isFolder ? collectDescendantIds(state.repo.nodes, node.id) : [node.id];
+    const extra = isFolder && descendants.length > 1 ? ` · ${descendants.length - 1} elemento(s)` : '';
+    return `
+      <div class="agrp-trash-item">
+        <div class="agrp-trash-item-info">
+          <span class="agrp-trash-item-icon"><i class="${iconClass}" aria-hidden="true"></i></span>
+          <div class="agrp-trash-item-text">
+            <span class="agrp-trash-item-name">${escapeHtml(node.title)}</span>
+            <span class="agrp-trash-item-meta">${typeLabel}${extra} · ${escapeHtml(formatTrashDate(node.deletedAt))}</span>
+          </div>
+        </div>
+        <div class="agrp-trash-item-actions">
+          <button type="button" class="agrp-btn agrp-btn-ghost agrp-trash-restore-btn" data-action="restore-node" data-node-id="${node.id}">Restaurar</button>
+          <button type="button" class="agrp-btn-icon" title="Eliminar permanente" data-action="purge-node" data-node-id="${node.id}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = headerHtml + itemsHtml;
 }
 
 function renderTabs() {
@@ -945,21 +1034,77 @@ function confirmDelete() {
     return;
   }
 
-  const removedIds = collectDescendantIds(state.repo.nodes, node.id);
-  state.openTabs = state.openTabs.filter((id) => !removedIds.includes(id));
-  if (removedIds.includes(state.activeFileId)) {
+  // Soft-delete: the node and its subtree move to the trash, keeping their
+  // original location so they can be restored. Tabs/active file are released.
+  const trashedIds = collectDescendantIds(state.repo.nodes, node.id);
+  state.openTabs = state.openTabs.filter((id) => !trashedIds.includes(id));
+  if (trashedIds.includes(state.activeFileId)) {
     state.activeFileId = state.openTabs[state.openTabs.length - 1] || null;
     state.preview = false;
   }
 
-  state.repo = deleteNodeFromRepo(state.repo, node.id).repo;
+  state.repo = softDeleteNodeInRepo(state.repo, node.id).repo;
   state.repo.activeNodeId = state.activeFileId || null;
   persistAll(false);
   closeModal();
   renderTree();
   renderTabs();
   renderEditor();
-  pushToast('Eliminado', 'success');
+  updateTrashBadge();
+  pushToast('Movido a la papelera', 'success');
+}
+
+// ---------------------------------------------------------------------------
+// Trash view — list, restore, purge.
+// ---------------------------------------------------------------------------
+
+function openTrash() {
+  state.view = 'trash';
+  state.treeQuery = '';
+  const search = qs('#agrpSearchInput');
+  if (search) search.value = '';
+  renderTree();
+}
+
+function closeTrash() {
+  state.view = 'tree';
+  renderTree();
+}
+
+function restoreNodeFromTrashById(nodeId) {
+  if (!nodeId) return;
+  const result = restoreNodeFromTrash(state.repo, nodeId);
+  state.repo = result.repo;
+  // Bring the user back to the tree so they see the restored node in place.
+  state.view = 'tree';
+  if (result.restored) expandPathToNode(nodeId);
+  persistAll(false);
+  renderTree();
+  updateTrashBadge();
+  pushToast(result.restored ? 'Restaurado' : 'No se pudo restaurar', result.restored ? 'success' : 'error');
+}
+
+function purgeNodeFromTrashById(nodeId) {
+  if (!nodeId) return;
+  const node = getNode(state.repo.nodes, nodeId);
+  const result = purgeNodeFromTrash(state.repo, nodeId);
+  state.repo = result.repo;
+  state.repo.activeNodeId = state.activeFileId || null;
+  persistAll(false);
+  renderTree();
+  updateTrashBadge();
+  pushToast(node ? `'${node.title}' eliminado permanentemente` : 'Eliminado permanentemente', 'success');
+}
+
+function emptyTrash() {
+  const before = getTrashedNodes(state.repo.nodes).length;
+  state.repo = purgeExpiredTrash(state.repo, 30).repo;
+  persistAll(false);
+  renderTree();
+  updateTrashBadge();
+  const after = getTrashedNodes(state.repo.nodes).length;
+  const removed = Math.max(0, before - after);
+  pushToast(removed > 0 ? `${removed} elemento(s) eliminado(s) permanentemente` : 'No había elementos expirados', 'success');
 }
 
 function resolveClipboardPasteParent(node) {
@@ -1236,6 +1381,7 @@ function renderFrame() {
           <button type="button" class="agrp-btn-icon" title="Nueva carpeta" data-action="open-create-folder"><i class="fa-solid fa-folder-plus" aria-hidden="true"></i></button>
           <button type="button" class="agrp-btn-icon" title="Importar .md" data-action="import-files"><i class="fa-solid fa-file-import" aria-hidden="true"></i></button>
           <button type="button" class="agrp-btn-icon" title="Exportar todo" data-action="export-all"><i class="fa-solid fa-file-export" aria-hidden="true"></i></button>
+          <button type="button" class="agrp-btn-icon agrp-trash-btn" title="Papelera" data-action="open-trash"><i class="fa-solid fa-trash-can" aria-hidden="true"></i><span class="agrp-trash-badge" id="agrpTrashBadge" hidden>0</span></button>
         </div>
       </aside>
 
@@ -1353,6 +1499,7 @@ function renderAll() {
   updateHeader();
   updateStatusBar();
   updateContextMenuState();
+  updateTrashBadge();
 }
 
 function handleAction(action, target) {
@@ -1377,6 +1524,21 @@ function handleAction(action, target) {
       break;
     case 'export-all':
       exportAll();
+      break;
+    case 'open-trash':
+      openTrash();
+      break;
+    case 'close-trash':
+      closeTrash();
+      break;
+    case 'restore-node':
+      restoreNodeFromTrashById(target.dataset.nodeId);
+      break;
+    case 'purge-node':
+      purgeNodeFromTrashById(target.dataset.nodeId);
+      break;
+    case 'purge-expired':
+      emptyTrash();
       break;
     case 'open-search-modal':
       openSearchModal();
@@ -1441,6 +1603,8 @@ function handleClick(event) {
 function handleInput(event) {
   if (event.target.id === 'agrpSearchInput') {
     state.treeQuery = event.target.value || '';
+    // Searching implies leaving the trash view — searches run against the live tree.
+    if (state.view === 'trash') state.view = 'tree';
     renderTree();
     return;
   }
@@ -1579,6 +1743,9 @@ function initWidget() {
   state.root = root;
   const { repo, notice } = loadRepoState();
   state.repo = repo;
+  // Silently purge trash entries older than 30 days (hard delete) before the
+  // first render, so expired items never surface in the trash view.
+  state.repo = purgeExpiredTrash(state.repo, 30).repo;
 
   const tabs = loadTabState(repo);
   state.openTabs = tabs.openTabs;

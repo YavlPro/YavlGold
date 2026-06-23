@@ -2812,3 +2812,63 @@ Widget afectado: AgroRepo (`agro-repo-app.js` + `agro-repo-storage.js` + `agro-r
 **Leccion operativa (reutilizable):** Cuando una feature apunta a una tabla/endpoint que no tiene migracion (`agrorepo_sync`), la feature esta media rota en produccion. Antes de anyadir features que dependan de backend, verificar que la migracion existe en `supabase/`. Si no se va a usar, eliminar la feature por completo (no dejar UI huerfana apuntando a la nada).
 
 **Scope respetado:** no se toco `agro.js` ni archivos canonicos. No se hicieron commits (pendiente de revision del usuario).
+
+---
+
+## Sesion 2026-06-22 (Fase 3) — AgroRepo: Papelera con soft-delete + restaurar
+
+**Objetivo:** Implementar papelera (recycle bin) para AgroRepo que permita mover a papelera en vez de hard-delete, restaurar a la ubicacion original, y purgar automaticamente lo expirado (>30 dias).
+
+**Hallazgo critico que condiciono el diseño:**
+`normalizeRepo()` reconstruye cada nodo desde cero via `buildFolderNode`/`buildFileNode` (set cerrado de campos) y se invoca en CADA `persistRepoState`. Un campo `deletedAt`/`deletedFromParentId` anadido "manualmente" sobre un nodo NO sobreviviria al primer guardado. Por eso la pieza central fue hacer que los normalizers propaguen esos campos.
+
+**Patron de referencia:** `agro-trash.js` + `agro.js:5940-6119` usan `deleted_at` ISO 8601, ventana 30 dias, restore = `null`. A diferencia del patron facturero (que NO purga fisicamente), aqui si se hace hard-delete real de >30 dias por ser local-first.
+
+**Cambios realizados:**
+
+| Archivo | Cambio | Detalle |
+|---|---|---|
+| `agro-repo-storage.js` | Schema | `buildFolderNode` + `buildFileNode` ahora generan `deletedAt` y `deletedFromParentId` (defaults `''`/`null`). Set cerrado ampliado. |
+| `agro-repo-storage.js` | Normalizers | `normalizeFolderNode` + `normalizeFileNode` propagan `deletedAt`/`deletedFromParentId` del nodo crudo al builder (claves para que sobrevivan ciclos de normalize). Ademas: nodo trashed preserva su titulo exacto (sin forzar canonico) y su parentId original (para restauracion). |
+| `agro-repo-storage.js` | System roots | `ensureSystemRoots`: el `find` de system roots existentes ahora excluye `deletedAt` (no fuerza system/title sobre raices que estan en papelera). |
+| `agro-repo-storage.js` | Filtro | `getAllFiles(nodes)` ahora excluye `deletedAt` (archivos activos solo). |
+| `agro-repo-storage.js` | Nueva fn | `getTrashedNodes(nodes)`: top-level trashed (entry points) ordenados por `deletedAt` desc. |
+| `agro-repo-storage.js` | Nueva fn | `softDeleteNodeInRepo(repo, nodeId)`: marca nodo + subarbol con `deletedAt`+`deletedFromParentId`, registra tumba de system root en `deletedSystemFolders`, limpia expandedIds. |
+| `agro-repo-storage.js` | Nueva fn | `restoreNodeFromTrash(repo, nodeId)`: limpia markers del nodo + subarbol; valida padre original (si no existe/no es folder/no esta vivo, restaura a raiz); quita tumba de system root. |
+| `agro-repo-storage.js` | Nueva fn | `purgeExpiredTrash(repo, maxDays=30)`: hard-delete real de nodos con `deletedAt` > maxDays. Usada al cargar y por "Vaciar". |
+| `agro-repo-storage.js` | Nueva fn | `purgeNodeFromTrash(repo, nodeId)`: hard-delete permanente de un nodo + subarbol (boton X por item). |
+| `agro-repo-storage.js` | Defensa | `updateNodeInRepo`: el target de parentId (drag&drop) debe ser folder viva (`!target.deletedAt`). |
+| `agro-repo-app.js` | Estado | Nuevo campo `state.view` (`'tree'` | `'trash'`). |
+| `agro-repo-app.js` | Filtros UI | `getSortedChildren`, `getVisibleNodeIds`, `sanitizeOpenTabs`, `getActiveFile` ahora excluyen `deletedAt`. (Getters de grafo `getNode`/`getChildren`/`collectDescendantIds` INTACTOS — siguen viendo la papelera para que restore/drag funcione.) |
+| `agro-repo-app.js` | Delete | `confirmDelete` ya no llama `deleteNodeFromRepo`; usa `softDeleteNodeInRepo`. Toast: "Movido a la papelera". |
+| `agro-repo-app.js` | Carga | `initWidget`: `purgeExpiredTrash(repo, 30)` silencioso antes del primer render. |
+| `agro-repo-app.js` | UI | Boton Papelera en sidebar footer (`fa-trash-can` + badge conteo). Nuevas fns `renderTrash`, `updateTrashBadge`, `formatTrashDate`. |
+| `agro-repo-app.js` | Vista papelera | `renderTrash`: header ("Papelera" + Vaciar + Volver), lista de items (icono, nombre, tipo, fecha relativa, Restaurar + X permanente), empty state. `renderTree` delega a `renderTrash` cuando `state.view === 'trash'`. |
+| `agro-repo-app.js` | Acciones | Nuevos cases en `handleAction`: `open-trash`, `close-trash`, `restore-node`, `purge-node`, `purge-expired`. Fns `openTrash`/`closeTrash`/`restoreNodeFromTrashById`/`purgeNodeFromTrashById`/`emptyTrash`. |
+| `agro-repo-app.js` | Coherencia | Al escribir en search box estando en papelera, vuelve al arbol (las busquedas corren sobre el arbol vivo). Restaurar vuelve al arbol y expande el path. |
+| `agro-repo-app.js` | Sync | `renderAll` ahora llama `updateTrashBadge`. Import de `deleteNodeFromRepo` retirado (sin uso). |
+| `agro-repo.css` | Estilos | `.agrp-trash-header`, `.agrp-trash-title`, `.agrp-trash-actions`, `.agrp-trash-empty-btn`, `.agrp-trash-item` (info + actions), `.agrp-trash-item-icon/text/name/meta`, `.agrp-trash-item-actions`, `.agrp-trash-restore-btn`, `.agrp-trash-btn` (relative), `.agrp-trash-badge` (pill dorado). Tokens `--agrp-*` existentes, transiciones 180ms. |
+
+**No se toco:** `agro.js` (monolito), `agro-repo-templates.js`, `agro-repo-search.js`, migraciones, archivos canonicos, keys de localStorage existentes.
+
+**Resultado de build:** `pnpm build:gold` OK en 3.37s. UTF-8 OK. Llaves CSS balanceadas (165/165). Sin errores nuevos.
+
+**Reglas del brief respetadas:**
+- Soft-delete con `deletedAt`+`deletedFromParentId`, nodos siguen en `repo.nodes[]`. (via normalizers que propagan los campos)
+- Filtrado: getters de grafo (`getNode`/`getChildren`/`collectDescendantIds`) ven la papelera; `getAllFiles` y `getActiveFile` excluyen.
+- Vista papelera reemplaza el arbol, con Restaurar + Vaciar + Volver.
+- Restaurar valida padre original (si no, raiz); restaura descendientes.
+- Expiracion automatica al cargar (>30 dias hard-delete).
+- Persistencia automatica (persistRepoState escribe todo el repo, sin keys nuevas).
+- System roots en papelera + restauracion canonica via `ensureSystemRoots`/`deletedSystemFolders`.
+
+**QA pendiente (sugerido para validacion manual):**
+1. Crear archivo -> eliminar -> verificar que aparece en papelera (badge muestra 1) -> Restaurar -> reaparece en arbol en su ubicacion original.
+2. Crear carpeta con archivos -> eliminar carpeta -> verificar que toda la jerarquia esta como UN entry en papelera (con "N elemento(s)") -> Restaurar -> reaparece completa.
+3. Boton X (eliminar permanente) -> hard-delete del item sin ventana de 30 dias.
+4. Vaciar -> solo purga lo >30 dias (lo reciente se queda).
+5. System root eliminada (ej: Mercado) -> va a papelera -> Restaurar -> `ensureSystemRoots` la repone con props canonicas (respeta rename si existia).
+6. Smoke no-regresion: drag&drop, rename, copy/paste, duplicar siguen funcionando (getters de grafo no se filtraron).
+7. Recargar pagina tras eliminar -> el nodo sigue en papelera (persistio) y lo >30 dias ya no aparece (purgado al cargar).
+
+**Scope respetado:** no se toco `agro.js` ni archivos canonicos. No se hicieron commits (pendiente de revision del usuario).

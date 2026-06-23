@@ -157,7 +157,9 @@ export function getPathNodes(nodes, nodeId) {
 }
 
 export function getAllFiles(nodes) {
-    return (Array.isArray(nodes) ? nodes : []).filter((node) => node?.type === 'file');
+    // Active files only — soft-deleted (trashed) nodes are excluded so the
+    // editor, default-active selection and counts ignore the trash bin.
+    return (Array.isArray(nodes) ? nodes : []).filter((node) => node?.type === 'file' && !node?.deletedAt);
 }
 
 export function getRootFolders(nodes) {
@@ -214,7 +216,10 @@ export function buildFolderNode(nodes, overrides = {}) {
         system: Boolean(overrides.system),
         createdAt: overrides.createdAt || safeNow(),
         updatedAt: overrides.updatedAt || overrides.createdAt || safeNow(),
-        legacyPath: String(overrides.legacyPath || '')
+        legacyPath: String(overrides.legacyPath || ''),
+        // Soft-delete (trash) markers — propagated through normalize cycles.
+        deletedAt: String(overrides.deletedAt || ''),
+        deletedFromParentId: overrides.deletedFromParentId || null
     };
 }
 
@@ -235,7 +240,10 @@ export function buildFileNode(nodes, overrides = {}) {
         content: String(overrides.content ?? getTemplateSeed(templateKey)),
         createdAt: overrides.createdAt || safeNow(),
         updatedAt: overrides.updatedAt || overrides.createdAt || safeNow(),
-        legacyPath: String(overrides.legacyPath || '')
+        legacyPath: String(overrides.legacyPath || ''),
+        // Soft-delete (trash) markers — propagated through normalize cycles.
+        deletedAt: String(overrides.deletedAt || ''),
+        deletedFromParentId: overrides.deletedFromParentId || null
     };
 }
 
@@ -302,7 +310,8 @@ export function updateNodeInRepo(repoLike, nodeId, updates = {}) {
             node.parentId = null;
         } else {
             const target = getNode(repo.nodes, nextParentId);
-            if (target?.type === 'folder' && !collectDescendantIds(repo.nodes, nodeId).includes(nextParentId) && nextParentId !== nodeId) {
+            // Target must be a live (non-trashed) folder to accept a drop.
+            if (target?.type === 'folder' && !target.deletedAt && !collectDescendantIds(repo.nodes, nodeId).includes(nextParentId) && nextParentId !== nodeId) {
                 node.parentId = nextParentId;
                 if (!repo.expandedIds.includes(nextParentId)) repo.expandedIds = [...repo.expandedIds, nextParentId];
             }
@@ -348,6 +357,129 @@ export function deleteNodeFromRepo(repoLike, nodeId) {
     }
 
     return { repo, removedIds, removed: true };
+}
+
+// ---------------------------------------------------------------------------
+// Trash (soft-delete). Trashed nodes stay in repo.nodes[] carrying a
+// `deletedAt` ISO timestamp and a `deletedFromParentId` pointer so they can be
+// restored to their original location. The whole repo (including trash) is
+// persisted automatically by persistRepoState, so no new storage keys are
+// needed.
+// ---------------------------------------------------------------------------
+
+// Top-level trashed nodes only (a trashed folder brings its descendants with
+// it, so we only surface the entry point in the trash UI).
+export function getTrashedNodes(nodes) {
+    return (Array.isArray(nodes) ? nodes : [])
+        .filter((node) => node?.deletedAt && (node?.deletedFromParentId !== null && node?.deletedFromParentId !== undefined))
+        .sort((a, b) => String(b.deletedAt || '').localeCompare(String(a.deletedAt || '')));
+}
+
+export function softDeleteNodeInRepo(repoLike, nodeId) {
+    const repo = normalizeRepo(repoLike);
+    const node = getNode(repo.nodes, nodeId);
+    if (!node) return { repo, trashedIds: [], trashed: false };
+
+    // Tombstone system roots so ensureSystemRoots doesn't recreate them while
+    // they live in the trash. On restore we remove the key so the root returns.
+    if (isSystemFolder(node) && node.folderKey) {
+        repo.deletedSystemFolders = Array.from(new Set([...(repo.deletedSystemFolders || []), node.folderKey]));
+    }
+
+    const trashedIds = collectDescendantIds(repo.nodes, nodeId);
+    const stamp = safeNow();
+    trashedIds.forEach((id) => {
+        const entry = getNode(repo.nodes, id);
+        if (!entry) return;
+        entry.deletedAt = stamp;
+        // Remember each node's pre-deletion parent so a folder restore places
+        // every descendant back where it was (not all at the folder's level).
+        entry.deletedFromParentId = entry.parentId || null;
+    });
+
+    // Trashed nodes must not appear as "expanded" in the active tree.
+    repo.expandedIds = repo.expandedIds.filter((id) => !trashedIds.includes(id));
+
+    if (trashedIds.includes(repo.activeNodeId)) {
+        repo.activeNodeId = getAllFiles(repo.nodes)[0]?.id || getRootFolders(repo.nodes)[0]?.id || null;
+    }
+
+    return { repo, trashedIds, trashed: true };
+}
+
+export function restoreNodeFromTrash(repoLike, nodeId) {
+    const repo = normalizeRepo(repoLike);
+    const node = getNode(repo.nodes, nodeId);
+    if (!node || !node.deletedAt) return { repo, restoredIds: [], restored: false };
+
+    const restoredIds = collectDescendantIds(repo.nodes, nodeId);
+
+    // If the original parent folder is gone (also trashed or hard-deleted), fall
+    // back to the root so the restored node doesn't end up orphaned.
+    const originalParentStillValid = node.deletedFromParentId
+        ? getNode(repo.nodes, node.deletedFromParentId)?.type === 'folder' && !getNode(repo.nodes, node.deletedFromParentId)?.deletedAt
+        : true;
+
+    restoredIds.forEach((id) => {
+        const entry = getNode(repo.nodes, id);
+        if (!entry) return;
+        // Root entry of the restore: reattach to its original parent (or root).
+        // Descendants keep their existing parentId, which still points inside the
+        // restored subtree.
+        if (id === nodeId) {
+            entry.parentId = originalParentStillValid ? (node.deletedFromParentId || null) : null;
+        }
+        entry.deletedAt = '';
+        entry.deletedFromParentId = null;
+    });
+
+    // If this was a system root, remove its tombstone so ensureSystemRoots can
+    // restore canonical props (icon/folderKey). Renamed titles are preserved
+    // via renamedSystemFolders, which ensureSystemRoots already honors.
+    if (isSystemFolder(node) && node.folderKey) {
+        repo.deletedSystemFolders = (repo.deletedSystemFolders || []).filter((key) => key !== node.folderKey);
+    }
+
+    return { repo, restoredIds, restored: true };
+}
+
+export function purgeExpiredTrash(repoLike, maxDays = 30) {
+    const repo = normalizeRepo(repoLike);
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - maxDays);
+    const cutoffMs = cutoff.getTime();
+
+    const expiredIds = new Set();
+    repo.nodes.forEach((node) => {
+        if (node?.deletedAt) {
+            const ts = Date.parse(node.deletedAt);
+            if (!Number.isNaN(ts) && ts < cutoffMs) expiredIds.add(node.id);
+        }
+    });
+
+    if (!expiredIds.size) return { repo, purgedIds: [], purged: false };
+
+    repo.nodes = repo.nodes.filter((node) => !expiredIds.has(node.id));
+    repo.expandedIds = repo.expandedIds.filter((id) => !expiredIds.has(id));
+
+    return { repo, purgedIds: Array.from(expiredIds), purged: true };
+}
+
+export function purgeNodeFromTrash(repoLike, nodeId) {
+    const repo = normalizeRepo(repoLike);
+    const node = getNode(repo.nodes, nodeId);
+    if (!node) return { repo, purgedIds: [], purged: false };
+
+    // Hard-delete the node and its whole subtree permanently.
+    const purgedIds = new Set(collectDescendantIds(repo.nodes, nodeId));
+    repo.nodes = repo.nodes.filter((entry) => !purgedIds.has(entry.id));
+    repo.expandedIds = repo.expandedIds.filter((id) => !purgedIds.has(id));
+
+    if (purgedIds.has(repo.activeNodeId)) {
+        repo.activeNodeId = getAllFiles(repo.nodes)[0]?.id || getRootFolders(repo.nodes)[0]?.id || null;
+    }
+
+    return { repo, purgedIds: Array.from(purgedIds), purged: true };
 }
 
 export function collectDescendantIds(nodes, nodeId) {
@@ -484,6 +616,7 @@ function ensureSystemRoots(repoLike, options = {}) {
         const existing = draftNodes.find((node) =>
             node?.type === 'folder'
             && node?.parentId === null
+            && !node?.deletedAt
             && (node?.folderKey === folderDef.key || resolveRootFolderKey(node?.title) === folderDef.key)
         );
 
@@ -526,23 +659,36 @@ function normalizeFolderNode(node, nodes) {
     const rootKey = node?.parentId === null
         ? resolveRootFolderKey(node?.folderKey || node?.title)
         : '';
+    // A soft-deleted node keeps its exact title (canonical forcing would
+    // mask user-driven renames and make trash entries confusing).
+    const isTrashed = Boolean(node?.deletedAt);
+    const title = (!isTrashed && node?.parentId === null && rootKey)
+        ? getRootFolder(rootKey).label
+        : node?.title;
 
     return buildFolderNode(nodes, {
         id: node?.id,
         parentId: node?.parentId || null,
-        title: node?.parentId === null && rootKey ? getRootFolder(rootKey).label : node?.title,
+        title,
         folderKey: rootKey,
         system: node?.parentId === null && Boolean(rootKey),
         createdAt: node?.createdAt,
         updatedAt: node?.updatedAt,
-        legacyPath: node?.legacyPath
+        legacyPath: node?.legacyPath,
+        deletedAt: node?.deletedAt,
+        deletedFromParentId: node?.deletedFromParentId
     });
 }
 
 function normalizeFileNode(node, nodes, fallbackParentId) {
-    const parentId = getNode(nodes, node?.parentId)?.type === 'folder'
-        ? node.parentId
-        : fallbackParentId;
+    const isTrashed = Boolean(node?.deletedAt);
+    // A trashed file keeps its original parentId even if the parent folder no
+    // longer exists, so it can be restored to its original location later.
+    const parentId = isTrashed
+        ? (node?.parentId || null)
+        : (getNode(nodes, node?.parentId)?.type === 'folder'
+            ? node.parentId
+            : fallbackParentId);
     const templateKey = node?.templateKey || inferTemplateKeyFromLegacy(node?.entryType);
 
     return buildFileNode(nodes, {
@@ -553,7 +699,9 @@ function normalizeFileNode(node, nodes, fallbackParentId) {
         content: node?.content,
         createdAt: node?.createdAt,
         updatedAt: node?.updatedAt,
-        legacyPath: node?.legacyPath
+        legacyPath: node?.legacyPath,
+        deletedAt: node?.deletedAt,
+        deletedFromParentId: node?.deletedFromParentId
     });
 }
 
