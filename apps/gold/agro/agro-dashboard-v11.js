@@ -87,32 +87,43 @@ function isDashboardActive() {
 // ============================================================
 // BLOQUE 0 — SALUDO (reutiliza el nombre del navbar)
 // ============================================================
-function renderGreeting() {
+async function renderGreeting() {
     const target = $('ygd-greeting-name');
     if (!target) return;
 
-    // agro.js escribe el nombre en .user-profile .user-name (resolveHeaderDisplayName).
-    const navbarName = (document.querySelector('.user-profile .user-name')?.textContent || '').trim();
-
-    if (navbarName && navbarName !== 'Agricultor') {
-        target.textContent = `Bienvenido, ${navbarName}`;
-        return;
+    // PASO 1 — Nombre instantáneo desde el cache (sin parpadeo).
+    // agro.js persiste aquí el nombre resuelto (writeCachedDisplayName).
+    const CACHE_KEY = 'YG_AGRO_DISPLAY_NAME_V1';
+    let cachedName = '';
+    try {
+        cachedName = String(localStorage.getItem(CACHE_KEY) || '').trim();
+    } catch (_e) { /* ignore */ }
+    if (cachedName) {
+        target.textContent = `Bienvenido, ${cachedName}`;
     }
 
-    // Fallback: si el navbar aún no resolvió el nombre, esperar y reintentar.
-    const observer = new MutationObserver(() => {
-        const name = (document.querySelector('.user-profile .user-name')?.textContent || '').trim();
-        if (name && name !== 'Agricultor') {
-            target.textContent = `Bienvenido, ${name}`;
-            observer.disconnect();
+    // PASO 2 — Resolver nombre canónico async (jerarquía igual a agro.js).
+    let displayName = 'Agricultor';
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            displayName = String(user.user_metadata?.full_name || user.email || 'Agricultor').trim() || 'Agricultor';
+            const { data: profile, error } = await supabase
+                .from('agro_farmer_profile')
+                .select('display_name')
+                .eq('user_id', user.id)
+                .maybeSingle();
+            if (!error) {
+                const profileName = String(profile?.display_name || '').trim();
+                if (profileName) displayName = profileName;
+            }
         }
-    });
-    const navbarNameEl = document.querySelector('.user-profile .user-name');
-    if (navbarNameEl) {
-        observer.observe(navbarNameEl, { childList: true, characterData: true, subtree: true });
+    } catch (_err) {
+        // Mantener el cache si ya se mostró; si no, queda 'Agricultor'.
     }
-    // Timeout defensivo: dejar de observar tras 12s.
-    setTimeout(() => observer.disconnect(), 12000);
+
+    // PASO 3 — Actualizar el DOM con el nombre resuelto.
+    target.textContent = `Bienvenido, ${displayName}`;
 }
 
 // ============================================================
