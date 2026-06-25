@@ -2971,50 +2971,94 @@ Widget afectado: AgroRepo (`agro-repo-app.js` + `agro-repo-storage.js` + `agro-r
 
 ---
 
-## Sesión 2026-06-24 — Dashboard Agro v11 (6 bloques) + 4 fixes
+**Agentes:** Yerikson Varela (Product Owner), Claude Sonnet 4.6 (planificación y coordinación), GLM 5.2 (implementación), mimo 2.5 (documentación)
+**Estado:** GREEN — build verde, working tree limpio, 0 regresiones
+**Producción:** 6 commits subidos, daily log NO subido a GitHub (como norma)
 
-**Objetivo:** Implementar Dashboard Agro evolucionado con 6 bloques funcionales y corregir bugs de QA.
+### Resumen ejecutivo
+Evolución del Dashboard Agro de superficie básica a centro de control agrícola completo con 6 bloques, datos reales, tipografía V12 estrenada y ciclo completo diseño → prototipo → implementación → QA → documentación.
 
-### Implementación inicial (`a30e5b8`)
-- `agro-dashboard-v11.css` (927 líneas) — CSS bloques 0–6, prefijo `ygd-`, tokens `--agrp-*`, sin glow
-- `agro-dashboard-v11.js` (660 líneas) — Módulo ES6 con lógica bloques 0–6
-- `agro/index.html` — Sección dashboard reemplazada por 6 bloques
-- `dashboard.js` — Retarget selector a `#ygd-weather-location-controls`
-- Eliminados: `dashboard-prototype.html`, `PLAN_DASHBOARD_AGRO.md`
+### Resultado por frente
 
-### 4 fixes de QA (`f108e24`)
+| Frente | Estado | Detalle |
+|--------|--------|---------|
+| **Dashboard Agro 6 bloques** | 🟢 GREEN | Bloque 0–6 implementados, datos reales de Supabase |
+| **Tipografía V12** | 🟢 GREEN | Plus Jakarta Sans + Inter en producción (Dashboard Agro) |
+| **ADN-VISUAL-V12.0.md** | 🟢 GREEN | Canon visual actualizado §20 y §21 |
+| **Documentación canónica** | 🟢 GREEN | 8 documentos actualizados |
+| **QA visual browser** | 🟡 Pendiente | Responsable: Yerikson Varela |
+| **Onboarding** | 🟡 Pendiente | Requiere cuenta nueva |
+| **RPC `get_farm_balance`** | 🟡 Media | Balance client-side documentado como deuda técnica |
+| **MutationObserver saludo** | 🟡 Baja | Posible vacío momentáneo en saludo |
 
-| Bug | Causa | Fix |
-|---|---|---|
-| "Dashboard Agro" duplicado | Eyebrow del Bloque 0 se solapaba con breadcrumb del shell | Eyebrow eliminado del HTML |
-| Mercados "Cargando" infinito | `window.getMarketTickerSnapshot` no existe (es `export` de `agro-market.js`) | Import estático `import { getMarketTickerSnapshot } from './agro-market.js'` |
-| Balance finca $0 | Query filtraba `.eq('farm_id', farmId)` directo; movimientos legacy tienen `farm_id = NULL` y se asocian vía `crop_id → agro_crops.farm_id` | Reutiliza `computeFarmStats()` de `agro-farm-compare.js` (export añadido) |
-| Velocímetro gigante | `max-width: 300px` heredado del prototipo | Reducido a `200px` + compacté padding/gaps |
+### Commits del día
 
-### Hallazgo crítico (balance)
-Los movimientos legacy se asocian a finca **indirectamente** vía `crop_id → agro_crops.farm_id`. Un query directo `.eq('farm_id', farmId)` retorna $0. La solución correcta es reutilizar `computeFarmStats()` que es crop-céntrica + bucket de generales (misma lógica que `loadFarms()` de Mis Fincas).
+| Hash | Descripción | Responsable |
+|------|-------------|-------------|
+| `a30e5b8b` | feat(agro-dashboard): v11 — 6 bloques Dashboard Agro evolucionado | GLM 5.2 |
+| `f108e247` | fix(agro-dashboard): 4 bugs — eyebrow duplicado, mercados loading, balance $0, gauge gigante | GLM 5.2 |
+| `ff8d7582` | docs: docs-agro.html actualizado | mimo 2.5 |
+| `1c3ad24f` | feat(agro): tipografía V12 — Plus Jakarta Sans/Inter en Dashboard Agro | GLM 5.2 / Yerikson |
+| `56c1b8d4` | docs: eliminar ADN-VISUAL-V11.0.md tras canonización V12 | mimo 2.5 |
+| `77427c29` | docs: actualizar AGENT_REPORT_ACTIVE y referencias V11→V12 | mimo 2.5 |
 
-### QA Full Green (humano)
-- Dashboard: saludo correcto sin duplicación ✓
-- Mercados: carga valores reales ✓
-- Balance finca: cifras reales consistentes con Mis Fincas ✓
-- Velocímetro: tamaño compacto correcto ✓
-- Build OK (8.11s)
+### Bloques del Dashboard Agro V12
 
-### Commits
-| Hash | Descripción |
-|---|---|
-| `a30e5b8b` | feat(agro-dashboard): v11 — 6 bloques Dashboard Agro evolucionado |
-| `f108e247` | fix(agro-dashboard): 4 bugs — eyebrow duplicado, mercados loading, balance $0, gauge gigante |
+| Bloque | Contenido | Fuente |
+|--------|-----------|--------|
+| 0 — Bienvenida | Saludo personalizado + Asistente IA | `resolveHeaderDisplayName()` |
+| 1 — Selector de finca | Chips dinámicos con fincas reales | `agro_farms` |
+| 2 — Pulso del día | Clima + Mercados + Fase lunar | Open-Meteo / Binance / fórmula sinódica |
+| 3 — Cómo va mi finca | Velocímetro SVG + balance (inversión/cobrado/fiados) | `agro_expenses`, `agro_income`, `agro_pending` |
+| 4 — Mis cultivos activos | Cards con estado semántico (Ganado/Recuperando/Invirtiendo/Equilibrio) | `agro_crops` |
+| 5 — Mis tareas del día | Lista de tareas de hoy con estado | `agro_task_cycles` |
+| 6 — Accesos rápidos | Navegación real con `data-agro-view` | Shell router |
+
+### Decisiones canónicas tomadas
+
+| Decisión | Contexto | Estado |
+|----------|----------|--------|
+| Tipografía: Plus Jakarta Sans + Inter | Orbitron demasiado "gamer" para producto agrícola serio | ✅ ADN V12 §5 |
+| Velocímetro 3 estados propios | Distintos de estados de ciclo de cultivo — capas diferentes | ✅ ADN V12 §20 |
+| Título bienvenida en `--gold-4` | Única excepción H1 completamente dorado | ✅ ADN V12 §21 |
+| Fase lunar con consejo agrícola | Iniciativa GLM, aprobada por Yerikson | ✅ Manifiesto §4.2 |
+| Balance client-side sin migración | No mezclar fases — deuda documentada | ✅ Ficha Técnica |
+
+### Hallazgos críticos resueltos
+
+- **Eyebrow duplicado:** selector CSS conflictivo en dashboard
+- **Mercados loading:** estado inicial incorrecto
+- **Balance $0:** movimientos legacy tienen `farm_id = NULL`, se asocian vía `crop_id → agro_crops.farm_id`. Query directo retorna $0. Solución: reutilizar `computeFarmStats()` de `agro-farm-compare.js`
+- **Gauge gigante:** `max-width: 300px` → reducido a `200px`
 
 ### Archivos tocados
-- `apps/gold/agro/agro-dashboard-v11.css` — CSS bloques 0–6
-- `apps/gold/agro/agro-dashboard-v11.js` — Lógica bloques 0–6 + fixes mercados/balance
+
+- `apps/gold/agro/agro-dashboard-v11.css` — CSS bloques 0–6, tipografía V12
+- `apps/gold/agro/agro-dashboard-v11.js` — Lógica bloques 0–6 + fixes
 - `apps/gold/agro/agro-farm-compare.js` — Export `computeFarmStats`
 - `apps/gold/agro/index.html` — 6 bloques + fixes
-- `apps/gold/agro/dashboard.js` — Retarget selector
+- `apps/gold/agro/dashboard.js` — Retarget selector lunar
+- `apps/gold/docs/ADN-VISUAL-V12.0.md` — Canon actualizado §20, §21
+- `apps/gold/docs/MANIFIESTO_AGRO.md` — §4.2 actualizado
+- `apps/gold/docs/FICHA_TECNICA.md` — actualizado
 
-### Deuda técnica documentada
-- RPC `get_farm_balance` — balance hoy hace N queries client-side por finca. Queda para fase posterior con migración Supabase server-side.
+### Scope respetado
+- No se tocó `agro.js` (monolito)
+- No se modificaron archivos canónicos sin autorización
+- Daily log NO subido a GitHub (como norma)
 
-**Scope respetado:** no se tocó `agro.js` ni archivos canónicos.
+### Próximo agente — acciones recomendadas
+
+1. **QA Visual browser:** Yerikson verifica tipografía V12 en desktop y mobile
+2. **Onboarding QA:** requiere cuenta nueva para verificar wizard
+3. **RPC `get_farm_balance`:** consolidar balance client-side en llamada server-side
+4. **MutationObserver saludo:** migrar a suscripción directa de auth
+5. **Migración tipográfica resto del proyecto:** factureros, ciclos, reportes (siguiente sesión)
+
+### Lecciones operativas
+
+- QA humano validado es la única métrica de cierre confiable
+- Cuando el usuario reporta bugs de datos, investigar origen de los datos antes de asumir culpable al query
+- Migración tipográfica debe ser por módulo, no global, para reducir riesgo
+- Documentos canónicos deben actualizarse en la misma jornada del cambio, no después
+
