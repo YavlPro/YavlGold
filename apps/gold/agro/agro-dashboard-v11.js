@@ -15,6 +15,8 @@
  */
 
 import { supabase } from '../assets/js/config/supabase-config.js';
+import { getMarketTickerSnapshot } from './agro-market.js';
+import { computeFarmStats } from './agro-farm-compare.js';
 
 // ============================================================
 // CONSTANTES
@@ -209,9 +211,7 @@ function renderMarkets() {
     const list = $('ygd-markets-list');
     if (!list) return;
 
-    const snapshot = typeof window.getMarketTickerSnapshot === 'function'
-        ? window.getMarketTickerSnapshot()
-        : null;
+    const snapshot = getMarketTickerSnapshot();
 
     if (!snapshot) {
         list.innerHTML = `
@@ -269,8 +269,54 @@ function formatNumber(n) {
 }
 
 // ============================================================
-// BLOQUE 3 — CÓMO VA MI FINCA (balance por finca, client-side)
+// BLOQUE 3 — CÓMO VA MI FINCA (balance por finca)
+// Reutiliza computeFarmStats de agro-farm-compare.js (misma lógica
+// que loadFarms de agro-farms.js) para que las cifras coincidan
+// EXACTAMENTE con las cards de "Mis Fincas".
 // ============================================================
+let farmStatsCache = null; // { farmId: { totalExpenses, totalIncome, balance, cropIds } }
+
+async function ensureFarmStats() {
+    if (farmStatsCache) return farmStatsCache;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+    try {
+        const { farms, statsMap } = await computeFarmStats(user.id);
+        // Enriquecer cada entrada con los crop_ids de esa finca (para fiados).
+        const enriched = new Map();
+        const cropsByFarm = await fetchCropIdsByFarm(user.id);
+        for (const [farmId, stats] of statsMap.entries()) {
+            enriched.set(farmId, {
+                totalExpenses: stats.totalExpenses || 0,
+                totalIncome: stats.totalIncome || 0,
+                balance: stats.balance || 0,
+                cropIds: cropsByFarm.get(farmId) || [],
+            });
+        }
+        farmStatsCache = { farms, statsMap: enriched, computedAt: Date.now() };
+    } catch (err) {
+        console.error('[DashboardV11] computeFarmStats error:', err);
+        farmStatsCache = { farms: [], statsMap: new Map(), computedAt: Date.now() };
+    }
+    return farmStatsCache;
+}
+
+async function fetchCropIdsByFarm(userId) {
+    const { data, error } = await supabase
+        .from('agro_crops')
+        .select('id, farm_id')
+        .eq('user_id', userId)
+        .is('deleted_at', null);
+    if (error) throw error;
+    const map = new Map();
+    (data || []).forEach(c => {
+        if (!c.farm_id) return;
+        if (!map.has(c.farm_id)) map.set(c.farm_id, []);
+        map.get(c.farm_id).push(c.id);
+    });
+    return map;
+}
+
 async function renderBalance() {
     const farmId = state.selectedFarmId;
     const farmNameEl = $('ygd-balance-farm-name');
@@ -295,7 +341,12 @@ async function renderBalance() {
     if (statsHost) statsHost.innerHTML = skeletonStats();
 
     try {
-        const { inversion, cobrado, fiados } = await fetchFarmBalance(farmId);
+        const cache = await ensureFarmStats();
+        const stats = cache?.statsMap?.get(farmId);
+        const inversion = stats?.totalExpenses ?? 0;
+        const cobrado = stats?.totalIncome ?? 0;
+        const fiados = await fetchFiadosForFarm(stats?.cropIds || []);
+
         const estadoKey = computeBalanceEstado(cobrado, inversion, fiados);
         const labelMap = { success: 'Ganando', warning: 'Recuperando', muted: 'Neutral' };
 
@@ -315,42 +366,32 @@ async function renderBalance() {
     }
 }
 
-async function fetchFarmBalance(farmId) {
-    // Tres sumas client-side en paralelo, filtrando por farm_id y soft-delete.
-    const [inv, cob, fia] = await Promise.all([
-        sumMovements('agro_expenses', farmId, 'monto_usd', 'amount'),
-        sumMovements('agro_income', farmId, 'monto_usd'),
-        sumMovementsPending('agro_pending', farmId, 'monto_usd'),
-    ]);
-    return { inversion: inv, cobrado: cob, fiados: fia };
-}
-
-async function sumMovements(table, farmId, primaryCol, fallbackCol) {
+async function fetchFiadosForFarm(cropIds) {
+    if (!cropIds.length) return 0;
+    // Fiados: agro_pending por crop_id de la finca, no revertidos ni borrados.
+    // También los generales de finca (crop_id null, farm_id = X) se capturan vía farm_id.
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return 0;
     const { data, error } = await supabase
-        .from(table)
-        .select(`${primaryCol}${fallbackCol ? `, ${fallbackCol}` : ''}`)
-        .eq('farm_id', farmId)
-        .is('deleted_at', null);
-    if (error) throw error;
-    return (data || []).reduce((acc, row) => acc + pickAmount(row, primaryCol, fallbackCol), 0);
-}
-
-async function sumMovementsPending(table, farmId, primaryCol) {
-    // Fiados: excluir también los revertidos.
-    const { data, error } = await supabase
-        .from(table)
-        .select(primaryCol)
-        .eq('farm_id', farmId)
+        .from('agro_pending')
+        .select('monto_usd, monto, currency, exchange_rate, crop_id, farm_id')
+        .eq('user_id', user.id)
         .is('deleted_at', null)
         .is('reverted_at', null);
     if (error) throw error;
-    return (data || []).reduce((acc, row) => acc + safeNum(row?.[primaryCol]), 0);
+    const farmId = state.selectedFarmId;
+    return (data || [])
+        .filter(r => (r.crop_id && cropIds.includes(r.crop_id)) || (r.farm_id === farmId && !r.crop_id))
+        .reduce((acc, row) => acc + resolveRecordUsd(row), 0);
 }
 
-function pickAmount(row, primaryCol, fallbackCol) {
-    const primary = safeNum(row?.[primaryCol]);
-    if (primary !== 0) return primary;
-    return fallbackCol ? safeNum(row?.[fallbackCol]) : 0;
+function resolveRecordUsd(row) {
+    if (row.monto_usd != null) return safeNum(row.monto_usd);
+    const amount = safeNum(row.monto);
+    const currency = String(row.currency || 'USD').toUpperCase();
+    if (currency === 'USD') return amount;
+    const rate = safeNum(row.exchange_rate) || 1;
+    return rate > 0 ? amount / rate : amount;
 }
 
 function computeBalanceEstado(cobrado, inversion, fiados) {
@@ -716,6 +757,7 @@ function bindFarmEvents() {
     document.addEventListener('agro:farms-loaded', async () => {
         const cached = window._agroFarms?.getFarms?.() || [];
         state.farms = cached;
+        farmStatsCache = null; // invalidar: las cifras deben recalcularse
         if (!state.selectedFarmId || !state.farms.some(f => f.id === state.selectedFarmId)) {
             restoreSelectedFarm();
         }

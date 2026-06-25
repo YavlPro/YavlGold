@@ -41,7 +41,7 @@ function resolveRecordUsd(row) {
 // Cálculo de estadísticas (misma lógica que loadFarms en agro-farms.js)
 // ---------------------------------------------------------------------------
 
-async function computeFarmStats(userId) {
+export async function computeFarmStats(userId) {
   // 1. Fincas
   const { data: farms, error: farmsError } = await supabase
     .from('agro_farms')
