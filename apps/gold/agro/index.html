@@ -48,6 +48,7 @@
     <link rel="stylesheet" href="./agro-tokens.css">
     <link rel="stylesheet" href="./agrociclos.css">
     <link rel="stylesheet" href="./agro-dashboard.css">
+    <link rel="stylesheet" href="./agro-dashboard-v11.css">
     <link rel="stylesheet" href="./agro-facturero-finca.css">
     <link rel="stylesheet" href="./agro-operational-cycles.css">
     <link rel="stylesheet" href="./agro-task-cycles.css">
@@ -910,93 +911,331 @@
         </section>
 
         <!-- KPIs Section -->
-        <section class="kpi-section agro-dashboard-v10" data-agro-section="agenda" data-agro-shell-region="dashboard">
-            <div class="agro-dash-header section-header animate-in delay-1">
-                <div class="agro-dash-heading">
-                    <p class="agro-dash-kicker">Centro de control agrícola</p>
-                    <h2 class="agro-dash-title section-title">
-                        <span class="agro-dash-icon">📊</span> Dashboard Agro
-                    </h2>
-                    <p class="agro-dash-subtitle">Clima, divisas de referencia y fase lunar en una sola lectura para
-                        arrancar el día con mejor contexto.</p>
-                </div>
-                <div class="agro-dash-controls">
-                    <button type="button" class="assistant-trigger agro-dash-btn-assistant" id="btn-open-agro-assistant"
+        <section class="agro-dashboard-v11" data-agro-shell-region="dashboard">
+            <div class="ygd-dashboard">
+
+                <!-- ====================================================
+                     BLOQUE 0 — HEADER CONTEXTUAL
+                     (saludo + botón IA; reemplaza el breadcrumb ausente)
+                     ==================================================== -->
+                <header class="ygd-block ygd-header">
+                    <div class="ygd-header-greeting">
+                        <span class="ygd-header-eyebrow">Dashboard Agro</span>
+                        <h1 class="ygd-header-title" id="ygd-greeting-name">Bienvenido, Agricultor</h1>
+                    </div>
+                    <button class="ygd-btn-ai" type="button" aria-label="Abrir Asistente IA"
                         data-agro-view="asistente">
-                        Asistente IA
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M12 3l1.6 4.6L18 9.2l-4.4 1.6L12 15l-1.6-4.2L6 9.2l4.4-1.6L12 3z" />
+                            <path d="M18 14l.8 2.2L21 17l-2.2.8L18 20l-.8-2.2L15 17l2.2-.8L18 14z" />
+                        </svg>
+                        <span>Asistente IA</span>
                     </button>
-                </div>
-            </div>
+                </header>
 
-            <div class="agro-dash-separator" aria-hidden="true"></div>
-
-            <article class="agro-dash-guide card animate-in delay-2">
-                <div class="agro-dash-guide__content">
-                    <div class="agro-dash-guide__head">
-                        <div class="agro-dash-guide__copyblock">
-                            <p class="agro-dash-guide__eyebrow">Ruta sugerida</p>
-                            <h3 class="agro-dash-guide__title">Cómo empezar</h3>
+                <!-- ====================================================
+                     BLOQUE 1 — SELECTOR DE FINCA
+                     (chips dinámicos; renderizados por agro-dashboard-v11.js)
+                     ==================================================== -->
+                <section class="ygd-block" aria-label="Selector de finca" id="ygd-block-farms">
+                    <div class="ygd-block-head">
+                        <div>
+                            <p class="ygd-block-eyebrow">Tu finca activa</p>
+                            <h2 class="ygd-block-title">Selecciona la finca</h2>
                         </div>
-                        <p class="agro-dash-guide__copy">Tres pasos breves para crear tu primera finca, consultar el clima y encontrar ayuda cuando la necesites.</p>
                     </div>
-                    <div class="agro-dash-guide__steps">
-                        <button type="button" class="agro-guide-step" data-agro-view="ciclos"
-                            data-agro-subview="mis-fincas" data-agro-mode-scope="crop">
-                            <span class="agro-guide-step__index">1</span>
-                            <span class="agro-guide-step__text">Crear mi finca</span>
-                        </button>
-                        <button type="button" class="agro-guide-step" data-agro-view="clima">
-                            <span class="agro-guide-step__index">2</span>
-                            <span class="agro-guide-step__text">Ver clima</span>
-                        </button>
-                        <button type="button" class="agro-guide-step" data-agro-view="herramientas">
-                            <span class="agro-guide-step__index">3</span>
-                            <span class="agro-guide-step__text">Ayuda y soporte</span>
-                        </button>
+                    <div class="ygd-farm-chips" role="tablist" aria-label="Fincas" id="ygd-farm-chips">
+                        <!-- JS: chips de fincas reales o estado vacío -->
                     </div>
-                </div>
-            </article>
+                </section>
 
-            <div class="agro-dash-boardline animate-in delay-2">
-                <div class="agro-dash-boardline__titleblock">
-                    <p class="agro-dash-boardline__eyebrow">Pulso del día</p>
-                    <h3 class="agro-dash-boardline__title">Resumen rápido</h3>
-                </div>
-                <p class="agro-dash-boardline__copy">Consulta las páginas dedicadas para información completa.</p>
+                <!-- ====================================================
+                     BLOQUE 2 — PULSO DEL DÍA (no cambia con finca)
+                     ==================================================== -->
+                <section class="ygd-block" aria-label="Pulso del día">
+                    <div class="ygd-block-head">
+                        <div>
+                            <p class="ygd-block-eyebrow">Contexto de hoy</p>
+                            <h2 class="ygd-block-title">Pulso del día</h2>
+                        </div>
+                    </div>
+
+                    <div class="ygd-pulse-grid">
+
+                        <!-- Card A: Clima — reutiliza dashboard.js (#weather-*) -->
+                        <article class="ygd-card ygd-pulse-card">
+                            <div class="ygd-pulse-card-head">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <circle cx="7" cy="7" r="2.5" />
+                                    <line x1="7" y1="2" x2="7" y2="3.5" />
+                                    <line x1="7" y1="10.5" x2="7" y2="12" />
+                                    <line x1="2" y1="7" x2="3.5" y2="7" />
+                                    <line x1="10.5" y1="7" x2="12" y2="7" />
+                                    <line x1="3.5" y1="3.5" x2="4.5" y2="4.5" />
+                                    <line x1="9.5" y1="9.5" x2="10.5" y2="10.5" />
+                                    <path d="M17.5 19a4 4 0 0 0-3-7 5 5 0 0 0-9.5 1.5A3.5 3.5 0 0 0 5.5 19h12z" />
+                                </svg>
+                                <span class="ygd-pulse-card-head-label">Clima</span>
+                            </div>
+                            <div>
+                                <div class="ygd-clima-main">
+                                    <span class="ygd-clima-temp" id="weather-temp">--</span>
+                                    <span class="ygd-clima-condition" id="weather-conditions">Cargando...</span>
+                                </div>
+                                <p class="ygd-clima-location" id="weather-desc">
+                                    Detectando ubicación...
+                                </p>
+                                <div class="ygd-clima-meta">
+                                    <span class="ygd-clima-chip" id="weather-humidity">💧 --%</span>
+                                </div>
+                                <div id="ygd-weather-location-controls"></div>
+                            </div>
+                        </article>
+
+                        <!-- Card B: Mercados — reutiliza agro-market.js (snapshot) -->
+                        <article class="ygd-card ygd-pulse-card">
+                            <div class="ygd-pulse-card-head">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                                    <polyline points="17 6 23 6 23 12" />
+                                </svg>
+                                <span class="ygd-pulse-card-head-label">Mercados</span>
+                            </div>
+                            <ul class="ygd-markets-list" id="ygd-markets-list" role="list">
+                                <li class="ygd-market-row">
+                                    <span class="ygd-market-label">Cargando...</span>
+                                </li>
+                            </ul>
+                        </article>
+
+                        <!-- Card C: Fase lunar — reutiliza calculateMoonPhase() de dashboard.js -->
+                        <article class="ygd-card ygd-pulse-card">
+                            <div class="ygd-pulse-card-head">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
+                                </svg>
+                                <span class="ygd-pulse-card-head-label">Fase lunar</span>
+                            </div>
+                            <!-- calculateMoonPhase() inyecta aquí estructuras .agro-lunar-* -->
+                            <div id="moon-phase">
+                                <div class="agro-lunar-icon">🌑</div>
+                                <div class="agro-lunar-phase">Calculando...</div>
+                                <div class="agro-lunar-tip">Cargando fase lunar</div>
+                            </div>
+                        </article>
+
+                    </div>
+                </section>
+
+                <!-- ====================================================
+                     BLOQUE 3 — CÓMO VA MI FINCA (dinámico por finca)
+                     ==================================================== -->
+                <section class="ygd-block" aria-label="Cómo va mi finca" id="ygd-block-balance">
+                    <div class="ygd-block-head">
+                        <div>
+                            <p class="ygd-block-eyebrow">Balance general</p>
+                            <h2 class="ygd-block-title">Cómo va mi finca</h2>
+                        </div>
+                    </div>
+
+                    <article class="ygd-card ygd-balance-card" id="ygd-balance-card">
+                        <p class="ygd-balance-farm-label" id="ygd-balance-farm-name">Selecciona una finca</p>
+
+                        <div class="ygd-gauge-wrap">
+                            <svg class="ygd-gauge" viewBox="0 0 220 140" aria-hidden="true">
+                                <path d="M 22 110 A 88 88 0 0 1 198 110" fill="none"
+                                    stroke="var(--border-neutral)" stroke-width="1" />
+                                <path class="ygd-gauge-arc ygd-gauge-arc-neutral" d="M 30 110 A 80 80 0 0 1 70 40.72"
+                                    fill="none" stroke="var(--text-muted)" stroke-width="12" stroke-linecap="round" />
+                                <path class="ygd-gauge-arc ygd-gauge-arc-recuperando" d="M 70 40.72 A 80 80 0 0 1 150 40.72"
+                                    fill="none" stroke="var(--color-warning)" stroke-width="12" stroke-linecap="round" />
+                                <path class="ygd-gauge-arc ygd-gauge-arc-ganando" d="M 150 40.72 A 80 80 0 0 1 190 110"
+                                    fill="none" stroke="var(--color-success)" stroke-width="12" stroke-linecap="round" />
+                                <g class="ygd-gauge-ticks" stroke="var(--text-muted)" stroke-width="1.5"
+                                    stroke-linecap="round" opacity="0.55">
+                                    <line x1="18" y1="110" x2="26" y2="110" />
+                                    <line x1="63" y1="37" x2="68" y2="44" />
+                                    <line x1="110" y1="22" x2="110" y2="30" />
+                                    <line x1="157" y1="37" x2="152" y2="44" />
+                                    <line x1="202" y1="110" x2="194" y2="110" />
+                                </g>
+                                <text x="38" y="130" font-family="Orbitron, sans-serif" font-size="7"
+                                    font-weight="500" fill="var(--text-muted)" text-anchor="middle"
+                                    letter-spacing="1.2">NEUTRAL</text>
+                                <text x="110" y="130" font-family="Orbitron, sans-serif" font-size="7"
+                                    font-weight="500" fill="var(--text-muted)" text-anchor="middle"
+                                    letter-spacing="1.2">RECUPERANDO</text>
+                                <text x="182" y="130" font-family="Orbitron, sans-serif" font-size="7"
+                                    font-weight="500" fill="var(--text-muted)" text-anchor="middle"
+                                    letter-spacing="1.2">GANANDO</text>
+                                <g id="ygd-gauge-needle" class="ygd-gauge-needle">
+                                    <line x1="110" y1="110" x2="110" y2="44" stroke="var(--gold-4)"
+                                        stroke-width="2.5" stroke-linecap="round" />
+                                    <polygon points="110,40 105,50 115,50" fill="var(--gold-5)" />
+                                </g>
+                                <circle cx="110" cy="110" r="11" fill="var(--bg-3)"
+                                    stroke="var(--gold-4)" stroke-width="1.5" />
+                                <circle cx="110" cy="110" r="5" fill="var(--gold-4)" />
+                                <circle cx="110" cy="110" r="1.8" fill="var(--gold-5)" />
+                            </svg>
+                            <p class="ygd-gauge-status-name is-muted" id="ygd-gauge-status-name">Neutral</p>
+                        </div>
+
+                        <p class="ygd-estado-desc" id="ygd-balance-desc">
+                            Selecciona una finca para ver su balance.
+                        </p>
+
+                        <div class="ygd-balance-divider"></div>
+
+                        <div class="ygd-balance-stats" id="ygd-balance-stats">
+                            <!-- JS: cifras de balance por finca -->
+                            <div class="ygd-balance-stat">
+                                <span class="ygd-balance-stat-label">Inversión total</span>
+                                <span class="ygd-balance-stat-value is-muted">--</span>
+                            </div>
+                            <div class="ygd-balance-stat">
+                                <span class="ygd-balance-stat-label">Cobrado real</span>
+                                <span class="ygd-balance-stat-value is-muted">--</span>
+                            </div>
+                            <div class="ygd-balance-stat">
+                                <span class="ygd-balance-stat-label">Fiados pendientes</span>
+                                <span class="ygd-balance-stat-value is-muted">--</span>
+                            </div>
+                        </div>
+                    </article>
+                </section>
+
+                <!-- ====================================================
+                     BLOQUE 4 — MIS CULTIVOS ACTIVOS (dinámico por finca)
+                     ==================================================== -->
+                <section class="ygd-block" aria-label="Mis cultivos activos" id="ygd-block-crops">
+                    <div class="ygd-block-head">
+                        <div>
+                            <p class="ygd-block-eyebrow">Ciclos en producción</p>
+                            <h2 class="ygd-block-title">Mis cultivos activos</h2>
+                        </div>
+                    </div>
+
+                    <div class="ygd-crops-grid" id="ygd-crops-grid">
+                        <!-- JS: cards de cultivos activos por finca -->
+                    </div>
+
+                    <button class="ygd-btn-see-all" type="button" data-agro-view="ciclos"
+                        data-agro-subview="mis-cultivos">
+                        <span>Ver todos</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                            <polyline points="12 5 19 12 12 19" />
+                        </svg>
+                    </button>
+                </section>
+
+                <!-- ====================================================
+                     BLOQUE 5 — MIS TAREAS DEL DÍA (no cambia con finca)
+                     ==================================================== -->
+                <section class="ygd-block" aria-label="Mis tareas del día" id="ygd-block-tasks">
+                    <div class="ygd-block-head">
+                        <div>
+                            <p class="ygd-block-eyebrow">Trabajo diario</p>
+                            <h2 class="ygd-block-title">Mis tareas del día</h2>
+                        </div>
+                    </div>
+
+                    <ul class="ygd-tasks-list" id="ygd-tasks-list" role="list">
+                        <!-- JS: tareas de hoy -->
+                    </ul>
+
+                    <button class="ygd-btn-see-all" type="button" data-agro-view="task-cycles">
+                        <span>Ver todas</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                            <polyline points="12 5 19 12 12 19" />
+                        </svg>
+                    </button>
+                </section>
+
+                <!-- ====================================================
+                     BLOQUE 6 — ACCESOS RÁPIDOS
+                     (navegación real vía data-agro-view del shell)
+                     ==================================================== -->
+                <section class="ygd-block" aria-label="Accesos rápidos" id="ygd-block-access">
+                    <div class="ygd-block-head">
+                        <div>
+                            <p class="ygd-block-eyebrow">Navegación</p>
+                            <h2 class="ygd-block-title">Accesos rápidos</h2>
+                        </div>
+                    </div>
+
+                    <div class="ygd-access-grid">
+                        <button class="ygd-access-chip" type="button" data-agro-view="ciclos"
+                            data-agro-subview="mis-cultivos">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M12 22V12" />
+                                <path d="M12 12c0-3 2-6 6-6 0 4-3 6-6 6z" />
+                                <path d="M12 14c0-3-2-6-6-6 0 4 3 6 6 6z" />
+                            </svg>
+                            <span>Mis Cultivos</span>
+                        </button>
+
+                        <button class="ygd-access-chip" type="button" data-agro-view="facturero-clientes">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14 2 14 8 20 8" />
+                                <line x1="8" y1="13" x2="16" y2="13" />
+                                <line x1="8" y1="17" x2="16" y2="17" />
+                            </svg>
+                            <span>Facturero de Clientes</span>
+                        </button>
+
+                        <button class="ygd-access-chip" type="button" data-agro-view="facturero-finca"
+                            data-agro-subview="active">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35a2 2 0 0 1 1.26-1.86l8-3.2a2 2 0 0 1 1.48 0l8 3.2A2 2 0 0 1 22 8.35z" />
+                                <path d="M6 22V12h12v10" />
+                                <path d="M6 16h12" />
+                            </svg>
+                            <span>Facturero de la Finca</span>
+                        </button>
+
+                        <button class="ygd-access-chip" type="button" data-agro-view="task-cycles">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <polyline points="3 7 4 8 6 6" />
+                                <line x1="9" y1="7" x2="20" y2="7" />
+                                <polyline points="3 13 4 14 6 12" />
+                                <line x1="9" y1="13" x2="20" y2="13" />
+                                <polyline points="3 19 4 20 6 18" />
+                                <line x1="9" y1="19" x2="20" y2="19" />
+                            </svg>
+                            <span>Trabajo Diario</span>
+                        </button>
+
+                        <button class="ygd-access-chip" type="button" data-agro-view="reportes">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <line x1="3" y1="21" x2="21" y2="21" />
+                                <rect x="5" y="11" width="3" height="8" />
+                                <rect x="10.5" y="7" width="3" height="12" />
+                                <rect x="16" y="14" width="3" height="5" />
+                            </svg>
+                            <span>Centro de Reportes</span>
+                        </button>
+                    </div>
+                </section>
+
             </div>
 
-            <div class="dash-nav-grid animate-in delay-2">
-                <button type="button" class="dash-nav-card" data-agro-view="clima">
-                    <span class="dash-nav-card__icon">🌦️</span>
-                    <div class="dash-nav-card__body">
-                        <strong class="dash-nav-card__title">Clima Local</strong>
-                        <span class="dash-nav-card__summary" id="weather-temp">--</span>
-                        <span class="dash-nav-card__hint" id="weather-desc">Cargando...</span>
-                    </div>
-                    <span class="dash-nav-card__arrow"><i class="fa-solid fa-chevron-right"
-                            aria-hidden="true"></i></span>
-                </button>
-
-                <button type="button" class="dash-nav-card" onclick="window.openMarketHub?.('crypto')">
-                    <span class="dash-nav-card__icon">📈</span>
-                    <div class="dash-nav-card__body">
-                        <strong class="dash-nav-card__title">Mercados de referencia</strong>
-                        <span class="dash-nav-card__summary" id="market-location">Detectando...</span>
-                        <span class="dash-nav-card__hint">Contexto de divisas para Agro</span>
-                    </div>
-                    <span class="dash-nav-card__arrow"><i class="fa-solid fa-chevron-right"
-                            aria-hidden="true"></i></span>
-                </button>
-
-            </div>
-
-            <!-- Hidden containers for JS compatibility -->
+            <!-- Contenedores ocultos de compatibilidad para dashboard.js / agro-market.js -->
             <div hidden aria-hidden="true">
-                <span id="weather-conditions"></span>
-                <span id="weather-humidity"></span>
-                <div id="moon-phase">
-                    <div class="agro-lunar-phase"></div>
-                </div>
                 <div id="market-ticker-track"></div>
                 <div id="clima-weekly-host"></div>
             </div>
@@ -3040,6 +3279,7 @@
                 await import('./agro-farms.js');
                 await import('../assets/js/geolocation.js');
                 await import('./dashboard.js');
+                await import('./agro-dashboard-v11.js').catch(err => console.error('[Bootstrap] agro-dashboard-v11.js', err));
                 await import('../assets/js/utils/activityTracker.js');
 
                 const [

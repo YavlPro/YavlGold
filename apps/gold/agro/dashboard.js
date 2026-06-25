@@ -225,7 +225,8 @@ async function initWeather() {
  * Creates location control UI (mode toggle + manual selector)
  */
 function initLocationControls() {
-    const container = document.querySelector('.kpi-card.animate-in.delay-2 .kpi-secondary');
+    const container = document.getElementById('ygd-weather-location-controls')
+        || document.querySelector('.kpi-card.animate-in.delay-2 .kpi-secondary');
     if (!container) return;
     if (document.getElementById('location-controls')) return;
 
