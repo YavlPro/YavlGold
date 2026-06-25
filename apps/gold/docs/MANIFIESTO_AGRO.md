@@ -177,44 +177,108 @@ Todo empieza desde aquí. Cuando abres Agro por primera vez, tu perfil se usa pa
 
 ---
 
-## 4.2 Dashboard Agro
+## 4.2 — Dashboard Agro
 
-### Qué es
+**Propósito:** Superficie de orientación diaria. El agricultor entra, lee el
+contexto del día y el estado de su finca, y sale con claridad para trabajar.
+No es un módulo de registro ni un reporte profundo — es el punto de partida.
 
-La vista central de entrada al módulo Agro. Es la primera pantalla que ves cuando entras a Agro.
+**Pregunta que responde:** ¿Cómo estoy hoy? ¿Cómo va mi finca? ¿Qué tengo
+pendiente?
 
-### Qué no es
+---
 
-No es un reemplazo de los módulos profundos ni un simple panel decorativo. No es donde registras datos — es donde orientas tu trabajo.
+#### Estructura de 6 bloques (validada en producción — 2026-06-24)
 
-### Para qué sirve
+**BLOQUE 0 — Header de bienvenida**
+Saludo personalizado con el nombre real del agricultor autenticado.
+Botón de acceso al Asistente IA.
+El título usa `--gold-4` según el patrón §21 del ADN V12.
 
-* Orientar al usuario al entrar.
-* Resumir el estado actual del día: clima, mercados, fase lunar.
-* Servir como punto de acceso rápido a herramientas, ciclos, finanzas y contexto.
-* Dar una ruta sugerida de arranque rápido ("Cómo empezar").
+**BLOQUE 1 — Selector de finca**
+Chips horizontales con las fincas reales del agricultor (de `agro_farms`).
+Al seleccionar una finca, los Bloques 3 y 4 se actualizan dinámicamente.
+Si el agricultor no tiene fincas, muestra la guía "Cómo empezar" (3 pasos:
+crear finca, ver clima, ayuda y soporte).
 
-### Componentes actuales
+**BLOQUE 2 — Pulso del día**
+Tres cards fijas que no cambian con el selector de finca:
+- **Clima local:** temperatura, condición y ubicación (La Grita, Táchira).
+  Fuente: Open-Meteo vía `fetchWeather()` en `dashboard.js`.
+- **Mercados / divisas:** BTC, USD/VES, USD/COP.
+  Fuente: `getMarketTickerSnapshot()` en `agro-market.js`.
+- **Fase lunar:** nombre de la fase + consejo agrícola contextual.
+  Fuente: `calculateMoonPhase()` en `dashboard.js` (fórmula sinódica 29.53 días).
+  Fases: Nueva, Creciente, Llena, Menguante.
 
-* Guía "Cómo empezar" (3 pasos seguros: crear finca, ver clima, ayuda)
-* Clima local (temperatura, condición)
-* Mercados (crypto y divisas)
-* Fase lunar
-* Tarjetas de acceso directo: Mi Perfil, Dashboard Agro, Crear Finca
+**BLOQUE 3 — Cómo va mi finca**
+Card con velocímetro SVG animado + tres cifras de balance.
+Cambia dinámicamente según la finca seleccionada.
 
-### Cómo se usa
+Velocímetro — 3 estados (ver ADN V12 §20 para especificación visual completa):
+- NEUTRAL → cobradoReal < inversionTotal, sin fiados → aguja -60° → gris
+- RECUPERANDO → fiadosPendientes > 0 → aguja 0° → ámbar
+- GANANDO → cobradoReal >= inversionTotal → aguja +60° → verde
 
-1. Al entrar a Agro ves el Dashboard automáticamente.
-2. Consultas las condiciones climáticas del día y el estado de los mercados en tiempo real.
-3. Si es tu primer ingreso, la guía "Cómo empezar" te muestra los primeros pasos seguros (crear finca, consultar clima, buscar ayuda).
-4. Las tarjetas del hub te llevan directamente a las herramientas que necesitas.
-5. Desde esta pantalla también puedes consultar al Asistente IA para ayuda.
+Tres cifras bajo el velocímetro:
+- Inversión total: `SUM(agro_expenses.monto_usd WHERE farm_id AND deleted_at IS NULL)`
+- Cobrado real: `SUM(agro_income.monto_usd WHERE farm_id AND deleted_at IS NULL)`
+- Fiados pendientes: `SUM(agro_pending.monto_usd WHERE farm_id AND deleted_at IS NULL AND reverted_at IS NULL)`
 
-> **Nota (2026-06-20):** La guía del Dashboard muestra solo pasos que no requieren infraestructura previa (fincas o cultivos). Si el usuario intenta crear un cultivo o registrar un movimiento sin tener fincas, el sistema lo redirige automáticamente a Mis Fincas con un aviso informativo.
+⚠️ Los estados del velocímetro (NEUTRAL/RECUPERANDO/GANANDO) son distintos de
+los estados de ciclo de cultivo del §4.3 (GANADO/RECUPERANDO/INVIRTIENDO/EQUILIBRIO).
+No mezclarlos. El velocímetro lee la finca en conjunto; §4.3 lee un ciclo individual.
 
-### Cómo se conecta con el resto
+Deuda técnica activa: hoy las cifras se calculan con sumas client-side (N queries).
+Pendiente crear RPC `get_farm_balance(p_farm_id)` en Supabase para consolidar
+server-side.
 
-Es el centro de la aplicación. Desde aquí navegas a cualquier módulo. También muestra el contexto del día (clima, fase lunar), información práctica para tomar decisiones en campo.
+**BLOQUE 4 — Mis cultivos activos**
+Cards dinámicas con los ciclos activos de la finca seleccionada.
+Máximo 3 visible. Botón "Ver todos" navega a `#view=ciclos&subview=mis-cultivos`.
+Fuente: `agro_crops` donde `farm_id = X` y `status IN ('sembrado','creciendo','produccion')`.
+
+Estado semántico de cada cultivo (§4.3 del Manifiesto):
+- GANADO → rentabilidadReal > 0 y fiadosPendientes == 0 → ↗ verde
+- RECUPERANDO → fiadosPendientes > 0 → → ámbar
+- INVIRTIENDO → rentabilidadReal <= 0 y fiadosPendientes == 0 → ↘ gris
+- EQUILIBRIO → ingresos == egresos → ↘ gris claro
+
+Si la finca no tiene cultivos activos, muestra estado vacío.
+
+**BLOQUE 5 — Mis tareas del día**
+Lista de tareas del agricultor para la fecha actual.
+Máximo 3 visible. Botón "Ver todas" navega a `#view=task-cycles`.
+No cambia con el selector de finca — las tareas son del agricultor, no de la finca.
+Fuente: `agro_task_cycles` donde `user_id = X` y `task_date == hoy` y
+`deleted_at IS NULL`.
+Completadas: `task_status IN ('completed','not_executed')` → tachado + badge verde.
+Pendientes: `task_status IN ('pending','active')` → badge ámbar.
+
+**BLOQUE 6 — Accesos rápidos**
+Chips de navegación con rutas reales del shell (botones `data-agro-view`):
+- Mis Cultivos → `data-agro-view="ciclos" data-agro-subview="mis-cultivos"`
+- Facturero de Clientes → `data-agro-view="facturero-clientes"`
+- Facturero de la Finca → `data-agro-view="facturero-finca"`
+- Trabajo Diario → `data-agro-view="task-cycles"`
+- Centro de Reportes → `data-agro-view="reportes"`
+
+---
+
+#### Archivos de implementación
+
+| Archivo | Rol |
+|---|---|
+| `apps/gold/agro/agro-dashboard-v11.css` | CSS de los 6 bloques, prefijo `ygd-` |
+| `apps/gold/agro/agro-dashboard-v11.js` | Módulo ES6 con lógica de datos reales |
+
+#### Nota de actualización
+
+*(2026-06-24)* §4.2 reescrito para reflejar el Dashboard Agro evolucionado
+implementado y validado en producción. La estructura anterior (guía "Cómo
+empezar" como bloque central + solo clima y mercados) queda reemplazada por
+los 6 bloques documentados arriba. La guía "Cómo empezar" sobrevive como
+estado vacío del Bloque 1 cuando el agricultor no tiene fincas.
 
 ---
 

@@ -31,9 +31,11 @@
 - **Build Tool:** Vite (Multi-Page Application)
 - **Arquitectura:** MPA (Multi-Page Application) - NO SPA
 - **Tipografías:**
-  - Títulos/branding: Orbitron
-  - Cuerpo/UI: Rajdhani
+  - Títulos/branding: Plus Jakarta Sans
+  - Cuerpo/UI: Inter
   - Citas/prestige: Playfair Display
+  - Orbitron: DEPRECADA (no usar en código nuevo)
+  - Rajdhani: DEPRECADA (no usar en código nuevo)
 - **Iconos:** Font Awesome 6.5
 
 ### Backend/Servicios
@@ -178,12 +180,14 @@ agro-stats-report.js — reportes estadísticos
 agro-trash.js        — papelera de eliminados
 agro-unit-totals.js  — totales por unidad
 agro-wizard.js       — wizard de configuración
+agro-dashboard-v11.js — Dashboard Agro v11 (6 bloques: saludo, clima, mercados, velocium, cultivos, tareas, accesos)
 ```
 
 **Archivos CSS:**
 - `agro.css` — estilos principales + papelera + undo toast
 - `agro-facturero-clientes.css` — Facturero de Clientes: vista, cards, estados, acciones separadas y responsive mobile
 - `agro-dashboard.css` — dashboard
+- `agro-dashboard-v11.css` — Dashboard Agro v11 (6 bloques), prefijo `ygd-`
 - `agro-facturero-finca.css` — operaciones financieras
 - `agro-farms.css` — estilos de gestión de fincas (ADN V11)
 - `agro-clients.css` — Mis Clientes
@@ -277,12 +281,15 @@ agro-wizard.js       — wizard de configuración
 
 ### Documento Canónico de ADN Visual
 - **Versión activa:** `V11.0 (Canon activo)`
-- **Ruta:** `apps/gold/docs/ADN-VISUAL-V11.0.md`
+- **Ruta:** `apps/gold/docs/ADN-VISUAL-V12.0.md`
 - **Referencia histórica:** `apps/gold/docs/ADN-VISUAL-V10.0.md` (base fundacional, no rige)
 
-### Tipografía
-- **Títulos:** Orbitron (futurista, tecnológica)
-- **Cuerpo:** Rajdhani (legible, moderna)
+### Tipografía (V12)
+- **Títulos:** Plus Jakarta Sans (Google Fonts, pesos 500/600/700)
+- **Cuerpo:** Inter (Google Fonts, pesos 400/500/600)
+- **Citas:** Playfair Display (sin cambios)
+- **Orbitron:** DEPRECADA
+- **Rajdhani:** DEPRECADA
 
 ### Animaciones
 - **Tipo:** Ligeras (opacity, transform)
@@ -421,6 +428,14 @@ git status
 
 ---
 
+## DEUDA TÉCNICA REGISTRADA
+
+- **RPC `get_farm_balance(p_farm_id)`** — pendiente. El balance del Dashboard Agro hoy hace N queries client-side por finca. Requiere migración Supabase para consolidar server-side.
+- **`MutationObserver` en saludo de bienvenida** — el Dashboard Agro lee `.user-profile .user-name` vía `MutationObserver`. Puede fallar si cambia el timing de `resolveHeaderDisplayName`. Migrar a suscripción directa de auth cuando sea posible.
+- **Tipografía legacy** — Orbitron y Rajdhani siguen en CSS de módulos existentes. Migración gradual por módulo, no en bloque.
+
+---
+
 ## NOTAS IMPORTANTES
 
 1. **Proyecto Inmutable:** Respetar arquitectura MPA existente
@@ -430,5 +445,5 @@ git status
 
 ---
 
-**Versión de Ficha:** 1.6
-**Última Actualización:** 18/06/2026
+**Versión de Ficha:** 1.7
+**Última Actualización:** 24/06/2026
