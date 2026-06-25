@@ -528,11 +528,23 @@ async function computeCropFinances(cropId) {
 async function sumByCrop(table, cropId, primaryCol, fallbackCol) {
     const { data, error } = await supabase
         .from(table)
-        .select(`${primaryCol}${fallbackCol ? `, ${fallbackCol}` : ''}`)
+        .select(`${primaryCol}${fallbackCol ? `, ${fallbackCol}` : ''}, currency, exchange_rate`)
         .eq('crop_id', cropId)
         .is('deleted_at', null);
     if (error) throw error;
     return (data || []).reduce((acc, row) => acc + pickAmount(row, primaryCol, fallbackCol), 0);
+}
+
+// Precedencia canónica de monto USD — idéntica a resolveRecordUsd de agro-farm-compare.js
+// (monto_usd → amount_usd → amount/monto con currency/exchange_rate).
+function pickAmount(row, primaryCol, fallbackCol) {
+    if (row.monto_usd !== undefined && row.monto_usd !== null) return safeNum(row.monto_usd);
+    if (row.amount_usd !== undefined && row.amount_usd !== null) return safeNum(row.amount_usd);
+    const amount = safeNum(row.amount || row.monto);
+    const currency = String(row.currency || 'USD').toUpperCase();
+    if (currency === 'USD') return amount;
+    const rate = safeNum(row.exchange_rate) || 1;
+    return rate > 0 ? amount / rate : amount;
 }
 
 async function sumByCropPending(table, cropId, primaryCol) {
