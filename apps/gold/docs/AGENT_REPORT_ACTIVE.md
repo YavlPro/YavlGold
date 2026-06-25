@@ -2968,3 +2968,53 @@ Widget afectado: AgroRepo (`agro-repo-app.js` + `agro-repo-storage.js` + `agro-r
 - QA humano validado es la única métrica de cierre confiable
 - Cuando el usuario reporta bugs de contenido compartido, investigar orden de operaciones en `persist()` antes de asumir culpable al storage
 - Rebrand de naming debe preservar términos conceptuales en documentos internos (AGENTS.md, MANIFIESTO) mientras se limpia UI pública
+
+---
+
+## Sesión 2026-06-24 — Dashboard Agro v11 (6 bloques) + 4 fixes
+
+**Objetivo:** Implementar Dashboard Agro evolucionado con 6 bloques funcionales y corregir bugs de QA.
+
+### Implementación inicial (`a30e5b8`)
+- `agro-dashboard-v11.css` (927 líneas) — CSS bloques 0–6, prefijo `ygd-`, tokens `--agrp-*`, sin glow
+- `agro-dashboard-v11.js` (660 líneas) — Módulo ES6 con lógica bloques 0–6
+- `agro/index.html` — Sección dashboard reemplazada por 6 bloques
+- `dashboard.js` — Retarget selector a `#ygd-weather-location-controls`
+- Eliminados: `dashboard-prototype.html`, `PLAN_DASHBOARD_AGRO.md`
+
+### 4 fixes de QA (`f108e24`)
+
+| Bug | Causa | Fix |
+|---|---|---|
+| "Dashboard Agro" duplicado | Eyebrow del Bloque 0 se solapaba con breadcrumb del shell | Eyebrow eliminado del HTML |
+| Mercados "Cargando" infinito | `window.getMarketTickerSnapshot` no existe (es `export` de `agro-market.js`) | Import estático `import { getMarketTickerSnapshot } from './agro-market.js'` |
+| Balance finca $0 | Query filtraba `.eq('farm_id', farmId)` directo; movimientos legacy tienen `farm_id = NULL` y se asocian vía `crop_id → agro_crops.farm_id` | Reutiliza `computeFarmStats()` de `agro-farm-compare.js` (export añadido) |
+| Velocímetro gigante | `max-width: 300px` heredado del prototipo | Reducido a `200px` + compacté padding/gaps |
+
+### Hallazgo crítico (balance)
+Los movimientos legacy se asocian a finca **indirectamente** vía `crop_id → agro_crops.farm_id`. Un query directo `.eq('farm_id', farmId)` retorna $0. La solución correcta es reutilizar `computeFarmStats()` que es crop-céntrica + bucket de generales (misma lógica que `loadFarms()` de Mis Fincas).
+
+### QA Full Green (humano)
+- Dashboard: saludo correcto sin duplicación ✓
+- Mercados: carga valores reales ✓
+- Balance finca: cifras reales consistentes con Mis Fincas ✓
+- Velocímetro: tamaño compacto correcto ✓
+- Build OK (8.11s)
+
+### Commits
+| Hash | Descripción |
+|---|---|
+| `a30e5b8b` | feat(agro-dashboard): v11 — 6 bloques Dashboard Agro evolucionado |
+| `f108e247` | fix(agro-dashboard): 4 bugs — eyebrow duplicado, mercados loading, balance $0, gauge gigante |
+
+### Archivos tocados
+- `apps/gold/agro/agro-dashboard-v11.css` — CSS bloques 0–6
+- `apps/gold/agro/agro-dashboard-v11.js` — Lógica bloques 0–6 + fixes mercados/balance
+- `apps/gold/agro/agro-farm-compare.js` — Export `computeFarmStats`
+- `apps/gold/agro/index.html` — 6 bloques + fixes
+- `apps/gold/agro/dashboard.js` — Retarget selector
+
+### Deuda técnica documentada
+- RPC `get_farm_balance` — balance hoy hace N queries client-side por finca. Queda para fase posterior con migración Supabase server-side.
+
+**Scope respetado:** no se tocó `agro.js` ni archivos canónicos.
