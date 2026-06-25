@@ -3062,3 +3062,83 @@ Evolución del Dashboard Agro de superficie básica a centro de control agrícol
 - Migración tipográfica debe ser por módulo, no global, para reducir riesgo
 - Documentos canónicos deben actualizarse en la misma jornada del cambio, no después
 
+---
+
+## Sesión 2026-06-26 — Fix Dashboard Agro: gastos operativos + pickAmount
+
+**Estado:** GREEN — Build passing, QA pendiente de verificación visual por el usuario.
+
+### Objetivo
+Corregir bug en Dashboard Agro Bloque 4 (Mis cultivos activos) donde cultivos con egresos reales en el subsistema de movimientos operativos (`agro_operational_cycles` + `agro_operational_movements`) mostraban EQUILIBRIO en vez del estado semántico correcto (INVIRTIENDO).
+
+### Diagnóstico en dos capas
+
+#### Causa raíz #1 (fix previo — necesario pero insuficiente)
+`pickAmount` estaba rota/ausente en `agro-dashboard-v11.js`. La función es necesaria para la precedencia canónica de conversión de moneda (`monto_usd` → `amount_usd` → `amount/monto + currency/exchange_rate`), idéntica a `resolveRecordUsd` de `agro-farm-compare.js`.
+
+#### Causa raíz #2 (la real)
+Los USD 29 de "caraota roja" **no están en `agro_expenses`** — están en el subsistema de movimientos operativos (`agro_operational_cycles` + `agro_operational_movements`), lo que Mis Cultivos llama "Facturero de cultivos". El `sumByCrop('agro_expenses', ...)` del Dashboard devolvía legítimamente 0, produciendo `0 − 0 = 0` → EQUILIBRIO.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---------|------|--------|
+| `apps/gold/agro/agro-dashboard-v11.js` | restauración | `pickAmount(row, primaryCol, fallbackCol)` con precedencia canónica de `resolveRecordUsd` |
+| `apps/gold/agro/agro-dashboard-v11.js` | ampliación | `select` de `sumByCrop` → `monto_usd, amount, currency, exchange_rate` (sin currency/exchange_rate, la conversión VES/COP→USD no funciona) |
+| `apps/gold/agro/agro-dashboard-v11.js` | feature | `fetchOperationalExpenses(cropId)` — prioriza `window.YGAgroOperationalCycles.getOperationalExpensesByCrop()` (fuente de verdad de Mis Cultivos → consistencia garantizada) |
+| `apps/gold/agro/agro-dashboard-v11.js` | fallback | `fetchOperationalExpensesDirect(cropId)` — query 2-hop defensivo (ciclos por `crop_id` → movimientos salientes por `cycle_id`) replicando `agro-crop-report.js`, devuelve 0 sin romper |
+| `apps/gold/agro/agro-dashboard-v11.js` | ampliación | `resolveRecordUsd` ampliada a canónica completa (`monto_usd` → `amount_usd` → `amount/monto + currency/exchange_rate`) |
+
+### Fórmula resultante
+```
+egresos = egresosDirectos (agro_expenses) + egresosOperativos (agro_operational_movements)
+rentabilidadReal = ingresos − egresos
+```
+
+### Scope respetado (NO se tocó)
+- `computeFarmStats` → intacta
+- Bloque 3 (balance de finca) → intacto
+- `sumByCropPending` → intacta
+- `computeCropEstado`, `cropCardHtml` → intactas
+- `sumByCrop` → intacta (solo se amplió el `select`)
+
+### Resultado esperado para "caraota roja"
+- `egresos = 0 (agro_expenses) + 29 (operativos) = 29`
+- `rentabilidadReal = 0 − 29 = −29`
+- `computeCropEstado(−29, 0)` → **INVIRTIENDO** ✓
+- Coincide con Mis Cultivos ("Invirtiendo USD 29", "Rentabilidad ↘ -USD 29")
+
+### Build
+✅ `pnpm build:gold` — OK (agent-guard OK, agent-report-check OK, UTF-8 OK)
+
+### Observación de honestidad
+Hay una **inconsistencia preexistente** entre `computeCropEstado` y el Manifiesto §4.3:
+- **Manifiesto dice:** `balanceActual = rentabilidadReal - fiadosPendientes` → si `> 0` → GANADO
+- **Código actual:** prioriza `fiadosPendientes > 0` → RECUPERANDO (antes de evaluar balance)
+
+Esto es un **problema de diseño previo**, no introducido por este fix. Merece revisión semántica aparte, no bloquea el fix actual.
+
+### QA pendiente (acción del usuario)
+1. **Hard reload obligatorio:** `Ctrl + Shift + R` en el browser (el navegador estuvo ejecutando código stale durante sesiones anteriores)
+2. Abrir Dashboard Agro → seleccionar "Los Higuerones" → card de "caraota roja"
+3. Verificar: **INVIRTIENDO** con valor negativo consistente con Mis Cultivos
+
+### Git sugerido (NO ejecutado — §7 AGENTS.md)
+```bash
+git add apps/gold/agro/agro-dashboard-v11.js
+git commit -m "fix(dashboard): incluir gastos operativos en balance de cultivos
+
+- computeCropFinances ahora suma agro_expenses + agro_operational_movements
+- Prioriza API de YGAgroOperationalCycles para consistencia con Mis Cultivos
+- Fallback defensivo con query 2-hop cuando API no está cargada
+- Amplía resolveRecordUsd a precedencia canónica completa
+- Restaura pickAmount() con lógica idéntica a resolveRecordUsd
+- Amplía select de sumByCrop para incluir currency, exchange_rate
+- Corrige bug donde cultivos con gastos operativos mostraban EQUILIBRIO"
+```
+
+### Lección operativa
+Cuando un cultivo muestra datos financieros inconsistentes entre superficies, verificar **qué tablas consulta cada una**. Un fix de lógica (pickAmount) puede ser necesario pero insuficiente si la fuente de datos está incompleta (agro_expenses vs agro_operational_movements).
+
+**Agente:** GLM 5.2 · **Validación:** Qwen 3.7 Max (revisión de código y validación contra Manifiesto).
+
