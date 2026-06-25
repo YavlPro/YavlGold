@@ -238,11 +238,17 @@ Cards dinámicas con los ciclos activos de la finca seleccionada.
 Máximo 3 visible. Botón "Ver todos" navega a `#view=ciclos&subview=mis-cultivos`.
 Fuente: `agro_crops` donde `farm_id = X` y `status IN ('sembrado','creciendo','produccion')`.
 
+Gastos por cultivo: suma de `agro_expenses` + 
+`agro_operational_movements` filtrados por `crop_id`.
+`computeCropFinances` prioriza `YGAgroOperationalCycles` API
+(consistencia con Mis Cultivos) con fallback defensivo
+a query directa cuando la API no está cargada.
+
 Estado semántico de cada cultivo (§4.3 del Manifiesto):
 - GANADO → rentabilidadReal > 0 y fiadosPendientes == 0 → ↗ verde
 - RECUPERANDO → fiadosPendientes > 0 → → ámbar
 - INVIRTIENDO → rentabilidadReal <= 0 y fiadosPendientes == 0 → ↘ gris
-- EQUILIBRIO → ingresos == egresos → ↘ gris claro
+- EQUILIBRIO → rentabilidadReal === 0 y fiadosPendientes === 0 → ↘ gris claro
 
 Si la finca no tiene cultivos activos, muestra estado vacío.
 

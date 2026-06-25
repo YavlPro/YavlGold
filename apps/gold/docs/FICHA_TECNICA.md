@@ -183,6 +183,14 @@ agro-wizard.js       — wizard de configuración
 agro-dashboard-v11.js — Dashboard Agro v11 (6 bloques: saludo, clima, mercados, velocium, cultivos, tareas, accesos)
 ```
 
+**Fuentes de datos del Dashboard Agro Bloque 4 (Mis cultivos activos):**
+
+Bloque 4 consulta dos fuentes para gastos por cultivo:
+`agro_expenses` (gastos directos) y `agro_operational_movements`
+(gastos operativos). `computeCropFinances` suma ambas fuentes
+con prioridad a `YGAgroOperationalCycles` API cuando está
+disponible, con fallback defensivo a query directa.
+
 **Archivos CSS:**
 - `agro.css` — estilos principales + papelera + undo toast
 - `agro-facturero-clientes.css` — Facturero de Clientes: vista, cards, estados, acciones separadas y responsive mobile
