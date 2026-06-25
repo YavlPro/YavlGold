@@ -5,7 +5,7 @@
 > Estado: DOCUMENTO CANÓNICO ACTIVO
 > Fecha base: 2026-04-15 · Canonizado: 2026-04-17
 > Release visible: V1
-> Fuente canónica superior: `AGENTS.md` + `ADN-VISUAL-V11.0.md` + `apps/gold/docs/FICHA_TECNICA.md`
+> Fuente canónica superior: `AGENTS.md` + `ADN-VISUAL-V12.0.md` + `apps/gold/docs/FICHA_TECNICA.md`
 
 ---
 
@@ -23,7 +23,7 @@ Este documento es la **verdad semántica canónica del módulo Agro**. Define qu
 Cuando exista conflicto entre documentos canónicos, la jerarquía de autoridad es:
 
 1. `AGENTS.md` — reglas globales de repo y operación (autoridad suprema del proyecto)
-2. `ADN-VISUAL-V11.0.md` — identidad visual y sistema de diseño
+2. `ADN-VISUAL-V12.0.md` — identidad visual y sistema de diseño
 3. `apps/gold/docs/FICHA_TECNICA.md` — arquitectura y límites técnicos
 4. `MANIFIESTO_AGRO.md` — semántica funcional de Agro (este documento)
 5. `NAVEGACION.md` — rutas y nombres visibles de navegación (si existe)
@@ -1160,7 +1160,7 @@ Un sistema de mensajes emergentes compactos dentro de Agro que reemplaza los `al
 * Mostrar confirmaciones de acción (cultivo creado, registro guardado).
 * Mostrar errores de validación (campos vacíos, datos inválidos).
 * Mostrar avisos operativos (operación completada, sin permisos).
-* Reemplazar `alert()` nativo por un diálogo estilizado que respeta el ADN Visual V11.
+* Reemplazar `alert()` nativo por un diálogo estilizado que respeta el ADN Visual V12.
 
 #### Cómo funciona
 
@@ -1668,7 +1668,7 @@ No hacer crecer `agro.js` con nuevas features; modularizar cuando corresponda.
 
 ### Regla 5
 
-Cualquier cambio visual debe obedecer el ADN Visual V11 y el canon de modales §19.
+Cualquier cambio visual debe obedecer el ADN Visual V12 y el canon de modales §19.
 
 ---
 

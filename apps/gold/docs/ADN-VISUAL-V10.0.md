@@ -3,7 +3,7 @@
 
 Documento histórico del sistema visual V10.0. Referencia fundacional, no canon activo.
 
-> **Canon visual activo actual:** `apps/gold/docs/ADN-VISUAL-V11.0.md`
+> **Canon visual activo actual:** `apps/gold/docs/ADN-VISUAL-V12.0.md`
 
 ---
 

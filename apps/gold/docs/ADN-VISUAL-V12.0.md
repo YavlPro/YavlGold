@@ -12,7 +12,7 @@ dorado (§21). borderShimmer canonizado en separadores de Dashboard Agro.
 
 ## §0 — Misión
 
-ADN Visual V11 no busca más brillo, sino más verdad visual.
+ADN Visual V12 no busca más brillo, sino más verdad visual.
 
 El sistema debe sentirse agrícola, serio, sobrio, oscuro, dorado y útil.
 
@@ -566,7 +566,7 @@ Los ghost emojis (emojis de fondo con opacidad 0.02–0.05 y `pointer-events: no
 
 ### Flujo obligatorio
 
-1. Definir en ADN Visual V11.
+1. Definir en ADN Visual V12.
 2. Versionar si es cambio mayor.
 3. Implementar después de documento.
 
@@ -578,7 +578,7 @@ Los ghost emojis (emojis de fondo con opacidad 0.02–0.05 y `pointer-events: no
 
 ADN Visual V10.0 fue la base fundacional metálica del proyecto. Definió la identidad dark/gold, la paleta 5-tone, la tipografía, los tokens y la arquitectura visual completa. Sin V10 no existiría V11.
 
-ADN Visual V11.0 consolida lo que ya quedó vivo en el producto: superficies más sobrias, menos brillo decorativo, mejor separación semántica, modales alineados al canon del asistente IA, y una identidad visual agrícola real que prioriza claridad sobre espectáculo.
+ADN Visual V12.0 consolida lo que ya quedó vivo en el producto: superficies más sobrias, menos brillo decorativo, mejor separación semántica, modales alineados al canon del asistente IA, y una identidad visual agrícola real que prioriza claridad sobre espectáculo.
 
 ---
 

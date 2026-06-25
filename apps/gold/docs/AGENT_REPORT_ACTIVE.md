@@ -10,7 +10,7 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-05-05__2026-06-03.md`
 
 - Release visible activa: `V1`.
 - Canon operativo superior: `AGENTS.md`.
-- Canon visual activo: `apps/gold/docs/ADN-VISUAL-V11.0.md`.
+- Canon visual activo: `apps/gold/docs/ADN-VISUAL-V12.0.md`.
 - Canon semántico Agro: `apps/gold/docs/MANIFIESTO_AGRO.md` (solo con autorización expresa).
 - Ficha técnica disponible en: `apps/gold/docs/FICHA_TECNICA.md`.
 - Supabase canónico: `supabase/` en raíz.
@@ -996,7 +996,7 @@ Resolver los hallazgos de la auditoría técnica de la base de datos de producci
 6. Entrar a una finca y verificar que "Ver cultivos" funciona.
 
 ### Scope respetado
-- No se tocaron: `agro-shell.js`, `agro.js`, `agro-farms.js`, `ADN-VISUAL-V11.0.md`, `FICHA_TECNICA.md`.
+- No se tocaron: `agro-shell.js`, `agro.js`, `agro-farms.js`, `ADN-VISUAL-V12.0.md`, `FICHA_TECNICA.md`.
 - Sidebar "Mis cultivos" intacto (no estaba en scope).
 - Ruta `#view=ciclos&subview=mis-cultivos` sigue operativa (router sin cambios).
 
@@ -1036,7 +1036,7 @@ Resolver los hallazgos de la auditoría técnica de la base de datos de producci
 7. Sidebar mantiene enlaces a todas las subvistas incluyendo mis-cultivos.
 
 ### Scope respetado
-- No se tocaron: `agro.js`, `ADN-VISUAL-V11.0.md`, `FICHA_TECNICA.md`.
+- No se tocaron: `agro.js`, `ADN-VISUAL-V12.0.md`, `FICHA_TECNICA.md`.
 - Sidebar mantiene enlaces a todas las subvistas.
 - Rutas `#view=ciclos&subview=estadisticas` y `#view=ciclos&subview=comparar` siguen operativas.
 
@@ -1071,7 +1071,7 @@ Resolver los hallazgos de la auditoría técnica de la base de datos de producci
 5. Comparar Fincas: contextbar dice "Comparar Fincas", no hay header duplicado
 
 ### Scope respetado
-- No se tocaron: `agro.js`, `agro-farms.js`, `index.html`, `ADN-VISUAL-V11.0.md`, `FICHA_TECNICA.md`.
+- No se tocaron: `agro.js`, `agro-farms.js`, `index.html`, `ADN-VISUAL-V12.0.md`, `FICHA_TECNICA.md`.
 - No se necesitó restaurar header en loadFarms() (shell lo maneja via syncCultivosSubview).
 
 ---
@@ -1099,7 +1099,7 @@ Resolver los hallazgos de la auditoría técnica de la base de datos de producci
 4. Comparar Fincas → Volver → Mis Fincas (con grid de fincas visible)
 
 ### Scope respetado
-- No se tocaron: `agro.js`, `MANIFIESTO_AGRO.md`, `ADN-VISUAL-V11.0.md`, `FICHA_TECNICA.md`.
+- No se tocaron: `agro.js`, `MANIFIESTO_AGRO.md`, `ADN-VISUAL-V12.0.md`, `FICHA_TECNICA.md`.
 
 ---
 
@@ -1131,7 +1131,7 @@ Resolver los hallazgos de la auditoría técnica de la base de datos de producci
 - Contextbar mobile: ✅ se actualiza a "Mis Fincas"
 - Grid de fincas visible: ✅ sin cambios en renderizado
 
-**No se tocó:** `agro.js`, `ADN-VISUAL-V11.0.md`, `FICHA_TECNICA.md`, `agro-shell.js`, `agro-farm-compare.js`
+**No se tocó:** `agro.js`, `ADN-VISUAL-V12.0.md`, `FICHA_TECNICA.md`, `agro-shell.js`, `agro-farm-compare.js`
 
 ---
 
@@ -1324,7 +1324,7 @@ Ejecutar sincronización canónica completa del proyecto YavlGold Agro, incluyen
 | Archivo | Tipo | Cambio |
 |---------|------|--------|
 | `apps/gold/docs/MANIFIESTO_AGRO.md` | Texto | §3.1, §4.4, §4.5.2, §5.0, §10 Caso 6, §9.9, §9.27: Renombrado |
-| `apps/gold/docs/ADN-VISUAL-V11.0.md` | Texto | §9 hub Mi Granja, tabs internas: Renombrado |
+| `apps/gold/docs/ADN-VISUAL-V12.0.md` | Texto | §9 hub Mi Granja, tabs internas: Renombrado |
 | `apps/gold/docs/FICHA_TECNICA.md` | Texto | §4.2 funcionalidades, descripción agro-shell.js: Renombrado |
 | `apps/gold/agro/agro-shell.js` | Código | Label visible de navegación, breadcrumbs: Renombrado |
 | `apps/gold/agro/agro-period-cycles.js` | Código | Título UI, subtítulo, copy de secciones, label “Generales del período” → “Generales de la finca” |
@@ -1357,7 +1357,7 @@ Commits: varios (renombrado, reorganización, docs, fixes)
 | Archivo | Tipo | Cambio |
 |---------|------|--------|
 | `apps/gold/docs/MANIFIESTO_AGRO.md` | Texto | §3.1 mapa, §4.4 subsuperficies, §4.5.2 flujo, §5.0 nota Mi Granja, §9.9 FAQ, §10 Caso 6, §9.27 FAQ: Actualizado |
-| `apps/gold/docs/ADN-VISUAL-V11.0.md` | Texto | §9 hub Mi Granja (4 grupos → 3 grupos), §9 tabs internas: Actualizado |
+| `apps/gold/docs/ADN-VISUAL-V12.0.md` | Texto | §9 hub Mi Granja (4 grupos → 3 grupos), §9 tabs internas: Actualizado |
 | `apps/gold/docs/FICHA_TECNICA.md` | Texto | §4.2 descripción agro-shell.js, §4.2 funcionalidades: Actualizado |
 | `apps/gold/public/llms.txt` | Texto | Estructura de navegación reescrita con 3 grupos |
 | `apps/gold/index.html (landing)` | Verificación | Confirmado sin residuos |
@@ -1449,7 +1449,7 @@ Pero `viewFarmCrops` disparaba `new Event('change')` — y por spec DOM, `Event`
 - No se tocaron migraciones Supabase ni infraestructura.
 - No se ejecutaron comandos git.
 - No se mergearon PRs de Dependabot (esperar automáticos).
-- No se modificaron documentos canónicos (AGENTS.md, MANIFIESTO_AGRO.md, ADN-VISUAL-V11.0.md, FICHA_TECNICA.md).
+- No se modificaron documentos canónicos (AGENTS.md, MANIFIESTO_AGRO.md, ADN-VISUAL-V12.0.md, FICHA_TECNICA.md).
 
 ### Git sugerido (NO ejecutado — §7)
 ```bash
@@ -1780,7 +1780,7 @@ git commit -m "feat(agro): refactor factureros — separación semántica estruc
 
 **Estado:** GREEN — Build pasa, cards alineadas con Facturero de Clientes, hover corregido a canon V11.
 
-**Objetivo:** Unificar el diseño visual de los 3 factureros (Finca, Cultivo, Personal) con el estándar de Facturero de Clientes, y corregir violación de ADN Visual V11 (gold glow en hover).
+**Objetivo:** Unificar el diseño visual de los 3 factureros (Finca, Cultivo, Personal) con el estándar de Facturero de Clientes, y corregir violación de ADN Visual V12 (gold glow en hover).
 
 ### Cambios realizados
 
@@ -1824,7 +1824,7 @@ git commit -m "feat(agro): refactor factureros — separación semántica estruc
 **Estado:** ✅ CERRADO Y VALIDADO
 
 ### Resumen ejecutivo
-Se ejecutó el Refactor de Factureros completo, separando semánticamente el antiguo "Facturero de la Finca" en 3 contextos independientes (Finca, Cultivo, Personal), reestructurando el hub Mi Granja, limpiando labels obsoletos y alineando el diseño de cards con el canon ADN Visual V11.
+Se ejecutó el Refactor de Factureros completo, separando semánticamente el antiguo "Facturero de la Finca" en 3 contextos independientes (Finca, Cultivo, Personal), reestructurando el hub Mi Granja, limpiando labels obsoletos y alineando el diseño de cards con el canon ADN Visual V12.
 
 Resultado: 6 commits exitosos, build passing, documentación actualizada, cero deuda técnica pendiente.
 
@@ -1919,22 +1919,22 @@ Por cada facturero (Finca / Cultivo / Personal), en desktop y mobile (≤480px):
 - No se tocó el monolito `agro.js`.
 - No se refactorizó `renderEditForm`/`renderWizard` más allá de los guards.
 - No se cambiaron rutas hash (`facturero-*` preservadas — Skill Lección 9).
-- No se modificaron documentos canónicos (`AGENTS.md`, `MANIFIESTO_AGRO.md`, `ADN-VISUAL-V11.0.md`, `FICHA_TECNICA.md`).
+- No se modificaron documentos canónicos (`AGENTS.md`, `MANIFIESTO_AGRO.md`, `ADN-VISUAL-V12.0.md`, `FICHA_TECNICA.md`).
 - No se crearon archivos nuevos (la skill `2026-06-11-PATRONES-ERROR-YAVLGOLD.md` ya cubre esta familia de bugs vía Lecciones 3/9/10; no se añadió lección nueva).
 
 ---
 
-## Sesión 2026-06-14 — Excepciones canónicas de identidad (ADN Visual V11 §19)
+## Sesión 2026-06-14 — Excepciones canónicas de identidad (ADN Visual V12 §19)
 
 ### Objetivo
-Anexar 3 animaciones recuperadas (`metallicShift`, `ghostFloat`, `btnShimmer`) como **excepciones canónicas de identidad** al ADN Visual V11.0, en versión sutil y elegante. Cambio solo documental; autoriza el canon para una fase posterior de implementación.
+Anexar 3 animaciones recuperadas (`metallicShift`, `ghostFloat`, `btnShimmer`) como **excepciones canónicas de identidad** al ADN Visual V12.0, en versión sutil y elegante. Cambio solo documental; autoriza el canon para una fase posterior de implementación.
 
 ### Cambios realizados
 | Archivo | Tipo | Cambio |
 |---|---|---|
-| `apps/gold/docs/ADN-VISUAL-V11.0.md` | canon | §4 Motion: nota de identidad (2026-06-14) indicando recuperación parcial de 3 animaciones en §19. Las demás permanecen retiradas. |
-| `apps/gold/docs/ADN-VISUAL-V11.0.md` | canon | §17 Gobernanza: nota de que toda excepción al canon vive exclusivamente en §19. |
-| `apps/gold/docs/ADN-VISUAL-V11.0.md` | canon | §19 (nueva) — Excepciones Canónicas de Identidad, con 5 subsecciones: 19.1 metallicShift (marca, ≥30s), 19.2 ghostFloat (empty states, ±3px/8–10s, con `prefers-reduced-motion`), 19.3 btnShimmer (solo hover de `.btn-gold`, 1.5s), 19.4 precedencia, 19.5 anti-patrón de extensión. |
+| `apps/gold/docs/ADN-VISUAL-V12.0.md` | canon | §4 Motion: nota de identidad (2026-06-14) indicando recuperación parcial de 3 animaciones en §19. Las demás permanecen retiradas. |
+| `apps/gold/docs/ADN-VISUAL-V12.0.md` | canon | §17 Gobernanza: nota de que toda excepción al canon vive exclusivamente en §19. |
+| `apps/gold/docs/ADN-VISUAL-V12.0.md` | canon | §19 (nueva) — Excepciones Canónicas de Identidad, con 5 subsecciones: 19.1 metallicShift (marca, ≥30s), 19.2 ghostFloat (empty states, ±3px/8–10s, con `prefers-reduced-motion`), 19.3 btnShimmer (solo hover de `.btn-gold`, 1.5s), 19.4 precedencia, 19.5 anti-patrón de extensión. |
 
 ### Resultado de build
 `pnpm build:gold` — **OK** (docs-only). agent-guard OK · agent-report-check OK · vite 185 módulos · check-llms OK · UTF-8 OK.
@@ -1957,10 +1957,10 @@ Abrir un showcase de motion y validar que las 3 animaciones se perciben sutiles 
 
 ---
 
-## Sesión 2026-06-13 — Pulido ADN Visual V11 de Factureros (Finca / Cultivo / Personal)
+## Sesión 2026-06-13 — Pulido ADN Visual V12 de Factureros (Finca / Cultivo / Personal)
 
 ### Objetivo
-Pulir los 3 factureros operacionales con ADN Visual V11, acercándolos visual/UX al Facturero de Clientes (referencia "espectacular") sin tocar este. Resolver: demasiado texto, mezcla de registros sin aire, placeholders idénticos ("Botas de cuero Titan") y deuda de tokens.
+Pulir los 3 factureros operacionales con ADN Visual V12, acercándolos visual/UX al Facturero de Clientes (referencia "espectacular") sin tocar este. Resolver: demasiado texto, mezcla de registros sin aire, placeholders idénticos ("Botas de cuero Titan") y deuda de tokens.
 
 ### Diagnóstico (evidencia de `agroOperationalCycles.js` + `agro-operational-cycles.css` + comparación con `agro-facturero-clientes-view.js/css`)
 - **Texto redundante**: 3 capas de eyebrow/título/copy (header + list-head + overview-panel-head muerto + family-section copy por grupo). La descripción `getFamilyCopy` repetida por cada familia aunque el usuario ya está dentro del facturero.
@@ -2011,15 +2011,15 @@ Por cada facturero (Finca / Cultivo / Personal), desktop + mobile (≤480px):
 ## Sesión 2026-06-13 (continuación) — Excepciones canónicas ADN V11 §19 + Fix de contexto en factureros
 
 ### Objetivo
-1. Anexar 3 animaciones como excepciones canónicas de identidad al ADN Visual V11 (decisión de producto: metallicShift, ghostFloat, btnShimmer son parte de la identidad YavlGold, implementar en versión sutil y elegante).
+1. Anexar 3 animaciones como excepciones canónicas de identidad al ADN Visual V12 (decisión de producto: metallicShift, ghostFloat, btnShimmer son parte de la identidad YavlGold, implementar en versión sutil y elegante).
 2. Corregir 4 bugs QA de pérdida de contexto de vista en factureros.
 
 ### Cambios realizados
 | Archivo | Tipo | Cambio |
 |---|---|---|
-| `ADN-VISUAL-V11.0.md` | docs | §4 — Nota de identidad (2026-06-14): metallicShift, ghostFloat, btnShimmer recuperadas como excepciones canónicas en §19. |
-| `ADN-VISUAL-V11.0.md` | docs | §17 — Nota de gobernanza: excepciones canónicas viven exclusivamente en §19. |
-| `ADN-VISUAL-V11.0.md` | docs | §19 — Nueva sección "Excepciones Canónicas de Identidad" con 5 subsecciones (19.1 metallicShift, 19.2 ghostFloat, 19.3 btnShimmer, 19.4 Regla de precedencia, 19.5 Anti-patrón de extensión). |
+| `ADN-VISUAL-V12.0.md` | docs | §4 — Nota de identidad (2026-06-14): metallicShift, ghostFloat, btnShimmer recuperadas como excepciones canónicas en §19. |
+| `ADN-VISUAL-V12.0.md` | docs | §17 — Nota de gobernanza: excepciones canónicas viven exclusivamente en §19. |
+| `ADN-VISUAL-V12.0.md` | docs | §19 — Nueva sección "Excepciones Canónicas de Identidad" con 5 subsecciones (19.1 metallicShift, 19.2 ghostFloat, 19.3 btnShimmer, 19.4 Regla de precedencia, 19.5 Anti-patrón de extensión). |
 | `agroOperationalCycles.js` | bugfix | Cambio A — Helpers `shouldRenderCropSelector()` / `shouldRenderFarmSelector()` centralizan matriz de visibilidad por preset (DRY para 6 sitios). |
 | `agroOperationalCycles.js` | bugfix | Cambio B — `renderEditForm()` (:1714, :1722): selectores Cultivo/Finca con guards contextuales → Bug 1 corregido (Finca deja de mostrar "Cultivo asociado"). |
 | `agroOperationalCycles.js` | bugfix | Cambio C — Wizard creación paso 2 (:1860, :1868): guards vía helpers; Finca visible para preset crop. |
@@ -2326,7 +2326,7 @@ La documentación canónica y HTML visible no reflejaban estos cambios.
 ### NO se hizo (scope respetado)
 - No se modificaron archivos JS de implementación
 - No se modificaron archivos CSS
-- No se modificaron AGENTS.md, ADN-VISUAL-V11.0.md ni ROADMAP_VISION_YAVLGOLD.md
+- No se modificaron AGENTS.md, ADN-VISUAL-V12.0.md ni ROADMAP_VISION_YAVLGOLD.md
 - No se agregaron detalles técnicos de implementación
 - No se crearon archivos nuevos
 

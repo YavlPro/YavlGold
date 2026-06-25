@@ -18,7 +18,7 @@ Este documento complementa, pero no reemplaza:
 - `AGENTS.md`: ley operativa para agentes.
 - `apps/gold/docs/MANIFIESTO_AGRO.md`: verdad semántica canónica de Agro.
 - `FICHA_TECNICA.md` → `apps/gold/docs/FICHA_TECNICA.md`: estructura técnica del proyecto.
-- `apps/gold/docs/ADN-VISUAL-V11.0.md`: canon visual activo.
+- `apps/gold/docs/ADN-VISUAL-V12.0.md`: canon visual activo.
 - `apps/gold/docs/AGENT_REPORT_ACTIVE.md`: bitácora operativa viva.
 
 ## 1. Verdad actual del producto
