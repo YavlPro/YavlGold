@@ -387,7 +387,8 @@ async function fetchFiadosForFarm(cropIds) {
 
 function resolveRecordUsd(row) {
     if (row.monto_usd != null) return safeNum(row.monto_usd);
-    const amount = safeNum(row.monto);
+    if (row.amount_usd != null) return safeNum(row.amount_usd);
+    const amount = safeNum(row.amount || row.monto);
     const currency = String(row.currency || 'USD').toUpperCase();
     if (currency === 'USD') return amount;
     const rate = safeNum(row.exchange_rate) || 1;
@@ -517,12 +518,57 @@ async function renderCrops() {
 }
 
 async function computeCropFinances(cropId) {
-    const [ingresos, egresos, fiados] = await Promise.all([
+    const [ingresos, egresosDirectos, egresosOperativos, fiados] = await Promise.all([
         sumByCrop('agro_income', cropId, 'monto_usd'),
         sumByCrop('agro_expenses', cropId, 'monto_usd', 'amount'),
+        fetchOperationalExpenses(cropId),
         sumByCropPending('agro_pending', cropId, 'monto_usd'),
     ]);
+    // Gastos totales del cultivo = agro_expenses + movimientos operativos
+    // (misma composición que usa la card de detalle de Mis Cultivos).
+    const egresos = egresosDirectos + egresosOperativos;
     return { rentabilidadReal: ingresos - egresos, fiadosPendientes: fiados };
+}
+
+// Gastos del "Facturero de cultivos": agro_operational_cycles + agro_operational_movements.
+// Prioriza la API ya calculada por agroOperationalCycles (fuente de verdad de Mis Cultivos);
+// si no está cargada, hace la query directa (agro-crop-report.js:740-766).
+async function fetchOperationalExpenses(cropId) {
+    const opsApi = window.YGAgroOperationalCycles;
+    if (opsApi?.getOperationalExpensesByCrop) {
+        const map = opsApi.getOperationalExpensesByCrop();
+        const amount = map.get(cropId);
+        if (amount !== undefined) return safeNum(amount);
+    }
+    return fetchOperationalExpensesDirect(cropId);
+}
+
+async function fetchOperationalExpensesDirect(cropId) {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return 0;
+        // 2-hop: ciclos operativos del cultivo → movimientos salientes.
+        const { data: cycles, error: cyclesError } = await supabase
+            .from('agro_operational_cycles')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('crop_id', cropId)
+            .in('economic_type', ['expense', 'loss', 'donation']);
+        if (cyclesError || !cycles?.length) return 0;
+        const cycleIds = cycles.map(c => c.id);
+        const { data: movements, error: movError } = await supabase
+            .from('agro_operational_movements')
+            .select('amount,currency,amount_usd,exchange_rate,direction')
+            .in('cycle_id', cycleIds);
+        if (movError || !movements?.length) return 0;
+        // Salientes = direction !== 'in' (mismo criterio que rebuildPortfolioByCrop).
+        return movements
+            .filter(m => m.direction !== 'in')
+            .reduce((sum, m) => sum + resolveRecordUsd(m), 0);
+    } catch (err) {
+        console.warn('[DashboardV11] operational expenses error:', err?.message || err);
+        return 0;
+    }
 }
 
 async function sumByCrop(table, cropId, primaryCol, fallbackCol) {
