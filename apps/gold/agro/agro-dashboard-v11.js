@@ -16,7 +16,6 @@
 
 import { supabase } from '../assets/js/config/supabase-config.js';
 import { getMarketTickerSnapshot } from './agro-market.js';
-import { computeFarmStats } from './agro-farm-compare.js';
 
 // ============================================================
 // CONSTANTES
@@ -87,32 +86,43 @@ function isDashboardActive() {
 // ============================================================
 // BLOQUE 0 — SALUDO (reutiliza el nombre del navbar)
 // ============================================================
-function renderGreeting() {
+async function renderGreeting() {
     const target = $('ygd-greeting-name');
     if (!target) return;
 
-    // agro.js escribe el nombre en .user-profile .user-name (resolveHeaderDisplayName).
-    const navbarName = (document.querySelector('.user-profile .user-name')?.textContent || '').trim();
-
-    if (navbarName && navbarName !== 'Agricultor') {
-        target.textContent = `Bienvenido, ${navbarName}`;
-        return;
+    // PASO 1 — Nombre instantáneo desde el cache (sin parpadeo).
+    // agro.js persiste aquí el nombre resuelto (writeCachedDisplayName).
+    const CACHE_KEY = 'YG_AGRO_DISPLAY_NAME_V1';
+    let cachedName = '';
+    try {
+        cachedName = String(localStorage.getItem(CACHE_KEY) || '').trim();
+    } catch (_e) { /* ignore */ }
+    if (cachedName) {
+        target.textContent = `Bienvenido, ${cachedName}`;
     }
 
-    // Fallback: si el navbar aún no resolvió el nombre, esperar y reintentar.
-    const observer = new MutationObserver(() => {
-        const name = (document.querySelector('.user-profile .user-name')?.textContent || '').trim();
-        if (name && name !== 'Agricultor') {
-            target.textContent = `Bienvenido, ${name}`;
-            observer.disconnect();
+    // PASO 2 — Resolver nombre canónico async (jerarquía igual a agro.js).
+    let displayName = 'Agricultor';
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            displayName = String(user.user_metadata?.full_name || user.email || 'Agricultor').trim() || 'Agricultor';
+            const { data: profile, error } = await supabase
+                .from('agro_farmer_profile')
+                .select('display_name')
+                .eq('user_id', user.id)
+                .maybeSingle();
+            if (!error) {
+                const profileName = String(profile?.display_name || '').trim();
+                if (profileName) displayName = profileName;
+            }
         }
-    });
-    const navbarNameEl = document.querySelector('.user-profile .user-name');
-    if (navbarNameEl) {
-        observer.observe(navbarNameEl, { childList: true, characterData: true, subtree: true });
+    } catch (_err) {
+        // Mantener el cache si ya se mostró; si no, queda 'Agricultor'.
     }
-    // Timeout defensivo: dejar de observar tras 12s.
-    setTimeout(() => observer.disconnect(), 12000);
+
+    // PASO 3 — Actualizar el DOM con el nombre resuelto.
+    target.textContent = `Bienvenido, ${displayName}`;
 }
 
 // ============================================================
@@ -270,51 +280,37 @@ function formatNumber(n) {
 
 // ============================================================
 // BLOQUE 3 — CÓMO VA MI FINCA (balance por finca)
-// Reutiliza computeFarmStats de agro-farm-compare.js (misma lógica
-// que loadFarms de agro-farms.js) para que las cifras coincidan
-// EXACTAMENTE con las cards de "Mis Fincas".
+// Balance consolidado vía RPC server-side get_farm_balance, que
+// replica la atribución crop-céntrica de computeFarmStats (Mis
+// Fincas) para que las cifras coincidan exactamente con esas cards.
 // ============================================================
-let farmStatsCache = null; // { farmId: { totalExpenses, totalIncome, balance, cropIds } }
+// Cache de balance por farmId: { farmId: { inversion, cobrado, fiados } }
+let farmStatsCache = new Map();
 
-async function ensureFarmStats() {
-    if (farmStatsCache) return farmStatsCache;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
-    try {
-        const { farms, statsMap } = await computeFarmStats(user.id);
-        // Enriquecer cada entrada con los crop_ids de esa finca (para fiados).
-        const enriched = new Map();
-        const cropsByFarm = await fetchCropIdsByFarm(user.id);
-        for (const [farmId, stats] of statsMap.entries()) {
-            enriched.set(farmId, {
-                totalExpenses: stats.totalExpenses || 0,
-                totalIncome: stats.totalIncome || 0,
-                balance: stats.balance || 0,
-                cropIds: cropsByFarm.get(farmId) || [],
-            });
-        }
-        farmStatsCache = { farms, statsMap: enriched, computedAt: Date.now() };
-    } catch (err) {
-        console.error('[DashboardV11] computeFarmStats error:', err);
-        farmStatsCache = { farms: [], statsMap: new Map(), computedAt: Date.now() };
-    }
-    return farmStatsCache;
-}
+// Balance consolidado vía RPC server-side get_farm_balance.
+// El RPC replica la atribución crop-céntrica de computeFarmStats (Mis Fincas),
+// así que los números coinciden exactamente con las cards de Mis Fincas.
+async function fetchFarmBalance(farmId, userId) {
+    if (!farmId || !userId) return { inversion: 0, cobrado: 0, fiados: 0 };
 
-async function fetchCropIdsByFarm(userId) {
-    const { data, error } = await supabase
-        .from('agro_crops')
-        .select('id, farm_id')
-        .eq('user_id', userId)
-        .is('deleted_at', null);
-    if (error) throw error;
-    const map = new Map();
-    (data || []).forEach(c => {
-        if (!c.farm_id) return;
-        if (!map.has(c.farm_id)) map.set(c.farm_id, []);
-        map.get(c.farm_id).push(c.id);
+    // Cache en sesión: evita recalcular al alternar entre fincas.
+    if (farmStatsCache.has(farmId)) return farmStatsCache.get(farmId);
+
+    const { data, error } = await supabase.rpc('get_farm_balance', {
+        p_farm_id: farmId,
+        p_user_id: userId,
     });
-    return map;
+    if (error) throw error;
+
+    // El RPC devuelve una fila { inversion_total, cobrado_real, fiados_pendientes }.
+    const row = Array.isArray(data) ? data[0] : data;
+    const result = {
+        inversion: safeNum(row?.inversion_total),
+        cobrado: safeNum(row?.cobrado_real),
+        fiados: safeNum(row?.fiados_pendientes),
+    };
+    farmStatsCache.set(farmId, result);
+    return result;
 }
 
 async function renderBalance() {
@@ -341,11 +337,8 @@ async function renderBalance() {
     if (statsHost) statsHost.innerHTML = skeletonStats();
 
     try {
-        const cache = await ensureFarmStats();
-        const stats = cache?.statsMap?.get(farmId);
-        const inversion = stats?.totalExpenses ?? 0;
-        const cobrado = stats?.totalIncome ?? 0;
-        const fiados = await fetchFiadosForFarm(stats?.cropIds || []);
+        const { data: { user } } = await supabase.auth.getUser();
+        const { inversion, cobrado, fiados } = await fetchFarmBalance(farmId, user?.id);
 
         const estadoKey = computeBalanceEstado(cobrado, inversion, fiados);
         const labelMap = { success: 'Ganando', warning: 'Recuperando', muted: 'Neutral' };
@@ -364,25 +357,6 @@ async function renderBalance() {
     } finally {
         state.balanceBusy = false;
     }
-}
-
-async function fetchFiadosForFarm(cropIds) {
-    if (!cropIds.length) return 0;
-    // Fiados: agro_pending por crop_id de la finca, no revertidos ni borrados.
-    // También los generales de finca (crop_id null, farm_id = X) se capturan vía farm_id.
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return 0;
-    const { data, error } = await supabase
-        .from('agro_pending')
-        .select('monto_usd, monto, currency, exchange_rate, crop_id, farm_id')
-        .eq('user_id', user.id)
-        .is('deleted_at', null)
-        .is('reverted_at', null);
-    if (error) throw error;
-    const farmId = state.selectedFarmId;
-    return (data || [])
-        .filter(r => (r.crop_id && cropIds.includes(r.crop_id)) || (r.farm_id === farmId && !r.crop_id))
-        .reduce((acc, row) => acc + resolveRecordUsd(row), 0);
 }
 
 function resolveRecordUsd(row) {
@@ -815,7 +789,7 @@ function bindFarmEvents() {
     document.addEventListener('agro:farms-loaded', async () => {
         const cached = window._agroFarms?.getFarms?.() || [];
         state.farms = cached;
-        farmStatsCache = null; // invalidar: las cifras deben recalcularse
+        farmStatsCache.clear(); // invalidar: las cifras deben recalcularse
         if (!state.selectedFarmId || !state.farms.some(f => f.id === state.selectedFarmId)) {
             restoreSelectedFarm();
         }
