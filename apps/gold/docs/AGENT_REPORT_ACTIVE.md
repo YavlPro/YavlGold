@@ -3246,3 +3246,77 @@ Cierre de QA visual del Dashboard Agro (pendiente día anterior) y ataque a deud
 - Los gastos operativos en `agro_operational_movements` deben incluirse en todo cálculo de balance de cultivo
 - Un fix de lógica puede ser necesario pero insuficiente si la fuente de datos está incompleta
 - Qwen puede suplir a Mimo en documentación, pero sin acceso a terminal/git — el titular debe commits si hay
+
+---
+
+## Sesión 2026-06-26 (cierre) — P1 Saludo + P2 RPC get_farm_balance: QA GREEN
+
+**Estado:** GREEN — QA visual confirmado por Yerikson en yavlgold.com
+**Rama mergeada:** `fix/agro-dashboard-greeting-getuser` → `main` (fast-forward)
+**HEAD de main:** `ad20133f`
+
+### Resumen
+
+Cierre de los dos frentes pendientes de la jornada 2026-06-25, ambos verificados en producción.
+
+### P1 — Saludo del Bloque 0 sin MutationObserver: GREEN
+
+**Commit:** `effa1ee3` — `fix(agro-dashboard): replace MutationObserver greeting with getUser()`
+
+El saludo de bienvenida (`#ygd-greeting-name`) usaba un `MutationObserver` sobre `.user-profile .user-name`, frágil y dependiente del timing de `agro.js`. Reemplazado por:
+1. Render instantáneo desde `localStorage['YG_AGRO_DISPLAY_NAME_V1']` (sin flash).
+2. `supabase.auth.getUser()` + jerarquía canónica de resolución (`agro_farmer_profile.display_name` → `user_metadata.full_name` → `email` → `'Agricultor'`).
+3. Actualización del DOM con el nombre resuelto.
+
+Sin importar `agro.js`. Solo se tocó `renderGreeting()`.
+
+### P2 — RPC `get_farm_balance` para el Bloque 3: GREEN
+
+**Objetivo:** consolidar el balance de finca (6 queries client-side de `computeFarmStats`) en una sola llamada server-side.
+
+**Commits:**
+- `6f5118e4` — `feat(agro): add get_farm_balance RPC` (migración SQL `20260625120000_agro_get_farm_balance_rpc.sql`)
+- `367af4aa` — `refactor(agro-dashboard): use get_farm_balance RPC for Block 3` (JS)
+- `ad20133f` — `fix(agro): correct nested parens in get_farm_balance sum() calls` (migración de fix `20260626120000_fix_agro_get_farm_balance_sum_args.sql`)
+
+**Implementación:**
+- RPC `public.get_farm_balance(p_farm_id, p_user_id)` con `SECURITY DEFINER`, `search_path = public`, `RETURNS TABLE(inversion_total, cobrado_real, fiados_pendientes)`.
+- Replica fielmente la atribución crop-céntrica de `computeFarmStats` (Mis Fincas): agro_expenses vía crop_id + agro_crops.investment + operativos por cycle_id + generales de finca; agro_income análogo; agro_pending con `reverted_at IS NULL`.
+- JS: `renderBalance` ahora llama a una sola `supabase.rpc('get_farm_balance', ...)`. Cache por farmId (Map) invalidado en `agro:farms-loaded`. Eliminadas `ensureFarmStats`/`fetchFiadosForFarm`/`fetchCropIdsByFarm` + import de `computeFarmStats`. Velocímetro y estados intactos.
+
+### Bug intermedio resuelto — paréntesis mal anidados en `sum()`
+
+Tras el primer `db push`, el Bloque 3 falló en producción con `42883: function sum(numeric, integer) does not exist`. Causa raíz: en 3 consultas, `coalesce(sum(EXPR), 0)` quedó mal anidado como `sum(EXPR, 0)`, convirtiendo `sum` en una función de 2 argumentos. PL/pgSQL **no valida el SQL interno de las funciones al crearlas** — solo al ejecutarlas, por lo que `db push` reportó éxito.
+
+**Fix:** migración adicional `20260626120000_fix_agro_get_farm_balance_sum_args.sql` con paréntesis corregidos + casts `::numeric` explícitos. Tras reaplicar, QA GREEN.
+
+### QA visual
+
+Confirmado por Yerikson en yavlgold.com (hard reload): Bloque 3 carga cifras consistentes con Mis Fincas, velocímetro responde.
+
+### Lecciones operativas
+
+1. **PL/pgSQL no valida SQL interno al `CREATE FUNCTION`.** Un RPC puede "crear" sin error y tronar en runtime. Para RPCs complejos, ejecutar la función tras crearla, no confiar solo en `db push`.
+2. **El error `42883` (No function matches) suele indicar bug de tipos/paréntesis en el cuerpo del RPC**, no de exposición PostgREST — aunque un 404 inicial puede confundir. Verificar siempre el `code` del error en consola antes de asumir caching.
+3. **El `NOTIFY pgrst, 'reload schema'` sí refresca el catálogo** — tras él, el 404 desapareció y el error real quedó expuesto.
+
+### Estado de pendientes anteriores
+
+| Tarea | Estado nuevo |
+|-------|--------------|
+| RPC get_farm_balance Fase 2 | ✅ CERRADO (QA GREEN) |
+| MutationObserver saludo | ✅ CERRADO (QA GREEN) |
+| Migración tipográfica V12 al resto del proyecto | Pendiente (fase separada) |
+| QA de Onboarding (requiere cuenta nueva) | Pendiente |
+
+### Archivos tocados
+
+- `apps/gold/agro/agro-dashboard-v11.js` — `renderGreeting` (P1) + `fetchFarmBalance`/`renderBalance` (P2)
+- `supabase/migrations/20260625120000_agro_get_farm_balance_rpc.sql` — RPC original
+- `supabase/migrations/20260626120000_fix_agro_get_farm_balance_sum_args.sql` — fix paréntesis
+
+### Scope respetado
+
+- No se tocó `agro.js`, `computeCropFinances`, ni el Bloque 4.
+- No se combinaron fixes fuera de P1 y P2.
+- Cambios aislados en commits separados, merge fast-forward limpio.
