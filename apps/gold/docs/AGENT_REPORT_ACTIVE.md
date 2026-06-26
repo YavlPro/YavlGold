@@ -3142,3 +3142,107 @@ Cuando un cultivo muestra datos financieros inconsistentes entre superficies, ve
 
 **Agente:** GLM 5.2 · **Validación:** Qwen 3.7 Max (revisión de código y validación contra Manifiesto).
 
+
+---
+
+## Sesión 2026-06-25 — QA Visual Dashboard Agro + RPC get_farm_balance (Fase 1 SQL)
+
+**Agentes:** Yerikson Varela (Product Owner), Claude Sonnet 4.6 (planificación), GLM 5.2 (implementación SQL/JS), Qwen 3.7 Max (documentación suplente)
+**Estado:** YELLOW — QA visual GREEN en producción; RPC `get_farm_balance` Fase 2 JS local sin commit (pendiente mañana)
+**Producción:** commits de fixes subidos; RPC SQL committed; JS RPC en local sin commit/build/push
+
+### Resumen ejecutivo
+Cierre de QA visual del Dashboard Agro (pendiente día anterior) y ataque a deuda técnica media: MutationObserver del saludo y RPC `get_farm_balance`. Durante QA se detectó bug real en Bloque 4 (caraota roja mostraba EQUILIBRIO en vez de INVIRTIENDO) causado por dos capas: `pickAmount` eliminada por error en sesión anterior y gastos operativos no contemplados en el cálculo.
+
+### Resultado por frente
+
+| Frente | Estado | Detalle |
+|--------|--------|---------|
+| **QA Visual Dashboard** | 🟢 GREEN | 7/7 bloques verificados en yavlgold.com |
+| **Fix Bloque 4 — caraota roja** | 🟢 GREEN | Bug corregido, estado INVIRTIENDO confirmado |
+| **RPC `get_farm_balance` Fase 1 SQL** | 🟢 GREEN | Migración SQL committed |
+| **RPC `get_farm_balance` Fase 2 JS** | 🟡 Pendiente | JS local modificado, sin commit/build/push |
+| **MutationObserver saludo** | 🟡 Pendiente | Diagnóstico completado, solución aprobada, falta implementar |
+| **Documentación canónica** | 🟢 GREEN | FICHA_TECNICA y MANIFIESTO actualizados por Qwen |
+
+### Commits del día
+
+| Hash | Descripción | Responsable |
+|------|-------------|-------------|
+| `3c066de5` | fix(dashboard): restaurar pickAmount con precedencia canónica USD | GLM 5.2 |
+| `87c61c9a` | fix(dashboard): incluir gastos operativos en balance de cultivos | GLM 5.2 |
+| `9b7e1809` | fix(dashboard): ajuste fino gastos operativos balance cultivos | GLM 5.2 |
+| `e49e1867` | docs: actualizar fuentes de datos Bloque 4 y condición EQUILIBRIO | Qwen 3.7 Max |
+
+### QA Visual — resultado (7/7 bloques)
+
+| Bloque | Estado verificado en yavlgold.com |
+|--------|-----------------------------------|
+| 0 — Bienvenida | ✅ |
+| 1 — Selector de finca | ✅ |
+| 2 — Pulso del día | ✅ Clima + Mercados + Fase lunar Llena |
+| 3 — Balance general + velocímetro GANANDO | ✅ |
+| 4 — caraota roja → INVIRTIENDO | ✅ Bug corregido |
+| 5 — Tareas del día | ✅ Estado vacío correcto |
+| 6 — Accesos rápidos | ✅ |
+| Tipografía V12 (Plus Jakarta Sans + Inter) | ✅ |
+
+### Hallazgos críticos resueltos
+
+1. **pickAmount eliminada por error:** Regresión de GLM en refactor del Bloque 3. Restaurada con misma precedencia que `resolveRecordUsd`: `monto_usd → amount_usd → amount/monto con currency/exchange_rate`.
+
+2. **Gastos operativos no contemplados:** Los gastos del cultivo "caraota roja" viven en `agro_operational_movements`, no en `agro_expenses`. `computeCropFinances` ahora suma ambas fuentes.
+
+3. **Inconsistencia semántica preexistente:** `computeCropEstado` vs Manifiesto §4.3 — el código prioriza `fiadosPendientes > 0` antes de evaluar balance, mientras el Manifiesto dice `balanceActual = rentabilidadReal - fiadosPendientes`. No introducido por este fix, merece revisión semántica aparte.
+
+### RPC `get_farm_balance` — Estado
+
+**Fase 1 SQL:** ✅ Committed
+- Archivo: `supabase/migrations/20260625120000_agro_get_farm_balance_rpc.sql`
+- RPC con atribución crop-céntrica completa, SECURITY DEFINER, search_path = public, COALESCE en nulls
+
+**Fase 2 JS:** ⚠️ En local, sin commit
+- `fetchFarmBalance()` reemplaza `ensureFarmStats()`
+- `fetchFiadosForFarm` eliminada (fiados vienen del RPC)
+- Import de `computeFarmStats` eliminado
+- `farmStatsCache` migrado de variable a Map con `.clear()`
+- **Pendiente: build + commit + push + `supabase db push`**
+
+### MutationObserver del saludo — Diagnóstico completado
+
+**Solución aprobada:**
+1. Leer `localStorage['YG_AGRO_DISPLAY_NAME_V1']` para nombre instantáneo
+2. `supabase.auth.getUser()` +jerarquía canónica: `agro_farmer_profile.display_name` → `user.user_metadata.full_name` → `user.email` → `'Agricultor'`
+3. Sin importar `agro.js` (resolveHeaderDisplayName es privada)
+
+### Pendientes del proyecto
+
+| Prioridad | Tarea | Estado |
+|-----------|-------|--------|
+| Alta | RPC get_farm_balance Fase 2 — build + commit + push + migración | ⚠️ JS local sin commit |
+| Alta | MutationObserver saludo — implementar fix aprobado | Pendiente |
+| Media | Migración tipográfica V12 al resto del proyecto | Pendiente |
+| Baja | QA de Onboarding (requiere cuenta nueva) | Pendiente |
+
+### Archivos tocados
+
+- `apps/gold/agro/agro-dashboard-v11.js` — fixes Bloque 4, RPC local
+- `apps/gold/docs/FICHA_TECNICA.md` — documentado `agro_operational_movements`
+- `apps/gold/docs/MANIFIESTO_AGRO.md` — §4.2 actualizado, condición EQUILIBRIO corregida
+
+### Scope respetado
+- No se tocó `agro.js` (monolito)
+- Daily log NO subido a GitHub (como norma)
+
+### Próximo agente — acciones recomendadas
+
+1. **RPC get_farm_balance:** completar Fase 2 (build + commit + push) y ejecutar `supabase db push`
+2. **MutationObserver saludo:** implementar solución aprobada (localStorage + getUser +jerarquía canónica)
+3. **Inconsistencia semántica:** revisar `computeCropEstado` vs Manifiesto §4.3 — ¿priorizar fiadosPendientes o balanceActual?
+4. **Migración tipográfica:** continuar por módulos pendientes
+
+### Lecciones operativas
+- Cuando un cultivo muestra datos inconsistentes entre superficies, verificar qué tablas consulta cada una antes de asumir culpable al cálculo
+- Los gastos operativos en `agro_operational_movements` deben incluirse en todo cálculo de balance de cultivo
+- Un fix de lógica puede ser necesario pero insuficiente si la fuente de datos está incompleta
+- Qwen puede suplir a Mimo en documentación, pero sin acceso a terminal/git — el titular debe commits si hay
