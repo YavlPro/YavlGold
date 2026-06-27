@@ -3741,7 +3741,10 @@ function bindEvents() {
     state.root.addEventListener('toggle', handleRootToggle, true);
 
     window.addEventListener(VIEW_CHANGED_EVENT, (event) => {
-        state.currentView = normalizeToken(event?.detail?.view);
+        const incomingView = normalizeToken(event?.detail?.view);
+        const viewChanged = incomingView !== state.currentView;
+
+        state.currentView = incomingView;
         state.currentSubview = normalizeOperationalSubview(event?.detail?.subview || state.currentSubview);
 
         // Apply view context for facturero-* views (structural separation)
@@ -3752,10 +3755,14 @@ function bindEvents() {
         } else {
             state.viewContext = null;
         }
-        // Reset the context selector state on every view change so a finca/cultivo
-        // filter chosen in one facturero never leaks into another surface.
-        state.selectedContextFarmId = '';
-        state.selectedContextCropId = '';
+
+        // Reset the context selector state ONLY when the view itself changes.
+        // Si solo cambia el subview (cambio de tab dentro del mismo facturero),
+        // selectedContextFarmId y selectedContextCropId deben preservarse.
+        if (viewChanged) {
+            state.selectedContextFarmId = '';
+            state.selectedContextCropId = '';
+        }
 
         if (state.currentView === PERIOD_VIEW_NAME) {
             closeComposerModal();

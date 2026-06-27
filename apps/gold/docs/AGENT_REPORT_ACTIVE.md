@@ -3358,3 +3358,51 @@ Todos los fixes pasaron `pnpm build:gold` individualmente sin errores. Build fin
 - No se modificaron nombres de funciones públicas.
 - No se agregaron features nuevas.
 - No se tocó `agro.js`.
+
+---
+
+## Sesión 2026-06-27 — Bug post-producción: cambio de tab destruye contexto
+
+**Objetivo:** Corregir bug confirmado en producción: clic en tab (Pagados/No pagados/Donaciones/Pérdidas/Exportar) salta a Vista General y pierde la finca/cultivo seleccionados.
+**Archivo único tocado:** `apps/gold/agro/agroOperationalCycles.js`
+
+### Diagnóstico
+
+El handler `set-subview` despacha `agro:shell:set-view` con `view: state.currentView` (misma vista) y el nuevo `subview`. El shell lo procesa y emite `VIEW_CHANGED_EVENT`. El listener de ese evento tenía un reset **incondicional**:
+
+```js
+state.selectedContextFarmId = '';
+state.selectedContextCropId = '';
+```
+
+Ese reset se ejecutaba tanto al cambiar de vista (correcto) como al cambiar solo de tab dentro del mismo facturero (incorrecto). Resultado: el contexto de finca/cultivo se destruía en cada cambio de tab.
+
+**Líneas afectadas:** ~3743-3758 (listener `VIEW_CHANGED_EVENT` en `bindEvents`)
+
+### Cambio realizado
+
+El reset de `selectedContextFarmId` y `selectedContextCropId` ahora está condicionado a que la vista realmente cambie (`viewChanged = incomingView !== state.currentView`). Si el evento llega con la misma vista (solo cambio de subview/tab), el contexto se preserva intacto.
+
+```js
+// ANTES: reset incondicional
+state.selectedContextFarmId = '';
+state.selectedContextCropId = '';
+
+// DESPUÉS: reset solo si la vista cambió
+if (viewChanged) {
+    state.selectedContextFarmId = '';
+    state.selectedContextCropId = '';
+}
+```
+
+### Resultado de build
+`pnpm build:gold` — ✅ sin errores
+
+### QA pendiente (manual)
+- Seleccionar Los Higuerones + cualquier cultivo → clic en "Pagados" → debe mostrar los pagados de esa finca, NO Vista General.
+- Repetir para "Donaciones", "Pérdidas", "Exportar".
+- Navegar a otro facturero y volver → el contexto sí debe resetearse (comportamiento correcto del cambio de vista).
+
+### NO se hizo
+- No se tocó `agro.js`, `agro-shell.js`, `agro-mode.js` ni `agro-facturero-clientes-*.js`.
+- No se crearon archivos nuevos.
