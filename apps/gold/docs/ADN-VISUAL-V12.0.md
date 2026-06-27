@@ -36,7 +36,7 @@ El sistema debe sentirse agrícola, serio, sobrio, oscuro, dorado y útil.
 
 ---
 
-## §2 — Paleta canónica V11
+## §2 — Paleta canónica V12
 
 ### Color core
 
@@ -92,7 +92,7 @@ Los alias legacy (`--gg-*`, `--v10-*`, `--sombra-dorada`, etc.) se mantienen mie
 
 ---
 
-## §3 — Sombras V11
+## §3 — Sombras V12
 
 V10 definía sombras doradas agresivas (`--shadow-gold-xl`, `--shadow-metallic`). V11 reduce:
 
@@ -113,7 +113,7 @@ V10 definía sombras doradas agresivas (`--shadow-gold-xl`, `--shadow-metallic`)
 
 ---
 
-## §4 — Motion V11
+## §4 — Motion V12
 
 ### Canon
 
@@ -214,7 +214,7 @@ no en bloque para evitar regresiones visuales.
 
 ---
 
-## §7 — Componentes V11
+## §7 — Componentes V12
 
 ### Botones
 
@@ -297,7 +297,7 @@ no en bloque para evitar regresiones visuales.
 
 ---
 
-## §8 — Canon de modales V11
+## §8 — Canon de modales V12
 
 El estándar es el modal "Configura tu asistente IA".
 
@@ -380,7 +380,7 @@ El estándar es el modal "Configura tu asistente IA".
 
 ---
 
-## §9 — Hub y navegación V11
+## §9 — Hub y navegación V12
 
 ### Navegación principal
 
@@ -473,7 +473,7 @@ Los ghost emojis (emojis de fondo con opacidad 0.02–0.05 y `pointer-events: no
 
 ---
 
-## §13 — Anti-patrones prohibidos V11
+## §13 — Anti-patrones prohibidos V12
 
 1. **No hardcodear hex en componentes.** Color → token → componente.
 2. **No crear paletas por módulo.** Una sola paleta canónica.
@@ -554,7 +554,7 @@ Los ghost emojis (emojis de fondo con opacidad 0.02–0.05 y `pointer-events: no
 
 ### Jerarquía
 
-1. Este documento (`ADN-VISUAL-V11.0.md`) es el canon visual activo.
+1. Este documento (`ADN-VISUAL-V12.0.md`) es el canon visual activo.
 2. `ADN-VISUAL-V10.0.md` es referencia histórica fundacional. No se elimina, pero ya no rige.
 3. Todo cambio visual pasa por aquí primero.
 

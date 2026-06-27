@@ -288,7 +288,7 @@ disponible, con fallback defensivo a query directa.
 - **Prohibido:** Azul/morado como acento principal
 
 ### Documento Canónico de ADN Visual
-- **Versión activa:** `V11.0 (Canon activo)`
+- **Versión activa:** `V12.0 (Canon activo)`
 - **Ruta:** `apps/gold/docs/ADN-VISUAL-V12.0.md`
 - **Referencia histórica:** `apps/gold/docs/ADN-VISUAL-V10.0.md` (base fundacional, no rige)
 
@@ -438,7 +438,7 @@ git status
 
 ## DEUDA TÉCNICA REGISTRADA
 
-- **RPC `get_farm_balance(p_farm_id)`** — pendiente. El balance del Dashboard Agro hoy hace N queries client-side por finca. Requiere migración Supabase para consolidar server-side.
+- **RPC `get_farm_balance(p_farm_id)`** — ✅ RESUELTA (commit 6c8b0411, 26-jun-2026). Dashboard Bloque 3 ya no hace N queries client-side.
 - **`MutationObserver` en saludo de bienvenida** — el Dashboard Agro lee `.user-profile .user-name` vía `MutationObserver`. Puede fallar si cambia el timing de `resolveHeaderDisplayName`. Migrar a suscripción directa de auth cuando sea posible.
 - **Tipografía legacy** — Orbitron y Rajdhani siguen en CSS de módulos existentes. Migración gradual por módulo, no en bloque.
 
