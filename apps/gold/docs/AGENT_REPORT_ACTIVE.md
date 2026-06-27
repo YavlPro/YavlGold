@@ -3320,3 +3320,41 @@ Confirmado por Yerikson en yavlgold.com (hard reload): Bloque 3 carga cifras con
 - No se tocó `agro.js`, `computeCropFinances`, ni el Bloque 4.
 - No se combinaron fixes fuera de P1 y P2.
 - Cambios aislados en commits separados, merge fast-forward limpio.
+
+---
+
+## Sesión 2026-06-27 — Fase 1: Corrección quirúrgica agroOperationalCycles.js
+
+**Objetivo:** Aplicar los 6 fixes del plan GLM 5.2 sobre `agroOperationalCycles.js`.
+**Archivo único tocado:** `apps/gold/agro/agroOperationalCycles.js`
+
+### Diagnóstico previo
+Plan recibido con diagnóstico externo (GLM 5.2). Líneas exactas identificadas antes de tocar código.
+
+### Cambios realizados
+
+| Fix | Líneas aprox. | Qué cambió |
+|-----|--------------|-----------|
+| Fix 1 · Bug 1 | ~3735-3745 | Handler `MODE_CHANGE_EVENT`: blindada la escritura de `familyFilter` — solo aplica si no hay `state.viewContext` activo. Los factureros específicos ignoran el switch global. |
+| Fix 2 · Bug 2 | ~2080-2110 | `filterCyclesByContext`: reemplazado el AND estricto por filtro contextual según `preset`. `farm` filtra solo por `farm_id`; `crop` filtra solo por `crop_id`; vista general mantiene AND. |
+| Fix 3 · Bug 3 | ~3217-3250 (resetForm) · ~1205-1220 (normalizePayload) | `resetForm` pre-carga `farmId`/`cropId` según `viewContext.preset`. `normalizePayload` fuerza `farmId=''` y `cropId=''` si el preset es `orphan`. |
+| Fix 4 · Bug 5a | ~3924-3940 (init) | `initAgroOperationalCycles`: el `viewContext` ahora se resuelve desde `body.dataset` **antes** de lanzar `refreshData`, eliminando la race condition al recargar con F5. |
+| Fix 5 · Bug 5b | ~3409-3422 (catch) | `refreshData` catch: el reset destructivo de `state.datasets` ahora solo ocurre si `schemaMissing === true`. Errores transitorios conservan los datos existentes. |
+| Fix 6 · Bug 6 | ~2298 (getDonationCycles) · ~2321 (getLossCycles) | `getDonationCycles` y `getLossCycles` ahora leen el dataset del subview activo en lugar de `getAllCycles()`. Conteos de donaciones/pérdidas ya no cruzan fronteras activos/cerrados. |
+
+### Resultado de build
+Todos los fixes pasaron `pnpm build:gold` individualmente sin errores. Build final limpio.
+
+### QA pendiente (manual)
+- Fix 1: Facturero de la Finca → Vista General → cambiar switch global → verificar que no mezcla.
+- Fix 2: Seleccionar Los Higuerones + cultivo en ambos factureros → debe mostrar registros, no cero.
+- Fix 3: Nuevo registro desde Facturero de la Finca con finca seleccionada → verificar `farm_id` correcto y `crop_id null` en Supabase.
+- Fix 4: Estar en Facturero de la Finca con registros → F5 → registros deben aparecer sin interacción manual.
+- Fix 5: Error de red temporal → registros visibles deben persistir aunque aparezca feedback de error.
+- Fix 6: Tabs "No pagados" / "Pagados" → conteos de donaciones/pérdidas deben ser consistentes con el dataset activo.
+
+### NO se hizo
+- No se tocó ningún otro archivo del repo.
+- No se modificaron nombres de funciones públicas.
+- No se agregaron features nuevas.
+- No se tocó `agro.js`.

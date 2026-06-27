@@ -1202,8 +1202,10 @@ function normalizePayload(source = {}, options = {}) {
         description,
         economicType,
         category,
-        cropId: ensureLocalCropSelection(source.cropId || source.crop_id),
-        farmId: normalizeId(source.farmId || source.farm_id),
+        // Facturero Personal (orphan): forzar farmId y cropId a vacío aunque el form
+        // haya recibido algún valor por contaminación de estado previo.
+        cropId: state.viewContext?.preset === 'orphan' ? '' : ensureLocalCropSelection(source.cropId || source.crop_id),
+        farmId: state.viewContext?.preset === 'orphan' ? '' : normalizeId(source.farmId || source.farm_id),
         amount,
         currency,
         movementDate,
@@ -2082,7 +2084,25 @@ function filterCyclesByContext(cycles) {
     const farmId = normalizeId(state.selectedContextFarmId);
     const cropId = normalizeId(state.selectedContextCropId);
     if (!farmId && !cropId) return cycles;
+
+    const preset = state.viewContext?.preset;
+
     return cycles.filter((cycle) => {
+        // Facturero de la Finca: ciclos sin crop_id, filtrar solo por farm_id.
+        // El selector de cultivo no aplica porque los ciclos de finca no tienen crop_id.
+        if (preset === 'farm') {
+            return !farmId || normalizeId(cycle?.farm_id) === farmId;
+        }
+
+        // Facturero del Cultivo: ciclos con crop_id, filtrar por crop_id.
+        // Si hay finca seleccionada, la finca se infiere del cultivo — no filtramos
+        // por farm_id directamente porque los ciclos de cultivo no usan farm_id.
+        if (preset === 'crop') {
+            return !cropId || normalizeId(cycle?.crop_id) === cropId;
+        }
+
+        // Vista general o Facturero Personal: AND estricto solo cuando ambos ejes
+        // tienen valor y el ciclo los tiene — evita cero por combinación imposible.
         const matchesFarm = !farmId || normalizeId(cycle?.farm_id) === farmId;
         const matchesCrop = !cropId || normalizeId(cycle?.crop_id) === cropId;
         return matchesFarm && matchesCrop;
@@ -2296,7 +2316,11 @@ function renderContextPicker() {
 }
 
 function getDonationCycles() {
-    return getAllCycles().filter((cycle) => normalizeToken(cycle?.economic_type) === 'donation');
+    // Usar el dataset del subview activo, no la combinación de ambos.
+    const activeDataset = state.currentSubview === SUBVIEW_FINISHED
+        ? (state.datasets[SUBVIEW_FINISHED]?.cycles || [])
+        : (state.datasets[SUBVIEW_ACTIVE]?.cycles || []);
+    return activeDataset.filter((cycle) => normalizeToken(cycle?.economic_type) === 'donation');
 }
 
 function isDonationCycle(cycle) {
@@ -2319,7 +2343,11 @@ function getPaidCycles() {
 }
 
 function getLossCycles() {
-    return getAllCycles().filter(isLossCycle);
+    // Usar el dataset del subview activo, no la combinación de ambos.
+    const activeDataset = state.currentSubview === SUBVIEW_FINISHED
+        ? (state.datasets[SUBVIEW_FINISHED]?.cycles || [])
+        : (state.datasets[SUBVIEW_ACTIVE]?.cycles || []);
+    return activeDataset.filter(isLossCycle);
 }
 
 function getCyclesForSubview(subview) {
@@ -2718,12 +2746,12 @@ function renderOverview() {
         const familyLabel = getFamilyLabel(state.familyFilter);
         state.refs.overviewBody.innerHTML = `
             ${renderCompactOverview({
-                label: 'Resumen de esta vista',
-                summary,
-                familyLabel: `${familyLabel} — donaciones incluidas como gastos`,
-                balanceLabel: 'Balance donaciones',
-                balanceHint: `Recibí: ${renderMoneyNode(summary.incomingText)} · Gasté: ${renderMoneyNode(summary.outgoingText)}`
-            })}
+            label: 'Resumen de esta vista',
+            summary,
+            familyLabel: `${familyLabel} — donaciones incluidas como gastos`,
+            balanceLabel: 'Balance donaciones',
+            balanceHint: `Recibí: ${renderMoneyNode(summary.incomingText)} · Gasté: ${renderMoneyNode(summary.outgoingText)}`
+        })}
         `;
         return;
     }
@@ -2734,12 +2762,12 @@ function renderOverview() {
         const familyLabel = getFamilyLabel(state.familyFilter);
         state.refs.overviewBody.innerHTML = `
             ${renderCompactOverview({
-                label: 'Resumen de esta vista',
-                summary,
-                familyLabel: `${familyLabel} — cancelaciones o pérdidas operativas`,
-                balanceLabel: 'Balance pérdidas',
-                balanceHint: `Recibí: ${renderMoneyNode(summary.incomingText)} · Gasté: ${renderMoneyNode(summary.outgoingText)}`
-            })}
+            label: 'Resumen de esta vista',
+            summary,
+            familyLabel: `${familyLabel} — cancelaciones o pérdidas operativas`,
+            balanceLabel: 'Balance pérdidas',
+            balanceHint: `Recibí: ${renderMoneyNode(summary.incomingText)} · Gasté: ${renderMoneyNode(summary.outgoingText)}`
+        })}
         `;
         return;
     }
@@ -2749,10 +2777,10 @@ function renderOverview() {
     const familyLabel = getFamilyLabel(state.familyFilter);
     state.refs.overviewBody.innerHTML = `
         ${renderCompactOverview({
-            label: 'Resumen de esta vista',
-            summary,
-            familyLabel
-        })}
+        label: 'Resumen de esta vista',
+        summary,
+        familyLabel
+    })}
     `;
 }
 
@@ -3216,12 +3244,31 @@ function readExistingCycle(cycleId) {
 
 function resetForm() {
     state.editId = '';
+
+    // Pre-cargar preset según el facturero activo para que los registros nuevos
+    // nazcan bien asociados. El usuario puede cambiarlo manualmente dentro del form.
+    const preset = state.viewContext?.preset;
+    const presetOverrides = {};
+    if (preset === 'farm') {
+        // Facturero de la Finca: pre-cargar la finca seleccionada, sin cultivo.
+        presetOverrides.farmId = state.selectedContextFarmId || '';
+        presetOverrides.cropId = '';
+    } else if (preset === 'crop') {
+        // Facturero del Cultivo: pre-cargar el cultivo seleccionado.
+        presetOverrides.cropId = state.selectedContextCropId || '';
+    } else if (preset === 'orphan') {
+        // Facturero Personal: sin finca ni cultivo.
+        presetOverrides.farmId = '';
+        presetOverrides.cropId = '';
+    }
+
     state.form = createFormState({
         values: createDraftValues({
             economicType: state.form.values.economicType || 'expense',
             category: state.form.values.category || 'other',
             currency: state.form.values.currency || 'COP',
-            movementDate: todayLocalIso()
+            movementDate: todayLocalIso(),
+            ...presetOverrides
         })
     });
     clearFeedback();
@@ -3408,12 +3455,17 @@ async function refreshData(options = {}) {
         renderCurrentSubview();
     } catch (error) {
         state.schemaMissing = isSchemaMissingError(error);
-        state.crops = [];
-        state.datasets = createDatasetsState();
-        state.portfolioByCrop = new Map();
-        state.operationalExpensesByCrop = new Map();
-        state.operationalPendingByCrop = new Map();
-        rebuildCycleIndex();
+        // Solo resetear datasets si el schema realmente no existe.
+        // Para errores transitorios (red, token, timeout), conservar los datos
+        // existentes y mostrar el error sin borrar lo que el usuario ya tenía cargado.
+        if (state.schemaMissing) {
+            state.crops = [];
+            state.datasets = createDatasetsState();
+            state.portfolioByCrop = new Map();
+            state.operationalExpensesByCrop = new Map();
+            state.operationalPendingByCrop = new Map();
+            rebuildCycleIndex();
+        }
         renderWizard();
         renderFamilyToggle();
         renderContextPicker();
@@ -3734,9 +3786,13 @@ function bindEvents() {
 
     window.addEventListener(MODE_CHANGE_EVENT, (event) => {
         const mode = normalizeToken(event?.detail?.mode);
-        if (mode === 'cultivo') state.familyFilter = FAMILY_LINKED;
-        else if (mode === 'no-cultivo') state.familyFilter = FAMILY_ALL;
-        else state.familyFilter = FAMILY_ALL;
+        // Si hay un viewContext activo (facturero específico), su family tiene
+        // autoridad — el switch global no sobreescribe familyFilter.
+        if (!state.viewContext) {
+            if (mode === 'cultivo') state.familyFilter = FAMILY_LINKED;
+            else if (mode === 'no-cultivo') state.familyFilter = FAMILY_ALL;
+            else state.familyFilter = FAMILY_ALL;
+        }
         if (!isOperationalView(state.currentView)) return;
         renderFamilyToggle();
         renderSubviewSwitch();
@@ -3886,6 +3942,22 @@ export async function initAgroOperationalCycles(options = {}) {
         state.userId = normalizeId(options.initialUserId);
     }
     exposeGlobalApi();
+
+    // 1b. Resolver el viewContext desde el body.dataset ANTES de lanzar refreshData,
+    // para que el primer fetch ya tenga el contexto correcto (evita race condition en F5).
+    const bootView = normalizeToken(document.body?.dataset?.agroActiveView || '');
+    if (bootView) {
+        const bootContext = resolveViewContext(bootView);
+        if (bootContext) {
+            state.viewContext = bootContext;
+            state.familyFilter = bootContext.family;
+            state.currentView = bootView;
+        } else {
+            const bootMode = normalizeToken(document.body?.dataset?.agroMode || 'general');
+            if (bootMode === 'cultivo') state.familyFilter = FAMILY_LINKED;
+            else state.familyFilter = FAMILY_ALL;
+        }
+    }
 
     // 2. Always refresh data so operational expenses are available for crop cards
     const refreshPromise = refreshData({ initialUserId: options.initialUserId });
