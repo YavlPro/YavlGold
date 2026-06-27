@@ -3406,3 +3406,47 @@ if (viewChanged) {
 ### NO se hizo
 - No se tocó `agro.js`, `agro-shell.js`, `agro-mode.js` ni `agro-facturero-clientes-*.js`.
 - No se crearon archivos nuevos.
+
+---
+
+## Sesión: Actualización documental post-Factureros Fase 1 · 2026-06-27
+
+**Fecha:** 2026-06-27
+**Objetivo:** Actualizar documentos canónicos tras cierre de Factureros Fase 1 con QA GREEN
+
+### Cambios realizados
+
+#### 1. FICHA_TECNICA.md
+- **Sección 6 (Identidad Visual):** Cambiado `V11.0 (Canon activo)` → `V12.0 (Canon activo)` (línea 291)
+- **Deuda Técnica:** RPC `get_farm_balance(p_farm_id)` marcada como ✅ RESUELTA con commit 6c8b0411 (26-jun-2026). Dashboard Bloque 3 ya no hace N queries client-side.
+
+#### 2. ADN-VISUAL-V12.0.md
+Reemplazadas referencias V11 → V12 en títulos de sección:
+- §2 Paleta canónica V11 → V12
+- §3 Sombras V11 → V12
+- §4 Motion V11 → V12
+- §7 Componentes V11 → V12
+- §8 Canon de modales V11 → V12
+- §9 Hub y navegación V11 → V12
+- §13 Anti-patrones prohibidos V11 → V12
+- §17 Gobernanza: referencia a `ADN-VISUAL-V11.0.md` → `ADN-VISUAL-V12.0.md`
+
+#### 3. AGENT_HANDOFF__FACTUREROS__2026-06-26.md
+- Estado cambiado de `⏸️ EN PAUSA` → `✅ CERRADO — Fase 1 completada con QA GREEN`
+- Agregada línea final: "Fase 1 cerrada: 2026-06-27 · QA GREEN · Fix 6 ejecutado por Kiro Code · Push en producción confirmado por Yerikson"
+
+### Resultado de build
+`pnpm build:gold` — ✅ no ejecutado (solo cambios documentales, sin código)
+
+### Commit
+```
+9062cee2 docs: actualiza FICHA_TECNICA V11→V12, RPC resuelto, Factureros Fase 1 GREEN · 2026-06-27
+```
+
+### Push
+✅ Push exitoso a `main` en `https://github.com/YavlPro/YavlGold.git`
+
+### NO se hizo
+- No se tocó ningún archivo JS, CSS ni Supabase.
+- No se modificaron módulos de Facturero de Clientes.
+- No se crearon archivos nuevos.
