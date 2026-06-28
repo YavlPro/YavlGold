@@ -18,7 +18,7 @@ body {
 }
 
 body.module-unavailable-page {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body), sans-serif;
   background:
     radial-gradient(circle at 18% 18%, rgba(200, 167, 82, 0.1) 0%, transparent 42%),
     radial-gradient(circle at 82% 78%, rgba(200, 167, 82, 0.08) 0%, transparent 38%),
@@ -63,7 +63,7 @@ body.module-unavailable-page {
   border: 1px solid rgba(200, 167, 82, 0.34);
   background: rgba(200, 167, 82, 0.09);
   color: var(--yg-unavailable-gold);
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.82rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -79,7 +79,7 @@ body.module-unavailable-page {
 
 .module-unavailable-title {
   margin: 0 0 14px;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading), sans-serif;
   font-size: clamp(2rem, 5vw, 3.6rem);
   line-height: 1.06;
   background: linear-gradient(135deg, var(--yg-unavailable-gold), var(--yg-unavailable-gold-strong));
@@ -112,7 +112,7 @@ body.module-unavailable-page {
 
 .module-unavailable-catalog-title {
   margin: 0 0 10px;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading), sans-serif;
   font-size: 0.95rem;
   color: var(--yg-unavailable-gold);
   letter-spacing: 0.06em;

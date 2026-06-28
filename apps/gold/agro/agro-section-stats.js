@@ -701,7 +701,7 @@ function doughnutChartOptions() {
                 position: 'right',
                 labels: {
                     color: 'rgba(255,255,255,0.7)',
-                    font: { family: 'Rajdhani', size: 12 },
+                    font: { family: 'Inter', size: 12 },
                     boxWidth: 14,
                     padding: 10
                 }

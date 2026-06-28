@@ -129,7 +129,7 @@ function initGeoDebugPanel() {
         'border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25))',
         'border-radius: 10px',
         'padding: 12px',
-        'font-family: Rajdhani, sans-serif',
+        'font-family: var(--font-body)',
         'font-size: 11px',
         'color: #e5e5e5',
         'min-width: 220px',
@@ -455,7 +455,7 @@ function openLocationSelector() {
     header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;';
 
     const title = document.createElement('h3');
-    title.style.cssText = "margin: 0; color: var(--v10-gold-4, #C8A752); font-family: 'Orbitron', sans-serif; font-size: 14px; letter-spacing: 1px;";
+    title.style.cssText = "margin: 0; color: var(--v10-gold-4, #C8A752); font-family: var(--font-heading); font-size: 14px; letter-spacing: 1px;";
     title.textContent = 'SELECCIONAR UBICACION';
 
     const closeBtn = document.createElement('button');

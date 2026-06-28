@@ -377,10 +377,7 @@ function injectForecastStyles() {
             font-size: 11px;
             font-weight: 700;
             color: #e5e5e5;
-            font-family: 'Orbitron', monospace;
-        }
-
-        .rain-value {
+            font-family: var(--font-heading);
             font-size: 9px;
             color: #60a5fa;
             height: 12px;

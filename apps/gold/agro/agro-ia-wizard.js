@@ -359,7 +359,7 @@ function injectStyles() {
 .aiw-header-left { display: flex; align-items: center; gap: 10px; }
 .aiw-header-icon { color: var(--gold-4, #C8A752); font-size: 1.1rem; }
 .aiw-header-title {
-    font-family: var(--font-heading, 'Orbitron', sans-serif);
+    font-family: var(--font-heading);
     font-size: 0.95rem; font-weight: 600;
     color: var(--text-1, #f5f5f5);
 }
@@ -378,13 +378,13 @@ function injectStyles() {
 }
 .aiw-body { padding: 20px; }
 .aiw-step-title {
-    font-family: var(--font-heading, 'Orbitron', sans-serif);
+    font-family: var(--font-heading);
     font-size: 1rem; font-weight: 600;
     color: var(--text-1, #f5f5f5);
     margin: 0 0 4px;
 }
 .aiw-step-subtitle {
-    font-family: var(--font-body, 'Rajdhani', sans-serif);
+    font-family: var(--font-body);
     font-size: 0.85rem; color: var(--text-3, #888);
     margin: 0 0 16px;
 }
@@ -402,7 +402,7 @@ function injectStyles() {
     text-align: left;
     transition: border-color 150ms ease, background 150ms ease;
     color: var(--text-2, #ccc);
-    font-family: var(--font-body, 'Rajdhani', sans-serif);
+    font-family: var(--font-body);
 }
 .aiw-option-card:hover {
     border-color: var(--gold-5, #A68A3E);
@@ -430,7 +430,7 @@ function injectStyles() {
 }
 .aiw-field-group { margin-bottom: 8px; }
 .aiw-field-label {
-    font-family: var(--font-body, 'Rajdhani', sans-serif);
+    font-family: var(--font-body);
     font-size: 0.82rem; color: var(--text-2, #ccc);
     display: block; margin-bottom: 8px;
 }
@@ -441,7 +441,7 @@ function injectStyles() {
     border: 1px solid var(--border-1, #2a2a2a);
     border-radius: 20px;
     padding: 6px 14px;
-    font-family: var(--font-body, 'Rajdhani', sans-serif);
+    font-family: var(--font-body);
     font-size: 0.82rem;
     color: var(--text-2, #ccc);
     cursor: pointer;
@@ -462,7 +462,7 @@ function injectStyles() {
     border: 1px solid var(--border-1, #2a2a2a);
     border-radius: 8px;
     padding: 10px 14px;
-    font-family: var(--font-body, 'Rajdhani', sans-serif);
+    font-family: var(--font-body);
     font-size: 0.85rem;
     color: var(--text-2, #ccc);
     cursor: pointer;
@@ -482,7 +482,7 @@ function injectStyles() {
 }
 .aiw-footer-spacer { flex: 1; }
 .aiw-btn {
-    font-family: var(--font-body, 'Rajdhani', sans-serif);
+    font-family: var(--font-body);
     font-size: 0.85rem; font-weight: 600;
     border-radius: 6px;
     padding: 8px 18px;
@@ -528,7 +528,7 @@ function injectStyles() {
     border-radius: 6px;
     padding: 6px 12px;
     margin-top: 10px;
-    font-family: var(--font-body, 'Rajdhani', sans-serif);
+    font-family: var(--font-body);
     font-size: 0.78rem;
     color: var(--gold-4, #C8A752);
     cursor: pointer;

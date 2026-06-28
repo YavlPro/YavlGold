@@ -327,7 +327,7 @@ function injectWizardStyles() {
             flex-shrink: 0;
         }
         .agro-wizard-header h3 {
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: 1rem;
             margin: 0 0 0.25rem;
             font-weight: 900;
@@ -533,7 +533,7 @@ function injectWizardStyles() {
             font-weight: 700;
             min-width: 60px;
             text-align: center;
-            font-family: 'Orbitron', monospace;
+            font-family: var(--font-heading);
         }
 
         /* Summary ticket */
@@ -566,7 +566,7 @@ function injectWizardStyles() {
         .wiz-ticket-total {
             font-size: 1.4rem;
             font-weight: 900;
-            font-family: 'Orbitron', monospace;
+            font-family: var(--font-heading);
             background: var(--v10-metallic-text, linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e));
             background-size: 200% 100%;
             -webkit-background-clip: text;
@@ -642,7 +642,7 @@ function injectWizardStyles() {
         .wiz-success-text {
             font-size: 1.1rem;
             font-weight: 900;
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             background: var(--v10-metallic-text, linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e));
             background-size: 200% 100%;
             -webkit-background-clip: text;
@@ -1809,7 +1809,7 @@ export async function openAgroWizard(tabName, deps) {
                     cause: insertData.causa,
                     originTable: insertData.origin_table
                 });
-                
+
                 const defaultOriginTable = insertData.origin_table;
                 // Explicitly assign only known buyer identity fields — avoids
                 // accidentally overwriting origin_table or other critical payload keys.

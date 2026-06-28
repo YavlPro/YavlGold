@@ -825,19 +825,19 @@ function renderActiveCart(cart, items, summary) {
     const processedItems = items.filter((item) => isProcessedItem(item));
     const itemsHtml = `
         ${renderCartItemsSection({
-            title: 'Pendientes por ejecutar',
-            helper: 'Planificados en carrito, aún sin registro contable.',
-            items: pendingItems,
-            emptyCopy: processedItems.length
-                ? 'Todo lo pendiente de este carrito ya fue registrado.'
-                : 'Sin items aún. Agrega uno abajo.'
-        })}
+        title: 'Pendientes por ejecutar',
+        helper: 'Planificados en carrito, aún sin registro contable.',
+        items: pendingItems,
+        emptyCopy: processedItems.length
+            ? 'Todo lo pendiente de este carrito ya fue registrado.'
+            : 'Sin items aún. Agrega uno abajo.'
+    })}
         ${processedItems.length ? renderCartItemsSection({
-            title: 'Procesados',
-            helper: 'Trazabilidad de lo ya registrado en Facturero de la Finca.',
-            items: processedItems,
-            variant: 'processed'
-        }) : ''}
+        title: 'Procesados',
+        helper: 'Trazabilidad de lo ya registrado en Facturero de la Finca.',
+        items: processedItems,
+        variant: 'processed'
+    }) : ''}
     `;
 
     return `
@@ -1703,7 +1703,7 @@ export function injectCartStyles() {
         .agro-cart-mini__eyebrow {
             margin: 0;
             color: var(--v10-gold-4, #C8A752);
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: 0.68rem;
             font-weight: 700;
             letter-spacing: 0.12em;
@@ -1712,7 +1712,7 @@ export function injectCartStyles() {
         .agro-cart-mini__title {
             margin: 0;
             color: #fff;
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: 0.95rem;
             line-height: 1.25;
         }

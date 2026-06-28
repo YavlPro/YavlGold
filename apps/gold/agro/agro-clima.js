@@ -344,7 +344,7 @@ function injectClimaStyles() {
         }
         .clima-view__title {
             margin: 0;
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: 1.15rem;
             letter-spacing: 1.5px;
             color: #fff;
@@ -354,7 +354,7 @@ function injectClimaStyles() {
             margin: 0.3rem 0 0;
             font-size: 0.82rem;
             color: rgba(255,255,255,0.6);
-            font-family: 'Rajdhani', sans-serif;
+            font-family: var(--font-body);
         }
         .clima-view__actions {
             display: flex;
@@ -372,7 +372,7 @@ function injectClimaStyles() {
             font-weight: 700;
             cursor: pointer;
             transition: background 180ms ease, border-color 180ms ease;
-            font-family: 'Rajdhani', sans-serif;
+            font-family: var(--font-body);
             letter-spacing: 0.3px;
         }
         .clima-btn-location:hover,
@@ -415,7 +415,7 @@ function injectClimaStyles() {
             filter: drop-shadow(0 2px 8px rgba(200,167,82,0.15));
         }
         .clima-current__temp {
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: 2.8rem;
             font-weight: 700;
             color: #fff;
@@ -425,7 +425,7 @@ function injectClimaStyles() {
             font-size: 0.88rem;
             color: rgba(255,255,255,0.7);
             margin-top: 0.3rem;
-            font-family: 'Rajdhani', sans-serif;
+            font-family: var(--font-body);
         }
         .clima-current__details {
             flex: 1;
@@ -448,13 +448,13 @@ function injectClimaStyles() {
             color: rgba(255,255,255,0.5);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            font-family: 'Rajdhani', sans-serif;
+            font-family: var(--font-body);
         }
         .clima-detail__value {
             font-size: 0.95rem;
             font-weight: 700;
             color: var(--v10-gold-4, #C8A752);
-            font-family: 'Rajdhani', sans-serif;
+            font-family: var(--font-body);
         }
 
         /* Agro advice */
@@ -466,7 +466,7 @@ function injectClimaStyles() {
         }
         .clima-advice__title {
             margin: 0 0 0.7rem;
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: 0.78rem;
             letter-spacing: 1px;
             color: var(--v10-gold-4, #C8A752);
@@ -486,7 +486,7 @@ function injectClimaStyles() {
             font-size: 0.82rem;
             color: rgba(255,255,255,0.85);
             line-height: 1.4;
-            font-family: 'Rajdhani', sans-serif;
+            font-family: var(--font-body);
         }
         .clima-tip--success { background: rgba(34,197,94,0.08); border-left: 3px solid rgba(34,197,94,0.5); }
         .clima-tip--info { background: rgba(200,167,82,0.06); border-left: 3px solid rgba(200,167,82,0.4); }
@@ -504,7 +504,7 @@ function injectClimaStyles() {
         }
         .clima-forecast__title {
             margin: 0 0 0.8rem;
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: 0.78rem;
             letter-spacing: 1px;
             color: var(--v10-gold-4, #C8A752);
@@ -537,7 +537,7 @@ function injectClimaStyles() {
                 rgba(12,12,12,0.9);
         }
         .clima-forecast-day__name {
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: 0.62rem;
             font-weight: 700;
             color: rgba(255,255,255,0.8);
@@ -559,7 +559,7 @@ function injectClimaStyles() {
         .clima-forecast-day__temps {
             display: flex;
             gap: 0.3rem;
-            font-family: 'Rajdhani', sans-serif;
+            font-family: var(--font-body);
             font-weight: 700;
         }
         .clima-temp-max { font-size: 0.82rem; color: #fff; }
@@ -567,7 +567,7 @@ function injectClimaStyles() {
         .clima-forecast-day__rain {
             font-size: 0.62rem;
             color: rgba(100,180,255,0.7);
-            font-family: 'Rajdhani', sans-serif;
+            font-family: var(--font-body);
         }
         .clima-forecast-day__uv {
             font-size: 0.58rem;
@@ -583,7 +583,7 @@ function injectClimaStyles() {
             border-top: 1px solid rgba(200,167,82,0.1);
             font-size: 0.65rem;
             color: rgba(255,255,255,0.35);
-            font-family: 'Rajdhani', sans-serif;
+            font-family: var(--font-body);
         }
 
         /* Loading / Error states */
@@ -604,12 +604,12 @@ function injectClimaStyles() {
             margin-bottom: 0.8rem;
         }
         .clima-loading__text {
-            font-family: 'Rajdhani', sans-serif;
+            font-family: var(--font-body);
             font-size: 0.9rem;
             color: rgba(255,255,255,0.6);
         }
         .clima-error__title {
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: 0.9rem;
             color: #fff;
             margin-bottom: 0.5rem;
@@ -649,7 +649,7 @@ function injectClimaStyles() {
         }
         .clima-loc-modal__header h3 {
             margin: 0;
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: 0.78rem;
             color: var(--v10-gold-4, #C8A752);
             letter-spacing: 1px;
@@ -670,7 +670,7 @@ function injectClimaStyles() {
             border-radius: 10px;
             color: #fff;
             font-size: 0.85rem;
-            font-family: 'Rajdhani', sans-serif;
+            font-family: var(--font-body);
             outline: none;
             box-sizing: border-box;
         }
@@ -691,7 +691,7 @@ function injectClimaStyles() {
             color: rgba(255,255,255,0.85);
             transition: background 150ms ease;
             border: 1px solid transparent;
-            font-family: 'Rajdhani', sans-serif;
+            font-family: var(--font-body);
         }
         .clima-loc-result:hover {
             background: rgba(200,167,82,0.1);

@@ -459,11 +459,11 @@ function injectTickerStyles() {
         .ticker-label {
             font-weight: 700;
             color: #e5e5e5;
-            font-family: 'Rajdhani', sans-serif;
+            font-family: var(--font-body);
         }
 
         .ticker-value {
-            font-family: 'Orbitron', monospace;
+            font-family: var(--font-heading);
             color: var(--gold-primary, #C8A752);
             font-size: 0.9rem;
         }

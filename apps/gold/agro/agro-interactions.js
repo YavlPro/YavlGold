@@ -256,7 +256,7 @@ function renderAgendaPanel(dateStr) {
     panel.innerHTML = `
         <div style="animation: fadeIn 0.3s ease;">
             <div style="font-size: 10px; color: var(--v10-gold-4, #C8A752); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px;">PROGRAMACIÓN</div>
-            <h2 style="font-size: 1.2rem; color: #fff; font-family: 'Orbitron', sans-serif; margin: 0 0 6px 0; text-transform: capitalize; line-height: 1.3;">${humanDate}</h2>
+            <h2 style="font-size: 1.2rem; color: #fff; font-family: var(--font-heading); margin: 0 0 6px 0; text-transform: capitalize; line-height: 1.3;">${humanDate}</h2>
             <div style="font-size: 12px; color: #888; margin-bottom: 20px;">${phaseInfo.icon} ${phaseInfo.name}</div>
 
             <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; max-height: 220px; overflow-y: auto;">
@@ -267,7 +267,7 @@ function renderAgendaPanel(dateStr) {
                 <label style="font-size: 11px; color: #666; display: block; margin-bottom: 8px;">Agregar Nota</label>
                 <div style="display: flex; gap: 8px;">
                     <input type="text" id="agenda-note-input" placeholder="Ej: Comprar fertilizante..."
-                        style="flex: 1; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #fff; outline: none; transition: border-color 0.2s; font-family: 'Rajdhani', sans-serif;"
+                        style="flex: 1; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #fff; outline: none; transition: border-color 0.2s; font-family: var(--font-body);"
                         onfocus="this.style.borderColor='var(--v10-gold-4, #C8A752)'"
                         onblur="this.style.borderColor='rgba(255,255,255,0.15)'"
                         onkeypress="if(event.key === 'Enter') window.saveTask()">
