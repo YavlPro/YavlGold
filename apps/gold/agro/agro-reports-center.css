@@ -21,7 +21,7 @@
   min-height: 44px;
   border: 1px solid var(--border-gold);
   border-radius: var(--radius-pill);
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-weight: 800;
   line-height: 1;
   cursor: pointer;
@@ -30,7 +30,7 @@
 
 .agro-reports-category__eyebrow {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: var(--type-eyebrow);
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -82,7 +82,7 @@
 
 .agro-reports-summary dd {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: var(--type-card-title);
   color: var(--gold-4);
 }
@@ -125,7 +125,7 @@
 
 .agro-reports-empty__title {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: var(--type-section-title);
   color: var(--gold-4);
 }
@@ -151,7 +151,7 @@
 
 .agro-reports-category__title {
   margin: 0.16rem 0 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: var(--type-section-title);
   line-height: 1.1;
   color: var(--text-primary);
@@ -243,7 +243,7 @@
 
 .agro-report-card__title {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: var(--type-card-title);
   line-height: 1.2;
   color: var(--text-primary);

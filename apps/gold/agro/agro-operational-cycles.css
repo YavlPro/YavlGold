@@ -83,7 +83,7 @@ body.agro-operational-modal-open {
 
 .agro-operational-modal__eyebrow {
   margin: 0 0 0.2rem;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.66rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -179,7 +179,7 @@ body.agro-operational-modal-open {
 .agro-operational-panel__eyebrow,
 .agro-operational-list-eyebrow {
   margin: 0 0 0.18rem;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.66rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -190,7 +190,7 @@ body.agro-operational-modal-open {
 .agro-operational-panel__title,
 .agro-operational-list-title {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: clamp(1rem, 2.2vw, 1.25rem);
   color: var(--text-primary);
 }
@@ -404,7 +404,7 @@ body.agro-operational-modal-open {
 }
 
 .agro-operational-summary-card__label {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.82rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -412,7 +412,7 @@ body.agro-operational-modal-open {
 }
 
 .agro-operational-summary-card__value {
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: clamp(0.98rem, 2vw, 1.18rem);
   color: var(--gold-4);
 }
@@ -463,7 +463,7 @@ body.agro-operational-modal-open {
 }
 
 .agro-operational-overview-summary__label {
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.7rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -535,7 +535,7 @@ body.agro-operational-modal-open {
 }
 
 .agro-operational-overview-hero__label {
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.7rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -668,7 +668,7 @@ body.agro-operational-modal-open {
   min-width: 86px;
   padding: 0.28rem 0.6rem;
   border-radius: var(--radius-pill);
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.68rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -858,7 +858,7 @@ body.agro-operational-modal-open {
 }
 
 .agro-operational-family-break__label {
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.68rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -901,7 +901,7 @@ body.agro-operational-modal-open {
 
 .agro-operational-family-section__eyebrow {
   margin: 0 0 0.18rem;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.62rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -911,7 +911,7 @@ body.agro-operational-modal-open {
 
 .agro-operational-family-section__title {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.98rem;
   color: var(--text-primary);
 }
@@ -939,7 +939,7 @@ body.agro-operational-modal-open {
   border: 1px solid var(--border-neutral);
   background: var(--bg-1);
   color: var(--text-secondary);
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.72rem;
   font-weight: 700;
   white-space: nowrap;
@@ -990,7 +990,7 @@ body.agro-operational-modal-open {
   border: 1px solid var(--border-gold);
   background: color-mix(in srgb, var(--gold-4) 12%, transparent);
   color: var(--gold-5);
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.76rem;
 }
 
@@ -1035,7 +1035,7 @@ body.agro-operational-modal-open {
 
 .agro-operational-card__title {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.92rem;
   line-height: 1.1;
   letter-spacing: 0.01em;
@@ -1090,7 +1090,7 @@ body.agro-operational-modal-open {
   color: var(--text-primary);
   font-weight: 700;
   font-size: 0.76rem;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
 }
 
 .agro-operational-card__metric[data-tone='success'] dd {
@@ -1113,7 +1113,7 @@ body.agro-operational-modal-open {
   justify-content: center;
   padding: 0.28rem 0.56rem;
   border-radius: var(--radius-pill);
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.66rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -1224,7 +1224,7 @@ body.agro-operational-modal-open {
 }
 
 .agro-operational-physical-summary__label {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -1232,7 +1232,7 @@ body.agro-operational-modal-open {
 }
 
 .agro-operational-physical-summary__value {
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.96rem;
   color: var(--text-primary);
   line-height: 1.3;
@@ -1331,7 +1331,7 @@ body.agro-operational-modal-open {
   justify-content: space-between;
   gap: 0.6rem;
   padding: 0.7rem 0.8rem;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.76rem;
   color: var(--gold-4);
 }
@@ -1403,7 +1403,7 @@ body.agro-operational-modal-open {
 
 .agro-operational-empty__title {
   margin: 0.5rem 0 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1rem;
   color: var(--text-primary);
 }
@@ -1588,7 +1588,7 @@ body.agro-operational-modal-open {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.78rem;
 }
 
@@ -1637,7 +1637,7 @@ body.agro-operational-modal-open {
 
 .agro-operational-step-panel__eyebrow {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.68rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -1646,7 +1646,7 @@ body.agro-operational-modal-open {
 
 .agro-operational-step-panel__title {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1rem;
   color: var(--text-primary);
 }
@@ -1722,7 +1722,7 @@ body.agro-operational-modal-open {
 }
 
 .agro-operational-filter-summary__label {
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.7rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1798,7 +1798,7 @@ body.agro-operational-modal-open {
 
 .agro-operational-export-filename {
   color: var(--gold-5);
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.76rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1845,7 +1845,7 @@ body.agro-operational-modal-open {
 
 .agro-operational-summary-card code {
   color: var(--gold-5);
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.7rem;
 }
 

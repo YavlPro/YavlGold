@@ -20,7 +20,7 @@
 .agro-clients-header__eyebrow,
 .agro-clients-modal__eyebrow {
   margin: 0 0 0.18rem;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: var(--type-eyebrow);
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -30,7 +30,7 @@
 
 .agro-clients-header__title {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: var(--type-page-title);
   line-height: 1.1;
   color: var(--text-primary);
@@ -228,7 +228,7 @@ body[data-agro-active-view="clients"][data-agro-shell-depth="module"] .agro-mobi
 
 .agro-clients-card__name {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: var(--type-card-title);
   line-height: 1.2;
   color: var(--text-primary);
@@ -355,7 +355,7 @@ body[data-agro-active-view="clients"][data-agro-shell-depth="module"] .agro-mobi
 
 .agro-clients-empty h3 {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: var(--type-card-title);
   color: var(--text-primary);
 }
@@ -424,7 +424,7 @@ body[data-agro-active-view="clients"][data-agro-shell-depth="module"] .agro-mobi
 
 .agro-clients-modal__head h3 {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: var(--type-section-title);
   color: var(--text-primary);
 }

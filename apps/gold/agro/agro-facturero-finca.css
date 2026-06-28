@@ -99,7 +99,7 @@
 
 .agro-ops-v10 .module-title {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: clamp(1.05rem, 2.5vw, 1.35rem);
   font-weight: 900;
   line-height: 1.1;
@@ -113,7 +113,7 @@
 
 .agro-ops-v10 .module-subtitle {
   margin-top: 0.2rem;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: var(--text-sm);
   font-weight: 600;
   color: var(--text-muted);
@@ -143,7 +143,7 @@
 
 .ops-module-eyebrow {
   margin: 0 0 0.1rem;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.54rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -206,7 +206,7 @@ body[data-agro-active-view='rankings'] .ops-header-rankings {
 }
 
 .agro-ops-header__eyebrow {
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.18em;
@@ -217,7 +217,7 @@ body[data-agro-active-view='rankings'] .ops-header-rankings {
 
 .agro-ops-header__title {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: clamp(1.15rem, 2.5vw, 1.6rem);
   font-weight: 900;
   line-height: 1.15;
@@ -303,7 +303,7 @@ body[data-agro-active-view='rankings'] .ops-header-rankings {
 
 .agro-ops-v10 .financial-operations-kicker {
   margin: 0 0 0.04rem;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: var(--type-caption);
   font-weight: 700;
   letter-spacing: 0.13em;
@@ -313,7 +313,7 @@ body[data-agro-active-view='rankings'] .ops-header-rankings {
 
 .agro-ops-v10 .financial-operations-title {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: 0.07em;
@@ -331,7 +331,7 @@ body[data-agro-active-view='rankings'] .ops-header-rankings {
 
 .agro-ops-v10 .ops-total-display {
   margin: 0.08rem 0 0;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: var(--type-body-sm);
   color: rgba(229, 213, 160, 0.8);
   letter-spacing: 0.2px;
@@ -351,7 +351,7 @@ body[data-agro-active-view='rankings'] .ops-header-rankings {
 
 .agro-ops-v10 .financial-operations-toolbar-label {
   margin: 0 0 0.04rem;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: var(--type-caption);
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -379,7 +379,7 @@ body[data-agro-active-view='rankings'] .ops-header-rankings {
   border-radius: 999px;
   min-height: 31px;
   padding: 0.24rem 0.62rem;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: var(--type-label);
   font-weight: 700;
   letter-spacing: 0.18px;
@@ -689,7 +689,7 @@ body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
   cursor: pointer;
   transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
   white-space: nowrap;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
 }
 
 .agro-privacy-strip .btn-privacy-toggle:hover {
@@ -824,7 +824,7 @@ body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
 .agro-ops-v10 .agro-pagados-history__eyebrow,
 .agro-ops-v10 .agro-pagados-step__label {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: var(--type-eyebrow);
   letter-spacing: 0.13em;
   text-transform: uppercase;
@@ -836,7 +836,7 @@ body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
 .agro-ops-v10 .agro-pagados-history__title,
 .agro-ops-v10 .agro-pagados-step__title {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   color: rgba(255, 255, 255, 0.92);
   letter-spacing: 0.04em;
 }
@@ -868,7 +868,7 @@ body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
   border: 1px solid rgba(200, 167, 82, 0.22);
   border-radius: 999px;
   padding: 0.32rem 0.72rem;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.6rem;
   letter-spacing: 0.08em;
   color: rgba(243, 222, 176, 0.92);
@@ -884,7 +884,7 @@ body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
   border: 1px solid rgba(200, 167, 82, 0.24);
   border-radius: 999px;
   padding: 0.26rem 0.62rem;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.62rem;
   letter-spacing: 0.08em;
   color: rgba(243, 222, 176, 0.9);
@@ -1057,7 +1057,7 @@ body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
 }
 
 .agro-ops-v10 .agro-pagados-search__label {
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: var(--type-caption);
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -1071,7 +1071,7 @@ body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
   background: rgba(255, 255, 255, 0.03);
   color: #fff;
   padding: 0.56rem 0.72rem;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.82rem;
 }
 
@@ -1102,7 +1102,7 @@ body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
   border: 1px solid rgba(200, 167, 82, 0.22);
   background: rgba(255, 255, 255, 0.025);
   color: rgba(255, 255, 255, 0.72);
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
@@ -1217,7 +1217,7 @@ body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
 }
 
 .agro-ops-v10 .agro-dedicated-stats__value {
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: clamp(0.92rem, 1.8vw, 1.12rem);
   font-weight: 700;
   color: var(--v10-gold-4, #C8A752);
@@ -1229,7 +1229,7 @@ body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
 }
 
 .agro-ops-v10 .agro-dedicated-stats__label {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.72rem;
   color: rgba(255, 255, 255, 0.52);
   text-transform: uppercase;
@@ -1255,7 +1255,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 }
 
 .agro-ss-context__eyebrow {
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.56rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -1264,7 +1264,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 }
 
 .agro-ss-context__value {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: 1rem;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.88);
@@ -1273,7 +1273,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 
 .agro-ss-context__copy {
   margin: 0;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.82rem;
   color: rgba(255, 255, 255, 0.58);
   line-height: 1.35;
@@ -1298,7 +1298,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 }
 
 .agro-ss-kpi__value {
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1.2rem;
   font-weight: 700;
   color: var(--v10-gold-4, #C8A752);
@@ -1306,7 +1306,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 }
 
 .agro-ss-kpi__label {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.72rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.52);
@@ -1332,7 +1332,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
   border-radius: 8px;
   background: transparent;
   color: rgba(255, 255, 255, 0.5);
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
@@ -1371,7 +1371,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 }
 
 .agro-ss-chart-card__title {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.82rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.6);
@@ -1405,7 +1405,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 }
 
 .agro-ss-insight {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.88rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.72);
@@ -1439,7 +1439,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 }
 
 .agro-ss-empty__text {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.92rem;
   color: rgba(255, 255, 255, 0.4);
   margin: 0;
@@ -1474,7 +1474,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 }
 
 .agro-ss-loading__text {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.85rem;
   color: rgba(255, 255, 255, 0.4);
   margin: 0;
@@ -1759,7 +1759,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: var(--text-sm);
   font-weight: 700;
   line-height: 1;
@@ -1853,7 +1853,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: var(--text-xs);
   font-weight: 700;
   border: 1px solid var(--border-neutral);
@@ -1889,7 +1889,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 }
 
 .agro-ops-v10 .step-label {
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: var(--text-xs);
   font-weight: 700;
   text-transform: uppercase;
@@ -1934,7 +1934,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 
 .agro-ops-v10 .crop-selector-title {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: var(--text-sm);
   font-weight: 700;
   text-transform: uppercase;
@@ -2113,7 +2113,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 
 .agro-ops-v10 .crop-meta-name {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: var(--text-sm);
   font-weight: 700;
   color: var(--text-primary);
@@ -2124,7 +2124,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 
 .agro-ops-v10 .crop-meta-sub {
   margin-top: 0.15rem;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 600;
   color: var(--text-muted);
@@ -2140,7 +2140,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
   padding: 3px 8px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--border-neutral);
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.55rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -2189,7 +2189,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 700;
   text-decoration: none;
@@ -2219,7 +2219,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
   padding: 7px 14px;
   background: transparent;
   color: var(--text-muted);
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 700;
   text-transform: uppercase;
@@ -2249,7 +2249,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
   border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--gold-4) 15%, transparent);
   color: var(--gold-4);
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.55rem;
   font-weight: 700;
 }
@@ -2313,7 +2313,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: var(--text-md);
   font-weight: 700;
   color: var(--text-gold-prestige);
@@ -2332,7 +2332,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
   border-left: 3px solid var(--gold-3);
   border-radius: var(--radius-xs);
   background: var(--gold-1);
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 600;
   line-height: 1.6;
@@ -2389,7 +2389,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 }
 
 .agro-ops-v10 .summary-label {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 600;
   text-transform: uppercase;
@@ -2399,7 +2399,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 
 .agro-ops-v10 .summary-value {
   margin-top: 0.15rem;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: var(--text-lg);
   font-weight: 700;
   line-height: 1.2;
@@ -2424,7 +2424,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 
 .agro-ops-v10 .summary-sub {
   margin-top: 0.1rem;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 600;
   color: var(--text-muted);
@@ -2474,7 +2474,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
   outline: 0;
   background: transparent;
   color: var(--text-primary);
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: var(--text-sm);
   font-weight: 600;
 }
@@ -2494,7 +2494,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
   border-radius: var(--radius-pill);
   background: transparent;
   color: var(--text-muted);
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 600;
   padding: 4px 10px;
@@ -2532,7 +2532,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
   border-radius: var(--radius-pill);
   border: 1px solid var(--border-neutral);
   background: var(--bg-3);
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.55rem;
   font-weight: 700;
   letter-spacing: 1.5px;
@@ -2555,7 +2555,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 
 .agro-ops-v10 .empty-state-text {
   margin: 10px 0 16px;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: var(--text-sm);
   font-weight: 600;
   color: var(--text-muted);
@@ -2622,7 +2622,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 .agro-ops-v10 .yg-accordion-title {
   margin: 0;
   flex: 1;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: var(--text-sm);
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -2705,7 +2705,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: var(--text-sm);
   font-weight: 700;
   color: var(--text-gold-prestige);
@@ -2714,7 +2714,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 
 .agro-ops-v10 .agrorepo-subtitle {
   display: block;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.72rem;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.5);
@@ -2866,7 +2866,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 /* §15 TRANSACTION BODY DETAILS */
 .agro-ops-v10 .tx-client {
   margin: 0;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: var(--text-sm);
   font-weight: 700;
   color: var(--text-primary);
@@ -2877,14 +2877,14 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 
 .agro-ops-v10 .tx-detail {
   margin: 0;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 600;
   color: var(--text-muted);
 }
 
 .agro-ops-v10 .tx-date {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 600;
   color: var(--text-muted);
@@ -2894,7 +2894,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 600;
   color: var(--gold-3);
@@ -2903,7 +2903,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 /* §16 TRANSACTION AMOUNT */
 .agro-ops-v10 .tx-amount {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: var(--text-base);
   font-weight: 700;
   line-height: 1.2;
@@ -2940,7 +2940,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 
 .agro-ops-v10 .tx-amount-sub {
   margin-top: 0.1rem;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 600;
   color: var(--text-muted);
@@ -2954,7 +2954,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
   padding: 3px 8px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--border-neutral);
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.55rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -3000,7 +3000,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
   border-radius: var(--radius-pill);
   border: 1px solid var(--border-neutral);
   background: transparent;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 600;
   color: var(--text-muted);
@@ -3063,7 +3063,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 }
 
 .agro-ops-v10 .tx-actions-trigger-label {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 700;
   letter-spacing: 0.4px;
@@ -3399,7 +3399,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
   border: 1px solid color-mix(in srgb, var(--gold-4) 20%, transparent);
   border-radius: var(--radius-xs);
   color: var(--gold-4);
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.03em;
@@ -3459,7 +3459,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
   background: color-mix(in srgb, var(--gold-4) 4%, var(--bg-1));
   border-left: 3px solid var(--gold-4);
   border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--gold-4);
@@ -3468,7 +3468,7 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 }
 
 .agro-farm-section-divider span {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-weight: 500;
   color: var(--text-secondary);
   text-transform: none;
