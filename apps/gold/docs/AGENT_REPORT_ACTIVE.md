@@ -3543,3 +3543,45 @@ Preservado correctamente en:
 - No se modificaron módulos de Agro.
 - No se crearon archivos nuevos.
 - No se tocaron colores, layout ni animaciones.
+
+---
+
+## Sesión: Migración Tipográfica CSS Hub Agro → V12
+
+**Fecha:** 2026-06-28
+**Agente:** OpenCode
+**Objetivo:** Migrar tipografía CSS del hub de Agro de Orbitron+Rajdhani (V10) a Plus Jakarta Sans+Inter (V12) — solo CSS, sin tocar ningún JS.
+
+### Archivos modificados (6 CSS + 1 doc)
+
+| Archivo | Cambio |
+| --- | --- |
+| `apps/gold/agro/agro-tokens.css` | Tokens `--font-heading`, `--font-body`, `--font-quote` agregados |
+| `apps/gold/agro/agro.css` | 60+ refs migradas (Orbitron→`var(--font-heading)`, Rajdhani→`var(--font-body)`) |
+| `apps/gold/agro/agro-dashboard.css` | 25+ refs migradas |
+| `apps/gold/agro/agro-index-critical.css` | 20+ refs migradas |
+| `apps/gold/agro/agro-task-cycles.css` | 11 refs migradas |
+| `apps/gold/agro/agro-repo.css` | 3 refs migradas |
+| `apps/gold/docs/DEUDA_TIPOGRAFIA_JS.md` | Documentación de las 59 refs JS pendientes |
+
+### Deuda JS documentada
+
+59 refs de Orbitron/Rajdhani en 11 archivos JS — documentadas en `DEUDA_TIPOGRAFIA_JS.md`.
+Breakdown: agro-clima.js (19), agro-agenda.js (13), agro-ia-wizard.js (9), agro.js (4, monolito), y otros.
+
+### Resultado de build
+`pnpm build:gold` — ✅ Todos los gates pasaron.
+
+### Commit
+```
+33ea0d97 feat(agro): migración tipográfica V12 CSS · agro hub · 2026-06-28
+```
+
+### Push
+✅ Push exitoso a `main`
+
+### NO se hizo
+- No se tocó ningún archivo JS.
+- No se modificó agro.js (monolito frozen).
+- No se tocaron colores, layout ni animaciones.
+- No se crearon archivos CSS nuevos (solo se editaron los existentes).
