@@ -91,11 +91,11 @@
      2. TIPOGRAFÍA (FUTURISMO AGRO-TECH)
      ========================================= */
 
-  /* Títulos: Geométricos y Tecnológicos */
-  --font-heading: 'Orbitron', sans-serif;
+  /* Títulos: Plus Jakarta Sans (V12 canónico) */
+  --font-heading: 'Plus Jakarta Sans', sans-serif;
 
-  /* Cuerpo: Técnico y Legible */
-  --font-body: 'Rajdhani', sans-serif;
+  /* Cuerpo: Inter (V12 canónico) */
+  --font-body: 'Inter', sans-serif;
 
   /* Monospaced: Código */
   --font-mono: 'Courier New', monospace;
@@ -394,7 +394,7 @@ body.light-mode,
   white-space: normal;
   background: var(--bg-1, #0a0a0a);
   color: var(--gold-4, #C8A752);
-  font-family: var(--font-body, 'Rajdhani', sans-serif);
+  font-family: var(--font-body, 'Inter', sans-serif);
   font-size: 1rem;
   font-weight: 700;
   border: 2px solid var(--gold-4, #C8A752);
