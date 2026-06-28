@@ -15,7 +15,7 @@ body.light-mode {
 }
 
 body {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: var(--bg-dark);
   color: var(--text-light);
   margin: 0;

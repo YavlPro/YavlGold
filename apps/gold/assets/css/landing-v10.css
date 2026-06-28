@@ -75,7 +75,7 @@
   --chip-inactive-text: #6b5a3e; --chip-active-text: #C8A752; --chip-active-bg: rgba(200,167,82,0.12);
   --chip-radius: 999px; --chip-padding: 6px 14px; --chip-gap: 8px; --switch-capsule-padding: 4px;
   /* §4 — Tipografía */
-  --font-brand: 'Orbitron', sans-serif; --font-ui: 'Rajdhani', sans-serif; --font-prestige: 'Playfair Display', serif;
+  --font-brand: 'Plus Jakarta Sans', sans-serif; --font-ui: 'Inter', sans-serif; --font-prestige: 'Playfair Display', serif;
   /* §3 — Escala Tipográfica */
   --text-xs: 0.70rem; --text-sm: 0.80rem; --text-base: 0.92rem; --text-md: 1.00rem;
   --text-lg: 1.10rem; --text-xl: 1.30rem; --text-2xl: 1.60rem; --text-3xl: 2.20rem; --text-4xl: 3.80rem;
