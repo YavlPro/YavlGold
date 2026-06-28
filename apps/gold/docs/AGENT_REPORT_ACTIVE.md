@@ -3450,3 +3450,51 @@ Reemplazadas referencias V11 → V12 en títulos de sección:
 - No se tocó ningún archivo JS, CSS ni Supabase.
 - No se modificaron módulos de Facturero de Clientes.
 - No se crearon archivos nuevos.
+
+---
+
+## Sesión — Migración Tipográfica V12 Footer Pages
+
+**Fecha:** 2026-06-28
+**Objetivo:** Migrar tipografía de las 7 páginas del footer (Legal + Proyecto) al canon V12 (Plus Jakarta Sans + Inter).
+
+### Diagnóstico previo
+
+Las páginas del footer usaban Orbitron + Rajdhani (V10 deprecated). La landing ya estaba migrada a V12.
+
+### Archivos modificados
+
+| Archivo | Cambio | Método |
+|---|---|---|
+| `tokens.css:95,98` | `--font-heading` → Plus Jakarta Sans, `--font-body` → Inter | Tokens globales |
+| `tokens.css:397` | Fallback sr-only-focusable: Rajdhani → Inter | Token heredado |
+| `open-source.html` | Google Fonts import → PJS + Inter | Individual |
+| `privacy.html` | Google Fonts import → PJS + Inter | Individual |
+| `terms.html` | Google Fonts import → PJS + Inter | Individual |
+| `security.html` | Google Fonts import → PJS + Inter | Individual |
+| `anti-suplantacion.html` | Google Fonts import → PJS + Inter | Individual |
+| `status.html` | Google Fonts import → PJS + Inter | Individual |
+| `docs-agro.css:33,34` | `--font-heading` → PJS, `--font-body` → Inter | CSS dedicado |
+| `docs-agro.html` | Google Fonts import → PJS + Inter | Individual |
+
+### Método de herencia
+
+- **Trust pages (6):** `trust-pages.css` → `@import url('./tokens.css')`. Cambiar tokens.css propagation automática a headings/body de todas las trust pages.
+- **docs-agro.html:** CSS dedicado `docs-agro.css` con sus propios `:root` tokens. Requirió edición independiente.
+
+### Resultado de build
+`pnpm build:gold` — ✅ Todos los gates pasaron (agent-guard, agent-report-check, vite build, check-llms, check-dist-utf8).
+
+### Commit
+```
+fcf344f2 feat(landing): migración tipográfica V12 en páginas del footer Legal + Proyecto · 2026-06-28
+```
+
+### Push
+✅ Push exitoso a `main` en `https://github.com/YavlPro/YavlGold.git`
+
+### NO se hizo
+- No se tocó ningún archivo JS, lógica, estructura ni contenido.
+- No se modificaron módulos de Agro.
+- No se crearon archivos nuevos (excepto el propio reporte).
+- No se tocaron colores, layout ni animaciones.
