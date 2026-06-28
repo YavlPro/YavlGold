@@ -32,7 +32,7 @@
         }
 
         .agro-splash__title {
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: 1.15rem;
             font-weight: 700;
             color: var(--gold-4, #C8A752);
@@ -42,7 +42,7 @@
         }
 
         .agro-splash__subtitle {
-            font-family: 'Rajdhani', sans-serif;
+            font-family: var(--font-body);
             font-size: 0.88rem;
             color: var(--text-secondary, #a0a0a0);
             opacity: 0;
@@ -139,7 +139,7 @@
         }
 
         body {
-            font-family: 'Rajdhani', sans-serif;
+            font-family: var(--font-body);
             font-weight: 400;
             background-color: var(--bg-base);
             color: var(--text-primary);
@@ -236,7 +236,7 @@
         }
 
         .logo-text {
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-weight: 900;
             font-size: 1.75rem;
             background: linear-gradient(135deg, var(--gold-light), var(--gold-primary), var(--gold-dark));
@@ -258,7 +258,7 @@
         }
 
         .version-badge {
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: 0.65rem;
             font-weight: 700;
             padding: 0.2rem 0.5rem;
@@ -270,7 +270,7 @@
         }
 
         .module-release-badge {
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: 0.62rem;
             font-weight: 800;
             letter-spacing: 0.08em;
@@ -432,7 +432,7 @@
 
         .agro-notif-dropdown__title {
             color: var(--gold-primary);
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: 10px;
             font-weight: 700;
             letter-spacing: 2px;
@@ -553,7 +553,7 @@
         #modal-lunar .agro-lunar-modal__title,
         #modal-market .agro-market-modal__title {
             margin: 0;
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             color: var(--text-primary);
             letter-spacing: 1px;
             text-shadow: 0 0 20px rgba(200, 167, 82, 0.3);
@@ -599,7 +599,7 @@
 
         #modal-lunar .agro-lunar-modal__side-title {
             margin: 0;
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: 1rem;
             color: var(--gold-primary);
         }
@@ -781,7 +781,7 @@
         }
 
         .section-title {
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-weight: 700;
             font-size: 1.1rem;
             color: var(--text-primary);
@@ -854,7 +854,7 @@
         }
 
         .financial-operations-title {
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: 0.95rem;
             letter-spacing: 1.5px;
             text-transform: uppercase;
@@ -899,7 +899,7 @@
             color: var(--text-secondary);
             padding: 0.34rem 0.7rem;
             border-radius: var(--radius-pill);
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: 0.66rem;
             letter-spacing: 0.08em;
             text-transform: uppercase;
@@ -982,7 +982,7 @@
         }
 
         .kpi-label {
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: 0.7rem;
             font-weight: 700;
             text-transform: uppercase;
@@ -1073,7 +1073,7 @@
         }
 
         .crop-name {
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-weight: 700;
             font-size: 1rem;
             color: var(--text-primary);
@@ -1155,7 +1155,7 @@
         }
 
         .progress-value {
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: 0.85rem;
             font-weight: 700;
             color: var(--gold-primary);
@@ -1255,7 +1255,7 @@
         }
 
         .input-label {
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: 0.7rem;
             font-weight: 700;
             text-transform: uppercase;
@@ -1284,7 +1284,7 @@
             border: 1px solid var(--border-subtle);
             border-radius: var(--radius-md);
             color: var(--text-primary);
-            font-family: 'Rajdhani', sans-serif;
+            font-family: var(--font-body);
             font-size: 1.1rem;
             font-weight: 600;
             transition: all 0.3s ease;
@@ -1307,7 +1307,7 @@
             align-items: center;
             justify-content: center;
             gap: var(--spacing-xs);
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-weight: 700;
             font-size: 0.8rem;
             text-transform: uppercase;
@@ -1404,7 +1404,7 @@
         }
 
         .roi-value {
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-weight: 900;
             font-size: 1.4rem;
         }

@@ -13,7 +13,7 @@
 
 .agro-task-shell__eyebrow {
   margin: 0 0 0.2rem;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.66rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -121,7 +121,7 @@
 
 .agro-task-panel__eyebrow {
   margin: 0 0 0.18rem;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.66rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -131,7 +131,7 @@
 
 .agro-task-panel__title {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: clamp(0.92rem, 2vw, 1.08rem);
   color: var(--text-primary);
 }
@@ -224,7 +224,7 @@
 .agro-task-stat-card__value,
 .agro-task-impact-card__value {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: clamp(0.95rem, 1.8vw, 1.15rem);
   color: var(--text-primary);
 }
@@ -258,7 +258,7 @@
 
 .agro-task-breakdown-card__title {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1rem;
 }
 
@@ -323,7 +323,7 @@
 
 .agro-task-filter-group__eyebrow {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.66rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -381,7 +381,7 @@
 
 .agro-task-day-group__label {
   color: var(--text-secondary);
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: var(--text-sm);
   font-weight: 600;
   text-transform: uppercase;
@@ -464,7 +464,7 @@
 
 .agro-task-card__title {
   margin: 0;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   font-size: var(--text-base);
   font-weight: 600;
   color: var(--text-primary);
@@ -540,7 +540,7 @@
 
 .agro-task-empty h4 {
   margin: 0 0 0.35rem;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
 }
 
 .agro-task-empty p {
@@ -603,7 +603,7 @@ body.agro-task-cycles-modal-open {
 
 .agro-task-modal__eyebrow {
   margin: 0 0 0.2rem;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.66rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -613,7 +613,7 @@ body.agro-task-cycles-modal-open {
 
 .agro-task-modal__title {
   margin: 0;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
 }
 
 .agro-task-modal__copy {

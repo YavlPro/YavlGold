@@ -1,9 +1,14 @@
 /* ===========================================================
-   YAVLGOLD V10.0 VISUAL DNA TOKENS
+   YAVLGOLD V12.0 VISUAL DNA TOKENS
    Core token layer for all Agro modules
    =========================================================== */
 
 :root {
+  /* ADN Visual V12 — Typography Tokens */
+  --font-heading: 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-quote: 'Playfair Display', serif;
+
   /* 5-Tone Metallic System */
   --gold-1: #2a2218;
   --gold-2: #3a3228;

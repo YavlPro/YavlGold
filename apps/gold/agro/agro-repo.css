@@ -19,7 +19,7 @@
   --agrp-radius: 12px;
   --agrp-glass: saturate(1.2) blur(24px);
   color: var(--agrp-text);
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-body);
   overflow-x: hidden;
 }
 
@@ -165,7 +165,7 @@
 #agro-widget-root .agrp-header-title span,
 #agro-widget-root .agrp-brand h1,
 #agro-widget-root .agrp-modal h2 {
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
 }
 
 #agro-widget-root .agrp-header-title span {
@@ -611,7 +611,7 @@
 #agro-widget-root .agrp-preview-content h1,
 #agro-widget-root .agrp-preview-content h2,
 #agro-widget-root .agrp-preview-content h3 {
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   color: var(--agrp-gold-light);
   margin: 20px 0 10px;
 }
