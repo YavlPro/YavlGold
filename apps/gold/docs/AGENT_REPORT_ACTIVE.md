@@ -3585,3 +3585,134 @@ Breakdown: agro-clima.js (19), agro-agenda.js (13), agro-ia-wizard.js (9), agro.
 - No se modificó agro.js (monolito frozen).
 - No se tocaron colores, layout ni animaciones.
 - No se crearon archivos CSS nuevos (solo se editaron los existentes).
+
+---
+
+## Sesión 2026-06-28 — Barrido tipográfico V12: CSS módulos restantes
+
+**Objetivo:** Eliminar todas las refs hardcodeadas a Orbitron/Rajdhani/Playfair Display en los CSS de `apps/gold/agro/` que aún no habían sido migrados.
+
+### Escaneo realizado
+
+Archivos CSS escaneados (excluyendo `node_modules`):
+
+| Archivo | Refs encontradas | Tipo | Acción |
+|---|---|---|---|
+| `agro-tokens.css` | 1 (`--font-quote: 'Playfair Display'`) | Definición de token | Ignorar — es la fuente de verdad |
+| `agro.css:10821` | 1 (`Orbitron + Rajdhani`) | Comentario | Ignorar |
+| `agro-operational-cycles.css:270` | 1 (`no Orbitron`) | Comentario | Ignorar |
+| `tx-cards-v2.css` | **3 (`"Rajdhani"`)** | Uso funcional | **Migrado** |
+| `yavl-themes.css` | 2 | `node_modules/@yavl/themes` | Fuera de scope |
+| `base.css` | 2 | `node_modules/@yavl/ui` | Fuera de scope |
+
+### Cambios realizados — `tx-cards-v2.css`
+
+| Línea aprox. | Selector | Cambio |
+|---|---|---|
+| 59 | `.agro-ops-v10 .tx-card` (card base) | `"Rajdhani", sans-serif` → `var(--font-body)` |
+| 378 | botón de acción dentro de card | `"Rajdhani", sans-serif` → `var(--font-body)` |
+| 430 | `.facturero-day-header`, `.date-divider` | `"Rajdhani", sans-serif` → `var(--font-body)` |
+
+### Estado final
+
+Cero refs funcionales hardcodeadas a Orbitron/Rajdhani en CSS de Agro (fuera de comentarios y definiciones de tokens).
+
+### Build
+`pnpm build:gold` — ✅ sin errores
+
+### Commit
+`feat(agro): barrido general tipografia V12 CSS modulos restantes · 2026-06-28`
+
+### Push
+`main → 5c6de148` — ✅ pusheado
+
+### QA pendiente (manual, Yerikson)
+Navegar los módulos principales del Agro y verificar que la tipografía de:
+- cards de transacciones (`tx-cards-v2`)
+- headers de día / date dividers
+- botones de acción dentro de cards
+
+sigue renderizando correctamente con Rajdhani via token.
+
+### NO se hizo
+- No se tocó ningún archivo JS.
+- No se tocaron `agro.js`, `agro-facturero-clientes-*.js`.
+- No se crearon tokens nuevos.
+- No se tocó lógica, colores ni layout.
+
+---
+
+## Sesión 2026-06-28 — Migración tipográfica JS V12: barrido final
+
+**Objetivo:** Eliminar todas las refs hardcodeadas de Orbitron/Rajdhani en archivos JS de `apps/gold/agro/`.
+
+### Escaneo real vs. documento de deuda
+
+El documento `DEUDA_TIPOGRAFIA_JS.md` listaba 11 archivos con 59 refs. Al escanear el estado real del repo, la mayoría ya habían sido migrados en sesiones anteriores. Las refs vivas al inicio de esta sesión eran:
+
+| Archivo | Refs activas | Estado previo |
+|---|---|---|
+| `agro-agenda.js` | 13 | Pendiente |
+| `agro.js` | 4 | Pendiente |
+| `agro-clima.js` | 0 | Ya migrado |
+| `agro-ia-wizard.js` | 0 | Ya migrado |
+| `agro-wizard.js` | 0 | Ya migrado |
+| `agro-planning.js` | 0 | Ya migrado |
+| `agro-section-stats.js` | 0 | Ya migrado |
+| `agro-cart.js` | 0 | Ya migrado |
+| `agro-interactions.js` | 0 | Ya migrado |
+| `agro-market.js` | 0 | Ya migrado |
+| `dashboard.js` | 0 | Ya migrado |
+
+### Cambios realizados
+
+**`agro-agenda.js` — 13 refs (Tramo 1)**
+
+| Selector | Cambio |
+|---|---|
+| `.aga-title` | `'Orbitron'` → `var(--font-heading)` |
+| `.aga-month-label` | `'Orbitron'` → `var(--font-heading)` |
+| `.aga-nav-label` | `'Orbitron'` → `var(--font-heading)` |
+| `.aga-day-title` | `'Orbitron'` → `var(--font-heading)` |
+| `.aga-create-title` | `'Orbitron'` → `var(--font-heading)` |
+| `.aga-day-num` | `'Rajdhani'` → `var(--font-body)` |
+| `.aga-planner-section__title` | `'Orbitron'` → `var(--font-heading)` |
+| `.aga-inline-link`, `.aga-add-btn` | `'Rajdhani'` → `var(--font-body)` |
+| `.aga-metric-card__label` | `'Orbitron'` → `var(--font-heading)` |
+| `.aga-metric-card__value` | `'Orbitron'` → `var(--font-heading)` |
+| `.aga-eyebrow` / `__eyebrow` | `'Orbitron'` → `var(--font-heading)` |
+| `.aga-subtitle` / `__meta` | `'Rajdhani'` → `var(--font-body)` |
+| `.aga-calendar-summary__title` | `'Orbitron'` → `var(--font-heading)` |
+
+**`agro.js` — 4 refs quirúrgicas (Tramo 2, monolito)**
+
+| Línea | Elemento | Cambio |
+|---|---|---|
+| ~5368 | `input.style.cssText` (búsqueda facturero) | `'Rajdhani'` → `var(--font-body)` |
+| ~11910 | `clearBtn.style.cssText` (botón limpiar) | `'Rajdhani'` → `var(--font-body)` |
+| ~16573 | `.modal-title` (template literal CSS) | `'Orbitron'` → `var(--font-heading)` |
+| ~16611 | botón sin familia (template literal CSS) | `'Orbitron'` → `var(--font-heading)` |
+
+### Estado final
+Cero refs funcionales de Orbitron/Rajdhani en JS de Agro (scope completo verificado con Select-String).
+
+### Build
+`pnpm build:gold` — ✅ sin errores (ambos tramos)
+
+### Commit
+`feat(agro): migracion tipografica JS V12 · Orbitron/Rajdhani a tokens · 2026-06-28`
+Hash: `68dab5ec`
+
+### Push
+`main → 68dab5ec` — ✅
+
+### QA pendiente (manual, Yerikson)
+- Módulo Agenda: verificar títulos, eyebrows, labels de día y botones de acción
+- Facturero (agro.js): verificar input de búsqueda y botón limpiar
+- Modal genérico (agro.js): verificar `.modal-title` y botones
+
+### NO se hizo
+- No se tocó `agro-facturero-clientes-*.js`
+- No se tocó lógica, colores ni layout
+- No se crearon archivos nuevos
+- `DEUDA_TIPOGRAFIA_JS.md` queda como referencia histórica — deuda JS cerrada
