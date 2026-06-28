@@ -162,7 +162,7 @@
 }
 
 .dashboard-hero h1 {
-  font-family: 'Orbitron', sans-serif; /* Aligned with index.html */
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 3rem;
   font-weight: 900;
   color: var(--text-light);
@@ -179,7 +179,7 @@
 }
 
 .dashboard-hero p {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 1.2rem;
   color: var(--text-muted);
   font-weight: 500;
@@ -194,7 +194,7 @@
 }
 
 .modules-section h2 {
-  font-family: 'Orbitron', sans-serif; /* Aligned with index.html */
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 1.8rem;
   font-weight: 900;
   color: var(--color-secondary);
@@ -294,7 +294,7 @@
 
 /* Card Title */
 .module-card h3 {
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 1.4rem;
   font-weight: 700;
   color: var(--color-secondary);
@@ -303,7 +303,7 @@
 
 /* Card Description */
 .module-card p {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 1rem;
   color: var(--text-muted);
   margin-bottom: 20px;
@@ -318,7 +318,7 @@
   padding: 12px 28px;
   background: linear-gradient(135deg, var(--color-secondary), var(--gold-dark));
   color: var(--bg-darker);
-  font-family: 'Rajdhani', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-weight: 700;
   font-size: 0.95rem;
   text-transform: uppercase;
@@ -363,7 +363,7 @@
   background: color-mix(in srgb, var(--color-secondary) 10%, transparent);
   border: 1px solid var(--border-gold);
   border-radius: 20px;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--color-secondary);
@@ -386,7 +386,7 @@
 }
 
 .dashboard-footer p {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.9rem;
   color: var(--text-muted);
 }
@@ -468,7 +468,7 @@
     color: var(--color-secondary);
     padding: 8px 24px;
     border-radius: 50px;
-    font-family: 'Rajdhani', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-weight: 600;
     font-size: 0.9rem;
     text-transform: uppercase;
@@ -665,7 +665,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 /* ━━━ FEEDBACK BUTTON ━━━ */

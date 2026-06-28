@@ -74,8 +74,8 @@
   --dorado-yavl: var(--gold-4);
   --dorado-claro: var(--gold-5);
   --dorado-oscuro: var(--gold-dark);
-  --font-titulo: 'Orbitron', sans-serif;
-  --font-cuerpo: 'Rajdhani', sans-serif;
+  --font-titulo: 'Plus Jakarta Sans', sans-serif;
+  --font-cuerpo: 'Inter', sans-serif;
   --sombra-dorada: none;
   --sombra-tarjeta: 0 10px 40px rgba(0,0,0,0.5);
   --borde-dorado: 1px solid var(--border-gold);

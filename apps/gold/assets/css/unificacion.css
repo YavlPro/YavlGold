@@ -7,9 +7,9 @@
 /* Variables de tema - DARK (por defecto) */
 :root,
 [data-theme="dark"] {
-  /* 🔤 TIPOGRAFÍAS OFICIALES - ADN VISUAL */
-  --font-heading: 'Orbitron', sans-serif;
-  --font-body: 'Rajdhani', sans-serif;
+  /* 🔤 TIPOGRAFÍAS OFICIALES - ADN VISUAL V12 */
+  --font-heading: 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'Inter', sans-serif;
 
   --color-primary: #111111;
   --color-secondary: #C8A752; /* Dorado principal */
