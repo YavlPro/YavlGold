@@ -5365,7 +5365,7 @@ function injectHistorySearchInput(tabName, config) {
     input.type = 'text';
     input.className = 'facturero-search-input';
     input.placeholder = '\uD83D\uDD0D Buscar por nombre, cultivo o monto...';
-    input.style.cssText = "width:100%;min-height:48px;background:var(--v10-bg-2, #0B0C0F);border:1px solid var(--v10-gold-4, #C8A752);border-radius:8px;padding:10px 14px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:0.95rem;box-sizing:border-box;outline:none;";
+    input.style.cssText = "width:100%;min-height:48px;background:var(--v10-bg-2, #0B0C0F);border:1px solid var(--v10-gold-4, #C8A752);border-radius:8px;padding:10px 14px;color:#fff;font-family:var(--font-body);font-size:0.95rem;box-sizing:border-box;outline:none;";
     input.style.setProperty('--placeholder-color', '#888');
     input.addEventListener('focus', () => {
         input.style.boxShadow = '0 0 8px rgba(200,167,82,0.3)';
@@ -11907,7 +11907,7 @@ function injectRoiClearButton(calcBtn) {
     clearBtn.type = 'button';
     clearBtn.className = 'btn';
     clearBtn.textContent = 'LIMPIAR';
-    clearBtn.style.cssText = "margin-left: 0.75rem; background: transparent; border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25)); color: var(--v10-gold-4, #C8A752); padding: 0.75rem 1.5rem; border-radius: 50px; font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.3s ease;";
+    clearBtn.style.cssText = "margin-left: 0.75rem; background: transparent; border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25)); color: var(--v10-gold-4, #C8A752); padding: 0.75rem 1.5rem; border-radius: 50px; font-family: var(--font-body); font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.3s ease;";
 
     clearBtn.addEventListener('mouseenter', () => {
         clearBtn.style.background = 'rgba(200, 167, 82, 0.12)';
@@ -16570,7 +16570,7 @@ function injectModalStyles() {
             border-bottom: 1px solid #2a2a2a;
         }
         .modal-title {
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-weight: 700;
             font-size: 1.25rem;
             color: var(--v10-gold-4, #C8A752);
@@ -16608,7 +16608,7 @@ function injectModalStyles() {
             color: rgba(255,255,255,0.4);
             border: 1px solid #2a2a2a;
             border-radius: 50px;
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-weight: 600;
             font-size: 0.8rem;
             cursor: pointer;

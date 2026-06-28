@@ -1544,7 +1544,7 @@ function injectAgendaStyles() {
             margin-bottom: 10px;
         }
         .aga-title {
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: 1.1rem;
             font-weight: 700;
             color: #fff;
@@ -1557,7 +1557,7 @@ function injectAgendaStyles() {
             gap: 12px;
         }
         .aga-month-label {
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: 0.7rem;
             color: var(--v10-gold-4, #C8A752);
             letter-spacing: 1px;
@@ -1645,7 +1645,7 @@ function injectAgendaStyles() {
             background: rgba(200,167,82,0.15);
         }
         .aga-nav-label {
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: 0.85rem;
             color: #fff;
             font-weight: 700;
@@ -1687,7 +1687,7 @@ function injectAgendaStyles() {
             background: rgba(200,167,82,0.1);
         }
         .aga-day-num {
-            font-family: 'Rajdhani', sans-serif;
+            font-family: var(--font-body);
             font-size: 0.9rem;
             font-weight: 600;
             color: rgba(255,255,255,0.85);
@@ -1737,7 +1737,7 @@ function injectAgendaStyles() {
             align-items: center;
         }
         .aga-day-title {
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: 0.9rem;
             font-weight: 700;
             color: #fff;
@@ -1876,7 +1876,7 @@ function injectAgendaStyles() {
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         }
         .aga-create-title {
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: 0.95rem;
             color: #fff;
             margin: 0 0 16px;
@@ -2081,7 +2081,7 @@ function injectAgendaStyles() {
         .aga-planner-section__eyebrow,
         .aga-calendar-summary__eyebrow {
             margin: 0;
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: var(--text-xs, 0.7rem);
             font-weight: 700;
             line-height: 1.2;
@@ -2093,7 +2093,7 @@ function injectAgendaStyles() {
         .aga-planner-section__meta,
         .aga-calendar-summary__meta {
             margin: 0;
-            font-family: 'Rajdhani', sans-serif;
+            font-family: var(--font-body);
             font-size: var(--text-sm, 0.8rem);
             line-height: 1.45;
             color: var(--text-secondary, #cccccc);
@@ -2151,14 +2151,14 @@ function injectAgendaStyles() {
             border-color: rgba(229,213,160,0.18);
         }
         .aga-metric-card__label {
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: var(--text-xs, 0.7rem);
             letter-spacing: 0.12em;
             text-transform: uppercase;
             color: var(--text-muted, #94A3B8);
         }
         .aga-metric-card__value {
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: var(--text-xl, 1.3rem);
             font-weight: 700;
             color: var(--text-primary, #ffffff);
@@ -2221,7 +2221,7 @@ function injectAgendaStyles() {
         }
         .aga-planner-section__title {
             margin: 0;
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: clamp(0.95rem, 1.6vw, 1.12rem);
             line-height: 1.25;
             color: var(--text-primary, #ffffff);
@@ -2242,7 +2242,7 @@ function injectAgendaStyles() {
             min-height: var(--a11y-touch-min, 44px);
             padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
             border-radius: var(--radius-sm, 8px);
-            font-family: 'Rajdhani', sans-serif;
+            font-family: var(--font-body);
             font-size: var(--text-sm, 0.8rem);
             font-weight: 700;
             transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
@@ -2360,7 +2360,7 @@ function injectAgendaStyles() {
             min-width: 0;
         }
         .aga-calendar-summary__title {
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading);
             font-size: var(--text-sm, 0.8rem);
             color: var(--text-primary, #ffffff);
             letter-spacing: 0.03em;
