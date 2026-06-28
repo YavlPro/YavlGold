@@ -3498,3 +3498,48 @@ fcf344f2 feat(landing): migración tipográfica V12 en páginas del footer Legal
 - No se modificaron módulos de Agro.
 - No se crearon archivos nuevos (excepto el propio reporte).
 - No se tocaron colores, layout ni animaciones.
+
+---
+
+## Sesión: Migración Tipográfica Dashboard → V12
+
+**Fecha:** 2026-06-28
+**Agente:** OpenCode
+**Objetivo:** Migrar tipografía del Dashboard (`/dashboard`) de Orbitron+Rajdhani (V10) a Plus Jakarta Sans+Inter (V12) — sin tocar contenido, estructura, lógica ni colores.
+
+### Archivos modificados
+
+| Archivo | Cambio |
+| --- | --- |
+| `apps/gold/dashboard/index.html` | Google Fonts import → V12; CSS vars `--font-titulo`/`--font-cuerpo` → V12; 12 refs inline hardcodeadas migradas (Orbitron→Plus Jakarta Sans, Rajdhani→Inter); Playfair Display preservado (2 refs) |
+| `apps/gold/assets/css/unificacion.css` | `--font-heading`/`--font-body` → V12 |
+| `apps/gold/assets/css/dashboard-v1.css` | `--font-titulo`/`--font-cuerpo` → V12 |
+| `apps/gold/assets/css/dashboard.css` | 10 refs hardcodeadas migradas (Orbitron→Plus Jakarta Sans, Rajdhani→Inter) |
+
+### Playfair Display
+
+Preservado correctamente en:
+- `dashboard/index.html` línea 20 (Google Fonts import)
+- `dashboard/index.html` líneas 1835, 1843 (`.yg-about-initials`, `.yg-about-name`)
+- `dashboard-v1.css` línea 818
+
+### Deuda técnica restante
+
+`module-unavailable.css` (5 refs: 3 Orbitron, 2 Rajdhani) — pendiente de migración.
+
+### Resultado de build
+`pnpm build:gold` — ✅ Todos los gates pasaron (agent-guard, agent-report-check, vite build, check-llms, check-dist-utf8).
+
+### Commit
+```
+713f0e10 feat(dashboard): migrate typography to ADN Visual V12 (Plus Jakarta Sans + Inter) · 2026-06-28
+```
+
+### Push
+✅ Push exitoso a `main` en `https://github.com/YavlPro/YavlGold.git`
+
+### NO se hizo
+- No se tocó ningún archivo JS, lógica, estructura ni contenido.
+- No se modificaron módulos de Agro.
+- No se crearon archivos nuevos.
+- No se tocaron colores, layout ni animaciones.
