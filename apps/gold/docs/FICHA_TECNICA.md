@@ -440,7 +440,7 @@ git status
 
 - **RPC `get_farm_balance(p_farm_id)`** — ✅ RESUELTA (commit 6c8b0411, 26-jun-2026). Dashboard Bloque 3 ya no hace N queries client-side.
 - **`MutationObserver` en saludo de bienvenida** — el Dashboard Agro lee `.user-profile .user-name` vía `MutationObserver`. Puede fallar si cambia el timing de `resolveHeaderDisplayName`. Migrar a suscripción directa de auth cuando sea posible.
-- **Tipografía legacy** — Orbitron y Rajdhani siguen en CSS de módulos existentes. Migración gradual por módulo, no en bloque.
+- **Migración tipográfica V12** — ✅ RESUELTA (28-jun-2026). Orbitron/Rajdhani erradicadas de superficies visibles. Plus Jakarta Sans, Inter y Playfair Display gobiernan la plataforma. Cualquier referencia residual futura debe tratarse como regresión o deuda histórica no visible y auditarse antes de tocar.
 
 ---
 

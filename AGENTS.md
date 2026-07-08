@@ -14,7 +14,7 @@ Las referencias a `V9.8` solo se conservan cuando están marcadas como históric
 | Build | Vite MPA | Webpack, Turbopack, migración a SPA |
 | Backend | Supabase (Auth, DB, Storage, Edge Functions) | Firebase, otro BaaS sin aprobación |
 | Estilo | CSS Custom Properties + clases utilitarias ligeras | Tailwind, CSS-in-JS, Styled Components |
-| Tipografía | Google Fonts: Orbitron, Rajdhani, Playfair Display | Cambiar familias sin aprobación |
+| Tipografía | Google Fonts: Plus Jakarta Sans, Inter, Playfair Display | Reintroducir Orbitron/Rajdhani o cambiar familias sin aprobación |
 | Iconos | Font Awesome 6.5 | Otras librerías de iconos sin aprobación |
 
 El script `agent-guard.mjs` bloquea React, Vue, Svelte, Angular, Next, Nuxt y Astro en el build. Si un agente instala alguno, el build fallará.
@@ -30,7 +30,7 @@ El sistema de diseño activo vive en `apps/gold/docs/ADN-VISUAL-V12.0.md`. Es el
 
 1. **Paleta**: 5-Tone Metallic System. Brand primary = `#C8A752` (`--gold-4`).
 2. **Fondos**: Dark por defecto (`--bg-1: #0a0a0a`). Light mode por override de tokens.
-3. **Tipografía**: Orbitron (headings), Rajdhani (body/UI), Playfair Display (quotes).
+3. **Tipografía V12**: Plus Jakarta Sans (headings/labels/chips), Inter (body/UI/data), Playfair Display (quotes). Orbitron y Rajdhani quedan deprecadas y no deben reintroducirse.
 4. **Tokens antes de hardcode**: siempre `var(--token)`, nunca hex directo sin justificación.
 5. **Sin acento azul/morado como brand**: azul solo para estado semántico `info`.
 6. **Interacciones UI**: 120ms–220ms. Usar `opacity` y `transform`.
