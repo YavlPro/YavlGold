@@ -11065,6 +11065,8 @@ body[data-agro-active-view="asistente"] .agro-feedback-fab {
 .asistente-dedicado .ast-thread-scroll {
   flex: 1;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   padding: 0.3rem 0.6rem;
   min-height: 0;
 }
@@ -11317,6 +11319,8 @@ body[data-agro-active-view="asistente"] .agro-feedback-fab {
 .asistente-dedicado .ast-messages {
   flex: 1;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   padding: 1.25rem 2rem;
   display: flex;
   flex-direction: column;
@@ -11325,6 +11329,8 @@ body[data-agro-active-view="asistente"] .agro-feedback-fab {
   position: relative;
   overscroll-behavior: contain;
   scroll-behavior: smooth;
+  /* iOS Safari requires explicit height bound for flex scroll to work */
+  min-height: 0;
 }
 
 .asistente-dedicado .ast-messages::-webkit-scrollbar { width: 5px; }

@@ -498,6 +498,7 @@ function renderTreeNode(node, visibleIds, depth = 0) {
           <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
           <span class="agrp-tree-icon"><i class="${getNodeIconClass(node)}" aria-hidden="true"></i></span>
           <span class="label" title="${escapeHtml(node.title)}">${escapeHtml(node.title)}</span>
+          <button type="button" class="agrp-tree-actions-btn" data-action="open-node-menu" data-node-id="${node.id}" title="Acciones" aria-label="Acciones de ${escapeHtml(node.title)}"><i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i></button>
         </div>
         <div class="agrp-tree-children ${isOpen ? '' : 'collapsed'}">
           ${children.map((child) => renderTreeNode(child, visibleIds, depth + 1)).join('')}
@@ -512,6 +513,7 @@ function renderTreeNode(node, visibleIds, depth = 0) {
         <span class="agrp-tree-spacer"></span>
         <span class="agrp-tree-icon"><i class="${getNodeIconClass(node)}" aria-hidden="true"></i></span>
         <span class="label" title="${escapeHtml(node.title)}">${escapeHtml(node.title)}</span>
+        <button type="button" class="agrp-tree-actions-btn" data-action="open-node-menu" data-node-id="${node.id}" title="Acciones" aria-label="Acciones de ${escapeHtml(node.title)}"><i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i></button>
       </div>
     </div>
   `;
@@ -689,8 +691,8 @@ function renderSearchResults(query) {
     <button type="button" class="agrp-search-result" data-action="open-search-result" data-file-id="${result.file.id}">
       <div class="sr-path">${highlightMatch(result.path, query)}</div>
       <div class="sr-line">${result.type === 'content'
-        ? `L${result.lineNum}: ${highlightMatch(result.line || result.file.title, query)}`
-        : highlightMatch(result.file.title || result.path, query)}</div>
+      ? `L${result.lineNum}: ${highlightMatch(result.line || result.file.title, query)}`
+      : highlightMatch(result.file.title || result.path, query)}</div>
     </button>
   `).join('');
 }
@@ -1569,6 +1571,17 @@ function handleClick(event) {
   if (treeItem) {
     const nodeId = treeItem.dataset.nodeId;
     const node = getNode(state.repo.nodes, nodeId);
+
+    // ⋯ actions button — open context menu anchored to the button.
+    const actionsBtn = event.target.closest('[data-action="open-node-menu"]');
+    if (actionsBtn) {
+      event.stopPropagation();
+      hideContextMenu();
+      const rect = actionsBtn.getBoundingClientRect();
+      showContextMenu(rect.right, rect.bottom, actionsBtn.dataset.nodeId);
+      return;
+    }
+
     hideContextMenu();
     if (node?.type === 'folder') {
       toggleFolder(nodeId);

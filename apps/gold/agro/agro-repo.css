@@ -358,6 +358,42 @@
   min-width: 0;
 }
 
+/* ⋯ inline actions button — desktop: hidden until hover; mobile: always visible */
+#agro-widget-root .agrp-tree-actions-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--agrp-text-muted);
+  cursor: pointer;
+  font-size: 0.78rem;
+  opacity: 0;
+  transition: opacity 150ms ease, background-color 150ms ease, color 150ms ease;
+  margin-left: auto;
+  pointer-events: none;
+}
+
+#agro-widget-root .agrp-tree-item:hover .agrp-tree-actions-btn,
+#agro-widget-root .agrp-tree-item.active .agrp-tree-actions-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#agro-widget-root .agrp-tree-actions-btn:hover {
+  background: var(--agrp-bg-hover);
+  color: var(--agrp-text);
+}
+
+/* grid needs an extra column for the actions button */
+#agro-widget-root .agrp-tree-item {
+  grid-template-columns: 14px 18px minmax(0, 1fr) 26px;
+}
+
 #agro-widget-root .agrp-tree-children {
   margin-left: 10px;
   padding-left: 14px;
@@ -1067,6 +1103,16 @@
   #agro-widget-root #agrpEditor,
   #agro-widget-root .agrp-preview-content {
     padding: 18px 16px;
+  }
+
+  /* Always show the ⋯ actions button on touch devices — no hover available */
+  #agro-widget-root .agrp-tree-actions-btn {
+    opacity: 1;
+    pointer-events: auto;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
   }
 }
 
