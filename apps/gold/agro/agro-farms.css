@@ -382,10 +382,27 @@
   .agro-farms-header-bar {
     align-items: flex-start;
     flex-direction: column;
+    gap: 0.75rem;
   }
 
-  .agro-farms-header-bar button,
-  .agro-farm-filter-container {
+  /* Título ocupa todo el ancho — no se corta ni se superpone */
+  .agro-farms-title-group {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .agro-farms-title-group h3 {
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .agro-farms-title-group p {
+    white-space: normal;
+  }
+
+  /* Botones de header (COMPARAR FINCAS, NUEVA FINCA) → fila completa */
+  .agro-farms-header-bar > .agro-farms-btn-group,
+  .agro-farms-header-bar button {
     width: 100%;
     max-width: none;
   }

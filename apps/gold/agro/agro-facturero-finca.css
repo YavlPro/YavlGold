@@ -267,6 +267,53 @@ body[data-agro-active-view='rankings'] .ops-header-rankings {
   .finances-section.agro-ops-v10 .module-subtitle {
     max-width: none;
   }
+
+  /* Mis Cultivos / Mis Fincas — header-actions hace wrap en mobile */
+  .crops-section.agro-ops-v10 .module-header {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .crops-section.agro-ops-v10 .module-title-group {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .crops-section.agro-ops-v10 .module-title {
+    font-size: clamp(0.95rem, 4.5vw, 1.15rem);
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .crops-section.agro-ops-v10 .module-subtitle {
+    max-width: none;
+  }
+
+  .crops-section.agro-ops-v10 .header-actions {
+    flex: 0 0 100%;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .crops-section.agro-ops-v10 .header-actions .btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+@media (max-width: 480px) {
+  .crops-section.agro-ops-v10 .header-actions {
+    flex-direction: column;
+  }
+
+  .crops-section.agro-ops-v10 .header-actions .btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
 }
 
 /* §1.5 OPERATIONS CENTER COMPACT LAYOUT */

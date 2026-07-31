@@ -1118,12 +1118,30 @@ body[data-agro-active-view='ciclos'][data-agro-subview='finalizados'] #crops-cyc
   }
 
   .crops-section[data-agro-shell-region="cultivos"] .module-header {
-    align-items: center;
-    text-align: center;
+    align-items: flex-start;
+    text-align: left;
+    flex-wrap: wrap;
   }
 
   .crops-section[data-agro-shell-region="cultivos"] .module-title-group {
-    justify-content: center;
+    flex: 1 1 100%;
+    justify-content: flex-start;
+    min-width: 0;
+  }
+
+  /* header-actions de Mis Cultivos → wrap al 100% del ancho */
+  .crops-section[data-agro-shell-region="cultivos"] .header-actions {
+    flex: 0 0 100%;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .crops-section[data-agro-shell-region="cultivos"] .header-actions .btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .agro-cycle-overview__copy,
