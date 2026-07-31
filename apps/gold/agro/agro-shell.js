@@ -644,11 +644,7 @@ function resolveInitialView() {
         };
     }
 
-    const storedView = normalizeView(readStoredView());
-    if (storedView && Object.prototype.hasOwnProperty.call(VIEW_CONFIG, storedView)) {
-        return { view: storedView, subview: readStoredSubview() };
-    }
-
+    // Always start at hub on fresh load — do not restore last module automatically.
     return { view: AGRO_DEFAULT_VIEW, subview: '' };
 }
 
@@ -1448,7 +1444,7 @@ export function initAgroShell() {
                     const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
                     const hashSubview = hashParams.get('subview');
                     if (hashSubview) actualSubview = hashSubview;
-                } catch (_) {}
+                } catch (_) { }
                 const periodBackTargets = {
                     'estadisticas': 'calendario',
                     'comparar': 'calendario',
