@@ -180,7 +180,7 @@ agro-stats-report.js — reportes estadísticos
 agro-trash.js        — papelera de eliminados
 agro-unit-totals.js  — totales por unidad
 agro-wizard.js       — wizard de configuración
-agro-dashboard-v11.js — Dashboard Agro v11 (6 bloques: saludo, clima, mercados, velocium, cultivos, tareas, accesos)
+agro-dashboard-v11.js — Dashboard Agro v11 (6 bloques: saludo, clima, mercados, velocium, cultivos, tareas, accesos) *(conserva nomenclatura V11 por legacy, aplica ADN visual V12)*
 ```
 
 **Fuentes de datos del Dashboard Agro Bloque 4 (Mis cultivos activos):**
@@ -195,7 +195,7 @@ disponible, con fallback defensivo a query directa.
 - `agro.css` — estilos principales + papelera + undo toast
 - `agro-facturero-clientes.css` — Facturero de Clientes: vista, cards, estados, acciones separadas y responsive mobile
 - `agro-dashboard.css` — dashboard
-- `agro-dashboard-v11.css` — Dashboard Agro v11 (6 bloques), prefijo `ygd-`
+- `agro-dashboard-v11.css` — Dashboard Agro v11 (6 bloques), prefijo `ygd-` *(conserva nomenclatura V11 por legacy, aplica ADN visual V12)*
 - `agro-facturero-finca.css` — operaciones financieras
 - `agro-farms.css` — estilos de gestión de fincas (ADN V11)
 - `agro-clients.css` — Mis Clientes
@@ -207,6 +207,12 @@ disponible, con fallback defensivo a query directa.
 - `yavlgold_ip_cache`
 - `yavlgold_location_pref`
 - `yavlgold_weather_*`
+- `YG_AGRO_ACTIVE_VIEW_V1` — última vista activa del shell Agro (restaura posición entre sesiones)
+- `YG_AGRO_ACTIVE_VIEW_SUB_V1` — subvista activa del shell
+- `YG_AGRO_ACTIVE_SHELL_GATE_V1` — puerta del shell activa (hub gate, ej: granja, memoria)
+- `YG_AGRO_RAIL_EXPANDED_V1` — estado expandido del rail de navegación
+- `YG_AGRO_MOBILE_RAIL_COLLAPSED_V1` — estado colapsado del rail en mobile
+- `YG_ACTIVITY_V1` — historial de actividad del usuario (módulos visitados, último acceso)
 
 ### 4.3 Crypto
 **Ubicación:** `apps/gold/crypto/`
@@ -252,6 +258,7 @@ disponible, con fallback defensivo a query directa.
 
 #### Agro — Clientes
 - `agro_clients` - Contactos manuales del agricultor (soft-delete con `deleted_at`, RLS owner-only, campo `client_type`)
+- `agro_buyers` - Vista/entidad derivada de compradores provenientes del Facturero de Clientes. Solo lectura. No tiene tabla propia editable; los registros se derivan automáticamente de `agro_pending`/movimientos del Facturero de Clientes. Se deduplican por nombre canónico normalizado contra `agro_clients` al mostrarse en Mis Clientes.
 
 #### Agro — Operaciones (Facturero de la Finca)
 - `agro_operational_cycles` - Ciclos operativos de Facturero de la Finca (hard delete, no usan `deleted_at`)

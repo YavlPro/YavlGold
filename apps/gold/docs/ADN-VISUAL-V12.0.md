@@ -90,6 +90,8 @@ Los hex anteriores viven dentro de tokens CSS. No se reparten por componentes. S
 
 Los alias legacy (`--gg-*`, `--v10-*`, `--sombra-dorada`, etc.) se mantienen mientras existan referencias activas en CSS, pero no se crean nuevos alias legacy.
 
+> **Atención:** `--gold-3` (`#6b5a3e`) sobre fondos oscuros (`--bg-1: #0a0a0a`) tiene ratio de contraste ~2.98:1 — no pasa el mínimo de 3:1 para texto legible esencial. No usar `--gold-3` para texto funcional sobre fondos oscuros sin aumentar el brillo. Reservarlo para bordes, fondos sutiles o decoración.
+
 ---
 
 ## §3 — Sombras V12
@@ -293,6 +295,10 @@ no en bloque para evitar regresiones visuales.
   border-color: var(--gold-4);
   box-shadow: var(--shadow-focus);
 }
+.input-canon.is-invalid {
+  border-color: var(--color-error);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
 ```
 
 ---
@@ -321,6 +327,18 @@ El estándar es el modal "Configura tu asistente IA".
 </div>
 ```
 
+### Escala de z-index
+
+```css
+/* Tokens canónicos de z-index — no hardcodear valores directamente */
+--z-base:    1;
+--z-dropdown: 100;
+--z-sticky:  200;
+--z-overlay: 900;
+--z-modal:   1000;
+--z-toast:   9999;
+```
+
 ### Estilo
 
 ```css
@@ -328,7 +346,7 @@ El estándar es el modal "Configura tu asistente IA".
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.85);
   display: flex; align-items: center; justify-content: center;
-  z-index: 1000;
+  z-index: var(--z-modal, 1000);
 }
 .modal-dialog {
   background: var(--bg-2);
@@ -463,6 +481,8 @@ Los ghost emojis (emojis de fondo con opacidad 0.02–0.05 y `pointer-events: no
 ---
 
 ## §12 — Responsive
+
+Los breakpoints se manejan vía `@media` en CSS. Para lógica condicional en JS (ej: colapsar sidebar, cambiar comportamiento de componentes) se usa `window.matchMedia`. Ambos métodos coexisten según el caso.
 
 | Breakpoint | Clase | Uso |
 |---|---|---|

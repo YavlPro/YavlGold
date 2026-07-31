@@ -84,6 +84,7 @@ agro-cart.js         — carrito
 - Los módulos se importan dinámicamente en `agro/index.html` bootstrap.
 - Para compartir funciones del monolito con módulos externos, usar `window._agroXxx` como puente.
 - Imports deben ser siempre al inicio del archivo.
+- **Prohibidas las dependencias circulares entre submódulos.** Si dos módulos comparten estado, ese estado debe subir al monolito o a un puente global (`window._agroXxx`), nunca cruzarse entre sí.
 
 ### 3.4 — CSS
 
@@ -372,6 +373,12 @@ Incluye: `agent-guard.mjs` (deps prohibidas) + `agent-report-check.mjs` (reporte
   - el cierre de sesion debe dejar produccion en un estado entendible y seguro para futuras pruebas;
   - ademas del cleanup de datos QA, el agente debe cerrar Playwright/browser y borrar temporales locales de esa sesion.
 
+### Política anti-mock
+
+- **Prohibido** inyectar datos mock o hardcodear arrays de prueba en código de producción.
+- Todo QA debe usar conexión real a Supabase o fallar honestamente.
+- Si los datos reales no están disponibles, el agente debe documentar el bloqueo y esperar — no inventar datos de prueba que contaminen el entorno real.
+
 ---
 
 ## §6 — Supabase
@@ -583,6 +590,33 @@ Es el que:
 
 ---
 
+## §9 — Memoria Documental y Sistema Wiki
+
+Este repositorio opera con un sistema de memoria documental activa. Los agentes deben conocer su estructura para orientarse rápidamente sin depender de contexto acumulado.
+
+### Jerarquía de documentos canónicos
+
+| Documento | Rol |
+|-----------|-----|
+| `AGENTS.md` | Ley operativa — instrucciones canónicas para agentes |
+| `ADN-VISUAL-V12.0.md` | Ley visual — sistema de diseño canónico activo |
+| `MANIFIESTO_AGRO.md` | Verdad semántica del módulo Agro |
+| `FICHA_TECNICA.md` | Estructura técnica del proyecto |
+| `AGENT_REPORT_ACTIVE.md` | Bitácora operativa activa — estado vivo del proyecto |
+| `AGENT_CONTEXT_INDEX.md` | Mapa central de documentos y su rol |
+
+### Cómo consultar la wiki
+
+1. Leer `AGENTS.md` primero (schema de todo).
+2. Consultar `AGENT_CONTEXT_INDEX.md` para ubicar el documento correcto.
+3. Ir al documento correspondiente según el tipo de pregunta.
+
+### Regla de escritura en bitácora
+
+Al finalizar cada sesión con cambios, el agente debe agregar una sección en `apps/gold/docs/AGENT_REPORT_ACTIVE.md` con: fecha, objetivo, diagnóstico, cambios realizados, resultado de build y QA sugerido.
+
+---
+
 ## §10 — Gobernanza Operativa y Confiabilidad
 
 ### §10.1 — Regla de Confiabilidad Operativa y Desacato
@@ -681,7 +715,7 @@ se trata como excepción riesgosa dentro de una conducta operativamente defectuo
 - Todo `addEventListener` debe contemplar `removeEventListener` o usarse con `{ once: true }`/delegación cuando aplique.
 - **Verificación obligatoria** en cada PR que toque módulos con temporizadores o listeners.
 
-### 11.3 CSS Inline vs Tokens ADN V10
+### 11.3 CSS Inline vs Tokens ADN V12
 - `index.html` contiene ~1,144L de CSS inline con hex hardcodeados (deuda heredada).
 - **Política:** No refactorizar de golpe. Migrar progresivamente a archivos `.css` usando tokens `--gold-*`, `--bg-*`, `--space-*`, etc.
 - **Nuevos estilos:** SIEMPRE en archivos CSS separados, NUNCA inline masivo.

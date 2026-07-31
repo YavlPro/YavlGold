@@ -238,7 +238,7 @@ Cards dinámicas con los ciclos activos de la finca seleccionada.
 Máximo 3 visible. Botón "Ver todos" navega a `#view=ciclos&subview=mis-cultivos`.
 Fuente: `agro_crops` donde `farm_id = X` y `status IN ('sembrado','creciendo','produccion')`.
 
-Gastos por cultivo: suma de `agro_expenses` + 
+Gastos por cultivo: suma de `agro_expenses` +
 `agro_operational_movements` filtrados por `crop_id`.
 `computeCropFinances` prioriza `YGAgroOperationalCycles` API
 (consistencia con Mis Cultivos) con fallback defensivo
@@ -338,12 +338,12 @@ rentabilidadReal = cobradoReal - costosTotales
 
 #### Cuatro estados semánticos del balance
 
-| Condición | Estado | Color (ADN V11 §2) | Significado operativo |
+| Condición | Estado | Color (ADN V12 §2) | Significado operativo |
 |-----------|--------|-------------------|---------------------|
-| `balanceActual > 0` | **Ganado** | Verde (`--color-success`) | Dinero real en mano tras cubrir costos |
-| `balanceActual < 0` con `fiadosPendientes > 0` | **Recuperando** | Ámbar (`--color-warning`) | Hay dinero en la calle pendiente de cobro |
-| `balanceActual < 0` sin fiados | **Invirtiendo** | Gris (`--text-muted`) | Ciclo en etapa temprana, sin ventas aún |
-| `balanceActual = 0` | **Equilibrio** | Gris (`--text-muted`) | Punto neutro, sin ganancia ni inversión pendiente |
+| `rentabilidadReal > 0` y `fiadosPendientes == 0` | **Ganado** | Verde (`--color-success`) | Dinero real en mano tras cubrir costos |
+| `fiadosPendientes > 0` | **Recuperando** | Ámbar (`--color-warning`) | Hay dinero en la calle pendiente de cobro |
+| `rentabilidadReal <= 0` y `fiadosPendientes == 0` | **Invirtiendo** | Gris (`--text-muted`) | Ciclo en etapa temprana, sin ventas aún |
+| `rentabilidadReal === 0` y `fiadosPendientes === 0` | **Equilibrio** | Gris (`--text-muted`) | Punto neutro, sin ganancia ni inversión pendiente |
 
 #### Interpretación de cada estado
 
@@ -635,7 +635,7 @@ El libro general de cuentas del sistema. Aquí anotas **todos** los movimientos:
 
 ### Qué no es
 
-No es la Facturero de Clientes (la sección destinada solo a llevar el saldo de quienes te deben). Sirve para todo lo demás.
+No es el Facturero de Clientes (la sección destinada solo a llevar el saldo de quienes te deben). Sirve para todo lo demás.
 
 ### Para qué sirve
 
@@ -649,7 +649,7 @@ No es la Facturero de Clientes (la sección destinada solo a llevar el saldo de 
 
 * **Gastos**: Todo lo que inviertes o gastas en la finca.
 * **Ingresos (Pagados)**: Dinero que ya cobraste por tus ventas.
-* **Fiados (Pendientes)**: Dinero que te deben (este registro alimenta también la Facturero de Clientes).
+* **Fiados (Pendientes)**: Dinero que te deben (este registro alimenta también el Facturero de Clientes).
 * **Pérdidas**: Producto que se perdió o dañó.
 * **Donaciones**: Producto que obsequiaste.
 * **Otros**: Cualquier movimiento excepcional.
@@ -673,7 +673,7 @@ No es la Facturero de Clientes (la sección destinada solo a llevar el saldo de 
 
 ### Relación con transferencias
 
-Cuando un fiado cambia de estado, la Facturero de la Finca debe reflejar la historia de forma comprensible: qué se cobró, qué quedó pendiente, qué se perdió o qué se donó. Esa lectura evita que las estadísticas mezclen deuda viva con dinero realmente recibido.
+Cuando un fiado cambia de estado, el Facturero de la Finca debe reflejar la historia de forma comprensible: qué se cobró, qué quedó pendiente, qué se perdió o qué se donó. Esa lectura evita que las estadísticas mezclen deuda viva con dinero realmente recibido.
 
 ### Regla de separación visual
 
@@ -703,12 +703,12 @@ No es un gasto real. No es Facturero de la Finca. Es una **lista de intención d
 
 1. Agregas productos/servicios a la lista con cantidad y precio estimado.
 2. Revisas el total estimado durante el proceso.
-3. Cuando realizas la compra, puedes convertir ese ítem en un gasto real y registrarlo en la Facturero de la Finca.
+3. Cuando realizas la compra, puedes convertir ese ítem en un gasto real y registrarlo en el Facturero de la Finca.
 4. También puedes exportar la lista completa.
 
 ### Cómo se relaciona con las finanzas
 
-* Es una herramienta de planificación que alimenta la Facturero de la Finca.
+* Es una herramienta de planificación que alimenta el Facturero de la Finca.
 * Los ítems del carrito NO son gastos hasta que los registras como tales.
 
 ---
@@ -1594,8 +1594,8 @@ Son mensajes emergentes estilizados que reemplazan los `alert()` nativos del nav
 
 ### Caso 1
 
-* **Confusión**: "La Facturero de la Finca y la Facturero de Clientes son simplemente dos nombres para un mismo tablero de ventas."
-* **La realidad**: Tienen propósitos distintos. La Facturero de Clientes sigue específicamente a la gente que te debe dinero. La Facturero de la Finca registra todos los movimientos financieros: gastos, cobros, pérdidas y pagos generales de la finca.
+* **Confusión**: "El Facturero de la Finca y el Facturero de Clientes son simplemente dos nombres para un mismo tablero de ventas."
+* **La realidad**: Tienen propósitos distintos. El Facturero de Clientes sigue específicamente a la gente que te debe dinero. El Facturero de la Finca registra todos los movimientos financieros: gastos, cobros, pérdidas y pagos generales de la finca.
 
 ### Caso 2
 
@@ -1708,6 +1708,7 @@ Cualquier cambio visual debe obedecer el ADN Visual V12 y el canon de modales §
 * [x] Agregar sección "cómo empezar desde cero"
 * [x] Agregar sección "cómo exportar / salir / respaldar"
 * [ ] Facturero de Clientes Lifecycle — Archivo / Papelera / Restauración: pendiente futuro para archivar/restaurar clientes y, después, registros. Nada que afecte dinero debe desaparecer sin trazabilidad.
+* [ ] Investigar cacheo local (Service Workers / IndexedDB) para modo offline real en finca — el agricultor puede estar sin señal en campo.
 
 ---
 
