@@ -618,3 +618,90 @@ Archivo: [2026-05.md](./2026-05.md)
 **Impacto:** Navegación profunda (Mis Fincas → Comparar Fincas → Volver) ahora mantiene coherencia visual en headers en desktop y mobile.
 
 **Archivos:** `agro-farms.js`, `MANIFIESTO_AGRO.md`, `docs-agro.html`, `AGENT_REPORT_ACTIVE.md`
+
+---
+
+# ADDENDUM - Junio 2026 (Append-only)
+
+> *Esta seccion extiende la cobertura de la cronica al mes de junio 2026.*
+
+## Resumen Ejecutivo - Junio 2026
+
+Los hechos que marcaron el sexto mes de 2026:
+
+1. **Renombramiento canonico Cartera Viva/Operativa** (Jun 2): 8 archivos renombrados, ~25 modificados, QA completo validado.
+2. **Plan estrategico de 4 fases** (Jun 3-5): Movimientos Generales de Finca (nuevo modulo + migracion SQL), Dashboard Finca Entidad Viva, Comparacion Fincas lado a lado, Informes MD por finca.
+3. **Auditoria cruzada de 9-10 informes** (Jun 5-6): 13 verdes, 3 amarillas, 0 rojas. 3 bugs criticos + 4 medios resueltos. Nombres unificados.
+4. **Hardening tecnico** (Jun 8): 25 indices performance, 5 funciones SECURITY DEFINER blindadas, permisos Edge Function confirmados.
+5. **Reorganizacion navegacion hub** (Jun 8-10): 3 grupos canonicos, "Operaciones de la Finca" superficie autonoma, botones internos Estadisticas/Comparar, "Volver" coherente.
+6. **Alineacion semantica V1 + Renombrado Calendario - Operaciones de la Finca** (Jun 10): 10 archivos, 4 estados canonicos de balance, naming publico actualizado, skill universal creada.
+7. **Refactor Factureros Fase 1** (Jun 12-13): 3 contextos independientes, categoria hub "MIS FACTUREROS", wizard contextual, fix TDZ, pulido visual ADN V11.
+8. **Selectores dinamicos + Hub reorganizado + Rankings rediseño** (Jun 16-18): 4 factureros chips dinamicos, "Mi Planificacion", Rankings pills canonicas, 15 commits Rankings, 6 migraciones SQL, Dashboard glow erradicado (68 lineas).
+9. **AgroRepo Fases 1-3** (Jun 22-23): Local-first, system roots editables, drag&drop nativo, papelera soft-delete 30d, rebrand "Bitacora" - "AgroRepo".
+10. **Dashboard Agro v11** (Jun 24): 6 bloques, modulo ES6 separado, migracion tipografica V12 (Orbitron/Rajdhani - Plus Jakarta Sans/Inter).
+11. **RPC get_farm_balance + Saludo optimizado** (Jun 25-26): Balance server-side, saludo sin MutationObserver con cache localStorage.
+12. **Factureros Fase 1 CERRADO** (Jun 27): 6 bugs corregidos, QA produccion movil+web GREEN.
+13. **Migracion tipografica V12 COMPLETADA** (Jun 28): Orbitron/Rajdhani erradicadas de TODA la plataforma. 14 commits, pipeline 4 agentes en relevo. CSS warning 3 meses cerrado.
+
+---
+
+## Anexo J - Junio 2026
+
+Archivo: [2026-06.md](./2026-06.md)
+
+**Resumen**: Junio 2026 fue el mes de madurez operativa y consolidacion semantica de YavlGold. Con ~350+ commits estimados en 22 dias trabajados, el mes ejecuto el plan estrategico de 4 fases (Movimientos Generales, Dashboard Finca, Comparacion, Informes MD), completo la reorganizacion total de la navegacion del hub Mi Granja, cerro el refactor estructural de Factureros en 3 contextos independientes, redisenio Rankings con farm/crop chip selectors dinamicos y RPCs deployadas, lanzo AgroRepo como superficie local-first con papelera, desplego Dashboard Agro v11 (6 bloques, ES6 module), completo la migracion tipografica V12 en toda la plataforma (Orbitron/Rajdhani erradicadas), y creo la primera Skill Universal (SKILLS/2026-06-11-PATRONES-ERROR-YAVLGOLD.md). La deuda tecnica prioritaria identificada: extraccion Rankings a agro-rankings.js, split agro-facturero-finca.css (>3,400L), extraccion agroOperationalCycles.js (>4,000L), rotacion AGENT_REPORT_ACTIVE.md (3,718L), y verificacion agro-planning.js como posible zombie.
+
+**Metricas estimadas**:
+- **~350+ commits** (estimacion basada en densidad de daily logs: 15-18 commits/dia promedio en dias activos)
+- **22 dias trabajados** con daily logs (21 canonicos + 1 no canonico purgado)
+- **13 modulos nuevos/actualizados**: agro-farm-movements.js, agro-dashboard-v11.js/.css, agro-repo.js, agroOperationalCycles.js (refactor), agro-farms.js (expandido), Rankings (redisenio completo), RPCs agro_rank_pending_clients, get_farm_balance
+- **6 migraciones SQL** en un solo dia (Jun 18 - record)
+- **14 commits** en dia de migracion tipografica V12 (Jun 28)
+- **1 Skill Universal creada**: SKILLS/2026-06-11-PATRONES-ERROR-YAVLGOLD.md (10 lecciones)
+- **Carpeta SKILLS/ creada** en raiz del repo
+- **0 PRs mergeados** (trabajo directo en main)
+- **1 archivo no canonico purgado**: DAILY_LOG_2026-06-03.md (anti-patron §4.3.1)
+
+---
+
+*Fecha de extension*: 2026-08-01
+*Generado por*: Historiador Forense de Git - Protocolo Append-Only v1.0
+
+
+---
+
+# ADDENDUM - Julio 2026 (Append-only)
+
+> *Esta seccion extiende la cobertura de la cronica al mes de julio 2026.*
+
+## Resumen Ejecutivo - Julio 2026
+
+Los hechos que marcaron el septimo mes de 2026 (mes de pausa por hardware):
+
+1. **Pausa operativa por dano de hardware** (Jul 1-30): Conector Smart Pin de HP agrietado con residuo en el puerto del cargador. Solo 2 dias con actividad registrada en todo el mes.
+2. **Sincronizacion canonica V12** (Jul 7): llms.txt, AGENTS.md y FICHA_TECNICA.md actualizados a ADN Visual V12.0 como canon activo. Orbitron/Rajdhani deprecadas en todo el canon. Deuda tipografica marcada RESUELTA.
+3. **Dependabot sharp bump** (Jul 25): bump de sharp (npm_and_yarn).
+4. **Reincorporacion productiva** (Jul 31): 7 commits, 6 bugs moviles cerrados con QA real en dispositivo, 3 CVEs High resueltas, plan de 14 prioridades documental, auditoria de reporte externo (Perplexity) y correccion de README desactualizado (V11 -> V12).
+
+---
+
+## Anexo K - Julio 2026
+
+Archivo: [2026-07.md](./2026-07.md)
+
+**Resumen**: Julio 2026 fue un mes de baja actividad por dano fisico del hardware (cargador de la laptop). La jornada de reincorporacion del 31 de julio concentro el valor del mes: 7 commits con QA confirmado en dispositivo real (boton eliminar repo en movil via boton inline, scroll IA con altura fija de cadena flex, inversion USD real sumando base + gastos, responsive de ciclos y headers en movil, hub como arranque canónico), 3 vulnerabilidades High de dependencias transitivas cerradas (brace-expansion y postcss via overrides pnpm), un plan de 14 prioridades documental ejecutado sobre los canonicos, cross-verificacion de un reporte externo (Perplexity) que detecto 2 datos inventados, y correccion del README raiz que aun declaraba ADN V11 como canon activo.
+
+**Metricas estimadas**:
+- **9 commits** en julio (7 del dia 31 + 1 dependabot dia 25 + 1 docs dia 7)
+- **2 dias con actividad** de 31 (7 y 31)
+- **6 bugs moviles cerrados** en el dia 31
+- **3 CVEs de severidad alta resueltas**: brace-expansion (CVE-2026-13149, CVE-2026-14257) y postcss (CVE-2026-45623)
+- **1 PR mergeado**: #95 (Dependabot npm_and_yarn)
+- **3 documentos canonicos sincronizados a V12**: llms.txt, AGENTS.md, FICHA_TECNICA.md (+ README raiz y agro/README.md)
+- **AGENT_REPORT_ACTIVE.md a 3,883L** (117 del umbral de rotacion 4,000L) - rotacion obligatoria proxima sesion
+
+---
+
+*Fecha de extension*: 2026-08-01
+*Generado por*: Historiador Forense de Git - Protocolo Append-Only v1.0
+
