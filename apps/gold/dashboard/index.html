@@ -27,20 +27,108 @@
   <link rel="stylesheet" href="/assets/css/unificacion.css?v=9.3">
 
   <style>
-    .dash-splash{position:fixed;inset:0;z-index:13000;display:flex;align-items:center;justify-content:center;background:var(--negro-puro,#0a0a0a);transition:opacity .35s ease,visibility .35s ease}
-    body.dashboard-ready .dash-splash{opacity:0;visibility:hidden;pointer-events:none}
-    .dash-splash__inner{display:grid;gap:.6rem;place-items:center;padding:2rem}
-    .dash-splash__logo{width:72px;height:72px;object-fit:contain;opacity:0;animation:dashSplashFadeIn .5s ease .1s forwards}
-    .dash-splash__title{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.05rem;font-weight:700;color:var(--dorado-yavl,#C8A752);letter-spacing:.06em;opacity:0;animation:dashSplashFadeIn .4s ease .25s forwards}
-    .dash-splash__subtitle{font-family:'Inter',sans-serif;font-size:.88rem;color:rgba(255,255,255,.62);opacity:0;animation:dashSplashFadeIn .4s ease .35s forwards}
-    .dash-splash__bar{width:140px;height:3px;border-radius:2px;background:rgba(255,255,255,.06);overflow:hidden;margin-top:.3rem;opacity:0;animation:dashSplashFadeIn .3s ease .45s forwards}
-    .dash-splash__progress{height:100%;width:40%;border-radius:2px;background:var(--dorado-yavl,#C8A752);animation:dashSplashSlide 1s ease-in-out infinite}
-    @keyframes dashSplashFadeIn{to{opacity:1}}
-    @keyframes dashSplashSlide{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
-    @media (prefers-reduced-motion: reduce){
-      .dash-splash{transition:none}
-      .dash-splash__logo,.dash-splash__title,.dash-splash__subtitle,.dash-splash__bar{opacity:1;animation:none}
-      .dash-splash__progress{width:60%;animation:none}
+    .dash-splash {
+      position: fixed;
+      inset: 0;
+      z-index: 13000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--negro-puro, #0a0a0a);
+      transition: opacity .35s ease, visibility .35s ease
+    }
+
+    body.dashboard-ready .dash-splash {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none
+    }
+
+    .dash-splash__inner {
+      display: grid;
+      gap: .6rem;
+      place-items: center;
+      padding: 2rem
+    }
+
+    .dash-splash__logo {
+      width: 72px;
+      height: 72px;
+      object-fit: contain;
+      opacity: 0;
+      animation: dashSplashFadeIn .5s ease .1s forwards
+    }
+
+    .dash-splash__title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--dorado-yavl, #C8A752);
+      letter-spacing: .06em;
+      opacity: 0;
+      animation: dashSplashFadeIn .4s ease .25s forwards
+    }
+
+    .dash-splash__subtitle {
+      font-family: 'Inter', sans-serif;
+      font-size: .88rem;
+      color: rgba(255, 255, 255, .62);
+      opacity: 0;
+      animation: dashSplashFadeIn .4s ease .35s forwards
+    }
+
+    .dash-splash__bar {
+      width: 140px;
+      height: 3px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, .06);
+      overflow: hidden;
+      margin-top: .3rem;
+      opacity: 0;
+      animation: dashSplashFadeIn .3s ease .45s forwards
+    }
+
+    .dash-splash__progress {
+      height: 100%;
+      width: 40%;
+      border-radius: 2px;
+      background: var(--dorado-yavl, #C8A752);
+      animation: dashSplashSlide 1s ease-in-out infinite
+    }
+
+    @keyframes dashSplashFadeIn {
+      to {
+        opacity: 1
+      }
+    }
+
+    @keyframes dashSplashSlide {
+      0% {
+        transform: translateX(-100%)
+      }
+
+      100% {
+        transform: translateX(350%)
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .dash-splash {
+        transition: none
+      }
+
+      .dash-splash__logo,
+      .dash-splash__title,
+      .dash-splash__subtitle,
+      .dash-splash__bar {
+        opacity: 1;
+        animation: none
+      }
+
+      .dash-splash__progress {
+        width: 60%;
+        animation: none
+      }
     }
   </style>
 
@@ -102,7 +190,7 @@
       z-index: 10;
       max-width: 1400px;
       margin: 0 auto;
-      padding: 2rem;
+      padding: 0 1.5rem 2.5rem;
       min-height: 100vh;
     }
 
@@ -113,12 +201,12 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 1.5rem 2rem;
+      padding: 1rem 1.5rem;
       background: var(--negro-tarjeta-alpha);
       border: var(--borde-dorado);
       border-radius: 20px;
       backdrop-filter: blur(20px);
-      margin-bottom: 3rem;
+      margin-bottom: 1.5rem;
     }
 
     .logo-section {
@@ -273,8 +361,8 @@
         ============================================ */
     .welcome-section {
       text-align: center;
-      margin-bottom: 4rem;
-      padding: 2rem;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
     }
 
     .welcome-section h2 {
@@ -451,8 +539,8 @@
     .modules-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-      gap: 2rem;
-      margin-bottom: 3rem;
+      gap: 1.25rem;
+      margin-bottom: 1.5rem;
     }
 
     /* ============================================
@@ -461,11 +549,11 @@
     .module-card {
       background: var(--negro-tarjeta);
       border: var(--borde-dorado);
-      border-radius: 20px;
-      padding: 1.25rem 1.5rem;
+      border-radius: 16px;
+      padding: 1rem 1.25rem;
       position: relative;
       overflow: hidden;
-      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      transition: border-color 200ms ease;
       cursor: pointer;
       text-decoration: none;
       color: inherit;
@@ -477,7 +565,7 @@
     }
 
     .module-card:hover {
-      border-color: rgba(255, 255, 255, 0.12);
+      border-color: rgba(200, 167, 82, 0.45);
     }
 
     .module-card:hover::before {
@@ -486,21 +574,21 @@
 
     /* Ícono del Módulo */
     .module-icon {
-      width: 50px;
-      height: 50px;
-      background: rgba(200, 167, 82, 0.1);
-      border: 1px solid rgba(200, 167, 82, 0.3);
-      border-radius: 14px;
+      width: 40px;
+      height: 40px;
+      background: rgba(200, 167, 82, 0.08);
+      border: 1px solid rgba(200, 167, 82, 0.25);
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.5rem;
-      margin-bottom: 0.75rem;
-      transition: all 0.3s ease;
+      font-size: 1.2rem;
+      margin-bottom: 0;
+      transition: background 200ms ease;
     }
 
     .module-card:hover .module-icon {
-      background: rgba(200, 167, 82, 0.10);
+      background: rgba(200, 167, 82, 0.12);
     }
 
     /* Header de Tarjeta */
@@ -508,15 +596,15 @@
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 0.5rem;
+      margin-bottom: 8px;
     }
 
     .module-title {
       font-family: var(--font-titulo);
       font-weight: 700;
-      font-size: 1.4rem;
+      font-size: 1rem;
       color: var(--blanco);
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
     }
 
     /* ============================================
@@ -562,35 +650,41 @@
 
     /* Descripción */
     .module-description {
-      color: rgba(255, 255, 255, 0.6);
-      font-size: 0.9rem;
-      line-height: 1.5;
-      margin-bottom: 0.75rem;
+      color: rgba(255, 255, 255, 0.55);
+      font-size: 0.82rem;
+      line-height: 1.45;
+      margin-bottom: 8px;
     }
 
-    /* Features List */
+    /* Features List — estilo chips, sin ◆ */
     .module-features {
       list-style: none;
-      margin-bottom: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 10px;
+      padding: 0;
     }
 
     .module-features li {
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 0.85rem;
-      margin-bottom: 0.25rem;
+      gap: 0;
+      padding: 2px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.04);
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.68rem;
+      font-weight: 500;
     }
 
     .module-features li::before {
-      content: '◆';
-      color: var(--dorado-yavl);
-      font-size: 0.5rem;
+      display: none;
     }
 
     /* ============================================
-           🔘 BOTONES - PILL SHAPE (OBLIGATORIO)
+           🔘 BOTONES - PILL SHAPE
         ============================================ */
     .btn-modulo {
       display: inline-flex;
@@ -598,33 +692,35 @@
       justify-content: center;
       gap: 0.5rem;
       width: 100%;
-      padding: 0.7rem 1.5rem;
-      background: linear-gradient(135deg, var(--dorado-yavl), var(--dorado-oscuro));
+      padding: 0.6rem 1.25rem;
+      background: var(--dorado-yavl);
       border: none;
       border-radius: 50px;
-      /* PILL SHAPE */
       color: var(--negro-puro);
       font-family: var(--font-titulo);
       font-weight: 700;
-      font-size: 0.8rem;
-      letter-spacing: 1.5px;
+      font-size: 0.72rem;
+      letter-spacing: 1.2px;
       text-transform: uppercase;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: opacity 180ms ease;
       text-decoration: none;
+      margin-top: auto;
     }
 
     .btn-modulo:hover {
+      opacity: 0.9;
     }
 
     .btn-modulo svg,
     .btn-modulo i {
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
+      transition: transform 180ms ease;
     }
 
-    .btn-modulo:hover svg,
     .btn-modulo:hover i {
+      transform: translateX(3px);
     }
 
     /* Botón Deshabilitado */
@@ -655,33 +751,33 @@
         ============================================ */
     .stats-section {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 3rem;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
     }
 
     .stat-card {
       background: var(--negro-tarjeta-alpha);
       border: var(--borde-dorado);
       border-radius: 16px;
-      padding: 1.5rem;
+      padding: 1rem;
       text-align: center;
       backdrop-filter: blur(10px);
     }
 
     .stat-number {
       font-family: var(--font-titulo);
-      font-size: 2.5rem;
-      font-weight: 900;
+      font-size: 1.6rem;
+      font-weight: 700;
       color: var(--dorado-yavl);
       display: block;
     }
 
     .stat-label {
-      font-size: 0.9rem;
-      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.5);
       text-transform: uppercase;
-      letter-spacing: 2px;
+      letter-spacing: 1.5px;
     }
 
     /* ============================================
@@ -689,21 +785,7 @@
         ============================================ */
     @media (max-width: 768px) {
       .dashboard-container {
-        padding: 1rem;
-      }
-
-      .header {
-        flex-direction: column;
-        gap: 1.5rem;
-        text-align: center;
-      }
-
-      .logo-section {
-        flex-direction: column;
-      }
-
-      .welcome-section h2 {
-        font-size: 1.8rem;
+        padding: 0 0.75rem 2rem;
       }
 
       .modules-grid {
@@ -711,7 +793,15 @@
       }
 
       .module-card {
-        padding: 1.5rem;
+        padding: 0.875rem 1rem;
+      }
+
+      .insights-section {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-section {
+        grid-template-columns: repeat(3, 1fr);
       }
     }
 
@@ -1308,39 +1398,40 @@
         ============================================ */
     .insights-section {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
     }
 
     .insight-card {
       background: var(--negro-tarjeta-alpha);
       border: var(--borde-dorado);
-      border-radius: 16px;
-      padding: 1.5rem;
+      border-radius: 12px;
+      padding: 1rem;
       backdrop-filter: blur(10px);
     }
 
     .insight-title {
       font-family: var(--font-titulo);
-      font-size: 1.1rem;
+      font-size: 0.7rem;
       color: var(--dorado-yavl);
       text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 0.75rem;
+      letter-spacing: 0.12em;
+      margin-bottom: 0.5rem;
+      font-weight: 700;
     }
 
     .insight-name {
-      font-size: 1rem;
+      font-size: 0.9rem;
       font-weight: 700;
       color: #fff;
-      margin-bottom: 0.25rem;
+      margin-bottom: 0.2rem;
     }
 
     .insight-meta {
-      font-size: 0.85rem;
-      color: rgba(255, 255, 255, 0.6);
-      margin-bottom: 0.9rem;
+      font-size: 0.78rem;
+      color: rgba(255, 255, 255, 0.5);
+      margin-bottom: 0.7rem;
     }
 
     .insight-action {
@@ -1452,7 +1543,6 @@
       transform: none;
       opacity: 0.9;
     }
-
   </style>
   <link rel="stylesheet" href="/assets/css/dashboard-v1.css">
 
@@ -1466,7 +1556,9 @@
       <img src="/assets/images/logo.webp" alt="YavlGold" width="72" height="72" class="dash-splash__logo" />
       <p class="dash-splash__title">Cargando Dashboard</p>
       <p class="dash-splash__subtitle">Preparando tu espacio principal</p>
-      <div class="dash-splash__bar"><div class="dash-splash__progress"></div></div>
+      <div class="dash-splash__bar">
+        <div class="dash-splash__progress"></div>
+      </div>
     </div>
   </div>
   <a href="#main-content" class="sr-only-focusable">Saltar al contenido principal</a>
@@ -1496,8 +1588,7 @@
           <button id="notification-bell" class="topbar-icon-btn btn-notification notification-bell"
             title="Notificaciones">
             <i class="fas fa-bell"></i>
-            <span id="notification-badge" class="notification-badge notif-dot"
-              style="display: none;">0</span>
+            <span id="notification-badge" class="notification-badge notif-dot" style="display: none;">0</span>
           </button>
           <button id="feedback-btn" class="topbar-icon-btn btn-feedback feedback-btn" title="Feedback">
             <i class="fas fa-comment-dots"></i>
@@ -1730,7 +1821,9 @@
 
       <!-- Bio Section -->
       <div class="yg-about-bio">
-        <p>Soy Yerikson Varela, agricultor y desarrollador de YavlGold, nativo de La Grita, Táchira, Venezuela. Fundé YavlGold.com como una herramienta agrícola digital nacida de la realidad del campo, pensada para convertir cultivos y economía productiva en información clara, útil y humana.</p>
+        <p>Soy Yerikson Varela, agricultor y desarrollador de YavlGold, nativo de La Grita, Táchira, Venezuela. Fundé
+          YavlGold.com como una herramienta agrícola digital nacida de la realidad del campo, pensada para convertir
+          cultivos y economía productiva en información clara, útil y humana.</p>
       </div>
 
       <!-- Social Links -->

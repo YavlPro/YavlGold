@@ -83,6 +83,8 @@ Actualizado: 2026-05-09.
 - [LEGACY_SURFACES.md](./LEGACY_SURFACES.md) — Clasificación de superficies orphan
 - [LOCAL_FIRST.md](./LOCAL_FIRST.md) — Estrategia offline
 - chronicles/
+  - [CRONICA-YAVLGOLD-2026-ACTIVA.md](./chronicles/CRONICA-YAVLGOLD-2026-ACTIVA.md) — Crónica general activa (solo 2026, append-only)
+  - [cronica yavlgold general 2025 historica no modificar.md](./chronicles/cronica%20yavlgold%20general%202025%20historica%20no%20modificar.md) — Memoria histórica 2025 cerrada (NO MODIFICAR)
   - [2026-01.md](./chronicles/2026-01.md) — Crónica mensual
   - [2026-03.md](./chronicles/2026-03.md) — Crónica mensual
   - [libro del samurai especial edicion.md](./chronicles/libro%20del%20samurai%20especial%20edicion.md) — Crónica especial

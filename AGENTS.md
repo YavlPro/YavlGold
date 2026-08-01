@@ -880,7 +880,7 @@ Cuando un agente trabaje con documentación de YavlGold:
 - **Ley visual** → ADN Visual V12
 - **Mapa central** → `AGENT_CONTEXT_INDEX.md`
 - **Estado vivo** → `AGENT_REPORT_ACTIVE.md`
-- **Memoria histórica** → `CRONICA-YAVLGOLD.md` y crónicas mensuales
+- **Memoria histórica** → `CRONICA-YAVLGOLD-2026-ACTIVA.md` (crónica activa del año en curso), `cronica yavlgold general 2025 historica no modificar.md` (memoria histórica cerrada) y crónicas mensuales
 
 ### Regla de sincronización
 Si un documento existe tanto en repo como en vault:
@@ -917,7 +917,7 @@ YavlGold ya opera con el patron LLM Wiki de forma organica. Este proyecto tiene:
 - **Wiki viva**: AGENT_REPORT_ACTIVE.md (crece por sesion, se rota cada 4000+ lineas)
 - **Mapa central**: AGENT_CONTEXT_INDEX.md (indice de documentos y su rol)
 - **Resumen operativo**: llms.txt (servido en produccion)
-- **Memoria historica**: cronicas mensuales, AGENT_LEGACY_CONTEXT__*.md, AGENT_REPORT.md
+- **Memoria historica**: cronica activa del ano en curso (`CRONICA-YAVLGOLD-<ANO>-ACTIVA.md`), cronicas historicas cerradas (`cronica yavlgold general <ANO> historica no modificar.md`), cronicas mensuales, AGENT_LEGACY_CONTEXT__*.md, AGENT_REPORT.md
 
 No se necesita un documento "LLM_WIKI_SCHEMA" nuevo. AGENTS.md ya es el schema maestro.
 
@@ -934,7 +934,7 @@ No se necesita un documento "LLM_WIKI_SCHEMA" nuevo. AGENTS.md ya es el schema m
 | **Wiki viva** | Memoria operativa acumulativa de sesiones de agentes | AGENT_REPORT_ACTIVE.md |
 | **Mapa central** | Indice y navegacion de la wiki | AGENT_CONTEXT_INDEX.md |
 | **Resumen operativo** | Contexto rapido para LLMs y produccion | apps/gold/public/llms.txt |
-| **Memoria historica** | Versiones anteriores de wiki viva y cronicas | AGENT_LEGACY_CONTEXT__*.md, chronicles/ |
+| **Memoria historica** | Versiones anteriores de wiki viva, cronicas historicas cerradas y cronica activa del ano | AGENT_LEGACY_CONTEXT__*.md, chronicles/ (cronica activa + cronicas historicas + mensuales) |
 | **Vault Obsidian** | Capa de lectura, grafo y navegacion visual | vault del usuario (no es canon) |
 
 #### Operaciones del sistema wiki
@@ -970,6 +970,31 @@ No se necesita un documento "LLM_WIKI_SCHEMA" nuevo. AGENTS.md ya es el schema m
 3. Si se cumplio el umbral de 4000 lineas, ejecutar rotacion (canonica §4.1)
 4. No dejar sesiones sin documentar o con formato incompleto
 5. Build gate obligatorio (`pnpm build:gold`) antes de cerrar sesion
+
+#### Ley de Cronicas Anuales
+
+La cronica general del proyecto no debe mezclar anos en un solo documento. El canon documental separa la historia por ano para que los agentes —incluso con fecha de corte de conocimiento— no confundan contexto de anos pasados con el contexto activo.
+
+##### Estructura canonica
+
+- **Cronica activa**: `apps/gold/docs/chronicles/CRONICA-YAVLGOLD-<ANO>-ACTIVA.md` — contiene exclusivamente el contenido del ano en curso (addendums mensuales Append-Only).
+  - Ejemplo actual: `CRONICA-YAVLGOLD-2026-ACTIVA.md`.
+- **Cronica historica cerrada**: `cronica yavlgold general <ANO> historica no modificar.md` — memoria historica sellada de anos anteriores. NO debe modificarse.
+  - Ejemplo actual: `cronica yavlgold general 2025 historica no modificar.md`.
+- **Cronicas mensuales**: `chronicles/<ANO>-<MM>.md` — detalle por mes; se consolidan en la cronica activa mediante addendums.
+
+##### Reglas obligatorias
+
+1. La cronica activa siempre lleva el sufijo `-ACTIVA` con el ano actual en el nombre.
+2. El contenido de anos anteriores nunca se edita dentro de la cronica activa: vive en su cronica historica cerrada.
+3. Cada nueva entrada mensual se agrega como addendum al final de la cronica activa (Protocolo Append-Only v1.0), sin tocar lineas existentes.
+4. Al cerrar un ano, la cronica activa se congela y se renombra a cronica historica cerrada (`cronica yavlgold general <ANO> historica no modificar.md`); se crea una nueva cronica activa para el ano siguiente.
+5. Ningun agente debe combinar 2025 y 2026 en el mismo documento cronica.
+6. Los vinculos a la cronica activa en `AGENTS.md`, `AGENT_CONTEXT_INDEX.md` y `AGENT_REPORT_ACTIVE.md` deben apuntar siempre al archivo activo vigente.
+
+##### Excepcion
+
+Los documentos canonicos (AGENTS.md, ADN-VISUAL-V12.0.md, MANIFIESTO_AGRO.md, FICHA_TECNICA.md) no se gobiernan por esta ley de cronicas; siguen su propia regla de versionamiento.
 
 #### Criterios de inclusion de documentos en la wiki
 
