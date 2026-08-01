@@ -279,8 +279,7 @@
 }
 
 .module-card:hover .module-icon {
-  transform: scale(1.15);
-  filter: drop-shadow(0 0 20px color-mix(in srgb, var(--color-secondary) 60%, transparent));
+  opacity: 0.9;
 }
 
 /* Card Icon */
@@ -575,14 +574,6 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .module-icon {
-    animation: float 6s ease-in-out infinite;
-  }
-
-  .badge {
-    animation: pulse 2.4s ease-in-out infinite;
-  }
-
   .loading-spinner {
     animation: spin 1.2s linear infinite;
   }
