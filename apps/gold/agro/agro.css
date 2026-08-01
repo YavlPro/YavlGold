@@ -12044,12 +12044,13 @@ body[data-agro-active-view="asistente"] .agro-feedback-fab {
 
 @media (max-width: 768px) {
   .asistente-dedicado {
-    height: auto;
-    min-height: calc(100svh - 116px);
+    height: calc(100svh - 116px);
+    min-height: 480px;
   }
 
   .asistente-dedicado .agro-assistant-workspace {
-    min-height: calc(100svh - 116px);
+    height: 100%;
+    min-height: 0;
     border-radius: var(--radius-md, 12px);
   }
 
@@ -12076,6 +12077,15 @@ body[data-agro-active-view="asistente"] .agro-feedback-fab {
 
   .asistente-dedicado .ast-layout {
     flex-direction: column;
+    /* En columna el layout necesita height para que ast-main pueda hacer scroll */
+    overflow: hidden;
+  }
+
+  .asistente-dedicado .ast-main {
+    /* flex: 1 sin height bound no es suficiente en column flex en iOS — hacemos explícito */
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
   }
 
   .asistente-dedicado .ast-sidebar {
