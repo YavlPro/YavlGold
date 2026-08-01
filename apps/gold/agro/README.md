@@ -28,7 +28,7 @@ Modulo operativo principal de YavlGold. Herramienta agricola digital construida 
 - Vanilla JS (ES6+ Modules) con carga dinamica de submodulos.
 - Vite MPA.
 - Supabase (Auth, DB, Storage).
-- CSS con tokens del ADN Visual V11.
+- CSS con tokens del ADN Visual V12.
 
 ## Estructura
 
@@ -74,5 +74,5 @@ agro/
 - No agregar features nuevas al monolito `agro.js`; crear submodulos separados.
 - Imports dinamicos en el bootstrap de `index.html`.
 - Para compartir funciones del monolito con submodulos, usar `window._agroXxx` como puente.
-- Estilos en CSS separados con tokens V11.
+- Estilos en CSS separados con tokens V12.
 - Build obligatorio: `pnpm build:gold`.
