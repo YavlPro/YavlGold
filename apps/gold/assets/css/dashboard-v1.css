@@ -594,17 +594,17 @@ ul { list-style: none; }
 
 /* Star Toggle */
 .star-toggle {
-  position: absolute;
-  top: 10px;
-  left: 10px;
+  position: static;
   background: none;
   border: none;
   cursor: pointer;
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   color: var(--text-muted);
   z-index: 2;
-  padding: 2px;
-  opacity: 0.5;
+  padding: 4px 2px;
+  opacity: 0.45;
+  flex-shrink: 0;
+  line-height: 1;
   transition: opacity 180ms ease, color 180ms ease;
 }
 .star-toggle:hover { opacity: 1; color: var(--gold-4); }

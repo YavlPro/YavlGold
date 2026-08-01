@@ -591,12 +591,21 @@
       background: rgba(200, 167, 82, 0.12);
     }
 
-    /* Header de Tarjeta */
+    /* Module Header */
     .module-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       margin-bottom: 8px;
+      gap: 8px;
+    }
+
+    .module-header-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      flex-shrink: 0;
     }
 
     .module-title {
@@ -2706,9 +2715,6 @@
 
         return `
           <div class="module-card" data-module="${moduleKey}">
-            <button class="star-toggle" onclick="event.stopPropagation(); window.FavoritesManager?.toggleFavorite('${moduleKey}', this.querySelector('i'))" title="Agregar a favoritos">
-              <i class="${starClass} fa-star" style="${starColor}"></i>
-            </button>
             ${thumbnailHtml}
             <div class="module-header">
               <div class="module-header-main">
@@ -2718,7 +2724,12 @@
                   <p class="module-description">${description}</p>
                 </div>
               </div>
-              <span class="badge ${badge.class}">${badge.text}</span>
+              <div class="module-header-actions">
+                <span class="badge ${badge.class}">${badge.text}</span>
+                <button class="star-toggle" onclick="event.stopPropagation(); window.FavoritesManager?.toggleFavorite('${moduleKey}', this.querySelector('i'))" title="Agregar a favoritos">
+                  <i class="${starClass} fa-star" style="${starColor}"></i>
+                </button>
+              </div>
             </div>
             ${featuresHtml}
             <a href="${url}" class="btn-modulo">
