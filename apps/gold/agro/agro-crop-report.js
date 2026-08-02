@@ -81,7 +81,8 @@ const TAB_CONFIGS = {
 
 // Production still serves a leaner agro_crops schema in some environments.
 // Keep the default export query on the compatibility subset to avoid 400s on report export.
-const CROP_REPORT_COLUMNS_FULL = 'id,name,variety,status,status_override,status_mode,area_size,start_date,expected_harvest_date,actual_harvest_date,investment';
+// H10: farm_id added to resolve the parent farm name in the exported MD.
+const CROP_REPORT_COLUMNS_FULL = 'id,name,variety,status,status_override,status_mode,area_size,start_date,expected_harvest_date,actual_harvest_date,investment,farm_id';
 const CROP_REPORT_COLUMNS_SAFE = 'id,name,variety,status,status_override,status_mode,area_size,start_date,expected_harvest_date,actual_harvest_date,investment';
 
 function normalizeCropId(value) {
@@ -817,6 +818,26 @@ export async function exportCropReport(cropId, opts = {}) {
             ? `${pending.length} (${pendingActive.length}✓ / ${pendingTransferred.length}↔ / ${pendingDeletedReal.length}🗑)`
             : String(pendingActive.length);
 
+        // H10: Resolve farm name from the global farms snapshot so the crop MD
+        // always declares its parent finca (principle: a crop without its farm is orphan).
+        // Uses window._agroFarms (same bridge as agroOperationalCycles.js) — no extra query.
+        const resolveFarmNameForCrop = (farmId) => {
+            const id = String(farmId || '').trim();
+            if (!id) return null;
+            try {
+                if (typeof window !== 'undefined' && typeof window._agroFarms?.getFarms === 'function') {
+                    const farm = window._agroFarms.getFarms().find((f) => String(f?.id || '').trim() === id);
+                    if (farm?.name) return String(farm.name).trim();
+                }
+            } catch (_err) {
+                // silently ignore — farm name is supplementary, not critical
+            }
+            return null;
+        };
+        const farmId = cropExists && crop?.farm_id ? String(crop.farm_id).trim() : '';
+        const farmName = resolveFarmNameForCrop(farmId) || (farmId ? null : null);
+        const farmLine = farmName ? farmName : (farmId ? `ID ${farmId}` : 'Sin finca asociada');
+
         // Build Markdown
         let md = '';
         if (cropExists) {
@@ -825,6 +846,7 @@ export async function exportCropReport(cropId, opts = {}) {
                 md += `> ⚠️ Metadata del cultivo no disponible; reporte generado en modo estricto.\n`;
                 md += `> **crop_id:** \`${normalizedCropId}\`\n`;
             }
+            md += `> **Finca:** ${farmLine}\n`;
             md += `> **Estado:** ${statusLine}\n`;
             md += `> **Área:** ${areaLine}\n`;
             md += `> **Siembra:** ${startLine}\n`;

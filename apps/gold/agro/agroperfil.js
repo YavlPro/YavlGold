@@ -1344,6 +1344,23 @@ function buildProfileMarkdown(options = {}) {
         `- Facebook: ${profileData.facebook || 'Sin definir'}`,
         `- Biografía: ${profileData.notes || 'Sin notas'}`,
         '',
+        // D3: Declare the real scope of this report — it consolidates ALL farms,
+        // not just the one in the profile. Listing the available farms prevents
+        // confusion when the user has more than one.
+        '## Alcance del Informe',
+        '- Alcance: **Todas las fincas** — este informe consolida datos de todas las fincas registradas.',
+        (() => {
+            try {
+                if (typeof window !== 'undefined' && typeof window._agroFarms?.getFarms === 'function') {
+                    const farms = window._agroFarms.getFarms();
+                    if (Array.isArray(farms) && farms.length) {
+                        return `- Fincas incluidas: ${farms.map((f) => String(f?.name || 'Sin nombre').trim()).join(', ')}`;
+                    }
+                }
+            } catch (_err) { /* silently ignore */ }
+            return `- Finca de referencia del perfil: ${profileData.farm_name || 'Sin definir'}`;
+        })(),
+        '',
         '## Estado de Cultivos',
         `- Activos: ${Number(cropStats.active || 0)}`,
         `- Finalizados: ${Number(cropStats.finalized || 0)}`,
