@@ -627,7 +627,8 @@ body.agro-operational-modal-open {
   resize: vertical;
 }
 
-.agro-operational-shell .btn-primary {
+.agro-operational-shell .btn-primary,
+.agro-operational-shell .btn-gold {
   transition: background 180ms ease, border-color 180ms ease, color 180ms ease !important;
   box-shadow: none !important;
   transform: none !important;
@@ -636,7 +637,11 @@ body.agro-operational-modal-open {
 .agro-operational-shell .btn-primary:hover,
 .agro-operational-shell .btn-primary:focus,
 .agro-operational-shell .btn-primary:focus-visible,
-.agro-operational-shell .btn-primary:active {
+.agro-operational-shell .btn-primary:active,
+.agro-operational-shell .btn-gold:hover,
+.agro-operational-shell .btn-gold:focus,
+.agro-operational-shell .btn-gold:focus-visible,
+.agro-operational-shell .btn-gold:active {
   box-shadow: none !important;
   transform: none !important;
 }

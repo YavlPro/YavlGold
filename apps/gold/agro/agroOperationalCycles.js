@@ -1447,8 +1447,8 @@ function renderShell() {
                     <h2 class="agro-ops-header__title" data-ops-header-title>${escapeHtml(initialTitle)}</h2>
                 </div>
                 <div class="agro-ops-header__actions">
-                    <button type="button" class="btn btn-primary" data-operational-action="new-cycle">Nuevo registro</button>
-                    <button type="button" class="btn" data-agro-view="period-cycles">Ver períodos</button>
+                    <button type="button" class="btn btn-gold" data-operational-action="new-cycle">Nuevo registro</button>
+                    <button type="button" class="btn btn-gold" data-agro-view="period-cycles">Ver períodos</button>
                     <button type="button" class="agro-operational-refresh-btn" data-operational-action="refresh" aria-label="Actualizar" title="Actualizar">
                         <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
                     </button>
@@ -2074,6 +2074,11 @@ function resolveDraftFarmLabel(farmId) {
 }
 
 function getCycleAssociationType(cycle) {
+    // D1 — Domain rule (canonical): Personal = total orphans only.
+    // A cycle with farm_id (but no crop_id) belongs to the Finca facturero, not Personal.
+    // FAMILY_LINKED: has crop_id (crop-linked, regardless of farm)
+    // FAMILY_FARM:   has farm_id but NO crop_id (general farm expense)
+    // FAMILY_ORPHAN: neither crop_id nor farm_id (truly unlinked — Personal facturero)
     if (cycle?.crop_id) return FAMILY_LINKED;
     if (cycle?.farm_id) return FAMILY_FARM;
     return FAMILY_ORPHAN;
@@ -3016,24 +3021,77 @@ function renderEmptyState(subview) {
 }
 
 function buildExportFileName() {
-    return `ciclos-operativos-${currentMonthKey()}.md`;
+    // Derive a meaningful filename from the active view context and selected
+    // finca/cultivo chip — mirrors how agro-crop-report.js builds its filename.
+    const preset = state.viewContext?.preset;
+    const monthKey = currentMonthKey();
+
+    // Sanitize a display label into a safe filename token.
+    const sanitizeToken = (value) =>
+        String(value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .trim()
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-') || 'general';
+
+    if (preset === 'farm') {
+        // Facturero de la Finca — include the selected farm name when available.
+        let farmToken = 'finca';
+        const farmId = normalizeId(state.selectedContextFarmId);
+        if (farmId && typeof window._agroFarms?.getFarms === 'function') {
+            const farm = window._agroFarms.getFarms().find((f) => normalizeId(f?.id) === farmId);
+            if (farm?.name) farmToken = sanitizeToken(farm.name);
+        }
+        return `facturero-finca-${farmToken}-${monthKey}.md`;
+    }
+
+    if (preset === 'crop') {
+        // Facturero del Cultivo — include the selected crop name when available.
+        let cropToken = 'cultivo';
+        const cropId = normalizeId(state.selectedContextCropId);
+        if (cropId) {
+            const crop = getAvailableCrops().find((c) => normalizeId(c?.id) === cropId);
+            if (crop) {
+                const display = buildCropDisplay(crop);
+                cropToken = sanitizeToken(display.name || display.label);
+            }
+        }
+        return `facturero-cultivo-${cropToken}-${monthKey}.md`;
+    }
+
+    if (preset === 'orphan') {
+        return `facturero-personal-${monthKey}.md`;
+    }
+
+    // Vista general (operational / no specific context)
+    return `ciclos-operativos-${monthKey}.md`;
 }
 
-function buildMarkdownSection(title, datasetKey) {
+function buildMarkdownSection(title, datasetKey, filteredCycles) {
+    // filteredCycles: pre-filtered array passed by buildExportMarkdown().
+    // If omitted we fall back to the raw dataset (backward-compat / debug path).
     const dataset = getDataset(datasetKey);
+    const cycles = Array.isArray(filteredCycles) ? filteredCycles : dataset.cycles;
+
+    // Recompute summary over the filtered snapshot so counts/balance are coherent.
+    const summary = createDatasetSummary(cycles);
+
     const lines = [`## ${title}`, ''];
     lines.push(`Filtros: ${readLabel(PERIOD_OPTIONS, dataset.filters.period, 'Todo')} · ${readLabel(CATEGORY_FILTER_OPTIONS, dataset.filters.category, 'Todas las categorías')} · ${readLabel(TYPE_FILTER_OPTIONS, dataset.filters.economicType, 'Todos los tipos')}`);
-    lines.push(`Balance: ${dataset.summary.balanceText}`);
-    lines.push(`Registros visibles: ${dataset.summary.count}`);
+    lines.push(`Balance: ${summary.balanceText}`);
+    lines.push(`Registros visibles: ${summary.count}`);
     lines.push('');
 
-    if (dataset.cycles.length === 0) {
+    if (cycles.length === 0) {
         lines.push('- Sin registros con los filtros actuales.');
         lines.push('');
         return lines;
     }
 
-    dataset.cycles.forEach((cycle) => {
+    cycles.forEach((cycle) => {
         lines.push(`### ${cycle.name}`);
         lines.push(`- Tipo económico: ${readLabel(ECONOMIC_TYPE_OPTIONS, cycle.economic_type, 'Sin tipo')}`);
         lines.push(`- Categoría: ${readLabel(CATEGORY_OPTIONS, cycle.category, 'Sin categoría')}`);
@@ -3063,21 +3121,34 @@ function buildMarkdownSection(title, datasetKey) {
 }
 
 function buildExportMarkdown() {
+    // ── H1: use the context-aware title instead of the hardcoded literal. ──
+    const viewTitle = state.viewContext?.title || 'Facturero';
+
+    // ── H2 / H7: build filtered snapshots for both datasets so the export
+    // only contains cycles that belong to the active finca/cultivo context.
+    // We NEVER mutate state.datasets — filterCyclesByContext returns a new array.
+    const filteredActive = filterCyclesByContext(state.datasets[SUBVIEW_ACTIVE].cycles);
+    const filteredFinished = filterCyclesByContext(state.datasets[SUBVIEW_FINISHED].cycles);
+
+    // Compute summaries over the filtered snapshots for the header section.
+    const activeSummary = createDatasetSummary(filteredActive);
+    const finishedSummary = createDatasetSummary(filteredFinished);
+
     const lines = [
-        '# Facturero de la Finca',
+        `# ${viewTitle}`,
         '',
         `Generado: ${formatDateLabel(todayLocalIso())}`,
         '',
         '## Resumen',
         '',
-        `- Activos exportados: ${state.datasets[SUBVIEW_ACTIVE].summary.count}`,
-        `- Pagados / pérdidas exportados: ${state.datasets[SUBVIEW_FINISHED].summary.count}`,
-        `- Balance combinado: ${mergeSummaryBalanceText(state.datasets[SUBVIEW_ACTIVE].summary, state.datasets[SUBVIEW_FINISHED].summary)}`,
+        `- Activos exportados: ${activeSummary.count}`,
+        `- Pagados / pérdidas exportados: ${finishedSummary.count}`,
+        `- Balance combinado: ${mergeSummaryBalanceText(activeSummary, finishedSummary)}`,
         ''
     ];
 
-    buildMarkdownSection('Activos', SUBVIEW_ACTIVE).forEach((line) => lines.push(line));
-    buildMarkdownSection('Pagados / pérdidas', SUBVIEW_FINISHED).forEach((line) => lines.push(line));
+    buildMarkdownSection('Activos', SUBVIEW_ACTIVE, filteredActive).forEach((line) => lines.push(line));
+    buildMarkdownSection('Pagados / pérdidas', SUBVIEW_FINISHED, filteredFinished).forEach((line) => lines.push(line));
 
     return lines.join('\n');
 }
@@ -3106,7 +3177,7 @@ function renderExportView() {
     return `
         <div class="agro-operational-export-panel">
             <div class="agro-operational-export-actions">
-                <button type="button" class="btn btn-primary" data-operational-action="download-markdown">Exportar MD</button>
+                <button type="button" class="btn btn-gold" data-operational-action="download-markdown">Exportar MD</button>
                 <span class="agro-operational-export-filename">${escapeHtml(buildExportFileName())}</span>
             </div>
             <div class="agro-operational-export-preview">
