@@ -154,3 +154,44 @@ Verificar la existencia de las crónicas de mayo/junio/julio 2026, crear las que
 **Resultado build:** `✔ built in 3.50s` — sin errores ni warnings nuevos
 
 **QA sugerido:** Revisar en browser `/dashboard` — verificar que el logo hero sea pequeño y sin glow, las tarjetas de stats compactas, las cards de módulo sin bounce al hover, y el scroll reveal sin salto.
+
+---
+
+## Sesión 2026-08-03 — Fix de reportes Agro: finca como entidad raíz
+
+**Objetivo:** Implementar la spec `AGENT_SPEC__REPORTES_POR_FINCA__2026-08-03.md` — corregir los 6 bloques de hallazgos identificados en la auditoría del 2026-08-02.
+
+**Diagnóstico (base):** Auditoría previa (solo lectura) confirmó causa raíz unificada: `buildExportMarkdown()` consumía `state.datasets` global sin pasar por `filterCyclesByContext()`, generando que los tres factureros (Finca, Cultivo, Personal) exportaran el mismo dataset, título hardcodeado y filename sin contexto.
+
+**Cambios realizados:**
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agroOperationalCycles.js` | fix | `buildExportFileName()`: filename dinámico por preset (finca/cultivo/personal) + nombre entidad seleccionada (H3) |
+| `agroOperationalCycles.js` | fix | `buildMarkdownSection()`: acepta `filteredCycles` y recalcula resumen sobre snapshot local (H2, H7) |
+| `agroOperationalCycles.js` | fix | `buildExportMarkdown()`: título dinámico desde `state.viewContext.title`; pasa snapshots filtrados via `filterCyclesByContext()` sin mutar `state.datasets` (H1, H2, H7) |
+| `agroOperationalCycles.js` | fix | `renderShell()` + `renderExportView()`: botones cambiados de `btn btn-primary` / `btn` a `btn btn-gold` (H5) |
+| `agroOperationalCycles.js` | docs | `getCycleAssociationType()`: comentario canónico — Personal = huérfanos totales (`!crop_id && !farm_id`) (D1) |
+| `agro-operational-cycles.css` | fix | Reglas de override extendidas a `.btn-gold` además de `.btn-primary` (H5) |
+| `agro-crop-report.js` | fix | `CROP_REPORT_COLUMNS_FULL`: añadido `farm_id`; bloque de MD: inserta `> **Finca:** <nombre>` resolviendo vía `window._agroFarms` (H10) |
+| `agroperfil.js` | fix | `buildProfileMarkdown()`: sección "Alcance del Informe" declara "Todas las fincas" y lista las incluidas en lugar de solo la finca del perfil (D3) |
+| `agro.js` | fix | `exportOpsRankingsMarkdown()`: importa `normalizeReportClientName` y la aplica sobre nombres de clientes antes de escribir el MD (D4) |
+| `apps/gold/docs/AGENT_SPEC__REPORTES_POR_FINCA__2026-08-03.md` | new | Spec guardada como documento canónico de referencia del frente |
+
+**Restricciones respetadas:**
+- `state.datasets[SUBVIEW_ACTIVE/FINISHED]` no se tocaron — los snapshots filtrados son locales al export.
+- `rebuildPortfolioByCrop()` y `emitPortfolioSnapshot()` siguen consumiendo datos globales.
+- `agro-farm-report.js` no se tocó (modelo correcto, referencia).
+
+**Resultado del build:**
+```
+agent-guard: OK
+agent-report-check: OK
+vite build: ✓ 187 modules, sin errores
+UTF-8 check: ✓ passed
+Exit code: 0
+```
+
+**QA pendiente (Yerikson):** Ver §7 de la spec — pruebas funcionales en navegador y móvil real.
+
+**No se hizo en esta sesión:** Export masivo de clientes (D2, fuera de alcance); split de `agroOperationalCycles.js` (deuda técnica preexistente).
