@@ -13943,7 +13943,8 @@ async function exportOpsRankingsMarkdown() {
         maskReportMoney: _maskMoney,
         maskReportMetric: _maskMetric,
         maskReportName: _maskName,
-        normalizeReportClientKey: _normKey
+        normalizeReportClientKey: _normKey,
+        normalizeReportClientName: _normClientName
     } = await import('./agro-report-format.js');
     const { getPendingTransferToken } = await import('./agro-unit-totals.js');
     _formatOpsRankingMoney = _fmtMoney;
@@ -14060,7 +14061,10 @@ async function exportOpsRankingsMarkdown() {
         md += `| Cliente | Compras | Monedas | Total (USD) | Estado |\n`;
         md += `|---------|--------:|---------|------------:|--------|\n`;
         for (const b of sortedBuyers) {
-            const name = hideNames ? BUYER_PRIVACY_MASK : String(b.displayWho || 'Sin cliente').trim();
+            // D4: normalize capitalization so names are consistent across rankings.
+            const rawName = String(b.displayWho || 'Sin cliente').trim();
+            const normalizedName = typeof _normClientName === 'function' ? _normClientName(rawName) : rawName;
+            const name = hideNames ? BUYER_PRIVACY_MASK : normalizedName;
             const estado = b.hasPaid && b.hasPending ? '🔔 Mixto' : b.hasPaid ? '✅ Pagado' : '⏳ Debe';
             const curs = Array.from(b.currencies).join(', ');
             md += `| ${name.replace(/\|/g, '·')} | ${b.count} | ${curs} | ${fmtMd(b.totalCents)} | ${estado} |\n`;
