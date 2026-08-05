@@ -2342,6 +2342,15 @@ function renderContextPicker() {
     `;
 }
 
+function isDonationCycle(cycle) {
+    return normalizeToken(cycle?.economic_type) === 'donation';
+}
+
+function isLossCycle(cycle) {
+    if (isDonationCycle(cycle)) return false;
+    return normalizeToken(cycle?.economic_type) === 'loss' || normalizeToken(cycle?.status) === 'lost';
+}
+
 function getPendingCycles() {
     const active = applyPresetFamilyFilter(state.datasets[SUBVIEW_ACTIVE]?.cycles || []);
     return active.filter((cycle) => ACTIVE_STATUS_VALUES.includes(normalizeToken(cycle?.status)) && !isDonationCycle(cycle) && !isLossCycle(cycle));
