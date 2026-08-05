@@ -2084,6 +2084,28 @@ function getCycleAssociationType(cycle) {
     return FAMILY_ORPHAN;
 }
 
+/**
+ * Filters a cycle array to only include the cycles that semantically belong
+ * to the active facturero preset (farm / crop / orphan).
+ *
+ * This is the first-pass filter that must be applied BEFORE filterCyclesByContext()
+ * and filterCyclesByFamily() so that each facturero only sees its own domain:
+ *   - Facturero de la Finca  (preset='farm')   → FAMILY_FARM   cycles
+ *   - Facturero del Cultivo  (preset='crop')   → FAMILY_LINKED cycles
+ *   - Facturero Personal     (preset='orphan') → FAMILY_ORPHAN cycles
+ *   - Vista general / no preset                → all cycles (no restriction)
+ *
+ * IMPORTANT: never mutates the input array — always returns a new array.
+ */
+function applyPresetFamilyFilter(cycles) {
+    if (!Array.isArray(cycles)) return [];
+    const preset = state.viewContext?.preset;
+    if (preset === 'farm') return cycles.filter((c) => getCycleAssociationType(c) === FAMILY_FARM);
+    if (preset === 'crop') return cycles.filter((c) => getCycleAssociationType(c) === FAMILY_LINKED);
+    if (preset === 'orphan') return cycles.filter((c) => getCycleAssociationType(c) === FAMILY_ORPHAN);
+    return cycles; // vista general — no restriction
+}
+
 function filterCyclesByContext(cycles) {
     if (!Array.isArray(cycles)) return [];
     const farmId = normalizeId(state.selectedContextFarmId);
@@ -2320,30 +2342,13 @@ function renderContextPicker() {
     `;
 }
 
-function getDonationCycles() {
-    // Usar el dataset del subview activo, no la combinación de ambos.
-    const activeDataset = state.currentSubview === SUBVIEW_FINISHED
-        ? (state.datasets[SUBVIEW_FINISHED]?.cycles || [])
-        : (state.datasets[SUBVIEW_ACTIVE]?.cycles || []);
-    return activeDataset.filter((cycle) => normalizeToken(cycle?.economic_type) === 'donation');
-}
-
-function isDonationCycle(cycle) {
-    return normalizeToken(cycle?.economic_type) === 'donation';
-}
-
-function isLossCycle(cycle) {
-    if (isDonationCycle(cycle)) return false;
-    return normalizeToken(cycle?.economic_type) === 'loss' || normalizeToken(cycle?.status) === 'lost';
-}
-
 function getPendingCycles() {
-    const active = state.datasets[SUBVIEW_ACTIVE]?.cycles || [];
+    const active = applyPresetFamilyFilter(state.datasets[SUBVIEW_ACTIVE]?.cycles || []);
     return active.filter((cycle) => ACTIVE_STATUS_VALUES.includes(normalizeToken(cycle?.status)) && !isDonationCycle(cycle) && !isLossCycle(cycle));
 }
 
 function getPaidCycles() {
-    const finished = state.datasets[SUBVIEW_FINISHED]?.cycles || [];
+    const finished = applyPresetFamilyFilter(state.datasets[SUBVIEW_FINISHED]?.cycles || []);
     return finished.filter((cycle) => normalizeToken(cycle?.status) === 'closed' && !isDonationCycle(cycle) && !isLossCycle(cycle));
 }
 
@@ -2352,7 +2357,15 @@ function getLossCycles() {
     const activeDataset = state.currentSubview === SUBVIEW_FINISHED
         ? (state.datasets[SUBVIEW_FINISHED]?.cycles || [])
         : (state.datasets[SUBVIEW_ACTIVE]?.cycles || []);
-    return activeDataset.filter(isLossCycle);
+    return applyPresetFamilyFilter(activeDataset).filter(isLossCycle);
+}
+
+function getDonationCycles() {
+    // Usar el dataset del subview activo, no la combinación de ambos.
+    const activeDataset = state.currentSubview === SUBVIEW_FINISHED
+        ? (state.datasets[SUBVIEW_FINISHED]?.cycles || [])
+        : (state.datasets[SUBVIEW_ACTIVE]?.cycles || []);
+    return applyPresetFamilyFilter(activeDataset).filter((cycle) => normalizeToken(cycle?.economic_type) === 'donation');
 }
 
 function getCyclesForSubview(subview) {
@@ -2726,8 +2739,10 @@ function renderOverview() {
     }
 
     if (state.currentSubview === SUBVIEW_EXPORT) {
-        const activeSummary = state.datasets[SUBVIEW_ACTIVE].summary;
-        const finishedSummary = state.datasets[SUBVIEW_FINISHED].summary;
+        const filteredActive = applyPresetFamilyFilter(state.datasets[SUBVIEW_ACTIVE].cycles);
+        const filteredFinished = applyPresetFamilyFilter(state.datasets[SUBVIEW_FINISHED].cycles);
+        const activeSummary = createDatasetSummary(filteredActive);
+        const finishedSummary = createDatasetSummary(filteredFinished);
         const totalCount = activeSummary.count + finishedSummary.count;
         state.refs.overviewBody.innerHTML = `
             ${renderExportCompactOverview(activeSummary, finishedSummary, totalCount)}
@@ -3123,12 +3138,41 @@ function buildMarkdownSection(title, datasetKey, filteredCycles) {
 function buildExportMarkdown() {
     // ── H1: use the context-aware title instead of the hardcoded literal. ──
     const viewTitle = state.viewContext?.title || 'Facturero';
+    const preset = state.viewContext?.preset;
 
-    // ── H2 / H7: build filtered snapshots for both datasets so the export
-    // only contains cycles that belong to the active finca/cultivo context.
-    // We NEVER mutate state.datasets — filterCyclesByContext returns a new array.
-    const filteredActive = filterCyclesByContext(state.datasets[SUBVIEW_ACTIVE].cycles);
-    const filteredFinished = filterCyclesByContext(state.datasets[SUBVIEW_FINISHED].cycles);
+    // ── H2 / H7 (revised): the export must respect BOTH the family partition
+    // (which cycles belong to this facturero) AND the chip selector (which
+    // specific finca/cultivo the user narrowed to).
+    //
+    // filterCyclesByContext() alone is insufficient: when no chip is selected
+    // ("Vista general"), it returns ALL cycles regardless of preset — so the
+    // Facturero del Cultivo would include farm-only cycles, etc.
+    //
+    // Correct approach:
+    //   1. Apply the family filter for the active preset (farm / crop / orphan).
+    //   2. Then apply the chip selector (filterCyclesByContext) on top.
+    //
+    // We NEVER mutate state.datasets. All arrays are new filtered copies.
+    const applyPresetFamilyFilter = (cycles) => {
+        if (!Array.isArray(cycles)) return [];
+        if (preset === 'farm') {
+            // Facturero de la Finca: only cycles that belong to a finca (farm_id set, no crop_id)
+            return cycles.filter((c) => getCycleAssociationType(c) === FAMILY_FARM);
+        }
+        if (preset === 'crop') {
+            // Facturero del Cultivo: only cycles linked to a crop (crop_id set)
+            return cycles.filter((c) => getCycleAssociationType(c) === FAMILY_LINKED);
+        }
+        if (preset === 'orphan') {
+            // Facturero Personal: only truly unlinked cycles (no farm_id, no crop_id)
+            return cycles.filter((c) => getCycleAssociationType(c) === FAMILY_ORPHAN);
+        }
+        // Vista general / fallback: return all (filterCyclesByContext will narrow further)
+        return cycles;
+    };
+
+    const filteredActive = filterCyclesByContext(applyPresetFamilyFilter(state.datasets[SUBVIEW_ACTIVE].cycles));
+    const filteredFinished = filterCyclesByContext(applyPresetFamilyFilter(state.datasets[SUBVIEW_FINISHED].cycles));
 
     // Compute summaries over the filtered snapshots for the header section.
     const activeSummary = createDatasetSummary(filteredActive);
@@ -3236,8 +3280,8 @@ function renderCurrentSubview() {
     }
 
     if (state.currentSubview === SUBVIEW_EXPORT) {
-        const activeCount = state.datasets[SUBVIEW_ACTIVE].summary.count;
-        const finishedCount = state.datasets[SUBVIEW_FINISHED].summary.count;
+        const activeCount = applyPresetFamilyFilter(state.datasets[SUBVIEW_ACTIVE].cycles).length;
+        const finishedCount = applyPresetFamilyFilter(state.datasets[SUBVIEW_FINISHED].cycles).length;
         clearFiltersHost();
         state.refs.listStatus.textContent = `Exportarás ${activeCount + finishedCount} ciclo${activeCount + finishedCount === 1 ? '' : 's'} respetando los filtros activos.`;
         state.refs.list.innerHTML = renderExportView();
