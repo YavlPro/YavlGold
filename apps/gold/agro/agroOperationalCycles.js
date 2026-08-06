@@ -3227,12 +3227,27 @@ function downloadMarkdownFile() {
 function renderExportView() {
     const markdown = buildExportMarkdown();
 
+    // Cambio 2: aviso visible si hay filtros activos distintos del default.
+    // Usa hasActiveAdvancedFilters y readLabel — ambos ya existen en este módulo.
+    const activeFilters = state.datasets[SUBVIEW_ACTIVE].filters;
+    const finishedFilters = state.datasets[SUBVIEW_FINISHED].filters;
+    const hasActiveFilters = hasActiveAdvancedFilters(activeFilters) || hasActiveAdvancedFilters(finishedFilters);
+    const filterWarning = hasActiveFilters ? `
+        <p class="agro-operational-export-filter-warning">
+            <i class="fa-solid fa-filter" aria-hidden="true"></i>
+            Filtros activos: el MD exportado solo incluirá los ciclos visibles con los filtros actuales.
+            Activos: ${readLabel(PERIOD_OPTIONS, activeFilters.period, 'Todo')} · ${readLabel(CATEGORY_FILTER_OPTIONS, activeFilters.category, 'Todas las categorías')} · ${readLabel(TYPE_FILTER_OPTIONS, activeFilters.economicType, 'Todos los tipos')}.
+            Pagados: ${readLabel(PERIOD_OPTIONS, finishedFilters.period, 'Todo')} · ${readLabel(CATEGORY_FILTER_OPTIONS, finishedFilters.category, 'Todas las categorías')} · ${readLabel(TYPE_FILTER_OPTIONS, finishedFilters.economicType, 'Todos los tipos')}.
+        </p>
+    ` : '';
+
     return `
         <div class="agro-operational-export-panel">
             <div class="agro-operational-export-actions">
                 <button type="button" class="btn btn-gold" data-operational-action="download-markdown">Exportar MD</button>
                 <span class="agro-operational-export-filename">${escapeHtml(buildExportFileName())}</span>
             </div>
+            ${filterWarning}
             <div class="agro-operational-export-preview">
                 <p class="agro-operational-export-preview__label">Vista previa del archivo</p>
                 <pre>${escapeHtml(markdown)}</pre>

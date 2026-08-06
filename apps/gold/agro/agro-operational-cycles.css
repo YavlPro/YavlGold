@@ -1840,6 +1840,21 @@ body.agro-operational-modal-open {
   line-height: 1.55;
 }
 
+/* Cambio 2: aviso de filtros activos en el panel de exportar MD */
+.agro-operational-export-filter-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 35%, transparent);
+  background: color-mix(in srgb, var(--color-warning) 8%, transparent);
+  color: var(--color-warning);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1.45;
+}
+
 .agro-operational-summary-card[data-tone='success'] .agro-operational-summary-card__value {
   color: var(--color-success);
 }
