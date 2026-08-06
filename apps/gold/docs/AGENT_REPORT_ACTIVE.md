@@ -227,9 +227,29 @@ Exit code: 0
 
 **Resultado del build:** `agent-guard: OK` · `agent-report-check: OK` · `187 modules, sin errores` · `UTF-8: OK` · Exit 0.
 
-**QA pendiente (Yerikson — verde provisional):**
-- F1: seleccionar finca → lista muestra solo clientes de esa finca con cifras scoped
-- F2: "Exportar lista" → MD concuerda exactamente con la lista visible
-- No regresión: filtrado por cultivo sigue igual; export individual del detalle sigue igual
+**QA profundo pendiente (verde provisional, tests de la spec §7):**
+- F1-1 a F1-5: filtrado por finca — "Vista general" vs fincas específicas, clientes "Sin registro", cifras scoped por finca
+- F2-1 a F2-4: export global — MD declara finca/alcance, tabla, coincidencia exacta lista ↔ MD, export individual intacto
+- NR-1 a NR-2: no regresión — filtro por cultivo intacto; vista general como antes
 
-**Deuda abierta:** Tests 1–7 del frente anterior (factureros operativos, 2026-08-02) en verde provisional — pendiente pasada profunda.
+**Deuda abierta:** QA profundo de clientes (F1/F2/NR) **pendiente** — frente Verde provisional. NO es verde definitivo hasta que el usuario confirme QA real.
+
+> **Actualización (2026-08-05):** Verde provisional. Una sola deuda viva: el QA profundo de clientes.
+
+---
+
+## Sesión 2026-08-05 — Cierre factureros operativos (frente del 2026-08-02): VERDE DEFINITIVO
+
+**Objetivo:** Cerrar el frente de factureros operativos con QA real confirmado por el usuario.
+
+**Estado:** ✅ **VERDE DEFINITIVO — frente cerrado. Ya no es deuda abierta.**
+
+**QA real confirmado:** El usuario confirmó que los tests 1–7 de `AGENT_SPEC__REPORTES_POR_FINCA__2026-08-03.md` pasaron en QA real.
+
+**Commits de cierre (2026-08-05):**
+- `fix(agro): vista de factureros aplica filtro de familia por preset (Capa 2)` — `87b18bf2`
+- `hotfix(agro): restaurar isDonationCycle e isLossCycle borradas por str_replace` — `f68cf384`
+
+**QA sugerido adicional:** Ninguno — frente cerrado con QA real. Mantener monitoreo de no-regresión al tocar zona de factureros en el futuro.
+
+**NO se hizo:** No se tocó código en esta sesión de documentación. No se modificaron specs ni documentos canónicos.
