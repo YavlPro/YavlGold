@@ -1448,7 +1448,7 @@ function renderShell() {
                 </div>
                 <div class="agro-ops-header__actions">
                     <button type="button" class="btn btn-gold" data-operational-action="new-cycle">Nuevo registro</button>
-                    <button type="button" class="btn btn-gold" data-agro-view="period-cycles">Ver períodos</button>
+                    <button type="button" class="btn btn-outline-gold" data-agro-view="period-cycles">Ver períodos</button>
                     <button type="button" class="agro-operational-refresh-btn" data-operational-action="refresh" aria-label="Actualizar" title="Actualizar">
                         <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
                     </button>
@@ -2473,6 +2473,29 @@ function mergeSummaryBalanceText(leftSummary, rightSummary) {
     return formatMoneyBucket(balance, { signed: true, emptyText: EMPTY_BALANCE_LABEL });
 }
 
+/**
+ * M2 — Single-line summary replacing the 3-card grid for specific factureros.
+ * Shows the same numbers (count, movementCount, balance) in a compact inline row.
+ * Used by renderOverview when state.viewContext is set (farm/crop/orphan).
+ */
+function renderInlineSummary(summary, balanceLabel = 'Balance') {
+    const count = Number(summary?.count || 0);
+    const movementCount = Number(summary?.movementCount || 0);
+    const cycleWord = count === 1 ? 'ciclo' : 'ciclos';
+    const movementWord = movementCount === 1 ? 'movimiento' : 'movimientos';
+    return `
+        <div class="agro-operational-inline-summary">
+            <span class="agro-operational-inline-summary__item">${count} ${cycleWord}</span>
+            <span class="agro-operational-inline-summary__sep" aria-hidden="true">·</span>
+            <span class="agro-operational-inline-summary__item">${movementCount} ${movementWord}</span>
+            <span class="agro-operational-inline-summary__sep" aria-hidden="true">·</span>
+            <span class="agro-operational-inline-summary__item agro-operational-inline-summary__balance" data-tone="${escapeAttr(summary?.balanceTone || 'gold')}">
+                ${escapeHtml(balanceLabel)}: ${renderMoneyNode(summary?.balanceText)}
+            </span>
+        </div>
+    `;
+}
+
 function renderCompactOverview({ label, summary, familyLabel, balanceLabel = 'Balance', balanceHint = '', detailsKey = '' }) {
     const count = Number(summary?.count || 0);
     const movementCount = Number(summary?.movementCount || 0);
@@ -2804,6 +2827,11 @@ function renderOverview() {
     const familyCycles = filterCyclesByFamily(getCyclesForSubview(state.currentSubview), state.familyFilter);
     const summary = createDatasetSummary(familyCycles);
     const familyLabel = getFamilyLabel(state.familyFilter);
+    // M2: specific factureros use a compact inline line instead of 3 metric cards.
+    if (state.viewContext) {
+        state.refs.overviewBody.innerHTML = renderInlineSummary(summary);
+        return;
+    }
     state.refs.overviewBody.innerHTML = `
         ${renderCompactOverview({
         label: 'Resumen de esta vista',
@@ -2971,12 +2999,19 @@ function renderCycleCard(cycle) {
         { label: 'Balance', value: cycle.balanceText, tone: cycle.balanceTone }
     ];
 
+    // M3: association chip with semantic color class; uses existing chip classes.
+    const assocChipClass = association.type === FAMILY_LINKED
+        ? 'agro-operational-chip agro-operational-chip--crop'
+        : association.type === FAMILY_FARM
+            ? 'agro-operational-chip agro-operational-chip--farm'
+            : 'agro-operational-chip agro-operational-chip--orphan';
+
     return `
         <article class="agro-operational-card" data-cycle-id="${escapeAttr(cycle.id)}">
             <header class="agro-operational-card__head">
                 <div class="agro-operational-card__identity">
                     <h3 class="agro-operational-card__title">${escapeHtml(cycle.name)}</h3>
-                    <p class="agro-operational-card__subtitle">${escapeHtml(cropText)} · ${escapeHtml(dates)}</p>
+                    <p class="agro-operational-card__subtitle">${escapeHtml(dates)}</p>
                 </div>
                 <div class="agro-operational-card__head-side">
                     <span class="agro-operational-status ${buildStatusClass(cycle.status)}">${escapeHtml(statusLabel)}</span>
@@ -2984,9 +3019,13 @@ function renderCycleCard(cycle) {
                 </div>
             </header>
 
-            <dl class="agro-operational-card__metrics">
-                ${metrics.map((m) => `
-                    <div class="agro-operational-card__metric"${m.tone ? ` data-tone="${escapeAttr(m.tone)}"` : ''}>
+            <dl class="agro-operational-card__metrics agro-operational-card__metrics--balance-first">
+                <div class="agro-operational-card__metric agro-operational-card__metric--balance" data-tone="${escapeAttr(cycle.balanceTone)}">
+                    <dt>${escapeHtml('Balance')}</dt>
+                    <dd>${escapeHtml(cycle.balanceText)}</dd>
+                </div>
+                ${metrics.slice(0, 2).map((m) => `
+                    <div class="agro-operational-card__metric">
                         <dt>${escapeHtml(m.label)}</dt>
                         <dd>${escapeHtml(m.value)}</dd>
                     </div>
@@ -2994,7 +3033,7 @@ function renderCycleCard(cycle) {
             </dl>
 
             <div class="agro-operational-card__chips">
-                <span class="agro-operational-chip">${escapeHtml(association.supportLabel)}</span>
+                <span class="${assocChipClass}">${escapeHtml(association.supportLabel)}</span>
                 <span class="agro-operational-chip">${escapeHtml(readLabel(CATEGORY_OPTIONS, cycle.category, 'Otro'))}</span>
                 <span class="agro-operational-chip">${cycle.movementCount} movimiento${cycle.movementCount === 1 ? '' : 's'}</span>
             </div>
@@ -3265,6 +3304,10 @@ function renderCurrentSubview() {
     state.refs.listEyebrow.textContent = meta.eyebrow;
     state.refs.listTitle.textContent = meta.title;
     state.refs.listCopy.textContent = meta.copy;
+    // M1: in specific factureros (viewContext set), hide the redundant eyebrow+h3
+    // via CSS — the active tab already communicates the subview name. The copy
+    // (context description) stays visible as a muted line below the subview-switch.
+    state.refs.listSection?.classList.toggle('is-facturero-specific', !!state.viewContext);
     state.refs.listSection?.classList.toggle('is-refreshing', isSoftRefreshing);
     state.refs.listStatus.classList.toggle('is-refreshing', isSoftRefreshing);
     state.refs.listStatus.toggleAttribute('aria-busy', isSoftRefreshing);
