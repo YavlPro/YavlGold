@@ -184,3 +184,128 @@ export function downloadBuyerPortfolioExport({ buyerRow, historyRows, exportedAt
     URL.revokeObjectURL(url);
     return filename;
 }
+
+// ---------------------------------------------------------------------------
+// F2 — Global list export (table summary, no per-client movement detail)
+// ---------------------------------------------------------------------------
+
+/**
+ * Builds the scope label for the list export header.
+ * @param {{ farmName?: string|null, cropName?: string|null }} opts
+ */
+function buildListExportScopeLabel({ farmName, cropName } = {}) {
+    if (cropName) return `Cultivo: ${cropName}`;
+    if (farmName) return `Finca: ${farmName}`;
+    return 'Vista general';
+}
+
+/**
+ * Generates a Markdown table summary of the visible client list.
+ * Respects active filters (category + search + farm/crop).
+ * Does NOT include per-client movement detail — that lives in the individual export.
+ *
+ * @param {{ rows: object[], farmName?: string|null, cropName?: string|null, activeCategory?: string, exportedAt?: Date }} opts
+ */
+export function buildBuyerListExportMarkdown({ rows, farmName, cropName, activeCategory, exportedAt = new Date() } = {}) {
+    const safeRows = Array.isArray(rows) ? rows : [];
+    const scopeLabel = buildListExportScopeLabel({ farmName, cropName });
+
+    const lines = [
+        `# Cartera de Clientes — ${scopeLabel}`,
+        '',
+        `- Fecha de exportación: ${formatExportTimestamp(exportedAt)}`,
+        `- Alcance: ${scopeLabel}`,
+        activeCategory && activeCategory !== 'todos'
+            ? `- Categoría: ${activeCategory}`
+            : `- Categoría: Todas`,
+        `- Clientes visibles: ${safeRows.length}`,
+        '',
+        '## Resumen por cliente',
+        '',
+        '| Cliente | Categoría | Fiado | Cobrado | Pérdida | Cumplimiento |',
+        '|---------|-----------|------:|--------:|--------:|-------------:|',
+    ];
+
+    let totalCredited = 0;
+    let totalPaid = 0;
+    let totalLoss = 0;
+
+    safeRows.forEach((row) => {
+        const name = String(row?.display_name || row?.canonical_name || 'Sin nombre').trim();
+        const category = resolveExportCategory(row);
+        const credited = Number(row?.credited_total || 0);
+        const paid = Number(row?.paid_total || 0);
+        const loss = Number(row?.loss_total || 0);
+        const compliance = row?.compliance_percent !== null && row?.compliance_percent !== undefined
+            ? `${Number(row.compliance_percent).toFixed(0)}%`
+            : 'N/A';
+        totalCredited += credited;
+        totalPaid += paid;
+        totalLoss += loss;
+        lines.push(
+            `| ${escapeListMd(name)} | ${escapeListMd(category)} | ${formatMoney(credited)} | ${formatMoney(paid)} | ${formatMoney(loss)} | ${compliance} |`
+        );
+    });
+
+    lines.push('');
+    lines.push('## Totales');
+    lines.push('');
+    lines.push(`| Fiado total | Cobrado total | Pérdida total |`);
+    lines.push(`|------------:|-------------:|--------------:|`);
+    lines.push(`| ${formatMoney(totalCredited)} | ${formatMoney(totalPaid)} | ${formatMoney(totalLoss)} |`);
+    lines.push('');
+    lines.push('---');
+    lines.push('> Para el historial detallado de cada cliente, usa el export individual en el detalle del cliente.');
+    if (farmName) {
+        lines.push(`> Esta vista incluye solo movimientos asociados a cultivos de **${farmName}**. La Vista general incluye movimientos sin asociar (legacy).`);
+    }
+    lines.push('> Generado por YavlGold Agro · Facturero de Clientes');
+
+    return lines.join('\n');
+}
+
+function escapeListMd(value) {
+    return String(value || '').replace(/\|/g, '·').replace(/\n/g, ' ');
+}
+
+function resolveExportCategory(row) {
+    const pending = Number(row?.pending_total || 0);
+    const paid = Number(row?.paid_total || 0);
+    const loss = Number(row?.loss_total || 0);
+    const review = Number(row?.review_required_total || 0) + Number(row?.legacy_unclassified_total || 0);
+    if (pending > 0) return 'Fiados';
+    if (paid > 0 && !pending && !loss) return 'Pagados';
+    if (loss > 0) return 'Pérdidas';
+    if (review > 0) return 'Por revisar';
+    return 'Sin registro';
+}
+
+/**
+ * Builds the filename for the list export.
+ * Avoids filename collision between scopes on the same date by including the scope token.
+ */
+export function buildBuyerListExportFilename({ farmName, cropName, exportedAt = new Date() } = {}) {
+    const dateStamp = getDateStamp(exportedAt);
+    if (cropName) return `cartera-lista-cultivo-${sanitizeFileToken(cropName)}-${dateStamp}.md`;
+    if (farmName) return `cartera-lista-finca-${sanitizeFileToken(farmName)}-${dateStamp}.md`;
+    return `cartera-lista-vista-general-${dateStamp}.md`;
+}
+
+/**
+ * Downloads the global list export as a Markdown file.
+ * Reuses the same BOM + Blob + link pattern as downloadBuyerPortfolioExport (V-D verified).
+ */
+export function downloadBuyerListExport({ rows, farmName, cropName, activeCategory, exportedAt = new Date() } = {}) {
+    const markdown = buildBuyerListExportMarkdown({ rows, farmName, cropName, activeCategory, exportedAt });
+    const filename = buildBuyerListExportFilename({ farmName, cropName, exportedAt });
+    const blob = new Blob(['\ufeff' + markdown], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    return filename;
+}

@@ -3,12 +3,13 @@ import { getExchangeStatus, initExchangeRates } from './agro-exchange.js';
 import {
     buildBuyerPortfolioScopeKey,
     fetchBuyerPortfolioCropScopeKeys,
+    fetchBuyerPortfolioFarmScopeKeys,
     fetchBuyerPortfolioSummary,
     normalizeBuyerGroupKey,
     normalizeBuyerPortfolioSummaryRow,
     normalizeHistorySearchToken
 } from './agro-facturero-clientes.js';
-import { downloadBuyerPortfolioExport } from './agro-facturero-clientes-export.js';
+import { downloadBuyerPortfolioExport, downloadBuyerListExport } from './agro-facturero-clientes-export.js';
 import {
     fetchBuyerHistoryTimeline,
     getVisibleBuyerHistoryRows,
@@ -103,6 +104,12 @@ let visibleCropScopeId = null;
 let visibleCropScopeLoading = false;
 let visibleCropScopeError = '';
 let visibleCropScopeRequestId = 0;
+// Farm scope state — mirrors the crop scope pattern for finca-level filtering.
+let visibleFarmScopeKeys = null;
+let visibleFarmScopeId = '';
+let visibleFarmScopeLoading = false;
+let visibleFarmScopeError = '';
+let visibleFarmScopeRequestId = 0;
 const sessionCropBuyerScopeKeys = new Map();
 let externalRefreshTimer = 0;
 let cropScopedSummaryMap = new Map();
@@ -1572,23 +1579,45 @@ function matchesPortfolioSearch(row, query = searchQuery) {
 function getCropScopedRows(rows) {
     const safeRows = Array.isArray(rows) ? rows.slice() : [];
     const selectedCropId = getSelectedCropId();
-    if (!selectedCropId) {
-        return safeRows.map((row) => {
+
+    // Case 1: specific cultivo selected — existing behavior, unchanged.
+    if (selectedCropId) {
+        if (!(visibleCropScopeKeys instanceof Set) || visibleCropScopeId !== selectedCropId) return [];
+        const sessionKeys = getSessionCropScopeKeys(selectedCropId);
+
+        return safeRows.flatMap((row) => {
+            if (!hasBuyerPortfolioHistory(row)) return [row];
             const scopeKey = buildBuyerPortfolioScopeKey(row);
-            if (!scopeKey || !hasBuyerPortfolioHistory(row)) return row;
-            return buildCropScopedSummaryOverlay(row, cropScopedSummaryMap.get(scopeKey));
+            if (!scopeKey || (!visibleCropScopeKeys.has(scopeKey) && !sessionKeys?.has(scopeKey))) {
+                return [];
+            }
+            return [buildCropScopedSummaryOverlay(row, cropScopedSummaryMap.get(scopeKey))];
         });
     }
-    if (!(visibleCropScopeKeys instanceof Set) || visibleCropScopeId !== selectedCropId) return [];
-    const sessionKeys = getSessionCropScopeKeys(selectedCropId);
 
-    return safeRows.flatMap((row) => {
-        if (!hasBuyerPortfolioHistory(row)) return [row];
-        const scopeKey = buildBuyerPortfolioScopeKey(row);
-        if (!scopeKey || (!visibleCropScopeKeys.has(scopeKey) && !sessionKeys?.has(scopeKey))) {
-            return [];
+    // Case 2: finca selected without a specific cultivo (NEW — F1).
+    // Rule: show only clients with ≥1 movement in crops of that finca.
+    // "Sin registro" clients (no history) are hidden in finca scope.
+    // Orphan movements (legacy, no crop_id) are invisible here — Vista general only.
+    // Cifras are scoped via cropScopedSummaryMap (already populated by fetchOperationalProgressMap).
+    const selectedFarmId = getSelectedFarmId();
+    if (selectedFarmId) {
+        if (!(visibleFarmScopeKeys instanceof Set) || visibleFarmScopeId !== selectedFarmId) {
+            return []; // scope keys not yet loaded
         }
-        return [buildCropScopedSummaryOverlay(row, cropScopedSummaryMap.get(scopeKey))];
+        return safeRows.flatMap((row) => {
+            if (!hasBuyerPortfolioHistory(row)) return []; // "Sin registro" → hidden in finca scope
+            const scopeKey = buildBuyerPortfolioScopeKey(row);
+            if (!scopeKey || !visibleFarmScopeKeys.has(scopeKey)) return [];
+            return [buildCropScopedSummaryOverlay(row, cropScopedSummaryMap.get(scopeKey))];
+        });
+    }
+
+    // Case 3: Vista general — existing behavior, unchanged.
+    return safeRows.map((row) => {
+        const scopeKey = buildBuyerPortfolioScopeKey(row);
+        if (!scopeKey || !hasBuyerPortfolioHistory(row)) return row;
+        return buildCropScopedSummaryOverlay(row, cropScopedSummaryMap.get(scopeKey));
     });
 }
 
@@ -2637,6 +2666,7 @@ function getSelectedBuyerRow() {
 
 function getListViewState() {
     const selectedCropId = getSelectedCropId();
+    const selectedFarmId = getSelectedFarmId();
     const cropScopedRows = getCropScopedRows(summaryRows);
     const shouldBlockInitialLoading = !hasLoadedSummary && !lastErrorMessage;
     const isSoftRefreshing = loading && hasLoadedSummary;
@@ -2658,9 +2688,19 @@ function getListViewState() {
             title: 'Cargando clientes del cultivo',
             copy: `Buscando movimientos visibles para ${getSelectedCropShortLabel()}.`
         });
+    } else if (visibleFarmScopeLoading && selectedFarmId && !selectedCropId) {
+        // F1: loading state while farm scope keys are being fetched
+        bodyMode = 'farm-loading';
+        bodyContent = renderEmptyState({
+            title: 'Cargando clientes de la finca',
+            copy: 'Buscando movimientos visibles para esta finca.'
+        });
     } else if (visibleCropScopeError && selectedCropId) {
         bodyMode = 'error';
         bodyContent = renderErrorState(visibleCropScopeError);
+    } else if (visibleFarmScopeError && selectedFarmId && !selectedCropId) {
+        bodyMode = 'error';
+        bodyContent = renderErrorState(visibleFarmScopeError);
     } else if (lastErrorMessage) {
         bodyMode = 'error';
         bodyContent = renderErrorState(lastErrorMessage);
@@ -2687,6 +2727,7 @@ function getListViewState() {
 
     return {
         selectedCropId,
+        selectedFarmId,
         cropScopedRows,
         shouldBlockInitialLoading,
         isSoftRefreshing,
@@ -2730,9 +2771,14 @@ function renderListViewMarkup(state) {
                             Unificar clientes
                         </button>
                     </div>
-                    <button type="button" class="cartera-viva-refresh" data-cartera-refresh ${loading ? 'disabled' : ''}>
-                        ${loading ? 'Actualizando…' : 'Actualizar'}
-                    </button>
+                    <div class="cartera-viva-action-pair">
+                        <button type="button" class="cartera-viva-refresh" data-cartera-refresh ${loading ? 'disabled' : ''}>
+                            ${loading ? 'Actualizando…' : 'Actualizar'}
+                        </button>
+                        <button type="button" class="cartera-viva-refresh cartera-viva-refresh--secondary" data-cartera-export-list>
+                            Exportar lista
+                        </button>
+                    </div>
                 </div>
                 <div data-cartera-summary-slot>
                     ${renderHeaderSummary(state.summaryRowsForHeader, { loading: state.shouldBlockInitialLoading })}
@@ -2988,6 +3034,51 @@ async function syncVisibleCropScope(options = {}) {
     }
 }
 
+/**
+ * Loads the Set of buyer scope keys visible for the selected finca.
+ * Mirrors syncVisibleCropScope but uses fetchBuyerPortfolioFarmScopeKeys
+ * with the crop IDs belonging to that finca.
+ *
+ * Rule: a finca with no crops has no clients (empty Set).
+ * Orphan movements (no crop_id) are invisible in finca scope — Vista general only.
+ */
+async function syncVisibleFarmScope(options = {}) {
+    const selectedFarmId = getSelectedFarmId();
+    const requestId = ++visibleFarmScopeRequestId;
+    const shouldRender = options.render !== false;
+
+    if (!selectedFarmId) {
+        visibleFarmScopeKeys = null;
+        visibleFarmScopeId = '';
+        visibleFarmScopeLoading = false;
+        visibleFarmScopeError = '';
+        if (shouldRender) renderView();
+        return;
+    }
+
+    visibleFarmScopeLoading = true;
+    visibleFarmScopeError = '';
+    visibleFarmScopeId = selectedFarmId;
+    if (shouldRender) renderView();
+
+    try {
+        const farmCropIds = getCropIdsForSelectedFarm();
+        const cropIdArray = farmCropIds instanceof Set ? Array.from(farmCropIds) : [];
+        const nextKeys = await fetchBuyerPortfolioFarmScopeKeys(supabase, cropIdArray);
+        if (requestId !== visibleFarmScopeRequestId) return;
+        visibleFarmScopeKeys = nextKeys;
+    } catch (error) {
+        if (requestId !== visibleFarmScopeRequestId) return;
+        console.error('[CarteraViva] farm scope load failed:', error?.message || error);
+        visibleFarmScopeKeys = new Set();
+        visibleFarmScopeError = String(error?.message || 'No se pudo filtrar la cartera por finca.');
+    } finally {
+        if (requestId !== visibleFarmScopeRequestId) return;
+        visibleFarmScopeLoading = false;
+        if (shouldRender) renderView();
+    }
+}
+
 async function loadSummary() {
     loading = true;
     lastErrorMessage = '';
@@ -3031,6 +3122,7 @@ async function loadSummary() {
             ? nextOperationalProgress.familyMap
             : new Map();
         await syncVisibleCropScope({ render: false });
+        await syncVisibleFarmScope({ render: false });
     } catch (error) {
         console.error('[CarteraViva] summary load failed:', error?.message || error);
         lastErrorMessage = String(error?.message || 'Error leyendo la cartera de clientes.');
@@ -3043,6 +3135,10 @@ async function loadSummary() {
         visibleCropScopeId = null;
         visibleCropScopeLoading = false;
         visibleCropScopeError = '';
+        visibleFarmScopeKeys = null;
+        visibleFarmScopeId = '';
+        visibleFarmScopeLoading = false;
+        visibleFarmScopeError = '';
     } finally {
         loading = false;
         hasLoadedSummary = true;
@@ -3137,6 +3233,29 @@ async function exportBuyerDetail() {
     }
 }
 
+/**
+ * F2 — Exports the global client list as a Markdown table summary.
+ * Respects active filters (category + search + farm/crop selector).
+ * The export is a snapshot of filteredRows — same data the list shows.
+ */
+function exportBuyerList() {
+    const listState = getListViewState();
+    const rows = listState.filteredRows;
+    if (!rows || rows.length === 0) return;
+
+    const selectedFarmId = getSelectedFarmId();
+    const farmName = selectedFarmId
+        ? (getAvailableFarms().find((f) => normalizeFarmId(f?.id) === selectedFarmId)?.name || 'Finca')
+        : null;
+
+    const selectedCropId = getSelectedCropId();
+    const cropName = selectedCropId
+        ? (resolveCropDisplay(getAvailableCrops().find((c) => normalizeCropId(c?.id) === selectedCropId))?.shortLabel || null)
+        : null;
+
+    downloadBuyerListExport({ rows, farmName, cropName, activeCategory, exportedAt: new Date() });
+}
+
 function bindListViewEvents(root) {
     if (root.dataset.carteraListEventsBound === '1') return;
     root.dataset.carteraListEventsBound = '1';
@@ -3179,6 +3298,11 @@ function bindListViewEvents(root) {
 
         if (target.closest('[data-cartera-refresh]')) {
             loadSummary();
+            return;
+        }
+
+        if (target.closest('[data-cartera-export-list]')) {
+            exportBuyerList();
             return;
         }
 

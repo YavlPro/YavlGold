@@ -145,6 +145,62 @@ export async function fetchBuyerPortfolioCropScopeKeys(supabaseClient, cropId) {
     return visibleKeys;
 }
 
+/**
+ * Builds the Set of buyer scope keys that have at least one movement associated
+ * with any of the given crop IDs (i.e. the crops belonging to a selected finca).
+ *
+ * Analogous to fetchBuyerPortfolioCropScopeKeys but uses .in('crop_id', cropIds)
+ * instead of .eq('crop_id', cropId).
+ *
+ * V-A verified: same buildBuyerPortfolioScopeKey(row) call → same key format.
+ *
+ * @param {object} supabaseClient
+ * @param {string[]} cropIds  Array of crop UUIDs belonging to the selected finca.
+ * @returns {Promise<Set<string>>}
+ */
+export async function fetchBuyerPortfolioFarmScopeKeys(supabaseClient, cropIds) {
+    const safeCropIds = Array.isArray(cropIds)
+        ? cropIds.map((id) => String(id || '').trim()).filter(Boolean)
+        : [];
+
+    // Finca with no crops → no clients (a finca can exist without crops but
+    // those crops have not been created yet → no movements → empty scope).
+    if (!safeCropIds.length) return new Set();
+
+    if (!supabaseClient?.from) {
+        throw new TypeError('fetchBuyerPortfolioFarmScopeKeys requires a Supabase client with from().');
+    }
+
+    const queries = BUYER_PORTFOLIO_CROP_SCOPE_TABLES.map(({ table, excludeReverted }) => {
+        let query = supabaseClient
+            .from(table)
+            .select('id,buyer_id,buyer_group_key')
+            .in('crop_id', safeCropIds)
+            .is('deleted_at', null);
+
+        if (excludeReverted !== false) {
+            query = query.is('reverted_at', null);
+        }
+
+        return query;
+    });
+
+    const results = await Promise.all(queries);
+    const visibleKeys = new Set();
+
+    results.forEach((result) => {
+        if (result?.error) throw result.error;
+        if (!Array.isArray(result?.data)) return;
+
+        result.data.forEach((row) => {
+            const scopeKey = buildBuyerPortfolioScopeKey(row);
+            if (scopeKey) visibleKeys.add(scopeKey);
+        });
+    });
+
+    return visibleKeys;
+}
+
 export function normalizeHistorySearchToken(value) {
     return String(value || '')
         .replace(/\s+/g, ' ')
