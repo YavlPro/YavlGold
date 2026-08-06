@@ -195,3 +195,41 @@ Exit code: 0
 **QA pendiente (Yerikson):** Ver §7 de la spec — pruebas funcionales en navegador y móvil real.
 
 **No se hizo en esta sesión:** Export masivo de clientes (D2, fuera de alcance); split de `agroOperationalCycles.js` (deuda técnica preexistente).
+
+---
+
+## Sesión 2026-08-05 — Facturero de Clientes: filtrado por finca + export global
+
+**Objetivo:** Implementar spec `AGENT_SPEC__CLIENTES_FINCA_EXPORT__2026-08-05.md` — F1 (filtrar lista por finca) y F2 (botón "Exportar lista").
+
+**4 puntos de verificación resueltos antes de implementar:**
+- V-A: `buildBuyerPortfolioScopeKey(row)` produce `"buyer:{id}"` o `"group:{key}"` — mismo formato que el Set de `fetchBuyerPortfolioFarmScopeKeys`. ✅
+- V-B: `getCropIdsForSelectedFarm()` existe (línea 468), usa `getAvailableCrops()` filtrado por `crop.farm_id`. ✅
+- V-C: `hasBuyerPortfolioHistory(row)` existe (línea 1283), devuelve `true` si cualquier campo numérico > 0. ✅
+- V-D: `downloadBuyerPortfolioExport` usa `'\ufeff' + md`, `Blob utf-8`, `appendChild/click/removeChild/revokeObjectURL`. Reusado idéntico. ✅
+
+**Cambios realizados:**
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agro-facturero-clientes.js` | feat | Nueva función `fetchBuyerPortfolioFarmScopeKeys(supabase, cropIds)` — análoga a CropScopeKeys con `.in()` |
+| `agro-facturero-clientes-view.js` | feat | Import de `fetchBuyerPortfolioFarmScopeKeys` y `downloadBuyerListExport` |
+| `agro-facturero-clientes-view.js` | feat | Variables de estado: `visibleFarmScopeKeys/Id/Loading/Error/RequestId` |
+| `agro-facturero-clientes-view.js` | feat | `syncVisibleFarmScope()` — análoga a `syncVisibleCropScope` |
+| `agro-facturero-clientes-view.js` | feat | `loadSummary()` llama `syncVisibleFarmScope` + reset en el catch |
+| `agro-facturero-clientes-view.js` | feat | `getCropScopedRows()` — Caso 2 nuevo: finca sin cultivo filtra y scopa cifras por finca |
+| `agro-facturero-clientes-view.js` | feat | `getListViewState()` — estados de carga y error para finca |
+| `agro-facturero-clientes-view.js` | feat | `exportBuyerList()` — genera MD snapshot de `filteredRows` activos |
+| `agro-facturero-clientes-view.js` | feat | Botón "Exportar lista" en `renderListViewMarkup` + handler en `bindListViewEvents` |
+| `agro-facturero-clientes-export.js` | feat | `buildBuyerListExportMarkdown`, `buildBuyerListExportFilename`, `downloadBuyerListExport` |
+
+**No tocado:** `visibleCropScopeKeys`, `syncVisibleCropScope`, `fetchBuyerPortfolioCropScopeKeys`, detalle individual, RPC `agro_buyer_portfolio_summary_v1`.
+
+**Resultado del build:** `agent-guard: OK` · `agent-report-check: OK` · `187 modules, sin errores` · `UTF-8: OK` · Exit 0.
+
+**QA pendiente (Yerikson — verde provisional):**
+- F1: seleccionar finca → lista muestra solo clientes de esa finca con cifras scoped
+- F2: "Exportar lista" → MD concuerda exactamente con la lista visible
+- No regresión: filtrado por cultivo sigue igual; export individual del detalle sigue igual
+
+**Deuda abierta:** Tests 1–7 del frente anterior (factureros operativos, 2026-08-02) en verde provisional — pendiente pasada profunda.
