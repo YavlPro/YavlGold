@@ -2,6 +2,7 @@ import {
     formatHistoryAbsoluteDayLabel,
     groupHistoryRowsByDay
 } from './agro-facturero-clientes.js';
+import { normalizeReportClientName } from './agro-report-format.js';
 
 function formatMoney(value) {
     const amount = Number(value);
@@ -231,7 +232,10 @@ export function buildBuyerListExportMarkdown({ rows, farmName, cropName, activeC
     let totalLoss = 0;
 
     safeRows.forEach((row) => {
-        const name = String(row?.display_name || row?.canonical_name || 'Sin nombre').trim();
+        // Cambio 1: normaliza capitalización del nombre (agro-report-format.js).
+        // Solo el texto del nombre; cifras y totales sin tocar.
+        const rawName = String(row?.display_name || row?.canonical_name || 'Sin nombre').trim();
+        const name = normalizeReportClientName(rawName);
         const category = resolveExportCategory(row);
         const credited = Number(row?.credited_total || 0);
         const paid = Number(row?.paid_total || 0);
