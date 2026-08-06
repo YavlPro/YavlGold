@@ -289,3 +289,28 @@ Se confirmaron incoherencias con evidencia en código y migraciones (`get_farm_b
 **QA sugerido:** Ninguno funcional — cambios solo documentales. Verificar visualmente en navegador solo si se desea confirmar que no hubo impacto (no lo hubo: no se tocó código).
 
 **NO se hizo:** No se modificó código del producto. No se tocó el README público de `agro/` (capa pública, se mantiene simplificada a propósito). No se modificaron specs ni documentos canónicos superiores a los listados.
+
+---
+
+## Sesión 2026-08-06 — Auditoría de exportes (17 MDs), fixes de honestidad y ola UI de factureros
+
+**Objetivo:** Cierre documental del 6 de agosto: auditoría de exportes, dos fixes de honestidad del export y ola visual M1-M6.
+
+**Diagnóstico (evidencia):** Auditoría de 17 MDs exportados leídos íntegros. Capa de export VERDE PROBADA POR DOCUMENTO: factureros operativos con filtro de familia correcto (cultivo muestra solo sus ciclos, personal solo huérfanos), 5 informes de cultivo declarando su finca (H10), perfil global declarando "Todas las fincas" (D3), Rankings con nombres normalizados (D4), títulos y filenames por contexto (H1/H3), encabezados coherentes con cuerpo (H7).
+
+**Cambios realizados (commits del 6 de agosto):**
+- `9660be2` fix(clientes): normalizar nombres en export de lista (D4 extendido)
+- `7b737cd` feat(agro): aviso de filtros activos en panel de export de factureros
+- `b5e3a76` feat(agro): ola UI factureros — jerarquía de títulos, balance protagonista y botones (M1-M6)
+
+**Build:** `pnpm build:gold` exit 0 en cada commit; Vercel deployment completed (check verde).
+
+**CI:** CodeQL Analyze (python) falló por infraestructura de GitHub ("hosted runner lost communication" + "Internal server error", correlation ID `e872ae4e-de44-478c-9b6c-c22a4bc8b55d`). Declarado ruido por el usuario: no es veredicto sobre el código; el check válido de deploy es Vercel. Los analizadores de actions y javascript-typescript fueron cancelados como daño colateral. Higiene pendiente: re-run o ajuste de matriz (fail-fast false / evaluar quitar python).
+
+**Estado de QA (honesto, sin verdes regalados):** Frentes previos (factureros operativos 2026-08-02 y clientes 2026-08-05) VERDE definitivo confirmado por el usuario; capa de export VERDE probada por documento (auditoría de 17 MDs de hoy); ola UI M1-M6 + aviso de filtros + normalización cartera-lista VERDE PROVISIONAL, pendiente de QA profundo online (el usuario solo hace QA online, post-deploy).
+
+**QA pendiente (próxima sesión online):** Ola UI (copy visible bajo los tabs, balance con color por estado semántico según Caso 10 —Invirtiendo gris, nunca rojo por signo—, jerarquía de botones comparada con superficies hermanas, no-regresión de tabs/chips/aviso de filtros/privacidad/Volver) y tests F1/F2/NR de clientes si no se corrieron.
+
+**Deuda viva:** Split de `agro-operational-cycles.css` (2,099 líneas, zona roja §11.X, congelado hasta plan de separación); M4 (menú de 3 puntos) diferido a segunda ola; Node 25 vs requerido 20.x (warn de engine).
+
+**NO se hizo:** No se tocó lógica de filtrado, `state.datasets`, RPC ni export individual del detalle; no se crearon clases de botón nuevas (se reusó `btn-outline-gold` del ADN §7); no se modificaron documentos canónicos.
