@@ -84,10 +84,10 @@ This file contains the current product, architecture and routing policy for `app
 - Facturero de Clientes visible states: `Fiado` = live pending balance, `Cobrado/Pagado` = paid with no pending/loss, `Perdido` = loss. `Transferido` and `Revertido` are traceability only, not primary states. Paid tab requires `paid > EPSILON && pending <= EPSILON && loss <= EPSILON`.
 - Facturero de Clientes general view should align with live crop balances and show associated crop names in cards when real data exists. Do not invent crop names or show technical IDs.
 Crop cycle balance uses four semantic states per MANIFIESTO_AGRO.md §4.3:
-- Ganado (balanceActual > 0, green) — dinero real en mano tras cubrir costos
-- Recuperando (balanceActual < 0 con fiadosPendientes > 0, amber) — hay dinero en la calle pendiente de cobro; acción operativa = gestionar cobros
-- Invirtiendo (balanceActual < 0 sin fiados, gray) — ciclo en etapa temprana, sin ventas aún; estado natural de cultivo joven, no alarma
-- Equilibrio (balanceActual = 0, gray) — punto neutro
+- Ganado (rentabilidadReal > 0 y fiadosPendientes == 0, green) — dinero real en mano tras cubrir costos
+- Recuperando (fiadosPendientes > 0, amber) — hay dinero en la calle pendiente de cobro; acción operativa = gestionar cobros
+- Invirtiendo (rentabilidadReal <= 0 y fiadosPendientes == 0, gray) — ciclo en etapa temprana, sin ventas aún; estado natural de cultivo joven, no alarma
+- Equilibrio (rentabilidadReal === 0 y fiadosPendientes === 0, gray) — punto neutro
 Formula: balanceActual = rentabilidadReal - fiadosPendientes; rentabilidadReal = cobradoReal - costosTotales
 - Operaciones de la Finca: a period remains active when `activeCycleCount > 0`, even if the calendar month/range has expired.
 - Future only: `Facturero de Clientes Lifecycle — Archivo / Papelera / Restauracion` is pending/proposed, not implemented. Money-affecting records must not disappear without traceability.
@@ -95,7 +95,7 @@ Formula: balanceActual = rentabilidadReal - fiadosPendientes; rentabilidadReal =
 - Crop states are manual: active, finalizado, perdido. No automatic transitions. The farmer decides when to change state.
 - Seed kg: optional field for crop creation. Not required.
 - Crop real duration: calculated from sowing date to actual close date, not estimated harvest date.
-- Popup system: `YGUXMessages` extended with `popup: true` for compact centered popups replacing `alert()`. Destructive `confirm()` and functional `prompt()` remain native. Phase 2 complete.
+- Popup system: `YGUXMessages` extended with `popup: true` for compact centered popups replacing `alert()`. Destructive confirmations use `showAgroConfirmDialog()` (canonical modal), not `window.confirm()`. Functional `prompt()` remains native. Phase 2 complete.
 
 ## 9. Repo hygiene
 - `apps/gold/public/` is the **canonical live public** directory for the product

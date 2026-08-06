@@ -2,7 +2,7 @@
 
 Mapa central de navegación documental de YavlGold.
 Este archivo es el punto de entrada para cualquier agente que necesite entender el sistema.
-Actualizado: 2026-05-09.
+Actualizado: 2026-08-05.
 
 ---
 
@@ -79,14 +79,18 @@ Actualizado: 2026-05-09.
 - [AGENT_LEGACY_CONTEXT__2026-04-16__2026-04-17.md](./AGENT_LEGACY_CONTEXT__2026-04-16__2026-04-17.md) — Wiki viva anterior (17,610 líneas archivadas)
 - [AGENT_REPORT.md](./AGENT_REPORT.md) — Histórico diagnostics (solo consulta)
 - [AGRO_V1_BASELINE.md](./AGRO_V1_BASELINE.md) — Baseline V1 de Agro
-- [AGRO-VISUAL-AUDIT-V1.md](./AGRO-VISUAL-AUDIT-V1.md) — Auditoría visual legacy
 - [LEGACY_SURFACES.md](./LEGACY_SURFACES.md) — Clasificación de superficies orphan
 - [LOCAL_FIRST.md](./LOCAL_FIRST.md) — Estrategia offline
 - chronicles/
   - [CRONICA-YAVLGOLD-2026-ACTIVA.md](./chronicles/CRONICA-YAVLGOLD-2026-ACTIVA.md) — Crónica general activa (solo 2026, append-only)
   - [cronica yavlgold general 2025 historica no modificar.md](./chronicles/cronica%20yavlgold%20general%202025%20historica%20no%20modificar.md) — Memoria histórica 2025 cerrada (NO MODIFICAR)
   - [2026-01.md](./chronicles/2026-01.md) — Crónica mensual
+  - [2026-02.md](./chronicles/2026-02.md) — Crónica mensual
   - [2026-03.md](./chronicles/2026-03.md) — Crónica mensual
+  - [2026-04.md](./chronicles/2026-04.md) — Crónica mensual
+  - [2026-05.md](./chronicles/2026-05.md) — Crónica mensual
+  - [2026-06.md](./chronicles/2026-06.md) — Crónica mensual
+  - [2026-07.md](./chronicles/2026-07.md) — Crónica mensual
   - [libro del samurai especial edicion.md](./chronicles/libro%20del%20samurai%20especial%20edicion.md) — Crónica especial
 
 ---

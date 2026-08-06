@@ -229,10 +229,6 @@ Tres cifras bajo el velocímetro:
 los estados de ciclo de cultivo del §4.3 (GANADO/RECUPERANDO/INVIRTIENDO/EQUILIBRIO).
 No mezclarlos. El velocímetro lee la finca en conjunto; §4.3 lee un ciclo individual.
 
-Deuda técnica activa: hoy las cifras se calculan con sumas client-side (N queries).
-Pendiente crear RPC `get_farm_balance(p_farm_id)` en Supabase para consolidar
-server-side.
-
 **BLOQUE 4 — Mis cultivos activos**
 Cards dinámicas con los ciclos activos de la finca seleccionada.
 Máximo 3 visible. Botón "Ver todos" navega a `#view=ciclos&subview=mis-cultivos`.
@@ -1584,7 +1580,7 @@ La navegación del shell persiste entre recargas. Al presionar F5 estando en Mis
 
 ### 9.28 ¿Qué son los popups informativos compactos?
 
-Son mensajes emergentes estilizados que reemplazan los `alert()` nativos del navegador dentro de Agro. Confirman acciones (cultivo creado, registro guardado), muestran errores de validación o dan avisos operativos. No son notificaciones push ni bandeja de entrada. Solo muestran un mensaje puntual y se cierran. Las confirmaciones destructivas (eliminar, borrar) siguen usando el diálogo nativo por seguridad.
+Son mensajes emergentes estilizados que reemplazan los `alert()` nativos del navegador dentro de Agro. Confirman acciones (cultivo creado, registro guardado), muestran errores de validación o dan avisos operativos. No son notificaciones push ni bandeja de entrada. Solo muestran un mensaje puntual y se cierran. Las confirmaciones destructivas (eliminar, borrar) usan el modal canónico `showAgroConfirmDialog()`, no este sistema de popups (ver §4.12.5).
 
 ---
 

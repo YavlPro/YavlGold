@@ -54,17 +54,6 @@ Los siguientes archivos **ya usan Plus Jakarta Sans + Inter** correctamente:
 
 ---
 
-## Módulos Agro (ya migrados a V12)
-
-Los siguientes archivos **ya usan Plus Jakarta Sans + Inter** correctamente:
-
-| Archivo | Estado |
-|---|---|
-| `agro/index.html` | ✅ Google Fonts carga PJS + Inter |
-| `agro/agro-dashboard-v11.css` | ✅ Usa Plus Jakarta Sans e Inter (26+ refs) |
-
----
-
 ## Criterio de migración
 
 Migrar por módulo cuando se toque ese módulo por otros motivos.

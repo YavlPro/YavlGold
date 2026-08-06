@@ -161,6 +161,8 @@ agro-cart.js         — carrito de insumos
 agro-facturero-clientes-assignment.js — reasignación segura de cliente dentro del editor de movimientos, sin borrar historial
 agro-facturero-clientes-merge.js — modal seguro para unificar clientes duplicados moviendo movimientos al cliente destino
 agro-facturero-clientes-view.js — Facturero de Clientes: vista de clientes, tabs por saldo vivo, cultivos asociados en cards, wizard de compradores y flujos separados Nuevo cliente / Cliente existente
+agro-facturero-clientes-detail.js — Facturero de Clientes: detalle individual del cliente (historial, saldos, acciones)
+agro-facturero-clientes-export.js — Facturero de Clientes: export Markdown de la lista (global y por finca)
 agro-clients.js      — Mis Clientes: directorio de contactos (clientes manuales + buyers derivados de Facturero de Clientes)
 agro-clima.js        — integración meteorológica
 agro-crop-report.js  — reportes detallados por cultivo (se acceden desde cada card/ciclo, no desde el Centro de Reportes)

@@ -17,7 +17,7 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-06-03__2026-07-31.md`
 - Ficha técnica disponible en: `apps/gold/docs/FICHA_TECNICA.md`.
 - Supabase canónico: `supabase/` en raíz.
 - Crónicas mensuales vigentes: mayo, junio y julio 2026 consolidadas y anexadas en `CRONICA-YAVLGOLD-2026-ACTIVA.md`.
-- Estado del mes: agosto 2026 en curso (día 1).
+- Estado del mes: agosto 2026 en curso (día 5).
 
 ## Frentes abiertos
 
@@ -47,7 +47,7 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-06-03__2026-07-31.md`
 - Polling duplicado Binance en `agro-market.js` y `agro-interactions.js` — singleton centralizado pendiente (§11.5).
 - `agro-planning.js` posible zombie — verificar import dinámico en `agro/index.html`.
 - `agro.css` con 310 hex hardcodeados — migración progresiva a tokens.
-- Dashboard Agro balance finca: solución client-side temporal (`computeFarmStats`) — requiere RPC definitiva.
+- Dashboard Agro balance finca: RPC `get_farm_balance(p_farm_id)` ya implementada (26-jun-2026). `computeFarmStats` queda como fallback de comparación de fincas, no como cálculo del Bloque 3.
 - `agro.js` aún tiene `formatCurrency`/`formatMoneyByCode` delegando a `es-VE` — migrar a `agro-format.js`.
 
 ## Últimos cambios importantes todavía relevantes
