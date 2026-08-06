@@ -253,3 +253,39 @@ Exit code: 0
 **QA sugerido adicional:** Ninguno — frente cerrado con QA real. Mantener monitoreo de no-regresión al tocar zona de factureros en el futuro.
 
 **NO se hizo:** No se tocó código en esta sesión de documentación. No se modificaron specs ni documentos canónicos.
+
+---
+
+## Sesión 2026-08-05 — Auditoría y corrección de coherencia documental (lectura + cirugía de docs)
+
+**Objetivo:** Leer la documentación canónica del proyecto, detectar incoherencias entre capas documentales y corregir cada una en el documento que corresponde según su misión.
+
+**Diagnóstico:** Se revisaron completos: `MANIFIESTO_AGRO.md` (1,733L), `FICHA_TECNICA.md` (464L), `llms.txt` (116L), `AGENT_CONTEXT_INDEX.md`, `ROADMAP_VISION_YAVLGOLD.md`, `LOCAL_FIRST.md`, `LEGACY_SURFACES.md`, `AGRO_V1_BASELINE.md`, `SPECS_crop-financials.md`, `DEUDA-TIPOGRAFICA-V12.md`, `DEUDA_TIPOGRAFIA_JS.md`, `AGENT_HANDOFF__FACTUREROS` y `apps/gold/agro/README.md`.
+
+Se confirmaron incoherencias con evidencia en código y migraciones (`get_farm_balance` ya implementado en `agro-dashboard-v11.js:299` + migración `20260625120000_agro_get_farm_balance_rpc.sql`).
+
+**Criterio de misión por capa (regla operativa reforzada):**
+- MANIFIESTO_AGRO = semántica, sin datos técnicos.
+- FICHA_TECNICA = todo lo técnico.
+- llms.txt = resumen operativo servido en producción.
+- AGENT_CONTEXT_INDEX = mapa documental.
+
+**Cambios realizados:**
+
+| Archivo | Tipo | Cambio |
+|---------|------|--------|
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | fix | §4.2: eliminada deuda técnica del RPC `get_farm_balance` / "N queries" (fuga técnica que pertenece a la ficha) |
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | fix | §9.28 FAQ alineado a §4.12.5: confirmaciones destructivas usan `showAgroConfirmDialog()` (corregido antes de esta sesión) |
+| `apps/gold/docs/FICHA_TECNICA.md` | fix | Lista de módulos JS: añadidos `agro-facturero-clientes-detail.js` y `agro-facturero-clientes-export.js` |
+| `apps/gold/docs/FICHA_TECNICA.md` | fix | Deuda del Bloque 3: RPC `get_farm_balance` reflejada como implementada (26-jun-2026) |
+| `apps/gold/public/llms.txt` | fix | Estados de ciclo de cultivo alineados al canon semántico de MANIFIESTO §4.3 (rentabilidadReal/fiadosPendientes) |
+| `apps/gold/public/llms.txt` | fix | Contradicción interna resuelta: confirmaciones destructivas usan `showAgroConfirmDialog()`, no `window.confirm()` |
+| `apps/gold/docs/DEUDA-TIPOGRAFICA-V12.md` | fix | Eliminada sección "Módulos Agro ya migrados a V12" duplicada |
+| `apps/gold/docs/AGENT_CONTEXT_INDEX.md` | fix | Enlace roto `AGRO-VISUAL-AUDIT-V1.md` eliminado; lista de crónicas mensuales completada (01–07); fecha actualizada a 2026-08-05 |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | fix | Deuda de balance de finca corregida (RPC resuelto); fecha del mes actualizada a día 5 |
+
+**Resultado del build:** `pnpm build:gold` → ✅ Exit 0 (agent-guard OK, agent-report-check OK, vite 187 modules, check-llms OK, UTF-8 OK).
+
+**QA sugerido:** Ninguno funcional — cambios solo documentales. Verificar visualmente en navegador solo si se desea confirmar que no hubo impacto (no lo hubo: no se tocó código).
+
+**NO se hizo:** No se modificó código del producto. No se tocó el README público de `agro/` (capa pública, se mantiene simplificada a propósito). No se modificaron specs ni documentos canónicos superiores a los listados.
