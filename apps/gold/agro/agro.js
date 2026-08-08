@@ -14084,9 +14084,20 @@ async function exportOpsRankingsMarkdown(farmId = '') {
 
     const sortedBuyers = Array.from(buyers.values()).sort((a, b) => b.totalCents - a.totalCents);
 
-    // ── Top Crops: same canonical calculator used by UI/Stats/MD ──
-    const exportData = await fetchOpsRankingsData({ cropId: null });
-    const exportTopCrops = normalizeOpsRankingsRows(exportData.topCrops);
+    // ── Top Crops: canonical calculator with farm scope applied ──
+    // Pass farmId directly to fetchOpsTopCropsCanonical so the filter uses the
+    // same farmId received by this function, not opsRankingsState.selectedFarmId
+    // (which reflects the UI panel state, not the export scope).
+    const exportTopCrops = normalizeOpsRankingsRows(
+        await fetchOpsTopCropsCanonical({
+            userId,
+            rangeDates: resolveOpsRankingsDateRange(opsRankingsState.range),
+            cropId: null,
+            farmId: activeFarmId || null,
+            filterRows: filterQARows,
+            resolveUsd: _resolveUsd
+        })
+    );
 
     // ── Build Markdown ──────────────────────────────────────────────
     const hideNames = privacy.hideBuyerNames;
