@@ -314,3 +314,29 @@ Se confirmaron incoherencias con evidencia en código y migraciones (`get_farm_b
 **Deuda viva:** Split de `agro-operational-cycles.css` (2,099 líneas, zona roja §11.X, congelado hasta plan de separación); M4 (menú de 3 puntos) diferido a segunda ola; Node 25 vs requerido 20.x (warn de engine).
 
 **NO se hizo:** No se tocó lógica de filtrado, `state.datasets`, RPC ni export individual del detalle; no se crearon clases de botón nuevas (se reusó `btn-outline-gold` del ADN §7); no se modificaron documentos canónicos.
+
+---
+
+## Sesión 2026-08-07 — Cierre ola UI factureros M1-M6: VERDE DEFINITIVO
+
+**Objetivo:** Cerrar el frente de la ola UI de factureros operativos (commit `b5e3a76`) con QA real confirmado por el usuario.
+
+**Estado:** ✅ **VERDE DEFINITIVO — frente cerrado. Ya no es deuda abierta.**
+
+**QA real confirmado por el usuario (2026-08-07):** Todos los puntos de la checklist pasaron en producción:
+- M1: eyebrow + título h3 ocultos en factureros específicos; copy atenuado visible bajo los tabs. ✅
+- M2: resumen en línea compacta (`N ciclos · M movimientos · Balance`) en lugar de cuadrícula de 3 tarjetas. ✅
+- M3: chips de asociación con color semántico (cultivo/finca/huérfano). ✅
+- M5: balance protagonista (primera métrica destacada) con color por estado semántico — Caso 10: Invirtiendo en gris, nunca rojo por signo. ✅
+- M6: jerarquía de botones — `Nuevo registro` dorado primario, `Ver períodos` outline secundario. ✅
+- NR-1..NR-5: no-regresión de tabs, chips de filtro, aviso de filtros activos, Volver/privacidad y consola sin errores. ✅
+
+**Nota operativa de QA automatizado:** El intento de QA con browser automation quedó bloqueado por hCaptcha en login de producción (no forzado, conforme política anti-mock). Sin errores de consola en el intento; la validación real la realizó el usuario en navegador post-deploy.
+
+**Build:** `pnpm build:gold` exit 0 (agent-guard OK, agent-report-check OK, vite OK, UTF-8 OK).
+
+**QA sugerido adicional:** Ninguno — frente cerrado con QA real. Mantener monitoreo de no-regresión al tocar zona de factureros en el futuro.
+
+**Deuda viva restante (sin cambios):** Split de `agro-operational-cycles.css` (2,099 líneas, congelado hasta plan); M4 (menú de 3 puntos) diferido a segunda ola; Node 25 vs requerido 20.x (warn de engine); higiene de CI CodeQL python pendiente; limpieza de residuos de `docs/` y archivo de frente de abril pendiente.
+
+**NO se hizo:** No se tocó código; no se modificaron documentos canónicos; no se ejecutó limpieza de ramas remotas (solo locales, conforme instrucción del usuario).
