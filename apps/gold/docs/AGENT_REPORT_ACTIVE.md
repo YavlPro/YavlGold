@@ -340,3 +340,48 @@ Se confirmaron incoherencias con evidencia en código y migraciones (`get_farm_b
 **Deuda viva restante (sin cambios):** Split de `agro-operational-cycles.css` (2,099 líneas, congelado hasta plan); M4 (menú de 3 puntos) diferido a segunda ola; Node 25 vs requerido 20.x (warn de engine); higiene de CI CodeQL python pendiente; limpieza de residuos de `docs/` y archivo de frente de abril pendiente.
 
 **NO se hizo:** No se tocó código; no se modificaron documentos canónicos; no se ejecutó limpieza de ramas remotas (solo locales, conforme instrucción del usuario).
+
+## Sesión 2026-08-08 — Centro de Reportes Generales + Selector de Finca
+
+**Objetivo:** Renombrar "Centro de Reportes" → "Centro de Reportes Generales" y agregar selector de finca con filtrado real en los dos reportes filtrables (Stats, Rankings). Opción C extendida del plan autorizado.
+
+**Diagnóstico realizado:**
+- Confirmado patrón canónico `window._agroFarms.getFarms()` con guard de seguridad — usado en 8 módulos, fuente única: `agro-farms.js`.
+- Confirmado que los 3 exportadores (exportStatsReport, exportOpsRankingsMarkdown, exportAgroGlobalMd) no aceptaban farmId — alcance siempre global.
+- `agro_crops` tiene columna `farm_id` — permite post-filtrado sin queries extra.
+- `agro_income`, `agro_pending`, `agro_expenses`, `agro_losses` tienen `crop_id` — filtrado por cropIds derivados de la finca.
+- Label "Centro de Reportes" en `VIEW_CONFIG` de `agro-shell.js` — único punto de wiring de la navegación.
+
+**Cambios realizados:**
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agro-shell.js` | Commit 1 | `VIEW_CONFIG.reportes.label`: "Centro de Reportes" → "Centro de Reportes Generales" |
+| `agro-reports-center.js` | Commit 1 | `FARMS_LOADED_EVENT`, `GENERAL_FARM_VALUE`, `selectedFarmId` en state; funciones `getAvailableFarms()`, `getSelectedFarmId()`, `getSelectedFarmName()`, `renderFarmSelector()`; selector en `renderOverview()`; listener `change` en `bindRootEvents()`; listener `agro:farms-loaded`; `exportGlobalStats`/`exportRankings` pasan `selectedFarmId`; nota global en descripción de Informe Global Agro |
+| `agro-reports-center.css` | Commit 1 | Nuevas clases `.agro-reports-farm-filter`, `.agro-reports-farm-filter__label`, `.agro-reports-farm-filter__select` — solo tokens ADN V12, sin hex hardcodeados |
+| `agro-stats-report.js` | Commit 2 | `exportStatsReport(farmId='')`: resolución de nombre de finca vía `window._agroFarms`, post-filtrado de crops/income/expenses/pending/losses por `farm_id` del crop, alcance en header del MD, slug de finca en nombre de archivo |
+| `agro.js` | Commit 3 | `exportOpsRankingsMarkdown(farmId='')`: resolución de finca vía `window._agroFarms`, fetch quirúrgico de `agro_crops` por `farm_id` para construir `scopedCropIds`, post-filtrado de income/pending, alcance en header del MD, slug en nombre de archivo |
+
+**Restricciones respetadas:**
+- `exportAgroGlobalMd` queda global siempre (nota visible en UI y en MD).
+- No se tocó `state.datasets`.
+- No se tocaron `agro-facturero-clientes-export.js` ni los factureros operativos.
+- No se crearon clases CSS fuera de tokens ADN V12.
+- No se modificó el hash `#view=reportes` ni los aliases de navegación.
+- Hash `#view=reportes` preservado; el renombrado es solo del label visible.
+- Edición al monolito `agro.js` quirúrgica: solo la función `exportOpsRankingsMarkdown` (~60 líneas de adición de lógica de scope, sin tocar el resto del monolito).
+
+**Resultado de build:** ✅ 3 builds consecutivos exitosos — `pnpm build:gold` sin errores ni warnings nuevos. 187 módulos transformados.
+
+**QA sugerido (Yerikson en producción yavlgold.com):**
+1. Navegar a Centro de Reportes → verificar label "Centro de Reportes Generales" en la vista y en la navegación del hub.
+2. Verificar que aparece el selector "Finca" con "Vista general" preseleccionado.
+3. Verificar que si solo hay una finca cargada, el selector muestra esa finca como opción adicional.
+4. Exportar "Informe estadístico global" con "Vista general" → debe ser idéntico al comportamiento anterior.
+5. Exportar con "Los Higuerones" → MD debe mostrar `Alcance: Finca — Los Higuerones` y solo los cultivos de esa finca.
+6. Exportar con "finca la ladera" → mismo comportamiento.
+7. Repetir pasos 4-6 con "Rankings de clientes".
+8. Exportar "Informe Global Agro" con cualquier finca → debe exportar igual (global siempre) y mostrar nota en la descripción de la card.
+9. Verificar en mobile (≤480px) que el selector se ve correctamente.
+
+**NO se hizo:** push a git (pendiente QA confirmado en producción por Yerikson).
