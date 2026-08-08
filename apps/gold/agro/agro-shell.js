@@ -158,7 +158,7 @@ const VIEW_CONFIG = Object.freeze({
     'task-cycles': { region: 'task-cycles', label: 'Ciclos de Tareas', focusSelector: '#agro-task-cycles-root' },
     carrito: { region: 'ops', label: 'Mi Carrito', tab: 'carrito', focusSelector: '#agro-carrito-dedicated', dense: true },
     rankings: { region: 'ops', label: 'Rankings de Clientes', tab: 'rankings', focusSelector: '#agro-rankings-dedicated', dense: true },
-    reportes: { region: 'reports-center', label: 'Centro de Reportes', focusSelector: '#agro-reports-center-root' },
+    reportes: { region: 'reports-center', label: 'Centro de Reportes Generales', focusSelector: '#agro-reports-center-root' },
     'cartera-viva': { region: 'cartera-viva', label: 'Facturero de Clientes', focusSelector: '#agro-cartera-viva-root' },
     'facturero-clientes': { region: 'cartera-viva', label: 'Facturero de Clientes', focusSelector: '#agro-cartera-viva-root' },
     clima: { region: 'clima', label: 'Clima Agro', focusSelector: '[data-agro-shell-region="clima"]' },

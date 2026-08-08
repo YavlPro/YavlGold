@@ -1,6 +1,8 @@
 const ROOT_SELECTOR = '#agro-reports-center-root';
 const VIEW_CHANGED_EVENT = 'agro:shell:view-changed';
 const DATA_REFRESH_EVENT = 'data-refresh';
+const FARMS_LOADED_EVENT = 'agro:farms-loaded';
+const GENERAL_FARM_VALUE = '';
 
 const REPORT_STATUS = Object.freeze({
     available: 'Disponible',
@@ -25,7 +27,7 @@ const REPORT_CATEGORIES = Object.freeze([
             {
                 id: 'perfil-global-agro',
                 name: 'Informe Global Agro',
-                description: 'Exporta el perfil global del agricultor con resumen de cultivos, totales y clientes principales.',
+                description: 'Exporta el perfil global del agricultor con resumen de cultivos, totales y clientes principales. Este reporte es global del agricultor — no se filtra por finca.',
                 status: 'available',
                 action: 'export-global-agro'
             }
@@ -53,7 +55,8 @@ const state = {
     root: null,
     feedback: '',
     feedbackTone: 'info',
-    busyReportId: ''
+    busyReportId: '',
+    selectedFarmId: GENERAL_FARM_VALUE
 };
 
 function escapeHtml(value) {
@@ -63,6 +66,58 @@ function escapeHtml(value) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+}
+
+// ── Farm selector helpers ──────────────────────────────────────────────────
+
+function getAvailableFarms() {
+    if (typeof window === 'undefined' || typeof window._agroFarms?.getFarms !== 'function') return [];
+    const farms = window._agroFarms.getFarms();
+    return Array.isArray(farms) ? farms : [];
+}
+
+function getSelectedFarmId() {
+    return state.selectedFarmId || GENERAL_FARM_VALUE;
+}
+
+function getSelectedFarmName() {
+    const farmId = getSelectedFarmId();
+    if (!farmId) return null;
+    const farms = getAvailableFarms();
+    const farm = farms.find((f) => String(f?.id || '').trim() === String(farmId).trim());
+    return farm?.name ? String(farm.name).trim() : null;
+}
+
+function renderFarmSelector() {
+    const farms = getAvailableFarms();
+    if (!farms.length) return '';
+
+    const selectedId = getSelectedFarmId();
+    const options = [
+        `<option value="${GENERAL_FARM_VALUE}"${!selectedId ? ' selected' : ''}>Vista general</option>`,
+        ...farms.map((f) => {
+            const id = String(f?.id || '').trim();
+            const name = escapeHtml(String(f?.name || 'Finca').trim());
+            const selected = id === selectedId ? ' selected' : '';
+            return `<option value="${escapeHtml(id)}"${selected}>${name}</option>`;
+        })
+    ].join('');
+
+    return `
+        <div class="agro-reports-farm-filter">
+            <label class="agro-reports-farm-filter__label" for="agro-reports-farm-select">
+                <i class="fa-solid fa-map-location-dot" aria-hidden="true"></i>
+                <span>Finca</span>
+            </label>
+            <select
+                id="agro-reports-farm-select"
+                class="agro-reports-farm-filter__select"
+                aria-label="Filtrar reportes por finca"
+                data-reports-farm-select>
+                ${options}
+            </select>
+        </div>
+    `;
 }
 
 function resolveReportStatus(report) {
@@ -154,8 +209,9 @@ function renderFeedback() {
 }
 
 function renderOverview(categories) {
+    const farmSelector = renderFarmSelector();
     return `
-        <section class="agro-reports-overview" aria-label="Resumen del Centro de Reportes">
+        <section class="agro-reports-overview" aria-label="Resumen del Centro de Reportes Generales">
             <dl class="agro-reports-summary" aria-label="Resumen de reportes">
                 <div>
                     <dt>Reportes</dt>
@@ -167,6 +223,7 @@ function renderOverview(categories) {
                 </div>
             </dl>
             <p class="agro-reports-overview__note">Solo aparecen reportes oficiales generales. Los informes por cultivo viven en cada ciclo creado.</p>
+            ${farmSelector}
         </section>
     `;
 }
@@ -251,7 +308,7 @@ function downloadHonestReport({ report, category, reason }) {
 
 async function exportRankings(report, category) {
     if (typeof window !== 'undefined' && typeof window.exportOpsRankingsMarkdown === 'function') {
-        await window.exportOpsRankingsMarkdown();
+        await window.exportOpsRankingsMarkdown(getSelectedFarmId());
         return;
     }
     downloadHonestReport({
@@ -264,7 +321,7 @@ async function exportRankings(report, category) {
 async function exportGlobalStats(report, category) {
     const mod = await import('./agro-stats-report.js');
     if (typeof mod.exportStatsReport === 'function') {
-        await mod.exportStatsReport();
+        await mod.exportStatsReport(getSelectedFarmId());
         return;
     }
     downloadHonestReport({
@@ -341,12 +398,21 @@ function bindRootEvents(root) {
         runReportExport(exportButton.dataset.reportExport);
     });
 
+    // Farm selector change (delegated — re-rendered on each render())
+    root.addEventListener('change', (event) => {
+        const select = event.target.closest('[data-reports-farm-select]');
+        if (!select) return;
+        state.selectedFarmId = String(select.value || '').trim();
+        render();
+    });
+
     window.addEventListener(VIEW_CHANGED_EVENT, (event) => {
         if (event.detail?.view === 'reportes') {
             render();
         }
     });
     document.addEventListener(DATA_REFRESH_EVENT, render);
+    document.addEventListener(FARMS_LOADED_EVENT, render);
 }
 
 export function initAgroReportsCenter() {
