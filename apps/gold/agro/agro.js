@@ -13933,7 +13933,7 @@ async function refreshOpsRankings() {
     }
 }
 
-async function exportOpsRankingsMarkdown() {
+async function exportOpsRankingsMarkdown(farmId = '') {
     // Dynamic imports for modules needed by the unified ranking logic
     const { filterQARows, validateExportBundle: _vEB, showExportError: _sEE } = await import('./agro-report-guard.js');
     const { formatMoney: _fmtMoney, toCents: _toCents, resolveAmountUsd: _resolveUsd } = await import('./agro-format.js');
@@ -13959,6 +13959,24 @@ async function exportOpsRankingsMarkdown() {
     }
     const userId = userData.user.id;
 
+    // Resolve farm scope (same bridge pattern as agro-facturero-clientes-view.js)
+    const activeFarmId = String(farmId || '').trim();
+    let farmScopeName = null;
+    let scopedCropIds = null; // null = all farms; Set = filtered
+
+    if (activeFarmId && typeof window !== 'undefined' && typeof window._agroFarms?.getFarms === 'function') {
+        const farms = window._agroFarms.getFarms();
+        const farm = Array.isArray(farms)
+            ? farms.find((f) => String(f?.id || '').trim() === activeFarmId)
+            : null;
+        farmScopeName = farm?.name ? String(farm.name).trim() : `Finca ${activeFarmId}`;
+        // scopedCropIds resolved after fetchRows (we need crop.farm_id from agro_crops)
+        // For rankings we derive crop IDs from the existing ops data already in memory.
+        // Use agro_crops snapshot from _agroFarms (same pattern as agro-dashboard-v11.js).
+        // If unavailable, fall back to global scope with a warning.
+        scopedCropIds = 'PENDING';
+    }
+
     // ── Fetch raw rows (same source as Stats report) ──────────────────
     const fetchRows = async (table, selectFields, opts = {}) => {
         try {
@@ -13973,7 +13991,7 @@ async function exportOpsRankingsMarkdown() {
         }
     };
 
-    const [incomeRows, pendingRows] = await Promise.all([
+    const [allIncomeRows, allPendingRows] = await Promise.all([
         fetchRows('agro_income',
             'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,crop_id,buyer_group_key,reverted_at',
             { filterReverted: true }),
@@ -13982,8 +14000,38 @@ async function exportOpsRankingsMarkdown() {
             {})
     ]);
 
+    // Resolve scoped crop IDs for farm filter (post-filter — no extra Supabase query)
+    let incomeRows = allIncomeRows;
+    let pendingRowsRaw = allPendingRows;
+
+    if (activeFarmId && scopedCropIds === 'PENDING') {
+        // Fetch agro_crops with farm_id to build the scoped set
+        try {
+            const { data: cropsData } = await supabase
+                .from('agro_crops')
+                .select('id,farm_id')
+                .eq('user_id', userId)
+                .eq('farm_id', activeFarmId)
+                .is('deleted_at', null);
+            if (Array.isArray(cropsData) && cropsData.length) {
+                scopedCropIds = new Set(cropsData.map((c) => String(c.id || '').trim()).filter(Boolean));
+                incomeRows = allIncomeRows.filter((r) => scopedCropIds.has(String(r?.crop_id || '').trim()));
+                pendingRowsRaw = allPendingRows.filter((r) => scopedCropIds.has(String(r?.crop_id || '').trim()));
+            } else {
+                // Farm exists but has no crops — scope is empty, not global
+                scopedCropIds = new Set();
+                incomeRows = [];
+                pendingRowsRaw = [];
+            }
+        } catch (err) {
+            console.warn('[Rankings] farm filter failed, falling back to global scope:', err?.message || err);
+            farmScopeName = null;
+            scopedCropIds = null;
+        }
+    }
+
     // Filter pending to only active (not transferred/reverted)
-    const activePending = pendingRows.filter(r => {
+    const activePending = pendingRowsRaw.filter(r => {
         const token = getPendingTransferToken(r);
         return token !== 'transferred' && token !== 'reverted';
     });
@@ -14050,7 +14098,9 @@ async function exportOpsRankingsMarkdown() {
 
     let md = `# 🏆 Rankings Agro\n\n`;
     md += `- Fecha: ${now.toLocaleString('es-CO')}\n`;
-    md += `- Alcance: Global (todo el historial)\n`;
+    md += farmScopeName
+        ? `- Alcance: Finca — ${farmScopeName}\n`
+        : `- Alcance: Global (todo el historial)\n`;
     md += `- Cultivo: 📋 Vista General\n\n`;
 
     // Unified client ranking
@@ -14098,10 +14148,11 @@ async function exportOpsRankingsMarkdown() {
             return;
         }
     }
+    const farmSlug = farmScopeName ? `_${farmScopeName.replace(/\s+/g, '-').toLowerCase()}` : '';
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `AgroRankings_${dateStamp}.md`;
+    link.download = `AgroRankings${farmSlug}_${dateStamp}.md`;
     document.body.appendChild(link);
     link.click();
     setTimeout(() => {
