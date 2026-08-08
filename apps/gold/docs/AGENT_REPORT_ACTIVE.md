@@ -385,3 +385,36 @@ Se confirmaron incoherencias con evidencia en código y migraciones (`get_farm_b
 9. Verificar en mobile (≤480px) que el selector se ve correctamente.
 
 **NO se hizo:** push a git (pendiente QA confirmado en producción por Yerikson).
+
+### Fix bugs post-QA (2026-08-08 — misma sesión)
+
+QA en producción detectó dos filtros rotos. Diagnóstico y fix quirúrgico:
+
+**Bug 1 — Stats devolvía vacío por finca**
+Causa raíz: `fetchCrops()` en `agro-stats-report.js` no incluía `farm_id` en el `select` de `agro_crops`. El post-filtro `allCrops.filter(c => c.farm_id === activeFarmId)` siempre retornaba `[]` porque `c.farm_id` era `undefined` en todos los intentos.
+Fix: Agregar `farm_id` al attempt primario del select (con fallback al attempt anterior sin `farm_id` si la columna no existe en el schema — patrón defensivo H10 ya usado en `agro-crop-report.js`).
+
+**Bug 2 — Top Cultivos de Rankings no filtraba**
+Causa raíz: `exportOpsRankingsMarkdown` llamaba `fetchOpsRankingsData({ cropId: null })` que internamente usa `opsRankingsState.selectedFarmId` (filtro de la UI del panel Rankings) — ignorando el `farmId` recibido como parámetro. `fetchOpsTopCropsCanonical` ya acepta y aplica `farmId` correctamente; el bug era que no se le pasaba.
+Fix: Reemplazar la llamada a `fetchOpsRankingsData` por llamada directa a `fetchOpsTopCropsCanonical` con `farmId: activeFarmId || null`. Una sola línea de diferencia real.
+
+| Archivo | Cambio |
+|---|---|
+| `agro-stats-report.js` | Agrega `farm_id` al attempt primario de `fetchCrops()` con fallback defensivo |
+| `agro.js` | `exportOpsRankingsMarkdown`: reemplaza `fetchOpsRankingsData()` por `fetchOpsTopCropsCanonical()` directo con `farmId` correcto |
+
+**Resultado de build:** ✅ Limpio — 187 módulos, sin errores.
+
+**Números esperados en re-QA:**
+
+| Métrica | Los higuerones | finca la ladera | Prueba aditividad |
+|---|---|---|---|
+| Cultivos activos (Stats) | 1 | 1 | — |
+| Cultivos en tabla | 4 (sin Caraota negra) | 1 (solo Caraota negra) | — |
+| Total pagados | $2,742.35 | $0.00 | — |
+| Total costos | $734.70 | $30.54 | — |
+| Ganancia neta | $2,007.65 | −$30.54 | 1,977.11 = global ✓ |
+| Top Cultivos Rankings (higuerones) | 4 cultivos sin Caraota negra | — | — |
+| Top Cultivos Rankings (ladera) | — | 1: solo Caraota negra | — |
+
+**NO se hizo:** push — pendiente re-QA de Yerikson en producción.
