@@ -199,6 +199,11 @@ async function fetchCrops(userId) {
     try {
         const attempts = [
             {
+                // farm_id included so callers can post-filter by finca (agro-crop-report.js H10 pattern)
+                select: 'id,name,variety,icon,status,status_override,start_date,expected_harvest_date,actual_harvest_date,investment,farm_id',
+                filterDeletedAt: true
+            },
+            {
                 select: 'id,name,variety,icon,status,status_override,start_date,expected_harvest_date,actual_harvest_date,investment',
                 filterDeletedAt: true
             },
