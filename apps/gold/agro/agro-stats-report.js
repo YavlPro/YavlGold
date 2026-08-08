@@ -582,8 +582,32 @@ function buildBuyerRanking(incomeRows, pendingRows, privacy = getMarkdownPrivacy
 
 /**
  * Generates and downloads a global statistical Markdown report.
+ * @param {string} [farmId] - Optional farm ID to filter by. Empty string = all farms (global).
  */
-export async function exportStatsReport() {
+export async function exportStatsReport(farmId = '') {
+    // Resolve farm scope
+    const activeFarmId = String(farmId || '').trim();
+    let farmScopeName = null;
+    let scopedCropIds = null; // null = all farms; Set = filtered
+
+    if (activeFarmId) {
+        // Resolve farm name from the global farms snapshot (same bridge as other modules)
+        try {
+            if (typeof window !== 'undefined' && typeof window._agroFarms?.getFarms === 'function') {
+                const farms = window._agroFarms.getFarms();
+                const farm = Array.isArray(farms)
+                    ? farms.find((f) => String(f?.id || '').trim() === activeFarmId)
+                    : null;
+                farmScopeName = farm?.name ? String(farm.name).trim() : `Finca ${activeFarmId}`;
+
+                // Build the set of crop IDs belonging to this farm, filtering by farm_id on agro_crops.
+                // agro_crops rows carry farm_id (confirmed in agro-farms.js and agro-dashboard-v11.js).
+                // We post-filter the already-fetched crops rows — no extra Supabase query.
+                scopedCropIds = 'PENDING'; // resolved after fetchCrops
+            }
+        } catch { /* ignore — fall back to global scope */ }
+    }
+
     try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { showExportError(['Sesión no válida.']); return; }
@@ -611,13 +635,33 @@ export async function exportStatsReport() {
         } catch { /* ignore */ }
 
         // Fetch raw rows for per-crop breakdown and buyer ranking
-        const [crops, incomeRows, expenseRows, pendingRows, lossesRows] = await Promise.all([
+        const [allCrops, allIncomeRows, allExpenseRows, allPendingRows, allLossesRows] = await Promise.all([
             fetchCrops(user.id),
             fetchIncome(user.id),
             fetchExpenses(user.id),
             fetchPending(user.id),
             fetchLosses(user.id)
         ]);
+
+        // Apply farm filter if requested (post-filter — no extra Supabase queries)
+        let crops = allCrops;
+        let incomeRows = allIncomeRows;
+        let expenseRows = allExpenseRows;
+        let pendingRows = allPendingRows;
+        let lossesRows = allLossesRows;
+
+        if (activeFarmId && scopedCropIds === 'PENDING') {
+            // Resolve scoped crop IDs from fetched crops
+            const farmCrops = allCrops.filter((c) => String(c?.farm_id || '').trim() === activeFarmId);
+            scopedCropIds = new Set(farmCrops.map((c) => String(c.id || '').trim()).filter(Boolean));
+
+            crops = farmCrops;
+            incomeRows = allIncomeRows.filter((r) => scopedCropIds.has(String(r?.crop_id || '').trim()));
+            expenseRows = allExpenseRows.filter((r) => scopedCropIds.has(String(r?.crop_id || '').trim()));
+            pendingRows = allPendingRows.filter((r) => scopedCropIds.has(String(r?.crop_id || '').trim()));
+            lossesRows = allLossesRows.filter((r) => scopedCropIds.has(String(r?.crop_id || '').trim()));
+        }
+
         const privacy = getMarkdownPrivacyState();
 
         // Keep global totals aligned with the same source used in per-crop tables.
@@ -645,11 +689,17 @@ export async function exportStatsReport() {
         const dateStr = now.toISOString().split('T')[0];
         const timeStr = now.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
 
+        // Build scope line for header
+        const scopeLine = farmScopeName
+            ? `> **Alcance:** Finca — ${escMd(farmScopeName)}`
+            : `> **Alcance:** Vista general (todas las fincas)`;
+
         // Build Markdown
         let md = '';
         md += `# 📊 YavlGold — Informe Estadístico\n`;
         md += `> **Fecha:** ${dateStr} ${timeStr}\n`;
         md += `> **Usuario:** ${escMd(maskReportName(userName, privacy, 'Usuario'))}\n`;
+        md += `${scopeLine}\n`;
         md += `> **Cultivos activos:** ${activeCrops.length}\n`;
         md += `> **Sistema:** YavlGold\n\n`;
         md += `---\n\n`;
@@ -710,17 +760,21 @@ export async function exportStatsReport() {
             showExportError(vResult.errors);
             return;
         }
+
+        const farmSlug = farmScopeName
+            ? `_${farmScopeName.replace(/\s+/g, '-').toLowerCase()}`
+            : '';
         const blob = new Blob(['\ufeff' + md], { type: 'text/markdown;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `Estadisticas_YavlGold_${dateStr}.md`;
+        link.download = `Estadisticas_YavlGold${farmSlug}_${dateStr}.md`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
 
-        console.info(`[StatsReport] Exported global stats report (${crops.length} crops, ${incomeRows.length} income, ${expenseRows.length} expenses, ${pendingRows.length} pending, ${lossesRows.length} losses)`);
+        console.info(`[StatsReport] Exported stats report — scope: ${farmScopeName || 'global'} (${crops.length} crops, ${incomeRows.length} income, ${expenseRows.length} expenses, ${pendingRows.length} pending, ${lossesRows.length} losses)`);
     } catch (err) {
         console.error('[StatsReport] Export error:', err);
         showExportError(['Error al exportar estadísticas: ' + (err.message || err)]);
