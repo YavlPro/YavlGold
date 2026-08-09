@@ -418,3 +418,78 @@ Fix: Reemplazar la llamada a `fetchOpsRankingsData` por llamada directa a `fetch
 | Top Cultivos Rankings (ladera) | — | 1: solo Caraota negra | — |
 
 **NO se hizo:** push — pendiente re-QA de Yerikson en producción.
+
+### Cierre de QA y deuda documentada (2026-08-08)
+
+**Resultado del re-QA completo (9 exports + 3 perfiles):**
+
+| Alcance | Stats cultivos | Stats totales | Rankings clientes | Rankings cultivos | Aditividad |
+|---|---|---|---|---|---|
+| Vista general | ✅ 5 cultivos | ✅ 2,742.35 / 765.24 / 1,977.11 | ✅ 30 clientes | ✅ 5 cultivos | — |
+| Los Higuerones | ✅ 4 cultivos | ✅ 2,742.35 / 734.70 / 2,007.65 | ✅ 30 clientes $2,742.35 | ✅ 4 cultivos (sin Caraota negra) | 2,007.65 |
+| finca la ladera | ✅ 1 cultivo (Caraota negra) | ✅ $0 pagados / $30.54 costos / −$30.54 | ✅ Sin clientes | ✅ 1 cultivo (solo Caraota negra) | −30.54 |
+| **Prueba aditividad** | — | — | — | — | **2,007.65 − 30.54 = 1,977.11 ✅** |
+
+**Nota perfil global en UI:** Confirmada — aparece en la card del Centro como `<p class="agro-report-card__copy">` visible antes de exportar. No aparece en el archivo exportado porque es intencional por diseño (el archivo es responsabilidad de `agroperfil.js`, fuera del alcance de este plan).
+
+**Deuda preexistente documentada — $47.22 en ranking global:**
+- Causa raíz: en el ranking de clientes de la vista global, `buildBuyerRanking` procesa todos los `incomeRows` incluyendo movimientos con `crop_id = null` o cultivo sin finca asignada. Esos movimientos tienen nombre de cliente resuelto (Wilmer Chapeton, Orlando Pineda) por `resolveBuyerName`, pero no pertenecen a ningún cultivo concreto. Aparecen sumados al cliente en el ranking, pero el "Total pagados" del Resumen Global también los incluye (vía `unassigned.incomeCents` en `buildPerCropTable`). No hay doble conteo — los $47.22 están en el total — pero la tabla de clientes los acumula a un cliente mientras "Sin cultivo asociado" no los muestra como ingresos, creando una inconsistencia aparente.
+- Este comportamiento es preexistente al selector de finca. El selector lo hace visible al comparar global vs filtrado lado a lado.
+- El filtrado por finca excluye estos movimientos limpiamente (correcto — no tienen `crop_id` en ninguna finca).
+- Magnitud exacta: $47.22 (Wilmer Chapeton: $33.52 extra en global; Orlando Pineda: $13.70 extra en global).
+- No bloquea el verde del frente. Se documenta como deuda acotada para sesión futura si se decide corregir.
+
+**Estado del frente: 🟢 VERDE** — Centro de Reportes Generales + Selector de Finca operativo y validado en producción.
+**Pendiente antes de push:** autorización explícita de Yerikson.
+
+---
+
+## Sesión 2026-08-08 — Fix: cultivos eliminados en reportes globales
+
+**Agente:** Kiro
+**Objetivo:** Corregir bug crítico — ventas de cultivos eliminados (deleted_at IS NOT NULL en agro_crops) aparecían en el Ranking de Clientes global y en Estadísticas Global, generando una discrepancia de $47.22 USD.
+
+### Diagnóstico
+
+Causa raíz confirmada con evidencia directa en código (sin suposiciones):
+
+- `fetchCrops()` en `agro-stats-report.js` ya filtra `deleted_at IS NULL` → `allCrops` nunca incluye el Pepino eliminado.
+- `fetchIncome()` trae todas las ventas no eliminadas de `agro_income` → incluye ventas cuyo `crop_id` apunta a cultivos ya eliminados (las *ventas* no están eliminadas, solo el *cultivo*).
+- En el path **por finca** (`activeFarmId` presente): `scopedCropIds` se construye desde cultivos activos de esa finca → el filtro por coincidencia excluía el Pepino. Correcto.
+- En el path **global** (`activeFarmId` vacío): `incomeRows = allIncomeRows` sin ningún cruce → las ventas del Pepino (crop_id eliminado) pasaban directamente a `buildBuyerRanking`. Bug confirmado.
+- Mismo patrón en `exportOpsRankingsMarkdown` (agro.js).
+- La regla `validCropIds` del MANIFIESTO_AGRO.md §1378-1392 ya exigía este filtro y no estaba implementada en el path global de ninguna de las dos funciones.
+
+### Archivos modificados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro-stats-report.js` | fix | Se agregó bloque `else` al `if (activeFarmId)` — en path global, construir `validCropIds` desde `allCrops` (ya filtrado con `deleted_at IS NULL`) y post-filtrar `incomeRows`, `expenseRows`, `pendingRows`, `lossesRows` contra ese Set. Rows sin `crop_id` (no asignados) pasan. |
+| `apps/gold/agro/agro.js` | fix | Mismo patrón en `exportOpsRankingsMarkdown` — bloque `else` que hace un query adicional a `agro_crops` con `.is('deleted_at', null)` para construir `validCropIds` global y filtrar `incomeRows` y `pendingRowsRaw`. |
+
+### Resultado de build
+
+```
+agent-guard: OK
+agent-report-check: OK
+vite build ✓ (187 modules, 3.64s)
+check-llms: OK
+UTF-8: ✓
+Exit Code: 0
+```
+
+### QA requerido
+
+Yerikson debe verificar en producción (yavlgold.com):
+1. Exportar Estadísticas Global (sin filtro de finca) — confirmar que la discrepancia de $47.22 ya no existe en el Ranking de Clientes (Wilmer Chapeton y Orlando Pineda deben bajar ese monto).
+2. Exportar Rankings Global — confirmar mismo resultado limpio.
+3. Exportar ambos con filtro por finca — confirmar que los resultados filtrados no cambiaron.
+4. Aditividad: Higuerones + La Ladera debe seguir igual a Global (ahora correctamente sin el Pepino en ninguno).
+
+### No se hizo
+
+- No se tocó `agro_income`, `agro_crops` ni ninguna tabla en Supabase.
+- No se tocó `agro-facturero-clientes-export.js` ni factureros operativos.
+- No se tocó `state.datasets`.
+- No se crearon clases CSS nuevas.
+- No se actualizaron MANIFIESTO_AGRO.md ni FICHA_TECNICA.md — pendiente de QA verde confirmado por Yerikson.
