@@ -302,36 +302,3 @@ Archivo: [2026-07.md](./2026-07.md)
 *Fecha de extension*: 2026-08-01
 *Generado por*: Historiador Forense de Git - Protocolo Append-Only v1.0
 
----
-
-# ADDENDUM — Agosto 2026 (Append-only)
-
-> *Esta sección extiende la cobertura de la crónica al mes de agosto 2026.*
-
-## Resumen Ejecutivo — Agosto 2026
-
-Los hechos que marcaron el octavo mes de 2026:
-
-1. **Centro de Reportes Generales + Selector de Finca** (Ago 8): Renombrado del label de navegación e implementación del selector de finca con opción "Todas las fincas" sobre los 3 reportes oficiales (Stats, Rankings, Perfil Global). Filtrado real por finca en Stats y Rankings; Perfil Global permanece global con nota visible en UI.
-2. **Bug crítico corregido — cultivos eliminados en reportes globales** (Ago 8): Se corrigió una violación de la regla de cascada documentada en `MANIFIESTO_AGRO.md` §4.12.5: movimientos de cultivos eliminados ("Pepino", crop_id `8b24ada0-16da-47c6-ae89-3e4b76f69859`) aparecían en el Ranking de Clientes global y Estadísticas Global, generando una discrepancia de $47.22 USD. Causa raíz: path global de `exportStatsReport` y `exportOpsRankingsMarkdown` no aplicaba `validCropIds`. Filtro simétrico agregado en ambas funciones.
-3. **Cierre documental del frente** (Ago 8): Actualización de `MANIFIESTO_AGRO.md` §4.9 (selector de finca documentado), `FICHA_TECNICA.md` (descripciones funcionales actualizadas) y `AGENT_REPORT_ACTIVE.md` (entrada de cierre).
-
----
-
-## Anexo L — Agosto 2026
-
-Archivo: [2026-08.md](./2026-08.md)
-
-**Resumen**: Agosto 2026 abrió con el cierre del frente "Centro de Reportes Generales": renombrado de label, selector de finca funcional en 3 reportes oficiales, y corrección quirúrgica de un bug de regla de cascada que afectaba $47.22 USD en rankings globales por movimientos de cultivos eliminados.
-
-**Métricas estimadas**:
-- **~5 commits** estimados (renombrado + selector + 2 fixes de filtros + fix cultivos eliminados)
-- **1 bug crítico resuelto**: cultivos eliminados incluidos en reportes globales
-- **1 deuda técnica documentada**: $47.22 en ranking global preexistente al selector (no bloquea verde del frente)
-- **Frente**: Centro de Reportes Generales — 🟡 pendiente de confirmación visual final del label por Yerikson
-
----
-
-*Fecha de extensión*: 2026-08-08
-*Generado por*: Historiador Forense de Git — Protocolo Append-Only v1.0
-
