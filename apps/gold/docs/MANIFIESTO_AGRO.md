@@ -124,7 +124,7 @@ El valor de Agro no está solo en registrar. Está en conectar lo que pasa en el
   * Trabajo y lectura
     * Mis Clientes (ver §4.5.4)
     * Trabajo Diario (ver §4.6)
-    * Centro de Reportes (ver §4.9)
+    * Centro de Reportes Generales (ver §4.9)
 
 > **Nota (2026-06-17):** Rankings de Clientes ya no aparece en el hub. Se accede desde el botón "Rankings de Clientes" dentro de la vista Mis Clientes.
 
@@ -263,7 +263,7 @@ Chips de navegación con rutas reales del shell (botones `data-agro-view`):
 - Facturero de Clientes → `data-agro-view="facturero-clientes"`
 - Facturero de la Finca → `data-agro-view="facturero-finca"`
 - Trabajo Diario → `data-agro-view="task-cycles"`
-- Centro de Reportes → `data-agro-view="reportes"`
+- Centro de Reportes Generales → `data-agro-view="reportes"`
 
 ---
 
@@ -861,7 +861,7 @@ El clima afecta tu trabajo diariamente: evitas siembras si hay probabilidad de g
 
 ---
 
-## 4.9 Centro de Reportes
+## 4.9 Centro de Reportes Generales
 
 ### Qué es
 
@@ -893,6 +893,24 @@ Los reportes detallados por cultivo viven en cada card/ciclo de cultivo mediante
 | Rankings de clientes (Markdown) | `window.exportOpsRankingsMarkdown()` | Rankings de clientes y cultivos desde Ciclos Operativos |
 
 No pertenecen al Centro de Reportes: reporte detallado por cultivo (vive en cada card), Facturero de Clientes, Facturero de la Finca, Mi Carrito, AgroRepo, Trabajo Diario, Mis Clientes, reportes financieros inventados, exportadores internos sueltos.
+
+### Selector de finca
+
+El Centro de Reportes incluye un selector de finca con la opción por defecto "Vista general" (equivalente a "Todas las fincas").
+
+**Comportamiento:**
+- Por defecto se muestra "Vista general", que agrega datos de todas las fincas del agricultor.
+- Al seleccionar una finca específica, los reportes filtrados por finca se limitan a los cultivos y movimientos de esa finca.
+- El selector se construye a partir de las fincas reales del agricultor (`agro_farms`).
+
+**Reportes afectados por el filtro:**
+- `exportStatsReport()` — Estadísticas: al seleccionar una finca, el informe se limita a los cultivos de esa finca.
+- `exportOpsRankingsMarkdown()` — Rankings: al seleccionar una finca, el ranking se limita a los movimientos de cultivos de esa finca.
+
+**Reporte NO afectado:**
+- `exportAgroGlobalMd()` — Perfil Global Agro: permanece global siempre, sin aplicar filtro de finca. En la UI se muestra una nota visible explicando que este informe refleja el total consolidado del agricultor, no una finca individual.
+
+**Regla:** el selector es un filtro de alcance, no un selector de cultivos individuales. El Centro de Reportes no reemplaza los reportes detallados por cultivo, que viven en cada card/ciclo.
 
 ### Regla de honestidad documental
 
@@ -1368,10 +1386,10 @@ Su propósito es concentrar el acceso a:
 * Mediante el botón "Exportar Informe Global (MD)" dentro de Estadísticas.
 * Mediante el botón "Informe Estadístico Global (MD)" dentro de Estadísticas.
 * Mediante el botón "Informe del Cultivo" dentro de cada card de cultivo.
-* Mediante el Centro de Reportes (`#view=reportes`), que agrupa los reportes generales oficiales.
+* Mediante el Centro de Reportes Generales (`#view=reportes`), que agrupa los reportes generales oficiales.
 * En formato abierto Markdown (texto simple).
 
-Los reportes detallados por cultivo se acceden directamente desde cada card/ciclo de cultivo, no desde el Centro de Reportes.
+Los reportes detallados por cultivo se acceden directamente desde cada card/ciclo de cultivo, no desde el Centro de Reportes Generales.
 
 ### Integridad de datos en estadísticas y reportes
 

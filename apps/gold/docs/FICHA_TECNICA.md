@@ -137,7 +137,7 @@ Regla estricta:
 - Facturero financiero: gastos, ingresos (pagados), fiados, pérdidas, donaciones, otros
 - Gestión de cultivos con ciclos productivos y balance operativo con cuatro estados semánticos (`Ganado`, `Recuperando`, `Invirtiendo`, `Equilibrio`) según MANIFIESTO_AGRO.md §4.3
 - Dashboard agrícola con clima en tiempo real
-- Centro de Reportes: índice de reportes generales oficiales (estadísticas globales, perfil agricultor, rankings). Los reportes detallados por cultivo viven en cada card/ciclo, no en el Centro.
+- Centro de Reportes Generales: índice de reportes generales oficiales con selector de finca (estadísticas globales, perfil agricultor, rankings). Los reportes detallados por cultivo viven en cada card/ciclo, no en el Centro.
 - Operaciones de la Finca: los períodos siguen activos si tienen operaciones vivas asociadas (`activeCycleCount > 0`). Incluye botones internos para Estadísticas de períodos y Comparar períodos.
 - Facturero de Clientes: `Fiados` por pendiente vivo, `Pagados` solo con cobro completo sin pendiente/perdida, `Perdidos` por perdida
 - Facturero de la Finca: registros POR FINCA (farm_id ✓, crop_id ✗) — ruta `#view=facturero-finca`
@@ -174,9 +174,9 @@ agro-market.js       — inteligencia de mercado
 agro-notifications.js — notificaciones
 agro-planning.js     — planificación
 agro-privacy.js      — privacidad de datos
-agro-reports-center.js — Centro de Reportes: índice de reportes generales oficiales (estadísticas globales, perfil agricultor, rankings). No consulta Supabase, no selecciona cultivos, no inventa Markdown.
+agro-reports-center.js — Centro de Reportes Generales: índice de reportes generales oficiales con selector de finca (estadísticas globales, perfil agricultor, rankings). No consulta Supabase, no selecciona cultivos, no inventa Markdown.
 agro-selection.js    — selección de cultivos
-agro-shell.js        — shell UI de Agro: gestiona navegación hub/module con puertas Inicio · Granja · Memoria · Menú con persistencia por hash, hub central Mi Granja con Mis fincas y cultivos (Mis Fincas, Mis cultivos, Operaciones de la Finca), Mi Planificación (Mi Carrito, Clima Agro) y Trabajo y lectura (Mis Clientes, Trabajo Diario, Centro de Reportes), barra inferior mobile, topbar contextual con Volver en módulos profundos, launcher/favoritos/búsqueda compacta cuando aplican, y entrada inicial al Dashboard Agro
+agro-shell.js        — shell UI de Agro: gestiona navegación hub/module con puertas Inicio · Granja · Memoria · Menú con persistencia por hash, hub central Mi Granja con Mis fincas y cultivos (Mis Fincas, Mis cultivos, Operaciones de la Finca), Mi Planificación (Mi Carrito, Clima Agro) y Trabajo y lectura (Mis Clientes, Trabajo Diario, Centro de Reportes Generales), barra inferior mobile, topbar contextual con Volver en módulos profundos, launcher/favoritos/búsqueda compacta cuando aplican, y entrada inicial al Dashboard Agro
 agro-stats.js        — estadísticas financieras
 agro-stats-report.js — reportes estadísticos
 agro-trash.js        — papelera de eliminados
@@ -201,7 +201,7 @@ disponible, con fallback defensivo a query directa.
 - `agro-facturero-finca.css` — operaciones financieras
 - `agro-farms.css` — estilos de gestión de fincas (ADN V11)
 - `agro-clients.css` — Mis Clientes
-- `agro-reports-center.css` — Centro de Reportes: vista, cards, estados, botones, nota informativa y responsive mobile
+- `agro-reports-center.css` — Centro de Reportes Generales: vista, cards, estados, botones, selector de finca, nota informativa y responsive mobile
 
 **LocalStorage Keys:**
 - `YG_MANUAL_LOCATION`
