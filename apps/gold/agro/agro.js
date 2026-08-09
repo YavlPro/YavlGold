@@ -14028,6 +14028,30 @@ async function exportOpsRankingsMarkdown(farmId = '') {
             farmScopeName = null;
             scopedCropIds = null;
         }
+    } else {
+        // Global scope: apply validCropIds filter to exclude movements linked to deleted crops.
+        // agro_crops is fetched with .is('deleted_at', null) so the Set only contains active crops.
+        // Canonical §MANIFIESTO validCropIds rule — rows with no crop_id (unassigned) pass through.
+        try {
+            const { data: allCropsData } = await supabase
+                .from('agro_crops')
+                .select('id')
+                .eq('user_id', userId)
+                .is('deleted_at', null);
+            if (Array.isArray(allCropsData) && allCropsData.length) {
+                const validCropIds = new Set(allCropsData.map((c) => String(c.id || '').trim()).filter(Boolean));
+                incomeRows = allIncomeRows.filter((r) => {
+                    const cid = String(r?.crop_id || '').trim();
+                    return !cid || validCropIds.has(cid);
+                });
+                pendingRowsRaw = allPendingRows.filter((r) => {
+                    const cid = String(r?.crop_id || '').trim();
+                    return !cid || validCropIds.has(cid);
+                });
+            }
+        } catch (err) {
+            console.warn('[Rankings] validCropIds global filter failed, using unfiltered rows:', err?.message || err);
+        }
     }
 
     // Filter pending to only active (not transferred/reverted)

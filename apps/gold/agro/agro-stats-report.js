@@ -665,6 +665,27 @@ export async function exportStatsReport(farmId = '') {
             expenseRows = allExpenseRows.filter((r) => scopedCropIds.has(String(r?.crop_id || '').trim()));
             pendingRows = allPendingRows.filter((r) => scopedCropIds.has(String(r?.crop_id || '').trim()));
             lossesRows = allLossesRows.filter((r) => scopedCropIds.has(String(r?.crop_id || '').trim()));
+        } else {
+            // Global scope: build validCropIds from allCrops (already filtered by deleted_at IS NULL
+            // in fetchCrops). This excludes movements linked to deleted crops — canonical §MANIFIESTO
+            // rule validCropIds — without changing any other behaviour.
+            const validCropIds = new Set(allCrops.map((c) => String(c?.id || '').trim()).filter(Boolean));
+            incomeRows = allIncomeRows.filter((r) => {
+                const cid = String(r?.crop_id || '').trim();
+                return !cid || validCropIds.has(cid); // rows with no crop_id pass through (unassigned)
+            });
+            expenseRows = allExpenseRows.filter((r) => {
+                const cid = String(r?.crop_id || '').trim();
+                return !cid || validCropIds.has(cid);
+            });
+            pendingRows = allPendingRows.filter((r) => {
+                const cid = String(r?.crop_id || '').trim();
+                return !cid || validCropIds.has(cid);
+            });
+            lossesRows = allLossesRows.filter((r) => {
+                const cid = String(r?.crop_id || '').trim();
+                return !cid || validCropIds.has(cid);
+            });
         }
 
         const privacy = getMarkdownPrivacyState();
