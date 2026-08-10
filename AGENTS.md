@@ -68,15 +68,58 @@ El sistema de diseño activo vive en `apps/gold/docs/ADN-VISUAL-V12.0.md`. Es el
 ### 3.2 — Módulos Agro existentes
 
 ```
-agro.js              — monolito principal (facturero, CRUD, historial)
-agro-feedback.js     — feedback y encuestas
-agro-market.js       — inteligencia de mercado
-agro-planning.js     — planificación
-agro-interactions.js — interacciones
-agro-stats.js        — estadísticas financieras
-agro-notifications.js — notificaciones
-agro-trash.js        — papelera de eliminados
-agro-cart.js         — carrito
+agro.js                              — monolito principal (facturero, CRUD, historial, Asistente IA V9.5.6+)
+agro-agenda.js                       — agenda agrícola
+agro-buyer-identity.js               — resolución de identidad de compradores
+agro-cart.js                         — carrito de insumos
+agro-clients.js                      — Mis Clientes: directorio de contactos
+agro-clima.js                        — integración meteorológica
+agro-crop-archive.js                 — archivo/restauración de cultivos
+agro-crop-report.js                  — reportes detallados por cultivo
+agro-cycles-workspace.js             — workspace de ciclos de cultivo
+agro-dashboard-v11.js                — Dashboard Agro v11 (6 bloques)
+agro-display-currency.js             — visualización de moneda
+agro-exchange.js                     — tasas de cambio
+agro-facturero-clientes.js           — lógica base del Facturero de Clientes (RPC, helpers compartidos)
+agro-facturero-clientes-assignment.js — reasignación segura de cliente en movimientos
+agro-facturero-clientes-detail.js    — detalle individual del cliente (historial, saldos, acciones)
+agro-facturero-clientes-export.js    — export Markdown de lista de clientes (global y por finca)
+agro-facturero-clientes-merge.js     — modal para unificar clientes duplicados
+agro-facturero-clientes-view.js      — vista principal: tabs por saldo vivo, wizard de compradores
+agro-farm-compare.js                 — comparación lado a lado de dos fincas
+agro-farm-movements.js               — movimientos financieros por finca
+agro-farm-report.js                  — reportes por finca
+agro-farms.js                        — CRUD de fincas, selector, estadísticas por finca
+agro-feedback.js                     — feedback y encuestas
+agro-format.js                       — helpers de formateo de moneda y métricas
+agro-ia-wizard.js                    — wizard de configuración del Asistente IA (experiencia + objetivos)
+agro-interactions.js                 — interacciones
+agro-market.js                       — inteligencia de mercado
+agro-mode.js                         — switch de modo de lectura del shell (General/Cultivo/No Cultivo/Herramientas)
+agro-notifications.js                — notificaciones
+agro-period-cycles.js                — ciclos de período (Operaciones de la Finca)
+agro-planning.js                     — planificación
+agro-privacy.js                      — privacidad de datos (ocultar nombres/montos)
+agro-profit-calculator.js            — calculadora de rentabilidad
+agro-prompt-modal.js                 — modal de prompt canónico
+agro-repo-app.js                     — AgroRepo/Bitácora: app principal
+agro-repo-search.js                  — búsqueda en AgroRepo
+agro-repo-storage.js                 — almacenamiento de entradas AgroRepo
+agro-repo-templates.js               — plantillas de entradas AgroRepo
+agro-report-format.js                — formateo canónico de reportes Markdown
+agro-report-guard.js                 — guard/validación de exportes
+agro-report-shared.js                — helpers compartidos entre módulos de reporte
+agro-reports-center.js               — Centro de Reportes Generales: índice con selector de finca
+agro-section-stats.js                — estadísticas por sección/vista
+agro-selection.js                    — selección de cultivos
+agro-shell.js                        — shell UI: navegación hub/module, puertas Inicio·Granja·Memoria·Menú
+agro-shell-favorites.js              — favoritos del shell
+agro-shell-search.js                 — búsqueda compacta del shell
+agro-stats.js                        — estadísticas financieras
+agro-stats-report.js                 — reportes estadísticos (exportStatsReport)
+agro-trash.js                        — papelera de cultivos eliminados (soft-delete + restore)
+agro-unit-totals.js                  — totales por unidad
+agro-wizard.js                       — wizard de configuración inicial
 ```
 
 ### 3.3 — Regla de imports

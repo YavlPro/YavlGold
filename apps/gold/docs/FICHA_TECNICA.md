@@ -41,8 +41,9 @@
 ### Backend/Servicios
 - **BaaS:** Supabase (Backend as a Service)
 - **APIs Externas:**
-  - Weather API (módulo Agro)
-  - Binance API (módulo Crypto - solo market data pública)
+  - Weather API — Open-Meteo (módulo Agro, `dashboard.js`)
+  - Binance API — solo market data pública (módulo Crypto)
+  - Google Gemini API — modelos `gemini-2.5-flash-lite` (primario) y `gemini-3-flash` (fallback); invocada exclusivamente desde la Edge Function `agro-assistant` vía `supabase.functions.invoke`
 
 ### Gestión de Dependencias
 - **Package Manager:** pnpm
@@ -215,6 +216,11 @@ disponible, con fallback defensivo a query directa.
 - `YG_AGRO_RAIL_EXPANDED_V1` — estado expandido del rail de navegación
 - `YG_AGRO_MOBILE_RAIL_COLLAPSED_V1` — estado colapsado del rail en mobile
 - `YG_ACTIVITY_V1` — historial de actividad del usuario (módulos visitados, último acceso)
+- `YG_AGRO_ASSISTANT_HISTORY_V1` — historial legacy del Asistente IA
+- `YG_AGRO_ASSISTANT_THREADS_V1` — lista de threads del Asistente IA
+- `YG_AGRO_ASSISTANT_ACTIVE_THREAD_V1` — thread activo del Asistente IA
+- `YG_AGRO_ASSISTANT_MESSAGES_V1_<threadId>` — mensajes por thread del Asistente IA (clave dinámica por threadId)
+- `YG_AGRO_ASSISTANT_COOLDOWN_V1` — estado de cooldown anti-429 del Asistente IA
 
 ### 4.3 Crypto
 **Ubicación:** `apps/gold/crypto/`
@@ -243,10 +249,12 @@ disponible, con fallback defensivo a query directa.
 
 #### Usuarios y Perfiles
 - `profiles` - Perfiles de usuario
+- `agro_farmer_profile` - Perfil del agricultor en Agro (display_name, farm_name, location_text, experience_level, farm_type, assistant_goals)
+- `user_onboarding_context` - Contexto de onboarding del usuario; consultado por el Asistente IA para personalizar respuestas (agro_relation, main_activity)
 
 #### Agro — Facturero
 - `agro_expenses` - Gastos (con `deleted_at` soft-delete)
-- `agro_incomes` - Ingresos/Pagados (con `deleted_at`)
+- `agro_income` - Ingresos/Pagados (con `deleted_at`)
 - `agro_pending` - Fiados/Pendientes (con `deleted_at`)
 - `agro_losses` - Pérdidas (con `deleted_at`)
 - `agro_transfers` - Donaciones/Transferencias (con `deleted_at`)
@@ -254,6 +262,7 @@ disponible, con fallback defensivo a query directa.
 #### Agro — Cultivos
 - `agro_crops` - Cultivos activos; campo `farm_id` (FK a `agro_farms`, nullable por migración)
 - `agro_crop_cycles` - Ciclos productivos
+- `agro_events` - Eventos agrícolas por cultivo (riego, abono, cosecha, observaciones, etc.); escritura vía herramienta `log_event` del Asistente IA
 
 #### Agro — Recursos
 - `agro_farms` - Fincas del agricultor (id, user_id, name, location_text, notes, is_default, deleted_at). Soft-delete. RLS owner-only.
@@ -421,6 +430,7 @@ pnpm -C apps/gold build
 - **Module Manager:** `apps/gold/assets/js/modules/moduleManager.js`
 - **Geolocalización:** `apps/gold/assets/js/geolocation.js`
 - **Weather:** `apps/gold/agro/dashboard.js`
+- **Asistente IA (Edge Function):** `supabase/functions/agro-assistant/index.ts` — Google Gemini, versión `v10.0.0-agro-agent`
 - **Build Config:** `apps/gold/vite.config.js`
 - **Routing:** `vercel.json` (raíz del repo)
 - **Agent Guard:** `apps/gold/scripts/agent-guard.mjs`

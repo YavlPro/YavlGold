@@ -493,3 +493,74 @@ Yerikson debe verificar en producción (yavlgold.com):
 - No se tocó `state.datasets`.
 - No se crearon clases CSS nuevas.
 - No se actualizaron MANIFIESTO_AGRO.md ni FICHA_TECNICA.md — pendiente de QA verde confirmado por Yerikson.
+
+---
+
+## Sesión 2026-08-08 — Cierre documental: Centro de Reportes Generales + selector de finca
+
+**Objetivo:** Cierre documental del frente "Centro de Reportes Generales": actualizar manifiesto, ficha técnica, crónica y reporte operativo para reflejar el selector de finca y la corrección del bug de cultivos eliminados en reportes globales.
+
+**Alcance:** SOLO documentación. No se tocó código de producto.
+
+**Cambios realizados:**
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/docs/chronicles/CRONICA-YAVLGOLD-2026-ACTIVA.md` | edit | Agregado ADDENDUM Agosto 2026 con resumen del frente |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | edit | Esta entrada de cierre documental |
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | edit | §4.9: agregado párrafo sobre selector de finca (comportamiento "Todas las fincas", filtrado Stats/Rankings, Perfil Global global con nota) |
+| `apps/gold/docs/FICHA_TECNICA.md` | edit | Actualizada descripción funcional del Centro de Reportes para incluir selector de finca |
+
+**Restricciones respetadas:**
+- No se modificó el nombre "Centro de Reportes" → "Centro de Reportes Generales" en `MANIFIESTO_AGRO.md` porque Yerikson aún no confirmó visualmente el renombrado en producción.
+- No se tocó código `.js` ni `.css`.
+- No se ejecutó push ni commit a GitHub.
+- No se marcó el frente como cerrado/verde sin la confirmación visual pendiente.
+
+**Pendiente:** Confirmación visual de Yerikson del label "Centro de Reportes Generales" en producción. Una vez confirmada, completar renombrado en `MANIFIESTO_AGRO.md`, `docs-agro.html` y `llms.txt`.
+
+**NO se hizo:** No se tocó código del producto; no se ejecutó push/commit; no se marcó nada como verde sin confirmación visual.
+
+---
+
+## Sesión 2026-08-08 — Auditoría de consistencia documental
+
+**Agente:** Kiro
+**Objetivo:** Auditoría cruzada de AGENTS.md, FICHA_TECNICA.md y MANIFIESTO_AGRO.md. Corrección de inconsistencias confirmadas por Yerikson contra el repo real.
+
+### Diagnóstico previo a correcciones
+
+Se generó un reporte de 10 hallazgos. Yerikson lo verificó línea por línea contra el repo real y confirmó:
+
+- **Hallazgo 4 cancelado:** `dashboard.js` sí existe (904 líneas), está activo e importado en `index.html`. La referencia en FICHA_TECNICA.md §11 estaba correcta — no se tocó.
+- **Hallazgo 8 corregido:** la tabla que escribe `log_event` es `agro_events`, no `agro_crop_events` (0 coincidencias en el repo). El reporte original tenía el nombre equivocado.
+- Todo lo demás del reporte fue confirmado exacto.
+
+### Archivos modificados
+
+| Archivo | Sección | Cambio |
+|---|---|---|
+| `AGENTS.md` | `§3.2 — Módulos Agro existentes` | Listado actualizado de 9 entradas a 51 módulos reales con descripción de cada uno |
+| `FICHA_TECNICA.md` | `§2 — APIs Externas` | Agregada Google Gemini API (`gemini-2.5-flash-lite` primario, `gemini-3-flash` fallback) |
+| `FICHA_TECNICA.md` | `§4.2 — LocalStorage Keys` | Agregadas 5 claves `YG_AGRO_ASSISTANT_*` del Asistente IA |
+| `FICHA_TECNICA.md` | `§5 — Usuarios y Perfiles` | Agregadas `agro_farmer_profile` y `user_onboarding_context` |
+| `FICHA_TECNICA.md` | `§5 — Agro — Cultivos` | Agregada tabla `agro_events` (eventos agrícolas, escritura vía `log_event`) |
+| `FICHA_TECNICA.md` | `§5 — Agro — Facturero` | Corregido typo `agro_incomes` → `agro_income` |
+| `FICHA_TECNICA.md` | `§11 — Referencias Internas` | Agregada referencia a `supabase/functions/agro-assistant/index.ts` |
+
+### Resultado de build
+
+```
+agent-guard: OK
+agent-report-check: OK
+vite build ✓ (187 modules, 4.04s)
+check-llms: OK
+UTF-8: ✓
+Exit Code: 0
+```
+
+### No se hizo
+
+- No se tocó MANIFIESTO_AGRO.md (no tenía inconsistencias que le correspondan — su rol es semántico y está correctamente separado de la implementación técnica).
+- No se modificó la referencia a `dashboard.js` en FICHA_TECNICA.md §11 (Yerikson confirmó que está correcta).
+- No se tocó ningún archivo de código.
