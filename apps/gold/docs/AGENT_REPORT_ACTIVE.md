@@ -567,35 +567,40 @@ Exit Code: 0
 
 ---
 
-## Sesión 2026-08-16 — UX: Días en proyecto + Ticker cotizaciones + Canal WhatsApp
+## Sesión 2026-08-16 — UX: Días en proyecto + Ticker cotizaciones + Canal WhatsApp + Espaciado botones header
 
-**Objetivo:** Tres mejoras de experiencia de usuario: mostrar días del usuario en el proyecto, cinta animada de cotizaciones en Dashboard Agro, y canal de WhatsApp en landing.
+**Agente:** Kiro
+**Objetivo:** Cinco mejoras de experiencia de usuario. QA green confirmado por Yerikson. Cambios commiteados y pusheados a main.
 
 ### Diagnóstico
 - `user.created_at` disponible en `supabase.auth.getSession()` (ambos dashboards). Ninguno lo leía.
 - `agro-market.js` ya tenía ticker completo (BTC, COP, VES) con `initMarketIntelligence()`, pero no se montaba en Dashboard Agro: faltaba el elemento `#market-ticker-track` en el HTML del bloque v11 y la llamada de init.
 - `official-socials__actions` en landing con 3 botones (X, YouTube, LinkedIn). Canal WhatsApp ausente.
+- Botones "Iniciar Sesión" / "Registrarse" en header de landing visualmente pegados: gap heredado de `.header-actions` era `var(--space-3)` (12px). El div `#auth-buttons` no tenía gap propio.
 
 ### Cambios realizados
 
 | Archivo | Tipo | Cambio |
 |---|---|---|
-| `apps/gold/index.html` | HTML | Agregado botón WhatsApp Canal en sección `official-socials__actions` |
+| `apps/gold/index.html` | HTML | Nuevo botón WhatsApp Canal en `official-socials__actions` (patrón visual idéntico a los existentes, icono `fa-brands fa-whatsapp`) |
 | `apps/gold/dashboard/index.html` | HTML | Nueva stat card `#stat-member-days` "Días contigo" en `stats-section` |
-| `apps/gold/dashboard/index.html` | JS | Cálculo de días con `user.created_at` en `initDashboard()` |
-| `apps/gold/agro/index.html` | HTML | Nuevo bloque `.ygd-ticker-bar` con `#market-ticker-track` antes del BLOQUE 0; nuevo `#ygd-greeting-days` bajo el título de saludo |
-| `apps/gold/agro/agro-dashboard-v11.css` | CSS | Estilos `.ygd-ticker-bar`, `.ygd-ticker-track`, `.ygd-header-days`; respeto a `prefers-reduced-motion` |
-| `apps/gold/agro/agro-dashboard-v11.js` | JS | Import de `initMarketIntelligence`; llamada en `initDashboardV11()`; PASO 4 en `renderGreeting()` para mostrar días |
+| `apps/gold/dashboard/index.html` | JS | Cálculo de días con `session.user.created_at` en `initDashboard()` — sin query extra |
+| `apps/gold/agro/index.html` | HTML | Bloque `.ygd-ticker-bar` con `#market-ticker-track` antes del BLOQUE 0; `#ygd-greeting-days` bajo el título de saludo |
+| `apps/gold/agro/agro-dashboard-v11.css` | CSS | Estilos `.ygd-ticker-bar`, `.ygd-ticker-track`, `.ygd-header-days`; `prefers-reduced-motion` respetado |
+| `apps/gold/agro/agro-dashboard-v11.js` | JS | Import de `initMarketIntelligence`; llamada en `initDashboardV11()`; PASO 4 en `renderGreeting()` para días ("Tu primer día" vs "X días") |
+| `apps/gold/assets/css/landing-v10.css` | CSS | `#auth-buttons { gap: var(--space-5) }` — 20px entre botones de auth en desktop; no afecta mobile (ya ocultos por regla preexistente) |
 
 ### Resultado de build
-`pnpm build:gold` — ✅ verde, 0 errores, 0 warnings de código.
+`pnpm build:gold` — ✅ verde, 0 errores, 0 warnings de código. Confirmado en todas las mejoras.
 
-### QA sugerido
-- Dashboard principal: verificar que la card "Días contigo" muestra número correcto según fecha de registro.
-- Dashboard Agro: verificar cinta animada con cotizaciones COP/VES/BTC en la parte superior al abrir el dashboard.
-- Dashboard Agro: verificar subtexto de días bajo el saludo.
-- Landing page: verificar botón WhatsApp visible en sección de redes sociales.
+### QA — estado: 🟢 VERDE (confirmado por Yerikson)
+- ✅ Landing: botón WhatsApp visible y funcional en sección de redes sociales.
+- ✅ Dashboard principal: card "Días contigo" muestra número correcto según fecha de registro.
+- ✅ Dashboard Agro: cinta animada de cotizaciones COP/VES/BTC en parte superior del dashboard.
+- ✅ Dashboard Agro: subtexto de días bajo el saludo.
+- ✅ Landing header: botones "Iniciar Sesión" y "Registrarse" con espaciado correcto en desktop, mobile no afectado.
 
 ### NO se hizo
-- No se tocó `agro.js` ni ningún módulo fuera del scope.
+- No se tocó `agro.js` ni módulos fuera del scope.
 - No se modificaron contratos de DB, migraciones ni RLS.
+- No se alteró el comportamiento mobile de ningún componente.
