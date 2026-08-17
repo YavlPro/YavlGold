@@ -1646,6 +1646,10 @@
         <span class="stat-number">AGRO</span>
         <span class="stat-label">Producto real</span>
       </div>
+      <div class="stat-card">
+        <span class="stat-number" id="stat-member-days">-</span>
+        <span class="stat-label">Días contigo</span>
+      </div>
     </section>
 
     <!-- 🔍 MODULE TOOLBAR (Search Only) -->
@@ -2191,6 +2195,13 @@
 
       // Show settings button
       if (settingsBtn) settingsBtn.style.display = 'inline-flex';
+
+      // Días en el proyecto: user.created_at viene del token de Supabase Auth
+      const memberDaysEl = document.getElementById('stat-member-days');
+      if (memberDaysEl && user.created_at) {
+        const days = Math.max(1, Math.floor((Date.now() - new Date(user.created_at).getTime()) / 86400000));
+        memberDaysEl.textContent = String(days);
+      }
 
       // 3. Load profile snapshot, apply fallback identity and run onboarding gate
       const profile = await loadProfileSnapshot(user.id);

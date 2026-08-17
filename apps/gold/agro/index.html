@@ -17,27 +17,124 @@
     <link rel="icon" type="image/webp" href="../assets/images/logo.webp">
     <link rel="apple-touch-icon" href="../assets/images/logo.webp">
     <style>
-        .agro-splash{position:fixed;inset:0;z-index:13000;display:flex;align-items:center;justify-content:center;background:var(--bg-1,#0a0a0a);transition:opacity .35s ease,visibility .35s ease}
-        body.agro-shell-ready .agro-splash{opacity:0;visibility:hidden;pointer-events:none}
-        .agro-splash__inner{display:grid;gap:.6rem;place-items:center;padding:2rem}
-        .agro-splash__logo{width:72px;height:72px;object-fit:contain;opacity:0;animation:agroSplashFadeIn .5s ease .1s forwards}
-        .agro-splash__title{font-family:var(--font-heading),sans-serif;font-size:1.15rem;font-weight:700;color:var(--gold-4,#C8A752);letter-spacing:.06em;opacity:0;animation:agroSplashFadeIn .4s ease .25s forwards}
-        .agro-splash__subtitle{font-family:var(--font-body),sans-serif;font-size:.88rem;color:var(--text-secondary,#a0a0a0);opacity:0;animation:agroSplashFadeIn .4s ease .35s forwards}
-        .agro-splash__bar{width:140px;height:3px;border-radius:2px;background:rgba(255,255,255,.06);overflow:hidden;margin-top:.3rem;opacity:0;animation:agroSplashFadeIn .3s ease .45s forwards}
-        .agro-splash__progress{height:100%;width:40%;border-radius:2px;background:var(--gold-4,#C8A752);animation:agroSplashSlide 1s ease-in-out infinite}
-        @keyframes agroSplashFadeIn{to{opacity:1}}
-        @keyframes agroSplashSlide{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
-        @media (prefers-reduced-motion: reduce){
-            .agro-splash{transition:none}
-            .agro-splash__logo,.agro-splash__title,.agro-splash__subtitle,.agro-splash__bar{opacity:1;animation:none}
-            .agro-splash__progress{width:60%;animation:none}
+        .agro-splash {
+            position: fixed;
+            inset: 0;
+            z-index: 13000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-1, #0a0a0a);
+            transition: opacity .35s ease, visibility .35s ease
         }
-        body:not(.agro-shell-ready) [data-agro-shell-region]{opacity:0;transition:opacity .3s ease}
-        body.agro-shell-ready [data-agro-shell-region]{opacity:1}
+
+        body.agro-shell-ready .agro-splash {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none
+        }
+
+        .agro-splash__inner {
+            display: grid;
+            gap: .6rem;
+            place-items: center;
+            padding: 2rem
+        }
+
+        .agro-splash__logo {
+            width: 72px;
+            height: 72px;
+            object-fit: contain;
+            opacity: 0;
+            animation: agroSplashFadeIn .5s ease .1s forwards
+        }
+
+        .agro-splash__title {
+            font-family: var(--font-heading), sans-serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--gold-4, #C8A752);
+            letter-spacing: .06em;
+            opacity: 0;
+            animation: agroSplashFadeIn .4s ease .25s forwards
+        }
+
+        .agro-splash__subtitle {
+            font-family: var(--font-body), sans-serif;
+            font-size: .88rem;
+            color: var(--text-secondary, #a0a0a0);
+            opacity: 0;
+            animation: agroSplashFadeIn .4s ease .35s forwards
+        }
+
+        .agro-splash__bar {
+            width: 140px;
+            height: 3px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, .06);
+            overflow: hidden;
+            margin-top: .3rem;
+            opacity: 0;
+            animation: agroSplashFadeIn .3s ease .45s forwards
+        }
+
+        .agro-splash__progress {
+            height: 100%;
+            width: 40%;
+            border-radius: 2px;
+            background: var(--gold-4, #C8A752);
+            animation: agroSplashSlide 1s ease-in-out infinite
+        }
+
+        @keyframes agroSplashFadeIn {
+            to {
+                opacity: 1
+            }
+        }
+
+        @keyframes agroSplashSlide {
+            0% {
+                transform: translateX(-100%)
+            }
+
+            100% {
+                transform: translateX(350%)
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .agro-splash {
+                transition: none
+            }
+
+            .agro-splash__logo,
+            .agro-splash__title,
+            .agro-splash__subtitle,
+            .agro-splash__bar {
+                opacity: 1;
+                animation: none
+            }
+
+            .agro-splash__progress {
+                width: 60%;
+                animation: none
+            }
+        }
+
+        body:not(.agro-shell-ready) [data-agro-shell-region] {
+            opacity: 0;
+            transition: opacity .3s ease
+        }
+
+        body.agro-shell-ready [data-agro-shell-region] {
+            opacity: 1
+        }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet" />
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Chart.js for Statistics Visualization -->
@@ -66,7 +163,9 @@
             <img src="../assets/images/logo.webp" alt="YavlGold" width="80" height="80" class="agro-splash__logo" />
             <p class="agro-splash__title">Cargando Agro</p>
             <p class="agro-splash__subtitle">Preparando tu espacio agrícola</p>
-            <div class="agro-splash__bar"><div class="agro-splash__progress"></div></div>
+            <div class="agro-splash__bar">
+                <div class="agro-splash__progress"></div>
+            </div>
         </div>
     </div>
     <!-- Animated Background -->
@@ -92,8 +191,8 @@
                     <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
                     <span>Dashboard</span>
                 </button>
-                <button type="button" class="agro-shell-rail__item" data-agro-view="ciclos"
-                    data-agro-subview="activos" aria-label="Cultivos" title="Cultivos">
+                <button type="button" class="agro-shell-rail__item" data-agro-view="ciclos" data-agro-subview="activos"
+                    aria-label="Cultivos" title="Cultivos">
                     <i class="fa-solid fa-seedling" aria-hidden="true"></i>
                     <span>Cultivos</span>
                 </button>
@@ -107,13 +206,13 @@
                     <i class="fa-solid fa-list-check" aria-hidden="true"></i>
                     <span>Agenda</span>
                 </button>
-                <button type="button" class="agro-shell-rail__item" data-agro-view="agrorepo"
-                    aria-label="AgroRepo" title="AgroRepo">
+                <button type="button" class="agro-shell-rail__item" data-agro-view="agrorepo" aria-label="AgroRepo"
+                    title="AgroRepo">
                     <i class="fa-solid fa-book-open" aria-hidden="true"></i>
                     <span>AgroRepo</span>
                 </button>
-                <button type="button" class="agro-shell-rail__item" data-agro-view="asistente"
-                    aria-label="Asistente IA" title="Asistente IA">
+                <button type="button" class="agro-shell-rail__item" data-agro-view="asistente" aria-label="Asistente IA"
+                    title="Asistente IA">
                     <i class="fa-solid fa-robot" aria-hidden="true"></i>
                     <span>Asistente</span>
                 </button>
@@ -122,8 +221,8 @@
                     <i class="fa-solid fa-chart-column" aria-hidden="true"></i>
                     <span>Estadísticas</span>
                 </button>
-                <button type="button" class="agro-shell-rail__item" data-agro-view="perfil"
-                    aria-label="Perfil" title="Perfil">
+                <button type="button" class="agro-shell-rail__item" data-agro-view="perfil" aria-label="Perfil"
+                    title="Perfil">
                     <i class="fa-solid fa-circle-user" aria-hidden="true"></i>
                     <span>Perfil</span>
                 </button>
@@ -180,241 +279,256 @@
                             <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                         </button>
                     </div>
-                    <div class="agro-shell-search__panel" id="agro-shell-search-results"
-                        data-agro-shell-search-panel hidden></div>
+                    <div class="agro-shell-search__panel" id="agro-shell-search-results" data-agro-shell-search-panel
+                        hidden></div>
                 </div>
-                <section class="agro-shell-favorites" id="agro-shell-favorites" aria-label="Favoritos del shell"
-                    hidden></section>
+                <section class="agro-shell-favorites" id="agro-shell-favorites" aria-label="Favoritos del shell" hidden>
+                </section>
             </div>
 
             <div class="agro-launcher__grid">
-            <section class="agro-shell-sidebar__group agro-launcher__section">
-                <p class="agro-shell-sidebar__label"><i class="fa-solid fa-compass agro-shell-sidebar__label-icon"
-                        aria-hidden="true"></i><span>Principal</span></p>
-                <div class="agro-launcher__tiles">
-                    <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="dashboard"
-                        data-agro-mode-scope="general">
-                        <i class="fa-solid fa-chart-line agro-shell-link__icon" aria-hidden="true"></i>
-                        <span class="agro-launcher__tile-copy">
-                            <span class="agro-shell-link__label">Dashboard Agro</span>
-                            <span class="agro-launcher__tile-desc">Resumen de estado y accesos operativos.</span>
-                        </span>
-                    </button>
-                    <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="perfil"
-                        data-agro-mode-scope="general">
-                        <i class="fa-solid fa-circle-user agro-shell-link__icon" aria-hidden="true"></i>
-                        <span class="agro-launcher__tile-copy">
-                            <span class="agro-shell-link__label">Mi Perfil</span>
-                            <span class="agro-launcher__tile-desc">Identidad, datos del productor y preferencias.</span>
-                        </span>
-                    </button>
-                </div>
-            </section>
-
-            <section class="agro-shell-sidebar__group agro-launcher__section">
-                <p class="agro-shell-sidebar__label"><i class="fa-solid fa-seedling agro-shell-sidebar__label-icon"
-                        aria-hidden="true"></i><span>Producción</span></p>
-                <div class="agro-launcher__tiles">
-                    <div class="agro-shell-nav-item agro-launcher__tile-group" data-agro-nav-parent="granja-general"
-                    data-agro-mode-scope="crop non_crop">
-                    <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-nav-toggle="granja-general"
-                        data-agro-mode-scope="crop non_crop" aria-expanded="false">
-                        <i class="fa-solid fa-wheat-awn agro-shell-link__icon" aria-hidden="true"></i>
-                        <span class="agro-launcher__tile-copy">
-                            <span class="agro-shell-link__label">Cultivos / Granja General</span>
-                            <span class="agro-launcher__tile-desc">Cultivos, operaciones de la finca, comparación y estadísticas.</span>
-                        </span>
-                    </button>
-                    <div class="agro-shell-subnav">
-                        <span class="agro-shell-subgroup-label" data-agro-mode-scope="crop"><i
-                                class="fa-solid fa-seedling agro-shell-link__icon"
-                                aria-hidden="true"></i><span>Ciclos de cultivos</span></span>
-                        <button type="button" class="agro-shell-sublink" data-agro-view="ciclos"
-                            data-agro-subview="mis-cultivos" data-agro-mode-scope="crop"><i class="fa-solid fa-leaf agro-shell-link__icon"
-                                aria-hidden="true"></i><span class="agro-shell-link__label">Mis
-                                cultivos</span></button>
-                        <button type="button" class="agro-shell-sublink" data-agro-view="ciclos"
-                            data-agro-subview="mis-fincas" data-agro-mode-scope="crop"><i class="fa-solid fa-mountain-sun agro-shell-link__icon"
-                                aria-hidden="true"></i><span class="agro-shell-link__label">Mis
-                                Fincas</span></button>
-                        <button type="button" class="agro-shell-sublink" data-agro-view="ciclos"
-                            data-agro-subview="comparar" data-agro-mode-scope="crop"><i class="fa-solid fa-scale-balanced agro-shell-link__icon"
-                                aria-hidden="true"></i><span class="agro-shell-link__label">Comparar
-                                ciclos</span></button>
-                        <button type="button" class="agro-shell-sublink" data-agro-view="ciclos"
-                            data-agro-subview="estadisticas" data-agro-mode-scope="crop"><i class="fa-solid fa-chart-column agro-shell-link__icon"
-                                aria-hidden="true"></i><span class="agro-shell-link__label">Estadísticas de
-                                ciclos</span></button>
-                        <button type="button" class="agro-shell-sublink" data-agro-view="period-cycles"
-                            data-agro-subview="calendario" data-agro-mode-scope="crop non_crop"><i class="fa-solid fa-calendar-day agro-shell-link__icon"
-                                aria-hidden="true"></i><span class="agro-shell-link__label">Operaciones de la Finca</span></button>
+                <section class="agro-shell-sidebar__group agro-launcher__section">
+                    <p class="agro-shell-sidebar__label"><i class="fa-solid fa-compass agro-shell-sidebar__label-icon"
+                            aria-hidden="true"></i><span>Principal</span></p>
+                    <div class="agro-launcher__tiles">
+                        <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="dashboard"
+                            data-agro-mode-scope="general">
+                            <i class="fa-solid fa-chart-line agro-shell-link__icon" aria-hidden="true"></i>
+                            <span class="agro-launcher__tile-copy">
+                                <span class="agro-shell-link__label">Dashboard Agro</span>
+                                <span class="agro-launcher__tile-desc">Resumen de estado y accesos operativos.</span>
+                            </span>
+                        </button>
+                        <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="perfil"
+                            data-agro-mode-scope="general">
+                            <i class="fa-solid fa-circle-user agro-shell-link__icon" aria-hidden="true"></i>
+                            <span class="agro-launcher__tile-copy">
+                                <span class="agro-shell-link__label">Mi Perfil</span>
+                                <span class="agro-launcher__tile-desc">Identidad, datos del productor y
+                                    preferencias.</span>
+                            </span>
+                        </button>
                     </div>
-                </div>
-                    <button type="button" class="agro-shell-link agro-shell-link--action agro-launcher__tile"
-                        data-agro-action="new-crop" data-agro-mode-scope="crop">
-                        <i class="fa-solid fa-plus agro-shell-link__icon" aria-hidden="true"></i>
-                        <span class="agro-launcher__tile-copy">
-                            <span class="agro-shell-link__label">Nuevo cultivo</span>
-                            <span class="agro-launcher__tile-desc">Crear un nuevo ciclo productivo.</span>
-                        </span>
-                    </button>
-                </div>
-            </section>
+                </section>
 
-            <section class="agro-shell-sidebar__group agro-launcher__section">
-                <p class="agro-shell-sidebar__label"><i class="fa-solid fa-file-invoice-dollar agro-shell-sidebar__label-icon"
-                        aria-hidden="true"></i><span>Mis factureros</span></p>
-                <div class="agro-launcher__tiles">
-                    <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="facturero-clientes"
-                        data-agro-mode-scope="non_crop">
-                        <i class="fa-solid fa-users agro-shell-link__icon" aria-hidden="true"></i>
-                        <span class="agro-launcher__tile-copy">
-                            <span class="agro-shell-link__label">Facturero de Clientes</span>
-                            <span class="agro-launcher__tile-desc">Seguimiento de clientes y fiados activos.</span>
-                        </span>
-                    </button>
-                    <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="facturero-finca"
-                        data-agro-mode-scope="non_crop">
-                        <i class="fa-solid fa-wallet agro-shell-link__icon" aria-hidden="true"></i>
-                        <span class="agro-launcher__tile-copy">
-                            <span class="agro-shell-link__label">Facturero de la Finca</span>
-                            <span class="agro-launcher__tile-desc">Registros de gastos e ingresos de la finca.</span>
-                        </span>
-                    </button>
-                    <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="facturero-cultivo"
-                        data-agro-mode-scope="non_crop">
-                        <i class="fa-solid fa-seedling agro-shell-link__icon" aria-hidden="true"></i>
-                        <span class="agro-launcher__tile-copy">
-                            <span class="agro-shell-link__label">Facturero del Cultivo</span>
-                            <span class="agro-launcher__tile-desc">Registros asociados a cultivos específicos.</span>
-                        </span>
-                    </button>
-                    <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="facturero-personal"
-                        data-agro-mode-scope="non_crop">
-                        <i class="fa-solid fa-user agro-shell-link__icon" aria-hidden="true"></i>
-                        <span class="agro-launcher__tile-copy">
-                            <span class="agro-shell-link__label">Facturero Personal</span>
-                            <span class="agro-launcher__tile-desc">Gastos y movimientos personales.</span>
-                        </span>
-                    </button>
-                </div>
-            </section>
+                <section class="agro-shell-sidebar__group agro-launcher__section">
+                    <p class="agro-shell-sidebar__label"><i class="fa-solid fa-seedling agro-shell-sidebar__label-icon"
+                            aria-hidden="true"></i><span>Producción</span></p>
+                    <div class="agro-launcher__tiles">
+                        <div class="agro-shell-nav-item agro-launcher__tile-group" data-agro-nav-parent="granja-general"
+                            data-agro-mode-scope="crop non_crop">
+                            <button type="button" class="agro-shell-link agro-launcher__tile"
+                                data-agro-nav-toggle="granja-general" data-agro-mode-scope="crop non_crop"
+                                aria-expanded="false">
+                                <i class="fa-solid fa-wheat-awn agro-shell-link__icon" aria-hidden="true"></i>
+                                <span class="agro-launcher__tile-copy">
+                                    <span class="agro-shell-link__label">Cultivos / Granja General</span>
+                                    <span class="agro-launcher__tile-desc">Cultivos, operaciones de la finca,
+                                        comparación y estadísticas.</span>
+                                </span>
+                            </button>
+                            <div class="agro-shell-subnav">
+                                <span class="agro-shell-subgroup-label" data-agro-mode-scope="crop"><i
+                                        class="fa-solid fa-seedling agro-shell-link__icon"
+                                        aria-hidden="true"></i><span>Ciclos de cultivos</span></span>
+                                <button type="button" class="agro-shell-sublink" data-agro-view="ciclos"
+                                    data-agro-subview="mis-cultivos" data-agro-mode-scope="crop"><i
+                                        class="fa-solid fa-leaf agro-shell-link__icon" aria-hidden="true"></i><span
+                                        class="agro-shell-link__label">Mis
+                                        cultivos</span></button>
+                                <button type="button" class="agro-shell-sublink" data-agro-view="ciclos"
+                                    data-agro-subview="mis-fincas" data-agro-mode-scope="crop"><i
+                                        class="fa-solid fa-mountain-sun agro-shell-link__icon"
+                                        aria-hidden="true"></i><span class="agro-shell-link__label">Mis
+                                        Fincas</span></button>
+                                <button type="button" class="agro-shell-sublink" data-agro-view="ciclos"
+                                    data-agro-subview="comparar" data-agro-mode-scope="crop"><i
+                                        class="fa-solid fa-scale-balanced agro-shell-link__icon"
+                                        aria-hidden="true"></i><span class="agro-shell-link__label">Comparar
+                                        ciclos</span></button>
+                                <button type="button" class="agro-shell-sublink" data-agro-view="ciclos"
+                                    data-agro-subview="estadisticas" data-agro-mode-scope="crop"><i
+                                        class="fa-solid fa-chart-column agro-shell-link__icon"
+                                        aria-hidden="true"></i><span class="agro-shell-link__label">Estadísticas de
+                                        ciclos</span></button>
+                                <button type="button" class="agro-shell-sublink" data-agro-view="period-cycles"
+                                    data-agro-subview="calendario" data-agro-mode-scope="crop non_crop"><i
+                                        class="fa-solid fa-calendar-day agro-shell-link__icon"
+                                        aria-hidden="true"></i><span class="agro-shell-link__label">Operaciones de la
+                                        Finca</span></button>
+                            </div>
+                        </div>
+                        <button type="button" class="agro-shell-link agro-shell-link--action agro-launcher__tile"
+                            data-agro-action="new-crop" data-agro-mode-scope="crop">
+                            <i class="fa-solid fa-plus agro-shell-link__icon" aria-hidden="true"></i>
+                            <span class="agro-launcher__tile-copy">
+                                <span class="agro-shell-link__label">Nuevo cultivo</span>
+                                <span class="agro-launcher__tile-desc">Crear un nuevo ciclo productivo.</span>
+                            </span>
+                        </button>
+                    </div>
+                </section>
 
-            <section class="agro-shell-sidebar__group agro-launcher__section">
-                <p class="agro-shell-sidebar__label"><i class="fa-solid fa-clipboard-list agro-shell-sidebar__label-icon"
-                        aria-hidden="true"></i><span>Mi planificación</span></p>
-                <div class="agro-launcher__tiles">
-                    <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="carrito"
-                        data-agro-mode-scope="non_crop">
-                        <i class="fa-solid fa-cart-shopping agro-shell-link__icon" aria-hidden="true"></i>
-                        <span class="agro-launcher__tile-copy">
-                            <span class="agro-shell-link__label">Mi Carrito</span>
-                            <span class="agro-launcher__tile-desc">Lista de compras y planeación.</span>
-                        </span>
-                    </button>
-                </div>
-            </section>
+                <section class="agro-shell-sidebar__group agro-launcher__section">
+                    <p class="agro-shell-sidebar__label"><i
+                            class="fa-solid fa-file-invoice-dollar agro-shell-sidebar__label-icon"
+                            aria-hidden="true"></i><span>Mis factureros</span></p>
+                    <div class="agro-launcher__tiles">
+                        <button type="button" class="agro-shell-link agro-launcher__tile"
+                            data-agro-view="facturero-clientes" data-agro-mode-scope="non_crop">
+                            <i class="fa-solid fa-users agro-shell-link__icon" aria-hidden="true"></i>
+                            <span class="agro-launcher__tile-copy">
+                                <span class="agro-shell-link__label">Facturero de Clientes</span>
+                                <span class="agro-launcher__tile-desc">Seguimiento de clientes y fiados activos.</span>
+                            </span>
+                        </button>
+                        <button type="button" class="agro-shell-link agro-launcher__tile"
+                            data-agro-view="facturero-finca" data-agro-mode-scope="non_crop">
+                            <i class="fa-solid fa-wallet agro-shell-link__icon" aria-hidden="true"></i>
+                            <span class="agro-launcher__tile-copy">
+                                <span class="agro-shell-link__label">Facturero de la Finca</span>
+                                <span class="agro-launcher__tile-desc">Registros de gastos e ingresos de la
+                                    finca.</span>
+                            </span>
+                        </button>
+                        <button type="button" class="agro-shell-link agro-launcher__tile"
+                            data-agro-view="facturero-cultivo" data-agro-mode-scope="non_crop">
+                            <i class="fa-solid fa-seedling agro-shell-link__icon" aria-hidden="true"></i>
+                            <span class="agro-launcher__tile-copy">
+                                <span class="agro-shell-link__label">Facturero del Cultivo</span>
+                                <span class="agro-launcher__tile-desc">Registros asociados a cultivos
+                                    específicos.</span>
+                            </span>
+                        </button>
+                        <button type="button" class="agro-shell-link agro-launcher__tile"
+                            data-agro-view="facturero-personal" data-agro-mode-scope="non_crop">
+                            <i class="fa-solid fa-user agro-shell-link__icon" aria-hidden="true"></i>
+                            <span class="agro-launcher__tile-copy">
+                                <span class="agro-shell-link__label">Facturero Personal</span>
+                                <span class="agro-launcher__tile-desc">Gastos y movimientos personales.</span>
+                            </span>
+                        </button>
+                    </div>
+                </section>
 
-            <section class="agro-shell-sidebar__group agro-launcher__section">
-                <p class="agro-shell-sidebar__label"><i class="fa-solid fa-list-check agro-shell-sidebar__label-icon"
-                        aria-hidden="true"></i><span>Trabajo y lectura</span></p>
-                <div class="agro-launcher__tiles">
-                    <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="clients"
-                        data-agro-mode-scope="non_crop">
-                        <i class="fa-solid fa-address-book agro-shell-link__icon" aria-hidden="true"></i>
-                        <span class="agro-launcher__tile-copy">
-                            <span class="agro-shell-link__label">Mis Clientes</span>
-                            <span class="agro-launcher__tile-desc">Libreta simple de clientes de la finca.</span>
-                        </span>
-                    </button>
-                    <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="task-cycles"
-                        data-agro-mode-scope="crop non_crop">
-                        <i class="fa-solid fa-list-check agro-shell-link__icon" aria-hidden="true"></i>
-                        <span class="agro-launcher__tile-copy">
-                            <span class="agro-shell-link__label">Agenda</span>
-                            <span class="agro-launcher__tile-desc">Tareas, ciclos y seguimiento de labores.</span>
-                        </span>
-                    </button>
-                    <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="reportes"
-                        data-agro-mode-scope="crop non_crop tools">
-                        <i class="fa-solid fa-folder-open agro-shell-link__icon" aria-hidden="true"></i>
-                        <span class="agro-launcher__tile-copy">
-                            <span class="agro-shell-link__label">Centro de Reportes</span>
-                            <span class="agro-launcher__tile-desc">Exporta reportes en Markdown por categoría.</span>
-                        </span>
-                    </button>
-                </div>
-            </section>
+                <section class="agro-shell-sidebar__group agro-launcher__section">
+                    <p class="agro-shell-sidebar__label"><i
+                            class="fa-solid fa-clipboard-list agro-shell-sidebar__label-icon"
+                            aria-hidden="true"></i><span>Mi planificación</span></p>
+                    <div class="agro-launcher__tiles">
+                        <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="carrito"
+                            data-agro-mode-scope="non_crop">
+                            <i class="fa-solid fa-cart-shopping agro-shell-link__icon" aria-hidden="true"></i>
+                            <span class="agro-launcher__tile-copy">
+                                <span class="agro-shell-link__label">Mi Carrito</span>
+                                <span class="agro-launcher__tile-desc">Lista de compras y planeación.</span>
+                            </span>
+                        </button>
+                    </div>
+                </section>
 
-            <section class="agro-shell-sidebar__group agro-launcher__section">
-                <p class="agro-shell-sidebar__label"><i class="fa-solid fa-book-open agro-shell-sidebar__label-icon"
-                        aria-hidden="true"></i><span>Memoria e IA</span></p>
-                <div class="agro-launcher__tiles">
-                    <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="agrorepo"
-                        data-agro-mode-scope="tools">
-                        <i class="fa-solid fa-book-open agro-shell-link__icon" aria-hidden="true"></i>
-                        <span class="agro-launcher__tile-copy">
-                            <span class="agro-shell-link__label">AgroRepo</span>
-                            <span class="agro-launcher__tile-desc">Repositorio de notas y memoria del trabajo agrícola.</span>
-                        </span>
-                    </button>
-                    <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="asistente"
-                        data-agro-mode-scope="tools">
-                        <i class="fa-solid fa-robot agro-shell-link__icon" aria-hidden="true"></i>
-                        <span class="agro-launcher__tile-copy">
-                            <span class="agro-shell-link__label">Asistente IA</span>
-                            <span class="agro-launcher__tile-desc">Apoyo contextual para decisiones de finca.</span>
-                        </span>
-                    </button>
-                    <a href="/docs-agro" class="agro-launcher__tile agro-launcher__tile--link"
-                        data-agro-mode-scope="crop non_crop tools" target="_blank" rel="noopener">
-                        <i class="fa-solid fa-book agro-shell-link__icon" aria-hidden="true"></i>
-                        <span class="agro-launcher__tile-copy">
-                            <span class="agro-shell-link__label">Documentación</span>
-                            <span class="agro-launcher__tile-desc">Guía de uso y referencia operativa.</span>
-                        </span>
-                    </a>
-                </div>
-            </section>
+                <section class="agro-shell-sidebar__group agro-launcher__section">
+                    <p class="agro-shell-sidebar__label"><i
+                            class="fa-solid fa-list-check agro-shell-sidebar__label-icon"
+                            aria-hidden="true"></i><span>Trabajo y lectura</span></p>
+                    <div class="agro-launcher__tiles">
+                        <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="clients"
+                            data-agro-mode-scope="non_crop">
+                            <i class="fa-solid fa-address-book agro-shell-link__icon" aria-hidden="true"></i>
+                            <span class="agro-launcher__tile-copy">
+                                <span class="agro-shell-link__label">Mis Clientes</span>
+                                <span class="agro-launcher__tile-desc">Libreta simple de clientes de la finca.</span>
+                            </span>
+                        </button>
+                        <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="task-cycles"
+                            data-agro-mode-scope="crop non_crop">
+                            <i class="fa-solid fa-list-check agro-shell-link__icon" aria-hidden="true"></i>
+                            <span class="agro-launcher__tile-copy">
+                                <span class="agro-shell-link__label">Agenda</span>
+                                <span class="agro-launcher__tile-desc">Tareas, ciclos y seguimiento de labores.</span>
+                            </span>
+                        </button>
+                        <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="reportes"
+                            data-agro-mode-scope="crop non_crop tools">
+                            <i class="fa-solid fa-folder-open agro-shell-link__icon" aria-hidden="true"></i>
+                            <span class="agro-launcher__tile-copy">
+                                <span class="agro-shell-link__label">Centro de Reportes</span>
+                                <span class="agro-launcher__tile-desc">Exporta reportes en Markdown por
+                                    categoría.</span>
+                            </span>
+                        </button>
+                    </div>
+                </section>
 
-            <section class="agro-shell-sidebar__group agro-launcher__section">
-                <p class="agro-shell-sidebar__label"><i
-                        class="fa-solid fa-screwdriver-wrench agro-shell-sidebar__label-icon"
-                        aria-hidden="true"></i><span>Sistema</span></p>
-                <div class="agro-launcher__tiles">
-                    <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="clima"
-                        data-agro-mode-scope="tools">
-                        <i class="fa-solid fa-cloud-sun agro-shell-link__icon" aria-hidden="true"></i>
-                        <span class="agro-launcher__tile-copy">
-                            <span class="agro-shell-link__label">Clima Agro</span>
-                            <span class="agro-launcher__tile-desc">Consulta de clima y señales de campo.</span>
-                        </span>
-                    </button>
-                    <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="herramientas"
-                        data-agro-mode-scope="tools">
-                        <i class="fa-solid fa-toolbox agro-shell-link__icon" aria-hidden="true"></i>
-                        <span class="agro-launcher__tile-copy">
-                            <span class="agro-shell-link__label">Ayuda y soporte</span>
-                            <span class="agro-launcher__tile-desc">Documentación, soporte y privacidad.</span>
-                        </span>
-                    </button>
-                    <a href="/dashboard" class="agro-launcher__tile agro-launcher__tile--link"
-                        data-agro-mode-scope="crop non_crop tools">
-                        <i class="fa-solid fa-house agro-shell-link__icon" aria-hidden="true"></i>
-                        <span class="agro-launcher__tile-copy">
-                            <span class="agro-shell-link__label">Dashboard</span>
-                            <span class="agro-launcher__tile-desc">Volver al dashboard principal.</span>
-                        </span>
-                    </a>
-                </div>
-            </section>
+                <section class="agro-shell-sidebar__group agro-launcher__section">
+                    <p class="agro-shell-sidebar__label"><i class="fa-solid fa-book-open agro-shell-sidebar__label-icon"
+                            aria-hidden="true"></i><span>Memoria e IA</span></p>
+                    <div class="agro-launcher__tiles">
+                        <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="agrorepo"
+                            data-agro-mode-scope="tools">
+                            <i class="fa-solid fa-book-open agro-shell-link__icon" aria-hidden="true"></i>
+                            <span class="agro-launcher__tile-copy">
+                                <span class="agro-shell-link__label">AgroRepo</span>
+                                <span class="agro-launcher__tile-desc">Repositorio de notas y memoria del trabajo
+                                    agrícola.</span>
+                            </span>
+                        </button>
+                        <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="asistente"
+                            data-agro-mode-scope="tools">
+                            <i class="fa-solid fa-robot agro-shell-link__icon" aria-hidden="true"></i>
+                            <span class="agro-launcher__tile-copy">
+                                <span class="agro-shell-link__label">Asistente IA</span>
+                                <span class="agro-launcher__tile-desc">Apoyo contextual para decisiones de finca.</span>
+                            </span>
+                        </button>
+                        <a href="/docs-agro" class="agro-launcher__tile agro-launcher__tile--link"
+                            data-agro-mode-scope="crop non_crop tools" target="_blank" rel="noopener">
+                            <i class="fa-solid fa-book agro-shell-link__icon" aria-hidden="true"></i>
+                            <span class="agro-launcher__tile-copy">
+                                <span class="agro-shell-link__label">Documentación</span>
+                                <span class="agro-launcher__tile-desc">Guía de uso y referencia operativa.</span>
+                            </span>
+                        </a>
+                    </div>
+                </section>
+
+                <section class="agro-shell-sidebar__group agro-launcher__section">
+                    <p class="agro-shell-sidebar__label"><i
+                            class="fa-solid fa-screwdriver-wrench agro-shell-sidebar__label-icon"
+                            aria-hidden="true"></i><span>Sistema</span></p>
+                    <div class="agro-launcher__tiles">
+                        <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="clima"
+                            data-agro-mode-scope="tools">
+                            <i class="fa-solid fa-cloud-sun agro-shell-link__icon" aria-hidden="true"></i>
+                            <span class="agro-launcher__tile-copy">
+                                <span class="agro-shell-link__label">Clima Agro</span>
+                                <span class="agro-launcher__tile-desc">Consulta de clima y señales de campo.</span>
+                            </span>
+                        </button>
+                        <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="herramientas"
+                            data-agro-mode-scope="tools">
+                            <i class="fa-solid fa-toolbox agro-shell-link__icon" aria-hidden="true"></i>
+                            <span class="agro-launcher__tile-copy">
+                                <span class="agro-shell-link__label">Ayuda y soporte</span>
+                                <span class="agro-launcher__tile-desc">Documentación, soporte y privacidad.</span>
+                            </span>
+                        </button>
+                        <a href="/dashboard" class="agro-launcher__tile agro-launcher__tile--link"
+                            data-agro-mode-scope="crop non_crop tools">
+                            <i class="fa-solid fa-house agro-shell-link__icon" aria-hidden="true"></i>
+                            <span class="agro-launcher__tile-copy">
+                                <span class="agro-shell-link__label">Dashboard</span>
+                                <span class="agro-launcher__tile-desc">Volver al dashboard principal.</span>
+                            </span>
+                        </a>
+                    </div>
+                </section>
             </div>
         </div>
     </aside>
     <nav class="agro-mobile-tabbar" data-agro-mobile-tabbar aria-label="Navegación móvil Agro" role="tablist">
-        <button type="button" class="agro-mobile-tabbar__item" id="agro-mobile-tab-inicio"
-            data-agro-mobile-tab="inicio" role="tab" aria-controls="agro-mobile-panel-inicio"
-            aria-selected="true">
+        <button type="button" class="agro-mobile-tabbar__item" id="agro-mobile-tab-inicio" data-agro-mobile-tab="inicio"
+            role="tab" aria-controls="agro-mobile-panel-inicio" aria-selected="true">
             <i class="fa-solid fa-house" aria-hidden="true"></i>
             <span>Inicio</span>
         </button>
@@ -425,14 +539,12 @@
             <span>Granja</span>
         </button>
         <button type="button" class="agro-mobile-tabbar__item" id="agro-mobile-tab-memoria"
-            data-agro-mobile-tab="memoria" role="tab" aria-controls="agro-mobile-panel-memoria"
-            aria-selected="false">
+            data-agro-mobile-tab="memoria" role="tab" aria-controls="agro-mobile-panel-memoria" aria-selected="false">
             <i class="fa-solid fa-book-open" aria-hidden="true"></i>
             <span>Memoria</span>
         </button>
-        <button type="button" class="agro-mobile-tabbar__item" id="agro-mobile-tab-menu"
-            data-agro-mobile-tab="menu" role="tab" aria-controls="agro-mobile-panel-menu"
-            aria-selected="false">
+        <button type="button" class="agro-mobile-tabbar__item" id="agro-mobile-tab-menu" data-agro-mobile-tab="menu"
+            role="tab" aria-controls="agro-mobile-panel-menu" aria-selected="false">
             <i class="fa-solid fa-compass" aria-hidden="true"></i>
             <span>Menú</span>
         </button>
@@ -488,8 +600,7 @@
         </header>
 
         <div class="agro-mobile-contextbar" data-agro-mobile-contextbar hidden inert>
-            <button type="button" class="agro-mobile-contextbar__back" data-agro-mobile-back
-                aria-label="Volver al hub">
+            <button type="button" class="agro-mobile-contextbar__back" data-agro-mobile-back aria-label="Volver al hub">
                 <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
                 <span>Volver</span>
             </button>
@@ -498,9 +609,8 @@
 
         <section class="agro-mobile-hub agro-shell-hub" data-agro-mobile-hub-root aria-label="Hub Agro">
             <nav class="agro-shell-hub-tabs" aria-label="Puertas principales Agro" role="tablist">
-                <button type="button" class="agro-shell-hub-tab" id="agro-hub-tab-inicio"
-                    data-agro-mobile-tab="inicio" role="tab" aria-controls="agro-mobile-panel-inicio"
-                    aria-selected="true">
+                <button type="button" class="agro-shell-hub-tab" id="agro-hub-tab-inicio" data-agro-mobile-tab="inicio"
+                    role="tab" aria-controls="agro-mobile-panel-inicio" aria-selected="true">
                     <i class="fa-solid fa-house" aria-hidden="true"></i>
                     <span>Inicio</span>
                 </button>
@@ -516,9 +626,8 @@
                     <i class="fa-solid fa-book-open" aria-hidden="true"></i>
                     <span>Memoria</span>
                 </button>
-                <button type="button" class="agro-shell-hub-tab" id="agro-hub-tab-menu"
-                    data-agro-mobile-tab="menu" role="tab" aria-controls="agro-mobile-panel-menu"
-                    aria-selected="false">
+                <button type="button" class="agro-shell-hub-tab" id="agro-hub-tab-menu" data-agro-mobile-tab="menu"
+                    role="tab" aria-controls="agro-mobile-panel-menu" aria-selected="false">
                     <i class="fa-solid fa-compass" aria-hidden="true"></i>
                     <span>Menú</span>
                 </button>
@@ -913,15 +1022,28 @@
             <div class="ygd-dashboard">
 
                 <!-- ====================================================
+                     TICKER DE COTIZACIONES — Cinta animada superior
+                     (COP, VES, USD, BTC — via agro-market.js)
+                     ==================================================== -->
+                <div class="ygd-ticker-bar" aria-label="Cotizaciones en tiempo real" role="marquee">
+                    <div class="ygd-ticker-track animate-marquee" id="market-ticker-track">
+                        <span class="agro-ticker-item agro-ticker-meta">
+                            <span class="agro-ticker-symbol">SYNC</span>
+                            <span class="agro-ticker-value">Cargando cotizaciones...</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- ====================================================
                      BLOQUE 0 — HEADER CONTEXTUAL
                      (saludo + botón IA; reemplaza el breadcrumb ausente)
                      ==================================================== -->
                 <header class="ygd-block ygd-header">
                     <div class="ygd-header-greeting">
                         <h1 class="ygd-header-title" id="ygd-greeting-name">Bienvenido, Agricultor</h1>
+                        <p class="ygd-header-days" id="ygd-greeting-days"></p>
                     </div>
-                    <button class="ygd-btn-ai" type="button" aria-label="Abrir Asistente IA"
-                        data-agro-view="asistente">
+                    <button class="ygd-btn-ai" type="button" aria-label="Abrir Asistente IA" data-agro-view="asistente">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
                             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <path d="M12 3l1.6 4.6L18 9.2l-4.4 1.6L12 15l-1.6-4.2L6 9.2l4.4-1.6L12 3z" />
@@ -1044,14 +1166,16 @@
 
                         <div class="ygd-gauge-wrap">
                             <svg class="ygd-gauge" viewBox="0 0 220 140" aria-hidden="true">
-                                <path d="M 22 110 A 88 88 0 0 1 198 110" fill="none"
-                                    stroke="var(--border-neutral)" stroke-width="1" />
+                                <path d="M 22 110 A 88 88 0 0 1 198 110" fill="none" stroke="var(--border-neutral)"
+                                    stroke-width="1" />
                                 <path class="ygd-gauge-arc ygd-gauge-arc-neutral" d="M 30 110 A 80 80 0 0 1 70 40.72"
                                     fill="none" stroke="var(--text-muted)" stroke-width="12" stroke-linecap="round" />
-                                <path class="ygd-gauge-arc ygd-gauge-arc-recuperando" d="M 70 40.72 A 80 80 0 0 1 150 40.72"
-                                    fill="none" stroke="var(--color-warning)" stroke-width="12" stroke-linecap="round" />
+                                <path class="ygd-gauge-arc ygd-gauge-arc-recuperando"
+                                    d="M 70 40.72 A 80 80 0 0 1 150 40.72" fill="none" stroke="var(--color-warning)"
+                                    stroke-width="12" stroke-linecap="round" />
                                 <path class="ygd-gauge-arc ygd-gauge-arc-ganando" d="M 150 40.72 A 80 80 0 0 1 190 110"
-                                    fill="none" stroke="var(--color-success)" stroke-width="12" stroke-linecap="round" />
+                                    fill="none" stroke="var(--color-success)" stroke-width="12"
+                                    stroke-linecap="round" />
                                 <g class="ygd-gauge-ticks" stroke="var(--text-muted)" stroke-width="1.5"
                                     stroke-linecap="round" opacity="0.55">
                                     <line x1="18" y1="110" x2="26" y2="110" />
@@ -1070,12 +1194,12 @@
                                     font-weight="500" fill="var(--text-muted)" text-anchor="middle"
                                     letter-spacing="1.2">GANANDO</text>
                                 <g id="ygd-gauge-needle" class="ygd-gauge-needle">
-                                    <line x1="110" y1="110" x2="110" y2="44" stroke="var(--gold-4)"
-                                        stroke-width="2.5" stroke-linecap="round" />
+                                    <line x1="110" y1="110" x2="110" y2="44" stroke="var(--gold-4)" stroke-width="2.5"
+                                        stroke-linecap="round" />
                                     <polygon points="110,40 105,50 115,50" fill="var(--gold-5)" />
                                 </g>
-                                <circle cx="110" cy="110" r="11" fill="var(--bg-3)"
-                                    stroke="var(--gold-4)" stroke-width="1.5" />
+                                <circle cx="110" cy="110" r="11" fill="var(--bg-3)" stroke="var(--gold-4)"
+                                    stroke-width="1.5" />
                                 <circle cx="110" cy="110" r="5" fill="var(--gold-4)" />
                                 <circle cx="110" cy="110" r="1.8" fill="var(--gold-5)" />
                             </svg>
@@ -1196,7 +1320,8 @@
                             data-agro-subview="active">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
                                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35a2 2 0 0 1 1.26-1.86l8-3.2a2 2 0 0 1 1.48 0l8 3.2A2 2 0 0 1 22 8.35z" />
+                                <path
+                                    d="M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35a2 2 0 0 1 1.26-1.86l8-3.2a2 2 0 0 1 1.48 0l8 3.2A2 2 0 0 1 22 8.35z" />
                                 <path d="M6 22V12h12v10" />
                                 <path d="M6 16h12" />
                             </svg>
@@ -1300,7 +1425,8 @@
                     <button class="btn btn-gold" id="btn-farm-compare-header" style="display:none;"
                         onclick="window._agroFarms?.compareFarms()">
                         <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i> Comparar fincas</button>
-                    <button class="btn btn-gold" id="btn-new-farm-header" style="display:none;" onclick="window._agroFarms?.openFarmModal()">+ Nueva
+                    <button class="btn btn-gold" id="btn-new-farm-header" style="display:none;"
+                        onclick="window._agroFarms?.openFarmModal()">+ Nueva
                         Finca</button>
                 </div>
             </header>
@@ -1313,16 +1439,21 @@
             </div>
             <div class="agro-cycle-subview" data-agro-cycle-subview="mis-cultivos">
                 <div class="agro-farm-filter-container">
-                    <label for="agro-farm-filter-select"><i class="fa-solid fa-mountain-sun" aria-hidden="true"></i> Finca</label>
+                    <label for="agro-farm-filter-select"><i class="fa-solid fa-mountain-sun" aria-hidden="true"></i>
+                        Finca</label>
                     <select id="agro-farm-filter-select" aria-label="Filtrar cultivos por finca">
                         <option value="">Todas las fincas</option>
                     </select>
                 </div>
                 <div class="agro-internal-tabs" role="tablist" aria-label="Tabs de Mis cultivos">
-                    <button type="button" class="agro-internal-tab is-active" role="tab" data-agro-crop-tab="activos" aria-selected="true">Activos</button>
-                    <button type="button" class="agro-internal-tab" role="tab" data-agro-crop-tab="finalizados" aria-selected="false">Finalizados</button>
-                    <button type="button" class="agro-internal-tab" role="tab" data-agro-crop-tab="perdidos" aria-selected="false">Perdidos</button>
-                    <button type="button" class="agro-internal-tab" role="tab" data-agro-crop-tab="archivo" aria-selected="false">Archivo y Papelera</button>
+                    <button type="button" class="agro-internal-tab is-active" role="tab" data-agro-crop-tab="activos"
+                        aria-selected="true">Activos</button>
+                    <button type="button" class="agro-internal-tab" role="tab" data-agro-crop-tab="finalizados"
+                        aria-selected="false">Finalizados</button>
+                    <button type="button" class="agro-internal-tab" role="tab" data-agro-crop-tab="perdidos"
+                        aria-selected="false">Perdidos</button>
+                    <button type="button" class="agro-internal-tab" role="tab" data-agro-crop-tab="archivo"
+                        aria-selected="false">Archivo y Papelera</button>
                 </div>
                 <div class="agro-internal-tab-content is-active" data-agro-crop-tab-content="activos">
                     <div id="cyclesContainer" class="crops-grid"></div>
@@ -1372,22 +1503,26 @@
 
                         <div class="gstats-crops-grid">
                             <article class="gstats-crop-card gstats-crop-card--active">
-                                <span class="gstats-crop-icon"><i class="fa-solid fa-seedling" aria-hidden="true"></i></span>
+                                <span class="gstats-crop-icon"><i class="fa-solid fa-seedling"
+                                        aria-hidden="true"></i></span>
                                 <strong class="gstats-crop-value" id="agro-profile-crops-active">0</strong>
                                 <span class="gstats-crop-label">Activos</span>
                             </article>
                             <article class="gstats-crop-card gstats-crop-card--done">
-                                <span class="gstats-crop-icon"><i class="fa-solid fa-check" aria-hidden="true"></i></span>
+                                <span class="gstats-crop-icon"><i class="fa-solid fa-check"
+                                        aria-hidden="true"></i></span>
                                 <strong class="gstats-crop-value" id="agro-profile-crops-finalized">0</strong>
                                 <span class="gstats-crop-label">Finalizados</span>
                             </article>
                             <article class="gstats-crop-card gstats-crop-card--lost">
-                                <span class="gstats-crop-icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>
+                                <span class="gstats-crop-icon"><i class="fa-solid fa-triangle-exclamation"
+                                        aria-hidden="true"></i></span>
                                 <strong class="gstats-crop-value" id="agro-profile-crops-lost">0</strong>
                                 <span class="gstats-crop-label">Perdidos</span>
                             </article>
                             <article class="gstats-crop-card gstats-crop-card--total">
-                                <span class="gstats-crop-icon"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i></span>
+                                <span class="gstats-crop-icon"><i class="fa-solid fa-chart-simple"
+                                        aria-hidden="true"></i></span>
                                 <strong class="gstats-crop-value" id="agro-profile-crops-total">0</strong>
                                 <span class="gstats-crop-label">Total</span>
                             </article>
@@ -1566,8 +1701,8 @@
         <div class="modal-container agro-new-crop-modal__container agro-modal-canon__dialog">
             <div class="modal-header agro-modal-canon__header">
                 <h3 id="new-crop-modal-title" class="modal-title">Nuevo Cultivo</h3>
-                <button class="modal-close agro-new-crop-modal__close"
-                    onclick="window.closeCropModal()" aria-label="Cerrar cultivo">&times;</button>
+                <button class="modal-close agro-new-crop-modal__close" onclick="window.closeCropModal()"
+                    aria-label="Cerrar cultivo">&times;</button>
             </div>
             <form id="form-new-crop" class="modal-body agro-modal-canon__body"
                 onsubmit="event.preventDefault(); window.saveCrop();">
@@ -1659,7 +1794,8 @@
                     <div class="input-row">
                         <div class="input-group">
                             <label class="input-label" for="crop-actual-harvest-date">Fecha real de cosecha</label>
-                            <input type="date" id="crop-actual-harvest-date" class="styled-input agro-modal-input--compact">
+                            <input type="date" id="crop-actual-harvest-date"
+                                class="styled-input agro-modal-input--compact">
                         </div>
                         <div class="input-group">
                             <label class="input-label" for="crop-lost-date">Fecha de p&eacute;rdida</label>
@@ -1683,7 +1819,8 @@
                 <button type="button" class="btn-cancel agro-modal-canon__button agro-modal-canon__button--secondary"
                     onclick="window.closeCropModal()">Cancelar</button>
                 <button type="submit" id="btn-save-crop" form="form-new-crop"
-                    class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary">Guardar siembra</button>
+                    class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary">Guardar
+                    siembra</button>
             </div>
         </div>
     </div>
@@ -1724,7 +1861,8 @@
                 <button type="button" class="btn-cancel agro-modal-canon__button agro-modal-canon__button--secondary"
                     onclick="window.closeFarmModal()">Cancelar</button>
                 <button type="submit" id="btn-save-farm" form="form-new-farm"
-                    class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary">Guardar finca</button>
+                    class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary">Guardar
+                    finca</button>
             </div>
         </div>
     </div>
@@ -1814,7 +1952,8 @@
                         <p class="ops-step-label">PASO 2 · Qué ver</p>
                         <div class="ops-step-copy">
                             <p class="ops-step-title">Abrir vista del facturero</p>
-                            <p class="ops-step-note ops-step-helper">Gastos, ingresos cobrados, fiados, pérdidas, donaciones,
+                            <p class="ops-step-note ops-step-helper">Gastos, ingresos cobrados, fiados, pérdidas,
+                                donaciones,
                                 otros, carrito y rankings.</p>
                         </div>
                     </div>
@@ -2154,9 +2293,11 @@
                 <div class="agro-privacy-strip">
                     <span class="agro-privacy-strip__label">Privacidad</span>
                     <button type="button" class="btn-privacy-toggle" data-buyer-privacy-control="toggle"
-                        aria-pressed="false"><i class="fa-solid fa-eye-slash" aria-hidden="true"></i> Ocultar nombres</button>
+                        aria-pressed="false"><i class="fa-solid fa-eye-slash" aria-hidden="true"></i> Ocultar
+                        nombres</button>
                     <button type="button" class="btn-privacy-toggle" data-money-privacy-control="toggle"
-                        aria-pressed="false"><i class="fa-solid fa-coins" aria-hidden="true"></i> Ocultar montos</button>
+                        aria-pressed="false"><i class="fa-solid fa-coins" aria-hidden="true"></i> Ocultar
+                        montos</button>
                 </div>
             </div>
             <div id="rankings-dedicated-root" class="agro-rankings-dedicated__content">
@@ -2181,7 +2322,8 @@
                         </div>
                         <p class="agro-tool-card__eyebrow">Guía</p>
                         <h3 class="agro-tool-card__title">Documentación Agro</h3>
-                        <p class="agro-tool-card__copy">Referencia oficial para entender el módulo y sus superficies.</p>
+                        <p class="agro-tool-card__copy">Referencia oficial para entender el módulo y sus superficies.
+                        </p>
                         <a class="agro-tool-card__action" href="/docs-agro" target="_blank" rel="noopener">
                             <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Abrir documentación
                         </a>
@@ -2192,7 +2334,8 @@
                         </div>
                         <p class="agro-tool-card__eyebrow">Contacto</p>
                         <h3 class="agro-tool-card__title">Soporte oficial</h3>
-                        <p class="agro-tool-card__copy">Canal directo del proyecto para ayuda operativa y comunicación.</p>
+                        <p class="agro-tool-card__copy">Canal directo del proyecto para ayuda operativa y comunicación.
+                        </p>
                         <a class="agro-tool-card__action" href="https://t.me/YavlPro" target="_blank" rel="noopener">
                             <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Abrir soporte
                         </a>
@@ -2203,7 +2346,8 @@
                         </div>
                         <p class="agro-tool-card__eyebrow">Cuenta</p>
                         <h3 class="agro-tool-card__title">Privacidad</h3>
-                        <p class="agro-tool-card__copy">Consulta las reglas de privacidad y tratamiento de información.</p>
+                        <p class="agro-tool-card__copy">Consulta las reglas de privacidad y tratamiento de información.
+                        </p>
                         <a class="agro-tool-card__action" href="/privacy.html">
                             <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Ver privacidad
                         </a>
@@ -3049,7 +3193,8 @@
                         <button type="button" class="btn agro-modal-canon__button agro-modal-canon__button--secondary"
                             data-agro-buyer-close>Cancelar</button>
                         <button type="submit" id="btn-save-agro-buyer"
-                            class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary">Guardar cambios</button>
+                            class="btn btn-primary agro-modal-canon__button agro-modal-canon__button--primary">Guardar
+                            cambios</button>
                     </div>
                     <div class="agro-buyer-footer__row agro-buyer-footer__row--secondary">
                         <button type="button" class="btn btn-ghost" id="btn-open-buyer-public-profile">Ver perfil
@@ -3072,8 +3217,8 @@
                     <p class="agro-buyer-confirm-eyebrow">Confirmación</p>
                     <h3 id="agro-buyer-delete-title" class="agro-buyer-confirm-title">Eliminar cliente</h3>
                 </div>
-                <button type="button" class="agro-buyer-confirm-close agro-modal-canon__close" data-agro-buyer-delete-close
-                    aria-label="Cerrar confirmación">
+                <button type="button" class="agro-buyer-confirm-close agro-modal-canon__close"
+                    data-agro-buyer-delete-close aria-label="Cerrar confirmación">
                     <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                 </button>
             </header>
@@ -3093,8 +3238,8 @@
 
     <div id="modal-agro-public-profile" class="agro-public-modal agro-modal-canon" aria-hidden="true">
         <div class="agro-public-backdrop" data-agro-public-close></div>
-        <div class="agro-public-panel agro-modal-canon__dialog" role="dialog" aria-modal="true" aria-labelledby="agro-public-title"
-            tabindex="-1">
+        <div class="agro-public-panel agro-modal-canon__dialog" role="dialog" aria-modal="true"
+            aria-labelledby="agro-public-title" tabindex="-1">
             <header class="agro-public-header agro-modal-canon__header">
                 <div class="agro-public-header-main">
                     <div id="agro-public-avatar" class="agro-public-avatar" aria-hidden="true">👨‍🌾</div>
@@ -3493,8 +3638,9 @@
                             title="Exportar">
                             <i class="fa-solid fa-download" aria-hidden="true"></i>
                         </button>
-                        <button type="button" class="ast-header-icon ast-header-icon--back" id="btn-close-agro-assistant"
-                            aria-label="Volver al dashboard" title="Volver al dashboard" data-agro-view="dashboard">
+                        <button type="button" class="ast-header-icon ast-header-icon--back"
+                            id="btn-close-agro-assistant" aria-label="Volver al dashboard" title="Volver al dashboard"
+                            data-agro-view="dashboard">
                             <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
                         </button>
                     </div>

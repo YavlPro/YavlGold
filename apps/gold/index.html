@@ -109,8 +109,10 @@
       </nav>
       <div class="header-actions">
         <div id="auth-buttons">
-          <button id="login-btn" class="btn btn-outline btn-header" type="button"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i> Iniciar Sesión</button>
-          <button id="register-btn" class="btn btn-gold btn-header" type="button"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> Registrarse</button>
+          <button id="login-btn" class="btn btn-outline btn-header" type="button"><i
+              class="fa-solid fa-right-to-bracket" aria-hidden="true"></i> Iniciar Sesión</button>
+          <button id="register-btn" class="btn btn-gold btn-header" type="button"><i class="fa-solid fa-user-plus"
+              aria-hidden="true"></i> Registrarse</button>
         </div>
         <div id="user-menu" class="user-menu" style="display: none;">
           <button id="user-menu-btn" class="user-menu-btn" type="button">
@@ -139,13 +141,22 @@
 
   <!-- Menú móvil -->
   <nav class="mobile-menu" id="mobileMenu" aria-label="Menú de navegación móvil">
-    <a href="#modulos"><i class="fa-solid fa-seedling" aria-hidden="true" style="margin-right:var(--comp-icon-gap);font-size:var(--icon-sm);color:var(--gold-4);"></i> Módulos</a>
-    <a href="#profundidad"><i class="fa-solid fa-eye" aria-hidden="true" style="margin-right:var(--comp-icon-gap);font-size:var(--icon-sm);color:var(--gold-4);"></i> Vistas</a>
-    <a href="#faq"><i class="fa-solid fa-circle-question" aria-hidden="true" style="margin-right:var(--comp-icon-gap);font-size:var(--icon-sm);color:var(--gold-4);"></i> Ayuda</a>
-    <a href="/docs-agro"><i class="fa-solid fa-book" aria-hidden="true" style="margin-right:var(--comp-icon-gap);font-size:var(--icon-sm);color:var(--gold-4);"></i> Documentación</a>
-    <div style="border-top:1px solid var(--border-neutral); margin-top:var(--space-3); padding-top:var(--space-3); display:flex; flex-direction:column; gap:var(--space-2);">
-      <button onclick="openAuthModal('login')" class="btn btn-outline" style="justify-content:center;" type="button"><i class="fa-solid fa-right-to-bracket" aria-hidden="true" style="margin-right:var(--comp-icon-gap);"></i> Iniciar Sesión</button>
-      <button onclick="openAuthModal('signup')" class="btn btn-gold" style="justify-content:center;" type="button"><i class="fa-solid fa-user-plus" aria-hidden="true" style="margin-right:var(--comp-icon-gap);"></i> Registrarse</button>
+    <a href="#modulos"><i class="fa-solid fa-seedling" aria-hidden="true"
+        style="margin-right:var(--comp-icon-gap);font-size:var(--icon-sm);color:var(--gold-4);"></i> Módulos</a>
+    <a href="#profundidad"><i class="fa-solid fa-eye" aria-hidden="true"
+        style="margin-right:var(--comp-icon-gap);font-size:var(--icon-sm);color:var(--gold-4);"></i> Vistas</a>
+    <a href="#faq"><i class="fa-solid fa-circle-question" aria-hidden="true"
+        style="margin-right:var(--comp-icon-gap);font-size:var(--icon-sm);color:var(--gold-4);"></i> Ayuda</a>
+    <a href="/docs-agro"><i class="fa-solid fa-book" aria-hidden="true"
+        style="margin-right:var(--comp-icon-gap);font-size:var(--icon-sm);color:var(--gold-4);"></i> Documentación</a>
+    <div
+      style="border-top:1px solid var(--border-neutral); margin-top:var(--space-3); padding-top:var(--space-3); display:flex; flex-direction:column; gap:var(--space-2);">
+      <button onclick="openAuthModal('login')" class="btn btn-outline" style="justify-content:center;" type="button"><i
+          class="fa-solid fa-right-to-bracket" aria-hidden="true" style="margin-right:var(--comp-icon-gap);"></i>
+        Iniciar Sesión</button>
+      <button onclick="openAuthModal('signup')" class="btn btn-gold" style="justify-content:center;" type="button"><i
+          class="fa-solid fa-user-plus" aria-hidden="true" style="margin-right:var(--comp-icon-gap);"></i>
+        Registrarse</button>
     </div>
   </nav>
 
@@ -158,34 +169,51 @@
           </div>
         </div>
         <h1>Tu trabajo de campo, ordenado y conectado</h1>
-        <p>Registra lo que pasa en tu finca, entiende cómo van tus cultivos, controla tu cartera y gastos, y usa la IA con contexto real. No es un panel vacío: es tu herramienta de campo.</p>
+        <p>Registra lo que pasa en tu finca, entiende cómo van tus cultivos, controla tu cartera y gastos, y usa la IA
+          con contexto real. No es un panel vacío: es tu herramienta de campo.</p>
         <div class="hero-cta">
-          <a href="#modulos" class="btn btn-gold"><i class="fa-solid fa-seedling" aria-hidden="true"></i> Explorar Agro</a>
-          <a href="#faq" class="btn btn-outline"><i class="fa-solid fa-book-open" aria-hidden="true"></i> Guía Rápida</a>
+          <a href="#modulos" class="btn btn-gold"><i class="fa-solid fa-seedling" aria-hidden="true"></i> Explorar
+            Agro</a>
+          <a href="#faq" class="btn btn-outline"><i class="fa-solid fa-book-open" aria-hidden="true"></i> Guía
+            Rápida</a>
         </div>
       </div>
     </section>
 
     <div class="container">
       <div class="trust-bar reveal">
-        <div class="trust-item"><div class="trust-num">1</div><div class="trust-label">Módulo Agro · En producción</div></div>
-        <div class="trust-item"><div class="trust-num">3</div><div class="trust-label">Monedas (COP/USD/VES)</div></div>
-        <div class="trust-item"><div class="trust-num">100%</div><div class="trust-label">Tus Datos Son Tuyos</div></div>
+        <div class="trust-item">
+          <div class="trust-num">1</div>
+          <div class="trust-label">Módulo Agro · En producción</div>
+        </div>
+        <div class="trust-item">
+          <div class="trust-num">3</div>
+          <div class="trust-label">Monedas (COP/USD/VES)</div>
+        </div>
+        <div class="trust-item">
+          <div class="trust-num">100%</div>
+          <div class="trust-label">Tus Datos Son Tuyos</div>
+        </div>
       </div>
     </div>
 
     <section id="modulos" class="reveal">
       <div class="container">
         <h2 class="section-title">Superficies de Agro</h2>
-        <p class="section-subtitle">Cada módulo con su nombre real. ¿Qué estoy haciendo, cómo avanza mi cultivo, qué estoy ganando o perdiendo, a qué debo prestarle atención hoy?</p>
+        <p class="section-subtitle">Cada módulo con su nombre real. ¿Qué estoy haciendo, cómo avanza mi cultivo, qué
+          estoy ganando o perdiendo, a qué debo prestarle atención hoy?</p>
 
         <div class="modo-bar" role="toolbar" aria-label="Filtro por modo operativo">
           <div class="container">
             <div class="modo-bar-inner">
-              <button class="modo-chip" aria-selected="true" data-modo="todos"><i class="fa-solid fa-border-all" aria-hidden="true" style="margin-right:4px;font-size:0.7rem;"></i> Todos</button>
-              <button class="modo-chip" aria-selected="false" data-modo="productivo"><i class="fa-solid fa-seedling" aria-hidden="true" style="margin-right:4px;font-size:0.7rem;"></i> Productivo</button>
-              <button class="modo-chip" aria-selected="false" data-modo="comercial"><i class="fa-solid fa-coins" aria-hidden="true" style="margin-right:4px;font-size:0.7rem;"></i> Mis Factureros</button>
-              <button class="modo-chip" aria-selected="false" data-modo="contextual"><i class="fa-solid fa-robot" aria-hidden="true" style="margin-right:4px;font-size:0.7rem;"></i> Contextual</button>
+              <button class="modo-chip" aria-selected="true" data-modo="todos"><i class="fa-solid fa-border-all"
+                  aria-hidden="true" style="margin-right:4px;font-size:0.7rem;"></i> Todos</button>
+              <button class="modo-chip" aria-selected="false" data-modo="productivo"><i class="fa-solid fa-seedling"
+                  aria-hidden="true" style="margin-right:4px;font-size:0.7rem;"></i> Productivo</button>
+              <button class="modo-chip" aria-selected="false" data-modo="comercial"><i class="fa-solid fa-coins"
+                  aria-hidden="true" style="margin-right:4px;font-size:0.7rem;"></i> Mis Factureros</button>
+              <button class="modo-chip" aria-selected="false" data-modo="contextual"><i class="fa-solid fa-robot"
+                  aria-hidden="true" style="margin-right:4px;font-size:0.7rem;"></i> Contextual</button>
             </div>
           </div>
         </div>
@@ -281,16 +309,27 @@
     <section id="profundidad" class="reveal">
       <div class="container">
         <h2 class="section-title">Vistas Reales de Jornada</h2>
-        <p class="section-subtitle">Así se ve la información cuando entras a trabajar. Sin dashboards vacíos, solo datos que deciden tu día.</p>
+        <p class="section-subtitle">Así se ve la información cuando entras a trabajar. Sin dashboards vacíos, solo datos
+          que deciden tu día.</p>
 
         <div class="switcher-wrap">
           <div class="agro-switch">
             <div class="switch-capsule" role="tablist" aria-label="Filtro de vistas">
-              <button class="switch-chip" role="tab" aria-selected="true" data-target="dive-clima"><i class="fa-solid fa-sun" aria-hidden="true" style="margin-right:4px;font-size:0.75rem;"></i> Clima</button>
-              <button class="switch-chip" role="tab" aria-selected="false" data-target="dive-ciclos"><i class="fa-solid fa-seedling" aria-hidden="true" style="margin-right:4px;font-size:0.75rem;"></i> Ciclos</button>
-              <button class="switch-chip" role="tab" aria-selected="false" data-target="dive-cartera"><i class="fa-solid fa-wallet" aria-hidden="true" style="margin-right:4px;font-size:0.75rem;"></i> Cartera</button>
-              <button class="switch-chip" role="tab" aria-selected="false" data-target="dive-trabajo"><i class="fa-solid fa-list-check" aria-hidden="true" style="margin-right:4px;font-size:0.75rem;"></i> Trabajo</button>
-              <button class="switch-chip" role="tab" aria-selected="false" data-target="dive-rankings"><i class="fa-solid fa-ranking-star" aria-hidden="true" style="margin-right:4px;font-size:0.75rem;"></i> Rankings</button>
+              <button class="switch-chip" role="tab" aria-selected="true" data-target="dive-clima"><i
+                  class="fa-solid fa-sun" aria-hidden="true" style="margin-right:4px;font-size:0.75rem;"></i>
+                Clima</button>
+              <button class="switch-chip" role="tab" aria-selected="false" data-target="dive-ciclos"><i
+                  class="fa-solid fa-seedling" aria-hidden="true" style="margin-right:4px;font-size:0.75rem;"></i>
+                Ciclos</button>
+              <button class="switch-chip" role="tab" aria-selected="false" data-target="dive-cartera"><i
+                  class="fa-solid fa-wallet" aria-hidden="true" style="margin-right:4px;font-size:0.75rem;"></i>
+                Cartera</button>
+              <button class="switch-chip" role="tab" aria-selected="false" data-target="dive-trabajo"><i
+                  class="fa-solid fa-list-check" aria-hidden="true" style="margin-right:4px;font-size:0.75rem;"></i>
+                Trabajo</button>
+              <button class="switch-chip" role="tab" aria-selected="false" data-target="dive-rankings"><i
+                  class="fa-solid fa-ranking-star" aria-hidden="true" style="margin-right:4px;font-size:0.75rem;"></i>
+                Rankings</button>
             </div>
           </div>
         </div>
@@ -299,23 +338,46 @@
           <div class="dive-grid">
             <div class="dive-card">
               <h4><i class="fa-solid fa-sun" aria-hidden="true"></i> Clima Agro</h4>
-              <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:var(--space-3);">¿Siembro hoy? ¿Riego mañana? El clima decide tu jornada.</p>
+              <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:var(--space-3);">¿Siembro hoy? ¿Riego
+                mañana? El clima decide tu jornada.</p>
               <div class="mock-row"><span>Actual</span><span class="mock-val">28°C · Parcial</span></div>
               <div class="mock-row"><span>Humedad</span><span class="mock-val">68%</span></div>
               <div class="mock-row"><span>Viento</span><span class="mock-val">12 km/h NE</span></div>
               <div class="climate-widget">
-                <div class="day-box"><div class="day-name">Mañana</div><div class="day-temp">33°/22°</div><div class="day-cond">Soleado</div></div>
-                <div class="day-box"><div class="day-name">Mié</div><div class="day-temp">29°/20°</div><div class="day-cond">Nublado</div></div>
-                <div class="day-box"><div class="day-name">Jue</div><div class="day-temp">25°/19°</div><div class="day-cond">Lluvia</div></div>
-                <div class="day-box"><div class="day-name">Vie</div><div class="day-temp">23°/18°</div><div class="day-cond">Tormenta</div></div>
+                <div class="day-box">
+                  <div class="day-name">Mañana</div>
+                  <div class="day-temp">33°/22°</div>
+                  <div class="day-cond">Soleado</div>
+                </div>
+                <div class="day-box">
+                  <div class="day-name">Mié</div>
+                  <div class="day-temp">29°/20°</div>
+                  <div class="day-cond">Nublado</div>
+                </div>
+                <div class="day-box">
+                  <div class="day-name">Jue</div>
+                  <div class="day-temp">25°/19°</div>
+                  <div class="day-cond">Lluvia</div>
+                </div>
+                <div class="day-box">
+                  <div class="day-name">Vie</div>
+                  <div class="day-temp">23°/18°</div>
+                  <div class="day-cond">Tormenta</div>
+                </div>
               </div>
             </div>
             <div class="dive-card">
               <h4><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Decisión Operativa</h4>
               <ul style="margin-top:var(--space-2);">
-                <li style="padding-left:var(--space-4); position:relative; margin-bottom:var(--space-2); color:var(--text-secondary); font-size:0.92rem;">Evita siembra si hay probabilidad de granizo</li>
-                <li style="padding-left:var(--space-4); position:relative; margin-bottom:var(--space-2); color:var(--text-secondary); font-size:0.92rem;">No apliques químicos en terreno húmedo</li>
-                <li style="padding-left:var(--space-4); position:relative; margin-bottom:var(--space-2); color:var(--text-secondary); font-size:0.92rem;">Adelanta cosecha si viene tormenta fuerte</li>
+                <li
+                  style="padding-left:var(--space-4); position:relative; margin-bottom:var(--space-2); color:var(--text-secondary); font-size:0.92rem;">
+                  Evita siembra si hay probabilidad de granizo</li>
+                <li
+                  style="padding-left:var(--space-4); position:relative; margin-bottom:var(--space-2); color:var(--text-secondary); font-size:0.92rem;">
+                  No apliques químicos en terreno húmedo</li>
+                <li
+                  style="padding-left:var(--space-4); position:relative; margin-bottom:var(--space-2); color:var(--text-secondary); font-size:0.92rem;">
+                  Adelanta cosecha si viene tormenta fuerte</li>
               </ul>
             </div>
           </div>
@@ -326,24 +388,32 @@
             <div class="dive-card">
               <h4><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Ciclos Activos</h4>
               <div class="crop-card">
-                <div class="crop-head"><span class="crop-name">Tomate Cherry</span><span class="mock-status status-active">En producción</span></div>
+                <div class="crop-head"><span class="crop-name">Tomate Cherry</span><span
+                    class="mock-status status-active">En producción</span></div>
                 <div class="crop-meta">2 ha · Siembra: 12 Mar · Riego ajustado por lluvias</div>
-                <div class="crop-stats"><span>Invertido: <strong>$480</strong></span><span>Recuperado: <strong>$320</strong></span></div>
+                <div class="crop-stats"><span>Invertido: <strong>$480</strong></span><span>Recuperado:
+                    <strong>$320</strong></span></div>
               </div>
               <div class="crop-card">
-                <div class="crop-head"><span class="crop-name">Maíz Amarillo</span><span class="mock-status status-active">Monitoreo</span></div>
+                <div class="crop-head"><span class="crop-name">Maíz Amarillo</span><span
+                    class="mock-status status-active">Monitoreo</span></div>
                 <div class="crop-meta">5 ha · Siembra: 05 Abr · Humedad estable</div>
-                <div class="crop-stats"><span>Invertido: <strong>$1,200</strong></span><span>Recuperado: <strong>$0</strong></span></div>
+                <div class="crop-stats"><span>Invertido: <strong>$1,200</strong></span><span>Recuperado:
+                    <strong>$0</strong></span></div>
               </div>
             </div>
             <div class="dive-card">
               <h4><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Ciclo Finalizado</h4>
               <div class="crop-card">
-                <div class="crop-head"><span class="crop-name">Café Arábica</span><span class="mock-status status-done">Cosechado</span></div>
+                <div class="crop-head"><span class="crop-name">Café Arábica</span><span
+                    class="mock-status status-done">Cosechado</span></div>
                 <div class="crop-meta">3 ha · Memoria exportada · Rendimiento +15%</div>
-                <div class="crop-stats"><span>Invertido: <strong>$2,800</strong></span><span>Ganancia: <strong>+$1,450</strong></span></div>
+                <div class="crop-stats"><span>Invertido: <strong>$2,800</strong></span><span>Ganancia:
+                    <strong>+$1,450</strong></span></div>
               </div>
-              <p style="color:var(--text-muted); font-size:0.85rem; margin-top:var(--space-3);">Los ciclos no son tarjetas quietas. Son unidades vivas de trabajo y memoria que alimentan estadísticas, cartera y AgroRepo.</p>
+              <p style="color:var(--text-muted); font-size:0.85rem; margin-top:var(--space-3);">Los ciclos no son
+                tarjetas quietas. Son unidades vivas de trabajo y memoria que alimentan estadísticas, cartera y
+                AgroRepo.</p>
             </div>
           </div>
         </div>
@@ -352,17 +422,27 @@
           <div class="dive-grid">
             <div class="dive-card">
               <h4><i class="fa-solid fa-wallet" aria-hidden="true"></i> Facturero de Clientes (Fiados)</h4>
-              <div class="mock-row"><span>Juan Pérez</span><span class="mock-val">$890</span><span class="mock-status status-pending">Parcial</span></div>
-              <div class="mock-row"><span>María González</span><span class="mock-val">$1,200</span><span class="mock-status status-pending">Pendiente</span></div>
-              <div class="mock-row"><span>Carlos Ruiz</span><span class="mock-val">$250</span><span class="mock-status status-done">Pagado</span></div>
-              <p style="color:var(--text-muted); font-size:0.85rem; margin-top:var(--space-3);">Solo seguimiento de quién te debe. No mezcla gastos ni ventas cobradas.</p>
+              <div class="mock-row"><span>Juan Pérez</span><span class="mock-val">$890</span><span
+                  class="mock-status status-pending">Parcial</span></div>
+              <div class="mock-row"><span>María González</span><span class="mock-val">$1,200</span><span
+                  class="mock-status status-pending">Pendiente</span></div>
+              <div class="mock-row"><span>Carlos Ruiz</span><span class="mock-val">$250</span><span
+                  class="mock-status status-done">Pagado</span></div>
+              <p style="color:var(--text-muted); font-size:0.85rem; margin-top:var(--space-3);">Solo seguimiento de
+                quién te debe. No mezcla gastos ni ventas cobradas.</p>
             </div>
             <div class="dive-card">
               <h4><i class="fa-solid fa-coins" aria-hidden="true"></i> Facturero de la Finca (Libro)</h4>
-              <div class="mock-row"><span>Abono orgánico</span><span class="mock-val" style="color:var(--color-error)">-$340</span><span style="font-size:0.8rem; color:var(--text-muted)">15 Abr</span></div>
-              <div class="mock-row"><span>Venta tomate</span><span class="mock-val" style="color:var(--color-success)">+$890</span><span style="font-size:0.8rem; color:var(--text-muted)">12 Abr</span></div>
-              <div class="mock-row"><span>Fiado J. Pérez</span><span class="mock-val">$250</span><span style="font-size:0.8rem; color:var(--text-muted)">10 Abr</span></div>
-              <p style="color:var(--text-muted); font-size:0.85rem; margin-top:var(--space-3);">Todo movimiento financiero. Multimoneda real. Asocia a cultivo o general.</p>
+              <div class="mock-row"><span>Abono orgánico</span><span class="mock-val"
+                  style="color:var(--color-error)">-$340</span><span
+                  style="font-size:0.8rem; color:var(--text-muted)">15 Abr</span></div>
+              <div class="mock-row"><span>Venta tomate</span><span class="mock-val"
+                  style="color:var(--color-success)">+$890</span><span
+                  style="font-size:0.8rem; color:var(--text-muted)">12 Abr</span></div>
+              <div class="mock-row"><span>Fiado J. Pérez</span><span class="mock-val">$250</span><span
+                  style="font-size:0.8rem; color:var(--text-muted)">10 Abr</span></div>
+              <p style="color:var(--text-muted); font-size:0.85rem; margin-top:var(--space-3);">Todo movimiento
+                financiero. Multimoneda real. Asocia a cultivo o general.</p>
             </div>
           </div>
         </div>
@@ -371,20 +451,29 @@
           <div class="dive-grid">
             <div class="dive-card">
               <h4><i class="fa-solid fa-list-check" aria-hidden="true"></i> Tareas del Día</h4>
-              <div class="mock-row"><span>Regar tomate cherry</span><span class="mock-status status-done">7:00 AM</span></div>
-              <div class="mock-row"><span>Revisar cercas lote 3</span><span class="mock-status status-pending">10:00 AM</span></div>
-              <div class="mock-row"><span>Aplicar fungicida maíz</span><span class="mock-status status-pending">2:00 PM</span></div>
-              <div class="mock-row"><span>Cobrar a Juan Pérez</span><span class="mock-status status-pending">4:00 PM</span></div>
+              <div class="mock-row"><span>Regar tomate cherry</span><span class="mock-status status-done">7:00 AM</span>
+              </div>
+              <div class="mock-row"><span>Revisar cercas lote 3</span><span class="mock-status status-pending">10:00
+                  AM</span></div>
+              <div class="mock-row"><span>Aplicar fungicida maíz</span><span class="mock-status status-pending">2:00
+                  PM</span></div>
+              <div class="mock-row"><span>Cobrar a Juan Pérez</span><span class="mock-status status-pending">4:00
+                  PM</span></div>
             </div>
             <div class="dive-card">
               <h4><i class="fa-solid fa-book" aria-hidden="true"></i> AgroRepo Reciente</h4>
-              <div style="margin-bottom:var(--space-3); padding-bottom:var(--space-3); border-bottom:1px solid var(--border-neutral);">
-                <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:var(--space-1);">20 Abr 2026 · Aguacate Hass</div>
-                <p style="font-size:0.9rem; color:var(--text-secondary);">"Llovió fuerte en la madrugada. El drenaje del lote 2 funciona bien. Revisar exceso de humedad."</p>
+              <div
+                style="margin-bottom:var(--space-3); padding-bottom:var(--space-3); border-bottom:1px solid var(--border-neutral);">
+                <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:var(--space-1);">20 Abr 2026 ·
+                  Aguacate Hass</div>
+                <p style="font-size:0.9rem; color:var(--text-secondary);">"Llovió fuerte en la madrugada. El drenaje del
+                  lote 2 funciona bien. Revisar exceso de humedad."</p>
               </div>
               <div>
-                <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:var(--space-1);">18 Abr 2026 · Tomate Cherry</div>
-                <p style="font-size:0.9rem; color:var(--text-secondary);">"Aplicé abono orgánico. Rendimiento del último ciclo fue 15% mejor."</p>
+                <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:var(--space-1);">18 Abr 2026 ·
+                  Tomate Cherry</div>
+                <p style="font-size:0.9rem; color:var(--text-secondary);">"Aplicé abono orgánico. Rendimiento del último
+                  ciclo fue 15% mejor."</p>
               </div>
             </div>
           </div>
@@ -394,16 +483,26 @@
           <div class="dive-grid">
             <div class="dive-card">
               <h4><i class="fa-solid fa-users" aria-hidden="true"></i> Mejores Compradores</h4>
-              <div class="mock-row"><span>1. Juan Pérez</span><span class="mock-val">$4,200</span><span style="font-size:0.8rem; color:var(--text-muted)">12 compras</span></div>
-              <div class="mock-row"><span>2. María González</span><span class="mock-val">$3,150</span><span style="font-size:0.8rem; color:var(--text-muted)">8 compras</span></div>
-              <div class="mock-row"><span>3. Carlos Ruiz</span><span class="mock-val">$1,800</span><span style="font-size:0.8rem; color:var(--text-muted)">5 compras</span></div>
+              <div class="mock-row"><span>1. Juan Pérez</span><span class="mock-val">$4,200</span><span
+                  style="font-size:0.8rem; color:var(--text-muted)">12 compras</span></div>
+              <div class="mock-row"><span>2. María González</span><span class="mock-val">$3,150</span><span
+                  style="font-size:0.8rem; color:var(--text-muted)">8 compras</span></div>
+              <div class="mock-row"><span>3. Carlos Ruiz</span><span class="mock-val">$1,800</span><span
+                  style="font-size:0.8rem; color:var(--text-muted)">5 compras</span></div>
             </div>
             <div class="dive-card">
               <h4><i class="fa-solid fa-chart-line" aria-hidden="true"></i> Cultivos Más Rentables</h4>
-              <div class="mock-row"><span>1. Tomate Cherry</span><span class="mock-val" style="color:var(--color-success)">+45%</span><span style="font-size:0.8rem; color:var(--text-muted)">2 ha</span></div>
-              <div class="mock-row"><span>2. Aguacate Hass</span><span class="mock-val" style="color:var(--color-success)">+32%</span><span style="font-size:0.8rem; color:var(--text-muted)">4 ha</span></div>
-              <div class="mock-row"><span>3. Café Arábica</span><span class="mock-val" style="color:var(--color-success)">+28%</span><span style="font-size:0.8rem; color:var(--text-muted)">Cerrado</span></div>
-              <p style="color:var(--text-muted); font-size:0.85rem; margin-top:var(--space-3);">Vistazo directo que ahorra sumar cuentas a mano. Basado en registros reales.</p>
+              <div class="mock-row"><span>1. Tomate Cherry</span><span class="mock-val"
+                  style="color:var(--color-success)">+45%</span><span
+                  style="font-size:0.8rem; color:var(--text-muted)">2 ha</span></div>
+              <div class="mock-row"><span>2. Aguacate Hass</span><span class="mock-val"
+                  style="color:var(--color-success)">+32%</span><span
+                  style="font-size:0.8rem; color:var(--text-muted)">4 ha</span></div>
+              <div class="mock-row"><span>3. Café Arábica</span><span class="mock-val"
+                  style="color:var(--color-success)">+28%</span><span
+                  style="font-size:0.8rem; color:var(--text-muted)">Cerrado</span></div>
+              <p style="color:var(--text-muted); font-size:0.85rem; margin-top:var(--space-3);">Vistazo directo que
+                ahorra sumar cuentas a mano. Basado en registros reales.</p>
             </div>
           </div>
         </div>
@@ -414,10 +513,26 @@
       <div class="container">
         <h2 class="section-title">Flujo real de jornada</h2>
         <div class="steps">
-          <div class="step"><div class="step-num">01</div><h4><i class="fa-solid fa-gauge" aria-hidden="true"></i> Dashboard</h4><p>Revisa clima, fase lunar y atajos rápidos. Orienta tu día antes de salir al lote.</p></div>
-          <div class="step"><div class="step-num">02</div><h4><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Registrar</h4><p>Anota gastos, fiados, tareas o notas en el momento. Sin formularios eternos.</p></div>
-          <div class="step"><div class="step-num">03</div><h4><i class="fa-solid fa-magnifying-glass-chart" aria-hidden="true"></i> Consultar</h4><p>Revisa cartera, estadísticas de ciclo o rankings. Entiende qué rinde y qué no.</p></div>
-          <div class="step"><div class="step-num">04</div><h4><i class="fa-solid fa-lightbulb" aria-hidden="true"></i> Decidir</h4><p>Usa la IA o exporta tu informe MD. Planifica la siguiente temporada con memoria real.</p></div>
+          <div class="step">
+            <div class="step-num">01</div>
+            <h4><i class="fa-solid fa-gauge" aria-hidden="true"></i> Dashboard</h4>
+            <p>Revisa clima, fase lunar y atajos rápidos. Orienta tu día antes de salir al lote.</p>
+          </div>
+          <div class="step">
+            <div class="step-num">02</div>
+            <h4><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Registrar</h4>
+            <p>Anota gastos, fiados, tareas o notas en el momento. Sin formularios eternos.</p>
+          </div>
+          <div class="step">
+            <div class="step-num">03</div>
+            <h4><i class="fa-solid fa-magnifying-glass-chart" aria-hidden="true"></i> Consultar</h4>
+            <p>Revisa cartera, estadísticas de ciclo o rankings. Entiende qué rinde y qué no.</p>
+          </div>
+          <div class="step">
+            <div class="step-num">04</div>
+            <h4><i class="fa-solid fa-lightbulb" aria-hidden="true"></i> Decidir</h4>
+            <p>Usa la IA o exporta tu informe MD. Planifica la siguiente temporada con memoria real.</p>
+          </div>
         </div>
       </div>
     </section>
@@ -428,7 +543,9 @@
         <p class="section-subtitle">Diseñado para manos grandes, guantes, sol directo y conexión intermitente.</p>
         <div class="features-grid" style="text-align: left;">
           <div class="feature-card">
-            <h3 style="font-family:var(--font-brand); font-size:1rem; margin-bottom:var(--space-3);"><i class="fa-solid fa-lock" aria-hidden="true" style="color:var(--gold-4); margin-right:var(--comp-icon-gap);"></i> Privacidad en campo</h3>
+            <h3 style="font-family:var(--font-brand); font-size:1rem; margin-bottom:var(--space-3);"><i
+                class="fa-solid fa-lock" aria-hidden="true"
+                style="color:var(--gold-4); margin-right:var(--comp-icon-gap);"></i> Privacidad en campo</h3>
             <ul>
               <li>Oculta nombres de clientes y montos con un toque</li>
               <li>Modo lectura segura cuando trabajas con terceros cerca</li>
@@ -436,7 +553,9 @@
             </ul>
           </div>
           <div class="feature-card">
-            <h3 style="font-family:var(--font-brand); font-size:1rem; margin-bottom:var(--space-3);"><i class="fa-solid fa-floppy-disk" aria-hidden="true" style="color:var(--gold-4); margin-right:var(--comp-icon-gap);"></i> Respaldo soberano</h3>
+            <h3 style="font-family:var(--font-brand); font-size:1rem; margin-bottom:var(--space-3);"><i
+                class="fa-solid fa-floppy-disk" aria-hidden="true"
+                style="color:var(--gold-4); margin-right:var(--comp-icon-gap);"></i> Respaldo soberano</h3>
             <ul>
               <li>Exporta informes globales o por cultivo en formato .md</li>
               <li>Archivos de texto ligero: abren en cualquier equipo</li>
@@ -444,12 +563,14 @@
             </ul>
           </div>
           <div class="feature-card">
-<h3 style="font-family:var(--font-brand); font-size:1rem; margin-bottom:var(--space-3);"><i class="fa-solid fa-wifi" aria-hidden="true" style="color:var(--gold-4); margin-right:var(--comp-icon-gap);"></i> Requiere conexión a internet</h3>
-             <ul>
-               <li>YavlGold necesita internet para sincronizar datos y operar</li>
-               <li>Interfaz liviana con estilos e iconos embebidos para carga rápida</li>
-               <li>Algunas vistas pueden cargar más rápido por caché del navegador, pero no es modo offline completo</li>
-             </ul>
+            <h3 style="font-family:var(--font-brand); font-size:1rem; margin-bottom:var(--space-3);"><i
+                class="fa-solid fa-wifi" aria-hidden="true"
+                style="color:var(--gold-4); margin-right:var(--comp-icon-gap);"></i> Requiere conexión a internet</h3>
+            <ul>
+              <li>YavlGold necesita internet para sincronizar datos y operar</li>
+              <li>Interfaz liviana con estilos e iconos embebidos para carga rápida</li>
+              <li>Algunas vistas pueden cargar más rápido por caché del navegador, pero no es modo offline completo</li>
+            </ul>
           </div>
         </div>
       </div>
@@ -459,27 +580,46 @@
       <div class="container" style="max-width: 800px;">
         <h2 class="section-title">Preguntas frecuentes</h2>
         <div class="faq-item">
-          <button class="faq-trigger" aria-expanded="false" aria-controls="faq1">¿Qué gano trabajando con YavlGold Agro?<i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
-          <div id="faq1" class="faq-content" role="region"><p>Orden sobre tus números de campo reales. Mides qué sembraste, cuánto perdiste por lluvia o plaga y cuánto invertiste este mes con un solo pantallazo, sin hacer cuentas de memoria ni buscar en libretas.</p></div>
+          <button class="faq-trigger" aria-expanded="false" aria-controls="faq1">¿Qué gano trabajando con YavlGold
+            Agro?<i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
+          <div id="faq1" class="faq-content" role="region">
+            <p>Orden sobre tus números de campo reales. Mides qué sembraste, cuánto perdiste por lluvia o plaga y cuánto
+              invertiste este mes con un solo pantallazo, sin hacer cuentas de memoria ni buscar en libretas.</p>
+          </div>
         </div>
         <div class="faq-item">
-          <button class="faq-trigger" aria-expanded="false" aria-controls="faq2">¿Qué diferencia hay entre Facturero de Clientes y Facturero de la Finca?<i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
-          <div id="faq2" class="faq-content" role="region"><p>Facturero de Clientes solo sigue fiados (dinero que te deben). Facturero de la Finca es el libro mayor: registra todos los movimientos financieros (gastos de finca, cobros, pérdidas, donaciones). No se mezclan, se complementan.</p></div>
+          <button class="faq-trigger" aria-expanded="false" aria-controls="faq2">¿Qué diferencia hay entre Facturero de
+            Clientes y Facturero de la Finca?<i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
+          <div id="faq2" class="faq-content" role="region">
+            <p>Facturero de Clientes solo sigue fiados (dinero que te deben). Facturero de la Finca es el libro mayor:
+              registra todos los movimientos financieros (gastos de finca, cobros, pérdidas, donaciones). No se mezclan,
+              se complementan.</p>
+          </div>
         </div>
         <div class="faq-item">
-          <button class="faq-trigger" aria-expanded="false" aria-controls="faq3">¿La IA adivina el mercado o hace proyecciones mágicas?<i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
-          <div id="faq3" class="faq-content" role="region"><p>No. La IA solo lee lo que tú registraste en Agro: facturas, AgroRepo, totales contables. Si no anotas, no tiene con qué trabajar. Te ayuda a cruzar datos y ahorrar tiempo, no a inventar realidades.</p></div>
+          <button class="faq-trigger" aria-expanded="false" aria-controls="faq3">¿La IA adivina el mercado o hace
+            proyecciones mágicas?<i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
+          <div id="faq3" class="faq-content" role="region">
+            <p>No. La IA solo lee lo que tú registraste en Agro: facturas, AgroRepo, totales contables. Si no anotas, no
+              tiene con qué trabajar. Te ayuda a cruzar datos y ahorrar tiempo, no a inventar realidades.</p>
+          </div>
         </div>
         <div class="faq-item">
-          <button class="faq-trigger" aria-expanded="false" aria-controls="faq4">¿Cómo ejecuto un respaldo manual antes de salir o borrar mi cuenta?<i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
-          <div id="faq4" class="faq-content" role="region"><p>Entra a Estadísticas y presiona "Exportar Informe Global (MD)". También puedes descargar el reporte individual por cultivo. Guárdalo localmente. Según la política vigente, el borrado de cuenta puede dejar la información fuera de recuperación desde la plataforma.</p></div>
+          <button class="faq-trigger" aria-expanded="false" aria-controls="faq4">¿Cómo ejecuto un respaldo manual antes
+            de salir o borrar mi cuenta?<i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
+          <div id="faq4" class="faq-content" role="region">
+            <p>Entra a Estadísticas y presiona "Exportar Informe Global (MD)". También puedes descargar el reporte
+              individual por cultivo. Guárdalo localmente. Según la política vigente, el borrado de cuenta puede dejar
+              la información fuera de recuperación desde la plataforma.</p>
+          </div>
         </div>
       </div>
     </section>
 
     <section class="testimonial reveal">
       <div class="container">
-        <p class="quote-text">"Antes anotaba todo en cuadernos que se perdían. Ahora tengo memoria real de cada ciclo, cada gasto, cada cosecha. YavlGold no me dice qué hacer: me muestra lo que pasó para que yo decida."</p>
+        <p class="quote-text">"Antes anotaba todo en cuadernos que se perdían. Ahora tengo memoria real de cada ciclo,
+          cada gasto, cada cosecha. YavlGold no me dice qué hacer: me muestra lo que pasó para que yo decida."</p>
         <div class="quote-author">Yerikson Varela</div>
         <div class="quote-role">Fundador de YavlGold · Táchira, Venezuela</div>
       </div>
@@ -494,19 +634,28 @@
         </p>
 
         <div class="official-socials__actions" aria-label="Redes sociales oficiales de YavlGold">
-          <a class="official-socials__btn" href="https://x.com/Yavlcapitan" target="_blank" rel="me noopener noreferrer" aria-label="Seguir a YavlGold en X">
+          <a class="official-socials__btn" href="https://x.com/Yavlcapitan" target="_blank" rel="me noopener noreferrer"
+            aria-label="Seguir a YavlGold en X">
             <i class="fa-brands fa-x-twitter" aria-hidden="true"></i>
             <span>X / Comunidad YavlGold</span>
           </a>
 
-          <a class="official-socials__btn" href="https://youtube.com/@yavlgoldpro" target="_blank" rel="me noopener noreferrer" aria-label="Ver el canal YavlGold Pro en YouTube">
+          <a class="official-socials__btn" href="https://youtube.com/@yavlgoldpro" target="_blank"
+            rel="me noopener noreferrer" aria-label="Ver el canal YavlGold Pro en YouTube">
             <i class="fa-brands fa-youtube" aria-hidden="true"></i>
             <span>YouTube / YavlGold Pro</span>
           </a>
 
-          <a class="official-socials__btn" href="https://www.linkedin.com/in/yavl-gold-7372b0302" target="_blank" rel="me noopener noreferrer" aria-label="Ver el perfil de Yerikson Varela en LinkedIn">
+          <a class="official-socials__btn" href="https://www.linkedin.com/in/yavl-gold-7372b0302" target="_blank"
+            rel="me noopener noreferrer" aria-label="Ver el perfil de Yerikson Varela en LinkedIn">
             <i class="fa-brands fa-linkedin" aria-hidden="true"></i>
             <span>LinkedIn / Yerikson Varela</span>
+          </a>
+
+          <a class="official-socials__btn" href="https://whatsapp.com/channel/0029VbCy6CF4NVirXuuYmy1I" target="_blank"
+            rel="noopener noreferrer" aria-label="Unirte al canal oficial de YavlGold en WhatsApp">
+            <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+            <span>WhatsApp / Canal YavlGold</span>
           </a>
         </div>
       </div>
@@ -516,7 +665,8 @@
       <div class="container">
         <h2>Empieza a ordenar tu campo hoy</h2>
         <p>Sin configuraciones eternas. Sin dashboards vacíos. Entra, registra y entiende tu finca de verdad.</p>
-        <button onclick="openAuthModal('signup')" class="btn btn-gold" type="button"><i class="fa-solid fa-seedling" aria-hidden="true"></i> Comenzar Ahora</button>
+        <button onclick="openAuthModal('signup')" class="btn btn-gold" type="button"><i class="fa-solid fa-seedling"
+            aria-hidden="true"></i> Comenzar Ahora</button>
       </div>
     </section>
   </main>
@@ -525,13 +675,15 @@
     <div class="container">
       <div class="footer-grid">
         <div class="footer-col">
-          <h5><img src="/brand/logo.webp" alt="" width="24" height="24" style="border-radius:50%; margin-right:var(--comp-icon-gap);"> YavlGold</h5>
+          <h5><img src="/brand/logo.webp" alt="" width="24" height="24"
+              style="border-radius:50%; margin-right:var(--comp-icon-gap);"> YavlGold</h5>
           <a href="#modulos"><i class="fa-solid fa-seedling" aria-hidden="true"></i> Módulos</a>
           <a href="#profundidad"><i class="fa-solid fa-eye" aria-hidden="true"></i> Vistas Reales</a>
           <a href="#faq"><i class="fa-solid fa-circle-question" aria-hidden="true"></i> Ayuda Rápida</a>
         </div>
         <div class="footer-col">
-          <h5><i class="fa-solid fa-scale-balanced" aria-hidden="true" style="margin-right:var(--comp-icon-gap);font-size:var(--icon-sm);color:var(--gold-4);"></i> Legal</h5>
+          <h5><i class="fa-solid fa-scale-balanced" aria-hidden="true"
+              style="margin-right:var(--comp-icon-gap);font-size:var(--icon-sm);color:var(--gold-4);"></i> Legal</h5>
           <a href="/open-source"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i> Licencia MIT</a>
           <a href="/privacy"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Política de datos</a>
           <a href="/terms"><i class="fa-solid fa-file-export" aria-hidden="true"></i> Términos de uso</a>
@@ -539,7 +691,8 @@
           <a href="/anti-suplantacion"><i class="fa-solid fa-user-shield" aria-hidden="true"></i> Anti-suplantación</a>
         </div>
         <div class="footer-col">
-          <h5><i class="fa-solid fa-code" aria-hidden="true" style="margin-right:var(--comp-icon-gap);font-size:var(--icon-sm);color:var(--gold-4);"></i> Proyecto</h5>
+          <h5><i class="fa-solid fa-code" aria-hidden="true"
+              style="margin-right:var(--comp-icon-gap);font-size:var(--icon-sm);color:var(--gold-4);"></i> Proyecto</h5>
           <a href="/open-source"><i class="fa-solid fa-code" aria-hidden="true"></i> Código fuente</a>
           <a href="/status"><i class="fa-solid fa-signal" aria-hidden="true"></i> Estado del servicio</a>
           <a href="/docs-agro"><i class="fa-solid fa-book" aria-hidden="true"></i> Documentación técnica</a>
@@ -547,18 +700,31 @@
       </div>
       <div class="footer-bottom">
         <p>&copy; <span id="footer-year">2026</span> YavlGold · Release V1 · Open Source (MIT)</p>
-        <p style="margin-top: var(--space-2); font-family: var(--font-prestige); font-style: italic; color: var(--text-gold-prestige);">Tu finca merece tecnología de primera. YavlGold nace del campo, para el campo.</p>
+        <p
+          style="margin-top: var(--space-2); font-family: var(--font-prestige); font-style: italic; color: var(--text-gold-prestige);">
+          Tu finca merece tecnología de primera. YavlGold nace del campo, para el campo.</p>
       </div>
     </div>
   </footer>
 
   <noscript>
     <style>
-      .reveal, .reveal-hidden { opacity: 1 !important; transform: none !important; }
-      .dive-section { display: block !important; }
-      body { opacity: 1 !important; }
+      .reveal,
+      .reveal-hidden {
+        opacity: 1 !important;
+        transform: none !important;
+      }
+
+      .dive-section {
+        display: block !important;
+      }
+
+      body {
+        opacity: 1 !important;
+      }
     </style>
-    <div style="padding:20px;background:#C8A752;color:#0a0a0a;text-align:center;font-family:'Inter',sans-serif;font-weight:700">
+    <div
+      style="padding:20px;background:#C8A752;color:#0a0a0a;text-align:center;font-family:'Inter',sans-serif;font-weight:700">
       Por favor habilita JavaScript para una experiencia completa de YavlGold</div>
   </noscript>
 
@@ -568,13 +734,13 @@
        YavlGold Landing V10.1 — Interactive Engine
        Combines prototype JS with auth integration
        ========================================= */
-    (function() {
+    (function () {
       'use strict';
 
       // =========================================
       // AUTH MODAL FUNCTIONS (global scope)
       // =========================================
-      window.openAuthModal = function(mode) {
+      window.openAuthModal = function (mode) {
         if (window.AuthUI && typeof window.AuthUI.openAuthModal === 'function') { window.AuthUI.openAuthModal(mode); return; }
         var modal = document.getElementById('auth-modal');
         var loginTab = document.getElementById('login-tab');
@@ -590,17 +756,17 @@
           if (loginTab) loginTab.classList.remove('active');
           if (registerForm) { registerForm.style.display = 'block'; registerForm.classList.add('active'); }
           if (loginForm) { loginForm.style.display = 'none'; loginForm.classList.remove('active'); }
-          setTimeout(function() { var el = document.getElementById('register-name'); if (el) el.focus(); }, 100);
+          setTimeout(function () { var el = document.getElementById('register-name'); if (el) el.focus(); }, 100);
         } else {
           if (loginTab) loginTab.classList.add('active');
           if (registerTab) registerTab.classList.remove('active');
           if (loginForm) { loginForm.style.display = 'block'; loginForm.classList.add('active'); }
           if (registerForm) { registerForm.style.display = 'none'; registerForm.classList.remove('active'); }
-          setTimeout(function() { var el = document.getElementById('login-email'); if (el) el.focus(); }, 100);
+          setTimeout(function () { var el = document.getElementById('login-email'); if (el) el.focus(); }, 100);
         }
       };
 
-      window.closeAuthModal = function() {
+      window.closeAuthModal = function () {
         var modal = document.getElementById('auth-modal');
         if (modal) {
           modal.classList.add('hidden');
@@ -614,8 +780,8 @@
       // Wire auth buttons
       var loginBtn = document.getElementById('login-btn');
       var registerBtn = document.getElementById('register-btn');
-      if (loginBtn) loginBtn.addEventListener('click', function() { openAuthModal('login'); });
-      if (registerBtn) registerBtn.addEventListener('click', function() { openAuthModal('signup'); });
+      if (loginBtn) loginBtn.addEventListener('click', function () { openAuthModal('login'); });
+      if (registerBtn) registerBtn.addEventListener('click', function () { openAuthModal('signup'); });
 
       var authModalClose = document.getElementById('auth-modal-close');
       var authModalOverlay = document.querySelector('.auth-modal-overlay');
@@ -650,7 +816,7 @@
       applyTheme(savedTheme);
 
       if (themeBtn) {
-        themeBtn.addEventListener('click', function(e) {
+        themeBtn.addEventListener('click', function (e) {
           e.preventDefault();
           e.stopPropagation();
           var current = html.getAttribute('data-theme');
@@ -687,7 +853,7 @@
       }
 
       if (menuBtn) {
-        menuBtn.addEventListener('click', function(e) {
+        menuBtn.addEventListener('click', function (e) {
           e.preventDefault();
           e.stopPropagation();
           var isOpen = mobileMenu && mobileMenu.classList.contains('open');
@@ -696,16 +862,16 @@
       }
 
       if (mobileOverlay) {
-        mobileOverlay.addEventListener('click', function(e) { e.preventDefault(); closeMenu(); });
+        mobileOverlay.addEventListener('click', function (e) { e.preventDefault(); closeMenu(); });
       }
 
       if (mobileMenu) {
-        mobileMenu.querySelectorAll('a').forEach(function(link) {
-          link.addEventListener('click', function() { closeMenu(); });
+        mobileMenu.querySelectorAll('a').forEach(function (link) {
+          link.addEventListener('click', function () { closeMenu(); });
         });
       }
 
-      document.addEventListener('keydown', function(e) {
+      document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
           if (mobileMenu && mobileMenu.classList.contains('open')) { closeMenu(); if (menuBtn) menuBtn.focus(); }
           closeAuthModal();
@@ -721,22 +887,22 @@
       function activateChip(chip) {
         var targetId = chip.getAttribute('data-target');
         if (!targetId) return;
-        chips.forEach(function(c) { c.setAttribute('aria-selected', 'false'); });
+        chips.forEach(function (c) { c.setAttribute('aria-selected', 'false'); });
         chip.setAttribute('aria-selected', 'true');
-        diveSections.forEach(function(d) { d.classList.remove('active'); });
+        diveSections.forEach(function (d) { d.classList.remove('active'); });
         var targetEl = document.getElementById(targetId);
         if (targetEl) targetEl.classList.add('active');
       }
 
-      chips.forEach(function(chip) {
-        chip.addEventListener('mousedown', function(e) { e.stopPropagation(); });
-        chip.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); activateChip(chip); }, true);
-        chip.addEventListener('touchend', function(e) { e.preventDefault(); activateChip(chip); }, { passive: false });
+      chips.forEach(function (chip) {
+        chip.addEventListener('mousedown', function (e) { e.stopPropagation(); });
+        chip.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); activateChip(chip); }, true);
+        chip.addEventListener('touchend', function (e) { e.preventDefault(); activateChip(chip); }, { passive: false });
       });
 
       var switcherCapsule = document.querySelector('.switch-capsule');
       if (switcherCapsule) {
-        switcherCapsule.addEventListener('click', function(e) {
+        switcherCapsule.addEventListener('click', function (e) {
           var chip = e.target.closest('.switch-chip');
           if (chip) { e.preventDefault(); e.stopPropagation(); activateChip(chip); }
         }, true);
@@ -761,9 +927,9 @@
         }
       }
 
-      document.querySelectorAll('.faq-trigger').forEach(function(btn) {
-        btn.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); toggleFaq(btn); }, true);
-        btn.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleFaq(btn); } });
+      document.querySelectorAll('.faq-trigger').forEach(function (btn) {
+        btn.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); toggleFaq(btn); }, true);
+        btn.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleFaq(btn); } });
       });
 
       // =========================================
@@ -773,9 +939,9 @@
       var revealEls = document.querySelectorAll('.reveal');
 
       if (!prefersReduced) {
-        revealEls.forEach(function(el) { el.classList.add('reveal-hidden'); });
-        var observer = new IntersectionObserver(function(entries) {
-          entries.forEach(function(entry) {
+        revealEls.forEach(function (el) { el.classList.add('reveal-hidden'); });
+        var observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
             if (entry.isIntersecting) {
               entry.target.classList.remove('reveal-hidden');
               entry.target.classList.add('visible');
@@ -783,19 +949,19 @@
             }
           });
         }, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
-        revealEls.forEach(function(el) { observer.observe(el); });
-        setTimeout(function() {
-          revealEls.forEach(function(el) { el.classList.remove('reveal-hidden'); el.classList.add('visible'); });
+        revealEls.forEach(function (el) { observer.observe(el); });
+        setTimeout(function () {
+          revealEls.forEach(function (el) { el.classList.remove('reveal-hidden'); el.classList.add('visible'); });
         }, 3000);
       } else {
-        revealEls.forEach(function(el) { el.classList.add('visible'); });
+        revealEls.forEach(function (el) { el.classList.add('visible'); });
       }
 
       // =========================================
       // SMOOTH SCROLL
       // =========================================
-      document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
-        anchor.addEventListener('click', function(e) {
+      document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
+        anchor.addEventListener('click', function (e) {
           var targetId = this.getAttribute('href');
           if (targetId === '#' || targetId === 'javascript:void(0)') return;
           var target = document.querySelector(targetId);
@@ -815,25 +981,25 @@
       var modCards = document.querySelectorAll('.features-grid .feature-card');
 
       function filterByModo(modo) {
-        modoChips.forEach(function(c) { c.setAttribute('aria-selected', 'false'); });
-        modoChips.forEach(function(c) { if (c.getAttribute('data-modo') === modo) c.setAttribute('aria-selected', 'true'); });
-        modCards.forEach(function(card) {
+        modoChips.forEach(function (c) { c.setAttribute('aria-selected', 'false'); });
+        modoChips.forEach(function (c) { if (c.getAttribute('data-modo') === modo) c.setAttribute('aria-selected', 'true'); });
+        modCards.forEach(function (card) {
           var cardModo = card.getAttribute('data-modo');
           if (modo === 'todos' || cardModo === modo) { card.classList.remove('modo-hidden'); }
           else { card.classList.add('modo-hidden'); }
         });
       }
 
-      modoChips.forEach(function(chip) {
-        chip.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); filterByModo(chip.getAttribute('data-modo')); }, true);
-        chip.addEventListener('touchend', function(e) { e.preventDefault(); filterByModo(chip.getAttribute('data-modo')); }, { passive: false });
+      modoChips.forEach(function (chip) {
+        chip.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); filterByModo(chip.getAttribute('data-modo')); }, true);
+        chip.addEventListener('touchend', function (e) { e.preventDefault(); filterByModo(chip.getAttribute('data-modo')); }, { passive: false });
       });
 
       // =========================================
       // OFFLINE / ONLINE
       // =========================================
-      window.addEventListener('online', function() { console.log('[YavlGold] Conexión restaurada.'); });
-      window.addEventListener('offline', function() { console.log('[YavlGold] Modo offline activo.'); });
+      window.addEventListener('online', function () { console.log('[YavlGold] Conexión restaurada.'); });
+      window.addEventListener('offline', function () { console.log('[YavlGold] Modo offline activo.'); });
 
       console.log('[YavlGold] Landing V10.1 cargada. Motor interactivo activo.');
 
@@ -841,7 +1007,7 @@
 
     // PWA placeholder
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() { console.log('[YavlGold] Arquitectura PWA lista.'); });
+      window.addEventListener('load', function () { console.log('[YavlGold] Arquitectura PWA lista.'); });
     }
   </script>
 
@@ -868,7 +1034,8 @@
         <div class="form-group">
           <label for="login-password">Contraseña</label>
           <div class="input-group">
-            <input type="password" id="login-password" name="password" placeholder="••••••••" required autocomplete="current-password">
+            <input type="password" id="login-password" name="password" placeholder="••••••••" required
+              autocomplete="current-password">
             <span class="password-toggle"><i class="fas fa-eye"></i></span>
           </div>
         </div>
@@ -895,13 +1062,15 @@
         <div class="form-group">
           <label for="register-password">Contraseña</label>
           <div class="input-group">
-            <input type="password" id="register-password" name="password" placeholder="••••••••" required autocomplete="new-password" minlength="6">
+            <input type="password" id="register-password" name="password" placeholder="••••••••" required
+              autocomplete="new-password" minlength="6">
             <span class="password-toggle"><i class="fas fa-eye"></i></span>
           </div>
         </div>
         <div id="hcaptcha-register"></div>
         <button type="submit" class="btn-premium btn-gold" style="width:100%">Crear Cuenta</button>
-        <div style="margin-top:1rem;text-align:center;color:var(--text-muted);font-family:var(--font-ui);font-size:0.9rem;">
+        <div
+          style="margin-top:1rem;text-align:center;color:var(--text-muted);font-family:var(--font-ui);font-size:0.9rem;">
           Al registrarte, aceptas nuestros <a href="/terms" target="_blank" style="color:var(--gold-4)">Términos y
             Condiciones</a> y <a href="/privacy" target="_blank" style="color:var(--gold-4)">Política de
             Privacidad</a>
@@ -996,7 +1165,7 @@
         if (res.success) {
           window.AuthUI?.showSuccess(window.YGUXMessages?.copy.registerSuccess?.() || 'Cuenta registrada con éxito. Revisa tu correo para confirmar el acceso.');
           document.getElementById('register-form')?.reset();
-          setTimeout(function() { window.AuthUI?.switchToLogin(); }, 2000);
+          setTimeout(function () { window.AuthUI?.switchToLogin(); }, 2000);
           if (btn) { btn.disabled = false; btn.textContent = originalText; }
         } else {
           window.AuthUI?.showError('register', res.error || 'Error al registrarse');

@@ -15,7 +15,7 @@
  */
 
 import { supabase } from '../assets/js/config/supabase-config.js';
-import { getMarketTickerSnapshot } from './agro-market.js';
+import { getMarketTickerSnapshot, initMarketIntelligence } from './agro-market.js';
 
 // ============================================================
 // CONSTANTES
@@ -123,6 +123,15 @@ async function renderGreeting() {
 
     // PASO 3 — Actualizar el DOM con el nombre resuelto.
     target.textContent = `Bienvenido, ${displayName}`;
+
+    // PASO 4 — Días en el proyecto (calculado desde created_at del token Auth).
+    const daysTarget = $('ygd-greeting-days');
+    if (daysTarget && user?.created_at) {
+        const days = Math.max(1, Math.floor((Date.now() - new Date(user.created_at).getTime()) / 86400000));
+        daysTarget.textContent = days === 1
+            ? 'Tu primer día en YavlGold'
+            : `${days} días contigo en YavlGold`;
+    }
 }
 
 // ============================================================
@@ -768,6 +777,11 @@ function restoreSelectedFarm() {
 async function initDashboardV11() {
     if (state.initialized) return;
     state.initialized = true;
+
+    // Ticker de cotizaciones: inicia el polling y renderiza la cinta animada.
+    initMarketIntelligence().catch(err => {
+        console.warn('[DashboardV11] Market ticker init error:', err?.message);
+    });
 
     // Bloque 0: saludo (usa MutationObserver sobre el navbar).
     renderGreeting();

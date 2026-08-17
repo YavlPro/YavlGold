@@ -104,6 +104,36 @@
 /* ============================================================
    BLOQUE 0 — HEADER CONTEXTUAL
    ============================================================ */
+/* ============================================================
+   TICKER DE COTIZACIONES — Cinta animada superior
+   ============================================================ */
+.ygd-ticker-bar {
+  overflow: hidden;
+  background: rgba(200, 167, 82, 0.04);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-sm);
+  height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.ygd-ticker-track {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ygd-ticker-track {
+    animation: none !important;
+    overflow-x: auto;
+  }
+}
+
+/* ============================================================
+   BLOQUE 0 — HEADER CONTEXTUAL
+   ============================================================ */
 .ygd-header {
   display: flex;
   align-items: center;
@@ -139,6 +169,15 @@
   line-height: 1.15;
   letter-spacing: 0.01em;
   overflow-wrap: anywhere;
+}
+
+.ygd-header-days {
+  margin: 0;
+  font-family: Inter, sans-serif;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-weight: 400;
+  letter-spacing: 0.01em;
 }
 
 @media (min-width: 480px) {
