@@ -2162,7 +2162,6 @@ async function executeCompensationRevertToPending({
 
     const pendingId = buildTransferId('pending');
     const sourceWhoData = getWhoData(sourceTab, sourceRow, sourceRow?.concepto || '');
-    const pendingConcept = sourceWhoData?.concept || sourceRow?.concepto || 'Fiado';
     const pendingMoney = buildIncomeMonetaryFields(sourceRow, transferAmount);
 
     // Propagate buyer identity from source row so enrichBuyerIdentityPayload
@@ -2171,13 +2170,42 @@ async function executeCompensationRevertToPending({
     const sourceBuyerId = String(sourceRow?.buyer_id || '').trim();
     const sourceBuyerGroupKey = String(sourceRow?.buyer_group_key || '').trim();
 
+    // Resolve the current display_name of the buyer to keep text fields in sync
+    // after a rename. Without this, the new pending inherits the stale name from
+    // the income's concepto/cliente text (e.g. "Venta a Carlos - ...") even though
+    // the buyer was already renamed to "José". The lookup is a single lightweight
+    // query against the PK and only runs when buyer_id is present.
+    let resolvedClientName = sourceWhoData?.who || '';
+    if (sourceBuyerId) {
+        try {
+            const { data: buyerNameData } = await supabase
+                .from('agro_buyers')
+                .select('display_name')
+                .eq('id', sourceBuyerId)
+                .maybeSingle();
+            if (buyerNameData?.display_name) {
+                resolvedClientName = String(buyerNameData.display_name).trim();
+            }
+        } catch (_err) {
+            // Non-blocking: if lookup fails, fall back to the text from the source row.
+        }
+    }
+
+    // Build the concept for the new pending using the resolved (current) name.
+    // If the source concept already contains the stale name, replace it.
+    const rawSourceConcept = sourceWhoData?.concept || sourceRow?.concepto || 'Fiado';
+    const staleClientName = sourceWhoData?.who || '';
+    const pendingConcept = (staleClientName && resolvedClientName !== staleClientName)
+        ? rawSourceConcept.replace(staleClientName, resolvedClientName)
+        : rawSourceConcept;
+
     const pendingPayload = {
         id: pendingId,
         user_id: userId,
         concepto: pendingConcept,
         monto: pendingMoney.monto,
         fecha: safeDecisionDate,
-        cliente: sourceTab === 'ingresos' ? (sourceWhoData?.who || null) : null,
+        cliente: sourceTab === 'ingresos' ? (resolvedClientName || null) : null,
         notas: reasonText || null,
         evidence_url: getFactureroEvidenceValue(sourceTab, sourceRow) || null,
         crop_id: sourceRow?.crop_id || null,
@@ -2201,7 +2229,7 @@ async function executeCompensationRevertToPending({
     const pendingPayloadWithBuyer = await enrichBuyerIdentityPayload('pendientes', pendingPayload, {
         userId,
         concept: pendingPayload.concepto,
-        whoValue: sourceWhoData?.who || '',
+        whoValue: resolvedClientName || sourceWhoData?.who || '',
         buyerHint: pendingPayload.cliente
     });
 
@@ -2233,7 +2261,9 @@ async function executeCompensationRevertToPending({
             ? {
                 id: remainderId,
                 user_id: userId,
-                concepto: sourceRow?.concepto || 'Pagado',
+                concepto: (staleClientName && resolvedClientName !== staleClientName)
+                    ? (sourceRow?.concepto || 'Pagado').replace(staleClientName, resolvedClientName)
+                    : (sourceRow?.concepto || 'Pagado'),
                 monto: remainderMoney.monto,
                 fecha: sourceRow?.fecha || safeDecisionDate,
                 categoria: sourceRow?.categoria || 'ventas',
@@ -2260,7 +2290,9 @@ async function executeCompensationRevertToPending({
             : {
                 id: remainderId,
                 user_id: userId,
-                concepto: sourceRow?.concepto || 'Pérdida',
+                concepto: (staleClientName && resolvedClientName !== staleClientName)
+                    ? (sourceRow?.concepto || 'Pérdida').replace(staleClientName, resolvedClientName)
+                    : (sourceRow?.concepto || 'Pérdida'),
                 monto: remainderMoney.monto,
                 fecha: sourceRow?.fecha || safeDecisionDate,
                 causa: sourceRow?.causa || 'Fiado cancelado',

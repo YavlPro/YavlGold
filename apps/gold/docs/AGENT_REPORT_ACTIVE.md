@@ -656,3 +656,40 @@ check-dist-utf8: ✓ passed
 - No se refactorizaron zonas estables
 - No se agregaron features nuevas
 - No se tocó el monolito más allá de las dos funciones afectadas
+
+---
+
+## Sesión 2026-08-18 (addendum) — Fix residual: nombre viejo en fiado al transferir Pagados → Fiados
+
+**Objetivo:** Corregir que el nuevo fiado creado al revertir un income mostrara el nombre viejo del cliente en título y concepto.
+
+### Causa raíz confirmada
+
+`executeCompensationRevertToPending` construía el nuevo `pendingPayload` copiando `concepto` y `cliente` directamente del `sourceRow` (income original). Si ese income fue creado antes del rename (concepto = `"Venta a Carlos - ..."`, cliente = `"Carlos"`), el nuevo fiado heredaba el texto stale. La vista de Fiados renderiza el título como `"Fiado a ${row.cliente}"`, así que el nombre viejo era visible directamente en la UI.
+
+### Cambios realizados
+
+| Archivo | Zona | Cambio |
+|---------|------|--------|
+| `apps/gold/agro/agro.js` | `executeCompensationRevertToPending` | Lookup defensivo a `agro_buyers` por `buyer_id` del sourceRow para resolver el `display_name` actual antes de construir `pendingPayload`. Reemplaza `cliente`, `concepto` y (en splits parciales) el `concepto` del `remainderPayload` con el nombre actualizado |
+
+### Comportamiento post-fix
+
+- El nuevo pending muestra `"Fiado a José"` (nombre actual) aunque el income original diga `"Venta a Carlos"`.
+- El concepto del nuevo pending también refleja el nombre actual si contiene el nombre viejo.
+- Si el lookup falla (error de red), cae silenciosamente al texto del sourceRow (no rompe el flujo).
+- En splits parciales, el remainder income/loss también tiene el concepto actualizado.
+
+### Resultado del build
+
+```
+agent-guard: OK — agent-report-check: OK — vite build: ✓ built in 3.49s — UTF-8: ✓
+```
+
+### QA sugerido
+
+1. Crear cliente "Carlos", registrar fiado, transferir a pagado (income `"Venta a Carlos - ..."`)
+2. Renombrar "Carlos" → "José"
+3. Desde Pagados, transferir ese income de vuelta a Fiados
+4. Verificar que el nuevo fiado dice `"Fiado a José"` (no `"Fiado a Carlos"`)
+5. Verificar que el concepto del nuevo fiado también dice `"José"` si aplica
