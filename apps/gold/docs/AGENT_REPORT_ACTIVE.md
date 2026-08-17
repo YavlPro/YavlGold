@@ -693,3 +693,67 @@ agent-guard: OK — agent-report-check: OK — vite build: ✓ built in 3.49s �
 3. Desde Pagados, transferir ese income de vuelta a Fiados
 4. Verificar que el nuevo fiado dice `"Fiado a José"` (no `"Fiado a Carlos"`)
 5. Verificar que el concepto del nuevo fiado también dice `"José"` si aplica
+
+---
+
+## Sesión 2026-08-18 (análisis exhaustivo) — Fix raíz real: buyer_id no viajaba en ninguna transferencia
+
+**Objetivo:** Resolver por qué el bug de nombre viejo persistía tras los fixes anteriores.
+
+### Diagnóstico profundo
+
+Los fixes anteriores funcionaban sobre `executeCompensationRevertToPending` asumiendo que el `sourceRow` (income) ya tendría `buyer_id`. El bug raíz real estaba más arriba en la cadena: **`buyer_id` nunca viajaba desde el pending al income en la transferencia original Fiado→Pagado** porque los payloads de destino no lo incluían, y las constantes de columnas de select tampoco lo pedían.
+
+#### Causas raíz confirmadas
+
+| Causa | Archivo | Línea |
+|-------|---------|-------|
+| `AGRO_INCOME_TRANSFER_COLUMNS` sin `buyer_id/buyer_group_key` | `agro.js` | ~196 |
+| `AGRO_PENDING_TRANSFER_COLUMNS` sin `buyer_id/buyer_group_key` | `agro.js` | ~195 |
+| `AGRO_INCOME_REVERT_COLUMNS` sin `buyer_id/buyer_group_key` | `agro.js` | ~198 |
+| `AGRO_LOSS_TRANSFER_COLUMNS` sin `buyer_id/buyer_group_key` | `agro.js` | ~197 |
+| `AGRO_LOSS_REVERT_COLUMNS` sin `buyer_id/buyer_group_key` | `agro.js` | ~199 |
+| `incomePayload` (Fiado→Pagado) sin `buyer_id` | `agro.js` | ~7688 |
+| `lossPayload` (Fiado→Pérdida) sin `buyer_id` | `agro.js` | ~7866 |
+| `pendingPayload` en `handleIncomeTransfer` directa sin `buyer_id` | `agro.js` | ~8143 |
+| `lossPayload` en `handleIncomeTransfer` directa sin `buyer_id` | `agro.js` | ~8224 |
+| `pendingPayload` en `handleLossTransfer` directa sin `buyer_id` | `agro.js` | ~8340 |
+| `incomePayload` en `handleLossTransfer→income` sin `buyer_id` | `agro.js` | ~8444 |
+
+#### Por qué el fix anterior no fue suficiente
+
+El lookup en `executeCompensationRevertToPending` buscaba `sourceRow.buyer_id`, pero como el income fue creado sin `buyer_id` (columnas de select incompletas + payload sin el campo), `sourceBuyerId` siempre era vacío y el lookup fallaba silenciosamente.
+
+### Cambios realizados (esta sesión)
+
+| Archivo | Cambio |
+|---------|--------|
+| `apps/gold/agro/agro.js` | `AGRO_PENDING_TRANSFER_COLUMNS`: agrega `buyer_id,buyer_group_key,buyer_match_status,cliente` |
+| `apps/gold/agro/agro.js` | `AGRO_INCOME_TRANSFER_COLUMNS`: agrega `buyer_id,buyer_group_key,buyer_match_status,comprador` |
+| `apps/gold/agro/agro.js` | `AGRO_LOSS_TRANSFER_COLUMNS`: agrega `buyer_id,buyer_group_key,buyer_match_status` |
+| `apps/gold/agro/agro.js` | `AGRO_INCOME_REVERT_COLUMNS`: agrega `buyer_id,buyer_group_key,buyer_match_status,comprador` |
+| `apps/gold/agro/agro.js` | `AGRO_LOSS_REVERT_COLUMNS`: agrega `buyer_id,buyer_group_key,buyer_match_status` |
+| `apps/gold/agro/agro.js` | `incomePayload` Fiado→Pagado: propaga `buyer_id` del pending |
+| `apps/gold/agro/agro.js` | `lossPayload` Fiado→Pérdida: propaga `buyer_id` del pending |
+| `apps/gold/agro/agro.js` | `pendingPayload` `handleIncomeTransfer` directa: propaga `buyer_id` del income |
+| `apps/gold/agro/agro.js` | `lossPayload` `handleIncomeTransfer` directa: propaga `buyer_id` del income |
+| `apps/gold/agro/agro.js` | `pendingPayload` `handleLossTransfer` directa: propaga `buyer_id` del loss |
+| `apps/gold/agro/agro.js` | `incomePayload` `handleLossTransfer→income`: propaga `buyer_id` del loss |
+
+### Resultado del build
+
+```
+agent-guard: OK — agent-report-check: OK — vite build: ✓ built in 3.55s — UTF-8: ✓
+```
+
+### QA crítico
+
+El escenario que prueba la cadena completa:
+1. Crear cliente "Carlos" → registrar fiado (nuevo pending con `buyer_id`)
+2. Transferir fiado → pagado (income debe recibir `buyer_id` ← este era el eslabón roto)
+3. Renombrar "Carlos" → "José"
+4. Transferir pagado → fiado (nuevo pending debe tener `buyer_id` + nombre "José")
+5. Verificar que el nuevo fiado dice `"Fiado a José"` y tiene `buyer_id` correcto
+6. Verificar que NO aparece "Carlos" como cliente separado en ninguna categoría
+
+Para movimientos legacy (creados antes de este fix) que no tienen `buyer_id` en el income, `updateMovementLinks` del rename debe actualizarlos. Si el income fue creado antes de este fix, ejecutar el rename del cliente desde la ficha para forzar la propagación.

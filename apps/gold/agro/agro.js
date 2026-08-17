@@ -192,11 +192,11 @@ const AGRO_PROFILE_LOCAL_AVATAR_KEY_PREFIX = 'YG_AGRO_PROFILE_AVATAR_V1_';
 const AGRO_PROFILE_DISPLAY_NAME_KEY = 'YG_AGRO_DISPLAY_NAME_V1';
 const AGRO_DEBUG = typeof window !== 'undefined'
     && new URLSearchParams(window.location.search).get('debug') === '1';
-const AGRO_PENDING_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,crop_id,unit_type,unit_qty,quantity_kg,transfer_state,transferred_to,transferred_income_id';
-const AGRO_INCOME_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state';
-const AGRO_LOSS_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,causa,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state';
-const AGRO_INCOME_REVERT_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state,currency,exchange_rate,monto_usd,soporte_url,reverted_at,reverted_reason,split_meta';
-const AGRO_LOSS_REVERT_COLUMNS = 'id,user_id,concepto,monto,fecha,causa,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state,currency,exchange_rate,monto_usd,evidence_url,reverted_at,reverted_reason,split_meta';
+const AGRO_PENDING_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,crop_id,unit_type,unit_qty,quantity_kg,transfer_state,transferred_to,transferred_income_id,buyer_id,buyer_group_key,buyer_match_status,cliente';
+const AGRO_INCOME_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state,buyer_id,buyer_group_key,buyer_match_status,comprador';
+const AGRO_LOSS_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,causa,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state,buyer_id,buyer_group_key,buyer_match_status';
+const AGRO_INCOME_REVERT_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state,currency,exchange_rate,monto_usd,soporte_url,reverted_at,reverted_reason,split_meta,buyer_id,buyer_group_key,buyer_match_status,comprador';
+const AGRO_LOSS_REVERT_COLUMNS = 'id,user_id,concepto,monto,fecha,causa,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state,currency,exchange_rate,monto_usd,evidence_url,reverted_at,reverted_reason,split_meta,buyer_id,buyer_group_key,buyer_match_status';
 const AGRO_INCOME_LIST_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,soporte_url,currency,exchange_rate,monto_usd,origin_table,origin_id,transfer_state,reverted_reason,deleted_at,reverted_at,created_at';
 const USE_V10_DASHBOARD = true;
 const USE_V10_HISTORY = true;
@@ -7696,7 +7696,16 @@ async function handlePendingTransfer(itemId) {
                 origin_id: pending.id,
                 transfer_state: 'active',
                 split_from_id: isPartialSplit ? pending.id : null,
-                split_meta: splitMetaDestination
+                split_meta: splitMetaDestination,
+                // Carry buyer identity from source pending so the income always
+                // holds the canonical buyer reference. Without this, if the client
+                // is later renamed, the income has no buyer_id and any revert back
+                // to pending re-derives identity from stale text.
+                ...(String(pending?.buyer_id || '').trim() ? {
+                    buyer_id: String(pending.buyer_id).trim(),
+                    buyer_group_key: String(pending?.buyer_group_key || '').trim() || null,
+                    buyer_match_status: 'matched'
+                } : {})
             };
 
             const incomePayloadWithBuyer = await enrichBuyerIdentityPayload('ingresos', incomePayload, {
@@ -7873,7 +7882,13 @@ async function handlePendingTransfer(itemId) {
                 origin_id: pending.id,
                 transfer_state: 'active',
                 split_from_id: isPartialSplit ? pending.id : null,
-                split_meta: splitMetaDestination
+                split_meta: splitMetaDestination,
+                // Carry buyer identity from source pending.
+                ...(String(pending?.buyer_id || '').trim() ? {
+                    buyer_id: String(pending.buyer_id).trim(),
+                    buyer_group_key: String(pending?.buyer_group_key || '').trim() || null,
+                    buyer_match_status: 'matched'
+                } : {})
             };
 
             const lossPayloadWithBuyer = await enrichBuyerIdentityPayload('perdidas', lossPayload, {
@@ -8129,7 +8144,13 @@ async function handleIncomeTransfer(itemId) {
                 unit_type: income.unit_type || null,
                 unit_qty: Number.isFinite(Number(income.unit_qty)) ? Number(income.unit_qty) : null,
                 quantity_kg: Number.isFinite(Number(income.quantity_kg)) ? Number(income.quantity_kg) : null,
-                transfer_state: 'active'
+                transfer_state: 'active',
+                // Carry buyer identity from source income.
+                ...(String(income?.buyer_id || '').trim() ? {
+                    buyer_id: String(income.buyer_id).trim(),
+                    buyer_group_key: String(income?.buyer_group_key || '').trim() || null,
+                    buyer_match_status: 'matched'
+                } : {})
             };
 
             const pendingPayloadWithBuyer = await enrichBuyerIdentityPayload('pendientes', pendingPayload, {
@@ -8209,7 +8230,13 @@ async function handleIncomeTransfer(itemId) {
                 quantity_kg: Number.isFinite(Number(income.quantity_kg)) ? Number(income.quantity_kg) : null,
                 origin_table: 'agro_income',
                 origin_id: income.id,
-                transfer_state: 'active'
+                transfer_state: 'active',
+                // Carry buyer identity from source income.
+                ...(String(income?.buyer_id || '').trim() ? {
+                    buyer_id: String(income.buyer_id).trim(),
+                    buyer_group_key: String(income?.buyer_group_key || '').trim() || null,
+                    buyer_match_status: 'matched'
+                } : {})
             };
 
             const lossPayloadWithBuyer = await enrichBuyerIdentityPayload('perdidas', lossPayload, {
@@ -8319,7 +8346,13 @@ async function handleLossTransfer(itemId) {
                 unit_type: loss.unit_type || null,
                 unit_qty: Number.isFinite(Number(loss.unit_qty)) ? Number(loss.unit_qty) : null,
                 quantity_kg: Number.isFinite(Number(loss.quantity_kg)) ? Number(loss.quantity_kg) : null,
-                transfer_state: 'active'
+                transfer_state: 'active',
+                // Carry buyer identity from source loss.
+                ...(String(loss?.buyer_id || '').trim() ? {
+                    buyer_id: String(loss.buyer_id).trim(),
+                    buyer_group_key: String(loss?.buyer_group_key || '').trim() || null,
+                    buyer_match_status: 'matched'
+                } : {})
             };
 
             const pendingPayloadWithBuyer = await enrichBuyerIdentityPayload('pendientes', pendingPayload, {
@@ -8425,7 +8458,13 @@ async function handleLossTransfer(itemId) {
                 monto_usd: incomeMoney.monto_usd,
                 origin_table: 'agro_losses',
                 origin_id: loss.id,
-                transfer_state: 'active'
+                transfer_state: 'active',
+                // Carry buyer identity from source loss.
+                ...(String(loss?.buyer_id || '').trim() ? {
+                    buyer_id: String(loss.buyer_id).trim(),
+                    buyer_group_key: String(loss?.buyer_group_key || '').trim() || null,
+                    buyer_match_status: 'matched'
+                } : {})
             };
 
             const incomePayloadWithBuyer = await enrichBuyerIdentityPayload('ingresos', incomePayload, {
