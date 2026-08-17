@@ -252,6 +252,9 @@ main { padding-top: var(--layout-navbar-h); }
 /* Botón header pequeño */
 .btn-header { padding: var(--space-1) var(--space-3); font-size: 0.85rem; font-weight: 700; min-height: 36px; border-radius: var(--radius-sm); }
 
+/* Separación entre botones Iniciar Sesión y Registrarse en desktop */
+#auth-buttons { display: flex; align-items: center; gap: var(--space-5); }
+
 /* Footer links próximamente */
 .footer-col a[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
 .footer-col a[aria-disabled="true"]::after { content: ' (próximamente)'; font-size: 0.7rem; font-style: italic; color: var(--text-muted); }
