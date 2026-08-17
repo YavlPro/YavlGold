@@ -588,9 +588,9 @@ function renderBuyerWizard(step) {
     form.innerHTML = `
         <div class="buyer-wizard-stepper" role="list">
             ${BUYER_WIZARD_STEPS.map((s) => {
-                const isActive = currentStep === s.id;
-                const isComplete = currentStep > s.id;
-                return `<button type="button" class="buyer-wizard-step${isActive ? ' is-active' : ''}${isComplete ? ' is-complete' : ''}"
+        const isActive = currentStep === s.id;
+        const isComplete = currentStep > s.id;
+        return `<button type="button" class="buyer-wizard-step${isActive ? ' is-active' : ''}${isComplete ? ' is-complete' : ''}"
                     data-buyer-wizard-goto="${s.id}" role="listitem"
                     ${isActive ? 'aria-current="step"' : ''}>
                     <span class="buyer-wizard-step__dot">${isComplete ? '✓' : s.id}</span>
@@ -599,7 +599,7 @@ function renderBuyerWizard(step) {
                         <small>${escapeHtml(s.eyebrow)}</small>
                     </span>
                 </button>`;
-            }).join('')}
+    }).join('')}
         </div>
 
         <div class="buyer-wizard-body">
@@ -633,8 +633,8 @@ function renderWizardStepPanel(step, d) {
                     <p class="buyer-wizard-panel__eyebrow">Paso 1</p>
                     <h4 class="buyer-wizard-panel__title">¿Quién es el cliente?</h4>
                     <p class="buyer-wizard-panel__copy">${isNew
-            ? 'Crea un cliente desde cero para llevar su seguimiento en Facturero de Clientes.'
-            : 'Elige un cliente existente de Facturero de Clientes usando nombre, finca, teléfono o redes disponibles.'}</p>
+                ? 'Crea un cliente desde cero para llevar su seguimiento en Facturero de Clientes.'
+                : 'Elige un cliente existente de Facturero de Clientes usando nombre, finca, teléfono o redes disponibles.'}</p>
                 </div>
                 ${isNew ? `
                     <label class="agro-buyer-field">
@@ -708,7 +708,7 @@ function renderWizardStepPanel(step, d) {
                         placeholder="Preferencias, acuerdos o recordatorios del cliente">${escapeHtml(d.notes)}</textarea>
                 </label>
                 ${d.linked_user_id && isValidUuid(d.linked_user_id)
-                    ? `<div class="agro-buyer-field agro-buyer-field--linked-verified">
+                ? `<div class="agro-buyer-field agro-buyer-field--linked-verified">
                         <span>Cuenta YavlGold vinculada</span>
                         <div class="agro-buyer-linked-status agro-buyer-linked-status--verified">
                             <span class="agro-buyer-linked-status__dot"></span>
@@ -716,14 +716,14 @@ function renderWizardStepPanel(step, d) {
                         </div>
                         <small class="agro-buyer-field__help">Este cliente ya tiene una cuenta YavlGold vinculada. Puedes guardar sin cambios.</small>
                        </div>`
-                    : `<div class="agro-buyer-field">
+                : `<div class="agro-buyer-field">
                         <span>Cuenta YavlGold vinculada</span>
                         <div class="agro-buyer-linked-status agro-buyer-linked-status--none">
                             Sin vinculacion
                         </div>
                         <small class="agro-buyer-field__help">La cuenta YavlGold solo puede vincularse con verificacion segura. Puedes guardar este cliente sin vincular.</small>
                        </div>`
-                }
+            }
             </div>`;
     }
 
@@ -1094,9 +1094,27 @@ async function deleteBuyerWithCascade() {
 
 async function updateMovementLinks(userId, buyerId, oldGroupKey, nextGroupKey) {
     const safeBuyerId = String(buyerId || '').trim();
-    const safeOldGroupKey = String(oldGroupKey || '').trim();
+    let safeOldGroupKey = String(oldGroupKey || '').trim();
     const safeNextGroupKey = String(nextGroupKey || '').trim();
     if (!safeBuyerId || !safeNextGroupKey) return;
+
+    // Defensive fallback: if oldGroupKey was not captured correctly (e.g. modal
+    // opened before fillBuyerForm completed), resolve the current group_key from
+    // DB before proceeding with the legacy-movement update. Without this, legacy
+    // movements (buyer_id = NULL, buyer_group_key = old name) would never be
+    // updated and would generate ghost rows in the portfolio RPC.
+    if (!safeOldGroupKey) {
+        try {
+            const { data: buyerData } = await state.supabase
+                .from('agro_buyers')
+                .select('group_key')
+                .eq('id', safeBuyerId)
+                .maybeSingle();
+            safeOldGroupKey = String(buyerData?.group_key || '').trim();
+        } catch (_err) {
+            // Non-blocking: if lookup fails, skip legacy update gracefully.
+        }
+    }
 
     await Promise.all(BUYER_MOVEMENT_TABLES.map(async (tableName) => {
         const linkedResult = await state.supabase

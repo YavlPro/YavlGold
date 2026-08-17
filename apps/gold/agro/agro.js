@@ -1365,6 +1365,16 @@ async function enrichBuyerIdentityPayload(tabName, payload = {}, overrides = {})
     if (!isBuyerIdentityRelevantTab(tabName)) return { ...(payload || {}) };
 
     const safePayload = { ...(payload || {}) };
+
+    // If the payload already carries a confirmed buyer_id (e.g. propagated from a
+    // source movement during revert/transfer), skip the text-based inference entirely.
+    // This prevents re-deriving identity from a stale concept string and avoids
+    // creating ghost buyers when a client was renamed after the movement was recorded.
+    const existingBuyerId = String(safePayload?.buyer_id || '').trim();
+    if (existingBuyerId) {
+        return safePayload;
+    }
+
     const conceptField = overrides.conceptField || (tabName === 'gastos' ? 'concept' : 'concepto');
     const concept = overrides.concept ?? safePayload?.[conceptField] ?? safePayload?.concepto ?? safePayload?.concept ?? '';
     const buyerHint = overrides.buyerHint ?? safePayload?.cliente ?? '';
@@ -2154,6 +2164,13 @@ async function executeCompensationRevertToPending({
     const sourceWhoData = getWhoData(sourceTab, sourceRow, sourceRow?.concepto || '');
     const pendingConcept = sourceWhoData?.concept || sourceRow?.concepto || 'Fiado';
     const pendingMoney = buildIncomeMonetaryFields(sourceRow, transferAmount);
+
+    // Propagate buyer identity from source row so enrichBuyerIdentityPayload
+    // does not re-derive it from the concept string (which may reference the old
+    // client name after a rename, creating ghost buyers).
+    const sourceBuyerId = String(sourceRow?.buyer_id || '').trim();
+    const sourceBuyerGroupKey = String(sourceRow?.buyer_group_key || '').trim();
+
     const pendingPayload = {
         id: pendingId,
         user_id: userId,
@@ -2172,7 +2189,13 @@ async function executeCompensationRevertToPending({
         monto_usd: pendingMoney.monto_usd,
         transfer_state: 'active',
         split_from_id: isPartial ? sourceRow.id : null,
-        split_meta: splitMetaPending
+        split_meta: splitMetaPending,
+        // Carry over confirmed buyer identity to avoid text-based re-derivation.
+        ...(sourceBuyerId ? {
+            buyer_id: sourceBuyerId,
+            buyer_group_key: sourceBuyerGroupKey || null,
+            buyer_match_status: 'matched'
+        } : {})
     };
 
     const pendingPayloadWithBuyer = await enrichBuyerIdentityPayload('pendientes', pendingPayload, {
@@ -2226,7 +2249,13 @@ async function executeCompensationRevertToPending({
                 origin_id: sourceRow?.origin_id || null,
                 transfer_state: 'active',
                 split_from_id: sourceRow.id,
-                split_meta: splitMetaRemainder
+                split_meta: splitMetaRemainder,
+                // Propagate confirmed buyer identity from source row.
+                ...(sourceBuyerId ? {
+                    buyer_id: sourceBuyerId,
+                    buyer_group_key: sourceBuyerGroupKey || null,
+                    buyer_match_status: 'matched'
+                } : {})
             }
             : {
                 id: remainderId,
@@ -2247,7 +2276,13 @@ async function executeCompensationRevertToPending({
                 origin_id: sourceRow?.origin_id || null,
                 transfer_state: 'active',
                 split_from_id: sourceRow.id,
-                split_meta: splitMetaRemainder
+                split_meta: splitMetaRemainder,
+                // Propagate confirmed buyer identity from source row.
+                ...(sourceBuyerId ? {
+                    buyer_id: sourceBuyerId,
+                    buyer_group_key: sourceBuyerGroupKey || null,
+                    buyer_match_status: 'matched'
+                } : {})
             };
 
         const remainderTabName = sourceTable === 'agro_income'

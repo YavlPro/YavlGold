@@ -278,7 +278,25 @@ function mergeSummaryRowsWithBuyerDirectory(summaryData, buyerDirectoryRows) {
         mergedRows.push(buyerRow);
     });
 
-    return mergedRows;
+    // Ghost-row cleanup: after the merge, remove any RPC-only rows that have no
+    // buyer_id and whose group_key does not match any active buyer in the directory.
+    // These are stale review_union aggregates from movements that still carry an
+    // old buyer_group_key (pre-rename) and were not yet updated by updateMovementLinks.
+    // A row without buyer_id that has no counterpart in the directory is a phantom
+    // and must not appear as a separate client entry.
+    const directoryGroupKeys = new Set(
+        (Array.isArray(buyerDirectoryRows) ? buyerDirectoryRows : []).map((r) =>
+            normalizeBuyerGroupKey(r?.canonical_name || r?.group_key || r?.display_name || '')
+        ).filter(Boolean)
+    );
+
+    return mergedRows.filter((row) => {
+        const hasBuyerId = Boolean(String(row?.buyer_id || '').trim());
+        if (hasBuyerId) return true;
+        const rowCanonical = normalizeBuyerGroupKey(row?.canonical_name || row?.group_key || '');
+        // Keep only if it has a corresponding buyer in the directory.
+        return Boolean(rowCanonical && directoryGroupKeys.has(rowCanonical));
+    });
 }
 
 function getSessionCropScopeKeys(cropId = getSelectedCropId()) {

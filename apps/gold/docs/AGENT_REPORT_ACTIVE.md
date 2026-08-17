@@ -604,3 +604,55 @@ Exit Code: 0
 - No se tocó `agro.js` ni módulos fuera del scope.
 - No se modificaron contratos de DB, migraciones ni RLS.
 - No se alteró el comportamiento mobile de ningún componente.
+
+---
+
+## Sesión 2026-08-18 — Fix bug identidad duplicada en renombrado de cliente (Facturero de Clientes)
+
+**Objetivo:** Corregir tres bugs relacionados con la propagación incompleta del rename de un cliente en el Facturero de Clientes Agro.
+
+### Diagnóstico confirmado
+
+Causa raíz única: cuando un cliente era renombrado (ej. "Carlos" → "José"), los movimientos legacy (con `buyer_id = NULL`, identificados solo por `buyer_group_key`) no se actualizaban correctamente. Esto generaba tres síntomas:
+
+| # | Síntoma | Causa específica |
+|---|---------|-----------------|
+| 1 | Cliente desaparece del cultivo tras rename | `previousGroupKey` vacío causaba que `updateMovementLinks` saltara la rama de movimientos legacy |
+| 2 | Nombre viejo sin datos + nombre nuevo con datos en "Sin registro" | El RPC generaba fila fantasma con `group_key` viejo (movimientos sin actualizar), que no hacía match en `mergeSummaryRowsWithBuyerDirectory` → dos entradas separadas |
+| 3 | Transferencia fiado→pagado se pierde tras rename | `executeCompensationRevertToPending` no propagaba `buyer_id` del `sourceRow` al nuevo `pendingPayload` → `enrichBuyerIdentityPayload` re-derivaba identidad desde el concepto con el nombre viejo → creaba cliente fantasma nuevo |
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---------|------|--------|
+| `apps/gold/agro/agro.js` | Bugfix | `enrichBuyerIdentityPayload`: early return si `payload.buyer_id` ya existe (protección global contra re-derivación de identidad) |
+| `apps/gold/agro/agro.js` | Bugfix | `executeCompensationRevertToPending`: propagar `buyer_id` + `buyer_group_key` del `sourceRow` al `pendingPayload` y al `remainderPayload` en splits parciales |
+| `apps/gold/agro/agrocompradores.js` | Bugfix | `updateMovementLinks`: fallback defensivo — si `safeOldGroupKey` está vacío, hacer lookup en `agro_buyers` por `buyer_id` antes de abortar la rama legacy |
+| `apps/gold/agro/agro-facturero-clientes-view.js` | Bugfix | `mergeSummaryRowsWithBuyerDirectory`: paso de limpieza post-merge que filtra filas del RPC sin `buyer_id` cuyo `group_key` no tenga contraparte en el directorio activo (elimina fantasmas) |
+
+### Resultado del build
+
+```
+agent-guard: OK
+agent-report-check: OK
+vite build: ✓ built in 2.89s — sin errores
+check-dist-utf8: ✓ passed
+```
+
+### QA sugerido
+
+1. Crear cliente "Carlos" con un fiado bajo un cultivo activo
+2. Transferir el fiado a pagado
+3. Renombrar "Carlos" → "José"
+4. Verificar que "José" aparece bajo el cultivo con sus datos reales
+5. Verificar que "Carlos" NO aparece como entrada separada en ninguna categoría
+6. Transferir el pagado de "José" de vuelta a fiado
+7. Verificar que la transacción queda en "José", no en un fantasma "Carlos"
+8. Verificar que no aparece cliente nuevo con nombre viejo en "Sin registro"
+
+### NO se hizo (scope respetado)
+
+- No se ejecutó limpieza automática de datos fantasma existentes en producción (frente separado)
+- No se refactorizaron zonas estables
+- No se agregaron features nuevas
+- No se tocó el monolito más allá de las dos funciones afectadas
