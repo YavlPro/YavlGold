@@ -193,9 +193,9 @@ const AGRO_PROFILE_DISPLAY_NAME_KEY = 'YG_AGRO_DISPLAY_NAME_V1';
 const AGRO_DEBUG = typeof window !== 'undefined'
     && new URLSearchParams(window.location.search).get('debug') === '1';
 const AGRO_PENDING_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,crop_id,unit_type,unit_qty,quantity_kg,transfer_state,transferred_to,transferred_income_id,buyer_id,buyer_group_key,buyer_match_status,cliente';
-const AGRO_INCOME_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state,buyer_id,buyer_group_key,buyer_match_status,comprador';
+const AGRO_INCOME_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state,buyer_id,buyer_group_key,buyer_match_status';
 const AGRO_LOSS_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,causa,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state,buyer_id,buyer_group_key,buyer_match_status';
-const AGRO_INCOME_REVERT_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state,currency,exchange_rate,monto_usd,soporte_url,reverted_at,reverted_reason,split_meta,buyer_id,buyer_group_key,buyer_match_status,comprador';
+const AGRO_INCOME_REVERT_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state,currency,exchange_rate,monto_usd,soporte_url,reverted_at,reverted_reason,split_meta,buyer_id,buyer_group_key,buyer_match_status';
 const AGRO_LOSS_REVERT_COLUMNS = 'id,user_id,concepto,monto,fecha,causa,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state,currency,exchange_rate,monto_usd,evidence_url,reverted_at,reverted_reason,split_meta,buyer_id,buyer_group_key,buyer_match_status';
 const AGRO_INCOME_LIST_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,soporte_url,currency,exchange_rate,monto_usd,origin_table,origin_id,transfer_state,reverted_reason,deleted_at,reverted_at,created_at';
 const USE_V10_DASHBOARD = true;
@@ -6187,7 +6187,11 @@ window._agroTrash = {
 
 window._agroFactureroBridge = Object.assign(window._agroFactureroBridge || {}, {
     resolveEvidenceUrl,
-    getFactureroEvidenceValue
+    getFactureroEvidenceValue,
+    handleRevertIncome,
+    handleRevertLoss,
+    handleIncomeTransfer,
+    handleLossTransfer
 });
 
 async function editFactureroItem(tabName, itemId) {

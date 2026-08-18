@@ -757,3 +757,46 @@ El escenario que prueba la cadena completa:
 6. Verificar que NO aparece "Carlos" como cliente separado en ninguna categoría
 
 Para movimientos legacy (creados antes de este fix) que no tienen `buyer_id` en el income, `updateMovementLinks` del rename debe actualizarlos. Si el income fue creado antes de este fix, ejecutar el rename del cliente desde la ficha para forzar la propagación.
+
+---
+
+## Sesión 2026-08-18 (fix post-rename) — "No se encontró el pagado" + redirige a creación de clientes
+
+**Objetivo:** Corregir dos bugs nuevos causados por un rename de cliente (qa pro → qa pro test) en producción.
+
+### Síntomas reportados
+
+1. Al intentar Transferir/Revertir un cobro desde la vista de detalle → toast "No se encontró el pagado seleccionado"
+2. Al dar "Actualizar" en el detalle → redirige a la vista de lista/creación de clientes
+
+### Diagnóstico
+
+**Bug 1 — Toast "No se encontró":**
+La columna `comprador` fue introducida por error en `AGRO_INCOME_TRANSFER_COLUMNS` y `AGRO_INCOME_REVERT_COLUMNS` en la sesión anterior. `agro_income` no tiene esa columna. Aunque `selectSingleWithMissingColumnFallback` tiene retry para columnas faltantes, la primera query fallaba con error y en algunos casos el retry no alcanzaba a limpiar el campo antes de que se propagara el error a `fetchRevertSourceRecord`.
+
+**Bug 2 — Redirige a lista:**
+`getSelectedBuyerRow()` buscaba el buyer en `getCropScopedRows(summaryRows)`. Con cultivo "caraota roja" seleccionado, `getCropScopedRows` filtra por `visibleCropScopeKeys`. Los movimientos legacy del cliente (creados antes del fix de propagación de buyer_id) aún tienen `buyer_group_key = "qa pro"` (nombre viejo) y no `buyer_id`. El scope key generado era `group:qa pro` pero el del buyer en el RPC era `buyer:X` → no había match → el buyer no estaba en `cropScopedRows` → `getSelectedBuyerRow()` retornaba `null` → `renderBuyerHistoryDetail` con `buyerRow = null` mostraba "Cliente no encontrado" → el usuario clickaba "Volver" → lista → botón "Crear cliente".
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---------|--------|
+| `apps/gold/agro/agro.js` | Quitar `comprador` de `AGRO_INCOME_TRANSFER_COLUMNS` y `AGRO_INCOME_REVERT_COLUMNS` (no existe en `agro_income`) |
+| `apps/gold/agro/agro.js` | Exponer `handleRevertIncome`, `handleRevertLoss`, `handleIncomeTransfer`, `handleLossTransfer` en `window._agroFactureroBridge` para uso desde el módulo de Cartera Viva |
+| `apps/gold/agro/agro-facturero-clientes-view.js` | `getSelectedBuyerRow()`: fallback a `summaryRows` completo cuando el buyer no está en `cropScopedRows` (scope keys stale por movimientos legacy sin buyer_id) |
+| `apps/gold/agro/agro-facturero-clientes-view.js` | `initAgroCarteraVivaView()`: listener de captura que intercepta clicks de `btn-transfer-income`, `btn-revert-income`, `btn-transfer-loss`, `btn-revert-loss` dentro del root del Facturero de Clientes y los delega via bridge |
+
+### Resultado del build
+
+```
+agent-guard: OK — agent-report-check: OK — vite build: ✓ built in 3.56s — UTF-8: ✓
+```
+
+### QA sugerido
+
+1. Abrir Facturero de Clientes con filtro "caraota roja" seleccionado
+2. Buscar cliente "qa pro test" en Pagados
+3. Abrir detalle → verificar que carga historial correcto (no "Cliente no encontrado")
+4. Dar "Actualizar" → verificar que permanece en el detalle del cliente
+5. En el cobro visible, abrir menú → "Revertir" → debe abrir wizard de reversión correctamente
+6. Completar la reversión → verificar que el cobro pasa a Fiados con nombre "qa pro test"
