@@ -800,3 +800,45 @@ agent-guard: OK — agent-report-check: OK — vite build: ✓ built in 3.56s �
 4. Dar "Actualizar" → verificar que permanece en el detalle del cliente
 5. En el cobro visible, abrir menú → "Revertir" → debe abrir wizard de reversión correctamente
 6. Completar la reversión → verificar que el cobro pasa a Fiados con nombre "qa pro test"
+
+## Sesión — 17 de agosto de 2026 — Fix identidad duplicada en renombrado de cliente (Facturero de Clientes)
+
+**Estado del frente:** YELLOW — Mejorado pero no resuelto completamente. Se introdujeron bugs nuevos.
+
+**Condiciones de la sesión:** Trabajo sin electricidad. Día dificultoso. Créditos de agente limitados. Sin agentes adicionales disponibles.
+
+**Objetivo:** Corregir bug donde renombrar cliente (Carlos→José) resucitaba el nombre viejo como fantasma en Sin Registro, y transferencias Pagados→Fiados perdían la transacción hacia el nombre viejo.
+
+**Diagnóstico (causa raíz confirmada):**
+- `buyer_id` nunca viajaba en ninguna transferencia: las constantes de columnas de select no pedían esos campos a Supabase
+- `enrichBuyerIdentityPayload` re-derivaba identidad desde texto viejo (`cliente`/`concepto`), creando buyers fantasma
+- `updateMovementLinks` no propagaba correctamente a movimientos legacy (sin `buyer_id`)
+- `comprador` fue agregado por error a constantes de `agro_income` (esa columna no existe en esa tabla)
+
+**Cambios realizados:**
+
+| Archivo | Tipo | Cambio |
+|---------|------|--------|
+| `apps/gold/agro/agro.js` | Fix | Propagación de `buyer_id` en 6 rutas de transferencia + lookup de `display_name` + eliminación de `comprador` de columnas |
+| `apps/gold/agro/agrocompradores.js` | Fix | Lookup defensivo en `updateMovementLinks` cuando `previousGroupKey` vacío |
+| `apps/gold/agro/agro-facturero-clientes-view.js` | Fix | Fallback en `getSelectedBuyerRow` + limpieza post-merge de filas fantasma + listener de captura en botones de transferencia |
+
+**Resultado de build:** `pnpm build:gold` OK (agent-guard, agent-report-check, vite, check-dist-utf8)
+
+**QA:** Pendiente. Local bloqueado. Solo se puede ejecutar post-deploy en producción.
+
+**Bugs nuevos introducidos (sin resolver):**
+1. `agro-dashboard-v11`: `user is not defined` (ReferenceError, línea 15)
+2. `200.js`: `Cannot read properties of undefined (reading 'M_ID')` — loop repetitivo, probable ticker de agro-market
+3. Limpieza de datos legacy: fantasmas existentes en producción no se limpian automáticamente
+
+**Deuda técnica viva:**
+- Los clientes ya contaminados antes del fix necesitan reconciliación de datos (SELECT diagnóstico → UPDATE controlado)
+- El mecanismo `selectSingleWithMissingColumnFallback` no detecta confiablemente columnas faltantes en todos los formatos de error de PostgREST
+- Se necesita una skill documentando la confusión de campos who por tabla (`cliente` en `agro_pending`, `comprador` NO existe en `agro_income`)
+
+**Próximo paso:**
+1. Ejecutar QA post-deploy en producción (escenario de rename + transferencia)
+2. Diagnosticar y corregir `user is not defined` en agro-dashboard-v11
+3. Diagnosticar y corregir `M_ID` en 200.js (loop de agro-market)
+4. Planificar reconciliación de datos legacy (SELECT primero, sin escribir)
