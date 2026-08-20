@@ -1400,6 +1400,41 @@ async function enrichBuyerIdentityPayload(tabName, payload = {}, overrides = {})
     };
 }
 
+async function resolveTransferBuyerIdentity(sourceRow = {}, userId = '') {
+    const buyerId = String(sourceRow?.buyer_id || '').trim();
+    const buyerGroupKey = String(sourceRow?.buyer_group_key || '').trim();
+
+    if (buyerId) {
+        return {
+            buyer_id: buyerId,
+            buyer_group_key: buyerGroupKey || null,
+            buyer_match_status: 'matched'
+        };
+    }
+
+    if (!buyerGroupKey || !userId) return {};
+
+    try {
+        const { data, error } = await supabase
+            .from('agro_buyers')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('group_key', buyerGroupKey)
+            .maybeSingle();
+        if (error) throw error;
+        if (!data?.id) return {};
+
+        return {
+            buyer_id: String(data.id),
+            buyer_group_key: buyerGroupKey,
+            buyer_match_status: 'matched'
+        };
+    } catch (error) {
+        console.warn('[AGRO][BUYER_IDENTITY] transfer link fallback:', error?.message || error);
+        return {};
+    }
+}
+
 function formatWhoDisplay(tabName, whoValue) {
     const meta = WHO_FIELD_META[tabName];
     if (!meta || !whoValue) return '';
@@ -7637,6 +7672,7 @@ async function handlePendingTransfer(itemId) {
     try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Debes iniciar sesión para transferir.');
+        const transferBuyerIdentity = await resolveTransferBuyerIdentity(pending, user.id);
 
         if (destination === 'income') {
             // Transfer to Income
@@ -7705,11 +7741,7 @@ async function handlePendingTransfer(itemId) {
                 // holds the canonical buyer reference. Without this, if the client
                 // is later renamed, the income has no buyer_id and any revert back
                 // to pending re-derives identity from stale text.
-                ...(String(pending?.buyer_id || '').trim() ? {
-                    buyer_id: String(pending.buyer_id).trim(),
-                    buyer_group_key: String(pending?.buyer_group_key || '').trim() || null,
-                    buyer_match_status: 'matched'
-                } : {})
+                ...transferBuyerIdentity
             };
 
             const incomePayloadWithBuyer = await enrichBuyerIdentityPayload('ingresos', incomePayload, {
@@ -7888,11 +7920,7 @@ async function handlePendingTransfer(itemId) {
                 split_from_id: isPartialSplit ? pending.id : null,
                 split_meta: splitMetaDestination,
                 // Carry buyer identity from source pending.
-                ...(String(pending?.buyer_id || '').trim() ? {
-                    buyer_id: String(pending.buyer_id).trim(),
-                    buyer_group_key: String(pending?.buyer_group_key || '').trim() || null,
-                    buyer_match_status: 'matched'
-                } : {})
+                ...transferBuyerIdentity
             };
 
             const lossPayloadWithBuyer = await enrichBuyerIdentityPayload('perdidas', lossPayload, {
@@ -8127,6 +8155,7 @@ async function handleIncomeTransfer(itemId) {
     try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Debes iniciar sesión para transferir.');
+        const transferBuyerIdentity = await resolveTransferBuyerIdentity(income, user.id);
 
         if (destination === 'pendientes') {
             if (income.origin_table === 'agro_pending' && income.origin_id) {
@@ -8150,11 +8179,7 @@ async function handleIncomeTransfer(itemId) {
                 quantity_kg: Number.isFinite(Number(income.quantity_kg)) ? Number(income.quantity_kg) : null,
                 transfer_state: 'active',
                 // Carry buyer identity from source income.
-                ...(String(income?.buyer_id || '').trim() ? {
-                    buyer_id: String(income.buyer_id).trim(),
-                    buyer_group_key: String(income?.buyer_group_key || '').trim() || null,
-                    buyer_match_status: 'matched'
-                } : {})
+                ...transferBuyerIdentity
             };
 
             const pendingPayloadWithBuyer = await enrichBuyerIdentityPayload('pendientes', pendingPayload, {
@@ -8236,11 +8261,7 @@ async function handleIncomeTransfer(itemId) {
                 origin_id: income.id,
                 transfer_state: 'active',
                 // Carry buyer identity from source income.
-                ...(String(income?.buyer_id || '').trim() ? {
-                    buyer_id: String(income.buyer_id).trim(),
-                    buyer_group_key: String(income?.buyer_group_key || '').trim() || null,
-                    buyer_match_status: 'matched'
-                } : {})
+                ...transferBuyerIdentity
             };
 
             const lossPayloadWithBuyer = await enrichBuyerIdentityPayload('perdidas', lossPayload, {
@@ -8325,6 +8346,7 @@ async function handleLossTransfer(itemId) {
     try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Debes iniciar sesión para transferir.');
+        const transferBuyerIdentity = await resolveTransferBuyerIdentity(loss, user.id);
 
         if (destination === 'pendientes') {
             if (loss.origin_table === 'agro_pending' && loss.origin_id) {
@@ -8352,11 +8374,7 @@ async function handleLossTransfer(itemId) {
                 quantity_kg: Number.isFinite(Number(loss.quantity_kg)) ? Number(loss.quantity_kg) : null,
                 transfer_state: 'active',
                 // Carry buyer identity from source loss.
-                ...(String(loss?.buyer_id || '').trim() ? {
-                    buyer_id: String(loss.buyer_id).trim(),
-                    buyer_group_key: String(loss?.buyer_group_key || '').trim() || null,
-                    buyer_match_status: 'matched'
-                } : {})
+                ...transferBuyerIdentity
             };
 
             const pendingPayloadWithBuyer = await enrichBuyerIdentityPayload('pendientes', pendingPayload, {
@@ -8464,11 +8482,7 @@ async function handleLossTransfer(itemId) {
                 origin_id: loss.id,
                 transfer_state: 'active',
                 // Carry buyer identity from source loss.
-                ...(String(loss?.buyer_id || '').trim() ? {
-                    buyer_id: String(loss.buyer_id).trim(),
-                    buyer_group_key: String(loss?.buyer_group_key || '').trim() || null,
-                    buyer_match_status: 'matched'
-                } : {})
+                ...transferBuyerIdentity
             };
 
             const incomePayloadWithBuyer = await enrichBuyerIdentityPayload('ingresos', incomePayload, {
