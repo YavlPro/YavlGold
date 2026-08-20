@@ -842,3 +842,35 @@ agent-guard: OK — agent-report-check: OK — vite build: ✓ built in 3.56s �
 2. Diagnosticar y corregir `user is not defined` en agro-dashboard-v11
 3. Diagnosticar y corregir `M_ID` en 200.js (loop de agro-market)
 4. Planificar reconciliación de datos legacy (SELECT primero, sin escribir)
+
+---
+
+## Sesión 2026-08-20 — identidad canónica en transferencias y limpieza QA
+
+**Objetivo:** Evitar que una transferencia de Facturero de Clientes mueva la cartera de un cliente canónico a “Sin registro”, y retirar los datos QA solicitados.
+
+### Diagnóstico
+
+La ruta Fiados → Pagados podía resolver correctamente el `buyer_id` de un fiado legado mediante `buyer_group_key`, pero ese identificador no se incorporaba al payload destino. Las demás rutas dependían del `buyer_id` ya presente. Cuando el origen era legado, el destino quedaba sin vínculo canónico y el resumen lo clasificaba como “Sin registro”.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+| --- | --- |
+| `apps/gold/agro/agro.js` | Se añadió `resolveTransferBuyerIdentity`, que conserva la identidad existente o la recupera por `buyer_group_key` para el mismo usuario. |
+| `apps/gold/agro/agro.js` | Las seis rutas directas de transferencia reutilizan ese vínculo: Fiados → Pagados/Pérdidas, Pagados → Fiados/Pérdidas y Pérdidas → Fiados/Pagados. |
+
+### Limpieza QA en producción
+
+- Se eliminaron los clientes canónicos `qa pro max` y `qa pro plus`.
+- Se aplicó borrado lógico a sus movimientos relacionados: 2 fiados y 1 pagado; no había pérdidas ni hilos sociales asociados.
+- Consulta de comprobación posterior: 0 clientes QA restantes y 0 movimientos activos para esos grupos.
+
+### Verificación
+
+`pnpm build:gold` aprobado: agent guard, validación del reporte activo, Vite, check-llms y UTF-8 pasaron correctamente. Solo permanece el warning ya conocido de tamaño del bundle.
+
+### QA manual sugerido
+
+1. En un cliente canónico con un fiado legado, transferir solo un registro a Pagados y confirmar que el cliente no aparece en “Sin registro”.
+2. Repetir Pagados → Fiados y una ruta hacia Pérdidas; verificar que el destino conserva el mismo cliente canónico y que los demás registros no cambian de categoría.
