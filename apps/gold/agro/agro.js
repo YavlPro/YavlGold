@@ -4026,6 +4026,13 @@ function computePendingSplitDraft(pending, destination, decision = {}) {
                 : roundNumeric(Math.max(sourceAmount - transferAmount, 0), 2))
         : 0;
 
+    // If the full monetary amount is consumed (user transferred 100% of the
+    // fiado value regardless of how many units they entered), treat the split
+    // as a complete transfer — no phantom unit-residue should stay in Fiados.
+    const isMonetaryComplete = transferAmount >= sourceAmount - 1e-9;
+    const effectiveQtyLeft = isMonetaryComplete ? 0 : qtyLeft;
+    const effectiveRemainingAmount = isMonetaryComplete ? 0 : remainingAmount;
+
     const unitPriceTransfer = qtyTransfer > 0
         ? roundNumeric(transferAmount / qtyTransfer, 6)
         : null;
@@ -4042,15 +4049,15 @@ function computePendingSplitDraft(pending, destination, decision = {}) {
         ...base,
         qtyTotal,
         qtyTransfer,
-        qtyLeft,
+        qtyLeft: effectiveQtyLeft,
         unitPriceTransfer,
         transferAmount,
-        remainingAmount,
+        remainingAmount: effectiveRemainingAmount,
         transferUnitQty: qtyTransfer,
-        remainingUnitQty: qtyLeft,
+        remainingUnitQty: effectiveQtyLeft,
         transferKgQty,
-        remainingKgQty,
-        isPartial: qtyLeft > 0
+        remainingKgQty: isMonetaryComplete ? 0 : remainingKgQty,
+        isPartial: effectiveQtyLeft > 0
     };
 }
 
