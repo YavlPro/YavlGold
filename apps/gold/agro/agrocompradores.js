@@ -1092,7 +1092,7 @@ async function deleteBuyerWithCascade() {
     return rpcResult.data || null;
 }
 
-async function updateMovementLinks(userId, buyerId, oldGroupKey, nextGroupKey) {
+async function updateMovementLinks(userId, buyerId, oldGroupKey, nextGroupKey, oldDisplayName, newDisplayName) {
     const safeBuyerId = String(buyerId || '').trim();
     let safeOldGroupKey = String(oldGroupKey || '').trim();
     const safeNextGroupKey = String(nextGroupKey || '').trim();
@@ -1153,6 +1153,50 @@ async function updateMovementLinks(userId, buyerId, oldGroupKey, nextGroupKey) {
 
         if (threadResult.error) throw threadResult.error;
     }
+
+    // Update denormalized display-name text fields in agro_pending so that
+    // movement titles ("Fiado a [nombre]") and concepts ("... - Cliente: [nombre]")
+    // reflect the new client name after a rename.
+    const safeOldDisplay = String(oldDisplayName || '').trim();
+    const safeNewDisplay = String(newDisplayName || '').trim();
+    if (safeOldDisplay && safeNewDisplay && safeOldDisplay !== safeNewDisplay) {
+        try {
+            // 1. Update the direct `cliente` field for linked movements.
+            await state.supabase
+                .from('agro_pending')
+                .update({ cliente: safeNewDisplay })
+                .eq('user_id', userId)
+                .eq('buyer_id', safeBuyerId)
+                .eq('cliente', safeOldDisplay);
+
+            // 2. Update `concepto` entries that contain the old display name.
+            //    Supabase REST does not support SQL REPLACE(), so we fetch and
+            //    patch individually. This set is typically very small per client.
+            const { data: conceptRows } = await state.supabase
+                .from('agro_pending')
+                .select('id, concepto')
+                .eq('user_id', userId)
+                .eq('buyer_id', safeBuyerId)
+                .ilike('concepto', `%${safeOldDisplay}%`);
+
+            if (Array.isArray(conceptRows) && conceptRows.length > 0) {
+                await Promise.all(conceptRows.map(async (row) => {
+                    const updatedConcepto = String(row.concepto || '')
+                        .split(safeOldDisplay)
+                        .join(safeNewDisplay);
+                    if (updatedConcepto === row.concepto) return;
+                    await state.supabase
+                        .from('agro_pending')
+                        .update({ concepto: updatedConcepto })
+                        .eq('id', row.id)
+                        .eq('user_id', userId);
+                }));
+            }
+        } catch (_err) {
+            // Non-blocking: display-name text update failure does not break the rename.
+            console.warn('[AGRO_CLIENTS] display-name text sync failed:', _err);
+        }
+    }
 }
 
 async function handleBuyerSave(event) {
@@ -1200,6 +1244,7 @@ async function handleBuyerSave(event) {
         };
 
         const previousGroupKey = state.currentGroupKey;
+        const previousDisplayName = state.currentDisplayName;
         let saved;
         if (state.currentBuyerId) {
             const { data, error } = await state.supabase
@@ -1230,7 +1275,7 @@ async function handleBuyerSave(event) {
             throw new Error('No se pudo guardar el cliente.');
         }
 
-        await updateMovementLinks(user.id, saved.id, previousGroupKey, saved.group_key || canonicalName);
+        await updateMovementLinks(user.id, saved.id, previousGroupKey, saved.group_key || canonicalName, previousDisplayName, displayName);
 
         fillBuyerForm(saved);
         await refreshHistoryCount();
