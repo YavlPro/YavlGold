@@ -2032,7 +2032,13 @@ async function openRevertToPendingWizard(sourceTab, sourceRow) {
     const sourceQtyResolved = resolvePendingQuantity(sourceRow);
     const splitDraftBase = computePendingSplitDraft(sourceRow, 'income');
     const splitUnitType = String(splitDraftBase.unitType || sourceQtyResolved.unitType || sourceRow?.unit_type || 'unidad').trim().toLowerCase();
-    const splitQtyTotal = toSafeLocaleNumber(splitDraftBase.qtyTotal ?? sourceQtyResolved.qtyTotal);
+    // Same kg-priority as handlePendingTransfer: when unit_type is 'kg',
+    // quantity_kg is the real magnitude; unit_qty may be a count of units
+    // (e.g. 1 sack) whose weight lives in quantity_kg.
+    const sourceKgQty = toSafeLocaleNumber(sourceRow?.quantity_kg);
+    const splitQtyTotal = splitUnitType === 'kg' && sourceKgQty !== null && sourceKgQty > 0
+        ? sourceKgQty
+        : toSafeLocaleNumber(splitDraftBase.qtyTotal ?? sourceQtyResolved.qtyTotal);
     const needsQtyTotalInput = !!splitUnitType && (splitQtyTotal === null || splitQtyTotal <= 0);
 
     const whoData = getWhoData(sourceTab, sourceRow, sourceRow?.concepto || '');
