@@ -1094,3 +1094,77 @@ La lógica de `computePendingSplitDraft` en la confirmación recibe `decision.qt
 | `apps/gold/agro/agro.js` | `handlePendingTransfer` | 7530 | `splitQtyTotal` usa `quantity_kg` cuando `unit_type = 'kg'` |
 
 **Resultado de build:** `pnpm build:gold` → ✅ sin errores.
+
+---
+
+## Sesión 2026-08-22 — Diagnóstico exhaustivo BUG 3: cierre de hipótesis
+
+**Evidencia de fila real (af08ed63):** `unit_qty=10, quantity_kg=10, unit_type='kg', split_meta=null, transfer_state='active'`.
+
+### Hipótesis cerradas
+
+| Hipótesis | Estado | Evidencia |
+|-----------|--------|-----------|
+| H2 — dato malo en DB | ❌ Descartada | Fila tiene `unit_qty=10, quantity_kg=10` — DB sana |
+| H4 — objeto en memoria sin campos | ❌ Descartada | `FACTURERO_CONFIG.pendientes.extraFields` incluye `unit_qty`, `quantity_kg`, `unit_type`. `PENDING_HISTORY_COLUMNS` también los incluye. `enrichFactureroItems` no los toca. |
+| H0 — deploy no llegó | ❌ Descartada | `git log` confirma commits `b3606d69` y `61abf9c6` en `origin/main`. Dist también tiene los campos. |
+
+### Causa raíz de la imagen de las 5:33 p.m.
+
+La captura fue tomada a las **17:33**. Fix B (`b3606d69`) fue commiteado a las **17:43** — 10 minutos después. La imagen muestra el código con Fix A solamente, sin Fix B. Vercel deploó el Fix B tras el push.
+
+### Estado del código actual
+
+Para la fila con `unit_qty=10, quantity_kg=10`:
+- `resolvePendingQuantity` devuelve `10` (Fix B innecesario para este caso, pero no daña)
+- `splitQtyTotal = 10`, modal abre con 10 en ambos campos, label "(DE 10 KG)", resumen "Se moverán 10 kg"
+
+Fix B cubre el caso real del bug: `unit_qty=1, quantity_kg=10` (1 saco de 10 kg). Con Fix B: `splitQtyTotal = 10`. Sin Fix B: `splitQtyTotal = 1`.
+
+### Fix A preservado
+
+`buildTransferMetaModal`: no se fija `qtyInput.max` estático cuando `forceQtyTotalInput=true`. Necesario para que el usuario pueda editar el total sin clamp.
+
+### Comportamiento correcto para sacos
+
+Fiado de `unit_qty=1, unit_type='saco', quantity_kg=null`: Fix B no aplica (`unit_type != 'kg'`). Modal dice "(DE 1 SACO)" — correcto.
+
+### Pendiente §5
+
+Cleanup de fiados QA ("qa test 2", "post", "Yobany") pendiente de autorización del usuario.
+
+---
+
+## Sesion 2026-08-22 — Cirugia BUG 3 paso 3: flujo hermano de reversion con prioridad kg
+
+### Objetivo
+
+Ejecutar el bloque de cirugia BUG 3 (causa raiz confirmada por comportamiento): verificar el select/objeto que alimenta el modal de transferencia, agregar los campos de cantidad si faltan, y auditar los flujos hermanos.
+
+### Diagnostico
+
+- **H4 cerrada por lectura de codigo:** el select ya trae los tres campos. `FACTURERO_CONFIG.pendientes.extraFields` incluye `unit_type`, `unit_qty`, `quantity_kg` (`agro.js:882`), ensamblados por `buildFactureroSelectFields` (`agro.js:4865-4888`). Los fallbacks single-fetch `AGRO_PENDING_TRANSFER_COLUMNS` / `AGRO_INCOME_TRANSFER_COLUMNS` / `AGRO_LOSS_TRANSFER_COLUMNS` (`agro.js:195-197`) tambien los incluyen. `enrichFactureroItems` solo hace spread.
+- **Flujo principal ya corregido en HEAD:** `handlePendingTransfer` usa `quantity_kg` cuando `unit_type='kg'` (`agro.js:7530-7537`, commit `b3606d69`) y `buildTransferMetaModal` no aplica clamp estatico con total editable (commit `61abf9c6`). La firma observada ("transfiere todo / muestra solo 1") corresponde al build previo al deploy de esos commits, consistente con el analisis horario 17:33 vs 17:43 ya asentado.
+- **Gap real encontrado en flujos hermanos:** `openRevertToPendingWizard` (`agro.js:~2032-2039`) usaba `splitDraftBase.qtyTotal ?? sourceQtyResolved.qtyTotal` sin prioridad kg. Para un pagado/perdida con `unit_type='kg'`, `unit_qty=1` (saco) y `quantity_kg=10`, el wizard de devolucion mostraria "(DE 1 KG)" — misma clase de BUG 3.
+- Flujos hermanos verificados sin gaps: `handleIncomeTransfer` y `handleLossTransfer` propagan `unit_type/unit_qty/quantity_kg` en todos sus payloads de destino y leen de caches/selects que incluyen los campos.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro.js` | fix quirurgico | `openRevertToPendingWizard`: prioridad `quantity_kg` sobre qty resuelta cuando `unit_type='kg'`, espejo del fix de `handlePendingTransfer`. Sin tocar `resolvePendingQuantity` ni `isMonetaryComplete`. |
+
+### Resultado de build
+
+`pnpm build:gold` OK (agent-guard OK, agent-report-check OK, vite build OK, check-llms OK, UTF-8 OK). Sin push.
+
+### QA sugerido
+
+- Con fiado limpio de 10 kg / 50,000 COP: transferencia total -> cobro de 10 kg; parcial de 5 kg -> cobro 5 kg + restante 5 kg (invariante en kg y monto).
+- Devolucion (Pagados -> Fiados) de un cobro nacido de fiado kg: wizard debe abrir con "(DE 10 KG)", no "(DE 1 KG)".
+- Cleanup §5 pendiente: par contaminado "qa test 2" (cobro 1 kg / monto completo).
+
+### NO se hizo
+
+- No se tocaron `resolvePendingQuantity` (prioridades intactas), `isMonetaryComplete`, ni la aritmetica monetaria.
+- Observacion residual fuera de alcance: ruta de auto-split por edicion con reduccion (`agro.js:~6647`) usa `resolvePendingQuantity` sin prioridad kg; queda documentada para decision futura.
