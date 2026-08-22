@@ -874,3 +874,72 @@ La ruta Fiados → Pagados podía resolver correctamente el `buyer_id` de un fia
 
 1. En un cliente canónico con un fiado legado, transferir solo un registro a Pagados y confirmar que el cliente no aparece en “Sin registro”.
 2. Repetir Pagados → Fiados y una ruta hacia Pérdidas; verificar que el destino conserva el mismo cliente canónico y que los demás registros no cambian de categoría.
+
+---
+
+## Sesión 2026-08-21
+
+**Objetivo:** Corregir bug donde al renombrar un cliente en el Facturero de Clientes, los movimientos históricos (fiados) seguían mostrando el nombre antiguo.
+
+**Diagnóstico:**
+- El cliente canónico en `agro_buyers` se actualizaba correctamente (`display_name`, `group_key`).
+- `updateMovementLinks` actualizaba `buyer_group_key` y `buyer_id` en las tablas de movimientos, pero **no** los campos de texto denormalizados.
+- Campo `cliente` en `agro_pending`: almacena el display name textual al momento de crear el fiado → no se actualizaba.
+- Campo `concepto` en `agro_pending`: almacena texto `"[base] - Cliente: [nombre]"` → no se actualizaba.
+- El título `"Fiado a qa test 1234"` y el concepto `"fiado - Cliente: qa test 1234"` provenían de esos campos sin actualizar.
+
+**Archivos modificados:**
+
+| Archivo | Tipo | Cambio |
+|---------|------|--------|
+| `apps/gold/agro/agrocompradores.js` | fix | `updateMovementLinks` extendida para recibir `oldDisplayName` / `newDisplayName` y actualizar `cliente` + `concepto` en `agro_pending` al renombrar |
+| `apps/gold/agro/agrocompradores.js` | fix | `handleBuyerSave` captura `previousDisplayName = state.currentDisplayName` antes de guardar y lo pasa a `updateMovementLinks` |
+
+**Detalles del fix:**
+1. Se agrega `const previousDisplayName = state.currentDisplayName` en `handleBuyerSave` antes del upsert.
+2. Se pasan `oldDisplayName` y `newDisplayName` como 5to y 6to parámetro a `updateMovementLinks`.
+3. Al final de `updateMovementLinks`, si los display names difieren, se ejecuta:
+   - Update directo de `cliente` en `agro_pending` donde `buyer_id` y `cliente = oldDisplay`.
+   - Fetch de filas donde `concepto ILIKE %oldDisplay%` → replace string en JS → update por id.
+4. Bloque try/catch no-blocking para que un fallo en el text-sync no rompa el rename principal.
+
+**Resultado de build:** `pnpm build:gold` → ✅ sin errores.
+
+**QA sugerido:**
+- Renombrar un cliente existente con fiados históricos → verificar que el detalle del cliente muestra el nuevo nombre en título ("Fiado a [nuevo nombre]") y concepto ("... - Cliente: [nuevo nombre]").
+- Crear un nuevo fiado → renombrar cliente → verificar que el nuevo fiado también refleja el nombre actualizado.
+- Renombrar cliente sin cambiar el nombre (guardar igual) → verificar que no se hacen updates innecesarios.
+
+**No se hizo:** no se modificaron `agro_income` ni `agro_losses` para text-sync (esos campos no tienen un `cliente` equivalente con el mismo patrón; solo `agro_pending` tiene el campo `cliente` + concepto con `- Cliente: [nombre]`).
+
+---
+
+## Sesión 2026-08-22 — Análisis post-fix rename + deuda estructural
+
+**Revisión por:** usuario (análisis manual post-sesión 2026-08-21)
+
+### Brecha 1 confirmada — Backfill pendiente de autorización
+
+El fix del 21-ago previene divergencia **futura** pero no repara la existente. Las filas con "qa test 1234" tienen `buyer_id` correcto pero `cliente` y `concepto` congelados. El filtro `cliente = nombreAntiguo` no matchea porque `nombreAntiguo` capturado hoy es "qa test 1", no "qa test 1234".
+
+**Acción requerida:** backfill puntual por `buyer_id` (no por nombre) que alinee `cliente` y `concepto` al `display_name` canónico actual. Requiere autorización expresa del usuario antes de ejecutarse — toca datos reales en producción.
+
+### Brecha 2 — Deuda estructural registrada
+
+La dualidad identidad canónica (`buyer_id`) vs campos de texto denormalizados (`cliente`, `concepto`) es la causa raíz estructural. Mientras la UI lea esos campos crudos en vez de resolver `display_name` desde `buyer_id` en lectura, cualquier superficie que consuma `concepto` crudo puede mostrar nombres congelados.
+
+**Patrón recurrente:** 9-ago fue transferencias (texto congelado vs identidad canónica), 21-ago fue renombres. La cura estructural es resolver la identidad en lectura, no propagar en escritura.
+
+**Deuda registrada:** resolver `display_name` desde `buyer_id` en `buildPendingLedgerRow()` y superficies equivalentes — candidato a sprint futuro, no urgencia hoy.
+
+### Cobertura de tablas — Verificación pendiente
+
+El fix cubre `agro_pending`. Verificar si `agro_income` y `agro_losses` embeben el nombre en `concepto` con el mismo patrón y necesitan propagación equivalente.
+
+### Gobernanza QA
+
+Cliente "qa test 1" / "qa test 1234" es data de prueba en cuenta real. Limpiar al cerrar este bloque de QA según §5 de `AGENTS.md`.
+
+### Skill potencial
+
+Este patrón tiene dos evidencias reales (9-ago transferencias, 21-ago renombres) y la forma reutilizable que §14 requiere. Candidato a `SKILLS/2026-08-22-DUALIDAD-CANONICO-DENORMALIZADO.md` — pendiente de autorización del usuario.
