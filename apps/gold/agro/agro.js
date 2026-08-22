@@ -7527,7 +7527,14 @@ async function handlePendingTransfer(itemId) {
         return SUPPORTED_CURRENCIES[raw] ? raw : 'COP';
     })();
     const splitUnitType = String(splitDraftBase.unitType || pendingQtyResolved.unitType || pending.unit_type || 'unidad').trim().toLowerCase();
-    const splitQtyTotal = toSafeLocaleNumber(splitDraftBase.qtyTotal ?? pendingQtyResolved.qtyTotal);
+    // When unit_type is 'kg', the canonical quantity for the transfer modal is
+    // quantity_kg (the actual weight). unit_qty in that context is a count of
+    // "units" (e.g. 1 sack) whose real magnitude is quantity_kg. Using unit_qty
+    // would show "1" in the modal instead of the true 10 kg.
+    const splitQtyTotalRaw = splitUnitType === 'kg' && toSafeLocaleNumber(pending?.quantity_kg) !== null && toSafeLocaleNumber(pending?.quantity_kg) > 0
+        ? toSafeLocaleNumber(pending.quantity_kg)
+        : toSafeLocaleNumber(splitDraftBase.qtyTotal ?? pendingQtyResolved.qtyTotal);
+    const splitQtyTotal = splitQtyTotalRaw;
     const needsQtyTotalInput = destination === 'income' && !!splitUnitType && (splitQtyTotal === null || splitQtyTotal <= 0);
     let splitConfig = null;
     if (destination === 'income') {
