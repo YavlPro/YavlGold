@@ -1117,6 +1117,9 @@ async function updateMovementLinks(userId, buyerId, oldGroupKey, nextGroupKey, o
     }
 
     await Promise.all(BUYER_MOVEMENT_TABLES.map(async (tableName) => {
+        // Pass 1: update all rows already linked by buyer_id — covers current and
+        // previously stale group_keys left by any earlier rename (no filter on
+        // buyer_group_key, so all linked rows converge to the new key in one shot).
         const linkedResult = await state.supabase
             .from(tableName)
             .update({
@@ -1130,6 +1133,8 @@ async function updateMovementLinks(userId, buyerId, oldGroupKey, nextGroupKey, o
 
         if (!safeOldGroupKey) return;
 
+        // Pass 2: legacy rows with no buyer_id but carrying the old group_key —
+        // link them to the buyer and update their key in a single update.
         const legacyResult = await state.supabase
             .from(tableName)
             .update({
