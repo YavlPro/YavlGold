@@ -943,3 +943,55 @@ Cliente "qa test 1" / "qa test 1234" es data de prueba en cuenta real. Limpiar a
 ### Skill potencial
 
 Este patrón tiene dos evidencias reales (9-ago transferencias, 21-ago renombres) y la forma reutilizable que §14 requiere. Candidato a `SKILLS/2026-08-22-DUALIDAD-CANONICO-DENORMALIZADO.md` — pendiente de autorización del usuario.
+
+---
+
+## Sesión 2026-08-22 — Fix BUG1 (Sin registro) + BUG2 (transferencia parcial)
+
+**Objetivo:** Dos bugs en Facturero de Clientes. Diagnóstico obligatorio antes de editar (§8.2).
+
+---
+
+### BUG 1 — Tab "Sin registro" sigue mostrando nombre antiguo tras rename
+
+**Diagnóstico:**
+- `openBuyerProfileInternal` (`agrocompradores.js` línea 1569) carga `state.currentGroupKey` desde `agro_buyers.group_key` — el nombre **ya actualizado**.
+- En `handleBuyerSave`, `previousGroupKey = state.currentGroupKey` captura el key actual, no el original.
+- `updateMovementLinks` recibe `oldGroupKey = "qa test 1"` (actual) y busca filas legacy con `.eq('buyer_group_key', 'qa test 1')`. Las filas congeladas del primer rename tienen `buyer_group_key = 'qa test 1234'` — nunca matcheadas.
+- El RPC devuelve esas filas fantasma que `mergeSummaryRowsWithBuyerDirectory` no puede fusionar con el buyer actual (keys distintos) y pasan el ghost-cleanup porque tienen totales > 0.
+
+**Causa raíz exacta:** `agrocompradores.js` → `updateMovementLinks` → la pasada `linkedResult` (Pass 1) ya tenía el filtro `.eq('buyer_id', safeBuyerId)` pero **solo actualizaba `buyer_group_key` de las filas ya vinculadas** — no tocaba filas con stale group_key de renombres anteriores. La pasada legacy no alcanzaba el key `"qa test 1234"` porque `safeOldGroupKey` era `"qa test 1"`.
+
+**Fix:** `agrocompradores.js` → `updateMovementLinks`.
+- Pass 1 reescrito: elimina el filtro por `buyer_group_key` — actualiza **todas** las filas con `buyer_id = safeBuyerId` al nuevo `safeNextGroupKey`, sin importar qué key stale tengan. Esto cierra el loop para cualquier rename previo que haya quedado incompleto.
+- Pass 2 (legacy, sin `buyer_id`) sin cambios estructurales.
+
+---
+
+### BUG 2 — Transferencia fiado→pagado con monto total mueve solo N unidades y deja residuo
+
+**Diagnóstico:**
+- `agro.js` → `computePendingSplitDraft` → cuando el usuario pone monto total en `transferTotal` pero `qtyTransfer < qtyTotal` (ej: qty=1 de total=10), `qtyLeft = 9 > 0` → `isPartial = true`.
+- El pending se actualiza con `monto = remainingAmount = 0` (correcto: sourceAmount - sourceAmount = 0) **pero** `unit_qty = 9` y `transfer_state` no se marca como `'transferred'` — queda visible en Fiados con 9 unidades y USD 0.
+- `isMonetaryComplete` nunca se evaluaba: la lógica veía `qtyLeft > 0` y declaraba parcial sin verificar si el dinero estaba agotado.
+
+**Causa raíz exacta:** `agro.js` → `computePendingSplitDraft` → `return` final: `isPartial: qtyLeft > 0` — sin blindaje para el caso "monto agotado pero unidades restantes".
+
+**Fix:** `agro.js` → `computePendingSplitDraft`.
+- Después de calcular `remainingAmount`, se evalúa `isMonetaryComplete = transferAmount >= sourceAmount - 1e-9`.
+- Si `isMonetaryComplete`, se fuerzan `effectiveQtyLeft = 0`, `effectiveRemainingAmount = 0`, `remainingKgQty = 0`.
+- El `return` usa `effectiveQtyLeft` e `isPartial: effectiveQtyLeft > 0` → `false` → el pending recibe `transfer_state: 'transferred'` y desaparece de Fiados correctamente.
+- Conserva: `monto_cobro + monto_fiado_restante == monto_fiado_original` ✓, `unit_qty` del income = `qtyTransfer` ✓.
+
+---
+
+**Archivos modificados:**
+
+| Archivo | Función | Cambio |
+|---------|---------|--------|
+| `apps/gold/agro/agrocompradores.js` | `updateMovementLinks` | Pass 1 elimina filtro por `buyer_group_key` — cubre stale keys de renombres anteriores |
+| `apps/gold/agro/agro.js` | `computePendingSplitDraft` | `isMonetaryComplete` fuerza `isPartial = false` cuando monto agotado |
+
+**Resultado de build:** `pnpm build:gold` → ✅ sin errores.
+
+**No se hizo:** no se tocó nada fuera del alcance; no se crearon clases CSS; no se añadió try/catch a la transferencia (falla atómica por diseño).
