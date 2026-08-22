@@ -1050,3 +1050,47 @@ Cuando `forceQtyTotalInput = true` (siempre en transferencia a Pagados), el camp
 **Resultado de build:** `pnpm build:gold` → ✅ sin errores.
 
 **No se hizo:** no se tocó `agrocompradores.js`, la lógica de montos (`isMonetaryComplete`), ni ningún otro flujo.
+
+---
+
+## Sesión 2026-08-22 — Fix BUG3 revisado: splitQtyTotal usa quantity_kg cuando unit_type = 'kg'
+
+**Síntoma confirmado:** modal muestra "CANTIDAD A TRANSFERIR (DE 1 KG)" y pre-rellena con 1 aunque el fiado tiene 10 kg / 50,000 COP. El fix anterior (buildTransferMetaModal) era necesario pero no suficiente — el problema de fondo estaba una capa arriba.
+
+**Causa raíz real (diagnóstico definitivo):**
+
+`agro.js` → `handlePendingTransfer` — línea donde se calcula `splitQtyTotal`:
+
+```js
+const splitQtyTotal = toSafeLocaleNumber(splitDraftBase.qtyTotal ?? pendingQtyResolved.qtyTotal);
+```
+
+`splitDraftBase.qtyTotal` viene de `computePendingSplitDraft(pending, destination)` → `resolvePendingQuantity(pending)`. Esta función tiene prioridad: `unit_qty > split_meta.qty_total > quantity_kg`. Para este fiado: `unit_qty = 1` (1 unidad/saco) pero `quantity_kg = 10` (el peso real). `resolvePendingQuantity` retorna `1`. Todo `splitConfig` se construye con `qtyTotal = 1`, `defaultQty = 1`. El modal abre con `qtyTotalInput.value = "1"`, `qtyInput.value = "1"`, label "(DE 1 KG)".
+
+El fix anterior de `buildTransferMetaModal` eliminó el `qtyInput.max` estático — correcto — pero el valor inicial del input seguía siendo `1`. El usuario tenía que editar manualmente ambos campos.
+
+**Fix aplicado — `agro.js` → `handlePendingTransfer`:**
+
+Cuando `splitUnitType = 'kg'` y el pending tiene `quantity_kg > 0`, usar `quantity_kg` como `splitQtyTotal` en lugar del valor de `resolvePendingQuantity`:
+
+```js
+const splitQtyTotalRaw = splitUnitType === 'kg'
+    && toSafeLocaleNumber(pending?.quantity_kg) > 0
+    ? toSafeLocaleNumber(pending.quantity_kg)   // 10 — la fuente correcta
+    : toSafeLocaleNumber(splitDraftBase.qtyTotal ?? pendingQtyResolved.qtyTotal);
+```
+
+Resultado: `splitQtyTotal = 10`. El modal se abre con:
+- `CANTIDAD TOTAL FIADA = 10` (correcto, ya lo era)
+- `CANTIDAD A TRANSFERIR (DE 10 KG) = 10` (ahora correcto)
+- Resumen: "Se moverán 10 kg a Pagados"
+
+La lógica de `computePendingSplitDraft` en la confirmación recibe `decision.qtyTotal = 10` desde el input — consistente.
+
+**Archivos modificados:**
+
+| Archivo | Función | Línea aprox | Cambio |
+|---------|---------|-------------|--------|
+| `apps/gold/agro/agro.js` | `handlePendingTransfer` | 7530 | `splitQtyTotal` usa `quantity_kg` cuando `unit_type = 'kg'` |
+
+**Resultado de build:** `pnpm build:gold` → ✅ sin errores.
