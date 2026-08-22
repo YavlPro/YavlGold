@@ -995,3 +995,58 @@ Este patrón tiene dos evidencias reales (9-ago transferencias, 21-ago renombres
 **Resultado de build:** `pnpm build:gold` → ✅ sin errores.
 
 **No se hizo:** no se tocó nada fuera del alcance; no se crearon clases CSS; no se añadió try/catch a la transferencia (falla atómica por diseño).
+
+---
+
+## Sesión 2026-08-22 — Fix BUG3: modal transferencia label "(DE 1 KG)" y clamp incorrecto
+
+**Objetivo:** El modal "Transferir a Pagados" muestra "(DE 1 KG)" cuando el fiado tiene 10 kg, pre-rellena el qty input con 1, y el clamp impide escribir 10.
+
+### Diagnóstico §8.2
+
+**H2 descartada:** el campo `CANTIDAD TOTAL FIADA` muestra el valor correcto desde DB (`qtyTotalInitial` lee `configuredQtyTotal = splitOptions.qtyTotal`). El dato en DB está bien.
+
+**Causa raíz — dos fuentes de verdad en conflicto:**
+
+`agro.js` → `buildTransferMetaModal` → bloque del `qtyInput` (antes del fix, línea ~7148):
+
+```js
+// Fuente 1: effectiveQtyTotal = configuredQtyTotal = splitOptions.qtyTotal
+//           → valor estático resuelto ANTES de que el usuario toque el modal
+qtyInput.max = String(roundNumeric(effectiveQtyTotal, 2));  // fija max en HTML inicial
+qtyLabel.textContent = `... (de ${formatSplitQuantity(effectiveQtyTotal, ...)})`;  // label estático
+```
+
+```js
+// Fuente 2: resolveQtyTotalDraft() en updateSplitPreview
+//           → lee qtyTotalInput.value (campo editable) en tiempo de ejecución
+const { qtyTotalRaw } = resolveQtyTotalDraft();  // valor dinámico, solo corre tras interacción
+```
+
+Cuando `forceQtyTotalInput = true` (siempre en transferencia a Pagados), el campo `qty-total` es editable. El usuario puede teclear el total real. Pero el `qtyInput.max` y el label ya fueron fijados con `effectiveQtyTotal` (la fuente estática) al construir el HTML. Si `effectiveQtyTotal = 1` (porque `pending.unit_qty = 1` aunque `quantity_kg = 10`), el label muestra "(DE 1 KG)" y el navegador clampea cualquier valor > 1 en el `qtyInput` al máximo permitido = 1.
+
+`updateSplitPreview` actualizaría el `qtyInput.max` correctamente al dispararse — pero solo se dispara por eventos `input`/`blur` del `qtyTotalInput`. Hasta que el usuario toca ese campo, el clamp estático de `1` bloquea la edición del qty input.
+
+**Archivo / función / línea:**
+- `agro.js` → `buildTransferMetaModal` → `qtyInput.max = String(roundNumeric(effectiveQtyTotal, 2))` (antes del fix ~línea 7157)
+- `agro.js` → `buildTransferMetaModal` → label con `formatSplitQuantity(effectiveQtyTotal, ...)` (antes del fix ~línea 7138)
+
+### Fix
+
+`agro.js` → `buildTransferMetaModal` — introducida variable `qtyTotalIsEditable`:
+
+- Si `qtyTotalIsEditable = forceQtyTotalInput || needsQtyTotalInput` → **no se fija `qtyInput.max`** en la construcción del HTML ni se escribe el label con el valor estático.
+- El `qtyInput.value` se pre-rellena con `defaultQty` (o `effectiveQtyTotal` como fallback) **sin clamp de max** — permite al usuario escribir el valor real.
+- El label se inicializa sin total ("Cantidad a transferir") — `updateSplitPreview` lo actualiza correctamente en cuanto lee el `qtyTotalInput`.
+- Si `qtyTotalIsEditable = false` (total fijo, no editable): comportamiento anterior sin cambios.
+- `isMonetaryComplete` y lógica de montos no tocadas.
+
+**Archivos modificados:**
+
+| Archivo | Función | Cambio |
+|---------|---------|--------|
+| `apps/gold/agro/agro.js` | `buildTransferMetaModal` | `qtyInput.max` y label no se fijan con `effectiveQtyTotal` cuando el qty-total es editable |
+
+**Resultado de build:** `pnpm build:gold` → ✅ sin errores.
+
+**No se hizo:** no se tocó `agrocompradores.js`, la lógica de montos (`isMonetaryComplete`), ni ningún otro flujo.
