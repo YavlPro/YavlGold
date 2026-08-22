@@ -7128,15 +7128,32 @@ function buildTransferMetaModal(options = {}) {
             let defaultQty = toSafeLocaleNumber(splitOptions.defaultQty);
             if (defaultQty === null) defaultQty = effectiveQtyTotal;
 
+            // When the qty-total field is editable (forceQtyTotalInput), the user
+            // defines the real total at runtime. Using effectiveQtyTotal (the static
+            // value from splitOptions) as the source-of-truth for both the label and
+            // qtyInput.max creates a two-source conflict: the static value clamps
+            // the input before the user can update the qty-total field.
+            // Fix: when qty-total is editable, defer label and max to updateSplitPreview
+            // which reads the live input value. Only use effectiveQtyTotal when it is
+            // the fixed, authoritative total (no editable override).
+            const qtyTotalIsEditable = forceQtyTotalInput || needsQtyTotalInput;
+            // The effective cap for the qty input at build time: if the total is
+            // editable we cannot know the real max yet — leave it unconstrained so
+            // the browser does not clamp user input before updateSplitPreview fires.
+            const staticQtyMax = qtyTotalIsEditable ? null : effectiveQtyTotal;
+
             const qtyGroup = document.createElement('div');
             qtyGroup.className = 'input-group';
             const qtyLabel = document.createElement('label');
             qtyLabel.className = 'input-label';
             qtyLabel.id = 'pending-transfer-qty-label';
-            if (effectiveQtyTotal !== null) {
+            if (!qtyTotalIsEditable && effectiveQtyTotal !== null) {
+                // Fixed total: safe to show in label immediately.
                 const qtyTotalText = formatSplitQuantity(effectiveQtyTotal, splitOptions.unitType);
                 qtyLabel.textContent = `${splitOptions.quantityLabel || 'Cantidad a transferir'} (de ${qtyTotalText})`;
             } else {
+                // Editable total: label will be updated by updateSplitPreview once
+                // the user confirms or the initial preview fires.
                 qtyLabel.textContent = splitOptions.quantityLabel || 'Cantidad a transferir';
             }
             qtyLabel.setAttribute('for', 'pending-transfer-qty');
@@ -7145,18 +7162,26 @@ function buildTransferMetaModal(options = {}) {
             qtyInput.id = 'pending-transfer-qty';
             qtyInput.className = 'styled-input';
             qtyInput.min = String(minQtyValue);
-            if (effectiveQtyTotal !== null) {
+            if (staticQtyMax !== null) {
+                // Fixed total: clamp default and set max immediately.
                 const clampedDefaultQty = Math.max(
                     minQtyValue,
                     Math.min(
-                        effectiveQtyTotal,
-                        roundNumeric(defaultQty ?? effectiveQtyTotal, 2)
+                        staticQtyMax,
+                        roundNumeric(defaultQty ?? staticQtyMax, 2)
                     )
                 );
-                qtyInput.max = String(roundNumeric(effectiveQtyTotal, 2));
+                qtyInput.max = String(roundNumeric(staticQtyMax, 2));
                 qtyInput.value = formatQuantityValue(clampedDefaultQty, qtyPrecision);
-            } else if (defaultQty !== null && defaultQty > 0) {
-                qtyInput.value = formatQuantityValue(defaultQty, isIntegerLike(defaultQty) ? 0 : 2);
+            } else {
+                // Editable total: set value to the best known default without
+                // clamping — updateSplitPreview will set the correct max and
+                // re-clamp once it reads the live qty-total input.
+                if (defaultQty !== null && defaultQty > 0) {
+                    qtyInput.value = formatQuantityValue(defaultQty, qtyPrecision);
+                } else if (effectiveQtyTotal !== null && effectiveQtyTotal > 0) {
+                    qtyInput.value = formatQuantityValue(effectiveQtyTotal, qtyPrecision);
+                }
             }
             qtyInput.step = qtyStep;
             qtyInput.style.paddingLeft = '1rem';
