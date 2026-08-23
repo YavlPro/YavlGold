@@ -7489,6 +7489,15 @@ function openTransferMetaModal(options = {}) {
     });
 }
 
+function resolvePendingTransferQuantity(pending) {
+    const unitType = String(pending?.unit_type || '').trim().toLowerCase();
+    const kgQty = toSafeLocaleNumber(pending?.quantity_kg);
+    if (unitType === 'kg' && kgQty !== null && kgQty > 0) {
+        return { qtyTotal: kgQty, unitType, hasQty: true };
+    }
+    return resolvePendingQuantity(pending);
+}
+
 async function handlePendingTransfer(itemId) {
     let pending = pendingCache.find((item) => String(item.id) === String(itemId));
     if (!pending) {
@@ -7500,9 +7509,12 @@ async function handlePendingTransfer(itemId) {
     // was populated (e.g. cartera viva context). If both unit_qty and
     // quantity_kg are missing, refetch the authoritative row so the transfer
     // modal resolves the real qtyTotal instead of falling back to 1.
+    const cachedUnitType = String(pending.unit_type || '').trim().toLowerCase();
     const cachedUnitQty = toSafeLocaleNumber(pending.unit_qty);
     const cachedKgQty = toSafeLocaleNumber(pending.quantity_kg);
-    if (cachedUnitQty === null && cachedKgQty === null) {
+    const cacheMissingQuantities = (cachedUnitQty === null && cachedKgQty === null)
+        || (cachedUnitType === 'kg' && cachedKgQty === null);
+    if (cacheMissingQuantities) {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
@@ -7551,8 +7563,8 @@ async function handlePendingTransfer(itemId) {
 
     const pendingWhoData = getWhoData('pendientes', pending, pending.concepto || '');
     const defaultTransferConcept = pendingWhoData.concept || pending.concepto || (destination === 'income' ? 'Pagado' : 'Pérdida');
-    const splitDraftBase = computePendingSplitDraft(pending, destination);
-    const pendingQtyResolved = resolvePendingQuantity(pending);
+    const pendingQtyResolved = resolvePendingTransferQuantity(pending);
+    const splitDraftBase = computePendingSplitDraft(pending, destination, { qtyTotal: pendingQtyResolved.qtyTotal });
     const pendingCurrencyLabel = (() => {
         const raw = String(pending?.currency || '').trim().toUpperCase();
         return SUPPORTED_CURRENCIES[raw] ? raw : 'COP';
@@ -7644,7 +7656,11 @@ async function handlePendingTransfer(itemId) {
         return;
     }
 
-    const splitDraft = computePendingSplitDraft(pending, destination, decision);
+    const mergedDecision = {
+        ...decision,
+        qtyTotal: toSafeLocaleNumber(decision?.qtyTotal) ?? pendingQtyResolved.qtyTotal
+    };
+    const splitDraft = computePendingSplitDraft(pending, destination, mergedDecision);
     if (splitDraft.error) {
         notifyFacturero(`⚠️ ${splitDraft.error}`, 'warning');
         return;
@@ -7679,7 +7695,7 @@ async function handlePendingTransfer(itemId) {
         }
     } else {
         // Mantener visibilidad de cantidad incluso si no se pudo activar el split por falta de unidad o total util.
-        const fallbackQty = resolvePendingQuantity(pending);
+        const fallbackQty = pendingQtyResolved;
         if (fallbackQty.hasQty) {
             summaryRows.push({
                 label: 'Cantidad',
