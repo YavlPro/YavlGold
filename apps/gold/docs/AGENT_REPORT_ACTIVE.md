@@ -1364,3 +1364,61 @@ Hard-reload; modal PRISTINO "(DE 10 KG)" con default 10 en ambos destinos (Pagad
 ### NO se hizo
 
 Sin cambios en Supabase/migraciones. Sin push. Sin commit. Sin QA autenticado local (fuera de alcance segun consigna).
+
+---
+
+## Sesion 2026-08-23 (III) — BUG 3 Ronda 3: causa raiz REAL encontrada — formatQuantityValue corrompia enteros terminados en 0 (10 -> "1")
+
+### Objetivo
+
+Trazas obligatorias de la ronda 3 (blur handler, origen de qtyTotalRaw, fila SQL de oli) y fix de convergencia real.
+
+### Paso 0 — Verdad de deploy (re-verificada por contenido)
+
+Monolito servido actual: entry `agro-BFHjeYIq.js` -> **`agro-CTjRX3bM.js`** (520,427 bytes; mismo tamano que el build local de `c0e76c74`, diff solo drift de entorno). Marcadores en el texto servido: refetch ronda 1 x1 (`from("agro_pending")...maybeSingle`), convergencia ronda 2 presente (spread mergedDecision + helper kg-aware + config Pagados `qtyTotal:h,defaultQty:h` con prioridad quantity_kg). El codigo servido ES el de HEAD.
+
+### Traza 1 — quien reescribe el input en blur/change (citado)
+
+`openTransferMetaModal` -> `updateSplitPreview` (agro.js:7324-7402): listeners `input/blur` sobre `#pending-transfer-qty-total`, `#pending-transfer-qty` y `#pending-transfer-total` (:7404-7415), llamada inicial :7416. Reescritura del valor: :7369-7371 `if (qtyInput && document.activeElement !== qtyInput) qtyInput.value = formatQuantityValue(qtyMove, qtyPrecision)` tras validar `resolveQtyMoveDraft` (:7303-7334, clamp `normalized > qtyTotalRaw -> invalido`). No existe listener dedicado adicional (verificado por grep: ids pending-transfer-* solo en agro.js).
+
+### Traza 2 — de donde sale qtyTotalRaw=1 con campo superior "10" (citado)
+
+`resolveQtyTotalDraft` (agro.js:7291-7301; minificado servido `d=()=>{const b=B(r?.qtyTotal),g=B(o?.value)...`): editable -> draft (valor del propio `#pending-transfer-qty-total`) gana sobre fixed. NO hay segundo input oculto ni elemento distinto: el campo superior visible ES `#pending-transfer-qty-total` (builder unico :7111-7129). El "1" no venia de otra fuente: **el `.value` del propio campo ya era literalmente "1"** porque el prefill y toda reescritura pasan por el formatter corrupto (ver causa raiz).
+
+### Traza 3 — fila SQL de oli: BLOQUEADA por entorno (declarada)
+
+Password grant Supabase ahora exige captcha: `POST /auth/v1/token?grant_type=password` -> `400 captcha_failed`. MCP Supabase: `Unauthorized (sin SUPABASE_ACCESS_TOKEN)`. Lectura anon REST: `200 []` (RLS). La fila no pudo leerse desde esta sesion; la causa raiz hallada vuelve innecesaria la lectura (reproduce el repro con fila sana 10/10/kg).
+
+### Causa raiz REAL (una linea, citada)
+
+`formatQuantityValue` (agro.js:3771-3782): `const cleaned = fixed.replace(/\.?0+$/, '')` (:3777) — con `\.?` OPCIONAL, el regex se come ceros SIGNIFICATIVOS de enteros terminados en 0. Probado por ejecucion: `(10)->"1"`, `(100)->"1"`, `(20)->"2"`, `(30,0)->"3"`; decimales reales intactos (`2.5->"2.5"`).
+
+Cadena exacta del repro oli (fila sana 10/10/kg, codigo ronda 2):
+1. Prefill campo superior `:7126 formatQuantityValue(qtyTotalInitial, isIntegerLike?0:2)` = "1" -> al abrir, draft=parse("1")=1 -> label "(DE 1 KG)" (:7346-7348), "En Fiados hay 1 kg disponibles." (:7364-7366), default cantidad = "1" (:7199).
+2. Operador tipea 10 en el campo superior/cantidad; blur dispara updateSplitPreview -> reescritura :7369-7371 vuelve a formatear 10 -> **"1"** ("se reescribe a 1").
+3. Resumen "Cantidad total fiada: 1 kg" (:7684 via formatSplitQuantity :3803-3811) — misma funcion.
+Todas las fuentes YA leian el mismo valor resuelto (10); el formatter lo corrompia al pintarlo y al re-parsear lo pintado. Por eso las rondas 1-2 (logica de resolucion) no podian curar el sintoma.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro.js` | fix quirurgico (1 linea logica) | `formatQuantityValue` :3776-3779: solo recortar ceros cuando hay punto decimal (`fixed.includes('.') ? fixed.replace(/0+$/,'').replace(/\.$/,'') : fixed`). Enteros preservados: 10->"10", 100->"100", 20->"20"; decimales siguen igual: 2.50->"2.5", 0.50->"0.5", 1.0->"1". |
+
+Alcance del fix: funcion pura compartida (transfer wizard, revert wizard, income/loss, cards, resumenes) — todos los llamadores quieren display fiel; ninguno puede depender del valor corrupto. Convergencia real cumplida: clamp, label, default y resumen ya leen el mismo valor Y ahora lo pintan igual.
+
+### No se toco
+
+`isMonetaryComplete`, espejo de revert (logica), wizard/builders, `resolvePendingQuantity`, `computePendingSplitDraft`, fixes de rondas 1-2.
+
+### Resultado de build
+
+`node --check agro.js` OK. `pnpm build:gold` OK completo (guard + report-check + vite + check-llms + UTF-8); monolito local nuevo `agro-8RvZzlp9.js`. Sin push; sin commitear a la espera de autorizacion del operador.
+
+### QA post-deploy (operador, online)
+
+Hard-reload; chunk servido distinto a `agro-CTjRX3bM.js`. Modal pristino "(DE 10 KG)" con default 10 sin editar nada; blur de "10" conserva "10"; total -> cobro 10 kg / 50,000 COP; parcial 5 kg conserva invariante (kg y monto); devolucion "(DE 10 KG)". Verificar ademas cards/wizards que muestren cantidades enteras terminadas en 0 (antes colapsaban a su primer digito). Cleanup §5 de oli al cerrar.
+
+### NO se hizo
+
+Sin cambios en Supabase/migraciones ni docs canonicos. Sin push. Sin commit. Fila de oli no leida (bloqueos trazados arriba); sobrante: ningun cambio de logica fuera del formatter.
