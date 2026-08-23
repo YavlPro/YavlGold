@@ -1271,3 +1271,41 @@ Nota de sesion previa: H-A (bundle viejo) quedo descartada — el monolito servi
 ### QA post-deploy (operador)
 
 Fiado limpio 10 kg -> modal "(DE 10 KG)" sin editar; transferencia total -> cobro 10 kg; devolucion -> "(DE 10 KG)"; parcial 5 kg conserva invariante (cobro + restante == original en kg y monto). Cleanup §5 de "compa" y su cobro al cerrar.
+
+---
+
+## Sesion 2026-08-23 (I) — BUG 4: chip "Facturero de Clientes abierto" solo en produccion/finalizado con fiados > 0
+
+### Objetivo
+
+Aplicar regla de negocio del operador: el chip SOLO se renderiza si `(status === 'produccion' || status === 'finalizado') && fiadosPendientes > 0`. En otro caso se oculta (sin renombrar ni crear variante "cerrado").
+
+### Diagnostico
+
+Grep de `"Facturero de Clientes abierto"` / `portfolio-badge` en `apps/gold/`: el chip vive SOLO en `apps/gold/agro/agrociclos.js`. Superficies afectadas (todas via `renderCard`): cards de Mis cultivos en tab Activos (`initCiclos` <- `buildActiveCycleCardsData`, `estado ∈ {produccion,siembra,cosecha}`) y grupos Finalizados/Perdidos (`renderFinishedCycles` <- `buildFinishedCycleCardsData`, `estado ∈ {finalizado,perdido}`). Detalle de cultivo: sin chip (verificado). Causa raiz doble: (1) la rama global `readBuyerPortfolioState().hasActivePending` pintaba "abierto" en TODAS las cards cuando existia cualquier deuda pendiente globalmente (por eso Sembrado/Invirtiendo y Perdidos mostraban chip), y (2) la decision ignoraba el estado del ciclo.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/agrociclos.js` | fix quirurgico | `resolveCarteraVivaStatus(estado, fiadosUsd)`: gate `(statusClassFor(estado) === 'status-produccion' \|\| 'status-finalizado') && fiadosUsd > 0`; devuelve `null` en otro caso. Eliminada la rama global y la emision de tone `'closed'` (la variante "cerrado" deja de renderizarse). |
+| `apps/gold/agro/agrociclos.js` | limpieza | Borrada `readBuyerPortfolioState()` (quedo huerfana al quitar su unico call site). |
+| `apps/gold/agro/agrociclos.js` | wiring | Call sites actualizados: `resolveAllPortfolioBadges` pasa `(ciclo?.estado, ciclo?.fiadosUsd)`; `syncOperationalPortfolioBadges` lee nuevo atributo `data-crop-status`; `<article>` en `renderCard` ahora emite `data-crop-status="${statusClass}"` para que el re-sync por eventos aplique el mismo gate sin queries nuevas. |
+
+No se agregaron queries ni se tocaron logica de estados, desglose financiero, labels ni CSS (`agrociclos.css` intacto; `.portfolio-badge--closed` queda muerto pero inofensivo). Los window events de re-sync se conservan como resync idempotente.
+
+### Resultado de build
+
+`node --check agrociclos.js` OK. `pnpm build:gold` OK (agent-guard + report-check + vite + check-llms + UTF-8). Sin push; sin commitear a la espera de autorizacion del operador.
+
+### QA post-cambio (operador, hard-reload)
+
+Maiz 190826 (Sembrado/Invirtiendo) -> sin chip; Maiz 090226 (Finalizado/Ganado) -> sin chip; caraota roja (Finalizado/Recuperando) -> chip visible; cualquier Perdido -> sin chip; ciclo en produccion con fiados -> chip visible. Verificar ademas que desglose financiero y estados semanticos (Ganado/Recuperando/Invirtiendo/Equilibrio) siguen intactos, desktop y mobile <=480px.
+
+### Consecuencias documentadas de la regla
+
+Ciclos activos en siembra o cosecha con fiados > 0 quedan SIN chip (regla literal del operador, no reinterpretada).
+
+### NO se hizo
+
+Cero cambios fuera de `agrociclos.js` (+ este asiento). No push. No commit.
