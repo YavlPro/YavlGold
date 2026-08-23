@@ -7490,10 +7490,35 @@ function openTransferMetaModal(options = {}) {
 }
 
 async function handlePendingTransfer(itemId) {
-    const pending = pendingCache.find((item) => String(item.id) === String(itemId));
+    let pending = pendingCache.find((item) => String(item.id) === String(itemId));
     if (!pending) {
         notifyFacturero('No se encontró el fiado seleccionado.', 'warning');
         return;
+    }
+
+    // The cached row can lack quantity fields depending on when/how the cache
+    // was populated (e.g. cartera viva context). If both unit_qty and
+    // quantity_kg are missing, refetch the authoritative row so the transfer
+    // modal resolves the real qtyTotal instead of falling back to 1.
+    const cachedUnitQty = toSafeLocaleNumber(pending.unit_qty);
+    const cachedKgQty = toSafeLocaleNumber(pending.quantity_kg);
+    if (cachedUnitQty === null && cachedKgQty === null) {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: freshRow, error: freshError } = await supabase
+                    .from('agro_pending')
+                    .select(AGRO_PENDING_TRANSFER_COLUMNS)
+                    .eq('id', itemId)
+                    .eq('user_id', user.id)
+                    .maybeSingle();
+                if (!freshError && freshRow) {
+                    pending = freshRow;
+                }
+            }
+        } catch (_err) {
+            // Keep cached object on any refetch failure.
+        }
     }
 
     if (isPendingTransferred(pending)) {
