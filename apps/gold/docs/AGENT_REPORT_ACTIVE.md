@@ -1168,3 +1168,106 @@ Ejecutar el bloque de cirugia BUG 3 (causa raiz confirmada por comportamiento): 
 
 - No se tocaron `resolvePendingQuantity` (prioridades intactas), `isMonetaryComplete`, ni la aritmetica monetaria.
 - Observacion residual fuera de alcance: ruta de auto-split por edicion con reduccion (`agro.js:~6647`) usa `resolvePendingQuantity` sin prioridad kg; queda documentada para decision futura.
+
+---
+
+## Sesion 2026-08-22 (II) — Traza BUG 3 lectura 2/3: sintoma persiste con deploy vivo
+
+### Objetivo
+
+Trazar sin editar el camino real del click Transferir en #view=facturero-clientes -> detalle "qa test pro", citando id pasado, objeto recibido y select efectivo.
+
+### Diagnostico (traza con archivo+funcion+linea)
+
+1. **Camino del click:** `agro-facturero-clientes-detail.js:1269-1277` crea la accion `btn-transfer-pending` con `sourceTab='pendientes'`, `sourceId=row.source_id`; `detail.js:1206-1208` la renderiza como `data-tab`/`data-id` (sin action). El listener delegado es document-level (`agro.js:8723`) y despacha en `agro.js:8784-8792` -> `handlePendingTransfer(source_id)`. Log existente en `agro.js:8790` imprime `{tabName, itemId}`.
+2. **Objeto recibido:** `agro.js:7493` resuelve contra `pendingCache`. `pendingCache` se pobla UNICAMENTE en `agro.js:5325` desde `refreshFactureroHistory('pendientes')`; el modulo de clientes NO tiene query propia hacia ese cache.
+3. **Select efectivo:** `fetchFactureroRowsByTab` (`agro.js:5067`) usa `buildFactureroSelectFields` (`agro.js:4871`) que incluye `unit_type/unit_qty/quantity_kg` via extraFields (`agro.js:888`). Los tres campos viajan en el select.
+4. **Prioridad kg:** `agro.js:7540-7543` lee `pending?.quantity_kg` en snake_case directo de Supabase (sin camelCase intermedio). Bundle dist local verificado: contiene ambas ramas kg (`handlePendingTransfer` + espejo en `openRevertToPendingWizard`), hashes coherentes con HEAD.
+
+### Lectura aplicable
+
+Las trazas 2 y 3 estan sanas por codigo y bundle. Con deploy vivo confirmado, la unica lectura que explica "(DE 1 KG)" es la 1: **el objeto recibido es otra fila distinta de 56598cca** (o su copia cacheada). Hipotesis principal: la card/cronologia del cliente agrega multiples pendings por buyer_group_key y el click cayo en una fila QA residual con `unit_qty=1` + `unit_type='kg'` + `quantity_kg=null` (o `split_meta.qty_total=1`), que produce "(DE 1 KG)" correctamente segun sus datos.
+
+### Verificacion runtime propuesta (cero edicion)
+
+El log existente `agro.js:8790` permite cerrar la traza sin tocar codigo:
+1. DevTools Console, filtrar `Facturero transfer click`, pulsar Transferir y leer `itemId`. Comparar contra `56598cca`.
+2. En consola: `pendingCache.find(i => String(i.id) === '<itemId>')` e inspeccionar `unit_qty/quantity_kg/unit_type/split_meta`.
+3. Si `itemId != 56598cca` -> bug de datos (fila residual): fix = cleanup §5, sin cambio de codigo.
+4. Si `itemId == 56598cca` y el objeto trae 10/10/kg -> capturar el hash del asset cargado y comparar contra dist local (deploy-lag real).
+
+### Fix minimo propuesto
+
+Ningun cambio de codigo hasta cerrar paso 1-2. La cirugia de codigo esta completa y desplegada; el residuo observable apunta a datos QA contaminados cuya limpieza ya esta autorizada-pendiente en §5.
+
+### Resultado de build
+
+No aplicable (sesion de lectura pura). Sin push; asiento dejado sin commitear a la espera de la verificacion runtime.
+
+### NO se hizo
+
+Cero ediciones de codigo. Sin consultas DB (token Supabase MCP no disponible en esta sesion).
+
+---
+
+## Sesion 2026-08-22 (III) — Ronda final BUG 3: H-A confirmada, el bundle servido no es HEAD
+
+### Objetivo
+
+Cerrar el diagnostico con los chequeos decisivos: verdad de hash del bundle servido vs dist de HEAD.
+
+### Diagnostico (causa raiz confirmada)
+
+**H-A confirmada por tres senales convergentes — el despliegue que sirve la app NO contiene el codigo de HEAD:**
+
+1. **Hash del chunk:** el sitio servido carga `agro-CDXFrTSz.js`; el build local desde HEAD `1a0ea1ff` produce `agro-B7AHYulr.js` (`apps/gold/dist/assets/`, arbol limpio salvo docs). `agro-CDXFrTSz.js` no existe en el dist local. Hash Vite = contenido: hash distinto = contenido distinto.
+2. **Log ausente en runtime:** `Facturero transfer click` existe desde `a6a202b5` (2026-02-03) y esta presente 1 vez en el bundle local. En HEAD es la UNICA entrada a `handlePendingTransfer` (caller unico `agro.js:8792`; verificado con rg sobre todo apps/gold sin docs/dist). El wizard observado ("Transferir a Pagados" + split "(DE 1 KG)" + "Cantidad total fiada" en confirmacion) solo lo construye `handlePendingTransfer` (`agro.js:7587`, resumen `7643`; el otro sitio homonimo `agro.js:8486` es perdida->pagados sin split). Si el modal abrio, esa funcion corrio -> el log debio imprimirse. No imprimio -> el codigo servido no es HEAD.
+3. **Sintoma = logica pre-fix:** qtyTotal=1 con fila sana es exactamente la prioridad `unit_qty > quantity_kg` previa a `b3606d6`.
+
+H-B queda descartada como causa principal: no existe ningun segundo camino al wizard (un solo caller; bridge `_agroFactureroBridge` en `agro.js:6236` no expone handlePendingTransfer; el interceptor capture de `agro-facturero-clientes-view.js:3579-3634` no captura `.btn-transfer-pending`, solo income/loss/revert).
+
+### Fix minimo
+
+Ninguno en codigo. El cierre es deploy/infra: re-desplegar y verificar que Vercel sirva un chunk cuyo contenido incluya `Facturero transfer click` y ambas ramas kg. Verificacion post-deploy sugerida para el operador:
+`fetch(document.querySelector('script[src*="assets/agro-"]').src).then(r=>r.text()).then(t=>console.log('log:', t.includes('Facturero transfer click'), '| kg:', t.includes('quantity_kg')))`
+Debe imprimir `log: true`. El nombre del chunk debe coincidir con un rebuild de HEAD.
+
+### Resultado de build
+
+`pnpm build:gold` OK (guard + report-check + vite + llms + UTF-8). Sin push. Sin commitear a la espera de autorizacion.
+
+### NO se hizo
+
+Cero ediciones de codigo. No se tocaron docs canonicos. No push.
+
+---
+
+## Sesion 2026-08-22 (IV) — Cirugia final BUG 3: refetch single cuando pendingCache no trae cantidades
+
+### Objetivo
+
+Aplicar el fix minimo autorizado: enriquecer handlePendingTransfer con fetch single por id cuando el objeto cacheado carece de campos de cantidad.
+
+### Causa raiz (confirmada por evidencia del operador)
+
+El log `Facturero transfer click` (agro.js:~8796) imprime el id correcto de una fila sana (`d7d86bb1...`: unit_qty=10, quantity_kg=10, unit_type='kg', split_meta=null), pero el modal abre con total=1. Conclusion: el objeto devuelto por `pendingCache.find(id)` no trae unit_qty/quantity_kg; resolvePendingQuantity cae al fallback y needsQtyTotalInput fuerza total=1. El gap esta en la frescura/contenido del cache poblado desde la vista Cartera Viva, no en el select canonico (que si incluye los tres campos via extraFields) ni en la prioridad kg.
+
+Nota de sesion previa: H-A (bundle viejo) quedo descartada — el monolito servido agro-CDXFrTSz.js contiene el log, quantity_kg y ambas ramas kg; el fetch-check anterior leyo el entry chunk equivocado (agro-CR8Nc_NP.js, 21KB) y el hash distinto entre Vercel y local es drift de entorno de build, no codigo viejo. Sin Service Worker registrado.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro.js` (handlePendingTransfer ~7492) | fix quirurgico | Tras `pendingCache.find(id)`: si `unit_qty` Y `quantity_kg` son ambos null/invalidos, refetch single `.from('agro_pending').select(AGRO_PENDING_TRANSFER_COLUMNS).eq('id', itemId).eq('user_id', uid).maybeSingle()` y usar esa fila para splitConfig. Si falla, continuar con el objeto cacheado. |
+
+### No se toco
+
+`isMonetaryComplete`, prioridades de `resolvePendingQuantity`, espejo kg de `openRevertToPendingWizard`, wizard, ni flujos hermanos (income/loss ya tienen su propio fallback single-fetch).
+
+### Resultado de build
+
+`pnpm build:gold` OK (agent-guard + report-check + vite + check-llms + UTF-8). Sin push; sin commitear a la espera de autorizacion del operador.
+
+### QA post-deploy (operador)
+
+Fiado limpio 10 kg -> modal "(DE 10 KG)" sin editar; transferencia total -> cobro 10 kg; devolucion -> "(DE 10 KG)"; parcial 5 kg conserva invariante (cobro + restante == original en kg y monto). Cleanup §5 de "compa" y su cobro al cerrar.
