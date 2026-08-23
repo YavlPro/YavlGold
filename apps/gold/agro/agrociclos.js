@@ -55,37 +55,16 @@ function statusClassFor(state) {
   return 'status-produccion';
 }
 
-function resolveCarteraVivaStatus(fiadosUsd) {
-  const globalState = readBuyerPortfolioState();
-  if (globalState?.known === true) {
-    return globalState.hasActivePending
-      ? { label: 'Facturero de Clientes abierto', tone: 'active' }
-      : { label: 'Facturero de Clientes cerrado', tone: 'closed' };
-  }
-
+function resolveCarteraVivaStatus(estado, fiadosUsd) {
+  const statusClass = statusClassFor(estado);
+  const statusOk = statusClass === 'status-produccion' || statusClass === 'status-finalizado';
   const pending = Number(fiadosUsd);
-  if (!Number.isFinite(pending)) return null;
-  return pending > 0
-    ? { label: 'Facturero de Clientes abierto', tone: 'active' }
-    : { label: 'Facturero de Clientes cerrado', tone: 'closed' };
-}
-
-function readBuyerPortfolioState() {
-  if (typeof window === 'undefined') return null;
-
-  try {
-    const api = window._agroBuyerPortfolioState;
-    if (typeof api?.getState !== 'function') return null;
-    const snapshot = api.getState();
-    return snapshot && typeof snapshot === 'object' ? snapshot : null;
-  } catch (error) {
-    console.warn('[agrociclos] No se pudo leer estado global de Facturero de Clientes:', error);
-    return null;
-  }
+  if (!statusOk || !Number.isFinite(pending) || pending <= 0) return null;
+  return { label: 'Facturero de Clientes abierto', tone: 'active' };
 }
 
 function resolveAllPortfolioBadges(ciclo) {
-  const carteraViva = resolveCarteraVivaStatus(ciclo?.fiadosUsd);
+  const carteraViva = resolveCarteraVivaStatus(ciclo?.estado, ciclo?.fiadosUsd);
   return { carteraViva };
 }
 
@@ -96,7 +75,7 @@ function syncOperationalPortfolioBadges(root = document) {
     const statusGroup = card.querySelector('.card-status-group');
     if (!statusGroup) return;
 
-    const carteraViva = resolveCarteraVivaStatus(card.dataset.fiadosUsd);
+    const carteraViva = resolveCarteraVivaStatus(card.dataset.cropStatus, card.dataset.fiadosUsd);
 
     syncSingleBadge(statusGroup, 'portfolio-badge--cv', carteraViva);
   });
@@ -511,7 +490,7 @@ function renderCard(ciclo, index = 0) {
   `;
 
   return `
-    <article class="cycle-card crop-card" data-crop-id="${escapeAttr(dataId)}" data-fiados-usd="${escapeAttr(ciclo?.fiadosUsd ?? '')}"${orphanData} style="animation-delay:${index * 70}ms;">
+    <article class="cycle-card crop-card" data-crop-id="${escapeAttr(dataId)}" data-fiados-usd="${escapeAttr(ciclo?.fiadosUsd ?? '')}" data-crop-status="${escapeAttr(statusClass)}"${orphanData} style="animation-delay:${index * 70}ms;">
       <header class="card-header">
         <div class="crop-info">
           <div class="crop-icon">${escapeHtml(ciclo?.icono || '🌱')}</div>
