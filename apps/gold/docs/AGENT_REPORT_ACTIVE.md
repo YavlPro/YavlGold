@@ -1309,3 +1309,58 @@ Ciclos activos en siembra o cosecha con fiados > 0 quedan SIN chip (regla litera
 ### NO se hizo
 
 Cero cambios fuera de `agrociclos.js` (+ este asiento). No push. No commit.
+
+---
+
+## Sesion 2026-08-23 (II) — BUG 3 Ronda 2: convergencia de las cuatro fuentes del modal de transferencia (kg-aware)
+
+### Objetivo
+
+Con el deploy validado (refetch vivo), cerrar la divergencia residual entre las fuentes del modal: las cuatro deben leer el MISMO valor resuelto, con fila fresca por id cuando el cache no alcance.
+
+### Paso 1 — Verdad de deploy (cerrado, sin edicion)
+
+- Git: refetch `0a495297` en origin/main (= HEAD `c8010229`, tree limpio). Confirmado con `git log origin/main` + `git ls-remote`.
+- Chunk servido (artefacto A reproducido): entry `/agro/` -> `agro-D4TpD-4M.js` (21.6KB) cuyo `__vite__mapDeps` lista el monolito **`agro-hvC1AAPD.js`** (520KB; antes `agro-CDXFrTSz.js`) => el chunk SI cambio tras el push.
+- Contenido del monolito servido verificado por fetch: `Facturero transfer click` OK, `quantity_kg`/`unit_qty` OK y huella unica del refetch presente (`n===null&&r===null` -> `.from("agro_pending").select(...).eq("id",...).maybeSingle()`). NO es cierre de deploy; se continuo.
+
+### Paso 2 — Traza estatica de las cuatro fuentes (archivo+funcion+linea, HEAD)
+
+| Fuente | Sitio | Que lee | Fila sana 10/10/kg |
+|---|---|---|---|
+| (a) Prefill "Cantidad total fiada" | `buildTransferMetaModal` agro.js:7106-7126 (`qtyTotalInitial` :7107, value :7126) | `splitOptions.qtyTotal` (= splitQtyTotal, prioridad kg :7577-7580); fallback piso 0.01 | 10 OK |
+| (b) Label "(DE X)" | build :7167-7175 (omite "(de X)" si editable) + runtime `updateSplitPreview` :7346-7348 via `resolveQtyTotalDraft` :7291-7301 | input VIVO `#pending-transfer-qty-total`; fallback `splitOptions.qtyTotal` | "(de 10 kg)" OK |
+| (c) Default input cantidad | :7146-7147 (`defaultQty`) + :7198-7202 | `splitOptions.defaultQty` = splitQtyTotal | 10 OK |
+| (d) Resumen/confirmacion "Cantidad total fiada" | `handlePendingTransfer` :7663 -> `computePendingSplitDraft` agro.js:3940-3943 -> resumen :7684 | `decision.qtyTotal` (input vivo) con FALLBACK `resolvePendingQuantity` :1141-1166 que prioriza `unit_qty`(=1 saco) sobre `quantity_kg`(=10 peso real) | **1 BUG** |
+
+La divergencia (d) vs (a/b/c) ES el bug: en destino Perdidas el campo qty-total no existe (`forceQtyTotalInput:false`, :7604-7610) => `decision.qtyTotal=null` => (d) cae al fallback roto (=1): resumen "Cantidad total fiada: 1 kg" y bloqueo de rango ("entre 0.01 y 1") con modal mostrando "(de 10 kg)". En Pagados converge solo porque el input siempre existe.
+
+### Paso 3 — Traza del objeto (cache)
+
+`pendingCache` se povbla UNICAMENTE en el render del tab historial `pendientes` (agro.js:5325 <- `fetchFactureroRowsByTab` con `extraFields ['cliente','unit_type','unit_qty','quantity_kg']` :882) => shape sano. El boton Transferir del DETALLE (`agro-facturero-clientes-detail.js:1269-1277`) delega por click global (:8821-8830, log :8827) a `handlePendingTransfer(itemId)` usando ese cache. Guard vencible declarado: exigia AMBOS campos null; un entry con `unit_qty=1` sin `quantity_kg` (u otro shape string/=1) no disparaba refetch y congelaba todo en 1.
+
+### Cambios realizados (fix minimo de convergencia, solo handlePendingTransfer)
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro.js` | fix quirurgico | Nuevo helper `resolvePendingTransferQuantity()` (:7492-7499): prioridad quantity_kg cuando unit_type=kg, sino delega en resolvePendingQuantity (intacto). |
+| `apps/gold/agro/agro.js` | guard | Refetch ampliado (:7512-7517): tambien dispara cuando unit_type=kg y cachedKgQty===null (fila fresca por id via AGRO_PENDING_TRANSFER_COLUMNS). |
+| `apps/gold/agro/agro.js` | convergencia | `pendingQtyResolved = resolvePendingTransferQuantity(pending)` (:7566) y `splitDraftBase` recibe `{qtyTotal: pendingQtyResolved.qtyTotal}` (:7567) para que la base del draft lea el total canonico. |
+| `apps/gold/agro/agro.js` | convergencia | `mergedDecision` (:7659-7662): decision.qtyTotal null/vacio cae al valor resuelto kg-aware antes de `computePendingSplitDraft` => fuente (d) lee lo mismo que (a/b/c). |
+| `apps/gold/agro/agro.js` | limpieza local | Fallback del resumen sin split (:7698) usa `pendingQtyResolved` en vez de re-resolver con prioridad rota. |
+
+### No se toco
+
+`resolvePendingQuantity` (compartida con espejo revert :2032/:2162 e income/loss :2460-2500), `computePendingSplitDraft` (internos compartidos), `isMonetaryComplete`, espejo `openRevertToPendingWizard`, builders del wizard/modal, prioridad kg existente :7577-7580.
+
+### Resultado de build
+
+`node --check agro.js` OK. `pnpm build:gold` OK (agent-guard + report-check + vite + check-llms + UTF-8); nuevo monolito local `agro-BKpkTrHD.js`. Sin push; sin commitear a la espera de autorizacion del operador.
+
+### QA post-deploy (operador, online - no hay QA local)
+
+Hard-reload; modal PRISTINO "(DE 10 KG)" con default 10 en ambos destinos (Pagados y Perdidas); total -> cobro 10 kg; reversion -> "(DE 10 KG)"; parcial 5 kg conserva invariante (cobro + restante == original en kg y monto). Verificar chunk servido distinto a `agro-hvC1AAPD.js` tras push. Cleanup §5 al cerrar.
+
+### NO se hizo
+
+Sin cambios en Supabase/migraciones. Sin push. Sin commit. Sin QA autenticado local (fuera de alcance segun consigna).
