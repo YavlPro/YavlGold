@@ -3774,7 +3774,9 @@ function formatQuantityValue(value, precision = 2) {
     if (Math.abs(num) < 1e-9) return '0';
     const decimals = precision === 0 || isIntegerLike(num) ? 0 : 2;
     const fixed = roundNumeric(num, decimals).toFixed(decimals);
-    const cleaned = fixed.replace(/\.?0+$/, '');
+    const cleaned = fixed.includes('.')
+        ? fixed.replace(/0+$/, '').replace(/\.$/, '')
+        : fixed;
     return cleaned === '' ? '0' : cleaned;
 }
 
