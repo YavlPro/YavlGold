@@ -64,7 +64,10 @@ El sistema debe sentirse agrícola, serio, sobrio, oscuro, dorado y útil.
 --text-primary: #ffffff;
 --text-secondary: #cccccc;
 --text-muted: #94A3B8;
+--text-ivory: #F5F1E8;
 ```
+
+> `--text-ivory` (marfil): tono cálido para datos numéricos vivos (ticker de mercados, cifras destacadas). Ratificado 2026-08-23; capa canónica en `agro-tokens.css`. No sustituye a `--text-primary`; reservado a datos, no a prosa.
 
 ### Bordes
 
@@ -775,6 +778,21 @@ Prohibido usar §19 como justificación para:
 - Crear variantes "más visibles" de las excepciones.
 
 Si una excepción necesita ampliarse, debe pasar por autorización expresa del usuario y documentarse aquí con nueva subsección numerada.
+
+### 19.7 Ticker de Mercados (banda full-bleed)
+
+Especificación canónica del ticker de cotizaciones del Dashboard Agro (Bloque v11). Implementación: `agro-market.js` (render + dirección) y `agro-dashboard-v11.css` (estilos `.ygd-ticker-*`). Ratificado 2026-08-23.
+
+1. **Contenedor**: sin caja. Banda full-bleed con hairlines 1px arriba/abajo en `var(--border-gold)`. `mask-image` con fade horizontal en ambos bordes (~5%/95%).
+2. **Caption "MERCADOS"**: Plus Jakarta Sans 500, small caps (uppercase), letter-spacing 0.12em, color `var(--gold-4)`; hairline vertical (`var(--border-gold)`) lo separa del marquee.
+3. **Items**: label del asset en dorado small caps 11px (Plus Jakarta Sans); valor en marfil 13px Inter con `font-variant-numeric: tabular-nums` usando `var(--text-ivory)`.
+4. **Semántica direccional** — la dirección vive en el glifo Y en el color (§16):
+   - Sube → ▲ `var(--color-success)`
+   - Baja → ▼ `var(--color-error)`
+   - Empate / sin cambio / primer poll / sin delta confirmado entre polls → • `var(--gold-4)`
+   Nunca flecha falsa: sin delta confirmado, punto dorado. Sin porcentajes inventados.
+5. **Separadores**: punto dorado al 25% entre items; separador etiquetado ("Cambio") entre el bloque cripto (BTC, ETH, SOL, USDT) y el bloque cambio (USD/COP, USD/VES).
+6. **Movimiento y accesibilidad**: marquee 45–60s linear infinite (canon: 50s); pausa en hover; `prefers-reduced-motion` → estático con scroll manual y copia duplicada oculta; copia duplicada del loop con `aria-hidden="true"`.
 
 ---
 
