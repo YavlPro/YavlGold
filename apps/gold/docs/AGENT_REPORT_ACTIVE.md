@@ -1422,3 +1422,49 @@ Hard-reload; chunk servido distinto a `agro-CTjRX3bM.js`. Modal pristino "(DE 10
 ### NO se hizo
 
 Sin cambios en Supabase/migraciones ni docs canonicos. Sin push. Sin commit. Fila de oli no leida (bloqueos trazados arriba); sobrante: ningun cambio de logica fuera del formatter.
+
+---
+
+## Sesion 2026-08-23 (IV) — Rediseño Ticker de Mercados (excepcion acotada autorizada por el operador)
+
+### Objetivo
+
+Rediseño visual del ticker de mercados conforme al canon ADN V12: banda full-bleed con hairlines doradas, caption "MERCADOS", labels doradas small caps + valores marfil tabulares, semantica direccional ▲/▼/• basada en delta real entre polls, separadores etiquetados, marquee 50s con pausa en hover, copia duplicada aria-hidden y reduced-motion estatico. Rol cirugia (§7); NO tocar agro.js, endpoints ni frecuencias de polling; NO consolidar polling duplicado (deuda §11.5 se declara, no se refactoriza).
+
+### Diagnostico (archivo + funcion + linea)
+
+- Render del ticker: `apps/gold/agro/agro-market.js` → `renderTicker()` (~L316), `createTickerItem()` (~L414), `resolveTrendMeta()` (~L402), `renderDegradedState()`, `injectTickerStyles()` (marquee keyframes).
+- Contenedor: `apps/gold/agro/index.html:1028-1035` — `.ygd-ticker-bar` > `#market-ticker-track`.
+- CSS activo: `apps/gold/agro/agro-dashboard-v11.css:110-132`. Las reglas `.agro-dashboard-v10 .agro-ticker-*` en `agro-dashboard.css:380-422` estan MUERTAS para esta pagina (la seccion es `.agro-dashboard-v11`; verificado que la clase v10 no existe en agro/index.html) — los items quedaron re-estilizados bajo scope `.ygd-ticker-bar`.
+- Direccion previa: `resolveTrendMeta` comparaba contra el cache localStorage (`getMarketCache()`), sin estado plano, y pintaba flecha ▲ falsa en primer poll / sin previo. Patch mobile legacy `agro.js:16731` fija 40s con !important solo en <=768px — intocable por scope (residual documentado abajo).
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro-tokens.css` | token | Creado `--text-ivory: #F5F1E8` en capa global de tokens Agro. |
+| `apps/gold/agro/index.html` | HTML | Ticker bar reestructurado: caption `<span class="ygd-ticker-caption">Mercados</span>` + viewport `.ygd-ticker-viewport` alrededor del track. |
+| `apps/gold/agro/agro-market.js` | logica | `tickerState.prevTick` guarda precio previo por simbolo en memoria tras cada poll fresco OK; `resolveTrendMeta` ahora devuelve up/down/**flat** con glifo (▲ success / ▼ error / • gold-4; sin previo o empate = • dorado, nunca flecha falsa); USDT pasa a flat •; SYNC meta/degraded usan flat •; render en dos loops (segundo `aria-hidden="true"`); separador punto dorado 25% entre items (`TICKER_DOT_SEPARATOR`) + separador etiquetado "Cambio" entre bloque cripto (BTC/ETH/SOL/USDT) y bloque fiat (USD/COP, USD/VES), retirado si no hay items fiat; marquee 25s→50s en `injectTickerStyles`; atributos `data-money`/`data-raw-money` preservados (formatter de display-currency intacto). |
+| `apps/gold/agro/agro-dashboard-v11.css` | CSS | Banda full-bleed sin caja: hairlines top/bottom `1px var(--border-gold)`; caption Plus Jakarta Sans 500 uppercase ls .12em gold-4 + hairline vertical; viewport con `mask-image` fade horizontal 5%/95%; labels 11px PJS small caps gold-4; valores 13px Inter `font-variant-numeric: tabular-nums` color `var(--text-ivory)`; `.agro-ticker-flat` = gold-4; punto dorado 25% via `color-mix`; divider etiquetado; reduced-motion: animacion off + scroll manual + oculta loop duplicada. |
+
+### Micro-enmienda pendiente de autorizacion
+
+`--text-ivory: #F5F1E8` creado en `agro-tokens.css` porque ADN V12 §2 no define tono marfil. Declarado como micro-enmienda pendiente de ratificacion formal en el canon §2.
+
+### Deuda declarada (no tocada)
+
+- §11.5: polling duplicado `agro-market.js` / `agro-interactions.js` sigue vigente; fuera de alcance.
+- Residual: patch mobile en `agro.js:16731` fuerza 40s con `!important` + ID (<=768px); desktop/tablet usa 50s. Corregir cuando toque agro.js por otra causa.
+- Reglas `.agro-dashboard-v10 .agro-ticker-*` (agro-dashboard.css:380-422) quedaron como CSS muerto heredado; no eliminadas por alcance minimo.
+
+### Resultado de build
+
+`pnpm build:gold` OK completo (agent-guard OK, agent-report-check OK, vite build OK, check-llms OK, UTF-8 OK). Sin push; sin commitear a la espera de autorizacion del operador (commits atomicos separados del fix pendiente del formatter en agro.js).
+
+### QA post-deploy sugerido (operador, online)
+
+Hard-reload del dashboard: hairlines doradas arriba/abajo y fades en bordes del marquee; caption MERCADOS + hairline vertical; labels doradas small caps y valores marfil tabulares; primer poll muestra • dorado en todos los items; tras el segundo poll (~60s) los triangulos aparecen y cambian de color segun tick real (verde ▲ / rojo ▼); hover pausa el marquee; reduced-motion queda estatico con scroll manual y sin copia duplicada visible; los datos siguen actualizandose al minuto; verificar USD/COP + USD/VES con divisor "CAMBIO" entre bloques (sesion Venezuela) desktop y mobile <=480px.
+
+### NO se hizo
+
+Cero ediciones en `agro.js`, endpoints, frecuencias de polling ni consolidacion §11.5. Sin docs canonicos. Sin push. Sin commit.
