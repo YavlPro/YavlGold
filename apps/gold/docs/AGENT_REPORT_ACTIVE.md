@@ -1504,3 +1504,64 @@ Alcance definido cuando se desbloquee: soft-delete (`deleted_at`) SOLO en cuenta
 ### NO se hizo
 
 Cero ediciones en agro.js (monolito quieto, confirmado por operador). Sin cambios en endpoints/polling. Sin push.
+
+---
+
+## Sesión 2026-08-23 (VI) — Cierre de BUG 3/BUG 4, ticker V12 e higiene de raíz
+
+**Fecha:** 2026-08-23
+**Estado:** GREEN
+**Modelo destacado:** ox alpha (OpenRouter, desconocido) — cerró causa raíz de BUG 3 tras 11 rondas acumuladas
+
+### Objetivo
+Cerrar el frente de transferencias (BUG 1-4), elevar el ticker de mercados al canon V12, y ejecutar higiene de raíz con QWEN.md como puntero canónico.
+
+### Diagnóstico clave
+- **BUG 3 (causa raíz real)**: el formatter de cantidades en `agro.js:3777` tenía `fixed.replace(/\.?0+$/, '')` — el `\.?` opcional se comía ceros significativos de enteros (10→"1", 100→"1", 20→"2"). Las cuatro fuentes del modal ya leían el valor correcto; el renderer corrompía al pintar y al re-parsear. Prueba por ejecución: 10→"1" antes del fix; 10→"10", 100→"100", 2.50→"2.5", 0.5→"0.5" después.
+- **BUG 4**: chip "Facturero de Clientes abierto" se renderizaba incondicionalmente por un override global (`readBuyerPortfolioState()`) que leía deuda de toda la cartera, no por ciclo.
+- **Drift de hashes refutado**: Node 25.6.0 vs 20.20.2 producen hashes Vite idénticos. El drift de BUG 3 era deploy-lag, no de entorno.
+
+### Cambios realizados
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/agro/agro.js` | Formatter de cantidades: recorte de ceros solo con punto decimal (+3/−1). Convergencia previa de cuatro fuentes ya era correcta. |
+| `apps/gold/agro/agrociclos.js` | Gate `(produccion || finalizado) && fiadosUsd > 0` en decisión/render/re-sync del chip facturero; override global eliminado. |
+| `apps/gold/agro/agro-market.js` | `tickerState.prevTick` con precio previo por símbolo; ▲ success / ▼ error / • gold solo con delta confirmado; marquee 25s→50s; segundo loop `aria-hidden`; divisor "Cambio" entre cripto/fiat. |
+| `apps/gold/agro/agro-tokens.css` | Token `--text-ivory: #F5F1E8` (ratificado en ADN §2). |
+| `apps/gold/agro/agro-dashboard-v11.css` | Banda full-bleed con hairlines `var(--border-gold)`, caption PJS 500 ls .12em gold-4, labels doradas small caps, valores marfil 13px `tabular-nums`, mask fade 5%/95%. |
+| `apps/gold/agro/index.html` | Caption "MERCADOS" + viewport con mask en `.ygd-ticker-bar`. |
+| `QWEN.md` | Reducido a puntero de una línea: "La única ley operativa es AGENTS.md". |
+| `nul` | Borrado (artefacto Windows, 0 bytes). |
+| `MANIFIESTO_AGRO_BASE.md.bak` | → `apps/gold/docs/archive/manifiesto/` (§4.2). |
+| `apps/gold/docs/ops/` abr-jun | 7 docs → `archive/infra/` (runbooks/status legacy). |
+| `apps/gold/docs/ADN-VISUAL-V12.0.md` | §2: token `--text-ivory`; §19.7 nueva con spec canónica del ticker. |
+| `package.json` | `engines.node: "20.x"` pineado (heredado por Vercel). |
+
+### Resultado de build
+`pnpm build:gold` completo en verde con Node 20.20.2 (guard + report-check + vite + llms + UTF-8), sin warning de engine.
+
+### QA realizado
+- BUG 3: modal prístino "(DE 10 KG)" con default 10 · blur de "10" conserva "10" · total → cobro 10 kg · parcial 5 kg con invariante · devolución "(DE 10 KG)". **GREEN**.
+- BUG 4: Maíz 190826 (sembrado/invirtiendo) y Maíz 090226 (finalizado/ganado) sin chip; caraota roja (finalizado/recuperando) con chip; tab Perdidos limpios. **GREEN**.
+- Ticker: hairlines + fades visibles · primer poll todo en • dorado · tras segundo poll (~60s) ▲ verde / ▼ rojo según tick real · reduced-motion estático · datos actualizando al minuto. **GREEN**.
+
+### NO se hizo (scope respetado)
+- Cleanup QA en Supabase (oli, compa, qa test*) bloqueado por hCaptcha/MCP. Datos protegidos: "post" y "Yobany" excluidos por cautela.
+- Refactor del polling duplicado §11.5 (market/interactions) — deuda declarada, no tocada.
+- Patch mobile `!important` en `agro.js:16731` — deuda declarada.
+- Desinstalación de Node 24.13.0 residual en `C:\Program Files\nodejs` — deuda de entorno, no de repo.
+
+### Pendientes vivos
+1. Cleanup QA cuando se desbloquee MCP (exportar `SUPABASE_ACCESS_TOKEN` o login asistido con captcha manual).
+2. Verificar pin de Node en Vercel → Settings → Node.js Version.
+3. Skill de la saga BUG 3 en `SKILLS/2026-08-23-FORMATTER-Y-ARTEFACTOS-DE-MEDICION.md`.
+4. Desinstalación manual de Node 24.13.0 residual.
+5. Crónica mensual `chronicles/2026-08.md` al cierre del mes con consolidación de daily-logs.
+
+### Lecciones reutilizables asentadas
+- Cuando todas las fuentes leen bien pero la pantalla miente, trazar el **renderer/formatter** entre el valor y el DOM — es la última milla que nadie trazó en 11 rondas.
+- Un regex con `\.?` opcional que recorta ceros corrompe enteros terminados en cero.
+- Verificar hipótesis con ejecución antes de asumirlas: el drift de hashes no era de entorno.
+- La observación del operador sobre el blur ("el cero se borra solo") fue el artefacto que cazó la causa raíz en una línea.
+
+---
