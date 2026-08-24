@@ -1565,3 +1565,29 @@ Cerrar el frente de transferencias (BUG 1-4), elevar el ticker de mercados al ca
 - La observación del operador sobre el blur ("el cero se borra solo") fue el artefacto que cazó la causa raíz en una línea.
 
 ---
+
+---
+
+## Sesión 2026-08-23 (VII) — Fixes SEO verificados y aplicados
+
+### Diagnóstico previo (lectura, sin edición)
+- Host canónico real confirmado en vivo: apex `yavlgold.com` responde 307 → `www.yavlgold.com` (200). Canónicas del landing ya apuntaban a www (correcto); la inconsistencia estaba en sitemap/robots.
+- `/agro` indexable sin meta de robots ni description; no cubierto por Disallow de robots.txt.
+- Sitemap con 7 URLs: faltaban faq/cookies/soporte/tecnologia.
+
+### Cambios realizados (commit a954f9c4, autorización expresa del operador)
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/public/sitemap.xml` | 7 locs apex → `https://www.yavlgold.com/...`; añadidas /faq (0.8), /soporte (0.7), /tecnologia (0.6), /cookies (0.3); legal pages bajadas a yearly/0.3. Total 11 URLs. |
+| `apps/gold/public/robots.txt` | Línea Sitemap a www + `Disallow: /agro` añadido como defensa en profundidad junto al noindex (extensión menor declarada sobre lo autorizado). |
+| `apps/gold/agro/index.html` | `<meta name="robots" content="noindex,nofollow">` + description "Aplicación agrícola privada... Requiere autenticación." tras el title. |
+
+### Resultado de build
+`pnpm build:gold` OK completo; dist/sitemap.xml verificado con las 11 URLs www.
+
+### Tarea manual pendiente del operador
+Vercel → Settings → Domains: cambiar redirección apex→www de 307 a 308 permanente.
+
+### NO se hizo
+Cero cambios en contenido de landing, JSON-LD ni headers de Vercel.
