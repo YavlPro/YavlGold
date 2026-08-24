@@ -32,6 +32,8 @@
   --text-secondary: #cccccc;
   --text-muted: #94A3B8;
   --text-gold-prestige: #E5D5A0;
+  /* Micro-enmienda pendiente de autorizacion para ADN V12 §2: tono marfil para datos numericos */
+  --text-ivory: #F5F1E8;
 
   /* Semantic Feedback Colors */
   --color-success: #10B981;

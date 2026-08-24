@@ -33,7 +33,8 @@ window.__YG_MARKET_TICKER__ = window.__YG_MARKET_TICKER__ || {
     inited: false,
     intervalId: null,
     lastState: null, // 'OK' | 'DEGRADED' | 'ERROR'
-    snapshot: null
+    snapshot: null,
+    prevTick: null // { crypto: {...}, fiat: {...} } del poll anterior (dirección real)
 };
 
 const tickerState = window.__YG_MARKET_TICKER__;
@@ -313,6 +314,8 @@ function detectUserCurrency(locationLabel) {
 // ============================================================
 // RENDERIZADO DEL TICKER
 // ============================================================
+const TICKER_DOT_SEPARATOR = '<span class="agro-ticker-dot" aria-hidden="true">\u2022</span>';
+
 function renderTicker(tickerTrack, crypto, fiat, localCurrency, cacheInfo = null) {
     const fmt = (n) => '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
     const fmtFiat = (n, c) => {
@@ -323,56 +326,73 @@ function renderTicker(tickerTrack, crypto, fiat, localCurrency, cacheInfo = null
         }
     };
 
-    const previousCache = getMarketCache();
-    const previousCrypto = previousCache?.crypto || {};
-    const previousFiat = previousCache?.fiat || {};
-    let items = '';
+    // Dirección real: precio previo por símbolo guardado en memoria (tick anterior del poll)
+    const prevTick = tickerState.prevTick || {};
+    const prevCrypto = prevTick.crypto || {};
+    const prevFiat = prevTick.fiat || {};
+    const parts = [];
 
-    // Crypto Assets
+    // Bloque cripto
     if (crypto.BTC) {
         const value = fmt(crypto.BTC);
-        const trend = resolveTrendMeta(crypto.BTC, previousCrypto.BTC);
-        items += createTickerItem('BTC', value, { rawMoney: value, trendClass: trend.className });
+        const trend = resolveTrendMeta(crypto.BTC, prevCrypto.BTC);
+        parts.push(createTickerItem('BTC', value, { rawMoney: value, trendClass: trend.className, trendGlyph: trend.glyph }));
     }
     if (crypto.ETH) {
         const value = fmt(crypto.ETH);
-        const trend = resolveTrendMeta(crypto.ETH, previousCrypto.ETH);
-        items += createTickerItem('ETH', value, { rawMoney: value, trendClass: trend.className });
+        const trend = resolveTrendMeta(crypto.ETH, prevCrypto.ETH);
+        parts.push(createTickerItem('ETH', value, { rawMoney: value, trendClass: trend.className, trendGlyph: trend.glyph }));
     }
     if (crypto.SOL) {
         const value = fmt(crypto.SOL);
-        const trend = resolveTrendMeta(crypto.SOL, previousCrypto.SOL);
-        items += createTickerItem('SOL', value, { rawMoney: value, trendClass: trend.className });
+        const trend = resolveTrendMeta(crypto.SOL, prevCrypto.SOL);
+        parts.push(createTickerItem('SOL', value, { rawMoney: value, trendClass: trend.className, trendGlyph: trend.glyph }));
     }
-    items += createTickerItem('USDT', '$1.00', { rawMoney: '$1.00', trendClass: 'agro-ticker-up' });
+    // USDT pegado a USD: sin delta, punto dorado
+    parts.push(createTickerItem('USDT', '$1.00', { rawMoney: '$1.00' }));
 
-    // Fiat Dinámico
+    // Separador etiquetado entre bloque cripto y bloque cambio
+    parts.push(createTickerBlockDivider('Cambio'));
+
+    // Bloque cambio fiat
+    let hasFiatItems = false;
     if (fiat[localCurrency] && localCurrency !== 'USD') {
         const value = fmtFiat(fiat[localCurrency], localCurrency);
-        const trend = resolveTrendMeta(fiat[localCurrency], previousFiat[localCurrency]);
-        items += createTickerItem(`USD/${localCurrency}`, value, { rawMoney: value, trendClass: trend.className });
+        const trend = resolveTrendMeta(fiat[localCurrency], prevFiat[localCurrency]);
+        parts.push(createTickerItem(`USD/${localCurrency}`, value, { rawMoney: value, trendClass: trend.className, trendGlyph: trend.glyph }));
+        hasFiatItems = true;
     }
 
     // Venezuela: mostrar COP también
     if (localCurrency === 'VES' && fiat['COP']) {
         const value = fmtFiat(fiat.COP, 'COP');
-        const trend = resolveTrendMeta(fiat.COP, previousFiat.COP);
-        items += createTickerItem('USD/COP', value, { rawMoney: value, trendClass: trend.className });
+        const trend = resolveTrendMeta(fiat.COP, prevFiat.COP);
+        parts.push(createTickerItem('USD/COP', value, { rawMoney: value, trendClass: trend.className, trendGlyph: trend.glyph }));
+        hasFiatItems = true;
+    }
+
+    // Si no hubo items fiat, retirar el separador etiquetado sobrante
+    if (!hasFiatItems) {
+        parts.splice(parts.length - 1, 1);
     }
 
     // Indicador de cache si aplica
     if (cacheInfo) {
         const ageText = cacheInfo.ageMinutes < 1 ? 'ahora' : `hace ${cacheInfo.ageMinutes} min`;
-        items += `<span class="agro-ticker-item agro-ticker-meta">
+        parts.push(`<span class="agro-ticker-item agro-ticker-meta">
             <span class="agro-ticker-symbol">SYNC</span>
             <span class="agro-ticker-value">\u00daltimo dato (${ageText})</span>
-            <span class="agro-ticker-trend agro-ticker-up">•</span>
-        </span>`;
+            <span class="agro-ticker-trend agro-ticker-flat">\u2022</span>
+        </span>`);
     }
 
-    // Clear before render (idempotent) + Duplicar para scroll infinito
+    const items = parts.join(TICKER_DOT_SEPARATOR);
+
+    // Clear before render (idempotent) + Duplicar para scroll infinito (copia aria-hidden)
     tickerTrack.innerHTML = '';
-    tickerTrack.innerHTML = items + items;
+    tickerTrack.innerHTML =
+        `<span class="agro-ticker-loop">${items}</span>` +
+        `<span class="agro-ticker-loop" aria-hidden="true">${items}</span>`;
     injectTickerStyles();
 }
 
@@ -385,7 +405,7 @@ function renderDegradedState(tickerTrack, hasCache = false) {
         <span class="agro-ticker-item agro-ticker-meta">
             <span class="agro-ticker-symbol">SYNC</span>
             <span class="agro-ticker-value">${message}</span>
-            <span class="agro-ticker-trend agro-ticker-down">•</span>
+            <span class="agro-ticker-trend agro-ticker-flat">\u2022</span>
         </span>
     `;
     injectTickerStyles();
@@ -399,21 +419,31 @@ function escapeAttr(value) {
         .replace(/"/g, '&quot;');
 }
 
+// Dirección semántica: solo con delta confirmado entre polls.
+// Subida -> ▲ success, bajada -> ▼ error, empate/sin previo -> • dorado (sin flecha falsa).
 function resolveTrendMeta(current, previous) {
     const currentValue = Number(current);
     const previousValue = Number(previous);
     if (!Number.isFinite(currentValue) || !Number.isFinite(previousValue)) {
-        return { className: 'agro-ticker-up' };
+        return { className: 'agro-ticker-flat', glyph: '\u2022' };
+    }
+    if (currentValue > previousValue) {
+        return { className: 'agro-ticker-up', glyph: '\u25b2' };
     }
     if (currentValue < previousValue) {
-        return { className: 'agro-ticker-down' };
+        return { className: 'agro-ticker-down', glyph: '\u25bc' };
     }
-    return { className: 'agro-ticker-up' };
+    return { className: 'agro-ticker-flat', glyph: '\u2022' };
+}
+
+function createTickerBlockDivider(labelText) {
+    return `<span class="agro-ticker-divider"><span class="agro-ticker-divider-label">${labelText}</span></span>`;
 }
 
 function createTickerItem(label, value, options = {}) {
-    const trendClass = options.trendClass === 'agro-ticker-down' ? 'agro-ticker-down' : 'agro-ticker-up';
-    const trendSymbol = trendClass === 'agro-ticker-down' ? '▼' : '▲';
+    const knownTrendClasses = ['agro-ticker-up', 'agro-ticker-down', 'agro-ticker-flat'];
+    const trendClass = knownTrendClasses.includes(options.trendClass) ? options.trendClass : 'agro-ticker-flat';
+    const trendSymbol = options.trendGlyph || '\u2022';
     const rawMoney = String(options.rawMoney ?? value);
 
     return `
@@ -440,7 +470,7 @@ function injectTickerStyles() {
         }
 
         .animate-marquee {
-            animation: marquee 25s linear infinite;
+            animation: marquee 50s linear infinite;
         }
 
         .animate-marquee:hover {
@@ -536,6 +566,8 @@ async function fetchAndRenderMarket() {
                 source: 'OK'
             });
             renderTicker(tickerTrack, crypto, fiat, userCurrency, null);
+            // Guardar tick actual como previo para la próxima dirección real
+            tickerState.prevTick = { crypto: { ...crypto }, fiat: { ...fiat } };
 
             // Log solo en cambio de estado
             if (tickerState.lastState !== 'OK') {

@@ -102,19 +102,44 @@
 }
 
 /* ============================================================
-   BLOQUE 0 — HEADER CONTEXTUAL
-   ============================================================ */
-/* ============================================================
-   TICKER DE COTIZACIONES — Cinta animada superior
+   TICKER DE COTIZACIONES — Banda full-bleed sin caja (V12)
+   Hairlines doradas arriba/abajo, caption MERCADOS, marquee
+   con fade horizontal en bordes (mask-image).
    ============================================================ */
 .ygd-ticker-bar {
-  overflow: hidden;
-  background: rgba(200, 167, 82, 0.04);
-  border: 1px solid var(--border-gold);
-  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: stretch;
   height: 40px;
+  overflow: hidden;
+  background: transparent;
+  border-top: 1px solid var(--border-gold);
+  border-bottom: 1px solid var(--border-gold);
+  border-radius: 0;
+}
+
+.ygd-ticker-caption {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0 0.85rem;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: var(--type-label);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold-4);
+  border-right: 1px solid var(--border-gold);
+  white-space: nowrap;
+}
+
+.ygd-ticker-viewport {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
 }
 
 .ygd-ticker-track {
@@ -122,12 +147,97 @@
   align-items: center;
   white-space: nowrap;
   will-change: transform;
+  width: max-content;
+}
+
+.agro-ticker-loop {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Items del ticker (scope local; las reglas .agro-dashboard-v10 no aplican aquí) */
+.ygd-ticker-bar .agro-ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0.6rem;
+  border-right: none;
+}
+
+.ygd-ticker-bar .agro-ticker-symbol {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold-4);
+}
+
+.ygd-ticker-bar .agro-ticker-value {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-ivory, var(--text-primary));
+}
+
+.ygd-ticker-bar .agro-ticker-trend {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.ygd-ticker-bar .agro-ticker-up {
+  color: var(--color-success);
+}
+
+.ygd-ticker-bar .agro-ticker-down {
+  color: var(--color-error);
+}
+
+.ygd-ticker-bar .agro-ticker-flat {
+  color: var(--gold-4);
+}
+
+/* Punto dorado al 25% entre items */
+.agro-ticker-dot {
+  color: color-mix(in srgb, var(--gold-4) 25%, transparent);
+  flex-shrink: 0;
+}
+
+/* Separador etiquetado cripto -> cambio */
+.agro-ticker-divider {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.6rem;
+}
+
+.agro-ticker-divider-label {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--gold-4) 55%, transparent);
+  border-left: 1px solid var(--border-gold);
+  padding-left: 0.6rem;
+}
+
+.ygd-ticker-bar .agro-ticker-meta {
+  font-family: 'Inter', sans-serif;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .ygd-ticker-track {
     animation: none !important;
     overflow-x: auto;
+    width: auto;
+    max-width: 100%;
+  }
+
+  .ygd-ticker-track .agro-ticker-loop[aria-hidden="true"] {
+    display: none;
   }
 }
 
