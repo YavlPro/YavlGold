@@ -1,37 +1,57 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://yavlgold.com/</loc>
+    <loc>https://www.yavlgold.com/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://yavlgold.com/open-source</loc>
+    <loc>https://www.yavlgold.com/faq</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.yavlgold.com/open-source</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://yavlgold.com/anti-suplantacion</loc>
+    <loc>https://www.yavlgold.com/tecnologia</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.yavlgold.com/anti-suplantacion</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://yavlgold.com/security</loc>
+    <loc>https://www.yavlgold.com/security</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://yavlgold.com/privacy</loc>
+    <loc>https://www.yavlgold.com/soporte</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://yavlgold.com/terms</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <loc>https://www.yavlgold.com/cookies</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://yavlgold.com/status</loc>
+    <loc>https://www.yavlgold.com/privacy</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://www.yavlgold.com/terms</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://www.yavlgold.com/status</loc>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
