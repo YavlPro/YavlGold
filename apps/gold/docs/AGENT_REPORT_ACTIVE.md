@@ -1468,3 +1468,39 @@ Hard-reload del dashboard: hairlines doradas arriba/abajo y fades en bordes del 
 ### NO se hizo
 
 Cero ediciones en `agro.js`, endpoints, frecuencias de polling ni consolidacion §11.5. Sin docs canonicos. Sin push. Sin commit.
+
+---
+
+## Sesion 2026-08-23 (V) — Diagnostico general + saneamiento de gobernanza (autorizacion operador)
+
+### Objetivo
+
+Ejecutar el plan de saneamiento derivado del diagnostico general: alinear Node 20 local/Vercel, higiene de raiz §11.7, ley de archivo §4.2 sobre docs/ops/, QWEN.md como puntero, ratificacion ADN (--text-ivory + ticker), e intento de cleanup QA.
+
+### Cambios realizados
+
+| Archivo / zona | Tipo | Cambio |
+|---|---|---|
+| entorno nvm | infra local | Instalado y activado Node 20.20.2 (antes 25.6.0). Build canonico OK. Hashes Vite IDENTICOS entre Node 25 y 20 (`agro-market-B63D5NW1.js`, monolito `agro-DS1WjPeD.js`) — evidencia: el drift de BUG 3 no provenia de la version de Node. Residual: existe un Node 24.13.0 standalone en `C:\Program Files\nodejs` sombreado en PATH; no desinstalado (fuera de alcance). |
+| `package.json` (raiz) | verificacion | `engines.node: "20.x"` ya versionado — mecanismo que Vercel hereda para su runtime de build. Verificacion dashboard pendiente del operador (sin CLI auth). |
+| raiz `nul` | higiene §11.7 | Eliminado (0 bytes, artefacto Windows). |
+| `MANIFIESTO_AGRO_BASE.md.bak` | archivo §4.2 | Movido a `apps/gold/docs/archive/manifiesto/` (snapshot pre-canonizacion, valor historico; era local no versionado). |
+| `docs/ops/*` abr-jun | archivo §4.2 | 7 documentos movidos a `apps/gold/docs/archive/infra/`: HEALTH_STATUS_VALIDATION, INCIDENT_RESPONSE_RUNBOOK, INFORME_JORNADA_2026-06-25, POST_MERGE_HEALTH_STATUS_VERIFICATION, POST_MERGE_ROLLOUT_VERIFICATION, ROLL_OUT_STATUS (abr), STAGING_GUARDRAILS_AND_SETUP. ops/ queda solo con daily logs de agosto. BACKUP_RESTORE_RUNBOOK era local-no-versionado y se movio igual (instruccion literal: ops solo daily logs). |
+| `QWEN.md` | gobernanza §9 | Reducido a puntero de 1 linea: "La unica ley operativa es AGENTS.md". Decision del operador entre puntero/archivo. |
+| `apps/gold/docs/ADN-VISUAL-V12.0.md` | ratificacion canonica | §2: token `--text-ivory: #F5F1E8` anadido al bloque Texto con nota de uso (datos numericos vivos, no prosa). Nueva §19.7 "Ticker de Mercados (banda full-bleed)": hairlines border-gold, caption MERCADOS, labels gold small caps 11px, valores marfil 13px tabular-nums, semantica direccional ▲/▼/• sin flecha falsa, punto dorado 25%, divisor etiquetado cripto->cambio, marquee 50s hover-pause, reduced-motion estatico, loop aria-hidden. Commit documental unico autorizado. |
+| `apps/gold/docs/ops/daily-log-2026-08-23.md` | bitacora diaria | Creado segun convencion §4.3.1. |
+
+### Cleanup QA (oli, compa, qa test*) — BLOQUEADO, intentado
+
+Autorizado por operador ("intentar ahora"). Dos vias probadas y bloqueadas:
+1. MCP Supabase: `Unauthorized — SUPABASE_ACCESS_TOKEN` no configurado.
+2. Password grant REST con cuenta QA de testqacredentials.md: `400 captcha_failed` (hCaptcha exigido) — reproduce el bloqueo de la sesion 2026-08-23 (III).
+Alcance definido cuando se desbloquee: soft-delete (`deleted_at`) SOLO en cuenta QA (`yavlcapitan@gmail.com`) de buyers/movimientos cuyos nombres matcheen oli / compa / qa test*. "post" y "Yobany" quedan EXCLUIDOS (posibles datos reales).
+
+### Resultado de build
+
+`pnpm build:gold` OK completo con Node 20.20.2 (guard + report-check + vite + llms + UTF-8), sin warning de engine. Sin push; commits atomicos locales pendientes de push con autorizacion.
+
+### NO se hizo
+
+Cero ediciones en agro.js (monolito quieto, confirmado por operador). Sin cambios en endpoints/polling. Sin push.
