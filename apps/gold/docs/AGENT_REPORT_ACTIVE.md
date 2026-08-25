@@ -1739,3 +1739,31 @@ Deuda #1 de la migración Zorin CERRADA: Agenda y Carrito funcionan offline con 
 ### NO se hizo
 - `supabase db push` ni ninguna operación contra el esquema remoto.
 - Commit del daily-log (§4.3: locales-only).
+
+---
+
+## Sesión 2026-08-25 (II) — Skill BUG 3 y ratificación de drift FICHA §5
+
+### Objetivo
+Cerrar las deudas documentales #6 y #7: skill reutilizable de la saga BUG 3 y alineación de FICHA_TECNICA §5 con la verdad de la base de datos.
+
+### Diagnóstico
+- Verificación contra BD local real antes de editar: `agro_clients` confirma columnas `display_name` y `client_type`; `agro_income` es singular en esquema y documento.
+- Hallazgo: el "Cambio 1" del plan externo (`agro_incomes` → `agro_income`) resultó **no-op** — FICHA línea 257 ya decía `agro_income` correctamente (drift ya resuelto en sesión previa o información obsoleta del plan). No se inventó cambio.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `SKILLS/2026-08-25-FORMATTER-Y-ARTEFACTOS-DE-MEDICION.md` | skill nueva | Lecciones de la saga BUG 3 (11 rondas): formatter como última milla, 3 artefactos de medición, checklist defensivo de render |
+| `apps/gold/docs/FICHA_TECNICA.md` | canónico | §5 Agro—Clientes línea 271: `campo client_type` → `campos display_name y client_type` (diff exacto, única sección tocada) |
+
+### Validación
+Columnas ratificadas por query directo a `information_schema` del stack local; `pnpm build:gold` OK completo; commits atómicos separados según plan autorizado.
+
+### Resultado
+Deuda #6 y #7 CERRADAS. Marcador vivo restante: cleanup QA bloqueado por hCaptcha/MCP · redirección Vercel apex→www 307→308 (tarea manual del operador) · crónica mensual al cierre de agosto.
+
+### NO se hizo
+- Tocar otras secciones de FICHA_TECNICA, AGENTS.md, MANIFIESTO_AGRO.md ni ADN-VISUAL-V12.0.md.
+- Commit del daily-log (locales-only).
