@@ -1705,3 +1705,37 @@ Cerrar la migración Zorin: versionar todo, dejar credenciales GitHub operativas
 ### NO se hizo
 - No se creó documento standalone del día: este asiento en la bitácora activa ES el informe canónico (anti-redundancia §7.4/§12.X). Los agentes deben consultar esta entrada primero.
 - No se tocaron históricos ni se inventaron esquemas de las tablas faltantes.
+
+---
+
+## Sesión 2026-08-25 — Deuda #1 cerrada: migración canónica de tablas solo-remotas
+
+### Objetivo
+Materializar las 4 tablas que solo existían en el esquema remoto (`agro_agenda`, `agro_cart`, `agro_cart_items`, `admin_audit_log`) como migración canónica idempotente, cerrando la deuda principal de la migración Zorin.
+
+### Diagnóstico
+- Dump real del esquema público remoto (`supabase db dump --schema public`, proyecto vinculado gerzlzprkarikblqxpjt) ejecutado por el operador con su DB password; extracción analítica de los bloques de las 4 tablas (líneas 1476–1565, 2823–3083, 3255–3300, 3673–3729, 4217–4243 del dump).
+- Hallazgos clave: audit_log SIN políticas RLS (deny-all por diseño; escritura solo vía trigger SECURITY DEFINER `audit_admin_changes`); 5 índices adicionales `idx_*` que la migración de hardening no cubría; FKs sin ON DELETE salvo `cart_items.cart_id` CASCADE.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `supabase/migrations/20260825185053_create_remote_only_tables.sql` | migración nueva | 4 CREATE TABLE con PK/FK/CHECK inline y nombres canónicos del remoto; 9 índices (incluye los 5 nombres guardados por hardening); ENABLE RLS ×4; 3 políticas verbatim con DROP IF EXISTS previo; 12 grants ALL |
+
+Desviaciones declaradas al operador (aprobadas): constraints inline vs ALTER separados; identificadores sin comillas; DROP POLICY IF EXISTS (PG carece de CREATE POLICY IF NOT EXISTS); OWNER TO omitido. Remoto intacto: migración es no-op allí (nunca se ejecuta `db push`).
+
+### Validación (end-to-end)
+- `supabase db reset --workdir . --local --no-seed`: cadena completa limpia con la nueva migración al final.
+- REST GET de las 4 tablas: **200** (antes PGRST205 tabla ausente).
+- INSERT anónimo sobre agro_agenda: rechazado **401 / 42501** (RLS viva).
+- Smoke positivo autenticado (usuario efímero GoAuth local): INSERT Agenda **201**, Cart **201**, Cart item **201** (FK cascade verificada).
+- Limpieza QA: DELETE como dueño **204 ×3** (valida política DELETE), usuario smoke purgado vía SQL directo, **residuo 0**.
+- `pnpm build:gold` OK completo.
+
+### Resultado
+Deuda #1 de la migración Zorin CERRADA: Agenda y Carrito funcionan offline con cadena fresca completa (58→62 migraciones). Commit `fix(db)` pusheado a main con autorización expresa; dump remoto eliminado de `~/.cache/kilo` tras push confirmado.
+
+### NO se hizo
+- `supabase db push` ni ninguna operación contra el esquema remoto.
+- Commit del daily-log (§4.3: locales-only).
