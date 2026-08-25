@@ -1667,3 +1667,41 @@ Dejar `pnpm dev:offline` funcional en Zorin: instalar Supabase CLI, levantar `sb
 ### QA sugerido
 - En terminal propia (con grupo docker ya activo tras re-login): `pnpm sb:status`, `pnpm dev:offline`, login contra local.
 - Verificar que Agenda/Carrito muestran error controlado offline (tabla ausente) y que el resto del flujo funciona.
+
+---
+
+## Sesión 2026-08-24 (III) — Cierre: git, push e informe consolidado del día
+
+### Objetivo
+Cerrar la migración Zorin: versionar todo, dejar credenciales GitHub operativas y consolidar un informe único del día para los agentes que lleguen después.
+
+### Cierre operativo realizado
+
+| Área | Resultado |
+|---|---|
+| Git identidad | `user.name/user.email` configurados SOLO local en este repo (replicados del historial; email aún placeholder `tu_correo@ejemplo.com` — el operador puede cambiarlo) |
+| Hook pre-commit | `.git/hooks/pre-commit` (guard anti-JWT/URLs Supabase) reactivado con `chmod +x`; estaba sin ejecutar desde la era Windows |
+| GitHub CLI | `gh 2.45.0` instalado vía pkexec; autenticado como **YavlPro** con protocolo HTTPS + credential helper (`gh auth setup-git`) |
+| Push | `e36bbe61..5a30ccca main → main` (commits `5b7b89a2` env-migración y `5a30ccca` asiento de sesión); luego daily-log creado localmente (sin push por diseño) |
+| Barrido final | 0 rutas Windows en activos · sin `AGENT.md` · reporte activo ~1700/4000 líneas · node/pnpm resolviendo en host · docker active · REST local 200 · build:gold verde |
+
+### Informe consolidado para el próximo agente
+
+**Estado entregado:** Zorin OS 18.1 con toolchain completo user-local (Node/pnpm en `~/.local/bin`), Docker Engine + Supabase local corriendo, docs canónicos actualizados a Linux, repo sincronizado con remoto.
+
+**Lecciones operativas de esta migración (no obvias):**
+1. Este entorno de agente corre bajo sandbox Flatpak de VS Code: inyecta un `PREFIX` ajeno que secuestra `npm i -g` hacia `~/.var/app/com.visualstudio.code/data/node_modules`. Para instalar globales npm, usar `flatpak-spawn --host bash -lc '...'` (shell del host limpia).
+2. `/tmp` es privado del sandbox: archivos que deba ver el host van en `$HOME`.
+3. Acciones root: patrón validado `flatpak-spawn --host pkexec /bin/bash script.sh` (diálogo gráfico de contraseña del operador).
+4. Docker requiere grupo: sesiones previas al `usermod` necesitan `sg docker -c "..."` hasta re-login.
+5. Terminales interactivas sin login no leen `~/.profile`: el PATH de `~/.local/bin` vive también en `~/.bashrc`.
+
+**Deuda viva (en orden de prioridad):**
+1. Exportar desde remoto esquemas reales de `agro_agenda`, `agro_cart`, `agro_cart_items`, `admin_audit_log` → migraciones canónicas de creación (hoy solo tienen guards; Agenda/Carrito fallarán en runtime offline).
+2. Operador pendiente de re-login para grupo docker en sus terminales.
+3. Email placeholder en identidad git local.
+4. Crónica mensual `chronicles/2026-08.md` al cierre de mes (daily logs son locales-only por `.gitignore:167`, NO forzar su add).
+
+### NO se hizo
+- No se creó documento standalone del día: este asiento en la bitácora activa ES el informe canónico (anti-redundancia §7.4/§12.X). Los agentes deben consultar esta entrada primero.
+- No se tocaron históricos ni se inventaron esquemas de las tablas faltantes.
