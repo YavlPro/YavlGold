@@ -1699,7 +1699,7 @@ Cerrar la migración Zorin: versionar todo, dejar credenciales GitHub operativas
 **Deuda viva (en orden de prioridad):**
 1. Exportar desde remoto esquemas reales de `agro_agenda`, `agro_cart`, `agro_cart_items`, `admin_audit_log` → migraciones canónicas de creación (hoy solo tienen guards; Agenda/Carrito fallarán en runtime offline).
 2. Operador pendiente de re-login para grupo docker en sus terminales.
-3. Email placeholder en identidad git local.
+3. ~~Email placeholder en identidad git local~~ RESUELTA 2026-08-25: `git config` local actualizado a `Yerikson Varela <yeriksonvarela@gmail.com>` (los 3 commits previos conservan el placeholder; no se ammendan commits ya pusheados).
 4. Crónica mensual `chronicles/2026-08.md` al cierre de mes (daily logs son locales-only por `.gitignore:167`, NO forzar su add).
 
 ### NO se hizo
