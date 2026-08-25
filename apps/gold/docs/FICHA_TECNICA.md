@@ -268,7 +268,7 @@ disponible, con fallback defensivo a query directa.
 - `agro_farms` - Fincas del agricultor (id, user_id, name, location_text, notes, is_default, deleted_at). Soft-delete. RLS owner-only.
 
 #### Agro — Clientes
-- `agro_clients` - Contactos manuales del agricultor (soft-delete con `deleted_at`, RLS owner-only, campo `client_type`)
+- `agro_clients` - Contactos manuales del agricultor (soft-delete con `deleted_at`, RLS owner-only, campos `display_name` y `client_type`)
 - `agro_buyers` - Vista/entidad derivada de compradores provenientes del Facturero de Clientes. Solo lectura. No tiene tabla propia editable; los registros se derivan automáticamente de `agro_pending`/movimientos del Facturero de Clientes. Se deduplican por nombre canónico normalizado contra `agro_clients` al mostrarse en Mis Clientes.
 
 #### Agro — Operaciones (Facturero de la Finca)
