@@ -67,7 +67,7 @@ This file contains the current product, architecture and routing policy for `app
 - `apps/gold/docs/AGENT_REPORT.md` is full historical diagnostics only (legacy, read-only)
 - `apps/gold/docs/LEGACY_SURFACES.md` classifies orphan and legacy files
 - `global_rules.md`, if present, is an operational copy and not a source of truth
-- Playwright QA hygiene is mandatory: close the browser/context after each QA block and delete that block's temp folder under `%LOCALAPPDATA%\\Temp\\playwright-mcp-output\\<session-id>`
+- Playwright QA hygiene is mandatory: close the browser/context after each QA block and delete that block's temp folder under `/tmp/playwright-mcp-output/<session-id>`
 
 ## 8. Agro module structure
 - `agro.js` is the main monolith (~18k lines) — do NOT add new features here

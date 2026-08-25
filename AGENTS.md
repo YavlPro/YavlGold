@@ -393,7 +393,7 @@ Incluye: `agent-guard.mjs` (deps prohibidas) + `agent-report-check.mjs` (reporte
 - Para cambios de auth/session, verificar login/logout flow.
 - Si se usa Playwright para QA:
   - cerrar sesión/contexto/browser al terminar cada bloque de prueba;
-  - borrar explícitamente la carpeta temporal usada por esa prueba en `%LOCALAPPDATA%\Temp\playwright-mcp-output\<session-id>`.
+  - borrar explícitamente la carpeta temporal usada por esa prueba en `/tmp/playwright-mcp-output/<session-id>`.
 
 ### Credenciales QA locales
 
@@ -882,12 +882,15 @@ YavlGold usa un modelo **híbrido**:
 - **Agent Skills**: viven en las rutas del agente, no dentro del código del producto.
 
 ### Rutas activas conocidas
-- **Repo YavlGold**: `C:\Users\yerik\gold`
-- **Vault Obsidian**: **no asumir una ruta fija por defecto. Verificar siempre con el usuario cuál es el vault activo.** Cuando el vault activo sea el documental del repo, usar: `C:\Users\yerik\gold\apps\gold\docs\`
-- **Codex CLI skills**: `C:\Users\yerik\.codex\skills\`
-- **OpenCode skills**: `C:\Users\yerik\.opencode\skills\obsidian-skills\`
 
-> **Nota operativa:** No asumir OneDrive como vault activo por defecto. La ruta histórica puede variar según la sesión. Para pruebas documentales en el vault del repo, usar exclusivamente: `C:\Users\yerik\gold\apps\gold\docs\test\`
+> **Entorno activo:** Linux (Zorin OS) desde 2026-08-24. Las rutas Windows que aparezcan en documentos históricos o archivados se leen solo como contexto de época, nunca como rutas operativas.
+
+- **Repo YavlGold**: `/home/yerikson/gold`
+- **Vault Obsidian**: **no asumir una ruta fija por defecto. Verificar siempre con el usuario cuál es el vault activo.** Cuando el vault activo sea el documental del repo, usar: `/home/yerikson/gold/apps/gold/docs/`
+- **Codex CLI skills**: `/home/yerikson/.codex/skills/`
+- **OpenCode skills**: `/home/yerikson/.opencode/skills/obsidian-skills/`
+
+> **Nota operativa:** No asumir OneDrive ni otras rutas heredadas de Windows como vault activo por defecto. La ruta puede variar según la sesión. Para pruebas documentales en el vault del repo, usar exclusivamente: `/home/yerikson/gold/apps/gold/docs/test/`
 
 ### Skills prioritarias
 Las skills prioritarias de Obsidian para agentes son:
@@ -1073,12 +1076,12 @@ La fase queda completa cuando:
 ## §13 — Pruebas documentales con Obsidian
 
 ### Estado operativo validado
-En sesiones de prueba con Obsidian, el agente **no debe asumir automáticamente** que el vault activo es OneDrive u otra ruta histórica. Antes de crear notas de prueba, debe verificar cuál vault está realmente abierto por el usuario.
+En sesiones de prueba con Obsidian, el agente **no debe asumir automáticamente** que el vault activo es OneDrive u otra ruta histórica heredada de Windows. Antes de crear notas de prueba, debe verificar cuál vault está realmente abierto por el usuario.
 
 #### Carpeta canónica de pruebas
 Cuando el usuario esté trabajando sobre el vault documental del repo, las pruebas de escritura deben hacerse en:
 
-`C:\Users\yerik\gold\apps\gold\docs\test\`
+`/home/yerikson/gold/apps/gold/docs/test/`
 
 Reglas:
 - **no escribir pruebas en la raíz del vault**

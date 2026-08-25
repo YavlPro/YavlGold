@@ -20,9 +20,9 @@ Este documento describe el flujo Online/Offline para `apps/gold` usando Supabase
 ## Setup rapido
 - Copia los ejemplos de entorno segun el modo:
 
-```powershell
-Copy-Item .\apps\gold\.env.online.example .\apps\gold\.env.online
-Copy-Item .\apps\gold\.env.offline.example .\apps\gold\.env.offline
+```sh
+cp apps/gold/.env.online.example apps/gold/.env.online
+cp apps/gold/.env.offline.example apps/gold/.env.offline
 ```
 
 ## Comandos
@@ -37,13 +37,12 @@ Copy-Item .\apps\gold\.env.offline.example .\apps\gold\.env.offline
 
 El flujo local vigente usa solo `supabase/` en la raiz. Si un reporte viejo o instruccion antigua menciona `apps/gold/supabase/`, debe leerse como historial de reconciliacion, no como flujo operativo.
 
-## Recursos Docker Desktop (8GB)
-- Memoria sugerida: 4GB.
+## Recursos Docker (8GB)
+- Memoria sugerida para el stack Supabase local: 4GB.
 - Swap sugerido: 2GB a 4GB.
-- Resource Saver: util si pausas, pero puede dormir contenedores durante el dev activo.
 
 ## Troubleshooting
 - Sin internet la primera vez: necesitas conexion para el primer `docker pull` de imagenes Supabase.
 - Puerto 54321 ocupado: detiene el proceso que lo use o ajusta puertos en la config de Supabase local.
-- Docker no arranca o queda sin memoria: reduce apps abiertas, ajusta memoria/swap y reinicia Docker Desktop.
+- Docker no arranca o queda sin memoria: reduce apps abiertas, ajusta memoria/swap y reinicia Docker (`sudo systemctl restart docker`).
 - Studio no abre: usa `pnpm sb:up:ui` (el perfil liviano lo excluye).

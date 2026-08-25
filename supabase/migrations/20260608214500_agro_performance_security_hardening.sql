@@ -25,8 +25,26 @@ CREATE INDEX IF NOT EXISTS agro_losses_crop_id_idx ON public.agro_losses (crop_i
 CREATE INDEX IF NOT EXISTS agro_pending_crop_id_idx ON public.agro_pending (crop_id) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS agro_transfers_crop_id_idx ON public.agro_transfers (crop_id) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS agro_operational_cycles_crop_id_idx ON public.agro_operational_cycles (crop_id);
-CREATE INDEX IF NOT EXISTS agro_agenda_crop_id_idx ON public.agro_agenda (crop_id);
-CREATE INDEX IF NOT EXISTS agro_cart_crop_id_idx ON public.agro_cart (crop_id);
+-- agro_agenda existe solo en el esquema remoto (no tiene migración de creación en esta cadena).
+-- Índice condicional para que cadenas frescas (supabase db reset / sb:up local) no fallen.
+DO $$
+BEGIN
+  IF to_regclass('public.agro_agenda') IS NOT NULL THEN
+    CREATE INDEX IF NOT EXISTS agro_agenda_crop_id_idx ON public.agro_agenda (crop_id);
+  END IF;
+END
+$$;
+-- agro_cart / agro_cart_items existen solo en el esquema remoto (sin migración de creación en esta cadena).
+DO $$
+BEGIN
+  IF to_regclass('public.agro_cart') IS NOT NULL THEN
+    CREATE INDEX IF NOT EXISTS agro_cart_crop_id_idx ON public.agro_cart (crop_id);
+  END IF;
+  IF to_regclass('public.agro_cart_items') IS NOT NULL THEN
+    CREATE INDEX IF NOT EXISTS agro_cart_items_expense_id_idx ON public.agro_cart_items (expense_id);
+  END IF;
+END
+$$;
 CREATE INDEX IF NOT EXISTS agro_roi_calculations_crop_id_idx ON public.agro_roi_calculations (crop_id);
 CREATE INDEX IF NOT EXISTS agro_task_cycles_crop_id_idx ON public.agro_task_cycles (crop_id);
 
@@ -39,10 +57,17 @@ CREATE INDEX IF NOT EXISTS agro_income_buyer_id_idx ON public.agro_income (buyer
 CREATE INDEX IF NOT EXISTS agro_operational_movements_cycle_id_idx ON public.agro_operational_movements (cycle_id);
 
 -- Otras Relaciones de la Aplicación
-CREATE INDEX IF NOT EXISTS agro_cart_items_expense_id_idx ON public.agro_cart_items (expense_id);
+-- (agro_cart_items_expense_id_idx se crea condicionalmente arriba; la tabla solo existe en remoto)
 CREATE INDEX IF NOT EXISTS agro_clients_linked_profile_id_idx ON public.agro_clients (linked_profile_id);
-CREATE INDEX IF NOT EXISTS admin_audit_log_profile_id_idx ON public.admin_audit_log (profile_id);
-CREATE INDEX IF NOT EXISTS admin_audit_log_changed_by_idx ON public.admin_audit_log (changed_by);
+-- admin_audit_log existe solo en el esquema remoto (sin migración de creación en esta cadena).
+DO $$
+BEGIN
+  IF to_regclass('public.admin_audit_log') IS NOT NULL THEN
+    CREATE INDEX IF NOT EXISTS admin_audit_log_profile_id_idx ON public.admin_audit_log (profile_id);
+    CREATE INDEX IF NOT EXISTS admin_audit_log_changed_by_idx ON public.admin_audit_log (changed_by);
+  END IF;
+END
+$$;
 
 
 -- ==========================================
