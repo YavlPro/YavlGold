@@ -1591,3 +1591,79 @@ Vercel → Settings → Domains: cambiar redirección apex→www de 307 a 308 pe
 
 ### NO se hizo
 Cero cambios en contenido de landing, JSON-LD ni headers de Vercel.
+
+---
+
+---
+
+## Sesión 2026-08-24 — Migración Windows 11 → Zorin OS Core 18.1
+
+### Objetivo
+El operador migró de Windows 11 a Zorin OS Core 18.1 (home `/home/yerikson`). Autorización expresa para aplicar todas las actualizaciones de entorno encontradas.
+
+### Diagnóstico
+- Barrido exhaustivo de `C:\Users\yerik`, `%LOCALAPPDATA%`, `.codex`, `.opencode`, PowerShell en todo el repo.
+- Activos afectados: `AGENTS.md` (§5, §12, §13), `package.json` (`clean:gold`/`scan:gold` con PowerShell, rotos en Linux), `apps/gold/public/llms.txt`, `apps/gold/docs/LOCAL_FIRST.md`, puntero raíz `AGENT_REPORT_ACTIVE.md`.
+- El host Zorin no tenía Node/pnpm/docker; este sandbox corre bajo runtime Flatpak de VS Code.
+- `node_modules` heredado contenía binarios nativos de Windows (esbuild/sharp/turbo): reinstalación obligatoria.
+- Históricos intactos por canon: `AGENT_LEGACY_CONTEXT__*`, `archive/**`, crónicas, `AGENT_REPORT.md`, runbook RLS 2026-04-24.
+- `~/.codex` y `~/.opencode` aún no existen; rutas actualizadas como destino esperado si se reinstalan esos CLIs.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `package.json` | scripts | `clean:gold` y `scan:gold` PowerShell → POSIX (`rm -rf` / `grep -nE`), mismos patrones de guard |
+| `AGENTS.md` | canónico | §12 rutas activas → Linux + nota de entorno Zorin desde 2026-08-24; §5 temp Playwright → `/tmp/playwright-mcp-output/<session-id>`; §13 OneDrive/test path actualizados |
+| `apps/gold/public/llms.txt` | operativo | higiene Playwright con ruta `/tmp/playwright-mcp-output/<session-id>` |
+| `apps/gold/docs/LOCAL_FIRST.md` | operativo | bloque `Copy-Item` → `cp`; sección Docker Desktop → Docker genérico con restart systemd |
+| `AGENT_REPORT_ACTIVE.md` (raíz) | puntero | enlace absoluto `C:/Users/...` → relativo |
+
+### Toolchain bootstrap (sin sudo, user-local)
+- Node `v20.20.2-linux-x64` (LTS, cumple `engines: 20.x`) instalado en `~/.local/lib/nodejs/`, shims en `~/.local/bin/`.
+- Corrección posterior en la misma sesión: (a) `~/.bashrc` ahora añade `~/.local/bin` al PATH para terminales interactivas sin login (antes solo `~/.profile` lo cubría); (b) el shim `pnpm` apuntaba a destino inexistente porque el sandbox Flatpak de VS Code inyecta un `PREFIX` ajeno que secuestró el primer `npm i -g`; reinstalado desde shell del host con prefijo correcto (`../lib/node_modules/pnpm/bin/pnpm.cjs`). Verificado `node v20.20.2` + `pnpm 9.1.0` resolvendo en terminal nueva del host. Descartado NVM: habría creado un segundo árbol de Node innecesario.
+- `pnpm@9.1.0` global vía npm (coincide con `packageManager`).
+- `rm -rf node_modules apps/gold/node_modules` (binarios Windows) + `pnpm install --frozen-lockfile` limpio para Linux.
+- Docker Engine 29.7.2 + Compose v5.5.0 instalados desde el repositorio oficial Docker/Ubuntu noble vía `flatpak-spawn --host pkexec` (autorización gráfica del operador); servicio `docker` activo y `yerikson` en grupo `docker`. Temporales de instalación eliminados.
+
+### Resultado de build
+`pnpm clean:gold` OK · `pnpm scan:gold` OK · `pnpm build:gold` OK completo (agent-guard + agent-report-check + vite 2.05s + check-llms OK + UTF-8 guard OK).
+
+### QA sugerido
+- Abrir terminal nueva y verificar `node -v` / `pnpm -v` resuelven desde `~/.local/bin`.
+- Modo offline: tras cerrar sesión y volver a entrar (para que el grupo `docker` aplique), ejecutar `pnpm sb:up` y copiar el `anon key` a `.env.offline`.
+
+### NO se hizo
+- Reescritura de documentos históricos/archivados (rutas Windows se conservan como contexto de época).
+- Instalación de Docker ni de CLIs externos (Codex/OpenCode) sin instrucción explícita.
+- Cambios semánticos en canónicos más allá de rutas y notas de entorno.
+
+---
+
+## Sesión 2026-08-24 (II) — Supabase local operativo + reparación de drift de migraciones
+
+### Objetivo
+Dejar `pnpm dev:offline` funcional en Zorin: instalar Supabase CLI, levantar `sb:up` y configurar `.env.offline`.
+
+### Diagnóstico
+- `supabase` no existía como binario → añadida CLI `2.115.0` como devDependency del workspace root (`pnpm add -D -w supabase`; modifica `package.json` + `pnpm-lock.yaml`, autorizado por el operador).
+- `pnpm sb:up` fallaba en migración final `20260608214500_agro_performance_security_hardening.sql`: 4 tablas existen SOLO en el esquema remoto sin migración de creación en la cadena (`agro_agenda`, `agro_cart`, `agro_cart_items`, `admin_audit_log`). Los índices sobre ellas rompían cualquier cadena fresca. `agro_rank_*` descartadas como falsos positivos (son funciones).
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `package.json` / `pnpm-lock.yaml` | deps | `supabase 2.115.0` en devDependencies (workspace root) |
+| `supabase/migrations/20260608214500_agro_performance_security_hardening.sql` | migración | Índices sobre las 4 tablas solo-remotas envueltos en guards `to_regclass(...)`; eliminado duplicado suelto de `agro_cart_items_expense_id_idx`. Remoto intacto (migración ya aplicada allí). |
+| `apps/gold/.env.offline` | config local (gitignored) | `VITE_SUPABASE_URL=http://127.0.0.1:54321` + `VITE_SUPABASE_ANON_KEY=sb_publishable_...` (nuevo formato de claves de CLI 2.115, compatible con supabase-js 2.90) |
+
+### Resultado
+- Cadena completa de 57 migraciones aplicada limpia; `sb:up` OK con perfil liviano; REST local responde **200** con la publishable key.
+- `pnpm build:gold` OK completo tras el cambio de dependencias.
+
+### Deuda viva documentada
+- Las 4 tablas solo-remotas NO existen en local: Agenda, Carrito y audit-log offline fallarán en runtime hasta que el operador exporte sus esquemas reales desde remoto (`pg_dump --table`) y se agreguen como migraciones de creación canónicas. No se inventó esquema por decisión de canon.
+
+### QA sugerido
+- En terminal propia (con grupo docker ya activo tras re-login): `pnpm sb:status`, `pnpm dev:offline`, login contra local.
+- Verificar que Agenda/Carrito muestran error controlado offline (tabla ausente) y que el resto del flujo funciona.
