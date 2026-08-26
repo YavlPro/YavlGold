@@ -1767,3 +1767,48 @@ Deuda #6 y #7 CERRADAS. Marcador vivo restante: cleanup QA bloqueado por hCaptch
 ### NO se hizo
 - Tocar otras secciones de FICHA_TECNICA, AGENTS.md, MANIFIESTO_AGRO.md ni ADN-VISUAL-V12.0.md.
 - Commit del daily-log (locales-only).
+
+---
+
+## 2026-08-25 — Facturero de Clientes: wizard por páginas (sin modales)
+
+**Objetivo:** Ejecutar plan `apps/gold/docs/ops/plan-2026-08-25-facturero-wizard-paginas.md` — reemplazar la entrada y el wizard modal de 4 pasos de Facturero de Clientes por un wizard por páginas profundas (P0–P6) con hash persistente, sin eliminar funciones.
+
+**Diagnóstico (FASE 0, citado en sesión):**
+- Entrada actual: `agro-facturero-clientes-view.js:2790-2810` (5 botones) + handlers `:3327-3356`.
+- Wizard modal: `agro-wizard.js` (`openAgroWizard:696`, 4 pasos). Llamadores verificados sin filtro de extensión: `agro.js:5799/:5853/:9015` (facturero general + global), `view.js openRecordFromCarteraContext/openClientRecordWizard`, shell `new-record` vía `window.openCarteraVivaRecordContext` (`agro-shell.js:901-905`). **El modal no es exclusivo de esta vista** → retiro parcial.
+- Shell: `VIEW_SUBNAV_CONFIG:136-144` sin `facturero-clientes`; boot siempre al hub salvo hash (`resolveInitialView:614-649`).
+- Primitivas intactas: `computePendingSplitDraft` (`agro.js:3940-4070`), `resolvePendingQuantity:1141-1166`, formatter BUG 3 `:3777-3779`, skill `SKILLS/2026-08-25-FORMATTER-Y-ARTEFACTOS-DE-MEDICION.md`.
+- Cultivos: constraint `('sembrado','creciendo','produccion','finalizado','lost')` (`20260417104335:44-45`); guard de vista permite `lost` (:45) vs plan P4 solo producción/finalizados → regla nueva solo dentro del flow.
+- `agro_buyers` sin columna finca (`20260227000500:6-18`) → contexto finca de P2 vive en `notes`; finca operativa en P4 (`farm_id`).
+- Verificación real de cuenta posible: `profiles` con select público (`001_setup_profiles_trigger.sql:16`) + email (`20260608214500:173`).
+
+**Cambios realizados**
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro-facturero-clientes-flow.js` | nuevo (~840L) | Motor P0–P6: puertas de entrada, vínculo con verificación real contra `profiles`, datos del cliente (buyer insert fiel a `agrocompradores.js:1237-1271` + evento `agro:client:changed`), grid Fiado/Pagado/Pérdida/Donación, finca→cultivo (solo producción/finalizados), datos kg-aware con guardrail USD inline (sin `confirm` nativo), inserción fiel al modal (defaults NOT NULL, `ensureBuyerIdentityLink`, fallback de columnas), P6 doble salida; hash profundo `subview/paso/id`; FA 6.5, cero emojis funcionales |
+| `apps/gold/agro/agro-facturero-clientes-flow.css` | nuevo (~600L) | ADN V12: tokens, `.btn-gold`/`.btn-outline-gold` locales (no cargaban en Agro), interacciones 120–220ms opacity/transform, focus-visible, touch ≥44px, ≤480px, `prefers-reduced-motion`, sin glow/shimmer |
+| `apps/gold/agro/agro-facturero-clientes-view.js` | wiring quirúrgico | Routing por hash en `renderView()` (entrada/nuevo/registros/detalle); guard `activeFlowSession` anti-re-instanciación; quick actions del detalle y `openRecordFromCarteraContext` delegan al flow (modal retirado de esta vista); header sin botones → bloque "Gestión de clientes" (Unificar/Actualizar/Exportar/Nuevo) al final de B1; "Te puede interesar" en detalle ([Ver registro de clientes] [Asistente IA] `data-agro-view`); onBack/open-history escriben hash; quitados imports muertos |
+| `apps/gold/agro/index.html` | wiring | `<link>` CSS del flow junto al existente (:152) |
+| `apps/gold/docs/ops/plan-2026-08-25-facturero-wizard-paginas.md` | doc | Plan del frente con decisiones FASE 0 adoptadas |
+
+**Resultado de build:** `pnpm build:gold` VERDE ×2 (agent-guard OK, agent-report-check OK, vite build ✓, check-llms OK, UTF-8 OK). Nota de entorno: shell sin Node nativo; se ejecutó con wrapper Electron `ELECTRON_RUN_AS_NODE=1 /app/extra/vscode/code` (v24.18.0). Bundle confirma flow embebido (`fcflow` en dist CSS+JS).
+
+**QA realizado:** sintaxis ESM validada (`--check`); contratos export/import cruzados verificados; balance de delimitadores en view.js OK.
+
+**QA sugerido (operador):**
+1. F5 en cada paso → URL `#view=facturero-clientes&subview=nuevo&paso=N` restaura página.
+2. Crear cliente sin cuenta → fiado → P6 → ambas salidas.
+3. "Con cuenta" con email inexistente → mensaje honesto; con email real de `profiles` → vincula `linked_user_id`.
+4. P4: cultivos sembrado/creciendo NO aparecen; producción/finalizados sí.
+5. Guardrail USD: monto ≥1000 USD exige checkbox para confirmar.
+6. Detalle → Nuevo fiado/cobro/pérdida abren páginas (no modal); transferencia parcial/reversión desde historial intactas; blur "10" conserva "10".
+7. Rail lateral → volver a Facturero de Clientes muestra puerta P0.
+
+**NO se hizo (scope respetado):**
+- No se tocó el facturero general ni `injectWizardInvokers`/`createWizardButton` (el modal sigue vivo ahí).
+- No se tocaron `computePendingSplitDraft`, `resolvePendingQuantity`, formatter `:3777`, reversión/transferencia parcial.
+- Sin cambios en agro-shell.js, MANIFIESTO_AGRO.md, ADN-VISUAL-V12.0.md, AGENTS.md.
+- Nota MANIFIESTO §4.5.1 (punto 8 del plan): pendiente de sí explícito del operador.
+- Sin commits ni push (pendiente autorización).
