@@ -1840,3 +1840,45 @@ Deuda #6 y #7 CERRADAS. Marcador vivo restante: cleanup QA bloqueado por hCaptch
 
 ### NO se hizo
 - Tocar MANIFIESTO_AGRO.md, ADN-VISUAL-V12.0.md, FICHA_TECNICA.md, AGENTS.md ni código de producto en este cierre.
+
+---
+
+## 2026-08-26 — Re-split del wizard a 8 pasos (P1..P8)
+
+**Objetivo:** Dividir el paso 5 combinado (presentación+kg+moneda+monto+tasa+concepto+fecha) en tres páginas, añadir resumen antes de confirmar y fijar el comportamiento del Volver superior.
+
+**FASE 0 (citada en sesión):** `renderStepDetails` :758-772 + `renderUnitSection` :598-622 (input kg :617-620) + `renderCurrencyAmountSection` :624-666 (tasa editable :632-640) + `renderSummaryTicket` :730-756 + volver superior :1106-1112 → goBack :337-345 + contador :314-319.
+
+**Cambios realizados** (solo `agro-facturero-clientes-flow.js`):
+
+| Zona | Cambio |
+|---|---|
+| `:27-28` | `STEP_ORDER_NEW = ['link','data','type','crop','unit','details','summary','done']`; `TOTAL_STEPS = 8` |
+| `:21-26` | Quita `hasOverride/clearOverride` (tasa ya no editable) |
+| `state` | Quita `exchangeRate` y `quantityKg` |
+| `stepNumber/totalSteps` | Numeración global P1..P8 (mapa NEW; record es subsecuencia P3..P8) |
+| `goBack` + `exitToEntry` | Footer Atrás retrocede un paso · topbar sale a entrada |
+| `renderStepUnit` (P5) | Sin kg opcional; label "Cantidad (sacos/ cestas/ kilogramos)" según presentación |
+| `renderStepDetails` (P6) | Moneda + monto + tasa(mercado, solo lectura) + concepto + fecha |
+| `renderStepSummary` (P7) | Resumen completo (cliente, vínculo, tipo, cultivo, finca, cantidad, fecha, concepto, moneda, tasa, ≈USD) |
+| `renderStepDone` (P8) | Aviso final con dos salidas |
+| `footerButton` | Botón "Atrás" outline + Siguiente/Confirmar; sin Atrás en P1 |
+| `handleSubmit` | Branches `unit` (valida qty>0) y `summary` (detailsValid + insert) |
+| `insertMovement` | Regla: saco/cesta → `unit_type+unit_qty` sin `quantity_kg`; kg → solo `quantity_kg` (columnas nullable, `20260327001000:39-41`) |
+| `bindEvents` | `[data-flow-exit]` (topbar) + `[data-flow-stepback]` (footer) |
+| `render` | Topbar con label "Entrada" + contador "Paso X de 8" |
+
+**Resultado de build:** `pnpm build:gold` VERDE con wrapper `~/.local/bin/node` (v24.18.0; PATH de este shell no lo incluía — añadido en sesión). Sintaxis ESM `--check` OK.
+
+**QA sugerido (7 puntos del prompt):**
+1. P5 sin kg opcional, Siguiente visible.
+2. P6 con moneda/monto/tasa(mercado, solo lectura)/concepto/fecha.
+3. P7 resumen fiel; Confirmar crea el registro correcto (saco sin kg, kg con quantity_kg).
+4. P8 con las dos salidas operativas.
+5. Volver superior (topbar "Entrada") → `#view=facturero-clientes` (entrada), no al hub.
+6. F5 en paso 6 restaura paso 6; Atrás de paso retrocede uno.
+7. Mobile ≤480 usable.
+
+**NO se hizo:** tocar `view.js`, `agro.js`, shell, otros módulos, ni los canónicos (MANIFIESTO, ADN, FICHA, AGENTS). CSS sin cambios (`.fcflow-card__hint` ya cubría la tasa readonly; `.btn-outline-gold` ya cubría Atrás).
+
+**Pendientes vivos:** nota MANIFIESTO §4.5.1 (autorización pendiente) · Vercel 307→308 apex→www (manual del operador) · cleanup QA (bloqueado hCaptcha/MCP) · crónica 2026-08 al cierre del mes · listar `agro-facturero-clientes-flow.js` en FICHA §4.2 (opcional) · commit + push de este split (pendiente autorización).

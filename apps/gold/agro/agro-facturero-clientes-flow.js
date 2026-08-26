@@ -12,9 +12,7 @@ import {
     SUPPORTED_CURRENCIES,
     initExchangeRates,
     getRate,
-    convertToUSD,
-    hasOverride,
-    clearOverride
+    convertToUSD
 } from './agro-exchange.js';
 import {
     ensureBuyerIdentityLink,
@@ -24,8 +22,11 @@ import {
 
 const FLOW_ROOT_CLASS = 'fcflow';
 
-const STEP_ORDER_NEW = ['link', 'data', 'type', 'crop', 'details', 'done'];
-const STEP_ORDER_RECORD = ['type', 'crop', 'details', 'done'];
+// Mapa canónico de 8 pasos (P1..P8). RECORD es la subsecuencia P3..P8
+// (cliente ya existente): la numeración global se mantiene sobre el mapa full.
+const STEP_ORDER_NEW = ['link', 'data', 'type', 'crop', 'unit', 'details', 'summary', 'done'];
+const STEP_ORDER_RECORD = ['type', 'crop', 'unit', 'details', 'summary', 'done'];
+const TOTAL_STEPS = 8;
 
 const RECORD_TYPES = Object.freeze({
     pendientes: Object.freeze({
@@ -295,10 +296,8 @@ export function openFactureroClientFlow(root, options = {}) {
         cropId: String(options.cropId || '').trim(),
         unitType: 'saco',
         unitQty: 1,
-        quantityKg: '',
         monto: '',
         currency: 'COP',
-        exchangeRate: 0,
         fecha: todayISO(),
         concepto: '',
         usdConfirmed: false,
@@ -311,17 +310,16 @@ export function openFactureroClientFlow(root, options = {}) {
     initExchangeRates().then((rates) => { if (rates && token === activeFlowToken) exchangeRates = rates; }).catch(() => {});
 
     function currentStep() { return steps[stepIndex]; }
+    // Numeración global sobre el mapa completo de 8 pasos (P1..P8).
     function stepNumber() {
-        // El usuario ve "Paso X de N" contando páginas humanas (sin la página de éxito final).
-        const total = steps.length - 1;
-        return Math.min(stepIndex + 1, total);
+        return Math.min(STEP_ORDER_NEW.indexOf(currentStep()) + 1, TOTAL_STEPS);
     }
-    function totalHumanSteps() { return steps.length - 1; }
+    function totalSteps() { return TOTAL_STEPS; }
 
     function syncHash() {
         writeFactureroHashRoute({
             subview: 'nuevo',
-            paso: stepIndex + 1,
+            paso: stepNumber(),
             id: state.buyerId || (mode === 'record' ? options.buyer?.id || '' : '')
         });
     }
@@ -334,6 +332,7 @@ export function openFactureroClientFlow(root, options = {}) {
         }
     }
 
+    // Volver de paso: retrocede exactamente un paso (nunca sale del wizard).
     function goBack() {
         if (stepIndex > 0) {
             stepIndex -= 1;
@@ -341,6 +340,11 @@ export function openFactureroClientFlow(root, options = {}) {
             render();
             return;
         }
+        options.onExit?.();
+    }
+
+    // Flecha superior: sale siempre a la entrada del Facturero de Clientes.
+    function exitToEntry() {
         options.onExit?.();
     }
 
@@ -352,7 +356,11 @@ export function openFactureroClientFlow(root, options = {}) {
             case 'crop': return state.cropId
                 ? 'Cultivo seleccionado. Puedes cambiarlo si quieres.'
                 : (state.farmId ? 'Ahora debes seleccionar tu cultivo.' : 'Ahora selecciona tu finca.');
-            case 'details': return 'Revisa los datos del registro antes de confirmar.';
+            case 'unit': return state.unitType === 'kg'
+                ? '¿Cuántos kilogramos movió?'
+                : '¿Cómo se entregó o recibió, y cuánto?';
+            case 'details': return 'Moneda, monto y concepto del registro.';
+            case 'summary': return 'Revisa que todo esté correcto antes de confirmar.';
             default: return '';
         }
     }
@@ -595,7 +603,15 @@ export function openFactureroClientFlow(root, options = {}) {
         `;
     }
 
-    function renderUnitSection() {
+    function unitQtyLabel() {
+        switch (state.unitType) {
+            case 'kg': return 'Cantidad (kilogramos)';
+            case 'cesta': return 'Cantidad (cestas)';
+            default: return 'Cantidad (sacos)';
+        }
+    }
+
+    function renderStepUnit() {
         const unitCards = UNIT_OPTIONS.map((unit) => optionCard({
             value: unit.value,
             label: unit.label,
@@ -607,16 +623,12 @@ export function openFactureroClientFlow(root, options = {}) {
             <p class="fcflow-label">Presentación</p>
             <div class="fcflow-grid fcflow-grid--2" data-flow-group="unit">${unitCards}</div>
             <div class="fcflow-field" style="margin-top:0.75rem;">
-                <label class="fcflow-label" for="fcflow-qty">Cantidad (${escapeHtml(state.unitType)})</label>
+                <label class="fcflow-label" for="fcflow-qty">${escapeHtml(unitQtyLabel())}</label>
                 <div style="display:flex; gap:0.5rem; align-items:center;">
                     <button type="button" class="fcflow-manage__btn" data-action="qty-dec" aria-label="Restar">−1</button>
                     <input class="fcflow-input" type="number" id="fcflow-qty" min="0.01" step="0.01" inputmode="decimal" value="${escapeHtml(String(qty))}" style="max-width:130px; text-align:center;">
                     <button type="button" class="fcflow-manage__btn" data-action="qty-inc" aria-label="Sumar">+1</button>
                 </div>
-            </div>
-            <div class="fcflow-field" style="margin-top:0.75rem;">
-                <label class="fcflow-label" for="fcflow-kg">Kilogramos (opcional)</label>
-                <input class="fcflow-input" type="number" id="fcflow-kg" min="0" step="0.01" inputmode="decimal" placeholder="Ej: 50" value="${escapeHtml(state.quantityKg)}">
             </div>
         `;
     }
@@ -632,9 +644,8 @@ export function openFactureroClientFlow(root, options = {}) {
         const rateBlock = state.currency !== 'USD'
             ? `
                 <div class="fcflow-field" style="margin-top:0.75rem;">
-                    <label class="fcflow-label" for="fcflow-rate">Tasa ${escapeHtml(state.currency)}/USD ${hasOverride(state.currency) ? '(manual)' : '(mercado)'}</label>
-                    <input class="fcflow-input" type="number" id="fcflow-rate" min="0.0001" step="any" inputmode="decimal" value="${escapeHtml(String(effectiveRate() || ''))}">
-                    <span class="fcflow-card__hint" id="fcflow-usd-preview">≈ $${usdEquivalent()} USD</span>
+                    <span class="fcflow-label">Tasa ${escapeHtml(state.currency)}/USD (mercado, solo lectura)</span>
+                    <span class="fcflow-card__hint" id="fcflow-rate-read">${marketRateText()} · ≈ $${usdEquivalent()} USD</span>
                 </div>
             `
             : '';
@@ -665,11 +676,15 @@ export function openFactureroClientFlow(root, options = {}) {
         `;
     }
 
+    // Tasa SIEMPRE de mercado (solo lectura): sin override manual en este flow.
     function effectiveRate() {
         if (state.currency === 'USD') return 1;
-        const parsed = Number(state.exchangeRate);
-        if (Number.isFinite(parsed) && parsed > 0) return parsed;
         return getRate(state.currency, exchangeRates) || 0;
+    }
+
+    function marketRateText() {
+        const rate = effectiveRate();
+        return rate > 0 ? `${rate}` : 'sin tasa disponible ahora';
     }
 
     function usdEquivalent() {
@@ -687,18 +702,17 @@ export function openFactureroClientFlow(root, options = {}) {
         return delta <= Math.max(0.01, amount * 0.0001);
     }
 
-    function readDetailsInputs() {
+    function readUnitInputs() {
         const qtyEl = root.querySelector('#fcflow-qty');
         if (qtyEl) {
             const parsed = Number.parseFloat(qtyEl.value);
             state.unitQty = Number.isFinite(parsed) && parsed > 0 ? Math.min(999, parsed) : 1;
         }
-        const kgEl = root.querySelector('#fcflow-kg');
-        if (kgEl) state.quantityKg = kgEl.value;
+    }
+
+    function readDetailsInputs() {
         const montoEl = root.querySelector('#fcflow-monto');
         if (montoEl) state.monto = montoEl.value;
-        const rateEl = root.querySelector('#fcflow-rate');
-        if (rateEl) state.exchangeRate = Number(rateEl.value) || 0;
         const dateEl = root.querySelector('#fcflow-date');
         if (dateEl) state.fecha = dateEl.value || todayISO();
         const conceptEl = root.querySelector('#fcflow-concepto');
@@ -727,21 +741,36 @@ export function openFactureroClientFlow(root, options = {}) {
         if (usdCheck) state.usdConfirmed = usdCheck.checked;
     }
 
-    function renderSummaryTicket() {
+    function summaryRows() {
         const typeMeta = RECORD_TYPES[state.recordType];
         const crop = getAvailableCrops().find((item) => String(item.id) === String(state.cropId));
         const farm = getFarms().find((item) => String(item.id) === String(state.farmId));
+        const cantidad = state.unitType === 'kg'
+            ? `${state.unitQty} kg`
+            : `${state.unitQty} ${state.unitType}${Number(state.unitQty) === 1 ? '' : 's'}`;
         const rows = [
             ['Cliente', state.buyerName],
+            ['Vínculo', state.linkedUserId ? `Cuenta YavlGold (${state.linkedEmail})` : 'Sin cuenta'],
             ['Tipo', typeMeta?.label || ''],
             ['Cultivo', crop ? cropDisplayLabel(crop) : 'General'],
             ['Finca', farm ? String(farm.name || 'Finca') : '—'],
-            ['Cantidad', `${state.unitQty} ${state.unitType}${state.quantityKg ? ` · ${state.quantityKg} kg` : ''}`],
-            ['Fecha', state.fecha]
+            ['Cantidad', cantidad],
+            ['Fecha', state.fecha],
+            ['Concepto', buildConceptWithWho(state.recordType, state.concepto, state.buyerName)],
+            ['Moneda', state.currency]
         ];
+        if (state.currency !== 'USD') {
+            rows.push(['Tasa', marketRateText()]);
+            rows.push(['Equivalente', `≈ $${usdEquivalent()} USD`]);
+        }
+        return rows;
+    }
+
+    // P7 — resumen completo + Confirmar
+    function renderStepSummary() {
         return `
-            <dl class="fcflow-summary" style="margin-top:0.9rem;">
-                ${rows.map(([label, value]) => `
+            <dl class="fcflow-summary">
+                ${summaryRows().map(([label, value]) => `
                     <div class="fcflow-summary__row">
                         <dt>${escapeHtml(label)}</dt>
                         <dd>${escapeHtml(value || '—')}</dd>
@@ -755,10 +784,10 @@ export function openFactureroClientFlow(root, options = {}) {
         `;
     }
 
+    // P6 — moneda + monto + tasa (mercado, solo lectura) + concepto + fecha
     function renderStepDetails() {
         return `
-            ${renderUnitSection()}
-            <div style="margin-top:0.9rem;">${renderCurrencyAmountSection()}</div>
+            ${renderCurrencyAmountSection()}
             <div class="fcflow-field" style="margin-top:0.75rem;">
                 <label class="fcflow-label" for="fcflow-date">Fecha</label>
                 <input class="fcflow-input" type="date" id="fcflow-date" max="${todayISO()}" value="${escapeHtml(state.fecha)}">
@@ -767,7 +796,6 @@ export function openFactureroClientFlow(root, options = {}) {
                 <label class="fcflow-label" for="fcflow-concepto">Concepto *</label>
                 <input class="fcflow-input" type="text" id="fcflow-concepto" placeholder="${escapeHtml(conceptPlaceholder())}" value="${escapeHtml(state.concepto)}" autocomplete="off">
             </div>
-            ${renderSummaryTicket()}
         `;
     }
 
@@ -825,7 +853,7 @@ export function openFactureroClientFlow(root, options = {}) {
             submitBtn.disabled = isSaving;
             submitBtn.innerHTML = isSaving
                 ? '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Guardando…'
-                : (currentStep() === 'details' ? 'Confirmar' : 'Siguiente');
+                : (currentStep() === 'summary' ? 'Confirmar' : 'Siguiente');
         }
     }
 
@@ -833,8 +861,12 @@ export function openFactureroClientFlow(root, options = {}) {
         const step = currentStep();
         if (step === 'done') return '';
         const disabledAttrs = step === 'details' && !detailsValid() ? 'disabled' : '';
-        const label = step === 'details' ? 'Confirmar' : 'Siguiente';
+        const label = step === 'summary' ? 'Confirmar' : 'Siguiente';
+        const backBtn = stepIndex > 0
+            ? `<button type="button" class="btn-outline-gold" data-flow-stepback>Atrás</button>`
+            : '';
         return `
+            ${backBtn}
             <button type="button" class="btn-gold" data-flow-submit ${disabledAttrs}>
                 ${label}
             </button>
@@ -869,11 +901,29 @@ export function openFactureroClientFlow(root, options = {}) {
             goNext();
             return;
         }
+        if (step === 'unit') {
+            readUnitInputs();
+            if (!(Number(state.unitQty) > 0)) {
+                showStepError('Ingresa una cantidad mayor a cero.');
+                return;
+            }
+            goNext();
+            return;
+        }
         if (step === 'details') {
             if (!detailsValid()) {
                 showStepError(detectInflatedUsd() && !state.usdConfirmed
                     ? 'Confirma que el monto está realmente en USD (o cambia la moneda).'
                     : 'Completa monto, fecha y concepto.');
+                return;
+            }
+            goNext();
+            return;
+        }
+        if (step === 'summary') {
+            readDetailsInputsSilent();
+            if (!detailsValid()) {
+                showStepError('Faltan datos del registro. Vuelve atrás y complétalos.');
                 return;
             }
             await insertMovement();
@@ -934,10 +984,16 @@ export function openFactureroClientFlow(root, options = {}) {
                 if (buyerLink.buyer_match_status !== undefined) insertData.buyer_match_status = buyerLink.buyer_match_status;
             }
 
-            insertData.unit_type = state.unitType;
-            insertData.unit_qty = Number(state.unitQty) || 1;
-            const kg = Number.parseFloat(state.quantityKg);
-            if (Number.isFinite(kg) && kg > 0) insertData.quantity_kg = kg;
+            // Regla canónica del flow: saco/cesta → unit_qty con su unidad,
+            // SIN quantity_kg · kg → SOLO quantity_kg (columnas nullable:
+            // 20260327001000_agro_facturero_base_order_repair.sql:39-41).
+            const qty = Number(state.unitQty) || 1;
+            if (state.unitType === 'kg') {
+                insertData.quantity_kg = Math.round(qty * 1000) / 1000;
+            } else {
+                insertData.unit_type = state.unitType;
+                insertData.unit_qty = qty;
+            }
 
             const optionalFieldsByTab = {
                 ingresos: ['origin_table', 'transfer_state', 'quantity_kg', 'monto_usd', 'exchange_rate', 'buyer_id', 'buyer_group_key', 'buyer_match_status', 'categoria'],
@@ -978,7 +1034,10 @@ export function openFactureroClientFlow(root, options = {}) {
     }
 
     function bindEvents() {
-        root.querySelectorAll('[data-flow-back]').forEach((btn) => btn.addEventListener('click', goBack));
+        // Flecha superior: salida a la entrada del facturero (nunca retrocede paso).
+        root.querySelectorAll('[data-flow-exit]').forEach((btn) => btn.addEventListener('click', exitToEntry));
+        // Volver de paso: retrocede exactamente un paso.
+        root.querySelectorAll('[data-flow-stepback]').forEach((btn) => btn.addEventListener('click', goBack));
 
         root.querySelectorAll('.fcflow-card[data-option-value]').forEach((card) => {
             card.addEventListener('click', () => {
@@ -1004,7 +1063,6 @@ export function openFactureroClientFlow(root, options = {}) {
                 }
                 if (group === 'currency') {
                     state.currency = value;
-                    state.exchangeRate = value === 'USD' ? 1 : (getRate(value, exchangeRates) || 0);
                     render();
                     return;
                 }
@@ -1036,7 +1094,7 @@ export function openFactureroClientFlow(root, options = {}) {
                     return;
                 }
                 if (action === 'qty-inc' || action === 'qty-dec') {
-                    readDetailsInputs();
+                    readUnitInputs();
                     const delta = action === 'qty-inc' ? 1 : -1;
                     state.unitQty = Math.max(0.1, Math.min(999, +(Number(state.unitQty || 1) + delta).toFixed(2)));
                     render();
@@ -1072,18 +1130,19 @@ export function openFactureroClientFlow(root, options = {}) {
             });
         });
 
-        ['#fcflow-monto', '#fcflow-rate', '#fcflow-date', '#fcflow-concepto', '#fcflow-kg', '#fcflow-usd-confirm'].forEach((selector) => {
+        ['#fcflow-monto', '#fcflow-date', '#fcflow-concepto', '#fcflow-usd-confirm'].forEach((selector) => {
             const input = root.querySelector(selector);
             input?.addEventListener('input', () => {
                 if (selector === '#fcflow-monto') state.monto = input.value;
-                if (selector === '#fcflow-rate') state.exchangeRate = Number(input.value) || 0;
                 if (selector === '#fcflow-date') state.fecha = input.value;
                 if (selector === '#fcflow-concepto') state.concepto = input.value.trim();
                 if (selector === '#fcflow-usd-confirm') state.usdConfirmed = input.checked;
                 const submitBtn = root.querySelector('[data-flow-submit]');
                 if (submitBtn && currentStep() === 'details') submitBtn.disabled = !detailsValid();
-                const preview = root.querySelector('#fcflow-usd-preview');
-                if (preview && selector === '#fcflow-rate') preview.textContent = `≈ $${usdEquivalent()} USD`;
+                const rateRead = root.querySelector('#fcflow-rate-read');
+                if (rateRead && selector === '#fcflow-monto' && state.currency !== 'USD') {
+                    rateRead.textContent = `${marketRateText()} · ≈ $${usdEquivalent()} USD`;
+                }
             });
         });
 
@@ -1097,18 +1156,20 @@ export function openFactureroClientFlow(root, options = {}) {
             : step === 'data' ? renderStepData()
             : step === 'type' ? renderStepType()
             : step === 'crop' ? renderStepCrop()
+            : step === 'unit' ? renderStepUnit()
             : step === 'details' ? renderStepDetails()
+            : step === 'summary' ? renderStepSummary()
             : renderStepDone();
 
         root.innerHTML = `
             <div class="${FLOW_ROOT_CLASS}">
                 ${step !== 'done' ? `
                     <div class="fcflow__topbar">
-                        <button type="button" class="fcflow__back" data-flow-back>
+                        <button type="button" class="fcflow__back" data-flow-exit>
                             <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
-                            Volver
+                            Entrada
                         </button>
-                        <span class="fcflow__step">Paso ${stepNumber()} de ${totalHumanSteps()}</span>
+                        <span class="fcflow__step">Paso ${stepNumber()} de ${totalSteps()}</span>
                     </div>
                 ` : ''}
                 ${guideText(step) ? `<p class="fcflow__guide">${escapeHtml(guideText(step))}</p>` : ''}
