@@ -15,12 +15,15 @@ import {
     getVisibleBuyerHistoryRows,
     renderBuyerHistoryDetail
 } from './agro-facturero-clientes-detail.js';
-import {
-    openBuyerProfileById,
-    openNewBuyerProfile
-} from './agrocompradores.js';
+import { openBuyerProfileById } from './agrocompradores.js';
 import { getPendingTransferToken } from './agro-unit-totals.js';
 import { openCarteraVivaClientMergeModal } from './agro-facturero-clientes-merge.js';
+import {
+    readFactureroHashRoute,
+    writeFactureroHashRoute,
+    renderFactureroClientEntryGate,
+    openFactureroClientFlow
+} from './agro-facturero-clientes-flow.js';
 
 const CARTERA_VIVA_VIEW = 'facturero-clientes';
 const CARTERA_VIVA_VIEW_LEGACY = 'cartera-viva';
@@ -1680,16 +1683,11 @@ function getCarteraVivaActionContext() {
 }
 
 function openRecordFromCarteraContext() {
-    if (typeof window === 'undefined' || typeof window.launchAgroWizard !== 'function') return false;
-    if (!guardLiveWalletCropCreation()) return false;
-    const context = getCarteraVivaActionContext();
-    if (typeof window.setSelectedCropId === 'function') {
-        window.setSelectedCropId(context.cropId || null);
-    }
-    window.launchAgroWizard(context.wizardTab, {
-        initialCropId: context.cropId || null,
-        debtContext: true
-    });
+    const root = getRootNode();
+    if (!root) return false;
+    if (selectedBuyerId) resetDetailState();
+    writeFactureroHashRoute({ subview: 'nuevo', paso: 1 });
+    renderView();
     return true;
 }
 
@@ -2787,27 +2785,6 @@ function renderListViewMarkup(state) {
             aria-label="Cartera de clientes"
             aria-busy="${loading ? 'true' : 'false'}">
             <header class="cartera-viva-view__header">
-                <div class="cartera-viva-view__actions">
-                    <div class="cartera-viva-action-pair" aria-label="Acciones de clientes">
-                        <button type="button" class="cartera-viva-refresh" data-cartera-new-client>
-                            Nuevo cliente
-                        </button>
-                        <button type="button" class="cartera-viva-refresh cartera-viva-refresh--secondary" data-cartera-existing-client>
-                            Cliente existente
-                        </button>
-                        <button type="button" class="cartera-viva-refresh cartera-viva-refresh--secondary" data-cartera-unify-clients>
-                            Unificar clientes
-                        </button>
-                    </div>
-                    <div class="cartera-viva-action-pair">
-                        <button type="button" class="cartera-viva-refresh" data-cartera-refresh ${loading ? 'disabled' : ''}>
-                            ${loading ? 'Actualizando…' : 'Actualizar'}
-                        </button>
-                        <button type="button" class="cartera-viva-refresh cartera-viva-refresh--secondary" data-cartera-export-list>
-                            Exportar lista
-                        </button>
-                    </div>
-                </div>
                 <div data-cartera-summary-slot>
                     ${renderHeaderSummary(state.summaryRowsForHeader, { loading: state.shouldBlockInitialLoading })}
                 </div>
@@ -2827,7 +2804,35 @@ function renderListViewMarkup(state) {
             <div class="cartera-viva-view__body" data-cartera-view-body>
                 ${renderListBody(state)}
             </div>
+
+            ${renderClientManagementBlock()}
         </section>
+    `;
+}
+
+function renderClientManagementBlock() {
+    return `
+        <div class="fcflow-manage">
+            <p class="fcflow-manage__title">Gestión de clientes</p>
+            <div class="fcflow-manage__actions">
+                <button type="button" class="fcflow-manage__btn" data-cartera-unify-clients>
+                    <i class="fa-solid fa-people-arrows" aria-hidden="true"></i>
+                    Unificar clientes
+                </button>
+                <button type="button" class="fcflow-manage__btn" data-cartera-refresh ${loading ? 'disabled' : ''}>
+                    <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+                    ${loading ? 'Actualizando…' : 'Actualizar'}
+                </button>
+                <button type="button" class="fcflow-manage__btn" data-cartera-export-list>
+                    <i class="fa-solid fa-file-export" aria-hidden="true"></i>
+                    Exportar lista
+                </button>
+                <button type="button" class="fcflow-manage__btn" data-cartera-new-client>
+                    <i class="fa-solid fa-user-plus" aria-hidden="true"></i>
+                    Nuevo cliente
+                </button>
+            </div>
+        </div>
     `;
 }
 
@@ -2902,7 +2907,7 @@ function patchListView(root, state) {
     const refreshButton = viewNode.querySelector('[data-cartera-refresh]');
     if (refreshButton) {
         refreshButton.disabled = loading;
-        refreshButton.textContent = loading ? 'Actualizando…' : 'Actualizar';
+        refreshButton.innerHTML = `<i class="fa-solid fa-rotate-right" aria-hidden="true"></i><span> ${loading ? 'Actualizando…' : 'Actualizar'}</span>`;
     }
 
     const summarySlot = viewNode.querySelector('[data-cartera-summary-slot]');
@@ -2957,9 +2962,119 @@ function renderListView(root) {
     patchListView(root, state);
 }
 
+function appendInterestBlock(root) {
+    if (!root || root.querySelector('[data-flow-interest]')) return;
+    const node = document.createElement('div');
+    node.className = 'fcflow-interest';
+    node.setAttribute('data-flow-interest', '');
+    node.innerHTML = `
+        <p class="fcflow-interest__label">Te puede interesar</p>
+        <div class="fcflow-interest__actions">
+            <button type="button" class="fcflow-manage__btn" data-interest-registros>
+                <i class="fa-solid fa-address-book" aria-hidden="true"></i>
+                Ver registro de clientes
+            </button>
+            <button type="button" class="fcflow-manage__btn" data-agro-view="asistente">
+                <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+                Asistente IA
+            </button>
+        </div>
+    `;
+    root.appendChild(node);
+    node.querySelector('[data-interest-registros]')?.addEventListener('click', () => {
+        resetDetailState();
+        writeFactureroHashRoute({ subview: 'registros' });
+        renderView();
+    });
+}
+
+let activeFlowSession = false;
+
+function openBuyerDetailWithRoute(buyerId) {
+    activeFlowSession = false;
+    resetDetailState();
+    writeFactureroHashRoute({ subview: 'detalle', id: String(buyerId || '').trim() });
+    void loadBuyerDetail(buyerId);
+}
+
+function openFlowWizard(root, route) {
+    // Guard: evita re-instanciar el wizard (y perder inputs) cuando renderView
+    // corre de nuevo durante una sesión activa (loadSummary, refrescos externos).
+    if (activeFlowSession) return;
+    activeFlowSession = true;
+    let buyer = null;
+    if (route.id) {
+        const knownRow = summaryRows.find((entry) => String(entry?.buyer_id || '').trim() === route.id);
+        buyer = { id: route.id, name: String(knownRow?.display_name || '').trim() };
+    }
+    openFactureroClientFlow(root, {
+        mode: 'new',
+        startStep: Math.max((Number(route.paso) || 1) - 1, 0),
+        buyer,
+        onExit: () => {
+            activeFlowSession = false;
+            writeFactureroHashRoute({ subview: '' });
+            renderView();
+        },
+        onGoToDetail: (buyerId) => {
+            activeFlowSession = false;
+            if (!buyerId) return;
+            loadSummary();
+            openBuyerDetailWithRoute(buyerId);
+        },
+        onGoToRecords: () => {
+            activeFlowSession = false;
+            loadSummary();
+            writeFactureroHashRoute({ subview: 'registros' });
+            renderView();
+        },
+        onCreated: () => {
+            void loadSummary();
+        }
+    });
+}
+
+function renderEntryGate(root) {
+    writeFactureroHashRoute({ subview: '' });
+    renderFactureroClientEntryGate(root, {
+        onNewClient: () => {
+            writeFactureroHashRoute({ subview: 'nuevo', paso: 1 });
+            renderView();
+        },
+        onViewRecords: () => {
+            writeFactureroHashRoute({ subview: 'registros' });
+            renderView();
+        }
+    });
+}
+
 function renderView() {
     const root = getRootNode();
     if (!root) return;
+
+    // Routing profundo por hash: '' = entrada P0, 'nuevo' = wizard por páginas,
+    // 'registros' = lista, 'detalle' = detalle del cliente.
+    const route = readFactureroHashRoute() || {};
+    const routeSubview = String(route.subview || '').trim().toLowerCase();
+
+    if (routeSubview === 'nuevo') {
+        openFlowWizard(root, route);
+        return;
+    }
+
+    if ((routeSubview === 'detalle' || routeSubview === 'detail') && route.id && !selectedBuyerId) {
+        openBuyerDetailWithRoute(route.id);
+        return;
+    }
+
+    if ((!routeSubview || routeSubview === 'entrada') && !selectedBuyerId) {
+        renderEntryGate(root);
+        return;
+    }
+
+    if (routeSubview === 'registros' && !selectedBuyerId) {
+        writeFactureroHashRoute({ subview: 'registros' });
+    }
 
     const selectedBuyerRow = getSelectedBuyerRow();
     if (selectedBuyerId) {
@@ -2979,6 +3094,7 @@ function renderView() {
             exchangeStatus: detailExchangeStatus,
             onBack: () => {
                 resetDetailState();
+                writeFactureroHashRoute({ subview: 'registros' });
                 renderView();
             },
             onRefresh: () => {
@@ -3020,6 +3136,7 @@ function renderView() {
                 renderView();
             }
         });
+        appendInterestBlock(root);
         return;
     }
 
@@ -3335,14 +3452,14 @@ function bindListViewEvents(root) {
         }
 
         if (target.closest('[data-cartera-new-client]')) {
-            if (!guardLiveWalletCropCreation()) return;
-            openNewBuyerProfile('', { mode: 'new' });
+            writeFactureroHashRoute({ subview: 'nuevo', paso: 1 });
+            renderView();
             return;
         }
 
         if (target.closest('[data-cartera-existing-client]')) {
-            if (!guardLiveWalletCropCreation()) return;
-            openNewBuyerProfile('', { mode: 'existing' });
+            writeFactureroHashRoute({ subview: 'registros' });
+            renderView();
             return;
         }
 
@@ -3393,6 +3510,7 @@ function bindListViewEvents(root) {
                 detailButton.getAttribute('data-cartera-open-history-scope') || activeCategory
             );
             if (!buyerId) return;
+            writeFactureroHashRoute({ subview: 'detalle', id: buyerId });
             loadBuyerDetail(buyerId, { ledgerScope });
             return;
         }
@@ -3455,7 +3573,11 @@ function scheduleExternalPortfolioRefresh() {
 
 function handleShellViewChanged(event) {
     const nextView = String(event?.detail?.view || '').trim().toLowerCase();
-    if (!isCarteraVivaView(nextView)) return;
+    if (!isCarteraVivaView(nextView)) {
+        // Al salir de Facturero de Clientes, cualquier sesión del flow termina.
+        activeFlowSession = false;
+        return;
+    }
 
     if (!hasLoadedSummary) {
         loadSummary();
@@ -3477,20 +3599,44 @@ async function handleCropContextUpdated() {
 
 function openClientRecordWizard(tabName, buyerRow) {
     const safeTab = String(tabName || '').trim().toLowerCase();
-    if (!['pendientes', 'ingresos', 'perdidas'].includes(safeTab)) return false;
-    if (typeof window === 'undefined' || typeof window.launchAgroWizard !== 'function') return false;
+    if (!['pendientes', 'ingresos', 'perdidas', 'transferencias'].includes(safeTab)) return false;
+    const root = getRootNode();
+    if (!root) return false;
     if (!guardLiveWalletCropCreation()) return false;
 
-    const cropId = getSelectedCropId();
-    if (typeof window.setSelectedCropId === 'function') {
-        window.setSelectedCropId(cropId || null);
-    }
-
-    window.launchAgroWizard(safeTab, {
-        initialCropId: cropId || null,
-        debtContext: true,
-        prefill: {
-            who: String(buyerRow?.display_name || '').trim()
+    const buyerId = String(buyerRow?.buyer_id || '').trim();
+    if (activeFlowSession) return true;
+    activeFlowSession = true;
+    writeFactureroHashRoute({ subview: 'nuevo', paso: 3, id: buyerId });
+    openFactureroClientFlow(root, {
+        mode: 'record',
+        recordType: safeTab,
+        buyer: { id: buyerId, name: String(buyerRow?.display_name || '').trim() },
+        cropId: getSelectedCropId(),
+        startStep: 0,
+        onExit: () => {
+            activeFlowSession = false;
+            if (buyerId) {
+                openBuyerDetailWithRoute(buyerId);
+                return;
+            }
+            writeFactureroHashRoute({ subview: 'registros' });
+            renderView();
+        },
+        onGoToDetail: (nextBuyerId) => {
+            activeFlowSession = false;
+            if (!nextBuyerId) return;
+            loadSummary();
+            openBuyerDetailWithRoute(nextBuyerId);
+        },
+        onGoToRecords: () => {
+            activeFlowSession = false;
+            loadSummary();
+            writeFactureroHashRoute({ subview: 'registros' });
+            renderView();
+        },
+        onCreated: () => {
+            void loadSummary();
         }
     });
     return true;

@@ -1,0 +1,464 @@
+/**
+ * Facturero de Clientes — Flow por páginas (sin modales)
+ * ADN Visual V12: tokens, sin glow/shimmer, interacciones 120–220ms.
+ */
+
+.fcflow {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4, 1rem);
+    color: var(--text-primary, #f5f5f5);
+    font-family: var(--font-body, 'Inter', sans-serif);
+    min-height: 60vh;
+}
+
+/* ---------- Topbar: Volver + Paso X de N ---------- */
+.fcflow__topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3, 0.75rem);
+}
+
+.fcflow__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 44px;
+    padding: 0.5rem 0.9rem;
+    background: transparent;
+    border: 1px solid var(--border-gold-weak, rgba(200, 167, 82, 0.25));
+    border-radius: var(--radius-md, 12px);
+    color: var(--text-muted, #94a3b8);
+    font-family: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: color 160ms ease, border-color 160ms ease;
+}
+
+.fcflow__back:hover,
+.fcflow__back:focus-visible {
+    color: var(--gold-4, #C8A752);
+    border-color: var(--gold-4, #C8A752);
+}
+
+.fcflow__step {
+    color: var(--text-muted, #94a3b8);
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+/* ---------- Microcopy guía (una línea) ---------- */
+.fcflow__guide {
+    margin: 0;
+    color: var(--text-secondary, #cbd5e1);
+    font-size: 0.95rem;
+    line-height: 1.45;
+}
+
+.fcflow__title {
+    margin: 0;
+    font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif);
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-primary, #fff);
+}
+
+/* ---------- P0: puertas de entrada ---------- */
+.fcflow-doors {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3, 0.75rem);
+    margin-top: var(--space-2, 0.5rem);
+}
+
+.fcflow-door {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.55rem;
+    padding: 1.25rem 1.1rem;
+    background: var(--bg-3, #12131a);
+    border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
+    border-radius: var(--radius-lg, 16px);
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+    transition: border-color 180ms ease, transform 180ms ease;
+}
+
+.fcflow-door:hover,
+.fcflow-door:focus-visible {
+    border-color: var(--gold-4, #C8A752);
+    transform: translateY(-2px);
+}
+
+.fcflow-door i {
+    font-size: 1.35rem;
+    color: var(--gold-4, #C8A752);
+}
+
+.fcflow-door__title {
+    font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif);
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-primary, #fff);
+}
+
+.fcflow-door__desc {
+    color: var(--text-muted, #94a3b8);
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+/* ---------- Opciones tipo tarjeta (P1/P3/P4) ---------- */
+.fcflow-grid {
+    display: grid;
+    gap: var(--space-3, 0.75rem);
+}
+
+.fcflow-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+.fcflow-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    min-height: 56px;
+    padding: 0.85rem 0.95rem;
+    background: var(--bg-3, #12131a);
+    border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
+    border-radius: var(--radius-md, 12px);
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.fcflow-card:hover,
+.fcflow-card:focus-visible {
+    border-color: var(--gold-4, #C8A752);
+}
+
+.fcflow-card.is-selected {
+    background: rgba(200, 167, 82, 0.12);
+    border-color: var(--gold-4, #C8A752);
+}
+
+.fcflow-card i {
+    color: var(--gold-4, #C8A752);
+    font-size: 1.05rem;
+    width: 1.25rem;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.fcflow-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.fcflow-card__label {
+    color: var(--text-primary, #fff);
+    font-weight: 600;
+    font-size: 0.92rem;
+}
+
+.fcflow-card__hint {
+    color: var(--text-muted, #94a3b8);
+    font-size: 0.78rem;
+    line-height: 1.35;
+}
+
+.fcflow-card--static { cursor: default; }
+.fcflow-card--static:hover { border-color: var(--border-neutral, rgba(255, 255, 255, 0.08)); }
+
+/* ---------- Formularios ---------- */
+.fcflow-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.fcflow-label {
+    color: var(--text-muted, #94a3b8);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.fcflow-input {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 46px;
+    padding: 0.65rem 0.85rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-gold-weak, rgba(200, 167, 82, 0.22));
+    border-radius: var(--radius-sm, 8px);
+    color: var(--text-primary, #fff);
+    font-family: inherit;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 150ms ease;
+}
+
+.fcflow-input:focus-visible {
+    border-color: var(--gold-4, #C8A752);
+}
+
+.fcflow-input::placeholder { color: rgba(255, 255, 255, 0.32); }
+
+select.fcflow-input option { background: var(--bg-2, #101116); color: var(--text-primary, #fff); }
+
+/* ---------- Footer fijo ---------- */
+.fcflow__footer {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-3, 0.75rem);
+    padding: 0.85rem 0 max(0.85rem, env(safe-area-inset-bottom));
+    background: linear-gradient(to top, var(--bg-1, #0a0a0a) 70%, transparent);
+}
+
+/* ---------- Botones canónicos V12 ---------- */
+.btn-gold,
+.btn-outline-gold {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 44px;
+    padding: 0.6rem 1.15rem;
+    border-radius: var(--radius-md, 12px);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter 160ms ease, border-color 160ms ease, opacity 160ms ease;
+}
+
+.btn-gold {
+    background: var(--metallic-btn, linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e));
+    border: 1px solid transparent;
+    color: var(--bg-1, #0a0a0a);
+}
+
+.btn-gold:hover:not(:disabled),
+.btn-gold:focus-visible:not(:disabled) { filter: brightness(1.08); }
+
+.btn-gold:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    filter: none;
+}
+
+.btn-outline-gold {
+    background: transparent;
+    border: 1px solid var(--gold-4, #C8A752);
+    color: var(--gold-4, #C8A752);
+}
+
+.btn-outline-gold:hover:not(:disabled),
+.btn-outline-gold:focus-visible:not(:disabled) {
+    background: rgba(200, 167, 82, 0.1);
+}
+
+/* ---------- Aviso inline (guardrail USD / verificación) ---------- */
+.fcflow-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: var(--radius-sm, 8px);
+    font-size: 0.83rem;
+    line-height: 1.4;
+}
+
+.fcflow-note i { margin-top: 0.1rem; flex-shrink: 0; }
+
+.fcflow-note--warning {
+    background: rgba(217, 119, 6, 0.1);
+    border: 1px solid rgba(217, 119, 6, 0.35);
+    color: #fbbf24;
+}
+
+.fcflow-note--info {
+    background: rgba(59, 130, 246, 0.08);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #93c5fd;
+}
+
+.fcflow-note--success {
+    background: rgba(34, 197, 94, 0.08);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #86efac;
+}
+
+.fcflow-checkline {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary, #cbd5e1);
+    cursor: pointer;
+}
+
+.fcflow-checkline input {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--gold-4, #C8A752);
+    flex-shrink: 0;
+}
+
+/* ---------- Éxito (P6) ---------- */
+.fcflow-done {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3, 0.75rem);
+    text-align: center;
+    padding: 2rem 1rem 1rem;
+}
+
+.fcflow-done i {
+    font-size: 2.4rem;
+    color: var(--gold-4, #C8A752);
+}
+
+.fcflow-done__title {
+    margin: 0;
+    font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif);
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--text-primary, #fff);
+}
+
+.fcflow-done__desc {
+    margin: 0;
+    color: var(--text-muted, #94a3b8);
+    font-size: 0.9rem;
+}
+
+.fcflow-done__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-3, 0.75rem);
+    margin-top: var(--space-2, 0.5rem);
+}
+
+/* ---------- Gestión de clientes (bloque secundario en B) ---------- */
+.fcflow-manage {
+    margin-top: var(--space-4, 1.25rem);
+    padding: var(--space-3, 0.75rem);
+    border: 1px dashed var(--border-neutral, rgba(255, 255, 255, 0.1));
+    border-radius: var(--radius-md, 12px);
+}
+
+.fcflow-manage__title {
+    margin: 0 0 0.6rem;
+    color: var(--text-muted, #94a3b8);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.fcflow-manage__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2, 0.5rem);
+}
+
+.fcflow-manage__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 40px;
+    padding: 0.45rem 0.85rem;
+    background: transparent;
+    border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.12));
+    border-radius: 999px;
+    color: var(--text-secondary, #cbd5e1);
+    font-family: inherit;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: border-color 150ms ease, color 150ms ease;
+}
+
+.fcflow-manage__btn:hover,
+.fcflow-manage__btn:focus-visible {
+    border-color: var(--gold-4, #C8A752);
+    color: var(--gold-4, #C8A752);
+}
+
+.fcflow-manage__btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* ---------- Te puede interesar (detalle) ---------- */
+.fcflow-interest {
+    margin-top: var(--space-4, 1.25rem);
+    padding-top: var(--space-3, 0.75rem);
+    border-top: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.07));
+}
+
+.fcflow-interest__label {
+    margin: 0 0 0.55rem;
+    color: var(--text-muted, #94a3b8);
+    font-size: 0.78rem;
+}
+
+.fcflow-interest__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2, 0.5rem);
+}
+
+/* ---------- Resumen compacto antes de confirmar ---------- */
+.fcflow-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.9rem 1rem;
+    background: rgba(200, 167, 82, 0.06);
+    border: 1px solid var(--border-gold-weak, rgba(200, 167, 82, 0.22));
+    border-radius: var(--radius-md, 12px);
+}
+
+.fcflow-summary__row {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3, 0.75rem);
+    font-size: 0.85rem;
+}
+
+.fcflow-summary__row dt { color: var(--text-muted, #94a3b8); }
+.fcflow-summary__row dd {
+    margin: 0;
+    color: var(--text-primary, #fff);
+    text-align: right;
+    word-break: break-word;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 480px) {
+    .fcflow-doors { grid-template-columns: 1fr; }
+    .fcflow-grid--2 { grid-template-columns: 1fr; }
+    .fcflow__footer { flex-direction: column-reverse; }
+    .fcflow__footer > * { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fcflow *,
+    .fcflow *::before,
+    .fcflow *::after {
+        transition: none !important;
+        animation: none !important;
+    }
+}
