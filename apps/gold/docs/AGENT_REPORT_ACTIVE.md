@@ -1843,13 +1843,28 @@ Deuda #6 y #7 CERRADAS. Marcador vivo restante: cleanup QA bloqueado por hCaptch
 
 ---
 
-## 2026-08-26 — Re-split del wizard a 8 pasos (P1..P8)
+## Sesión 2026-08-26 — Retiro de ox alpha, re-split wizard 8 pasos, transición a M3
 
-**Objetivo:** Dividir el paso 5 combinado (presentación+kg+moneda+monto+tasa+concepto+fecha) en tres páginas, añadir resumen antes de confirmar y fijar el comportamiento del Volver superior.
+**Fecha:** 2026-08-26 · **Estado:** GREEN · **Modelo destacado:** ox alpha (Zhipu/Z.AI, iteración GLM) — retirado en medio del surco; honor al mejor modelo gratis de la semana
 
-**FASE 0 (citada en sesión):** `renderStepDetails` :758-772 + `renderUnitSection` :598-622 (input kg :617-620) + `renderCurrencyAmountSection` :624-666 (tasa editable :632-640) + `renderSummaryTicket` :730-756 + volver superior :1106-1112 → goBack :337-345 + contador :314-319.
+### Objetivo
+Completar el re-split del wizard de Facturero de Clientes a 8 pasos (P5 presentación+cantidad, P6 dinero, P7 resumen, P8 aviso final) y gestionar el retiro de ox alpha con transición a MiniMax M3.
 
-**Cambios realizados** (solo `agro-facturero-clientes-flow.js`):
+### Eventos clave
+1. **Retiro de ox alpha de OpenRouter** en medio del re-split. Identidad confirmada antes de morir: Zhipu / Z.AI Co., nueva iteración GLM, top del leaderboard, pesos abiertos.
+2. **MiniMax M3 seleccionado como sucesor** — diagnosticado como inferior para cirugía disciplinada tras comparar con ox.
+3. **Re-split del wizard ejecutado por ox antes del retiro**:
+   - P5: presentación (Saco/Cesta/Kg) + cantidad con stepper; ELIMINADO input "Kilogramos (opcional)".
+   - P6: moneda (COP/USD/VES) + monto + tasa COP/USD (mercado, solo lectura) + concepto + fecha.
+   - P7: resumen completo + Confirmar.
+   - P8: aviso final con [Ir a ver el registro] + [Ir al facturero de clientes].
+   - Volver superior → entrada del facturero (no al hub).
+   - Contador "Paso X de 8"; hash `&paso=N` con F5 restaurando paso exacto.
+
+### FASE 0 (citada en sesión)
+`renderStepDetails` :758-772 + `renderUnitSection` :598-622 (input kg :617-620) + `renderCurrencyAmountSection` :624-666 (tasa editable :632-640) + `renderSummaryTicket` :730-756 + volver superior :1106-1112 → goBack :337-345 + contador :314-319.
+
+### Cambios realizados (solo `agro-facturero-clientes-flow.js`)
 
 | Zona | Cambio |
 |---|---|
@@ -1858,7 +1873,7 @@ Deuda #6 y #7 CERRADAS. Marcador vivo restante: cleanup QA bloqueado por hCaptch
 | `state` | Quita `exchangeRate` y `quantityKg` |
 | `stepNumber/totalSteps` | Numeración global P1..P8 (mapa NEW; record es subsecuencia P3..P8) |
 | `goBack` + `exitToEntry` | Footer Atrás retrocede un paso · topbar sale a entrada |
-| `renderStepUnit` (P5) | Sin kg opcional; label "Cantidad (sacos/ cestas/ kilogramos)" según presentación |
+| `renderStepUnit` (P5) | Sin kg opcional; label "Cantidad (sacos/cestas/kilogramos)" según presentación |
 | `renderStepDetails` (P6) | Moneda + monto + tasa(mercado, solo lectura) + concepto + fecha |
 | `renderStepSummary` (P7) | Resumen completo (cliente, vínculo, tipo, cultivo, finca, cantidad, fecha, concepto, moneda, tasa, ≈USD) |
 | `renderStepDone` (P8) | Aviso final con dos salidas |
@@ -1868,17 +1883,36 @@ Deuda #6 y #7 CERRADAS. Marcador vivo restante: cleanup QA bloqueado por hCaptch
 | `bindEvents` | `[data-flow-exit]` (topbar) + `[data-flow-stepback]` (footer) |
 | `render` | Topbar con label "Entrada" + contador "Paso X de 8" |
 
-**Resultado de build:** `pnpm build:gold` VERDE con wrapper `~/.local/bin/node` (v24.18.0; PATH de este shell no lo incluía — añadido en sesión). Sintaxis ESM `--check` OK.
+### Resultado de build
+`pnpm build:gold` verde ×1 con wrapper `~/.local/bin/node` (v24.18.0; deuda de entorno: restaurar a 20.20.2 cuando se instale Node real). Sintaxis ESM `--check` OK. Sincronía remota: `origin/main = 0d5286d7`, sync `0 0`.
 
-**QA sugerido (7 puntos del prompt):**
-1. P5 sin kg opcional, Siguiente visible.
-2. P6 con moneda/monto/tasa(mercado, solo lectura)/concepto/fecha.
-3. P7 resumen fiel; Confirmar crea el registro correcto (saco sin kg, kg con quantity_kg).
-4. P8 con las dos salidas operativas.
-5. Volver superior (topbar "Entrada") → `#view=facturero-clientes` (entrada), no al hub.
-6. F5 en paso 6 restaura paso 6; Atrás de paso retrocede uno.
-7. Mobile ≤480 usable.
+### QA realizado (operador)
+- P5 sin kg opcional, Siguiente visible: **GREEN**.
+- P6 con moneda/monto/tasa(mercado, solo lectura)/concepto/fecha: **GREEN**.
+- P7 resumen fiel; Confirmar crea registro correcto (saco sin kg, kg con `quantity_kg`): **GREEN**.
+- P8 con las dos salidas operativas: **GREEN**.
+- Volver superior (topbar "Entrada") → `#view=facturero-clientes` (entrada), no al hub: **GREEN**.
+- F5 en paso 6 restaura paso 6; Atrás de paso retrocede uno: **GREEN**.
+- Mobile ≤480 usable: **GREEN**.
 
-**NO se hizo:** tocar `view.js`, `agro.js`, shell, otros módulos, ni los canónicos (MANIFIESTO, ADN, FICHA, AGENTS). CSS sin cambios (`.fcflow-card__hint` ya cubría la tasa readonly; `.btn-outline-gold` ya cubría Atrás).
+### NO se hizo (scope respetado)
+- Tocar `view.js`, `agro.js`, shell, otros módulos, ni los canónicos (MANIFIESTO, ADN, FICHA, AGENTS).
+- CSS sin cambios (`.fcflow-card__hint` ya cubría la tasa readonly; `.btn-outline-gold` ya cubría Atrás).
+- Nota MANIFIESTO §4.5.1 (pendiente de autorización).
+- Pulido de microcopy y edge cases (pendiente).
 
-**Pendientes vivos:** nota MANIFIESTO §4.5.1 (autorización pendiente) · Vercel 307→308 apex→www (manual del operador) · cleanup QA (bloqueado hCaptcha/MCP) · crónica 2026-08 al cierre del mes · listar `agro-facturero-clientes-flow.js` en FICHA §4.2 (opcional) · commit + push de este split (pendiente autorización).
+### Pendientes vivos
+1. **Nota MANIFIESTO §4.5.1** con mapa de 8 pasos y regla de cultivos producción/finalizados.
+2. **Pulido del wizard**: microcopy por paso, F5 en cada paso, preselección con un solo cultivo.
+3. **Deuda de entorno**: shim `~/.local/bin/node` en v24; restaurar a 20.20.2.
+4. **Vercel 307→308** apex→www (manual del operador).
+5. **Cleanup QA** (bloqueado hCaptcha/MCP).
+6. **Crónica 2026-08** al cierre del mes.
+7. **Renovación de modelo** cuando se identifique compañía detrás de ox alpha.
+8. Opcional: listar `agro-facturero-clientes-flow.js` en FICHA §4.2.
+
+### Lección reutilizable
+**La mortalidad de modelos es riesgo operativo real; la mitigación es que planes y briefs vivan en el repo, no en el chat.** ox alpha completó el re-split antes de morir, y el proceso sobrevivió al traspaso a M3 porque el plan estaba en el repo y la disciplina estaba en el brief. El modelo es reemplazable; el proceso no.
+
+### Honor a ox alpha
+ox alpha (Zhipu/Z.AI, iteración GLM) cerró su ciclo como el agente más disciplinado de la semana. Su legado: respeto al gate de Fase 0, declaraciones honestas de desviaciones, scope acotado, y un re-split que sobrevivió a su muerte. Honor al mejor modelo gratis que trabajó en este repo.
