@@ -1812,3 +1812,31 @@ Deuda #6 y #7 CERRADAS. Marcador vivo restante: cleanup QA bloqueado por hCaptch
 - Sin cambios en agro-shell.js, MANIFIESTO_AGRO.md, ADN-VISUAL-V12.0.md, AGENTS.md.
 - Nota MANIFIESTO §4.5.1 (punto 8 del plan): pendiente de sí explícito del operador.
 - Sin commits ni push (pendiente autorización).
+
+---
+
+## 2026-08-25 — CIERRE del frente "wizard por páginas" de Facturero de Clientes
+
+**Objetivo:** Cierre documental del frente tras QA online GREEN del operador ("no hay nada que no funcione").
+
+**Estado:** GREEN — construido, commiteado, pusheado y validado online.
+
+**Commits del frente:** `f7c00804` feat(clientes): wizard por paginas para Facturero de Clientes (P0-P6, sin modales) · `243cea18` docs: asiento y plan del wizard por paginas.
+
+**Cambios consolidados:** `agro-facturero-clientes-flow.js` + `agro-facturero-clientes-flow.css` nuevos; `view.js` re-pointing de entradas (routing hash P0/nuevo/registros/detalle); `index.html` link CSS (el import JS vive en `view.js`, bootstrap dinámico existente lo arrastra); modal de 4 pasos retirado SOLO desde Facturero de Clientes — facturero general intacto (`injectWizardInvokers` sin tocar); Gestión de clientes (Unificar·Actualizar·Exportar·Nuevo) y bloque "Te puede interesar" ([Ver registro de clientes][Asistente IA]) operativos.
+
+**Decisiones FASE 0 adoptadas (validadas en producción):**
+- D1 retiro acotado del modal: solo rutas desde esta vista.
+- Routing hash gestionado en `view.js` (sin tocar `agro-shell.js`) — desviación aceptada con condición de QA, cumplida.
+- Cultivos del flow restringidos a producción/finalizados (regla nueva del flow; guard de lista con `lost` intacto).
+
+**NO se hizo:** MANIFIESTO §4.5.1 sin tocar (nota pendiente de sí explícito); patrón "Te puede interesar" NO canonizado aún.
+
+**Pendientes vivos:** nota MANIFIESTO §4.5.1 (autorización pendiente) · Vercel 307→308 apex→www (manual del operador) · cleanup QA (bloqueado hCaptcha/MCP) · crónica 2026-08 al cierre del mes · listar `agro-facturero-clientes-flow.js` en FICHA §4.2 (opcional).
+
+**Archivo del frente:** plan movido a `apps/gold/docs/archive/ux/` según §4.2 (frente cerrado y validado).
+
+**Build gate:** `pnpm build:gold` verde al cierre (wrapper Electron v24; Node nativo 20 vía nvm queda como mejora de entorno del operador).
+
+### NO se hizo
+- Tocar MANIFIESTO_AGRO.md, ADN-VISUAL-V12.0.md, FICHA_TECNICA.md, AGENTS.md ni código de producto en este cierre.
