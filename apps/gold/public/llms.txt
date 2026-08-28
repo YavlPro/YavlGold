@@ -2,53 +2,53 @@
 
 > YavlGold es una plataforma agrícola digital. El único módulo released en V1 es **Agro** (facturero, cultivos, clientes, dashboard, estadísticas, carrito, planificación). Rutas como `Academia`, `Social`, `Tecnologia` y `Crypto` existen como placeholders de compatibilidad pero no son productos activos. Stack: Vanilla JS (ES6 modules) + Vite MPA + Supabase + Vercel. Diseño gobernado por ADN Visual V12.0.
 
-YavlGold es una aplicación web agrícola construida sobre Vanilla JavaScript y Vite Multi-Page Application, con Supabase como backend y Vercel como plataforma de despliegue. El proyecto opera bajo reglas estrictas de stack, diseño y arquitectura documentadas en [`AGENTS.md`](AGENTS.md).
+YavlGold es una aplicación web agrícola construida sobre Vanilla JavaScript y Vite Multi-Page Application, con Supabase como backend y Vercel como plataforma de despliegue. Reglas estrictas documentadas en [`AGENTS.md`](AGENTS.md).
 
 ## Producto
-
 - `/` — Landing page
-- `/dashboard/` — Dashboard de usuario (autenticado)
 - `/agro/` — Módulo Agro, único producto released en V1
+- `/dashboard/` — Dashboard de usuario (autenticado)
 - `/academia/`, `/social/`, `/tecnologia/`, `/crypto/` — Placeholders “no disponible”
-- `/open-source`, `/security`, `/anti-suplantacion`, `/privacy`, `/terms`, `/status` — Páginas institucionales
+- `/open-source/`, `/security/`, `/anti-suplantacion/`, `/privacy/`, `/terms/`, `/status/` — Páginas institucionales
 - `/health` — Health check JSON público
 
 Semántica del producto Agro: [`MANIFIESTO_AGRO.md`](apps/gold/docs/MANIFIESTO_AGRO.md)
 
-Canales oficiales:
-- X / Comunidad YavlGold: https://x.com/Yavlcapitan
-- YouTube / YavlGold Pro: https://youtube.com/@yavlgoldpro
-- LinkedIn / Yerikson Varela: https://www.linkedin.com/in/yavl-gold-7372b0302
+## Docs (canónicas)
+- [`AGENTS.md`](AGENTS.md) — Instrucciones canónicas para agentes
+- [`apps/gold/docs/FICHA_TECNICA.md`](apps/gold/docs/FICHA_TECNICA.md) — Ficha técnica
+- [`apps/gold/docs/ADN-VISUAL-V12.0.md`](apps/gold/docs/ADN-VISUAL-V12.0.md) — Sistema de diseño activo
+- [`apps/gold/docs/MANIFIESTO_AGRO.md`](apps/gold/docs/MANIFIESTO_AGRO.md) — Semántica del producto Agro
+
+## Canales oficiales
+- [X / Comunidad YavlGold](https://x.com/Yavlcapitan)
+- [YouTube / YavlGold Pro](https://youtube.com/@yavlgoldpro)
+- [LinkedIn / Yerikson Varela](https://www.linkedin.com/in/yavl-gold-7372b0302)
 
 ## Arquitectura
-
 - Vanilla JavaScript (ES6+ Modules)
 - Vite Multi-Page Application — prohibido SPA
 - Supabase (auth, datos, storage, edge functions)
 - Vercel (deploy y clean URLs)
 - Stack prohibido: React, Vue, Svelte, Angular, Next, Nuxt, Astro, Tailwind
 
-Ficha técnica completa: [`FICHA_TECNICA.md`](apps/gold/docs/FICHA_TECNICA.md)
-
 ## Diseño (ADN Visual V12.0)
+Tokens principales: fondo oscuro (`#0a0a0a`), acento oro (`#C8A752`). Tipografía Plus Jakarta Sans (headings), Inter (body), Playfair Display (quotes). Iconos Font Awesome 6.5. Prohibido acento azul/morado como brand. Interacciones 120–220ms. Respeta `prefers-reduced-motion`.
 
 Sistema de diseño activo: [`ADN-VISUAL-V12.0.md`](apps/gold/docs/ADN-VISUAL-V12.0.md)
 
-Tokens principales: fondo oscuro (`#0a0a0a`), acento oro (`#C8A752`). Tipografía Plus Jakarta Sans (headings), Inter (body), Playfair Display (quotes). Iconos Font Awesome 6.5. Prohibido acento azul/morado como brand. Interacciones 120–220ms. Respeta `prefers-reduced-motion`.
-
-Referencia histórica: [`ADN-VISUAL-V10.0.md`](apps/gold/docs/ADN-VISUAL-V10.0.md)
-
 ## Políticas operativas
-
-- [`AGENTS.md`](AGENTS.md) — Instrucciones canónicas para agentes
-- [`AGENT_REPORT_ACTIVE.md`](apps/gold/docs/AGENT_REPORT_ACTIVE.md) — Reporte operativo activo
-- [`AGENT_REPORT.md`](apps/gold/docs/AGENT_REPORT.md) — Diagnósticos históricos (solo lectura)
-- [`LEGACY_SURFACES.md`](apps/gold/docs/LEGACY_SURFACES.md) — Clasificación de archivos legacy
+- [`apps/gold/docs/AGENT_REPORT_ACTIVE.md`](apps/gold/docs/AGENT_REPORT_ACTIVE.md) — Reporte operativo activo
+- [`apps/gold/docs/AGENT_REPORT.md`](apps/gold/docs/AGENT_REPORT.md) — Diagnósticos históricos (solo lectura)
+- [`apps/gold/docs/LEGACY_SURFACES.md`](apps/gold/docs/LEGACY_SURFACES.md) — Clasificación de archivos legacy
 - Build oficial: `pnpm build:gold`
 
-## Material histórico
-
+## Optional
+- [`apps/gold/docs/ADN-VISUAL-V10.0.md`](apps/gold/docs/ADN-VISUAL-V10.0.md) — Referencia histórica
 - `apps/gold/archive/legacy-html/` — HTML legacy archivado
 - `apps/gold/archive/legacy-js/` — JS legacy archivado
+- `herramientas/` — Directorio residual sin contenido activo
+
+---
 
 # EOF — YavlGold llms.txt (do not truncate)
