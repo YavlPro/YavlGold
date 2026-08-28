@@ -1,116 +1,54 @@
-# YavlGold Context for LLMs
-This file contains the current product, architecture and routing policy for `apps/gold`.
+# YavlGold
 
----
-# YAVLGOLD V1 - CURRENT PROJECT STATE
+> YavlGold es una plataforma agrícola digital. El único módulo released en V1 es **Agro** (facturero, cultivos, clientes, dashboard, estadísticas, carrito, planificación). Rutas como `Academia`, `Social`, `Tecnologia` y `Crypto` existen como placeholders de compatibilidad pero no son productos activos. Stack: Vanilla JS (ES6 modules) + Vite MPA + Supabase + Vercel. Diseño gobernado por ADN Visual V12.0.
 
-## 0. Canonical sources
-- `AGENTS.md` (repo root) — canonical agent instructions
-- `apps/gold/docs/ADN-VISUAL-V12.0.md` — active design system (V12.0 canon activo)
-- `apps/gold/docs/ADN-VISUAL-V10.0.md` — historical foundational reference (V10.0, no longer governing)
-- `apps/gold/docs/AGENT_REPORT_ACTIVE.md` — active operational report
-- `FICHA_TECNICA.md` at apps/gold/docs/FICHA_TECNICA.md — full technical spec
-- Release policy: `V1` is the active visible product release; `V9.8` is historical only when explicitly labeled; `V10.0` refers to the visual DNA version, not the product release.
+YavlGold es una aplicación web agrícola construida sobre Vanilla JavaScript y Vite Multi-Page Application, con Supabase como backend y Vercel como plataforma de despliegue. El proyecto opera bajo reglas estrictas de stack, diseño y arquitectura documentadas en [`AGENTS.md`](AGENTS.md).
 
-## 1. Product catalog
-- `Agro` is the only released module in `V1` (facturero, crops, clients, dashboard, stats, cart, planning, trash).
-- `Academia`, `Social`, `Tecnologia` and `Crypto` are placeholder routes showing "no disponible". They are not active products and should not be presented as such.
-- `Herramientas` and `Suite` are legacy aliases that redirect to placeholder routes, not official modules.
+## Producto
 
-## 2. Architecture
-- Vanilla JavaScript only (ES6+ Modules)
-- Vite Multi-Page Application — NO SPA
-- Supabase for auth, data, storage, edge functions
-- Vercel for deploy and clean URLs
-- Prohibited: React, Vue, Svelte, Angular, Next, Nuxt, Astro, Tailwind
+- `/` — Landing page
+- `/dashboard/` — Dashboard de usuario (autenticado)
+- `/agro/` — Módulo Agro, único producto released en V1
+- `/academia/`, `/social/`, `/tecnologia/`, `/crypto/` — Placeholders “no disponible”
+- `/open-source`, `/security`, `/anti-suplantacion`, `/privacy`, `/terms`, `/status` — Páginas institucionales
+- `/health` — Health check JSON público
 
-## 3. Official routes
-- `/` landing
-- `/dashboard/` user dashboard
-- `/agro/` released module
-- `/academia/`, `/social/`, `/tecnologia/`, `/crypto/` unavailable placeholders
-- `/open-source`, `/security`, `/anti-suplantacion`, `/privacy`, `/terms`, `/status` trust and operations pages
-- `/health` public JSON health endpoint without secrets
+Semántica del producto Agro: [`MANIFIESTO_AGRO.md`](apps/gold/docs/MANIFIESTO_AGRO.md)
 
-## 3.1 Official channels
+Canales oficiales:
 - X / Comunidad YavlGold: https://x.com/Yavlcapitan
 - YouTube / YavlGold Pro: https://youtube.com/@yavlgoldpro
 - LinkedIn / Yerikson Varela: https://www.linkedin.com/in/yavl-gold-7372b0302
 
-## 4. Auth policy
-- Global protected areas: `/dashboard` and `/agro`
-- Landing auth entry uses `/index.html#login`
-- Unavailable modules should not behave like protected released products
+## Arquitectura
 
-## 5. Visual policy (ADN Visual V12.0)
-- Main background: `#0a0a0a`
-- Gold accent: `#C8A752` (`--gold-4`)
-- Headings/labels/chips: Plus Jakarta Sans
-- Body/UI/data: Inter
-- Quotes: Playfair Display
-- Deprecated (do not reintroduce): Orbitron, Rajdhani
-- Icons: Font Awesome 6.5
-- Do not introduce blue or purple as primary accent
-- Always use CSS tokens (`var(--token)`), never hardcoded hex
-- Interactions: 120-220ms, use opacity and transform
-- Respect `prefers-reduced-motion`
+- Vanilla JavaScript (ES6+ Modules)
+- Vite Multi-Page Application — prohibido SPA
+- Supabase (auth, datos, storage, edge functions)
+- Vercel (deploy y clean URLs)
+- Stack prohibido: React, Vue, Svelte, Angular, Next, Nuxt, Astro, Tailwind
 
-## 6. Build
-- Official validation command: `pnpm build:gold`
-- Pipeline: agent-guard → agent-report-check → vite build → check-llms → check-dist-utf8
-- agent-guard blocks prohibited dependencies at build time
+Ficha técnica completa: [`FICHA_TECNICA.md`](apps/gold/docs/FICHA_TECNICA.md)
 
-## 7. Repo hygiene
-- `AGENTS.md` is the single canonical instruction file for agents
-- `AGENT.md` must not exist or be recreated
-- `apps/gold/docs/AGENT_REPORT_ACTIVE.md` is the only active operational report
-- `apps/gold/docs/AGENT_REPORT.md` is full historical diagnostics only (legacy, read-only)
-- `apps/gold/docs/LEGACY_SURFACES.md` classifies orphan and legacy files
-- `global_rules.md`, if present, is an operational copy and not a source of truth
-- Playwright QA hygiene is mandatory: close the browser/context after each QA block and delete that block's temp folder under `/tmp/playwright-mcp-output/<session-id>`
+## Diseño (ADN Visual V12.0)
 
-## 8. Agro module structure
-- `agro.js` is the main monolith (~18k lines) — do NOT add new features here
-- New features go in separate `agro-*.js` modules loaded dynamically
-- Share monolith functions via `window._agroXxx` bridge
-- Supabase tables use soft-delete (`deleted_at`) as standard pattern
-- Supported currencies: COP, USD, VES
-- Agro navigation: hub/module pattern with Inicio, Granja, Memoria, Menu; Granja contains Mi Granja with four groups: Mis fincas y cultivos (Mis Fincas, Mis cultivos with Estadísticas/Comparar cultivos, Operaciones de la Finca with Crear ciclo/Estadísticas/Comparar períodos), Mis factureros (Facturero de Clientes, Facturero de la Finca, Facturero del Cultivo, Facturero Personal), Mi Planificación (Mi Carrito, Clima Agro), Trabajo y lectura (Mis Clientes, Trabajo Diario, Centro de Reportes Generales). Deep modules use contextual Volver and hide global navigation. Shell gates (Inicio/Granja/Memoria/Menu) use canonical hash routes and persist across F5 refresh.
-- Centro de Reportes Generales: índice de reportes generales oficiales (Informe estadístico global, Informe Global Agro, Rankings de clientes). No es selector de cultivos, no consulta Supabase, no inventa Markdown. Los reportes detallados por cultivo viven en cada card/ciclo, no en el Centro.
-- `#view=operaciones` is legacy/compatibility, not a primary functional destination. Notifications route to modern surfaces (Facturero de Clientes, Facturero de la Finca), not to Operaciones.
-- Archivar/eliminar un cultivo NO borra clientes ni movimientos comerciales. La historia económica permanece.
-- `showAgroConfirmDialog()` is the canonical modal for destructive confirmations. Do not use `window.confirm()` or `alert()` in sensitive flows.
-- Facturero de Clientes (formerly Cartera Viva): separates Nuevo cliente (create new) and Cliente existente (select/link existing) flows. Does not expose UUID/user_id to end user.
-- Facturero de Clientes visible states: `Fiado` = live pending balance, `Cobrado/Pagado` = paid with no pending/loss, `Perdido` = loss. `Transferido` and `Revertido` are traceability only, not primary states. Paid tab requires `paid > EPSILON && pending <= EPSILON && loss <= EPSILON`.
-- Facturero de Clientes general view should align with live crop balances and show associated crop names in cards when real data exists. Do not invent crop names or show technical IDs.
-Crop cycle balance uses four semantic states per MANIFIESTO_AGRO.md §4.3:
-- Ganado (rentabilidadReal > 0 y fiadosPendientes == 0, green) — dinero real en mano tras cubrir costos
-- Recuperando (fiadosPendientes > 0, amber) — hay dinero en la calle pendiente de cobro; acción operativa = gestionar cobros
-- Invirtiendo (rentabilidadReal <= 0 y fiadosPendientes == 0, gray) — ciclo en etapa temprana, sin ventas aún; estado natural de cultivo joven, no alarma
-- Equilibrio (rentabilidadReal === 0 y fiadosPendientes === 0, gray) — punto neutro
-Formula: balanceActual = rentabilidadReal - fiadosPendientes; rentabilidadReal = cobradoReal - costosTotales
-- Operaciones de la Finca: a period remains active when `activeCycleCount > 0`, even if the calendar month/range has expired.
-- Future only: `Facturero de Clientes Lifecycle — Archivo / Papelera / Restauracion` is pending/proposed, not implemented. Money-affecting records must not disappear without traceability.
-- Mis Clientes: contact directory combining `agro_clients` (manual, editable) with `agro_buyers` (derived from Facturero de Clientes, read-only). Deduplication by canonical name. Mis Clientes does NOT handle debts, balances or financial data — that is Facturero de Clientes' domain.
-- Crop states are manual: active, finalizado, perdido. No automatic transitions. The farmer decides when to change state.
-- Seed kg: optional field for crop creation. Not required.
-- Crop real duration: calculated from sowing date to actual close date, not estimated harvest date.
-- Popup system: `YGUXMessages` extended with `popup: true` for compact centered popups replacing `alert()`. Destructive confirmations use `showAgroConfirmDialog()` (canonical modal), not `window.confirm()`. Functional `prompt()` remains native. Phase 2 complete.
+Sistema de diseño activo: [`ADN-VISUAL-V12.0.md`](apps/gold/docs/ADN-VISUAL-V12.0.md)
 
-## 9. Repo hygiene
-- `apps/gold/public/` is the **canonical live public** directory for the product
-- `public/` at root was removed — all product assets live in `apps/gold/public/`
-- Canonical Supabase rule: the only canonical Supabase folder is `/supabase` at repo root
-- `apps/gold/supabase` was retired from the active tree on 2026-04-18 after controlled root bootstrap/reset validation
-- Do not recreate migrations, Edge Functions, or Supabase config in `apps/gold/supabase`
-- Any new Supabase duplication is operational debt and should be corrected
+Tokens principales: fondo oscuro (`#0a0a0a`), acento oro (`#C8A752`). Tipografía Plus Jakarta Sans (headings), Inter (body), Playfair Display (quotes). Iconos Font Awesome 6.5. Prohibido acento azul/morado como brand. Interacciones 120–220ms. Respeta `prefers-reduced-motion`.
 
-## 10. Legacy note
-- YavlGold today is Agro. Everything else is compatibility or archive.
-- Placeholder routes for unavailable modules exist to avoid 404s, not to suggest active products.
-- Archived legacy HTML lives under `apps/gold/archive/legacy-html/`
-- Archived legacy auth bridge lives under `apps/gold/archive/legacy-js/`
-- The former dashboard music utility is retired from active build, routing, and navigation
-- `herramientas/` is a residual directory with no active content
+Referencia histórica: [`ADN-VISUAL-V10.0.md`](apps/gold/docs/ADN-VISUAL-V10.0.md)
+
+## Políticas operativas
+
+- [`AGENTS.md`](AGENTS.md) — Instrucciones canónicas para agentes
+- [`AGENT_REPORT_ACTIVE.md`](apps/gold/docs/AGENT_REPORT_ACTIVE.md) — Reporte operativo activo
+- [`AGENT_REPORT.md`](apps/gold/docs/AGENT_REPORT.md) — Diagnósticos históricos (solo lectura)
+- [`LEGACY_SURFACES.md`](apps/gold/docs/LEGACY_SURFACES.md) — Clasificación de archivos legacy
+- Build oficial: `pnpm build:gold`
+
+## Material histórico
+
+- `apps/gold/archive/legacy-html/` — HTML legacy archivado
+- `apps/gold/archive/legacy-js/` — JS legacy archivado
 
 # EOF — YavlGold llms.txt (do not truncate)
