@@ -1,5 +1,5 @@
 User-agent: *
 Allow: /
 Disallow: /dashboard/
-Disallow: /agro
+Allow: /agro/
 Sitemap: https://www.yavlgold.com/sitemap.xml
