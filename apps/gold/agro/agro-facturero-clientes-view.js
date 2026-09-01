@@ -3055,6 +3055,11 @@ function renderEntryGate(root) {
     // desde la vista para no tocar el entry gate canonico de flow.js.
     const doors = root.querySelector('.fcflow-doors');
     if (doors) {
+        // Fase 2: una sola entrada de lectura. La card "Ver registros de clientes"
+        // se retira de la puerta (el subview `registros` sigue vivo en el routing;
+        // su retiro completo es decision futura del owner).
+        doors.querySelector('[data-flow-door="registros"]')?.remove();
+
         const viewWizardDoor = document.createElement('button');
         viewWizardDoor.type = 'button';
         viewWizardDoor.className = 'fcflow-door';

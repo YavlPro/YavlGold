@@ -1977,3 +1977,43 @@ Implementar la experiencia "Ver clientes" del Facturero de Clientes como wizard 
 3. Drift documental (listas de modulos en AGENTS.md §3.2 / FICHA §4.2).
 4. Edge: filtro de busqueda heredado en Paso 4.
 5. Deuda preexistente: shim node v24 → 20.20.2; Vercel 307→308; Cronica 2026-08 al cierre de mes.
+
+---
+
+## Sesion 2026-09-01 (II) — Wizard "Ver clientes": Fase 2 (3 ajustes quirurgicos)
+
+Agente: GLM (ZCode). Fase 1 aprobada y commiteada por el owner. Este prompt autoriza exactamente 3 ajustes; QA browser omitida por instruccion expresa del owner ("no hacer qa"; ademas credenciales QA siguen desactualizadas).
+
+### Objetivo
+1) Puerta P0 sin card duplicada de lectura. 2) Paso 2 lista solo cultivos con registros reales y status produccion/finalizado. 3) Paso 3 sin auto-advance.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agro/agro-facturero-clientes-view-wizard.js` | Cirugia | **Cambio 3**: tile del Paso 3 solo selecciona (`is-active` borde `--border-gold` sin glow); el avance 3→4 lo hace exclusivamente `Siguiente` (goNext ya sincroniza categoria). **Cambio 2**: nuevo bloque "Paso 2: cultivos con registros reales" — `WIZARD_ELIGIBLE_CROP_STATUSES = Set('produccion','finalizado')` (mismo canon P4 de flow.js, verificado en :65); `resolveWizardCropStatus` replica fiel de `resolveCropStatus` de flow.js (lost_at/fechas reales/stored/override/auto-%); `ensureCropRecordScope()` query real a 4 tablas (`agro_pending/agro_income/agro_losses/agro_transfers`, `crop_id not null`, `deleted_at is null`, schema verificado en 20260327001000:149+) con guard por requestId; `renderStepContext` reescrito con estados honestos: revisando / error + chip Reintentar / lista filtrada / empty humano por finca ("Esta finca todavia no tiene cultivos con registros de clientes..."); `reconcileActiveCrop` vuelve a Vista general (una sola vez, con nota visible, jamas mudo) si el cultivo global activo no cumple el filtro; carga en background al crear sesion. "Vista general" primera opcion siempre (canon §4.5.1). Selectores generales del facturero intactos. |
+| `agro/agro-facturero-clientes-view.js` | Wiring minimo | **Cambio 1**: en `renderEntryGate`, tras renderizar el gate canonico, se retira `doors.querySelector('[data-flow-door="registros"]')?.remove()` — queda UNA entrada de lectura (la puerta "Ver clientes"). El subview `registros` queda intacto en routing/modulo; retiro completo es decision futura del owner. |
+| CSS wizard | Sin cambios | Estados nuevos reusan `.fcvw-note`/`.fcvw-chip`; cero CSS nuevo. |
+
+### Verificacion de strings exactos (anti-inventar)
+- Status canon wizard: `FLOW_ALLOWED_CROP_STATUSES = new Set(['produccion', 'finalizado'])` (flow.js:65) — replica exacta.
+- Tabla real `agro_income` (el prompt decia "agro_incomes"; se uso el nombre real del schema). `agro_transfers` tiene `crop_id` + `deleted_at` (20260327001000:149-167).
+
+### Resultado de build
+`pnpm build:gold` verde (191 modulos, 2.54s; unico warning = chunk preexistente del monolito).
+
+### QA
+- **Omitida por instruccion expresa del owner** ("no hacer qa"). Credenciales QA siguen bloqueadas (Fase 1). Verificacion ejecutada: build gate + verificacion estatica del flujo (loading→lista/error→retry, reconcile one-shot, farm→crop estricto, F5 directo a Paso 2 sin flash sin contexto).
+- Interpretacion registrada de "cada card con su svg": las cards de cliente del Paso 4 ya renderizan su SVG de señal individual por datos reales (`renderCardSignal`) y cada tile/puerta lleva icono FA 6.5 + texto visible (canon ADN §1). No se introdujeron SVGs custom nuevos que romperian el canon de iconos.
+
+### NO se hizo (scope respetado)
+- Sin git. Sin tocar `flow.js` (la card de la puerta se retira desde view.js), `agro.js`, canonicos, ni CSS del wizard.
+- `subview=registros` intacto; selectores generales del facturero intactos.
+- Sin QA browser (instruccion del owner).
+
+### Pendientes vivos (heredados + nuevos)
+1. Credenciales QA (owner) → plan de QA completo pendiente (Fase 1).
+2. Canonizacion decisiones de sesion (Donaciones, Acciones del sistema, filtro Paso 2).
+3. Drift documental (listas §3.2 AGENTS.md / §4.2 FICHA).
+4. Edge Fase 1: busqueda persistida filtra Paso 4.
+5. QA manual sugerida del owner cuando esten las credenciales: puerta P0 (2 cards), Paso 2 con finca sin cultivos elegibles, Paso 3 seleccion+Siguiente, F5 por paso.
