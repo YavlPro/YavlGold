@@ -1916,3 +1916,64 @@ Completar el re-split del wizard de Facturero de Clientes a 8 pasos (P5 presenta
 
 ### Honor a ox alpha
 ox alpha (Zhipu/Z.AI, iteración GLM) cerró su ciclo como el agente más disciplinado de la semana. Su legado: respeto al gate de Fase 0, declaraciones honestas de desviaciones, scope acotado, y un re-split que sobrevivió a su muerte. Honor al mejor modelo gratis que trabajó en este repo.
+
+---
+
+## Sesion 2026-09-01 — Wizard "Ver clientes" (Facturero de Clientes): Fase 0 diagnostico + Fase 1 implementacion
+
+Agente: GLM (ZCode). Fase 0 (diagnostico, solo lectura) aprobada por el owner; Fase 1 (codigo) autorizada por prompt operativo del owner con decisiones de scope cerradas D1-D4.
+
+### Objetivo
+Implementar la experiencia "Ver clientes" del Facturero de Clientes como wizard de 4 pasos a pagina completa (`#view=facturero-clientes&subview=ver-clientes&paso=N`, F5 restaura paso), sin tocar el wizard de creacion (`subview=nuevo`, 8 pasos) ni `subview=registros` (coexiste).
+
+### Diagnostico Fase 0 (verificado, base de la implementacion)
+- No existia `ver-clientes`; "ver clientes" era la lista unica `registros` (superficie mixta, anti-patron §20 ADN).
+- Bugs 1-3 raiz: `.agro-mobile-contextbar` (agro.css:10207, display:flex top-level :10231) = pildora sticky centrada translucida + "Volver" duplicado con el back del modulo; `.fcflow__topbar` (flow.css:16-21) sin sticky = indicador de paso se pierde al scroll.
+- Bug 4: header global no se oculta en module depth (excepcion §4.12.3/4) — D2 del owner: se CONSERVA slim.
+- Reglas canonicas de estado ya correctas en view.js (`resolveVisibleCategory`/`hasVisibleCategory` :1331-1375, EPSILON :49) — el wizard las consume, no las reinventa.
+- `linked_user_id` existe en `agro_buyers` (20260227192000) pero ni el RPC ni el select del directorio lo traian.
+- Donaciones: `isBuyerIdentityRelevantTab` (agro-buyer-identity.js:56) excluye transferencias → sin camino de datos por comprador (D1: empty state honesto).
+- Log 24h: columnas reales `transferred_at/transferred_to/transfer_state/reverted_at` en agro_pending; `reverted_at` tambien en agro_income/agro_losses (20260327001000); income/losses SIN transferred_at (filtro .or() por tabla).
+- Exportes MD no consultaban `agro-privacy.js` (gap §8 MANIFIESTO).
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agro/agro-facturero-clientes-view-wizard.js` | NUEVO (~640L) | Wizard 4 pasos con sesion singleton (create vs update), chrome sticky full-width (`Volver` unico + titulo + `PASO X DE 4`), Paso 1 cuenta YavlGold (bifurcacion por `linked_user_id` verificado), Paso 2 finca→cultivo con regla estricta (nunca cultivos de otra finca), Paso 3 5 tiles cuadrados con auto-advance, Paso 4 cards + privacidad + `[Gestionar clientes v]` (Unificar/Actualizar) + `[Exportar lista]` + subvista `Acciones del sistema` (query 24h real a 3 tablas, frases humanas, empty honesto). Body class `agro-fcv-wizard-active` con ciclo de vida limpio. |
+| `agro/agro-facturero-clientes-view-wizard.css` | NUEVO (~470L) | Topbar sticky `--bg-1` solido + border-bottom; tiles `--radius-md` activo `--border-gold` sin glow; chips 44px; menu gestion; acciones; responsive ≤768/≤480; `prefers-reduced-motion`; neutralizacion scoped de contextbar (`body.agro-fcv-wizard-active .agro-mobile-contextbar { display:none !important }`). |
+| `agro/agro-facturero-clientes-flow.js` | 1 linea | `paso` persiste tambien para `subview=ver-clientes` (:105). |
+| `agro/agro-facturero-clientes-view.js` | Wiring quirurgico | Import wizard; `linked_user_id` en select directorio + fallback builder; rama `ver-clientes` en `renderView()` + guard de cierre de sesion al salir de la subvista; wrapper `openViewWizardSession` (datos/callbacks); puerta P0 "Ver clientes" (tercera puerta, desde view.js sin tocar flow.js); `applyWizardContext` (finca+cultivo silent en un solo loadSummary); `exportBuyerList(rowsOverride)`; `handleShellViewChanged` cierra sesion wizard al salir de la vista. Cero features nuevas; view.js solo orquesta. |
+| `agro/agro-facturero-clientes-export.js` | Privacidad §8 | `privacyName/privacyMoney/privacyPercent` consultan `readBuyerNamesHidden()/readMoneyValuesHidden()`; aplica a titulos, montos, cumplimiento, totales, historial y filename del export individual (`cartera-viva-cliente-*.md` cuando nombres ocultos). |
+| `agro/index.html` | 1 linea | `<link>` del CSS del wizard. |
+
+### Decisiones de sesion del owner registradas (NO canonizadas, tocan §4.5.1/§4.12.3-4)
+1. Tile `Donaciones` al nivel de los estados principales: empty state honesto ("Donaciones solo entra cuando la data real la sostenga"). Pendiente de canonizacion.
+2. Subvista `Acciones del sistema` como superficie de trazabilidad 24h (transferencias, reversiones, transacciones en lenguaje humano). Pendiente de canonizacion.
+3. Header global conservado slim en el wizard (identidad/notificaciones, sin duplicar navegacion) — cierra la excepcion §4.12.3/4 sin ocultar el header completo.
+4. Contextbar del shell neutralizada SOLO mientras el wizard esta activo (body class), no fix global.
+
+### Resultado de build
+`pnpm build:gold` verde x2 (agent-guard + agent-report-check + UTF-8 OK). Wizard verificado en dist: JS en chunk `agro-facturero-clientes-view-D--vw7Qu.js` (51 refs fcvw), CSS en `assets/agro-CRnDDK6a.css` (`agro-fcv-wizard-active` presente).
+
+### QA realizado / BLOQUEO
+- **BLOQUEADO**: credenciales QA desactualizadas. `testqacredentials.md` (marzo 2026) rechazadas por Supabase real: `Invalid login credentials` para `yavlcapitan@gmail.com` via `signInWithPassword` directo. Politica §5 AGENTS.md: no improvisar accesos. Se necesita clave actualizada del owner para ejecutar el plan de QA.
+- Verificado sin sesion: app carga; auth guard operativo; bundle y CSS correctos en dist.
+- QA pendiente (plan listo): desktop + mobile ≤480px — puerta P0, pasos 1→4, auto-advance, F5 por paso, finca→cultivo estricto, Donaciones empty, Acciones del sistema, exportes con privacidad on/off, Volver unico + indicador sticky, sin contextbar durante wizard y reaparicion al salir.
+
+### NO se hizo (scope respetado)
+- Sin git (commit/push/branch) — pendiente decision del owner.
+- Canonicos intactos: `AGENTS.md`, `MANIFIESTO_AGRO.md`, `ADN-VISUAL-V12.0.md`, `FICHA_TECNICA.md`.
+- `agro.js` intacto. `subview=registros` intacto (coexiste; retiro es decision futura). CSS grande (`agro-facturero-clientes.css`) sin features nuevas.
+- No se construyo vinculo transfer→buyer para Donaciones (D1) ni fix global de contextbar (scoped).
+- Drift documental solo reportado: `agro-facturero-clientes-flow.js/.css` y los nuevos `*-view-wizard.*` fuera de las listas §3.2/§4.2 — requiere aprobacion para tocar AGENTS.md/FICHA.
+
+### Edge conocido (documentado, no corregido)
+- El Paso 4 hereda el filtro de busqueda persistido de `registros` (`matchesPortfolioSearch` vive dentro de `filterRowsByCategory`): una busqueda previa activa filtra silenciosamente las cards del wizard. El wizard no tiene caja de busqueda por spec. Correccion limpia requiere refactor de view.js (fuera de "wiring"); queda como pendiente menor.
+
+### Pendientes vivos
+1. **Credenciales QA actualizadas** (owner) → ejecutar plan de QA del wizard.
+2. Canonizacion o rechazo de decisiones de sesion 1-2 (Donaciones, Acciones del sistema).
+3. Drift documental (listas de modulos en AGENTS.md §3.2 / FICHA §4.2).
+4. Edge: filtro de busqueda heredado en Paso 4.
+5. Deuda preexistente: shim node v24 → 20.20.2; Vercel 307→308; Cronica 2026-08 al cierre de mes.

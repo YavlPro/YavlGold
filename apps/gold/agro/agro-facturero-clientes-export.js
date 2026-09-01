@@ -3,6 +3,7 @@ import {
     groupHistoryRowsByDay
 } from './agro-facturero-clientes.js';
 import { normalizeReportClientName } from './agro-report-format.js';
+import { readBuyerNamesHidden, readMoneyValuesHidden } from './agro-privacy.js';
 
 function formatMoney(value) {
     const amount = Number(value);
@@ -13,6 +14,24 @@ function formatMoney(value) {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     }).format(amount);
+}
+
+// Privacidad (MANIFIESTO §8): los exportes MD respetan los mismos controles
+// "ocultar nombres" / "ocultar montos" que la UI. Nunca exportan en claro lo
+// que el usuario pidió ocultar.
+function privacyName(value) {
+    if (readBuyerNamesHidden()) return 'Cliente oculto';
+    return String(value ?? '').trim() || 'Cliente';
+}
+
+function privacyMoney(value) {
+    if (readMoneyValuesHidden()) return '$ ···';
+    return formatMoney(value);
+}
+
+function privacyPercent(value) {
+    if (readMoneyValuesHidden()) return '···';
+    return formatPercent(value);
 }
 
 function formatPercent(value) {
@@ -66,20 +85,20 @@ function formatExportTimestamp(date = new Date()) {
 
 function buildReviewSectionLines(buyerRow) {
     const lines = [
-        `- Por revisar: ${formatMoney(buyerRow?.review_required_total)}`,
-        `- Registros antiguos por ordenar: ${formatMoney(buyerRow?.legacy_unclassified_total)}`
+        `- Por revisar: ${privacyMoney(buyerRow?.review_required_total)}`,
+        `- Registros antiguos por ordenar: ${privacyMoney(buyerRow?.legacy_unclassified_total)}`
     ];
 
     if (Number(buyerRow?.non_debt_income_total || 0) > 0) {
-        lines.push(`- Ingreso aparte: ${formatMoney(buyerRow?.non_debt_income_total)}`);
+        lines.push(`- Ingreso aparte: ${privacyMoney(buyerRow?.non_debt_income_total)}`);
     }
 
     if (Number(buyerRow?.transferred_total || 0) > 0) {
-        lines.push(`- Movido fuera de cartera: ${formatMoney(buyerRow?.transferred_total)}`);
+        lines.push(`- Movido fuera de cartera: ${privacyMoney(buyerRow?.transferred_total)}`);
     }
 
     if (Number(buyerRow?.balance_gap_total || 0) !== 0) {
-        lines.push(`- Diferencia pendiente por cuadrar: ${formatMoney(buyerRow?.balance_gap_total)}`);
+        lines.push(`- Diferencia pendiente por cuadrar: ${privacyMoney(buyerRow?.balance_gap_total)}`);
     }
 
     return lines;
@@ -106,7 +125,7 @@ function buildHistoryLines(rows) {
         lines.push('');
 
         (group?.rows || []).forEach((row) => {
-            lines.push(`- **${row?.label || 'Movimiento'}** · ${formatMoney(row?.amount)}`);
+            lines.push(`- **${row?.label || 'Movimiento'}** · ${privacyMoney(row?.amount)}`);
             lines.push(`  - Registro: ${row?.title || 'Movimiento del cliente'}`);
             lines.push(`  - Estado: ${getHistoryConfidenceLabel(row)}`);
             if (row?.meta) {
@@ -138,7 +157,7 @@ export function buildBuyerPortfolioExportMarkdown({ buyerRow, historyRows, expor
     const historyLines = buildHistoryLines(historyRows);
 
     return [
-        `# Cartera de clientes — ${buyerRow.display_name || 'Cliente'}`,
+        `# Cartera de clientes — ${privacyName(buyerRow.display_name || 'Cliente')}`,
         '',
         `- Fecha de exportación: ${formatExportTimestamp(exportedAt)}`,
         `- Estado: ${resolveBuyerStatus(buyerRow)}`,
@@ -146,11 +165,11 @@ export function buildBuyerPortfolioExportMarkdown({ buyerRow, historyRows, expor
         '',
         '## Resumen de cartera',
         '',
-        `- Fiado: ${formatMoney(buyerRow.credited_total)}`,
-        `- Cobrado: ${formatMoney(buyerRow.paid_total)}`,
-        `- Pérdida: ${formatMoney(buyerRow.loss_total)}`,
-        `- Falta por cobrar: ${formatMoney(buyerRow.pending_total)}`,
-        `- Cumplimiento: ${formatPercent(buyerRow.compliance_percent)}`,
+        `- Fiado: ${privacyMoney(buyerRow.credited_total)}`,
+        `- Cobrado: ${privacyMoney(buyerRow.paid_total)}`,
+        `- Pérdida: ${privacyMoney(buyerRow.loss_total)}`,
+        `- Falta por cobrar: ${privacyMoney(buyerRow.pending_total)}`,
+        `- Cumplimiento: ${privacyPercent(buyerRow.compliance_percent)}`,
         '',
         '## Movimientos separados',
         '',
@@ -168,7 +187,11 @@ export function buildBuyerPortfolioExportFilename(buyerRow, exportedAt = new Dat
         throw new TypeError('buildBuyerPortfolioExportFilename requires a buyer summary row.');
     }
 
-    return `cartera-viva-${sanitizeFileToken(buyerRow.display_name || buyerRow.group_key)}-${getDateStamp(exportedAt)}.md`;
+    // Con nombres ocultos, el nombre de archivo tampoco puede exponerlos.
+    const nameToken = readBuyerNamesHidden()
+        ? 'cliente'
+        : (buyerRow.display_name || buyerRow.group_key);
+    return `cartera-viva-${sanitizeFileToken(nameToken)}-${getDateStamp(exportedAt)}.md`;
 }
 
 export function downloadBuyerPortfolioExport({ buyerRow, historyRows, exportedAt = new Date() } = {}) {
@@ -234,20 +257,25 @@ export function buildBuyerListExportMarkdown({ rows, farmName, cropName, activeC
     safeRows.forEach((row) => {
         // Cambio 1: normaliza capitalización del nombre (agro-report-format.js).
         // Solo el texto del nombre; cifras y totales sin tocar.
+        // Con nombres ocultos, el export respeta la privacidad (§8 MANIFIESTO).
         const rawName = String(row?.display_name || row?.canonical_name || 'Sin nombre').trim();
-        const name = normalizeReportClientName(rawName);
+        const name = readBuyerNamesHidden()
+            ? 'Cliente oculto'
+            : normalizeReportClientName(rawName);
         const category = resolveExportCategory(row);
         const credited = Number(row?.credited_total || 0);
         const paid = Number(row?.paid_total || 0);
         const loss = Number(row?.loss_total || 0);
-        const compliance = row?.compliance_percent !== null && row?.compliance_percent !== undefined
-            ? `${Number(row.compliance_percent).toFixed(0)}%`
-            : 'N/A';
+        const compliance = readMoneyValuesHidden()
+            ? '···'
+            : (row?.compliance_percent !== null && row?.compliance_percent !== undefined
+                ? `${Number(row.compliance_percent).toFixed(0)}%`
+                : 'N/A');
         totalCredited += credited;
         totalPaid += paid;
         totalLoss += loss;
         lines.push(
-            `| ${escapeListMd(name)} | ${escapeListMd(category)} | ${formatMoney(credited)} | ${formatMoney(paid)} | ${formatMoney(loss)} | ${compliance} |`
+            `| ${escapeListMd(name)} | ${escapeListMd(category)} | ${privacyMoney(credited)} | ${privacyMoney(paid)} | ${privacyMoney(loss)} | ${compliance} |`
         );
     });
 
@@ -256,7 +284,7 @@ export function buildBuyerListExportMarkdown({ rows, farmName, cropName, activeC
     lines.push('');
     lines.push(`| Fiado total | Cobrado total | Pérdida total |`);
     lines.push(`|------------:|-------------:|--------------:|`);
-    lines.push(`| ${formatMoney(totalCredited)} | ${formatMoney(totalPaid)} | ${formatMoney(totalLoss)} |`);
+    lines.push(`| ${privacyMoney(totalCredited)} | ${privacyMoney(totalPaid)} | ${privacyMoney(totalLoss)} |`);
     lines.push('');
     lines.push('---');
     lines.push('> Para el historial detallado de cada cliente, usa el export individual en el detalle del cliente.');

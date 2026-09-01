@@ -102,7 +102,7 @@ export function writeFactureroHashRoute({ subview = '', paso = null, id = '' } =
         const params = new URLSearchParams();
         params.set('view', 'facturero-clientes');
         if (subview) params.set('subview', subview);
-        if (subview === 'nuevo' && Number.isFinite(paso) && paso > 0) params.set('paso', String(paso));
+        if ((subview === 'nuevo' || subview === 'ver-clientes') && Number.isFinite(paso) && paso > 0) params.set('paso', String(paso));
         if (id) params.set('id', id);
         url.hash = `#${params.toString()}`;
         history.replaceState(null, '', url);

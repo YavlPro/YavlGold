@@ -24,6 +24,10 @@ import {
     renderFactureroClientEntryGate,
     openFactureroClientFlow
 } from './agro-facturero-clientes-flow.js';
+import {
+    openFactureroViewWizard,
+    destroyFactureroViewWizard
+} from './agro-facturero-clientes-view-wizard.js';
 
 const CARTERA_VIVA_VIEW = 'facturero-clientes';
 const CARTERA_VIVA_VIEW_LEGACY = 'cartera-viva';
@@ -216,6 +220,7 @@ function createBuyerPortfolioFallbackRow(buyer = {}) {
         group_key: canonicalName,
         canonical_name: canonicalName,
         client_status: String(buyer?.status || 'active').trim().toLowerCase() === 'archived' ? 'archived' : 'active',
+        linked_user_id: String(buyer?.linked_user_id || '').trim(),
         global_status: 'Sin movimientos',
         requires_review: false,
         created_at: buyer?.created_at || null,
@@ -226,7 +231,7 @@ function createBuyerPortfolioFallbackRow(buyer = {}) {
 async function fetchBuyerDirectorySummaryRows() {
     const { data, error } = await supabase
         .from('agro_buyers')
-        .select('id,display_name,group_key,canonical_name,status,created_at,updated_at')
+        .select('id,display_name,group_key,canonical_name,status,linked_user_id,created_at,updated_at')
         .order('updated_at', { ascending: false });
 
     if (error) throw error;
@@ -3046,6 +3051,119 @@ function renderEntryGate(root) {
             renderView();
         }
     });
+    // Puerta al wizard "Ver clientes" (decision de sesion 2026-09-01). Se agrega
+    // desde la vista para no tocar el entry gate canonico de flow.js.
+    const doors = root.querySelector('.fcflow-doors');
+    if (doors) {
+        const viewWizardDoor = document.createElement('button');
+        viewWizardDoor.type = 'button';
+        viewWizardDoor.className = 'fcflow-door';
+        viewWizardDoor.setAttribute('data-flow-door', 'ver-clientes');
+        viewWizardDoor.innerHTML = `
+            <i class="fa-solid fa-users" aria-hidden="true"></i>
+            <span class="fcflow-door__title">Ver clientes</span>
+            <span class="fcflow-door__desc">Explora tus clientes paso a paso: cuenta, contexto y estado.</span>
+        `;
+        viewWizardDoor.addEventListener('click', () => {
+            writeFactureroHashRoute({ subview: 'ver-clientes', paso: 1 });
+            renderView();
+        });
+        doors.appendChild(viewWizardDoor);
+    }
+}
+
+let activeViewWizardSession = false;
+
+function applyWizardContext(farmId, cropId) {
+    setSelectedFarmId(normalizeFarmId(farmId));
+    const nextCropId = normalizeCropId(cropId);
+    if (nextCropId !== getSelectedCropId()
+        && typeof window === 'object'
+        && typeof window.setSelectedCropId === 'function') {
+        // Silencioso: el wizard aplica finca + cultivo en un solo ciclo y dispara
+        // un unico loadSummary (evita la doble recarga del cambio de cultivo).
+        window.setSelectedCropId(nextCropId, { silent: true });
+    }
+    void loadSummary();
+}
+
+function closeViewWizardSession() {
+    activeViewWizardSession = false;
+    destroyFactureroViewWizard();
+}
+
+function openViewWizardSession(root, route) {
+    activeViewWizardSession = true;
+    openFactureroViewWizard(root, {
+        startPaso: Math.min(Math.max(Number(route?.paso) || 1, 1), 4),
+        data: {
+            loading,
+            hasLoadedSummary,
+            errorMessage: lastErrorMessage,
+            farms: getAvailableFarms(),
+            crops: getAvailableCrops(),
+            selectedFarmId: getSelectedFarmId(),
+            selectedCropId: getSelectedCropId()
+        },
+        getCategoryRows: (category) => filterRowsByCategory(getCropScopedRows(summaryRows), category),
+        getCategoryMeta: (category) => CATEGORY_META[normalizeCategory(category)] || null,
+        renderClientCard: (row) => renderPortfolioCard(row),
+        renderPrivacyStrip: () => renderPrivacyStrip(),
+        resolveBuyerName: ({ buyerId = '', groupKey = '', fallback = '' } = {}) => {
+            const idKey = String(buyerId || '').trim();
+            const groupToken = normalizeBuyerGroupKey(groupKey);
+            const found = summaryRows.find((row) =>
+                (idKey && String(row?.buyer_id || '') === idKey)
+                || (groupToken
+                    && normalizeBuyerGroupKey(row?.canonical_name || row?.group_key || row?.display_name || '') === groupToken)
+            );
+            return String(found?.display_name || fallback || '').trim();
+        },
+        onExit: () => {
+            closeViewWizardSession();
+            writeFactureroHashRoute({ subview: '' });
+            renderView();
+        },
+        onApplyContext: ({ farmId, cropId }) => {
+            applyWizardContext(farmId, cropId);
+        },
+        onCategorySelected: (category) => {
+            if (!CATEGORY_ORDER.includes(category)) return;
+            if (category === activeCategory) return;
+            activeCategory = category;
+            writeStoredCategory(activeCategory);
+        },
+        onRefresh: () => {
+            loadSummary();
+        },
+        onUnifyClients: () => {
+            void (async () => {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user?.id) return;
+                openCarteraVivaClientMergeModal({ supabase, userId: user.id });
+            })();
+        },
+        onExportList: (rows) => {
+            exportBuyerList(Array.isArray(rows) ? rows : null);
+        },
+        onOpenDetail: (buyerId, scope) => {
+            if (!buyerId) return;
+            closeViewWizardSession();
+            const ledgerScope = normalizeDetailLedgerScope(scope || activeCategory);
+            writeFactureroHashRoute({ subview: 'detalle', id: buyerId });
+            loadBuyerDetail(buyerId, { ledgerScope });
+        },
+        onEditClient: (buyerId) => {
+            if (!buyerId) return;
+            const row = summaryRows.find((entry) => String(entry?.buyer_id || '').trim() === buyerId) || null;
+            openBuyerProfileById(buyerId, row?.display_name || '');
+        },
+        onDeleteClient: (buyerId) => {
+            if (!buyerId) return;
+            const row = summaryRows.find((entry) => String(entry?.buyer_id || '').trim() === buyerId) || null;
+            openBuyerProfileById(buyerId, row?.display_name || '', { focusAction: 'delete' });
+        }
+    });
 }
 
 function renderView() {
@@ -3053,9 +3171,21 @@ function renderView() {
     if (!root) return;
 
     // Routing profundo por hash: '' = entrada P0, 'nuevo' = wizard por páginas,
-    // 'registros' = lista, 'detalle' = detalle del cliente.
+    // 'ver-clientes' = wizard de consulta (4 pasos), 'registros' = lista,
+    // 'detalle' = detalle del cliente.
     const route = readFactureroHashRoute() || {};
     const routeSubview = String(route.subview || '').trim().toLowerCase();
+
+    // Si el hash salio de ver-clientes por cualquier via, la sesion del wizard
+    // termina para que su body class (contextbar neutralizada) no quede pegado.
+    if (routeSubview !== 'ver-clientes' && activeViewWizardSession) {
+        closeViewWizardSession();
+    }
+
+    if (routeSubview === 'ver-clientes') {
+        openViewWizardSession(root, route);
+        return;
+    }
 
     if (routeSubview === 'nuevo') {
         openFlowWizard(root, route);
@@ -3382,10 +3512,12 @@ async function exportBuyerDetail() {
  * F2 — Exports the global client list as a Markdown table summary.
  * Respects active filters (category + search + farm/crop selector).
  * The export is a snapshot of filteredRows — same data the list shows.
+ * rowsOverride: filas visibles entregadas por el wizard "Ver clientes" (Paso 4),
+ * que ya aplicó sus propios filtros de cuenta/estado.
  */
-function exportBuyerList() {
+function exportBuyerList(rowsOverride = null) {
     const listState = getListViewState();
-    const rows = listState.filteredRows;
+    const rows = Array.isArray(rowsOverride) ? rowsOverride : listState.filteredRows;
     if (!rows || rows.length === 0) return;
 
     const selectedFarmId = getSelectedFarmId();
@@ -3576,6 +3708,7 @@ function handleShellViewChanged(event) {
     if (!isCarteraVivaView(nextView)) {
         // Al salir de Facturero de Clientes, cualquier sesión del flow termina.
         activeFlowSession = false;
+        closeViewWizardSession();
         return;
     }
 
