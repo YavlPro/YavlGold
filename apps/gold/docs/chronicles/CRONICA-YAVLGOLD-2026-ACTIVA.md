@@ -302,3 +302,43 @@ Archivo: [2026-07.md](./2026-07.md)
 *Fecha de extension*: 2026-08-01
 *Generado por*: Historiador Forense de Git - Protocolo Append-Only v1.0
 
+---
+
+# ADDENDUM - Agosto 2026 (Append-only)
+
+> *Esta seccion extiende la cobertura de la cronica al mes de agosto 2026.*
+
+## Resumen Ejecutivo - Agosto 2026
+
+Los hechos que marcaron el octavo mes de 2026 (consolidacion operativa + mudanza de entorno):
+
+1. **Division de cronicas + Ley de Cronicas Anuales** (Ago 1): 2025 sellada en historica `no modificar`; activa 2026 solo-addendums; ley en AGENTS.md §12.X. Limpieza visual del dashboard al canon.
+2. **Reportes por finca** (Ago 2 + Ago 8): spec de 5 bloques implementada y frente "Centro de Reportes Generales + selector de finca" cerrado — bug de cascada `validCropIds` (cultivo "Pepino") corregido.
+3. **Factureros VERDE + ola UI M1-M6 VERDE** (Ago 5-7): filtro de familia por preset, auditoria de 17 MDs exportados, balance protagonista, QA real del owner, higiene de 20 ramas.
+4. **Saga identidad + BUG 3/BUG 4 en causa raiz** (Ago 17-23): `buyer_id`/`buyer_group_key` en 6 rutas, formatter `\.?0+$` (+3/-1), gate del chip por ciclo, ticker V12, skill del BUG 3.
+5. **Migracion Windows→Zorin OS** (Ago 24): Node 20.20.2, Docker 29.7.2, Supabase CLI 2.115 local operativo, migracion canonica de tablas solo-remotas.
+6. **Wizard de clientes 8 pasos QA GREEN** (Ago 25-26): P0-P6 sin modales cerrado por el owner; re-split P1-P8 pusheado; ox alpha retirado, M3 sucesor.
+7. **UX landing/dashboards** (Ago 16): WhatsApp, "Dias contigo", ticker de cotizaciones, gap auth 20px.
+8. **Sin daily-log (git forense)**: llms.txt v2 (Ago 28) y landing `/agro/` + SEO (Ago 29).
+
+---
+
+## Anexo L - Agosto 2026
+
+Archivo: [2026-08.md](./2026-08.md)
+
+**Resumen**: Agosto 2026 consolido los frentes abiertos de junio-julio y mudo el entorno a Linux. Con 87 commits en 14 dias con bitacora, el mes cerro reportes por finca con regla de cascada, dejo el Facturero de Clientes con identidad canonica y wizard de 8 pasos en QA verde, resolvio el BUG 3 en su causa raiz (formatter) donde varios modelos no llegaron, dejo Supabase local operativo sobre Zorin OS, y creo la segunda skill universal (formatter/artefactos de medicion). Deuda al cierre: 2 bugs nuevos del dia 17, cleanup QA bloqueado por captcha, purga de daily-logs pendiente de validacion del owner.
+
+**Metricas estimadas**:
+- **87 commits** en agosto (`git log --since="2026-08-01" --until="2026-09-01"`, excluidos 2 del 2026-09-01)
+- **14 dias con daily-log** canonico (01, 02, 05, 06, 07, 08, 16, 17, 20, 22, 23, 24, 25, 26)
+- **0 archivos no canonicos** (purga defensiva §4.3.1 sin hallazgos)
+- **3 frentes cerrados VERDE**: factureros operativos, ola UI M1-M6, wizard por paginas P0-P6
+- **1 bug critico de datos** corregido (cascada `validCropIds`)
+- **1 skill universal creada** (BUG 3 formatter) + 1 migracion de entorno completa (Zorin OS)
+
+---
+
+*Fecha de extension*: 2026-09-02
+*Generado por*: Historiador Forense de Git - Protocolo Append-Only v1.0
+

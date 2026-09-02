@@ -2425,3 +2425,20 @@ Sesión documentada por agente documental (no ejecutor). Cambios de código y ca
 - **Estado al cierre**:
   - Frente Facturero de Clientes: **CERRADO GREEN**.
   - Subfrente Facturero de la Finca: **YELLOW** (Fase 1 a medio ejecutar, pendiente GLM).
+
+## 2026-09-02 (VI) — Crónica de agosto 2026 (14 daily-logs + Anexo L)
+
+- **Fecha**: 2026-09-02
+- **Objetivo**: saldar la deuda del 2026-08-08 (revert `657e6eb6` del ADDENDUM sin autorización) creando la crónica mensual de agosto con autorización expresa del owner, según ciclo §4.3 y ley de crónicas §12.X.
+- **Diagnóstico**: `chronicles/2026-08.md` no existía; la activa terminaba en Anexo K (julio). 14 daily-logs canónicos de agosto intactos en `docs/ops/`; 0 archivos no canónicos (purga defensiva §4.3.1 sin hallazgos). `git log 2026-08-01→2026-09-01` = 89 entradas, 87 de agosto (2 son del 2026-09-01).
+- **Cambios realizados** (tabla):
+  | Archivo | Tipo | Cambio |
+  | --- | --- | --- |
+  | `apps/gold/docs/chronicles/2026-08.md` | crónica mensual (nueva) | Contexto, 12 hitos con hashes, decisiones, estado de módulos, deuda; footer con fuentes |
+  | `apps/gold/docs/chronicles/CRONICA-YAVLGOLD-2026-ACTIVA.md` | addendum Append-Only | ADDENDUM Agosto + Anexo L, sin tocar líneas existentes |
+- **Resultado de build**: no aplica (solo `.md` documentales, cero código).
+- **QA**: pendiente del owner — validar que la crónica conserva hitos/decisiones/commits (paso 4 del ciclo §4.3).
+- **NO se hizo** (scope respetado):
+  - No se purgaron los 14 daily-logs de agosto (pasos 5–6 del ciclo: purga solo tras tu validación).
+  - No se tocó código, canon, ni git.
+- **Estado al cierre**: crónica de agosto **validada por el owner**; purga de los 14 daily-logs ejecutada 2026-09-02 (eran untracked: rm local, 0 variantes no canónicas); julio ya estaba (2026-07.md + Anexo K).
