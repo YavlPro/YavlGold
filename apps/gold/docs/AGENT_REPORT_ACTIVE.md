@@ -2361,3 +2361,37 @@ Selectores finca→cultivo (view.js), strip privacidad + aplicacion a exportes (
 1. Owner: QA online de la Parte A (subtitulos en ambos wizards, desktop + mobile).
 2. Owner: decidir fuente de datos por tile (ciclos vs ledger vs consolidadas) y si el wizard reemplaza o convive con el modal "Nuevo registro".
 3. Entonces: PROMPT FASE 1 FINCA con los pasos definidos.
+
+---
+
+## Sesion 2026-09-02 (IV) — Canonizacion del sistema Facturero de Clientes (documentos canonicos)
+
+Agente: GLM (ZCode). AUTORIZACION EXPRESA del owner para tocar MANIFIESTO_AGRO.md, FICHA_TECNICA.md y AGENTS.md (solo los bloques citados en su prompt). Regla cumplida: bloques insertados textualmente, sin re-redactar, sin tocar otras secciones.
+
+### Cambios realizados (tabla documental)
+
+| Documento | Seccion | Cambio |
+|---|---|---|
+| `MANIFIESTO_AGRO.md` | §4.5.1 (final, antes del separador de §4.5.2, ahora :621) | Subseccion nueva "### Lectura paso a paso: wizard "Ver clientes" (canonizado 2026-09-02)": los 4 pasos, regla de cultivos por registros reales (estado de ciclo no excluye), 5 tiles sin auto-advance, `Donaciones` como estado de lectura del credito, `Acciones del sistema` como trazabilidad secundaria, navegacion de la familia (topbar Entrada + footer Atras/Siguiente + F5), subtitulos distintivos de los dos wizards, puerta de dos entradas, retiro de `registros` con redirect y detalle como superficie dedicada. §4.5.2 intacta (verificada en :654). |
+| `apps/gold/docs/FICHA_TECNICA.md` | §4.2 "Módulos JS (carga dinámica)" (:167-168) | `agro-facturero-clientes-flow.js` (wizard creacion 8 pasos + routing hash) y `agro-facturero-clientes-view-wizard.js` (wizard lectura 4 pasos + Acciones del sistema 24h + renderSystemActionsListHtml), tras `agro-facturero-clientes-export.js`. |
+| `apps/gold/docs/FICHA_TECNICA.md` | §4.2 "Archivos CSS" (:202-203) | `agro-facturero-clientes-flow.css` y `agro-facturero-clientes-view-wizard.css`. |
+| `AGENTS.md` | §3.2 lista de modulos (:87, :90) | Mismos 2 JS con redaccion del owner, alineados a la columna de la lista (flow tras export; view-wizard tras view). |
+
+### Verificacion obligatoria ejecutada
+- **`agro_income` singular**: FICHA §5 ya decia `agro_income` (:257). Busqueda de `agro_incomes` en docs vivos (AGENTS.md, FICHA, MANIFIESTO, AGENT_CONTEXT_INDEX): **0 referencias** — nada que corregir.
+- §4.5.2 del MANIFIESTO intacta; sin documentos nuevos; AGENT_CONTEXT_INDEX, ADN-VISUAL y ROADMAP sin tocar (cumpliendo el prompt).
+
+### Resultado de build
+`pnpm build:gold` verde (2.25s) — incluye agent-report-check sobre el reporte activo.
+
+### NO se hizo
+- Sin git (comandos sugeridos abajo). Sin tocar otras secciones de los canonicos. Sin re-redactar los bloques del owner (insertados textualmente; unica adaptacion: alineacion de espacios a la columna de la lista §3.2 de AGENTS.md).
+
+### Impacto de gobernanza
+Con esta canonizacion, las decisiones de sesion pendientes quedan resueltas: `Donaciones` y `Acciones del sistema` ya son canon (§4.5.1), el filtro del Paso 2 por registros reales es canon, y el drift documental de los modulos wizard queda saldado en FICHA §4.2 y AGENTS §3.2. Pendiente menor heredado: destino de `yavlgold-context.md` y decision sobre skill del patron guard/estado-inicial.
+
+### Git sugerido (NO ejecutado)
+```bash
+git add AGENTS.md apps/gold/docs/MANIFIESTO_AGRO.md apps/gold/docs/FICHA_TECNICA.md apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "docs(canon): canonizar wizard Ver clientes en MANIFIESTO 4.5.1 + modulos wizard en FICHA 4.2 y AGENTS 3.2"
+```

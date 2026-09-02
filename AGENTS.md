@@ -84,8 +84,10 @@ agro-facturero-clientes.js           — lógica base del Facturero de Clientes 
 agro-facturero-clientes-assignment.js — reasignación segura de cliente en movimientos
 agro-facturero-clientes-detail.js    — detalle individual del cliente (historial, saldos, acciones)
 agro-facturero-clientes-export.js    — export Markdown de lista de clientes (global y por finca)
+agro-facturero-clientes-flow.js      — wizard de creación (8 pasos) + routing hash del facturero
 agro-facturero-clientes-merge.js     — modal para unificar clientes duplicados
 agro-facturero-clientes-view.js      — vista principal: tabs por saldo vivo, wizard de compradores
+agro-facturero-clientes-view-wizard.js — wizard de lectura "Ver clientes" (4 pasos) + Acciones del sistema
 agro-farm-compare.js                 — comparación lado a lado de dos fincas
 agro-farm-movements.js               — movimientos financieros por finca
 agro-farm-report.js                  — reportes por finca

@@ -164,6 +164,8 @@ agro-facturero-clientes-merge.js — modal seguro para unificar clientes duplica
 agro-facturero-clientes-view.js — Facturero de Clientes: vista de clientes, tabs por saldo vivo, cultivos asociados en cards, wizard de compradores y flujos separados Nuevo cliente / Cliente existente
 agro-facturero-clientes-detail.js — Facturero de Clientes: detalle individual del cliente (historial, saldos, acciones)
 agro-facturero-clientes-export.js — Facturero de Clientes: export Markdown de la lista (global y por finca)
+agro-facturero-clientes-flow.js — wizard de creación de cliente y primer registro (8 pasos) y routing hash del facturero (readFactureroHashRoute/writeFactureroHashRoute)
+agro-facturero-clientes-view-wizard.js — wizard de lectura "Ver clientes" (4 pasos), subvista "Acciones del sistema" (24 h) y componente compartido de trazabilidad (renderSystemActionsListHtml)
 agro-clients.js      — Mis Clientes: directorio de contactos (clientes manuales + buyers derivados de Facturero de Clientes)
 agro-clima.js        — integración meteorológica
 agro-crop-report.js  — reportes detallados por cultivo (se acceden desde cada card/ciclo, no desde el Centro de Reportes)
@@ -197,6 +199,8 @@ disponible, con fallback defensivo a query directa.
 **Archivos CSS:**
 - `agro.css` — estilos principales + papelera + undo toast
 - `agro-facturero-clientes.css` — Facturero de Clientes: vista, cards, estados, acciones separadas y responsive mobile
+- `agro-facturero-clientes-flow.css` — wizard de creación (chrome y pasos)
+- `agro-facturero-clientes-view-wizard.css` — wizard de lectura (topbar sticky, tiles, footer)
 - `agro-dashboard.css` — dashboard
 - `agro-dashboard-v11.css` — Dashboard Agro v11 (6 bloques), prefijo `ygd-` *(conserva nomenclatura V11 por legacy, aplica ADN visual V12)*
 - `agro-facturero-finca.css` — operaciones financieras

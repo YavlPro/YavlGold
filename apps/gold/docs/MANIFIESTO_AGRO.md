@@ -618,6 +618,37 @@ Si el usuario se equivoca al transferir un registro, Agro debe darle una salida 
 
 Esta regla transmite control. El agricultor puede corregir una transferencia hecha por accidente, ajustar un pago mal registrado o devolver una pérdida al estado pendiente si descubre nueva información. La confianza del sistema no viene de impedir todo error, sino de permitir corregirlo con claridad.
 
+### Lectura paso a paso: wizard "Ver clientes" (canonizado 2026-09-02)
+La lectura del Facturero de Clientes se organiza en un wizard de cuatro pasos
+a página completa. No usa modales como pasos.
+- Paso 1 — Cuenta YavlGold: pregunta si el cliente ya usa YavlGold.
+  `Con cuenta YavlGold` muestra clientes vinculados con verificación segura;
+  `Sin cuenta` muestra el resto. Nunca se finge una vinculación.
+- Paso 2 — Contexto: selector de finca y, más abajo, selector de cultivo.
+  Un cultivo se lista solo si tiene registros reales de clientes; el estado
+  del cultivo (sembrado, creciendo, producción, finalizado) no lo excluye.
+- Paso 3 — Ver estado de clientes: cinco tiles cuadrados con icono y texto:
+  `Fiados`, `Registro pagado`, `Pérdidas`, `Donaciones`, `Sin registro`.
+  Se toca para seleccionar y se avanza con `Siguiente`; no hay avance automático.
+- Paso 4 — Clientes del estado activo: cards del estado elegido, con
+  privacidad, `Gestionar clientes` (unificar, actualizar), `Exportar lista`
+  y `Acciones del sistema`.
+- `Donaciones` es un estado de lectura del crédito: la parte que el
+  agricultor decidió no cobrar. No es un estado de saldo vivo.
+- `Acciones del sistema` es la trazabilidad secundaria del facturero:
+  transferencias, reversiones y cambios recientes en lenguaje humano.
+  No compite con los estados principales.
+- Navegación de la familia de factureros: topbar con `← Entrada`, título del
+  módulo y paso visible; pie con `Atrás` y `Siguiente`; `Siguiente` es el
+  único avance; al recargar se restaura el paso.
+- Los dos wizards se distinguen con un subtítulo humano en la topbar:
+  "Creación de nuevo cliente y registro" y "Ver clientes y registros".
+- La puerta del facturero ofrece dos entradas: `Nuevo cliente` (creación)
+  y `Ver clientes` (lectura).
+- La lista legacy `registros` queda retirada de la navegación y redirige al
+  wizard. El detalle del cliente es superficie dedicada: sin tabs hermanas,
+  `Volver` único y filtros sin solapes (tipo de fila, estado, unidad).
+
 ---
 
 ## 4.5.2 Facturero de la Finca
