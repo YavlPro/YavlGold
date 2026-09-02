@@ -1169,6 +1169,7 @@ export function openFactureroClientFlow(root, options = {}) {
                             <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
                             Entrada
                         </button>
+                        <span class="fcflow__subtitle">Creación de nuevo cliente y registro</span>
                         <span class="fcflow__step">Paso ${stepNumber()} de ${totalSteps()}</span>
                     </div>
                 ` : ''}

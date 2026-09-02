@@ -2245,3 +2245,119 @@ Agente: GLM (ZCode). Entrada del owner: el wizard esta GREEN pero la superficie 
 1. QA online del owner (instrucciones arriba).
 2. Heredados: canonizacion Donaciones/Acciones del sistema; FICHA_TECNICA (modulos + agro_income); destino yavlgold-context.md; skill guard/estado-inicial; edge busqueda persistida (ya casi irrelevante: la lista no renderiza, pero `getListViewState` sigue usandola internamente para exportes con rowsOverride nulo).
 3. Nuevo: retiro fisico del codigo muerto de la lista `registros` cuando el owner lo autorice.
+
+---
+
+## Sesion 2026-09-02 (II) — Parte A: subtitulos distintivos en topbars de wizard
+
+Agente: GLM (ZCode). Problema del owner: los wizards `nuevo` y `ver-clientes` se parecen tanto que no se sabe en cual se esta. Fix autorizado: subtitulo humano en cada topbar. Topbar del detalle intocada ("Detalle del cliente" ya distingue).
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `agro/agro-facturero-clientes-flow.js` | Topbar del wizard `nuevo`: nuevo elemento central `.fcflow__subtitle` con texto "Creacion de nuevo cliente y registro" (la topbar de este wizard no tenia titulo; el subtitulo ocupa el centro entre `Entrada` y `Paso X de 8`). |
+| `agro/agro-facturero-clientes-flow.css` | `.fcflow__subtitle`: Plus Jakarta Sans, `var(--text-sm)` (0.80rem, token verificado en agro-tokens.css:76), `var(--text-muted)`, centrado, `flex:1; min-width:0`, line-height 1.3, sin glow ni uppercase. |
+| `agro/agro-facturero-clientes-view-wizard.js` | Topbar del wizard `ver-clientes`: subtitulo "Ver clientes y registros" dentro de `.fcvw__title` como `<span>` block (bajo el titulo "Facturero de Clientes"). |
+| `agro/agro-facturero-clientes-view-wizard.css` | `.fcvw__subtitle`: mismas reglas tipograficas; vive DENTRO del titulo para no alterar el layout de la topbar del detalle, que comparte `.fcvw__title` (el detalle no tiene la clase nueva → cero efecto). |
+
+### QA estatica ≤480px (sin browser, ley §5)
+- flow: 3 elementos flex (back 44px + subtitulo flex + step); el subtitulo envuelve a 2 lineas en 320px sin desbordar (min-width:0 + line-height 1.3).
+- fcvw: subtitulo hereda ellipsis del titulo (nowrap); "Ver clientes y registros" (24 chars a 0.80rem) cabe hasta ~320px; la topbar sticky crece ~14px de alto, sin ruptura (align-items:center).
+- Detalle: no renderiza `.fcvw__subtitle` → sin cambios.
+
+### Resultado de build
+`pnpm build:gold` verde (2.75s; UTF-8 OK).
+
+### QA online para el owner
+Entrar a ambos wizards (puerta P0 → "Nuevo cliente" y → "Ver clientes") y confirmar el subtitulo visible en la topbar en desktop y mobile: "Creación de nuevo cliente y registro" vs "Ver clientes y registros".
+
+### Git sugerido (NO ejecutado)
+```bash
+git add apps/gold/agro/agro-facturero-clientes-flow.js \
+        apps/gold/agro/agro-facturero-clientes-flow.css \
+        apps/gold/agro/agro-facturero-clientes-view-wizard.js \
+        apps/gold/agro/agro-facturero-clientes-view-wizard.css
+git commit -m "feat(clientes): subtitulos distintivos en topbars de wizards nuevo y ver-clientes"
+```
+
+---
+
+## Sesion 2026-09-02 (III) — Fase 0 Facturero de la Finca (SOLO lectura; cero edits)
+
+Agente: GLM (ZCode). Arrancada tras cierre A (build verde). Entregable: inventario + comparacion con el patron wizard + evaluacion de datos por tile + riesgos. SIN diseno UX final: los pasos los decide el owner.
+
+### Inventario de la superficie actual `#view=facturero-finca`
+
+- **Dueño**: `agroOperationalCycles.js` (**4198 lineas**) — un SOLO modulo que sirve las TRES vistas: `facturero-finca`, `facturero-cultivo`, `facturero-personal` via `VIEW_CONTEXTS` (:21-25: preset farm/crop/orphan + family filter). Alias legacy `operational` activo (shell :122; agro-cart.js:499 tambien lo consulta).
+- **Region**: `#agro-operational-root` (index.html:1389). Subvistas hash permitidas (shell :140): `active` (No pagados) / `finished` (Pagados) / `donations` / `losses` / `export` (Exportar MD).
+- **Superficie**: module heading con eyebrow/titulo/copy por subvista (getSubviewMeta :2165-2206); switch de subvistas (:1465); family toggle Todos/Por cultivo/Por finca/Sin asociar con emojis (:2208-2240); filtros categoria/tipo/periodo (:107-120); app de period-cycles montada DENTRO (mountAgroPeriodCycles :2, root anidado).
+- **Creacion**: MODAL canonico "Nuevo registro" (:1483+, formulario unico largo "Creacion guiada" — NO pasos). Selector finca dentro del modal (:1730). Edicion por el mismo modal.
+- **Chrome**: sin topbar sticky tipo wizard (vista de modulo con contextbar del shell). Sin strip de privacidad en este modulo (no encontrado en inventario).
+- **Datos que consume**: `agro_operational_cycles` (fetchCycles :1059 — con `farm_id` desde migracion 20260604120000; economic_type expense/income/donation/loss; status open/in_progress/compensating/closed/lost; SIN soft-delete) + `agro_operational_movements` (:1093, entradas dentro del ciclo, direction out/in) + `agro_crops` + `window._agroFarms`.
+
+### Tabla superficie actual vs patron wizard (ganado en Clientes)
+
+| Aspecto | Facturero de la Finca HOY | Patron wizard (Clientes) |
+|---|---|---|
+| Lectura | Subvistas planas (5 tabs) + family toggle + filtros avanzados en una pagina | Wizard 4 pasos guiados a pagina completa |
+| Creacion | **Modal** de formulario unico largo | Pagina completa, pasos, sin modales como pasos |
+| Chrome | Heading de modulo + contextbar shell | Topbar sticky `← Entrada` + titulo + subtitulo + `PASO X DE N`; footer `[Atras][Siguiente]` |
+| Estados async | Skeletons propios | Maquina 4 estados (loading/list/empty/error + Reintentar) |
+| Selectores | Finca/cultivo en modal y filtros | Selectores con "Vista general" primero + regla estricta finca→cultivo |
+| Privacidad | No vista en este modulo | Strip + aplicada a exportes |
+| Export | Subvista export propia | Export MD respetando privacidad |
+| F5 | subview por hash (sin paso) | paso por hash |
+
+### Evaluacion honesta de datos por tile (tiles propuestos por el owner: gasto/ingreso/fiado/perdida/donacion/otro)
+
+| Tile | Fuente A (ciclos operativos) | Fuente B (ledger crudo del monolito) | Nota |
+|---|---|---|---|
+| Gasto | cycles `economic_type='expense'` (+movements) | `agro_expenses` (farm_id desde 20260603120000) | DOBLE fuente — decidir cual alimenta el tile (o consolidadas) |
+| Ingreso | cycles `'income'` | `agro_income` con `origin_table <> 'agro_pending'` (los cobros de clientes NO son ingresos de finca) | DOBLE fuente; ojo con excluir cobros de clientes |
+| Fiado | NO existe en ciclos | `agro_pending` con `farm_id`/`crop_id` | Lectura en contexto finca; la GESTION vive en Facturero de Clientes (canon §4.5.1/4.5.2) |
+| Pérdida | cycles `'loss'` | `agro_losses` | DOBLE fuente |
+| Donación | cycles `'donation'` | `agro_transfers` | DOBLE fuente |
+| Otro | category `'other'` | movimientos sin clasificar del ledger | Definir alcance |
+
+Hallazgo clave: **la finca tiene DOS generaciones de datos** (ledger crudo de tabs del monolito + app de ciclos operativos). Cual wizard de finca lea una u otra (o ambas) es DECISION DEL OWNER antes de disenar pasos.
+
+### Queries de verificacion para el owner (SQL Editor, solo lectura)
+
+```sql
+-- (1) Ledger crudo vivo por finca (todas las tablas en una pasada)
+select 'gasto' tipo, farm_id, count(*) n from agro_expenses where deleted_at is null group by 1,2
+union all select 'ingreso_no_cliente', farm_id, count(*) from agro_income where deleted_at is null and lower(coalesce(origin_table,'')) <> 'agro_pending' group by 1,2
+union all select 'fiado', farm_id, count(*) from agro_pending where deleted_at is null group by 1,2
+union all select 'perdida', farm_id, count(*) from agro_losses where deleted_at is null group by 1,2
+union all select 'donacion', farm_id, count(*) from agro_transfers where deleted_at is null group by 1,2
+order by 1, 3 desc;
+
+-- (2) Ciclos operativos por tipo y asociacion (esta tabla NO tiene deleted_at)
+select economic_type, count(*) total,
+       count(farm_id) con_finca, count(crop_id) con_cultivo,
+       count(*) filter (where farm_id is null and crop_id is null) sin_asociar
+from agro_operational_cycles group by 1 order by 1;
+
+-- (3) Saldo ya calculado por finca (RPC existente, 20260625120000)
+select * from get_farm_balance(<farm_id_uuid>, auth.uid());
+```
+
+### Reutilizables del patron (inventario, sin implementar)
+Selectores finca→cultivo (view.js), strip privacidad + aplicacion a exportes (view.js/export.js), `renderSystemActionsListHtml` (view-wizard.js), maquina de 4 estados + ley defensiva de render, chrome topbar/footer (CSS `fcvw` reutilizable), redirect-pattern para rutas legacy. RPC `get_farm_balance` ya existe para saldos por finca.
+
+### Riesgos
+1. **Anti-Monolito (§11.X)**: `agroOperationalCycles.js` = 4198L (>2000: "no crecer con nuevas features; solo cirugia o extraccion"). Un wizard finca DEBE ser modulo nuevo + wiring minimo; tocar el modulo grande para meter el wizard violaria la ley y afectaria a las TRES vistas (cultivo/personal comparten modulo → riesgo de regresion cruzada).
+2. **Modal vs patron**: la creacion actual es modal; replicar "sin modales como pasos" implica reemplazarlo — decision del owner (convivencia o sustitucion).
+3. **Doble generacion de datos** por tile (ver tabla) — sin decision de fuente, el wizard mostraria numeros que no cuadran con la superficie actual.
+4. **Rutas legacy**: alias `operational` vivo (shell + agro-cart.js:499); cualquier redirect debe cubrirlo.
+5. **period-cycles anidado** dentro de la misma vista: touching chrome puede afectarlo.
+6. Family toggle con emojis en labels (:2225-2228) — nota ADN (emojis funcionales en UI activa).
+
+### NO se hizo
+- Cero edits en Parte B. Sin build propio (el de A basta). Sin diseno de pasos (decisión del owner). Sin tocar canon.
+
+### Pendientes vivos
+1. Owner: QA online de la Parte A (subtitulos en ambos wizards, desktop + mobile).
+2. Owner: decidir fuente de datos por tile (ciclos vs ledger vs consolidadas) y si el wizard reemplaza o convive con el modal "Nuevo registro".
+3. Entonces: PROMPT FASE 1 FINCA con los pasos definidos.

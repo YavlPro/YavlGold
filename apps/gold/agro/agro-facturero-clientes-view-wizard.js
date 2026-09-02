@@ -788,7 +788,7 @@ function createWizardSession(root, options) {
                         <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
                         Entrada
                     </button>
-                    <p class="fcvw__title">Facturero de Clientes</p>
+                    <p class="fcvw__title">Facturero de Clientes<span class="fcvw__subtitle">Ver clientes y registros</span></p>
                     <span class="fcvw__step">Paso ${paso} de ${TOTAL_STEPS}</span>
                 </div>
                 ${guide ? `<p class="fcvw__guide">${escapeHtml(guide)}</p>` : ''}
