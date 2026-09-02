@@ -2395,3 +2395,33 @@ Con esta canonizacion, las decisiones de sesion pendientes quedan resueltas: `Do
 git add AGENTS.md apps/gold/docs/MANIFIESTO_AGRO.md apps/gold/docs/FICHA_TECNICA.md apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "docs(canon): canonizar wizard Ver clientes en MANIFIESTO 4.5.1 + modulos wizard en FICHA 4.2 y AGENTS 3.2"
 ```
+
+## 2026-09-02 (cierre) — Cierre GREEN Facturero de Clientes + apertura Facturero de la Finca
+Sesión documentada por agente documental (no ejecutor). Cambios de código y canon realizados por GLM bajo orquestación de Qwen; commits del owner (YavlPro).
+
+- **Fecha**: 2026-09-02
+- **Objetivo**: cerrar el frente Facturero de Clientes en GREEN (Fases 5, 6 y canonización), y abrir el subfrente Facturero de la Finca con Fase 0 + Spec v1.
+- **Diagnóstico**: no aplica (sesión de documentación).
+- **Cambios realizados** (tabla):
+  | Archivo | Tipo | Cambio |
+  | --- | --- | --- |
+  | `apps/gold/agro/agro-facturero-clientes-view.js` | refactor (Fase 5) | redirect `registros` → wizard; wiring del detalle dedicado |
+  | `apps/gold/agro/agro-facturero-clientes-detail.js` | refactor (Fase 5) | topbar propia, sin tabs, sin Crear ciclo, sin Volver duplicado |
+  | `apps/gold/agro/agro-facturero-clientes-view-wizard.js` | refactor (Fase 5) | consumo de componente compartido Acciones del sistema |
+  | `apps/gold/agro/agro-facturero-clientes.css` | style (Fase 5) | reglas scoped para detalle |
+  | `apps/gold/agro/agro-facturero-clientes-flow.js` | feat (Fase 6) | subtítulo "Creación de nuevo cliente y registro" en topbar |
+  | `apps/gold/agro/agro-facturero-clientes-view-wizard.js` | feat (Fase 6) | subtítulo "Ver clientes y registros" en topbar |
+  | `apps/gold/agro/agro-facturero-clientes-flow.css` | style (Fase 6) | CSS del subtítulo en wizard de creación |
+  | `apps/gold/agro/agro-facturero-clientes-view-wizard.css` | style (Fase 6) | CSS del subtítulo en wizard de lectura |
+  | `apps/gold/docs/MANIFIESTO_AGRO.md` | canon (autorizado) | §4.5.1 subsección "Lectura paso a paso: wizard 'Ver clientes'" |
+  | `apps/gold/docs/FICHA_TECNICA.md` | canon (autorizado) | §4.2: 2 módulos JS + 2 CSS del wizard |
+  | `AGENTS.md` | canon (autorizado) | §3.2: 2 módulos en lista |
+- **Resultado de build**: verde (ejecutado por GLM en cada fase del día; el agente documental NO lo re-ejecuta).
+- **QA**: online por el owner; GREEN en desktop y mobile ≤480px para Fases 5 y 6.
+- **NO se hizo** (scope respetado):
+  - Este agente no tocó código, canon ni git.
+  - No se completó la Fase 1 Finca (GLM sin créditos, retoma 2026-09-03).
+  - No se canonizó §4.5/§4.5.2 "finca sin cultivos" (pendiente de palabra del owner).
+- **Estado al cierre**:
+  - Frente Facturero de Clientes: **CERRADO GREEN**.
+  - Subfrente Facturero de la Finca: **YELLOW** (Fase 1 a medio ejecutar, pendiente GLM).
