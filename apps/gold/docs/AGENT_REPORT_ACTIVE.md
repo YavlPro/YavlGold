@@ -1494,7 +1494,7 @@ Ejecutar el plan de saneamiento derivado del diagnostico general: alinear Node 2
 
 Autorizado por operador ("intentar ahora"). Dos vias probadas y bloqueadas:
 1. MCP Supabase: `Unauthorized — SUPABASE_ACCESS_TOKEN` no configurado.
-2. Password grant REST con cuenta QA de testqacredentials.md: `400 captcha_failed` (hCaptcha exigido) — reproduce el bloqueo de la sesion 2026-08-23 (III).
+2. Password grant REST con cuenta QA local (archivo de credenciales retirado del repo el 2026-09-01): `400 captcha_failed` (hCaptcha exigido) — reproduce el bloqueo de la sesion 2026-08-23 (III).
 Alcance definido cuando se desbloquee: soft-delete (`deleted_at`) SOLO en cuenta QA (`yavlcapitan@gmail.com`) de buyers/movimientos cuyos nombres matcheen oli / compa / qa test*. "post" y "Yobany" quedan EXCLUIDOS (posibles datos reales).
 
 ### Resultado de build
@@ -1957,7 +1957,7 @@ Implementar la experiencia "Ver clientes" del Facturero de Clientes como wizard 
 `pnpm build:gold` verde x2 (agent-guard + agent-report-check + UTF-8 OK). Wizard verificado en dist: JS en chunk `agro-facturero-clientes-view-D--vw7Qu.js` (51 refs fcvw), CSS en `assets/agro-CRnDDK6a.css` (`agro-fcv-wizard-active` presente).
 
 ### QA realizado / BLOQUEO
-- **BLOQUEADO**: credenciales QA desactualizadas. `testqacredentials.md` (marzo 2026) rechazadas por Supabase real: `Invalid login credentials` para `yavlcapitan@gmail.com` via `signInWithPassword` directo. Politica §5 AGENTS.md: no improvisar accesos. Se necesita clave actualizada del owner para ejecutar el plan de QA.
+- **BLOQUEADO**: credenciales QA locales desactualizadas (archivo retirado del repo el 2026-09-01 por decision del owner). Rechazadas por Supabase real: `Invalid login credentials` para `yavlcapitan@gmail.com` via `signInWithPassword` directo. Politica §5 AGENTS.md: no improvisar accesos. El QA pasa a ser responsabilidad exclusiva del owner (ver sesion 2026-09-01 III).
 - Verificado sin sesion: app carga; auth guard operativo; bundle y CSS correctos en dist.
 - QA pendiente (plan listo): desktop + mobile ≤480px — puerta P0, pasos 1→4, auto-advance, F5 por paso, finca→cultivo estricto, Donaciones empty, Acciones del sistema, exportes con privacidad on/off, Volver unico + indicador sticky, sin contextbar durante wizard y reaparicion al salir.
 
@@ -2017,3 +2017,73 @@ Agente: GLM (ZCode). Fase 1 aprobada y commiteada por el owner. Este prompt auto
 3. Drift documental (listas §3.2 AGENTS.md / §4.2 FICHA).
 4. Edge Fase 1: busqueda persistida filtra Paso 4.
 5. QA manual sugerida del owner cuando esten las credenciales: puerta P0 (2 cards), Paso 2 con finca sin cultivos elegibles, Paso 3 seleccion+Siguiente, F5 por paso.
+
+---
+
+## Sesion 2026-09-01 (III) — Fase 3: fix Paso 2 + Ley de QA del owner + limpieza de credenciales + boton Atras
+
+Agente: GLM (ZCode). Prompt del owner con 3 acciones autorizadas (bugfix con datos reales, cambio canonico AGENTS.md §5 con autorizacion EXPRESA, limpieza de credenciales) + pedido en sesion: boton Atras en el wizard.
+
+### Diagnostico del bug Paso 2 (caso real: finca "Los higuerones" / cultivo "caraota roja" con fiado real, selector vacio o en "Revisando...")
+
+Causas verificadas por analisis estatico del codigo (las queries contra produccion ya no son ejecutables por agentes bajo la nueva ley §5; quedan documentadas abajo para el owner):
+
+1. **CAUSA PRIMARIA — status como criterio de exclusion (Fase 2)**: el filtro exigia `resolveWizardCropStatus ∈ {produccion, finalizado}`. Un cultivo en `sembrado`/`creciendo` (o `status_mode=auto` con <25% de avance) quedaba excluido AUNQUE tuviera fiados reales. Confirma la palabra del owner: el selector debe regirse por registros reales, no por estado de ciclo. Un cultivo con registros debe verse aunque este sembrado/creciendo.
+2. **CAUSA SECUNDARIA — query sin acotar**: `select('crop_id')` sobre 4 tablas completas traia TODAS las filas del usuario (payload O(movimientos)); con historial grande la carga tarda → "Revisando..." prolongado (sintoma de colgado). Fix: `.in('crop_id', candidatos)` con los cultivos ya cargados en memoria + early-return con render cuando no hay candidatos.
+3. **Path de error cerrado (verificado)**: try/catch/finally con render en finally y chip Reintentar — no existe camino que deje `loading=true` para siempre; la unica via real de "colgado" era latencia (mitigada por el fix 2). Los movimientos con `crop_id null` nunca afectan (`.in` los excluye de facto).
+
+**Queries de verificacion para el owner (SQL Editor de Supabase, solo lectura):**
+
+```sql
+-- (a) Cultivos elegibles para el Paso 2 (>=1 registro vivo vinculado por crop_id)
+select distinct m.crop_id, c.name, c.farm_id, c.status
+from (
+  select crop_id from agro_pending   where deleted_at is null and crop_id is not null
+  union
+  select crop_id from agro_income    where deleted_at is null and crop_id is not null
+  union
+  select crop_id from agro_losses    where deleted_at is null and crop_id is not null
+  union
+  select crop_id from agro_transfers where deleted_at is null and crop_id is not null
+) m
+join agro_crops c on c.id = m.crop_id and c.deleted_at is null;
+
+-- (b) Constancia del caso "caraota roja" (debe aparecer en (a) con cualquier status)
+select c.id, c.name, c.status, c.status_mode, c.status_override,
+       (select count(*) from agro_pending   p where p.crop_id = c.id and p.deleted_at is null) as fiados_vivos,
+       (select count(*) from agro_income    i where i.crop_id = c.id and i.deleted_at is null) as ingresos_vivos,
+       (select count(*) from agro_losses    l where l.crop_id = c.id and l.deleted_at is null) as perdidas_vivas,
+       (select count(*) from agro_transfers t where t.crop_id = c.id and t.deleted_at is null) as donaciones_vivas
+from agro_crops c
+where c.deleted_at is null and c.name ilike '%caraota%';
+```
+
+Verificacion esperada post-fix: si (b) muestra `fiados_vivos >= 1`, "caraota roja" DEBE aparecer en el selector del Paso 2 (finca "Los higuerones") sin importar su `status`.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agro/agro-facturero-clientes-view-wizard.js` | Bugfix Paso 2 | Nueva regla del owner: elegible = tiene >=1 registro de cliente real vivo por `crop_id`; **el status YA NO es criterio de exclusion**. Eliminados `WIZARD_ELIGIBLE_CROP_STATUSES`/`resolveWizardCropStatus`/`normalizeWizardCropStatus`; `isWizardEligibleCrop` queda solo por ids. Query acotada `.in('crop_id', candidatos)` + skip+render si no hay candidatos. Nota base reescrita ("El cultivo solo muestra opciones con registros de clientes reales."). Vista general primero, dinamico por finca, estados honestos y selectores generales intactos. |
+| `agro/agro-facturero-clientes-view-wizard.js` | Pedido del owner en sesion | **Boton Atras**: footer `[Atras] [Siguiente]` — Atras visible desde Paso 2, Paso 4 queda solo Atras (`btn-outline-gold`, `data-fcvw-stepback`, retrocede exactamente un paso). Topbar pasa a `← Entrada` (`data-fcvw-exit`, salida a la puerta P0). Patron espejo del wizard de creacion (flow.js: topbar=salida, footer=retroceso); sin duplicar retrocesos. |
+| `AGENTS.md` §5 | Cambio canonico AUTORIZADO por el owner | Nueva "Ley de QA del owner (vigente desde 2026-09-01)": agentes sin QA local ni online (sin Playwright/browser/credenciales); QA local bloqueado; QA produccion exclusivo del owner online; cierre con build + verificacion estatica; commits/push solo con confirmacion expresa; proposito: ahorrar tokens y eliminar improvisacion. Eliminados: "QA post-cambio" (bloque Playwright), "Credenciales QA locales", "Politica de QA sobre produccion real". Anti-mock se mantiene. |
+| `testqacredentials.md` | Borrado | Archivo eliminado del disco local (nunca estuvo trackeado en git: `git ls-files` vacio → no requiere `git rm --cached`). |
+| `.gitignore` | Limpieza | Entrada `testqacredentials.md` retirada (linea 27). Patrones genericos de credenciales (`*credentials*.md`, etc.) se conservan. |
+| `apps/gold/docs/yavlgold-context.md` | Referencia viva | Bloques "Credenciales QA locales" + "Politica de QA sobre produccion real" reemplazados por la ley vigente (referencia a AGENTS.md §5). |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Referencias vivas | 2 menciones al archivo reescritas sin el nombre del archivo (hecho historico conservado). |
+
+### Resultado de build
+`pnpm build:gold` verde (191 modulos, 1.91s).
+
+### QA
+- Ninguna por ley nueva §5 (QA online = owner). Verificacion estatica ejecutada: flujo completo del fix (early-return con render, criterio solo-por-ids, reconcile intacto, Atras/Entrada bindings, footer por paso). Queries SQL listas arriba para la verificacion online del owner.
+
+### NO se hizo (scope respetado)
+- **Documentos historicos sellados SIN editar** (5 archivos con menciones nominales de epoca al archivo de credenciales: AUDITORIA_2026-04-26, 3x AGENT_LEGACY_CONTEXT, POST_MERGE_RLS_2026-04-23). Razon: son memoria sellada por §4.1/4.2, ninguna mencion expone credenciales (evidencia de auditoria de que NO se leyo el archivo). Si el owner quiere purga historica total, se autoriza explicito.
+- Sin git (commit/push pendientes de confirmacion expresa). Sin tocar MANIFIESTO/ADN/FICHA. Cero features nuevas en view.js. Daily logs no se suben a git (§4.3).
+
+### Pendientes vivos
+1. QA online del owner: Paso 2 con "Los higuerones"/"caraota roja" (queries arriba), boton Atras/Entrada en desktop + mobile ≤480px.
+2. Canonizacion decisiones de sesion (Donaciones, Acciones del sistema, filtro Paso 2 por registros).
+3. Drift documental (listas §3.2 AGENTS.md / §4.2 FICHA: flow.js/flow.css/view-wizard.*).
+4. Edge Fase 1: busqueda persistida filtra Paso 4.

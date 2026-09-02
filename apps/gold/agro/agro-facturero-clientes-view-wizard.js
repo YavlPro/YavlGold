@@ -35,10 +35,11 @@ const STATE_TILES = [
     { id: 'sin-registro', label: 'Sin registro', icon: 'fa-solid fa-inbox' }
 ];
 
-// Filtro del Paso 2 (decision de sesion 2026-09-01, solo este wizard): un cultivo
-// aparece solo si tiene registros de clientes reales Y esta en produccion o
-// finalizado. Mismo canon de status que el wizard de creacion (flow.js P4).
-const WIZARD_ELIGIBLE_CROP_STATUSES = new Set(['produccion', 'finalizado']);
+// Filtro del Paso 2 (regla del owner, 2026-09-01, Fase 3): un cultivo aparece
+// solo si tiene al menos 1 registro de cliente real vivo vinculado por crop_id.
+// El status del cultivo YA NO es criterio de exclusion: "los cultivos que tienen
+// registros de clientes, no los que estan sembrado y creciendo". Cultivos sin
+// registros no se muestran nunca. "Vista general" siempre primero (canon §4.5.1).
 const CROP_RECORD_TABLES = Object.freeze(['agro_pending', 'agro_income', 'agro_losses', 'agro_transfers']);
 
 let activeWizardSession = null;
@@ -125,13 +126,16 @@ function createWizardSession(root, options) {
         render();
     }
 
-    function goBack() {
-        if (state.stepIndex > 0) {
-            state.stepIndex -= 1;
-            state.manageMenuOpen = false;
-            render();
-            return;
-        }
+    // Footer: retrocede exactamente un paso (patron del wizard de creacion).
+    function goStepBack() {
+        if (state.stepIndex <= 0) return;
+        state.stepIndex -= 1;
+        state.manageMenuOpen = false;
+        render();
+    }
+
+    // Topbar: salida siempre a la entrada del Facturero de Clientes.
+    function exitToEntry() {
         ctx.onExit?.();
     }
 
@@ -186,55 +190,35 @@ function createWizardSession(root, options) {
         return safeName;
     }
 
-    // ---------- Paso 2: cultivos con registros reales (Fase 2) ----------
-
-    // Replica fiel de resolveCropStatus/normalizeCropStatus de flow.js (canon P4):
-    // lost_at > finalizado real > estado guardado > override > modo auto por %.
-    function normalizeWizardCropStatus(value) {
-        return String(value || '')
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .toLowerCase()
-            .trim()
-            .replace(/[\s-]+/g, '_');
-    }
-
-    function resolveWizardCropStatus(crop) {
-        if (normalizeWizardCropStatus(crop?.lost_at)) return 'lost';
-        if (normalizeWizardCropStatus(crop?.actual_harvest_date) || normalizeWizardCropStatus(crop?.closed_at)) return 'finalizado';
-
-        const stored = normalizeWizardCropStatus(crop?.status);
-        if (stored === 'finalizado' || stored === 'lost') return stored;
-        const override = normalizeWizardCropStatus(crop?.status_override);
-        if (override === 'produccion' || override === 'finalizado' || override === 'lost') return override;
-        if (String(crop?.status_mode || '').trim().toLowerCase() !== 'auto') return stored;
-
-        const startKey = String(crop?.start_date || '').slice(0, 10);
-        const harvestKey = String(crop?.expected_harvest_date || '').slice(0, 10);
-        const startDate = new Date(`${startKey}T00:00:00`);
-        const endDate = new Date(`${harvestKey}T00:00:00`);
-        if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return stored;
-        const totalDays = Math.floor((endDate.getTime() - startDate.getTime()) / 86400000);
-        if (totalDays <= 0) return stored;
-        const elapsed = Math.floor((Date.now() - startDate.getTime()) / 86400000);
-        const percent = Math.round((Math.min(Math.max(elapsed, 0), totalDays) / totalDays) * 100);
-        if (percent >= 100) return 'finalizado';
-        if (percent >= 25) return 'produccion';
-        return stored;
-    }
+    // ---------- Paso 2: cultivos con registros reales (Fase 3) ----------
 
     function isWizardEligibleCrop(crop, cropIds) {
         const cropId = String(crop?.id || '').trim();
         if (!cropId) return false;
-        if (!WIZARD_ELIGIBLE_CROP_STATUSES.has(resolveWizardCropStatus(crop))) return false;
         return cropIds instanceof Set ? cropIds.has(cropId) : false;
     }
 
     // Set de cultivos con >=1 registro de cliente vivo (movimiento con crop_id,
     // deleted_at nulo) en las tablas del facturero. Datos reales, sin mock.
+    // La query se acota con .in('crop_id', candidatos) — los cultivos ya cargados
+    // en memoria — para no arrastrar el historial completo de 4 tablas (causa del
+    // "Revisando..." prolongado diagnosticado en Fase 3).
     async function ensureCropRecordScope() {
         const scope = state.cropRecordScope;
         if (scope.loading || scope.ids instanceof Set) return;
+
+        const candidateIds = (Array.isArray(ctx.data?.crops) ? ctx.data.crops : [])
+            .map((crop) => String(crop?.id || '').trim())
+            .filter(Boolean);
+
+        // Sin cultivos cargados no hay nada que verificar: ninguno califica.
+        // (render incluido: sin el, la nota "Revisando..." quedaria colgada)
+        if (candidateIds.length <= 0) {
+            scope.ids = new Set();
+            render();
+            return;
+        }
+
         const requestId = ++scope.requestId;
         scope.loading = true;
         scope.error = '';
@@ -245,7 +229,7 @@ function createWizardSession(root, options) {
                 supabase
                     .from(table)
                     .select('crop_id')
-                    .not('crop_id', 'is', null)
+                    .in('crop_id', candidateIds)
                     .is('deleted_at', null)
             ));
             results.forEach((result) => {
@@ -330,7 +314,7 @@ function createWizardSession(root, options) {
             : crops;
 
         let cropChipsExtra = '';
-        let cropNote = 'El cultivo solo muestra opciones con registros de clientes y en producción o finalizado.';
+        let cropNote = 'El cultivo solo muestra opciones con registros de clientes reales.';
 
         if (scope.loading) {
             cropChipsExtra = '';
@@ -487,10 +471,18 @@ function createWizardSession(root, options) {
     }
 
     function footerHtml() {
-        if (state.stepIndex >= TOTAL_STEPS - 1) return '';
+        const isLast = state.stepIndex >= TOTAL_STEPS - 1;
+        const backBtn = state.stepIndex > 0
+            ? '<button type="button" class="btn-outline-gold" data-fcvw-stepback>Atrás</button>'
+            : '';
+        const nextBtn = isLast
+            ? ''
+            : '<button type="button" class="btn-gold" data-fcvw-next>Siguiente</button>';
+        if (!backBtn && !nextBtn) return '';
         return `
             <div class="fcvw__footer">
-                <button type="button" class="btn-gold" data-fcvw-next>Siguiente</button>
+                ${backBtn}
+                ${nextBtn}
             </div>
         `;
     }
@@ -748,9 +740,9 @@ function createWizardSession(root, options) {
         root.innerHTML = `
             <div class="fcvw">
                 <div class="fcvw__topbar">
-                    <button type="button" class="fcvw__back" data-fcvw-back>
+                    <button type="button" class="fcvw__back" data-fcvw-exit>
                         <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
-                        Volver
+                        Entrada
                     </button>
                     <p class="fcvw__title">Facturero de Clientes</p>
                     <span class="fcvw__step">Paso ${paso} de ${TOTAL_STEPS}</span>
@@ -822,7 +814,10 @@ function createWizardSession(root, options) {
     }
 
     function bindEvents() {
-        root.querySelector('[data-fcvw-back]')?.addEventListener('click', goBack);
+        // Topbar: salida a la entrada (nunca retrocede paso). Footer: Atrás
+        // retrocede exactamente un paso — mismo patron del wizard de creacion.
+        root.querySelector('[data-fcvw-exit]')?.addEventListener('click', exitToEntry);
+        root.querySelector('[data-fcvw-stepback]')?.addEventListener('click', goStepBack);
         root.querySelector('[data-fcvw-next]')?.addEventListener('click', goNext);
         root.querySelector('[data-fcvw-actions-back]')?.addEventListener('click', closeSystemActions);
         root.querySelector('[data-fcvw-system-actions]')?.addEventListener('click', openSystemActions);

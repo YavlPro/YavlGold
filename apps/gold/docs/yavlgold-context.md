@@ -1831,26 +1831,13 @@ Incluye: `agent-guard.mjs` (deps prohibidas) + `agent-report-check.mjs` (reporte
   - cerrar sesión/contexto/browser al terminar cada bloque de prueba;
   - borrar explícitamente la carpeta temporal usada por esa prueba en `%LOCALAPPDATA%\Temp\playwright-mcp-output\<session-id>`.
 
-### Credenciales QA locales
+### Ley de QA del owner (vigente desde 2026-09-01)
 
-- Para QA autenticada en produccion, los agentes pueden consultar `testqacredentials.md` en la raiz del repo **solo si existe localmente**.
-- `testqacredentials.md` es un archivo local y sensible:
-  - debe permanecer bajo `.gitignore`;
-  - no debe copiarse a `AGENTS.md`, `AGENT_REPORT_ACTIVE.md`, issues, PRs ni otros archivos versionados;
-  - se usa solo para pruebas reales de QA, nunca como credencial de desarrollo general.
-- Si el archivo no existe o esta desactualizado, el agente debe pedir confirmacion al usuario antes de improvisar accesos o credenciales.
-
-### Politica de QA sobre produccion real
-
-- Cuando se use la cuenta QA dedicada para agentes sobre produccion real:
-  - los datos creados para pruebas deben tratarse como temporales y controlados;
-  - no se deben dejar datos QA ambiguos, basura de prueba o duplicados que contaminen la siguiente sesion;
-  - al terminar cada bloque de QA, el agente debe:
-    - limpiar o revertir datos temporales sembrados para la prueba, o
-    - dejar explicitamente documentado que dataset QA estable permanece y por que;
-  - cualquier dataset QA persistente debe vivir solo en la cuenta QA dedicada, no mezclado con la cuenta personal del usuario;
-  - el cierre de sesion debe dejar produccion en un estado entendible y seguro para futuras pruebas;
-  - ademas del cleanup de datos QA, el agente debe cerrar Playwright/browser y borrar temporales locales de esa sesion.
+- Los agentes NO ejecutan QA local ni online (sin Playwright, sin browser, sin credenciales QA).
+- El QA en producción es responsabilidad EXCLUSIVA del owner, quien lo realiza online.
+- Toda sesión con cambios cierra con `pnpm build:gold` + verificación estática (queries documentadas, routing, bundle). Verdad antes que apariencia.
+- Commits/pushs SOLO con confirmación expresa del owner; después él hace el QA online.
+- Detalle canonico: `AGENTS.md` §5.
 
 ---
 
