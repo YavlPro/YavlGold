@@ -2149,3 +2149,44 @@ Probar con la finca de la captura y dos contrastes:
 ### Pendientes vivos
 1. QA online del owner (instrucciones arriba) → confirmar `list` en finca con registros.
 2. Heredados: canonizacion decisiones de sesion; drift documental; edge busqueda persistida en Paso 4.
+
+---
+
+## Sesion 2026-09-01 (V) — CIERRE GREEN del subfrente "Ver clientes" + hoja de ruta wizard-factureros
+
+Agente: GLM (ZCode). **QA online del owner: GREEN confirmado.** Subfrente Facturero de Clientes — wizard "Ver clientes" — CERRADO en GREEN.
+
+### Commits del owner (2026-09-01, autor YavlPro)
+1. `feat(clientes): wizard Ver clientes 4 pasos + fixes chrome scoped + privacidad en exportes` (Fase 1)
+2. `feat(clientes): Fase 2 wizard Ver clientes — puerta P0 unica, filtro real de cultivos, sin auto-advance` (Fase 2)
+3. `fix(clientes): Fase 3 — Paso 2 por registros reales (sin filtro de status), boton Atras, ley de QA del owner y limpieza de credenciales` (Fase 3)
+4. `fix(clientes): Fase 4 — selector de cultivo con maquina de 4 estados; causa raiz de 'Revisando' colgado (guard + estado inicial)` (Fase 4)
+
+### Secuencia acordada (mismo patron UX, adaptado por facturero)
+1. **Facturero de la Finca** (`#view=facturero-finca`)
+2. **Facturero del Cultivo** (`#view=facturero-cultivo`)
+3. **Facturero Personal** (`#view=facturero-personal`)
+4. Otros modulos si aplican.
+
+### Patron replicable (lo ganado en este frente)
+- Wizard a pagina completa, sin modales como pasos.
+- Topbar `← Entrada` + titulo + `PASO X DE N` sticky (fondo solido, border-bottom).
+- Footer `[Atras] + [Siguiente]` (Siguiente = unico avance; Atras retrocede exactamente un paso).
+- Tiles cuadrados icono + texto, sin auto-advance.
+- Filtros con datos reales y maquina de 4 estados honestos (loading/list/empty/error con Reintentar); ley defensiva: guard nunca bloquea por estado inicial, toda salida asincrona termina en estado terminal + render.
+- Chrome de gestion solo en el paso final; privacidad aplicada a exportes.
+- F5 restaura paso por hash.
+
+### Notas honestas de replicacion (la semantica NO se copia ciega)
+- **Finca**: tiles por TIPO DE MOVIMIENTO (gasto, ingreso, fiado, perdida, donacion, otro) — no por estado de cliente.
+- **Cultivo**: selector finca → cultivo con regla estricta (nunca cultivos de otra finca).
+- **Personal**: el canon §4.5 dice que NO tiene selectores de finca/cultivo (solo registros sin asociar) — su wizard tendra menos pasos por diseno, no por recorte.
+
+### Pendientes vivos (no bloquean los nuevos subfrentes)
+1. Canonizacion de `Donaciones` y `Acciones del sistema` en MANIFIESTO §4.5.1 (palabra del owner; quedan como decisiones de sesion registradas).
+2. Actualizacion de FICHA_TECNICA (modulos wizard nuevos + `agro_income` singular).
+3. Destino de `yavlgold-context.md` y deuda `?.remove()` del gate P0 (la puerta "Ver clientes" se agrega y la card `registros` se retira desde view.js; el gate canonico de flow.js no se tocó — conviene decantar a un patron limpio cuando se toque esa zona).
+4. Decision sobre skill del patron guard/estado-inicial (lección Fase 4: cambiar un estado inicial sin revisar guards que lo leen rompe en silencio).
+
+### Gobernanza
+No se declara la gobernanza "respetada" en pleno: las dos decisiones de sesion (Donaciones como tile, Acciones del sistema) quedan registradas hasta canonizacion o rechazo. Cada subfrente nuevo arranca como no bloqueante.
