@@ -72,7 +72,7 @@ function createWizardSession(root, options) {
         actionRows: [],
         actionsLoaded: false,
         actionsRequestId: 0,
-        cropRecordScope: { loading: true, error: '', ids: null, requestId: 0 },
+        cropRecordScope: { phase: 'loading', ids: null, error: '', requestId: 0 },
         cropAutoResetDone: false,
         cropResetNotice: false
     };
@@ -201,26 +201,35 @@ function createWizardSession(root, options) {
     // Set de cultivos con >=1 registro de cliente vivo (movimiento con crop_id,
     // deleted_at nulo) en las tablas del facturero. Datos reales, sin mock.
     // La query se acota con .in('crop_id', candidatos) — los cultivos ya cargados
-    // en memoria — para no arrastrar el historial completo de 4 tablas (causa del
-    // "Revisando..." prolongado diagnosticado en Fase 3).
+    // en memoria — para no arrastrar el historial completo de 4 tablas.
+    //
+    // Ley defensiva de render (Fase 4): toda salida termina en un estado terminal
+    // del scope — 'ready' (ids es Set, quizas vacio) o 'error' — y SIEMPRE
+    // re-renderiza. El guard solo bloquea si hay una query en vuelo
+    // (phase 'loading' con requestId > 0) o si ya se resolvio ('ready').
+    // El estado inicial 'loading' con requestId 0 NO bloquea: fue la causa raiz
+    // del "Revisando..." colgado (guard viejo retornaba con loading inicial true
+    // y la query nunca corria).
     async function ensureCropRecordScope() {
         const scope = state.cropRecordScope;
-        if (scope.loading || scope.ids instanceof Set) return;
+        if ((scope.phase === 'loading' && scope.requestId > 0) || scope.phase === 'ready') return;
 
         const candidateIds = (Array.isArray(ctx.data?.crops) ? ctx.data.crops : [])
             .map((crop) => String(crop?.id || '').trim())
             .filter(Boolean);
 
-        // Sin cultivos cargados no hay nada que verificar: ninguno califica.
-        // (render incluido: sin el, la nota "Revisando..." quedaria colgada)
+        // Sin cultivos cargados no hay nada que verificar (nunca .in() con array
+        // vacio): estado terminal inmediato con render.
         if (candidateIds.length <= 0) {
             scope.ids = new Set();
+            scope.error = '';
+            scope.phase = 'ready';
             render();
             return;
         }
 
         const requestId = ++scope.requestId;
-        scope.loading = true;
+        scope.phase = 'loading';
         scope.error = '';
         render();
 
@@ -245,14 +254,15 @@ function createWizardSession(root, options) {
                 });
             });
             scope.ids = ids;
+            scope.phase = 'ready';
         } catch (error) {
             if (requestId !== scope.requestId || !alive) return;
             console.error('[FactureroViewWizard] crop record scope load failed:', error?.message || error);
             scope.ids = null;
             scope.error = String(error?.message || 'No se pudo verificar los cultivos con registros.');
+            scope.phase = 'error';
         } finally {
             if (requestId === scope.requestId && alive) {
-                scope.loading = false;
                 render();
             }
         }
@@ -307,42 +317,58 @@ function createWizardSession(root, options) {
             })
         ].join('');
 
-        // Cultivos de la finca elegida (regla estricta) que ademas cumplen el
-        // filtro del wizard: registros reales + estado produccion/finalizado.
+        // Cultivos de la finca elegida (regla estricta: nunca cultivos de otra
+        // finca). El filtro de elegibilidad es solo por registros reales vivos.
         const farmCrops = farmId
             ? crops.filter((crop) => String(crop?.farm_id || '') === farmId)
             : crops;
 
+        // ---- Selector de cultivo: un solo punto de derivacion con 4 estados
+        // mutuamente excluyentes (loading / list / empty / error). La nota
+        // "Revisando..." SOLO existe en estado loading y siempre es reemplazada.
         let cropChipsExtra = '';
         let cropNote = 'El cultivo solo muestra opciones con registros de clientes reales.';
 
-        if (scope.loading) {
+        if (scope.phase === 'loading') {
+            // ESTADO loading
             cropChipsExtra = '';
             cropNote = 'Revisando qué cultivos tienen registros de clientes reales…';
-        } else if (scope.error) {
+        } else if (scope.phase === 'error') {
+            // ESTADO error
             cropChipsExtra = `
                 <button type="button" class="fcvw-chip" data-fcvw-crop-retry>
                     <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
                     Reintentar
                 </button>`;
             cropNote = 'No pudimos verificar los cultivos con registros ahora. Puedes continuar con Vista general o reintentar.';
-        } else if (scope.ids instanceof Set) {
+        } else if (farmCrops.length <= 0) {
+            // ESTADO empty — la finca (o la cuenta) no tiene cultivos creados.
+            cropChipsExtra = '';
+            cropNote = farmId
+                ? 'Esta finca todavía no tiene cultivos creados. Vista general muestra todos tus clientes.'
+                : 'Todavía no tienes cultivos creados. Vista general muestra todos tus clientes.';
+        } else {
             const eligibleCrops = farmCrops.filter((crop) => isWizardEligibleCrop(crop, scope.ids));
-            cropChipsExtra = eligibleCrops.map((crop) => {
-                const id = String(crop?.id || '').trim();
-                if (!id) return '';
-                const variety = String(crop?.variety || '').trim();
-                const label = variety ? `${cropShortLabel(crop)} · ${variety}` : cropShortLabel(crop);
-                return `<button type="button" class="fcvw-chip${cropId === id ? ' is-active' : ''}" data-fcvw-crop="${escapeHtml(id)}">${escapeHtml(label)}</button>`;
-            }).join('');
-
             if (eligibleCrops.length <= 0) {
+                // ESTADO empty — hay cultivos, pero ninguno tiene registros de clientes.
+                cropChipsExtra = '';
                 cropNote = farmId
-                    ? 'Esta finca todavía no tiene cultivos con registros de clientes. Vista general muestra todos tus clientes.'
-                    : 'Todavía no hay cultivos con registros de clientes. Vista general muestra todos tus clientes.';
-            } else if (cropId && !eligibleCrops.some((crop) => String(crop?.id || '') === cropId)) {
-                if (!reconcileActiveCrop(eligibleCrops)) {
-                    cropNote = 'El cultivo activo no aplica para esta consulta. Elige uno de la lista o usa Vista general.';
+                    ? 'Los cultivos de esta finca todavía no tienen registros de clientes. Vista general muestra todos tus clientes.'
+                    : 'Tus cultivos todavía no tienen registros de clientes. Vista general muestra todos tus clientes.';
+            } else {
+                // ESTADO list — cultivos elegibles: >=1 movimiento vivo por crop_id.
+                cropChipsExtra = eligibleCrops.map((crop) => {
+                    const id = String(crop?.id || '').trim();
+                    if (!id) return '';
+                    const variety = String(crop?.variety || '').trim();
+                    const label = variety ? `${cropShortLabel(crop)} · ${variety}` : cropShortLabel(crop);
+                    return `<button type="button" class="fcvw-chip${cropId === id ? ' is-active' : ''}" data-fcvw-crop="${escapeHtml(id)}">${escapeHtml(label)}</button>`;
+                }).join('');
+
+                if (cropId && !eligibleCrops.some((crop) => String(crop?.id || '') === cropId)) {
+                    if (!reconcileActiveCrop(eligibleCrops)) {
+                        cropNote = 'El cultivo activo no aplica para esta consulta. Elige uno de la lista o usa Vista general.';
+                    }
                 }
             }
         }

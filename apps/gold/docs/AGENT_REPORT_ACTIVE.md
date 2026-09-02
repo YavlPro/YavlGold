@@ -2087,3 +2087,65 @@ Verificacion esperada post-fix: si (b) muestra `fiados_vivos >= 1`, "caraota roj
 2. Canonizacion decisiones de sesion (Donaciones, Acciones del sistema, filtro Paso 2 por registros).
 3. Drift documental (listas §3.2 AGENTS.md / §4.2 FICHA: flow.js/flow.css/view-wizard.*).
 4. Edge Fase 1: busqueda persistida filtra Paso 4.
+
+---
+
+## Sesion 2026-09-01 (IV) — Fase 4: fix definitivo del selector de cultivo (Paso 2)
+
+Agente: GLM (ZCode). Entrada: QA online del owner reprocho el sintoma ("finca la ladera", paso=2, nota "Revisando..." colgada, sin chips — captura adjunta). Fase 3 no sostuvo. Trazado §8.2 sobre el codigo ACTUAL, sin rediagnostico desde cero.
+
+### Causa raiz (lineas exactas del codigo pre-fix)
+
+Interaccion entre DOS lineas introducidas en distinto momento:
+- `agro-facturero-clientes-view-wizard.js:75` — estado inicial `cropRecordScope: { loading: true, ... }` (cambio "anti-flash" al cierre de Fase 2).
+- `:208` — guard heredado de Fase 2: `if (scope.loading || scope.ids instanceof Set) return;`.
+
+Cadena: create → estado inicial `loading=true` → render muestra "Revisando..." (:319-321) → unica llamada a `ensureCropRecordScope()` (:886) → **retorna en la guard (:208) sin ejecutar la query ni bajar la bandera** → `loading` queda `true` eternamente → nota colgada y sin chips en TODAS las variantes (con o sin finca). Bug 100% de render, independiente de datos: ningun SQL lo explica. El guard era correcto en Fase 2 cuando el inicial era `loading:false`; el cambio del inicial lo rompio. Segundo colgado latente del mismo tipo: el early-return de candidatos vacios (:216-220) seteaba `ids` pero nunca bajaba `loading`.
+
+### Tabla de salidas ANTES del fix (codigo pre-Fase 4)
+
+| Caso | Render producido | ¿Estado final? |
+|---|---|---|
+| (a) sin finca | "Revisando..." eterno, solo chip Vista general | NO — colgado |
+| (b) finca sin cultivos | idem (a); empty humano :340-342 inalcanzable | NO — colgado |
+| (c) finca con cultivos sin registros | idem (a) | NO — colgado |
+| (d) finca con cultivos elegibles | idem (a); `ids` nunca es Set → chips jamas | NO — colgado |
+| (e) error de query | path muerto (la query nunca corria); diseno del path era correcto (catch→Reintentar) | SI, inalcanzable |
+| (f) excepcion a mitad del path | no habia excepcion: `return` silencioso en :208 + early-return que no bajaba loading | NO — colgado |
+
+### Tabla de salidas DESPUES del fix (4 estados mutuamente excluyentes)
+
+Scope con maquina de estados: `phase ∈ {loading, ready, error}`; `ready` = `ids` es Set (posiblemente vacio). Guard nuevo: solo bloquea query en vuelo (`loading` con `requestId>0`) o resuelto (`ready`); `error` deja reintentar; el inicial `loading` SIN requestId **no** bloquea. Toda salida asincrona termina en `ready|error` + render (try/catch/finally). `.in()` con array vacio: nunca (skip con estado terminal inmediato si no hay cultivos cargados).
+
+| Caso | Estado del selector | Que se ve |
+|---|---|---|
+| query en vuelo | `loading` | Chips: [Vista general]. Nota: "Revisando que cultivos tienen registros..." (unica aparicion posible de esa nota) |
+| query ok + finca con cultivos elegibles | `list` | Chips: [Vista general, ...cultivos con registros vivos]. Nota base; reconcile a Vista general con nota visible si el cultivo activo no califica |
+| query ok + cultivos pero 0 con registros | `empty` | Chips: [Vista general]. Nota: "Los cultivos de esta finca todavia no tienen registros de clientes..." |
+| finca (o cuenta) sin cultivos creados | `empty` | Chips: [Vista general]. Nota: "Esta finca todavia no tiene cultivos creados..." |
+| query falla | `error` | Chips: [Vista general, Reintentar]. Nota de error |
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `agro/agro-facturero-clientes-view-wizard.js` | Estado `cropRecordScope` a `phase`; guard nuevo (en-vuelo/resuelto); early-return con fase terminal + render; try/catch/finally setea `phase` terminal; `renderStepContext` reescrito con derivacion unica de 4 estados excluyentes (loading/list/empty/error) y dos mensajes empty distintos (sin cultivos creados vs sin registros); comentario desactualizado de F2 (mencionaba status) corregido. Cero cambios en view.js/CSS/canon. |
+
+### Resultado de build
+`pnpm build:gold` verde (191 modulos, 1.85s). Verificacion estatica: 0 referencias al campo viejo `scope.loading`; flujo create→render(loading)→query→ready/error→render verificado linea a linea.
+
+### QA online exacta para el owner (ley §5: la ejecuta el owner)
+
+Probar con la finca de la captura y dos contrastes:
+1. **"finca la ladera"** (la de la captura): entrar a Ver clientes → Paso 2 → elegir la finca. La nota "Revisando..." debe desaparecer en segundos y terminar en un estado final: si sus cultivos tienen movimientos vivos → chips de esos cultivos (`list`); si no → mensaje "Los cultivos de esta finca todavia no tienen registros de clientes..." (`empty`). Jamas debe quedar colgada.
+2. **Una finca con cultivos con fiados/ingresos reales** (ej. "Los higuerones"/"caraota roja"): debe verse el chip del cultivo con registros, sin importar su estado de ciclo (sembrado/creciente incluido).
+3. **Una finca sin cultivos** (si existe): mensaje "Esta finca todavia no tiene cultivos creados...".
+4. Cross-check opcional con los SQL de la sesion III: si un cultivo aparece en la query (a) pero NO aparece como chip en el Paso 2, pegar el resultado SQL y el nombre de la finca — eso indicaria datos (p.ej. `farm_id` del cultivo distinto de la finca esperada o `crop_id` null en los movimientos). Si los fiados reales tienen `crop_id null`, es hallazgo de producto (registros no ligados a cultivos) y NO se inventa vinculo sin autorizacion.
+
+### NO se hizo (scope respetado)
+- Sin QA local/online del agente (ley §5 nueva). Sin git. Sin tocar view.js, CSS, canonicos ni flow.js.
+- Sin inventar vinculo alternativo para movimientos con crop_id null (pendiente hallazgo de datos del owner).
+
+### Pendientes vivos
+1. QA online del owner (instrucciones arriba) → confirmar `list` en finca con registros.
+2. Heredados: canonizacion decisiones de sesion; drift documental; edge busqueda persistida en Paso 4.
