@@ -80,6 +80,20 @@ body.agro-fcv-wizard-active .agro-mobile-contextbar {
     font-weight: 600;
 }
 
+/* Subtitulo distintivo del wizard (Fase 6). Vive DENTRO de .fcvw__title para
+   no alterar el layout de la topbar del detalle, que comparte la clase. */
+.fcvw__subtitle {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif);
+    font-size: var(--text-sm, 0.8rem);
+    font-weight: 600;
+    color: var(--text-muted, #94a3b8);
+    letter-spacing: normal;
+    text-transform: none;
+}
+
 .fcvw__guide {
     margin: 0;
     color: var(--text-secondary, #cbd5e1);
