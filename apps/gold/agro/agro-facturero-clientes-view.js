@@ -2975,9 +2975,9 @@ function appendInterestBlock(root) {
     node.innerHTML = `
         <p class="fcflow-interest__label">Te puede interesar</p>
         <div class="fcflow-interest__actions">
-            <button type="button" class="fcflow-manage__btn" data-interest-registros>
-                <i class="fa-solid fa-address-book" aria-hidden="true"></i>
-                Ver registro de clientes
+            <button type="button" class="fcflow-manage__btn" data-interest-ver-clientes>
+                <i class="fa-solid fa-users" aria-hidden="true"></i>
+                Ver clientes
             </button>
             <button type="button" class="fcflow-manage__btn" data-agro-view="asistente">
                 <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
@@ -2986,9 +2986,9 @@ function appendInterestBlock(root) {
         </div>
     `;
     root.appendChild(node);
-    node.querySelector('[data-interest-registros]')?.addEventListener('click', () => {
+    node.querySelector('[data-interest-ver-clientes]')?.addEventListener('click', () => {
         resetDetailState();
-        writeFactureroHashRoute({ subview: 'registros' });
+        writeFactureroHashRoute({ subview: 'ver-clientes', paso: 1 });
         renderView();
     });
 }
@@ -3078,6 +3078,13 @@ function renderEntryGate(root) {
 }
 
 let activeViewWizardSession = false;
+
+const CARTERA_DETAIL_BODY_CLASS = 'agro-fcv-detail-active';
+
+function setDetailChromeActive(isDetail) {
+    if (typeof document === 'undefined') return;
+    document.body.classList.toggle(CARTERA_DETAIL_BODY_CLASS, isDetail === true);
+}
 
 function applyWizardContext(farmId, cropId) {
     setSelectedFarmId(normalizeFarmId(farmId));
@@ -3187,8 +3194,21 @@ function renderView() {
         closeViewWizardSession();
     }
 
+    // Chrome del detalle (topbar propia con Volver unico) solo cuando el
+    // detalle esta visible; el resto de ramas lo apaga.
+    setDetailChromeActive(false);
+
     if (routeSubview === 'ver-clientes') {
         openViewWizardSession(root, route);
+        return;
+    }
+
+    // D1 (Fase 5): la superficie legacy `registros` se retira de la navegacion.
+    // Redirect al wizard "Ver clientes", destino canonico de lectura. Sin loop:
+    // el hash queda en ver-clientes antes de volver a renderizar.
+    if (routeSubview === 'registros') {
+        writeFactureroHashRoute({ subview: 'ver-clientes', paso: 1 });
+        openViewWizardSession(root, { paso: 1 });
         return;
     }
 
@@ -3207,12 +3227,9 @@ function renderView() {
         return;
     }
 
-    if (routeSubview === 'registros' && !selectedBuyerId) {
-        writeFactureroHashRoute({ subview: 'registros' });
-    }
-
     const selectedBuyerRow = getSelectedBuyerRow();
     if (selectedBuyerId) {
+        setDetailChromeActive(true);
         renderBuyerHistoryDetail(root, {
             buyerRow: selectedBuyerRow,
             historyRows: detailRows,
@@ -3229,7 +3246,9 @@ function renderView() {
             exchangeStatus: detailExchangeStatus,
             onBack: () => {
                 resetDetailState();
-                writeFactureroHashRoute({ subview: 'registros' });
+                // Fase 5: Volver del detalle lleva al wizard "Ver clientes"
+                // (destino canonico de lectura; `registros` ya no es superficie).
+                writeFactureroHashRoute({ subview: 'ver-clientes', paso: 1 });
                 renderView();
             },
             onRefresh: () => {
@@ -3248,9 +3267,6 @@ function renderView() {
             },
             onExport: () => {
                 exportBuyerDetail();
-            },
-            onCreateCycle: (context) => {
-                createOperationalCycleFromCartera(context);
             },
             onHistoryFilterChange: (nextFilter) => {
                 detailHistoryFilter = normalizeDetailHistoryFilter(nextFilter);
@@ -3714,6 +3730,7 @@ function handleShellViewChanged(event) {
         // Al salir de Facturero de Clientes, cualquier sesión del flow termina.
         activeFlowSession = false;
         closeViewWizardSession();
+        setDetailChromeActive(false);
         return;
     }
 

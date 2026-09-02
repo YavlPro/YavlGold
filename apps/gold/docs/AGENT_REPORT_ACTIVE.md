@@ -2190,3 +2190,58 @@ Agente: GLM (ZCode). **QA online del owner: GREEN confirmado.** Subfrente Factur
 
 ### Gobernanza
 No se declara la gobernanza "respetada" en pleno: las dos decisiones de sesion (Donaciones como tile, Acciones del sistema) quedan registradas hasta canonizacion o rechazo. Cada subfrente nuevo arranca como no bloqueante.
+
+---
+
+## Sesion 2026-09-02 — Fase 5: cierre de superficies residuales del Facturero de Clientes
+
+Agente: GLM (ZCode). Entrada del owner: el wizard esta GREEN pero la superficie residual `registros` sigue alcanzable al volver desde el detalle. Trazado §8.2 primero, luego cirugia. QA online = owner (ley §5).
+
+### Trazado de navegacion (codigo actual, pre-fix)
+
+**(a) `subview=registros`** — renderiza `renderListView` (view.js, rama final de `renderView`). Se alcanzaba desde:
+1. Detalle → bloque "Te puede interesar" → boton `data-interest-registros` ("Ver registro de clientes", view.js `appendInterestBlock`).
+2. Detalle → Volver del toolbar sticky → `onBack` → `writeFactureroHashRoute({subview:'registros'})` (view.js, options del detalle).
+3. Wizard de creacion → callbacks `onGoToRecords`/`onExit`/paso done "Ir al facturero de clientes" (view.js, 3 sitios).
+4. Boton "Cliente existente" dentro de la propia lista.
+5. Hash directo.
+
+**(b) Tab hermana "Facturero de la Finca"** en el detalle: `renderCommercialFamilyNav` LOCAL (detail.js:1545) con `data-agro-view="operational"` → el shell resuelve `operational` como alias de **`facturero-finca`** (agro-shell.js:122). NO era bug de destino; la tab propia usaba la ruta legacy `cartera-viva`. Con D2 las tabs desaparecen del detalle (superficie dedicada §4.12) y el acceso a facturero-finca queda por el hub.
+
+**(c) Volver del detalle**: UN Volver real (pill `data-cartera-detail-back` en toolbar sticky, bindings en render principal y en caso "Cliente no encontrado"). El duplicado percibido = pill + contextbar flotante del shell (mismo patron del wizard pre-F1). Ademas: el boton "Crear ciclo" existia SOLO en el toolbar (el binding por fila `data-cartera-history-action="create-cycle"` estaba muerto: ningun menu generaba esa action).
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `agro/agro-facturero-clientes-view.js` | **D1**: rama `registros` retirada de `renderView` y reemplazada por redirect `registros → ver-clientes&paso=1` (hash rewrite + apertura del wizard; sin loop y sin pantalla rota; cubre los 5 puntos de entrada trazados). **D4**: "Te puede interesar" ahora "Ver clientes" → wizard. `onBack` del detalle → wizard paso 1. Retiro del option `onCreateCycle` (D3, lado vista). Chrome: `setDetailChromeActive()` togglea `agro-fcv-detail-active` (default off en cada render, on en rama detalle, off al salir de la vista). Normalizacion muerta de `registros` eliminada. |
+| `agro/agro-facturero-clientes-detail.js` | **D2**: tabs hermanas retiradas del render. **Chrome**: toolbar sticky reemplazada por topbar propia `.fcvw__topbar` (← Volver unico + "Detalle del cliente" + contador "N movimientos"; clases reutilizadas del CSS del wizard, cero CSS nuevo) + toolbar simple con Actualizar/Exportar. Caso "Cliente no encontrado" con la misma topbar. **D3**: boton "Crear ciclo" del toolbar retirado + su binding + el binding muerto por fila; timeline ya no pasa `onCreateCycle`. **Chips**: "Timeline (N)"→"Historial (N)", "Ver transferidos/revertidos"→"Transferidos/Revertidos", familia "Vista general"→"Todas las unidades" (cada barra con identidad inequivoca: tipo de fila / estado / unidad); h3 "Timeline canonico del cliente"→"Historial del cliente" y copy acompaante. **Acciones del sistema**: el disclosure ahora renderiza su lista con el componente compartido del wizard (datos propios del cliente; presentacion unica). |
+| `agro/agro-facturero-clientes-view-wizard.js` | Exportado `renderSystemActionsListHtml(entries)` (componente compartido; `escapeHtml` movido a nivel modulo). La subvista 24h del wizard y el disclosure del detalle consumen el mismo componente — una sola implementacion (anti-duplicacion). Sin cambios de comportamiento. |
+| `agro/agro-facturero-clientes.css` | Regla scoped `body.agro-fcv-detail-active .agro-mobile-contextbar { display:none !important }` (mismo fix del wizard, ahora para el detalle). |
+
+### Regla exacta de "POR REVISAR" (trazada, semantica intacta — no se cambio nada)
+
+- Badge en cards/resumen del detalle: `requires_review` del RPC `agro_buyer_portfolio_summary_v1` = `review_required_total > 0 OR legacy_unclassified_total > 0 OR balance visible negativo` (migraciones 20260328005620 + 20260417113444). Es decir: movimientos legacy cuyo `buyer_match_status` no es `matched` (por ordenar o sin clasificar) o credited < paid+loss+transferred.
+- Filas del timeline con label "Por revisar": movimientos con `buyer_match_status != 'matched'` (builders del detalle).
+- Montos "Por revisar" = `review_required_total + legacy_unclassified_total` (`getReviewTotal`, view.js).
+- Canon vigente: es deuda de ordenamiento legacy, no estado financiero. Cualquier cambio de semantica requiere palabra del owner.
+
+### Resultado de build
+`pnpm build:gold` verde (2.54s; check-llms OK; UTF-8 OK; warning de chunk = preexistente).
+
+### QA online exacta para el owner (ley §5)
+1. Wizard → Paso 4 → "Ver detalle" de un cliente: detalle con topbar propia (← Volver + titulo + "N movimientos"), SIN tabs hermanas, SIN "Crear ciclo", SIN contextbar flotante; toolbar con Actualizar/Exportar.
+2. Volver del detalle → wizard Paso 1 (ya NO vuelve a la lista `registros`).
+3. Hash directo `#view=facturero-clientes&subview=registros` → redirect al wizard paso 1, sin pantalla rota.
+4. Chips del detalle: "Historial/Transferidos/Revertidos" + "Fiados/Cobros/Perdidas/Todo" + "Todas las unidades/Sacos/Cestas/Kg" — sin solapes nominales.
+5. Disclosure "Acciones del sistema" del detalle: lista con iconos + fecha (mismo look de la subvista del wizard).
+6. Mobile ≤480px: topbar sticky del detalle con un solo Volver.
+
+### NO se hizo (scope respetado)
+- Sin QA local/online del agente. Sin git. Sin tocar canon. Sin cambiar semantica de "Por revisar".
+- Funciones ahora muertas NO eliminadas (deuda documentada, retiro total = decision del owner): `renderListView`/`patchListView`/bind de lista en view.js (inalcanzables tras redirect), `renderCommercialFamilyNav` local en detail.js, `createOperationalCycleFromCartera` + `resolveCyclePayloadFromCartera` (view.js, sin llamador tras D3).
+
+### Pendientes vivos
+1. QA online del owner (instrucciones arriba).
+2. Heredados: canonizacion Donaciones/Acciones del sistema; FICHA_TECNICA (modulos + agro_income); destino yavlgold-context.md; skill guard/estado-inicial; edge busqueda persistida (ya casi irrelevante: la lista no renderiza, pero `getListViewState` sigue usandola internamente para exportes con rowsOverride nulo).
+3. Nuevo: retiro fisico del codigo muerto de la lista `registros` cuando el owner lo autorice.

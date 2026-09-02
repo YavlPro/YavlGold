@@ -44,6 +44,42 @@ const CROP_RECORD_TABLES = Object.freeze(['agro_pending', 'agro_income', 'agro_l
 
 let activeWizardSession = null;
 
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// Componente compartido de "Acciones del sistema" (Fase 5): una sola
+// implementacion de presentacion. La subvista 24h del wizard y el disclosure
+// del detalle de cliente lo consumen. entries: [{ kind: 'transfer'|'revert'|'new',
+// text, timeLabel }] — timeLabel llega pre-formateado (humano).
+export function renderSystemActionsListHtml(entries) {
+    const safeEntries = Array.isArray(entries) ? entries : [];
+    if (safeEntries.length <= 0) return '';
+
+    const icons = {
+        transfer: 'fa-solid fa-arrow-right-arrow-left',
+        revert: 'fa-solid fa-rotate-left',
+        new: 'fa-solid fa-circle-plus'
+    };
+
+    return `
+        <ul class="fcvw-actions">
+            ${safeEntries.map((entry) => `
+                <li class="fcvw-actions__item">
+                    <i class="${icons[entry?.kind] || icons.new}" aria-hidden="true"></i>
+                    <span class="fcvw-actions__text">${escapeHtml(entry?.text || '')}</span>
+                    <span class="fcvw-actions__time">${escapeHtml(entry?.timeLabel || '')}</span>
+                </li>
+            `).join('')}
+        </ul>
+    `;
+}
+
 export function openFactureroViewWizard(root, options = {}) {
     if (activeWizardSession) {
         activeWizardSession.update(options);
@@ -79,15 +115,6 @@ function createWizardSession(root, options) {
 
     function clampStep(paso) {
         return Math.min(Math.max(Number(paso) || 1, 1), TOTAL_STEPS);
-    }
-
-    function escapeHtml(value) {
-        return String(value ?? '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
     }
 
     function syncHash() {
@@ -706,22 +733,13 @@ function createWizardSession(root, options) {
             });
         }
 
-        const icons = {
-            transfer: 'fa-solid fa-arrow-right-arrow-left',
-            revert: 'fa-solid fa-rotate-left',
-            new: 'fa-solid fa-circle-plus'
-        };
-        return `
-            <ul class="fcvw-actions">
-                ${state.actionRows.map((entry) => `
-                    <li class="fcvw-actions__item">
-                        <i class="${icons[entry.kind] || icons.new}" aria-hidden="true"></i>
-                        <span class="fcvw-actions__text">${escapeHtml(entry.text)}</span>
-                        <span class="fcvw-actions__time">${escapeHtml(relativeTime(entry.ts))}</span>
-                    </li>
-                `).join('')}
-            </ul>
-        `;
+        return renderSystemActionsListHtml(
+            state.actionRows.map((entry) => ({
+                kind: entry.kind,
+                text: entry.text,
+                timeLabel: relativeTime(entry.ts)
+            }))
+        );
     }
 
     function renderSystemActions() {

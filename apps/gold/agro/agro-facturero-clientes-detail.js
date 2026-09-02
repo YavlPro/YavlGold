@@ -10,6 +10,7 @@ import {
     getRate,
     hasOverride
 } from './agro-exchange.js';
+import { renderSystemActionsListHtml } from './agro-facturero-clientes-view-wizard.js';
 
 const PENDING_HISTORY_COLUMNS = [
     'id',
@@ -1053,9 +1054,9 @@ function renderHistoryFilters(historyRows, activeFilter, options = {}) {
     const normalizedFilter = normalizeHistoryFilter(activeFilter);
     const allCount = Number(options.timelineCount ?? getHistoryFilterCount(historyRows, 'todos', unitFamily, ledgerScope));
     const filters = [
-        { id: 'todos', label: `Timeline (${allCount})`, visible: true },
-        { id: 'transferidos', label: `Ver transferidos (${transferCount})`, visible: transferCount > 0 },
-        { id: 'revertidos', label: `Ver revertidos (${revertedCount})`, visible: revertedCount > 0 }
+        { id: 'todos', label: `Historial (${allCount})`, visible: true },
+        { id: 'transferidos', label: `Transferidos (${transferCount})`, visible: transferCount > 0 },
+        { id: 'revertidos', label: `Revertidos (${revertedCount})`, visible: revertedCount > 0 }
     ];
 
     return `
@@ -1104,7 +1105,7 @@ function renderLedgerScopeFilters(ledgerRows, activeScope) {
 function renderUnitFamilyFilters(rows, activeFamily) {
     const normalizedFamily = normalizeUnitFamily(activeFamily);
     const filters = [
-        { id: 'all', label: 'Vista general', count: Array.isArray(rows) ? rows.length : 0 },
+        { id: 'all', label: 'Todas las unidades', count: Array.isArray(rows) ? rows.length : 0 },
         { id: 'sacks', label: 'Sacos', count: getUnitFamilyCount(rows, 'sacks') },
         { id: 'baskets', label: 'Cestas', count: getUnitFamilyCount(rows, 'baskets') },
         { id: 'kg', label: 'Kilogramos', count: getUnitFamilyCount(rows, 'kg') }
@@ -1138,17 +1139,15 @@ function renderActionDisclosure(actions) {
     `).join('');
 
     const remainingCount = Math.max(0, safeActions.length - 4);
-    const disclosureItems = safeActions.map((row) => `
-        <article class="cartera-viva-detail__action-mini cartera-viva-detail__action-mini--${escapeHtml(row?.tone || 'review')}">
-            <div class="cartera-viva-detail__action-mini-head">
-                <span class="cartera-viva-action-pill cartera-viva-action-pill--${escapeHtml(row?.tone || 'review')}">
-                    ${escapeHtml(row?.label || 'Acción')}
-                </span>
-                <span class="cartera-viva-detail__action-mini-date">${escapeHtml(formatHistoryAbsoluteDayLabel(row?.fecha || row?.created_at || ''))}</span>
-            </div>
-            ${row?.note ? `<p class="cartera-viva-detail__action-mini-copy">${escapeHtml(row.note)}</p>` : ''}
-        </article>
-    `).join('');
+
+    // Fase 5: la lista interna reutiliza el componente de "Acciones del sistema"
+    // del wizard (un solo punto de presentacion). Los datos siguen siendo las
+    // acciones del timeline de ESTE cliente; solo cambia la presentacion.
+    const entries = safeActions.map((row) => ({
+        kind: String(row?.history_filter || '').trim().toLowerCase() === 'revertidos' ? 'revert' : 'transfer',
+        text: String(row?.label || 'Acción') + (row?.note ? ` — ${row.note}` : ''),
+        timeLabel: formatHistoryAbsoluteDayLabel(row?.fecha || row?.created_at || '')
+    }));
 
     return `
         <details class="cartera-viva-detail__actions-disclosure">
@@ -1164,7 +1163,7 @@ function renderActionDisclosure(actions) {
                 ${remainingCount > 0 ? `<span class="cartera-viva-action-pill cartera-viva-action-pill--ghost">+${remainingCount}</span>` : ''}
             </div>
             <div class="cartera-viva-detail__actions-list">
-                ${disclosureItems}
+                ${renderSystemActionsListHtml(entries)}
             </div>
         </details>
     `;
@@ -1678,8 +1677,12 @@ export function renderBuyerHistoryDetail(root, options = {}) {
     if (!buyerRow) {
         root.innerHTML = `
             <section class="cartera-viva-view cartera-viva-view--detail" aria-label="Historial contextual">
-                <div class="cartera-viva-detail__toolbar">
-                    <button type="button" class="cartera-viva-back" data-cartera-detail-back>Volver</button>
+                <div class="fcvw__topbar">
+                    <button type="button" class="fcvw__back" data-cartera-detail-back>
+                        <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+                        Volver
+                    </button>
+                    <p class="fcvw__title">Detalle del cliente</p>
                 </div>
                 ${renderEmptyState({
             title: 'Cliente no encontrado',
@@ -1729,21 +1732,24 @@ export function renderBuyerHistoryDetail(root, options = {}) {
 
     root.innerHTML = `
         <section class="cartera-viva-view cartera-viva-view--detail${isSoftRefreshing ? ' is-refreshing' : ''}" aria-label="Historial contextual por cliente" aria-busy="${loading ? 'true' : 'false'}">
-            ${renderCommercialFamilyNav('cartera-viva')}
-            <div class="cartera-viva-detail__toolbar cartera-viva-detail__toolbar--sticky">
-                <button type="button" class="cartera-viva-back" data-cartera-detail-back>
-                    <i class="fa fa-arrow-left" aria-hidden="true"></i> Volver
+            <div class="fcvw__topbar">
+                <button type="button" class="fcvw__back" data-cartera-detail-back>
+                    <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+                    Volver
                 </button>
+                <p class="fcvw__title">Detalle del cliente</p>
+                <span class="fcvw__step">${ledgerRows.length} movimiento${ledgerRows.length === 1 ? '' : 's'}</span>
+            </div>
+            <div class="cartera-viva-detail__toolbar">
                 <div class="cartera-viva-detail__toolbar-actions">
                 <button type="button" class="cartera-viva-refresh" data-cartera-detail-refresh ${loading ? 'disabled' : ''}>${loading ? 'Actualizando…' : 'Actualizar'}</button>
-                <button type="button" class="cartera-viva-refresh" data-cartera-detail-create-cycle>Crear ciclo</button>
                 <button
                     type="button"
                     class="cartera-viva-refresh"
                     data-cartera-detail-export
                     ${loading || exportPending ? 'disabled' : ''}>
                         ${exportPending ? 'Exportando…' : 'Exportar'}
-                    </button>
+                </button>
                 </div>
             </div>
             ${renderPrivacyStrip()}
@@ -1769,7 +1775,7 @@ export function renderBuyerHistoryDetail(root, options = {}) {
                     : (ledgerScope === 'perdidos'
                         ? `${unitFamilyPrefix}Pérdidas del cliente`
                         : (unitFamily === 'all'
-                            ? 'Timeline canónico del cliente'
+                            ? 'Historial del cliente'
                             : `Historial de ${getUnitFamilyLabel(unitFamily).toLowerCase()}`))))
             : 'Acciones del sistema'}</h3>
                     </div>
@@ -1778,8 +1784,8 @@ export function renderBuyerHistoryDetail(root, options = {}) {
                             ${isCanonicalFilter
             ? (ledgerScope === 'todos'
                 ? (unitFamily === 'all'
-                    ? 'El timeline principal muestra solo movimientos económicos reales, separados por familia operativa cuando haga falta.'
-                    : `El timeline principal muestra solo ${getUnitFamilyLabel(unitFamily).toLowerCase()} dentro del ledger económico del cliente.`)
+                    ? 'El historial principal muestra solo movimientos económicos reales, separados por familia operativa cuando haga falta.'
+                    : `El historial principal muestra solo ${getUnitFamilyLabel(unitFamily).toLowerCase()} dentro del ledger económico del cliente.`)
                 : 'El detalle respeta el contexto de entrada y muestra solo el ledger económico de esta categoría.')
             : 'Aquí solo ves eventos auxiliares del sistema, sin mezclar cobros o pérdidas normales.'}
                         </p>
@@ -1809,13 +1815,6 @@ export function renderBuyerHistoryDetail(root, options = {}) {
         button.addEventListener('click', () => {
             const nextTab = String(button.dataset.carteraDetailRecordTab || '').trim().toLowerCase();
             options.onOpenRecord?.(nextTab);
-        });
-    });
-
-    root.querySelector('[data-cartera-detail-create-cycle]')?.addEventListener('click', () => {
-        options.onCreateCycle?.({
-            buyerRow,
-            historyRow: null
         });
     });
 
@@ -1855,26 +1854,13 @@ export function renderBuyerHistoryDetail(root, options = {}) {
         });
     });
 
-    root.querySelectorAll('[data-cartera-history-action="create-cycle"]').forEach((button) => {
-        button.addEventListener('click', () => {
-            const historyId = String(button.dataset.carteraHistoryId || '').trim();
-            const historyRow = historyRows.find((row) => String(row?.history_id || '').trim() === historyId) || null;
-            options.onCreateCycle?.({
-                buyerRow,
-                historyRow
-            });
-        });
-    });
-
     const timelineNode = root.querySelector('[data-cartera-detail-timeline]');
     if (timelineNode) {
         renderHistoryDayGroups(timelineNode, visibleHistoryRows, {
             dateFieldName: 'fecha',
             formatDayLabel: formatHistoryAbsoluteDayLabel,
             renderRow(fragment, row) {
-                fragment.appendChild(createTimelineRowElement(row, {
-                    onCreateCycle: options.onCreateCycle
-                }));
+                fragment.appendChild(createTimelineRowElement(row));
             }
         });
     }

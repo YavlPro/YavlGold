@@ -2,6 +2,14 @@
   margin-block: 2rem;
 }
 
+/* Fase 5: dentro del detalle de cliente la contextbar flotante del shell se
+   neutraliza (mismo fix scoped que usa el wizard). La topbar propia del detalle
+   (.fcvw__topbar) es el unico Volver visible. La class la gestiona
+   agro-facturero-clientes-view.js. */
+body.agro-fcv-detail-active .agro-mobile-contextbar {
+  display: none !important;
+}
+
 .agro-cartera-viva-root {
   width: 100%;
 }
