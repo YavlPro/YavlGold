@@ -36,20 +36,27 @@ const RAMA_CREAR = 'crear';
 const VER_TOTAL = 4;
 const CREAR_TOTAL = 5;
 
-// Tiles de lectura (default del owner). Datos: ledger crudo por farm_id.
+// Tiles de lectura (canon §4.5.2 / D2): Gastos · Ingresos · Fiados · Pérdidas · Donaciones.
 // alias: agro_expenses usa date/concept/amount (los demas fecha/concepto/monto).
 const VER_TILES = [
+    {
+        id: 'gastos', label: 'Gastos', icon: 'fa-solid fa-receipt',
+        table: 'agro_expenses', who: '', orderCol: 'date',
+        cols: 'id,concept,amount,currency,date,created_at',
+        alias: { concepto: 'concept', monto: 'amount', fecha: 'date' },
+        scope: null
+    },
+    {
+        id: 'ingresos', label: 'Ingresos', icon: 'fa-solid fa-circle-check',
+        table: 'agro_income', who: '', orderCol: 'fecha',
+        cols: 'id,concepto,monto,monto_usd,currency,fecha,created_at',
+        scope: (q) => q.is('reverted_at', null)
+    },
     {
         id: 'fiados', label: 'Fiados', icon: 'fa-solid fa-hand-hold-dollar',
         table: 'agro_pending', who: 'cliente', orderCol: 'fecha',
         cols: 'id,cliente,concepto,monto,monto_usd,currency,fecha,created_at',
         scope: (q) => q.is('reverted_at', null).neq('transfer_state', 'transferred')
-    },
-    {
-        id: 'pagados', label: 'Pagados', icon: 'fa-solid fa-circle-check',
-        table: 'agro_income', who: '', orderCol: 'fecha',
-        cols: 'id,concepto,monto,monto_usd,currency,fecha,created_at',
-        scope: (q) => q.is('reverted_at', null)
     },
     {
         id: 'perdidas', label: 'Pérdidas', icon: 'fa-solid fa-circle-xmark',
@@ -61,13 +68,6 @@ const VER_TILES = [
         id: 'donaciones', label: 'Donaciones', icon: 'fa-solid fa-hand-holding-heart',
         table: 'agro_transfers', who: 'destino', orderCol: 'fecha',
         cols: 'id,destino,concepto,monto,monto_usd,currency,fecha,created_at',
-        scope: null
-    },
-    {
-        id: 'gastos', label: 'Gastos', icon: 'fa-solid fa-receipt',
-        table: 'agro_expenses', who: '', orderCol: 'date',
-        cols: 'id,concept,amount,currency,date,created_at',
-        alias: { concepto: 'concept', monto: 'amount', fecha: 'date' },
         scope: null
     }
 ];
@@ -86,6 +86,14 @@ const CURRENCY_OPTIONS = [
     { value: 'USD', label: 'USD' },
     { value: 'VES', label: 'Bs (VES)' }
 ];
+
+// D4: del exito de creacion a la lectura del MISMO tipo (misma finca, tile canonico).
+const TYPE_TO_TILE = Object.freeze({
+    expense: 'gastos',
+    income: 'ingresos',
+    donation: 'donaciones',
+    loss: 'perdidas'
+});
 
 let activeSession = null;
 
@@ -162,7 +170,7 @@ function createSession(root) {
         rama: source.rama === RAMA_CREAR ? RAMA_CREAR : RAMA_VER,
         paso: 1,
         farmId: String(source.finca || ''),
-        tileId: 'fiados',
+        tileId: 'gastos',
         tipoId: '',
         concepto: '',
         monto: '',
@@ -280,16 +288,21 @@ function createSession(root) {
         exitToSurface();
     }
 
-    // Salida oficial: el delegador global [data-agro-view] del shell procesa
-    // este click y devuelve la superficie normal del facturero (subview activa).
+    // D4: salida al hub Granja (gate del shell, no vista). El canal oficial es
+    // el evento agro:shell:set-view, que resuelve gates; el fallback cubre un
+    // shell no inicializado.
     function exitToSurface() {
-        const exitButton = root.querySelector('[data-fcwz-exit]');
-        if (exitButton) {
-            exitButton.click();
-            return;
-        }
         destroyWizard();
-        window.location.hash = 'view=facturero-finca';
+        window.dispatchEvent(new CustomEvent('agro:shell:set-view', {
+            detail: { view: 'granja', scroll: true }
+        }));
+        try {
+            const url = new URL(window.location.href);
+            url.hash = '#view=granja';
+            history.replaceState(null, '', url);
+        } catch (_err) {
+            // Ignorar fallos de routing.
+        }
     }
 
     function showStepError(message) {
@@ -610,6 +623,10 @@ function createSession(root) {
                     <span class="fcflow-door__desc">Explora los registros de la finca por tipo.</span>
                 </button>
             </div>
+            <button type="button" class="fcvw-syslink" data-agro-view="period-cycles">
+                <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+                Ver períodos
+            </button>
         `;
     }
 
@@ -859,9 +876,9 @@ function createSession(root) {
         root.innerHTML = `
             <div class="fcwz">
                 <div class="fcvw__topbar">
-                    <button type="button" class="fcvw__back" data-fcwz-exit data-agro-view="facturero-finca">
+                    <button type="button" class="fcvw__back" data-fcwz-exit>
                         <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
-                        Entrada
+                        Volver
                     </button>
                     <p class="fcvw__title">Facturero de la Finca${sub ? `<span class="fcvw__subtitle">${escapeHtml(sub)}</span>` : ''}</p>
                     <span class="fcvw__step">Paso ${state.paso} de ${totalPasos()}</span>
@@ -876,6 +893,7 @@ function createSession(root) {
     }
 
     function bindEvents() {
+        root.querySelector('[data-fcwz-exit]')?.addEventListener('click', exitToSurface);
         root.querySelector('[data-fcwz-back]')?.addEventListener('click', goBack);
         root.querySelector('[data-fcwz-next]')?.addEventListener('click', () => {
             if (state.rama === RAMA_CREAR && state.paso === CREAR_TOTAL && !state.created) {
@@ -899,7 +917,7 @@ function createSession(root) {
         });
         root.querySelectorAll('[data-fcwz-tile]').forEach((button) => {
             button.addEventListener('click', () => {
-                state.tileId = String(button.getAttribute('data-fcwz-tile') || '').trim() || 'fiados';
+                state.tileId = String(button.getAttribute('data-fcwz-tile') || '').trim() || 'gastos';
                 render();
             });
         });
@@ -931,14 +949,18 @@ function createSession(root) {
             if (event.target.open && state.actionsScope.phase === 'idle') void fetchActions();
         });
         root.querySelector('[data-fcwz-goto-ver]')?.addEventListener('click', () => {
-            state.rama = RAMA_VER;
-            state.paso = 2;
-            render();
+            // D4: a la rama VER con la MISMA finca y el tile canonico del tipo
+            // recien creado (navegacion que no miente).
+            state.tileId = TYPE_TO_TILE[state.tipoId] || 'gastos';
+            const createdTipo = state.tipoId;
+            resetCreateFlow();
+            state.tipoId = createdTipo;
+            goStep(VER_TOTAL, RAMA_VER);
         });
         root.querySelector('[data-fcwz-create-otro]')?.addEventListener('click', () => {
+            // D4: crear otro arranca desde el paso de TIPO, conservando la finca.
             resetCreateFlow();
-            state.paso = 2;
-            render();
+            goStep(3, RAMA_CREAR);
         });
     }
 

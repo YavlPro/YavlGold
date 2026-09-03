@@ -137,8 +137,12 @@ const VIEW_SUBNAV_CONFIG = Object.freeze({
     ciclos: Object.freeze({ defaultSubview: 'mis-cultivos', allowed: ['mis-cultivos', 'mis-fincas', 'comparar', 'estadisticas'] }),
     'period-cycles': Object.freeze({ defaultSubview: 'calendario', allowed: ['calendario', 'comparar', 'estadisticas'] }),
     carrito: Object.freeze({ defaultSubview: 'summary', allowed: ['summary', 'planning', 'calculator'] }),
-    operational: Object.freeze({ defaultSubview: 'active', allowed: ['active', 'finished', 'donations', 'losses', 'export', 'wizard'] }),
-    'facturero-finca': Object.freeze({ defaultSubview: 'active', allowed: ['active', 'finished', 'donations', 'losses', 'export', 'wizard'] }),
+    // D1 (Fase 2 Finca, 2026-09-03): el wizard ES la superficie principal del
+    // Facturero de la Finca. Cualquier subview legacy (active/finished/...)
+    // redirige al wizard via normalizeSubview -> defaultSubview (patron del
+    // redirect `registros` de clientes). Cultivo/Personal conservan su superficie.
+    operational: Object.freeze({ defaultSubview: 'wizard', allowed: ['wizard'] }),
+    'facturero-finca': Object.freeze({ defaultSubview: 'wizard', allowed: ['wizard'] }),
     'facturero-cultivo': Object.freeze({ defaultSubview: 'active', allowed: ['active', 'finished', 'donations', 'losses', 'export'] }),
     'facturero-personal': Object.freeze({ defaultSubview: 'active', allowed: ['active', 'finished', 'donations', 'losses', 'export'] })
 });

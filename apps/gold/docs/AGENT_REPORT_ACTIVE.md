@@ -2516,3 +2516,76 @@ git add apps/gold/agro/agro-facturero-finca-wizard.js \
         apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "feat(finca): wizard de lectura y creación del Facturero de la Finca (gate + VER 4 pasos + CREAR 5 pasos) con coexistencia"
 ```
+
+---
+
+## Sesion 2026-09-03 (II) — Fase 2 Finca: fix integral de entrada, navegacion y semantica (B1-B6)
+
+Agente: GLM (ZCode). QA online del owner REPROCHO B1-B6. Trazado §8.2 completo ANTES de editar; luego cirugia. Ley §5: build + verificacion estatica.
+
+### Tabla de navegacion PRE-fix (lineas exactas del codigo antes de esta sesion)
+
+| Transicion | Linea (pre-fix) | Hash que escribe | Vista que resolvia | Falla |
+|---|---|---|---|---|
+| Gate → VER/CREAR | cards `data-fcwz-rama` → goStep(2) | `wizard&paso=2&rama` | wizard | OK |
+| Exito → "Ver registros" | handler `data-fcwz-goto-ver`: rama=ver, paso=2 | idem | **Paso 2 (finca)** — perdia finca-tile y obligaba a re-elegir | **B2** |
+| Exito → "Crear otro" | handler `data-fcwz-create-otro`: paso=2 | idem | **Paso 2 (finca)** — debia arrancar en paso 3 (tipo) | **B2** |
+| `← Entrada` (todo paso) | boton `data-fcwz-exit` + `data-agro-view="facturero-finca"`; fallback `location.hash='view=facturero-finca'` | writeViewToHash → subview default `'active'` | **superficie vieja** (heading "No pagados" + contextbar) | **B1/B3**: label "Entrada" sin puerta previa; destinaba a superficie retirada |
+| subview=active / finished / export / alias `operational` | shell normalizeSubview con `defaultSubview:'active'`, allowed 6 valores | `subview=<legacy>` | superficie vieja completa (vocabulario "No pagado", STATUS_OPTIONS) | **B1/B5**: superficie vieja alcanzable = wizard no era la pagina principal |
+| Boton "Wizard de la finca" | operational header `data-agro-view+data-agro-subview="wizard"` | `subview=wizard` | wizard como SUB-vista secundaria | **B1**: el wizard como boton, no como superficie |
+| F5 en wizard | init lee hash (:111) + storage (:135); shell writeViewToHash (:651) pisa paso/rama | `subview=wizard` sin paso (rescate por storage) | wizard restaurado | **B6 parcial**: coherencia dependia del rescate |
+| Volver del shell (contextbar) | contextbar visible durante wizard (transicion desde superficie vieja) | — | — | **B6**: topbars apiladas percibidas |
+| Tiles | VER_TILES orden Fiados→...→Gastos; label 'Pagados' (:49) | — | — | **B4**: orden no canonico; "Pagados" en vez de "Ingresos"; iconos a auditar |
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `agro/agro-shell.js` | **D1**: `operational` y `facturero-finca` con `defaultSubview:'wizard'`, `allowed:['wizard']` — todo subview legacy (active/finished/donations/losses/export, alias, stored) redirige al wizard via normalizeSubview, sin pantalla rota (patron `registros` de clientes). Cultivo/Personal intactos. |
+| `agro/agroOperationalCycles.js` | Retirado el boton "Wizard de la finca" del header (D1: el wizard ya no es boton). El guard de coexistencia queda como retiro de render para finca. Cero lineas nuevas. |
+| `agro/agro-facturero-finca-wizard.js` | **D2**: VER_TILES reordenados al canon §4.5.2 `Gastos · Ingresos · Fiados · Perdidas · Donaciones`; 'Pagados'→'Ingresos' (id+label+empty texts); default tile 'gastos'; iconos FA verificados en los 5. **D4**: exito "Ver registros" → `goStep(4, ver)` con MISMA finca + `TYPE_TO_TILE[tipo]` (expense→gastos, income→ingresos, donation→donaciones, loss→perdidas) + fetch automatico; "Crear otro" → paso 3 (tipo) conservando finca. **B3/D4**: topbar `← Volver` sin data-agro-view; `exitToSurface` dispatchea `agro:shell:set-view {view:'granja'}` (canal oficial de gates del shell — 'granja' es gate, NO vista: data-agro-view la mandaria a dashboard) + hash coherente `#view=granja`. **D1**: gate con link humano "Ver periodos" (`data-agro-view="period-cycles"`, §4.4 intacto). Binding directo del exit. |
+| `agro/agro-facturero-finca-wizard.css` | Sin cambios (chrome reutilizado). |
+
+### Tabla de navegacion POST-fix (verificada estaticamente)
+
+| Transicion | Mecanismo | Resultado |
+|---|---|---|
+| Hub Granja → Facturero de la Finca | sidebar entry → setActiveView → normalize → 'wizard' | Wizard gate (paso 1) — la pagina principal |
+| `#view=facturero-finca&subview=active|finished|donations|losses|export` (F5/alias/stored) | normalizeSubview → default 'wizard' + writeViewToHash | Redirect al wizard, URL reescrita coherente |
+| `#view=operational` (alias legacy) | idem | Redirect al wizard |
+| Gate → VER/CREAR | data-fcwz-rama → goStep(2) | Paso 2 finca de cada rama |
+| Exito → "Ver registros" | TYPE_TO_TILE + goStep(4, ver) | Paso 4 VER con misma finca y tile del tipo creado |
+| Exito → "Crear otro" | resetCreateFlow + goStep(3, crear) | Paso 3 tipo, finca conservada |
+| `← Volver` (todo paso) | agro:shell:set-view {view:'granja'} | Hub Granja (gate oficial); wizard destruido; body class fuera |
+| "Ver periodos" (gate) | data-agro-view="period-cycles" | Operaciones de la Finca (§4.4, intacta) |
+| F5 en cualquier paso del wizard | hash paso/rama/finca + storage | Mismo paso/rama/finca; normalize mantiene wizard |
+| Volver contextbar shell | body class `agro-fcv-wizard-active` activa durante wizard | Contextbar neutralizada (misma regla CSS que clientes) |
+| Cultivo/Personal | allowed intactos | Superficie vieja sigue para esos subfrentes |
+
+### Verificacion D3 (semantica por tipo real)
+- Wizard finca: 0 ocurrencias de "No pagado"/"No pagados" (grep = 0). Vocabulario por tipo real (Gasto, Ingreso, Fiado, Perdida, Donacion) en tiles, guias, listas y exito.
+- El vocabulario "No pagados" solo vivia en la superficie vieja (operational), que para finca queda inalcanzable con D1; sigue viva para cultivo/personal (subfrentes futuros, fuera de scope).
+
+### Resultado de build
+`pnpm build:gold` verde (1.86s; UTF-8 OK). Residuos: 0 (sin 'pagados', sin boton wizard, sin data-agro-view="facturero-finca" en el wizard).
+
+### QA online exacta para el owner (B1-B6 resueltos)
+1. **B1**: hub Granja → Facturero de la Finca → cae DIRECTO al wizard (gate Crear/Ver), sin superficie vieja ni boton "Wizard de la finca". Probar tambien hash viejos: `#view=facturero-finca&subview=active` y `#view=operational` → redirect al wizard sin pantalla rota.
+2. **B2**: crear un registro → en exito, "Ver registros" → paso 4 VER con la MISMA finca y el tile del tipo creado; "Crear otro" → paso 3 (tipo) sin re-elegir finca.
+3. **B3**: `← Volver` en cualquier paso → hub Granja; el titulo nunca muta a "Entrada".
+4. **B4**: tiles en orden canonico con iconos: Gastos, Ingresos, Fiados, Perdidas, Donaciones.
+5. **B5**: buscar en el wizard cualquier "No pagado" → no existe; todo por tipo real.
+6. **B6**: F5 en gate/paso intermedio/exito (restaura exacto); durante el wizard no hay contextbar apilada; URL siempre dice subview=wizard&paso=N coherente con lo visible. Desktop + mobile ≤480px.
+7. Extra: "Ver periodos" en el gate → Operaciones de la Finca intacta.
+
+### NO se hizo
+- Sin QA del agente (ley §5). Sin git. Sin tocar canon (§4.5.2 ya define semantica; el codigo se alineo). Sin retirar el render interno de la superficie vieja dentro del modulo grande (queda inalcanzable para finca por routing; retiro fisico = decision futura). Cultivo/Personal intactos. Exclusion de Fiado en CREAR sigue como decision de sesion pendiente.
+
+### Git sugerido (NO ejecutado)
+```bash
+git add apps/gold/agro/agro-shell.js \
+        apps/gold/agro/agroOperationalCycles.js \
+        apps/gold/agro/agro-facturero-finca-wizard.js \
+        apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(finca): Fase 2 — wizard como superficie principal (redirect legacy), exito funcional, tiles canonicos y Volver al hub"
+```
