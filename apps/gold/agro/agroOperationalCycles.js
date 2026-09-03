@@ -1448,6 +1448,7 @@ function renderShell() {
                 </div>
                 <div class="agro-ops-header__actions">
                     <button type="button" class="btn btn-gold" data-operational-action="new-cycle">Nuevo registro</button>
+                    <button type="button" class="btn btn-outline-gold" data-agro-view="facturero-finca" data-agro-subview="wizard">Wizard de la finca</button>
                     <button type="button" class="btn btn-outline-gold" data-agro-view="period-cycles">Ver períodos</button>
                     <button type="button" class="agro-operational-refresh-btn" data-operational-action="refresh" aria-label="Actualizar" title="Actualizar">
                         <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
@@ -3564,8 +3565,20 @@ async function fetchDatasetRecords(supabase, userId, datasetKey, statuses) {
     return { cycles, movements };
 }
 
+// Fase 1 Finca: mientras el wizard tiene el root (subview=wizard en el hash),
+// esta superficie no debe recargar ni re-renderizar (pisaría al wizard).
+function isFincaWizardSubviewActive() {
+    try {
+        const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+        return String(hash.get('subview') || '').trim().toLowerCase() === 'wizard';
+    } catch (_err) {
+        return false;
+    }
+}
+
 async function refreshData(options = {}) {
     if (!state.root) return;
+    if (isFincaWizardSubviewActive()) return;
     if (state.loading) {
         state.needsRefresh = true;
         return;
@@ -3928,6 +3941,15 @@ function bindEvents() {
 
         state.currentView = incomingView;
         state.currentSubview = normalizeOperationalSubview(event?.detail?.subview || state.currentSubview);
+
+        // Fase 1 Finca (2026-09-02): coexistencia con el wizard
+        // (agro-facturero-finca-wizard.js). Con subview=wizard este modulo no
+        // renderiza ni recarga: el wizard toma el root y esta superficie duerme.
+        const rawSubview = normalizeToken(event?.detail?.subview);
+        if (rawSubview === 'wizard') {
+            closeComposerModal();
+            return;
+        }
 
         // Apply view context for facturero-* views (structural separation)
         const context = resolveViewContext(state.currentView);

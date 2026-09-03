@@ -1,0 +1,97 @@
+/**
+ * Facturero de la Finca — Wizard (gate + lectura + creación).
+ * Reutiliza el sistema de clases del patrón wizard (fcvw__*, fcflow-*),
+ * ya cargadas globalmente. Aquí viven solo los estilos propios del módulo:
+ * lista de movimientos y disclosure de acciones.
+ * ADN Visual V12: tokens, sin glow, transiciones 120–220ms, reduced-motion.
+ */
+
+.fcwz {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4, 1rem);
+    color: var(--text-primary, #f5f5f5);
+    font-family: var(--font-body, 'Inter', sans-serif);
+    min-height: 60vh;
+}
+
+.fcwz__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+/* ---------- Lista de movimientos (Paso 4 · rama VER) ---------- */
+.fcwz-movements {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.fcwz-movements__item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
+    padding: 0.7rem 0.9rem;
+    background: var(--bg-2, #101116);
+    border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
+    border-radius: var(--radius-md, 12px);
+}
+
+.fcwz-movements__date {
+    flex-shrink: 0;
+    min-width: 5.5rem;
+    color: var(--text-muted, #94a3b8);
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.fcwz-movements__text {
+    flex: 1;
+    min-width: 0;
+    color: var(--text-primary, #fff);
+    font-size: 0.92rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.fcwz-movements__amount {
+    flex-shrink: 0;
+    color: var(--gold-4, #C8A752);
+    font-size: 0.92rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* ---------- Disclosure: Acciones del sistema (24 h) ---------- */
+.fcwz-actions {
+    border-top: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.07));
+    padding-top: var(--space-3, 0.75rem);
+}
+
+.fcwz-actions__body {
+    margin-top: var(--space-3, 0.75rem);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 480px) {
+    .fcwz-movements__item {
+        flex-wrap: wrap;
+    }
+
+    .fcwz-movements__date {
+        min-width: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fcwz *,
+    .fcwz *::before,
+    .fcwz *::after {
+        transition: none !important;
+        animation: none !important;
+    }
+}

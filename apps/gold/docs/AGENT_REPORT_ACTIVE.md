@@ -2442,3 +2442,77 @@ Sesión documentada por agente documental (no ejecutor). Cambios de código y ca
   - No se purgaron los 14 daily-logs de agosto (pasos 5–6 del ciclo: purga solo tras tu validación).
   - No se tocó código, canon, ni git.
 - **Estado al cierre**: crónica de agosto **validada por el owner**; purga de los 14 daily-logs ejecutada 2026-09-02 (eran untracked: rm local, 0 variantes no canónicas); julio ya estaba (2026-07.md + Anexo K).
+
+---
+
+## Sesion 2026-09-03 — Fase 1 Finca: wizards de lectura y creación (gate + 2 ramas)
+
+Agente: GLM (ZCode). Retoma del 2026-09-03 (pausa por creditos del 02). Prompt del owner con diseno cerrado. Ley §5: sin QA del agente; build + verificacion estatica + queries documentadas.
+
+### Trazado pre-codigo (obligatorio del prompt)
+- **Destino del modal actual**: `createCycleRecord` (agroOperationalCycles.js:1286) inserta `agro_operational_cycles` (+ `farm_id`, status por tipo: loss→lost, donation→closed, resto open) y el primer `agro_operational_movements` via `upsertInitialMovement`/`deriveMovementPayload` (direction por `deriveMovementDirection`, amount/currency/exchange_rate/amount_usd, farm_id) con **rollback del ciclo** si el movimiento falla. El wizard replica exactamente ese contrato; cero tablas nuevas.
+- **Canal de navegacion oficial**: el shell delega `[data-agro-view]` + `data-agro-subview` a nivel documento (agro-shell.js:1529-1538) → el boton `Entrada` del wizard y el boton de entrada de la superficie son markup puro, sin wiring JS extra.
+- **Correccion a Fase 0**: la superficie actual SI tiene strip de privacidad "Ocultar montos" (:1459-1462); mi F0 decia que no. Se corrige aqui.
+- **Schema**: `agro_expenses` usa `date/concept/amount` (no fecha/concepto/monto) → alias por tile en el wizard. `agro_transfers` e income/losses/pending usan el estandar.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agro/agro-facturero-finca-wizard.js` | NUEVO (~810L) | Gate (Paso 1: Crear/Ver) + rama VER 4 pasos (finca → 5 tiles → registros con privacidad/Exportar MD/Acciones 24h) + rama CREAR 5 pasos (finca → tipo → datos → revision + Confirmar con exito). Hash `#view=facturero-finca&subview=wizard&paso=N&rama=X&finca=ID` con F5 (hash + respaldo localStorage; flag `created` evita re-confirmar tras F5 en exito). Chrome patron familia: topbar `← Entrada` (via delegador del shell) + titulo + subtitulo por rama + `PASO X DE N`; footer `[Atras][Siguiente]` (Confirmar en P5). Lectura: ledger crudo por `farm_id`+`deleted_at null` con maquina de estados loading/ready/error + Reintentar; fiados excluye transferred/reverted. Export MD respeta `readMoneyValuesHidden`. Acciones 24h reutilizan `renderSystemActionsListHtml` (import). Creacion: mismo contrato que el modal (cycles + movement + rollback + `assertOperationalPeriodOpen`), SIN cultivo (crop_id null por decision del owner), Fiado excluido de crear (su hogar es Clientes). |
+| `agro/agro-facturero-finca-wizard.css` | NUEVO (~110L) | Solo estilos propios: lista de movimientos (fecha/texto/monto) y disclosure acciones. Todo el chrome reutiliza clases fcvw__/fcflow-* globales. |
+| `agro/agro-shell.js` | 2 lineas | `wizard` anadido a allowed de `operational` y `facturero-finca` (el shell respeta el subview en hash y no lo pisa). |
+| `agro/agroOperationalCycles.js` | Wiring minimo (~15L) | Guard en view-changed: con raw subview `wizard` cierra modal y no renderiza (coexistencia). Guard `isFincaWizardSubviewActive()` al inicio de `refreshData`. Boton `Wizard de la finca` en el header (data-agro-view + data-agro-subview="wizard", markup puro). Cero features nuevas; las 3 vistas que sirve el modulo siguen intactas. |
+| `agro/index.html` | 2 lineas | Link CSS + import dinamico `initAgroFincaWizard()` tras el de operational. |
+
+### Decisiones de sesion registradas (pendientes de canonizacion §4.5.2)
+1. **Finca sin selectores de cultivo** en ninguna parte: el facturero de la finca es exclusivo de finca (palabra del owner).
+2. Tiles de lectura default: Fiados · Pagados · Perdidas · Donaciones · Gastos.
+3. Fiado excluido de la rama CREAR (lleva cliente → Facturero de Clientes).
+4. Creacion del wizard escribe en ciclos operativos (mismo destino que el modal), sin cultivo.
+5. Coexistencia: superficie actual + modal siguen vivos; retiro = decision futura del owner.
+6. El boton "Wizard de la finca" es visible tambien desde las vistas cultivo/personal (lleva al wizard de finca) — header compartido del modulo.
+
+### Queries por tile para el owner (verificacion con datos reales)
+```sql
+select 'fiados' tile, coalesce(f.name,'(sin finca)') finca, count(*) from agro_pending p left join agro_farms f on f.id=p.farm_id
+  where p.deleted_at is null and p.reverted_at is null and coalesce(p.transfer_state,'') <> 'transferred' group by 1,2
+union all
+select 'pagados', coalesce(f.name,'(sin finca)'), count(*) from agro_income i left join agro_farms f on f.id=i.farm_id
+  where i.deleted_at is null and i.reverted_at is null group by 1,2
+union all
+select 'perdidas', coalesce(f.name,'(sin finca)'), count(*) from agro_losses l left join agro_farms f on f.id=l.farm_id
+  where l.deleted_at is null and l.reverted_at is null group by 1,2
+union all
+select 'donaciones', coalesce(f.name,'(sin finca)'), count(*) from agro_transfers t left join agro_farms f on f.id=t.farm_id
+  where t.deleted_at is null group by 1,2
+union all
+select 'gastos', coalesce(f.name,'(sin finca)'), count(*) from agro_expenses e left join agro_farms f on f.id=e.farm_id
+  where e.deleted_at is null group by 1,2
+order by 1, 3 desc;
+```
+Nota honesta de datos: los movimientos ligados SOLO a cultivo (farm_id null) no salen al filtrar por finca especifica; en Vista general se ven todos. Los fiados heredan ademas la exclusion de transferidos/revertidos (canon §4.5.1).
+
+### Resultado de build
+`pnpm build:gold` verde (2.52s; UTF-8 OK). Dist verificado: chunk nuevo `agro-facturero-finca-wizard-DrUiU0JO.js` (31 refs fcwz) + boton/guards en chunk de operational.
+
+### QA online exacta para el owner (ley §5)
+1. **Entrada**: Facturero de la Finca → boton "Wizard de la finca" → gate con `Crear registro` / `Ver registros`.
+2. **Rama VER**: elegir finca ("Vista general" primero) → 5 tiles → registros del tipo elegido (datos reales o empty honesto) con `Ocultar montos`, `Exportar` (MD) y disclosure `Acciones del sistema` (24 h). **Sin selector de cultivo en ningun paso.**
+3. **Rama CREAR**: finca → tipo (4, sin Fiado) → concepto/monto/moneda (tasa mercado readonly)/fecha → revision → `Confirmar` → exito con `Ver registros` / `Crear otro`. Verificar en la superficie actual (o ciclos) que el registro aparecio.
+4. **F5** en varios pasos de ambas ramas (restaura paso/rama/finca); `Atras`/`Siguiente`; `Entrada` devuelve a la superficie actual (subview activa) sin romperla.
+5. Desktop + mobile ≤480px.
+
+### NO se hizo
+- Sin QA del agente. Sin git. Sin tocar canon (decision "finca sin cultivos" queda como decision de sesion). Sin retirar superficie actual ni modal. Sin tocar period-cycles ni `Ver periodos`. `facturero-cultivo`/`facturero-personal` allowed reciben `wizard` SOLO via alias operational→ no: solo operational y facturero-finca fueron tocados; cultivo/personal no listan wizard.
+
+### Git sugerido (NO ejecutado)
+```bash
+git add apps/gold/agro/agro-facturero-finca-wizard.js \
+        apps/gold/agro/agro-facturero-finca-wizard.css \
+        apps/gold/agro/agro-shell.js \
+        apps/gold/agro/agroOperationalCycles.js \
+        apps/gold/agro/index.html \
+        apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "feat(finca): wizard de lectura y creación del Facturero de la Finca (gate + VER 4 pasos + CREAR 5 pasos) con coexistencia"
+```

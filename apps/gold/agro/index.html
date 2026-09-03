@@ -152,6 +152,7 @@
     <link rel="stylesheet" href="./agro-facturero-clientes.css">
     <link rel="stylesheet" href="./agro-facturero-clientes-flow.css">
     <link rel="stylesheet" href="./agro-facturero-clientes-view-wizard.css">
+    <link rel="stylesheet" href="./agro-facturero-finca-wizard.css">
     <link rel="stylesheet" href="./agro-clients.css">
     <link rel="stylesheet" href="./agro-reports-center.css">
     <link rel="stylesheet" href="./agro-farms.css">
@@ -3489,6 +3490,12 @@
                         mod.initAgroOperationalCycles({ initialUserId: session.user?.id });
                     }
                 }).catch(err => console.warn('[AGRO] Operational cycles module load error:', err.message));
+
+                import('./agro-facturero-finca-wizard.js').then((mod) => {
+                    if (typeof mod.initAgroFincaWizard === 'function') {
+                        mod.initAgroFincaWizard();
+                    }
+                }).catch(err => console.warn('[AGRO] Finca wizard module load error:', err.message));
 
                 import('./agro-facturero-clientes-view.js').then((mod) => {
                     if (typeof mod.initAgroCarteraVivaView === 'function') {
