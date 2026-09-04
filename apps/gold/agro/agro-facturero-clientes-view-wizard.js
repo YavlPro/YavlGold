@@ -28,7 +28,7 @@ const ACCOUNT_TILES = [
 ];
 
 const STATE_TILES = [
-    { id: 'fiados', label: 'Fiados', icon: 'fa-solid fa-hand-hold-dollar' },
+    { id: 'fiados', label: 'Fiados', icon: 'fa-solid fa-handshake' },
     { id: 'pagados', label: 'Registro pagado', icon: 'fa-solid fa-circle-check' },
     { id: 'perdidos', label: 'Pérdidas', icon: 'fa-solid fa-circle-xmark' },
     { id: 'donaciones', label: 'Donaciones', icon: 'fa-solid fa-hand-holding-heart' },

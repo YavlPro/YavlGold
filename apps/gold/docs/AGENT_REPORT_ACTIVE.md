@@ -2767,3 +2767,44 @@ Cada celda = query QUE REPLICA EL FILTRO EXACTO del codigo (deleted_at null + cr
 git add apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "fix(finca): B7 — refetch por tile/finca con stamps (cacheo cruzado servia el gasto bajo Ingresos) + matriz de verificacion por celda"
 ```
+
+---
+
+## Sesion 2026-09-04 (II) — ANEXO 8: precisiones de QA visual (icono Fiados, categoria por tile, CREAR intacto) + Fase 6 en espera
+
+Agente: GLM (ZCode). Ley §5: build + verificacion estatica.
+
+### 1. Tile Fiados SIN icono (regresion B4) — causa raiz exacta
+`fa-hand-hold-dollar` es **PRO-only** en Font Awesome 6.5 Free, y el proyecto carga el set Free via cdnjs `all.min.css` (index.html:141) → el icono no renderiza (cuadro vacio). Estaba en el tile Fiados de AMBOS wizards (clientes STATE_TILES y finca VER_TILES). Fix: `fa-handshake` (Free, verificado por el owner) en los dos — auditoria completa de la familia wizard (48 iconos unicos entre los 5 modulos): **unico PRO de la lista**; el resto verificado Free (incluidos hand-holding-dollar, hand-holding-heart, file-invoice-dollar, people-arrows).
+
+### 2. Categoria de VER con tile Fiados — verificacion estatica (familia B7 ya cubierta)
+El paso de categoria ya deriva el vocabulario de las filas del tile activo (mismo scope del fetch). Para Fiados, `agro_pending` NO tiene columna de categoria (trazado ANEXO 6/7; sin DDL por regla) → todas sus filas caen en "Sin categoria" y los chips son "Todas" + "Sin categoria". Eso ES el vocabulario real de esa tabla: no hay subset fijo ni lectura faltante. Mejora aplicada: nota honesta por tile sin columna ("Este tipo de registro todavia no lleva categorias: usa Todas para verlo completo.") para fiados/perdidas/donaciones.
+
+### 3. CREAR intacto
+Verificado sin cambios: 4 tipos + nota "Los fiados se registran desde Facturero de Clientes, porque llevan cliente." (regla Q3/B.3 vigente). No es bug; no se toco.
+
+### Cambios realizados
+| Archivo | Cambio |
+|---|---|
+| `agro/agro-facturero-finca-wizard.js` | Tile Fiados → `fa-handshake`; nota de categoria consciente del tile (con/sin columna). |
+| `agro/agro-facturero-clientes-view-wizard.js` | Tile Fiados del wizard de Clientes → `fa-handshake` (mismo bug PRO, encontrado en la auditoria autorizada del anexo). |
+
+### Resultado de build
+`pnpm build:gold` verde (2.29s; UTF-8 OK). Residuo `fa-hand-hold-dollar`: 0 en todo el arbol.
+
+### FASE 6 (categorias canonicas) — RECIBIDA Y EN ESPERA
+El prompt de Fase 6 (vocabulario canonico de 6 categorias, CAT-1..CAT-4, translateCategory, conteos por chip) quedo recibido y documentado, pero su propia clausula de dependencia lo retiene: ejecutar SOLO cuando la Fase 5 (fix B7) cierre con QA verde del owner — es decir, cuando la matriz por celda de la sesion 2026-09-04 este llena y coincida. No se ejecuto nada de Fase 6 hoy.
+
+### QA online para el owner (ANEXO 8)
+1. Los 5 tiles de VER con icono visible (Fiados con el apretón de manos) en finca Y en el wizard de Clientes.
+2. VER → Fiados → paso de categoria: chips "Todas"/"Sin categoria" + nota honesta (los fiados no llevan categoria); filtrar ambas y ver la misma lista (correcto: sin columna).
+3. CREAR sin cambios (mismos 4 tipos + nota de fiados).
+4. Continua pendiente la matriz por celda de B7 (sesion 2026-09-04) — es la que habilita Fase 6.
+
+### Git sugerido (NO ejecutado)
+```bash
+git add apps/gold/agro/agro-facturero-finca-wizard.js \
+        apps/gold/agro/agro-facturero-clientes-view-wizard.js \
+        apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(wizards): ANEXO 8 — icono Fiados PRO→fa-handshake (finca y clientes) y nota honesta de categoria por tile"
+```

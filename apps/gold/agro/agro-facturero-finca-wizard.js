@@ -84,7 +84,7 @@ const VER_TILES = [
         scope: (q) => q.is('reverted_at', null)
     },
     {
-        id: 'fiados', label: 'Fiados', icon: 'fa-solid fa-hand-hold-dollar',
+        id: 'fiados', label: 'Fiados', icon: 'fa-solid fa-handshake',
         table: 'agro_pending', who: 'cliente', orderCol: 'fecha',
         cols: 'id,cliente,concepto,monto,monto_usd,currency,fecha,created_at',
         scope: (q) => q.is('reverted_at', null).neq('transfer_state', 'transferred')
@@ -861,6 +861,11 @@ function createSession(root) {
             scope.rows.map((row) => String(row?.categoria || '').trim()).filter(Boolean)
         )).sort((a, b) => a.localeCompare(b, 'es'));
         const sinCategoria = scope.rows.some((row) => !String(row?.categoria || '').trim());
+        // Tiles cuya tabla no tiene columna de categoria (trazado ANEXO 6/7:
+        // pending/losses/transfers): nota honesta en vez de vocabulario inventado.
+        const notaTileSinCategoria = ['fiados', 'perdidas', 'donaciones'].includes(state.tileId)
+            ? 'Este tipo de registro todavía no lleva categorías: usa "Todas" para verlo completo.'
+            : 'Las categorías salen de tus registros reales. Los registros sin categoría viven en "Sin categoría".';
 
         const chips = [
             `<button type="button" class="fcvw-chip${!state.categoria ? ' is-active' : ''}" data-fcwz-cat="">Todas</button>`,
@@ -874,7 +879,7 @@ function createSession(root) {
             <div class="fcvw-picker">
                 <span class="fcvw-picker__label">Categoría</span>
                 <div class="fcvw-picker__strip" role="group" aria-label="Filtrar por categoría">${chips}</div>
-                <p class="fcvw-note">Las categorías salen de tus registros reales. Los registros sin categoría viven en "Sin categoría".</p>
+                <p class="fcvw-note">${escapeHtml(notaTileSinCategoria)}</p>
             </div>
         `;
     }
