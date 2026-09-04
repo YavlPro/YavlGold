@@ -21,7 +21,6 @@ import { supabase } from '../assets/js/config/supabase-config.js';
 import { initExchangeRates, getRate, convertToUSD } from './agro-exchange.js';
 import { assertOperationalPeriodOpen } from './agro-period-cycles.js';
 import { renderSystemActionsListHtml } from './agro-facturero-clientes-view-wizard.js';
-import { deriveMovementDirection } from './agroOperationalCycles.js';
 import { readMoneyValuesHidden } from './agro-privacy.js';
 
 const ROOT_ID = 'agro-operational-root';
@@ -33,8 +32,40 @@ const LIST_LIMIT = 500;
 
 const RAMA_VER = 'ver';
 const RAMA_CREAR = 'crear';
-const VER_TOTAL = 4;
-const CREAR_TOTAL = 5;
+const VER_TOTAL = 5;
+const CREAR_TOTAL = 6;
+
+// D-B (decision de sesion, pendiente §4.5.2): CREAR escribe al ledger por tipo.
+// Trazado de columnas de categoria (2026-09-03): solo agro_expenses.category y
+// agro_income.categoria tienen columna; pending/losses/transfers NO (sus
+// registros caen en "Sin categoria"). agro_operational_movements no tiene
+// categoria: la historica vive en agro_operational_cycles.category (join).
+const TYPE_TO_TABLE = Object.freeze({
+    expense: 'agro_expenses',
+    income: 'agro_income',
+    donation: 'agro_transfers',
+    loss: 'agro_losses'
+});
+const TYPE_TO_TABLE_CATEGORY_FIELD = Object.freeze({
+    expense: 'category',
+    income: 'categoria'
+});
+// Union VER: movimientos operativos historicos mapeados por tipo del ciclo.
+// Fiados no tiene union (cycles no admite economic_type 'pending').
+const TILE_TO_OP_TYPE = Object.freeze({
+    gastos: 'expense',
+    ingresos: 'income',
+    donaciones: 'donation',
+    perdidas: 'loss'
+});
+const OP_CATEGORY_LABELS = Object.freeze({
+    tools: 'Herramientas',
+    maintenance: 'Mantenimiento',
+    labor: 'Mano de obra',
+    transport: 'Transporte',
+    supplies: 'Insumos',
+    other: 'Otro'
+});
 
 // Tiles de lectura (canon §4.5.2 / D2): Gastos · Ingresos · Fiados · Pérdidas · Donaciones.
 // alias: agro_expenses usa date/concept/amount (los demas fecha/concepto/monto).
@@ -144,10 +175,11 @@ function readWizardHash() {
         return {
             paso: Number.parseInt(hash.get('paso') || '', 10) || null,
             rama: String(hash.get('rama') || '').trim().toLowerCase() === RAMA_CREAR ? RAMA_CREAR : RAMA_VER,
-            finca: String(hash.get('finca') || '').trim()
+            finca: String(hash.get('finca') || '').trim(),
+            cat: String(hash.get('cat') || '').trim()
         };
     } catch (_err) {
-        return { paso: null, rama: RAMA_VER, finca: '' };
+        return { paso: null, rama: RAMA_VER, finca: '', cat: '' };
     }
 }
 
@@ -172,6 +204,9 @@ function createSession(root) {
         farmId: String(source.finca || ''),
         tileId: 'gastos',
         tipoId: '',
+        categoria: String(source.cat || source.categoria || ''),
+        crearCategoria: String(source.cat || source.crearCategoria || ''),
+        catScope: { phase: 'idle', values: [], error: '', requestId: 0 },
         concepto: '',
         monto: '',
         moneda: 'COP',
@@ -239,11 +274,16 @@ function createSession(root) {
             params.set('paso', String(state.paso));
             params.set('rama', state.rama);
             if (state.farmId) params.set('finca', state.farmId);
+            // D-C: la categoria restaura con F5 (hash + storage).
+            const categoriaValue = state.rama === RAMA_CREAR ? state.crearCategoria : state.categoria;
+            if (categoriaValue) params.set('cat', categoriaValue);
             const url = new URL(window.location.href);
             url.hash = `#${params.toString()}`;
             history.replaceState(null, '', url);
             window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
                 rama: state.rama, paso: state.paso, finca: state.farmId,
+                categoria: state.categoria,
+                crearCategoria: state.crearCategoria,
                 // created evita que un F5 en la pantalla de exito re-ofrezca
                 // confirmar el mismo registro dos veces.
                 created: state.created
@@ -264,15 +304,21 @@ function createSession(root) {
         if (nextRama) state.rama = nextRama;
         state.paso = clampPaso(nextPaso);
         render();
-        // Entrada al Paso 4 de la rama VER: primera carga de la lista del tile.
-        if (state.rama === RAMA_VER && state.paso === VER_TOTAL
+        // D-C: al entrar al Paso 4 de VER se cargan los registros (de ahí salen
+        // las categorías reales); el Paso 5 hereda las filas ya cargadas.
+        if (state.rama === RAMA_VER && state.paso >= 4
             && state.listScope.phase === 'loading' && state.listScope.requestId === 0) {
             void fetchTileRows();
+        }
+        // D-C: vocabulario real de categorías para el tipo elegido en CREAR.
+        if (state.rama === RAMA_CREAR && state.paso === 4
+            && (state.catScope.phase === 'idle' || state.catScope.tipo !== state.tipoId)) {
+            void fetchCrearCategorias();
         }
     }
 
     function goNext() {
-        if (state.rama === RAMA_CREAR && state.paso === 4 && !formValid()) {
+        if (state.rama === RAMA_CREAR && state.paso === 5 && !formValid()) {
             showStepError('Completa concepto, monto y fecha para continuar.');
             return;
         }
@@ -288,10 +334,13 @@ function createSession(root) {
         exitToSurface();
     }
 
-    // D4: salida al hub Granja (gate del shell, no vista). El canal oficial es
-    // el evento agro:shell:set-view, que resuelve gates; el fallback cubre un
-    // shell no inicializado.
+    // D-A: la topbar regresa al GATE (paso 1, pagina principal crear/ver)
+    // desde cualquier paso >= 2; solo desde el gate sale al hub Granja.
     function exitToSurface() {
+        if (state.paso > 1) {
+            goStep(1);
+            return;
+        }
         destroyWizard();
         window.dispatchEvent(new CustomEvent('agro:shell:set-view', {
             detail: { view: 'granja', scroll: true }
@@ -344,6 +393,7 @@ function createSession(root) {
         render();
 
         try {
+            // (1) Ledger crudo (fuente nueva de CREAR desde D-B).
             let query = supabase
                 .from(tile.table)
                 .select(tile.cols)
@@ -353,23 +403,128 @@ function createSession(root) {
                 .limit(LIST_LIMIT);
             if (tile.scope) query = tile.scope(query);
             if (state.farmId) query = query.eq('farm_id', state.farmId);
+            const ledgerResult = await query;
+            if (ledgerResult.error) throw ledgerResult.error;
 
-            const { data, error } = await query;
-            if (error) throw error;
-            if (requestId !== scope.requestId || !alive) return;
             const alias = tile.alias || {};
-            scope.rows = (Array.isArray(data) ? data : []).map((row) => ({
+            const categoryField = tile.id === 'gastos' ? 'category' : (tile.id === 'ingresos' ? 'categoria' : '');
+            const ledgerRows = (Array.isArray(ledgerResult.data) ? ledgerResult.data : []).map((row) => ({
                 ...row,
+                origen: 'ledger',
                 fecha: row?.[alias.fecha || 'fecha'],
                 concepto: row?.[alias.concepto || 'concepto'],
-                monto: row?.[alias.monto || 'monto']
+                monto: row?.[alias.monto || 'monto'],
+                categoria: categoryField ? String(row?.[categoryField] || '').trim() : ''
             }));
+
+            // (2) Union D-B: movimientos operativos historicos del tipo mapeado.
+            // La categoria historica vive en agro_operational_cycles (join logico).
+            const opType = TILE_TO_OP_TYPE[tile.id];
+            let opRows = [];
+            if (opType) {
+                const [cyclesResult, movementsResult] = await Promise.all([
+                    supabase.from('agro_operational_cycles')
+                        .select('id,economic_type,category')
+                        .eq('economic_type', opType)
+                        .limit(2000),
+                    (() => {
+                        let q = supabase.from('agro_operational_movements')
+                            .select('id,cycle_id,amount,currency,amount_usd,concept,movement_date,created_at,farm_id')
+                            .limit(3000);
+                        if (state.farmId) q = q.eq('farm_id', state.farmId);
+                        return q;
+                    })()
+                ]);
+                if (cyclesResult.error) throw cyclesResult.error;
+                if (movementsResult.error) throw movementsResult.error;
+                const cycleById = new Map(
+                    (cyclesResult.data || []).map((cycle) => [String(cycle.id), cycle])
+                );
+                opRows = (movementsResult.data || [])
+                    .filter((row) => cycleById.has(String(row.cycle_id)))
+                    .map((row) => ({
+                        ...row,
+                        origen: 'operacional',
+                        fecha: row?.movement_date,
+                        concepto: row?.concept,
+                        monto: row?.amount,
+                        categoria: String(cycleById.get(String(row.cycle_id))?.category || '').trim()
+                    }));
+            }
+
+            // (3) Sin duplicados: ledger prima ante coincidencia exacta
+            // (fecha + monto + concepto) dentro del mismo tile y finca.
+            const seenKeys = new Set(ledgerRows.map((row) =>
+                `${String(row.fecha || '')}|${Number(row.monto) || 0}|${String(row.concepto || '').trim().toLowerCase()}`
+            ));
+            const dedupedOp = opRows.filter((row) => {
+                const key = `${String(row.fecha || '')}|${Number(row.monto) || 0}|${String(row.concepto || '').trim().toLowerCase()}`;
+                if (seenKeys.has(key)) return false;
+                seenKeys.add(key);
+                return true;
+            });
+
+            if (requestId !== scope.requestId || !alive) return;
+            scope.rows = [...ledgerRows, ...dedupedOp].sort((a, b) => {
+                const fa = String(a.fecha || '');
+                const fb = String(b.fecha || '');
+                return fb.localeCompare(fa);
+            });
             scope.phase = 'ready';
         } catch (err) {
             if (requestId !== scope.requestId || !alive) return;
             console.error('[FincaWizard] tile load failed:', err?.message || err);
             scope.rows = [];
             scope.error = String(err?.message || 'No se pudo leer los registros.');
+            scope.phase = 'error';
+        } finally {
+            if (requestId === scope.requestId && alive) render();
+        }
+    }
+
+    // D-C: vocabulario de categorias REALES para la rama CREAR, segun el tipo
+    // (solo agro_expenses/agro_income tienen columna; los demas tipos no).
+    async function fetchCrearCategorias() {
+        const scope = state.catScope;
+        const tipoId = state.tipoId;
+        const field = TYPE_TO_TABLE_CATEGORY_FIELD[tipoId];
+        if (scope.loading || (scope.phase === 'ready' && scope.tipo === tipoId)) return;
+
+        if (!field) {
+            scope.values = [];
+            scope.error = '';
+            scope.phase = 'ready';
+            scope.tipo = tipoId;
+            render();
+            return;
+        }
+
+        const requestId = ++scope.requestId;
+        scope.phase = 'loading';
+        scope.error = '';
+        render();
+
+        try {
+            const { data, error } = await supabase
+                .from(TYPE_TO_TABLE[tipoId])
+                .select(field)
+                .is('deleted_at', null)
+                .limit(1000);
+            if (error) throw error;
+            if (requestId !== scope.requestId || !alive) return;
+            const values = Array.from(new Set(
+                (Array.isArray(data) ? data : [])
+                    .map((row) => String(row?.[field] || '').trim())
+                    .filter(Boolean)
+            )).sort((a, b) => a.localeCompare(b, 'es'));
+            scope.values = values;
+            scope.phase = 'ready';
+            scope.tipo = tipoId;
+        } catch (err) {
+            if (requestId !== scope.requestId || !alive) return;
+            console.error('[FincaWizard] categorias load failed:', err?.message || err);
+            scope.values = [];
+            scope.error = String(err?.message || 'No se pudieron leer las categorías.');
             scope.phase = 'error';
         } finally {
             if (requestId === scope.requestId && alive) render();
@@ -536,57 +691,53 @@ function createSession(root) {
             const economicType = tipo?.id || 'expense';
             await assertOperationalPeriodOpen({ movementDate: state.fecha, userId: user.id });
 
-            // Regla del modal: loss→lost, donation→closed, resto open.
-            const status = economicType === 'loss' ? 'lost' : (economicType === 'donation' ? 'closed' : 'open');
             const amount = Number(state.monto);
             const rate = effectiveRate();
             const amountUsd = state.moneda === 'USD' ? amount : (rate > 0 ? convertToUSD(amount, state.moneda, rate) : null);
+            const safeCategoria = state.crearCategoria ? String(state.crearCategoria).trim() : '';
 
-            const cyclePayload = {
+            // D-B (decision de sesion): CREAR escribe directo al ledger por tipo.
+            // farm_id set, crop_id null (facturero de finca puro), deleted_at null.
+            // Insert unico por tabla: sin ciclo que requiera rollback.
+            const table = TYPE_TO_TABLE[economicType] || 'agro_expenses';
+            const payload = {
                 user_id: user.id,
-                name: state.concepto.trim(),
-                description: null,
-                economic_type: economicType,
-                category: 'other',
-                crop_id: null, // movimiento general de finca: sin cultivo por decisión del owner
                 farm_id: state.farmId || null,
-                status,
-                opened_at: state.fecha,
-                closed_at: status === 'closed' ? todayLocalIso() : null,
-                notes: null
-            };
-            const { data: cycleData, error: cycleError } = await supabase
-                .from('agro_operational_cycles')
-                .insert(cyclePayload)
-                .select('id')
-                .single();
-            if (cycleError) throw cycleError;
-            const cycleId = String(cycleData?.id || '');
-
-            const movementPayload = {
-                user_id: user.id,
-                cycle_id: cycleId,
-                direction: deriveMovementDirection(economicType),
-                amount,
+                crop_id: null,
+                fecha: state.fecha,
+                concepto: state.concepto.trim(),
+                monto: amount,
                 currency: state.moneda,
-                amount_usd: amountUsd,
                 exchange_rate: state.moneda === 'USD' ? 1 : rate,
-                concept: state.concepto.trim(),
-                movement_date: state.fecha,
-                quantity: null,
-                unit_type: null,
-                farm_id: state.farmId || null
+                monto_usd: amountUsd
             };
-            const { error: movementError } = await supabase
-                .from('agro_operational_movements')
-                .insert(movementPayload);
-            if (movementError) {
-                // Rollback del ciclo, igual que createCycleRecord del modal.
-                await supabase.from('agro_operational_cycles').delete().eq('id', cycleId).eq('user_id', user.id);
-                throw movementError;
+            // Columnas con nombre propio por tabla (trazado 2026-09-03):
+            // agro_expenses usa date/concept/amount y category; agro_income usa
+            // fecha/concepto/monto y categoria; transfers/losses sin categoria.
+            if (economicType === 'expense') {
+                delete payload.fecha;
+                delete payload.concepto;
+                delete payload.monto;
+                payload.date = state.fecha;
+                payload.concept = state.concepto.trim();
+                payload.amount = amount;
+                payload.category = safeCategoria || 'general';
+            } else if (economicType === 'income') {
+                payload.categoria = safeCategoria || 'general';
             }
 
-            document.dispatchEvent(new CustomEvent('agro:operational-portfolio-updated'));
+            const { error: insertError } = await supabase.from(table).insert(payload);
+            if (insertError) throw insertError;
+
+            // Refresh de las superficies que escuchan estos eventos (como flow.js).
+            const eventByTipo = {
+                expense: 'data-refresh',
+                income: 'agro:income:changed',
+                donation: 'agro:transfers:refreshed',
+                loss: 'agro:losses:changed'
+            };
+            document.dispatchEvent(new CustomEvent(eventByTipo[economicType] || 'data-refresh'));
+
             state.created = true;
             render();
         } catch (err) {
@@ -604,6 +755,7 @@ function createSession(root) {
         state.monto = '';
         state.moneda = 'COP';
         state.fecha = todayLocalIso();
+        state.crearCategoria = '';
         state.created = false;
     }
 
@@ -662,9 +814,110 @@ function createSession(root) {
         `;
     }
 
+    function categoryLabel(value) {
+        const safeValue = String(value || '').trim();
+        if (!safeValue) return 'Sin categoría';
+        return OP_CATEGORY_LABELS[safeValue] || safeValue;
+    }
+
+    // D-C (VER, Paso 4): chips con el vocabulario REAL de categorias presentes
+    // en los registros del tile y finca elegidos + "Todas" + "Sin categoria".
+    function renderVerCategoria() {
+        const scope = state.listScope;
+        if (scope.phase === 'loading') {
+            return '<p class="fcvw-note">Revisando las categorías reales de estos registros…</p>';
+        }
+        if (scope.phase === 'error') {
+            return `
+                <div class="cartera-viva-empty">
+                    <h3 class="cartera-viva-empty__title">No se pudieron leer las categorías</h3>
+                    <p class="cartera-viva-empty__copy">${escapeHtml(scope.error)}</p>
+                    <button type="button" class="fcvw-btn" data-fcwz-retry-list><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Reintentar</button>
+                </div>
+            `;
+        }
+
+        const categorias = Array.from(new Set(
+            scope.rows.map((row) => String(row?.categoria || '').trim()).filter(Boolean)
+        )).sort((a, b) => a.localeCompare(b, 'es'));
+        const sinCategoria = scope.rows.some((row) => !String(row?.categoria || '').trim());
+
+        const chips = [
+            `<button type="button" class="fcvw-chip${!state.categoria ? ' is-active' : ''}" data-fcwz-cat="">Todas</button>`,
+            ...categorias.map((value) => `
+                <button type="button" class="fcvw-chip${state.categoria === value ? ' is-active' : ''}" data-fcwz-cat="${escapeHtml(value)}">${escapeHtml(categoryLabel(value))}</button>
+            `),
+            ...(sinCategoria ? [`<button type="button" class="fcvw-chip${state.categoria === '__sin__' ? ' is-active' : ''}" data-fcwz-cat="__sin__">Sin categoría</button>`] : [])
+        ].join('');
+
+        return `
+            <div class="fcvw-picker">
+                <span class="fcvw-picker__label">Categoría</span>
+                <div class="fcvw-picker__strip" role="group" aria-label="Filtrar por categoría">${chips}</div>
+                <p class="fcvw-note">Las categorías salen de tus registros reales. Los registros sin categoría viven en "Sin categoría".</p>
+            </div>
+        `;
+    }
+
+    // D-C (CREAR, Paso 4): vocabulario REAL de la tabla destino del tipo elegido.
+    // pending/losses/transfers no tienen columna: solo "Sin categoría" + nota.
+    function renderCrearCategoria() {
+        const field = TYPE_TO_TABLE_CATEGORY_FIELD[state.tipoId];
+        const scope = state.catScope;
+
+        if (!field) {
+            return `
+                <div class="fcvw-picker">
+                    <span class="fcvw-picker__label">Categoría</span>
+                    <div class="fcvw-picker__strip" role="group" aria-label="Categoría">
+                        <button type="button" class="fcvw-chip is-active">Sin categoría</button>
+                    </div>
+                    <p class="fcvw-note">Este tipo de registro todavía no maneja categorías. Continúa con Siguiente.</p>
+                </div>
+            `;
+        }
+        if (scope.phase === 'loading' || (scope.phase !== 'ready' && scope.phase !== 'error')) {
+            return '<p class="fcvw-note">Revisando las categorías que ya usas en este tipo de registro…</p>';
+        }
+        if (scope.phase === 'error') {
+            return `
+                <div class="cartera-viva-empty">
+                    <h3 class="cartera-viva-empty__title">No se pudieron leer las categorías</h3>
+                    <p class="cartera-viva-empty__copy">${escapeHtml(scope.error)}</p>
+                    <button type="button" class="fcvw-btn" data-fcwz-retry-cats><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Reintentar</button>
+                </div>
+            `;
+        }
+
+        const chips = [
+            ...scope.values.map((value) => `
+                <button type="button" class="fcvw-chip${state.crearCategoria === value ? ' is-active' : ''}" data-fcwz-crear-cat="${escapeHtml(value)}">${escapeHtml(categoryLabel(value))}</button>
+            `),
+            `<button type="button" class="fcvw-chip${!state.crearCategoria ? ' is-active' : ''}" data-fcwz-crear-cat="">Sin categoría</button>`
+        ].join('');
+
+        return `
+            <div class="fcvw-picker">
+                <span class="fcvw-picker__label">Categoría</span>
+                <div class="fcvw-picker__strip" role="group" aria-label="Categoría del registro">${chips}</div>
+                <p class="fcvw-note">Salen de las categorías que ya usas. "Sin categoría" deja el valor general del registro.</p>
+            </div>
+        `;
+    }
+
+    function filteredTileRows() {
+        const rows = state.listScope.rows;
+        if (!state.categoria) return rows;
+        if (state.categoria === '__sin__') {
+            return rows.filter((row) => !String(row?.categoria || '').trim());
+        }
+        return rows.filter((row) => String(row?.categoria || '').trim() === state.categoria);
+    }
+
     function renderVerListBody() {
         const scope = state.listScope;
         const tile = VER_TILES.find((entry) => entry.id === state.tileId) || VER_TILES[0];
+        const rows = filteredTileRows();
 
         if (scope.phase === 'loading') {
             return `
@@ -684,6 +937,14 @@ function createSession(root) {
                 </div>
             `;
         }
+        if (rows.length <= 0 && scope.rows.length > 0) {
+            return `
+                <div class="cartera-viva-empty">
+                    <h3 class="cartera-viva-empty__title">Sin registros en esta categoría</h3>
+                    <p class="cartera-viva-empty__copy">Vuelve atrás y elige "Todas" para ver los ${tile.label.toLowerCase()} completos.</p>
+                </div>
+            `;
+        }
         if (scope.rows.length <= 0) {
             return `
                 <div class="cartera-viva-empty">
@@ -694,10 +955,10 @@ function createSession(root) {
         }
         return `
             <ul class="fcwz-movements">
-                ${scope.rows.map((row) => `
+                ${rows.map((row) => `
                     <li class="fcwz-movements__item">
                         <span class="fcwz-movements__date">${escapeHtml(String(row?.fecha || '').slice(0, 10) || 'Sin fecha')}</span>
-                        <span class="fcwz-movements__text">${escapeHtml(movementText(row, tile))}</span>
+                        <span class="fcwz-movements__text">${escapeHtml(movementText(row, tile))}${row?.categoria ? ` <span class="fcwz-movements__tag">${escapeHtml(categoryLabel(row.categoria))}</span>` : ''}</span>
                         <span class="fcwz-movements__amount">${renderMoneyNode(formatMoney(row))}</span>
                     </li>
                 `).join('')}
@@ -705,9 +966,10 @@ function createSession(root) {
         `;
     }
 
-    function renderVerStep4() {
+    function renderVerStep5() {
         const tile = VER_TILES.find((entry) => entry.id === state.tileId) || VER_TILES[0];
         const actions = state.actionsScope;
+        const catPart = state.categoria ? ` · ${escapeHtml(categoryLabel(state.categoria === '__sin__' ? '' : state.categoria))}` : '';
         let actionsHtml = '';
         if (actions.phase === 'loading') {
             actionsHtml = '<p class="fcvw-note">Buscando acciones de las últimas 24 horas…</p>';
@@ -727,7 +989,7 @@ function createSession(root) {
         }
 
         return `
-            <p class="fcvw-clients__context">${escapeHtml(tile.label)} · ${escapeHtml(farmLabel())}</p>
+            <p class="fcvw-clients__context">${escapeHtml(tile.label)} · ${escapeHtml(farmLabel())}${catPart}</p>
             <div class="agro-privacy-strip" aria-label="Privacidad">
                 <span class="agro-privacy-strip__label">Privacidad</span>
                 <button type="button" class="btn-privacy-toggle" data-money-privacy-control="toggle" aria-pressed="false">Ocultar montos</button>
@@ -812,6 +1074,7 @@ function createSession(root) {
             <dl class="fcflow-summary">
                 <div class="fcflow-summary__row"><dt>Tipo</dt><dd>${escapeHtml(tipo?.label || '—')}</dd></div>
                 <div class="fcflow-summary__row"><dt>Finca</dt><dd>${escapeHtml(farmLabel())}</dd></div>
+                <div class="fcflow-summary__row"><dt>Categoría</dt><dd>${escapeHtml(state.crearCategoria ? categoryLabel(state.crearCategoria) : 'Sin categoría')}</dd></div>
                 <div class="fcflow-summary__row"><dt>Concepto</dt><dd>${escapeHtml(state.concepto || '—')}</dd></div>
                 <div class="fcflow-summary__row"><dt>Monto</dt><dd><strong>${escapeHtml(formatMoney({ monto: amount, currency: state.moneda }))}</strong></dd></div>
                 ${state.moneda !== 'USD' ? `<div class="fcflow-summary__row"><dt>≈ USD</dt><dd>${usd != null ? `$${usd.toFixed(2)}` : 'sin tasa'}</dd></div>` : ''}
@@ -840,11 +1103,13 @@ function createSession(root) {
         if (state.rama === RAMA_VER) {
             if (state.paso === 2) return renderFarmPicker();
             if (state.paso === 3) return renderVerTiles();
-            return renderVerStep4();
+            if (state.paso === 4) return renderVerCategoria();
+            return renderVerStep5();
         }
         if (state.paso === 2) return renderFarmPicker();
         if (state.paso === 3) return renderCrearTypes();
-        if (state.paso === 4) return renderCrearForm();
+        if (state.paso === 4) return renderCrearCategoria();
+        if (state.paso === 5) return renderCrearForm();
         return state.created ? renderCrearDone() : renderCrearReview();
     }
 
@@ -863,10 +1128,12 @@ function createSession(root) {
         if (state.paso === 2) return 'Elige la finca que quieres trabajar.';
         if (state.rama === RAMA_VER) {
             if (state.paso === 3) return '¿Qué tipo de registros quieres ver?';
-            return 'Registros del tipo elegido.';
+            if (state.paso === 4) return '¿Qué categoría quieres ver?';
+            return 'Registros del tipo y categoría elegidos.';
         }
         if (state.paso === 3) return '¿Qué tipo de movimiento vas a registrar?';
-        if (state.paso === 4) return 'Cuéntale al facturero los detalles del movimiento.';
+        if (state.paso === 4) return '¿En qué categoría encaja el movimiento?';
+        if (state.paso === 5) return 'Cuéntale al facturero los detalles del movimiento.';
         return 'Revisa que todo esté correcto antes de confirmar.';
     }
 
@@ -917,9 +1184,30 @@ function createSession(root) {
         });
         root.querySelectorAll('[data-fcwz-tile]').forEach((button) => {
             button.addEventListener('click', () => {
-                state.tileId = String(button.getAttribute('data-fcwz-tile') || '').trim() || 'gastos';
+                const nextTile = String(button.getAttribute('data-fcwz-tile') || '').trim() || 'gastos';
+                if (nextTile !== state.tileId) {
+                    state.tileId = nextTile;
+                    // La categoría pertenece al tile anterior: se resetea.
+                    state.categoria = '';
+                }
                 render();
             });
+        });
+        root.querySelectorAll('[data-fcwz-cat]').forEach((button) => {
+            button.addEventListener('click', () => {
+                state.categoria = String(button.getAttribute('data-fcwz-cat') || '').trim();
+                render();
+            });
+        });
+        root.querySelectorAll('[data-fcwz-crear-cat]').forEach((button) => {
+            button.addEventListener('click', () => {
+                state.crearCategoria = String(button.getAttribute('data-fcwz-crear-cat') || '').trim();
+                render();
+            });
+        });
+        root.querySelector('[data-fcwz-retry-cats]')?.addEventListener('click', () => {
+            state.catScope.phase = 'idle';
+            void fetchCrearCategorias();
         });
         root.querySelectorAll('[data-fcwz-tipo]').forEach((button) => {
             button.addEventListener('click', () => {
@@ -950,11 +1238,14 @@ function createSession(root) {
         });
         root.querySelector('[data-fcwz-goto-ver]')?.addEventListener('click', () => {
             // D4: a la rama VER con la MISMA finca y el tile canonico del tipo
-            // recien creado (navegacion que no miente).
+            // recien creado (navegacion que no miente). El scope se resetea para
+            // que el registro nuevo aparezca sin recargar la pagina.
             state.tileId = TYPE_TO_TILE[state.tipoId] || 'gastos';
+            state.categoria = '';
             const createdTipo = state.tipoId;
             resetCreateFlow();
             state.tipoId = createdTipo;
+            state.listScope = { phase: 'loading', rows: [], error: '', requestId: 0 };
             goStep(VER_TOTAL, RAMA_VER);
         });
         root.querySelector('[data-fcwz-create-otro]')?.addEventListener('click', () => {
@@ -975,9 +1266,13 @@ function createSession(root) {
     document.body.classList.add(WIZARD_BODY_CLASS);
     render();
 
-    // La lista se carga al entrar al paso 4 de la rama VER.
-    if (state.rama === RAMA_VER && state.paso === VER_TOTAL) {
+    // F5: recargar lo que el paso restaurado necesite (D-C).
+    if (state.rama === RAMA_VER && state.paso >= 4
+        && state.listScope.phase === 'loading' && state.listScope.requestId === 0) {
         void fetchTileRows();
+    }
+    if (state.rama === RAMA_CREAR && state.paso === 4) {
+        void fetchCrearCategorias();
     }
 
     return { destroy };

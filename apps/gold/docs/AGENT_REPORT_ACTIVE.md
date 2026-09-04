@@ -2589,3 +2589,62 @@ git add apps/gold/agro/agro-shell.js \
         apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "fix(finca): Fase 2 — wizard como superficie principal (redirect legacy), exito funcional, tiles canonicos y Volver al hub"
 ```
+
+---
+
+## Sesion 2026-09-03 (III) — Fase 3 Finca: navegacion de regreso, fuente unica y paso de categoria
+
+Agente: GLM (ZCode). Trazado §8.2 (a)-(e) primero; luego cirugia. Ley §5: build + verificacion estatica + queries documentadas.
+
+### Trazado pre-codigo
+- **(a) Bindings topbar**: un solo binding `[data-fcwz-exit]` → `exitToSurface()` que SIEMPRE iba al hub (falla D-A: pasos 2+ debian volver al gate).
+- **(b) Fuentes**: CREAR escribia `agro_operational_cycles`+`agro_operational_movements` (F1); VER leia solo las 5 tablas del ledger → un registro creado NO aparecia en VER (causa del hallazgo del owner).
+- **(c)/(d)/(e) Categoria (hallazgo de schema)**: SOLO `agro_expenses.category` (default 'general') y `agro_income.categoria` (default 'general', nombre en espanol) tienen columna. `agro_pending`, `agro_losses`, `agro_transfers` y `agro_operational_movements` NO tienen categoria — la historica vive en `agro_operational_cycles.category` (CHECK de 6 valores: tools/maintenance/labor/transport/supplies/other). Sin DDL: los registros de tablas sin columna caen en "Sin categoria" (regla dura cumplida; nada inventado).
+
+### Cambios realizados (solo `agro-facturero-finca-wizard.js`)
+
+| Decision | Cambio |
+|---|---|
+| **D-A Navegacion** | `exitToSurface`: pasos >= 2 → gate (Paso 1); Paso 1 → hub Granja (gate oficial `agro:shell:set-view`). Footer Atras = un paso atras (sin cambio). Sin topbars apiladas (body class intacta). |
+| **D-B Fuente (decision de sesion, pendiente §4.5.2)** | CREAR escribe directo al LEDGER por tipo (`TYPE_TO_TABLE`: expense→agro_expenses con date/concept/amount+category; income→agro_income con categoria; donation→agro_transfers; loss→agro_losses), farm_id set, crop_id null, deleted_at null; insert unico (sin rollback de ciclo, ya no hay ciclo); `assertOperationalPeriodOpen` conservado; evento de refresh por tabla (como flow.js). VER lee la UNION ledger + `agro_operational_movements` historicos (join logico con cycles por economic_type; fiados sin union porque cycles no admite 'pending') con dedup: ledger prima ante coincidencia exacta fecha+monto+concepto; badge/tag humano por categoria en cada fila; cero "No pagado". |
+| **D-C Categoria** | Paso de chips DESPUES del tipo en ambas ramas: VER ahora 5 pasos (gate→finca→tipo→categoria→registros, `PASO X DE 5`), CREAR 6 (→categoria→datos→revision, `PASO X DE 6`). VER: chips con categorias REALES presentes en los registros del tile+finca + "Todas" + "Sin categoria" (solo si hay filas sin categoria); filtro en el paso final con empty honesto por categoria. CREAR: vocabulario real de la tabla destino del tipo (query distinct client-side) + "Sin categoria"; tipos sin columna → nota honesta "este tipo todavia no maneja categorias". F5 restaura categoria (hash `&cat=` + storage). Cambiar tile resetea la categoria. Review muestra fila Categoria. Exito → "Ver registros" resetea el scope para ver el registro NUEVO sin recargar. |
+
+### Queries para el owner (verificacion con datos reales)
+```sql
+-- (c) Cruce por finca: nuevos (ledger) vs historicos (operativos) por tile
+select 'gastos' tile,'ledger' fuente,coalesce(f.name,'(sin finca)') finca,count(*) from agro_expenses e left join agro_farms f on f.id=e.farm_id where e.deleted_at is null group by 1,2,3
+union all select 'gastos','operativos',coalesce(f.name,'(sin finca)'),count(*) from agro_operational_movements m join agro_operational_cycles c on c.id=m.cycle_id and c.economic_type='expense' left join agro_farms f on f.id=m.farm_id group by 1,2,3
+union all select 'ingresos','ledger',coalesce(f.name,'(sin finca)'),count(*) from agro_income i left join agro_farms f on f.id=i.farm_id where i.deleted_at is null and i.reverted_at is null group by 1,2,3
+union all select 'ingresos','operativos',coalesce(f.name,'(sin finca)'),count(*) from agro_operational_movements m join agro_operational_cycles c on c.id=m.cycle_id and c.economic_type='income' left join agro_farms f on f.id=m.farm_id group by 1,2,3
+union all select 'fiados','ledger',coalesce(f.name,'(sin finca)'),count(*) from agro_pending p left join agro_farms f on f.id=p.farm_id where p.deleted_at is null and p.reverted_at is null and coalesce(p.transfer_state,'')<>'transferred' group by 1,2,3
+union all select 'perdidas','ledger',coalesce(f.name,'(sin finca)'),count(*) from agro_losses l left join agro_farms f on f.id=l.farm_id where l.deleted_at is null and l.reverted_at is null group by 1,2,3
+union all select 'perdidas','operativos',coalesce(f.name,'(sin finca)'),count(*) from agro_operational_movements m join agro_operational_cycles c on c.id=m.cycle_id and c.economic_type='loss' left join agro_farms f on f.id=m.farm_id group by 1,2,3
+union all select 'donaciones','ledger',coalesce(f.name,'(sin finca)'),count(*) from agro_transfers t left join agro_farms f on f.id=t.farm_id where t.deleted_at is null group by 1,2,3
+union all select 'donaciones','operativos',coalesce(f.name,'(sin finca)'),count(*) from agro_operational_movements m join agro_operational_cycles c on c.id=m.cycle_id and c.economic_type='donation' left join agro_farms f on f.id=m.farm_id group by 1,2,3
+order by 1,2,4 desc;
+
+-- (d) Vocabulario REAL de categorias
+select 'agro_expenses.category' origen, category valor, count(*) from agro_expenses where deleted_at is null group by 1,2
+union all select 'agro_income.categoria', categoria, count(*) from agro_income where deleted_at is null group by 1,2
+union all select 'ciclos.category (historicos)', category, count(*) from agro_operational_cycles group by 1,2
+order by 1,3 desc;
+```
+
+### Resultado de build
+`pnpm build:gold` verde (2.49s; UTF-8 OK). Residuos: 0 (sin renderVerStep4/import muerto/totales viejos). Modulo: 1279 lineas — entra en zona "evaluar extraccion" de §11.X (>1200); separacion lectura/creacion queda como pendiente para una fase futura con autorizacion (no se hizo ahora por scope).
+
+### QA online exacta para el owner
+1. **Crear y ver sin recargar**: rama CREAR → Gasto → categoria real (p.ej. la que ya uses) → datos → Confirmar → "Ver registros" → el gasto NUEVO aparece en el tile Gastos de la MISMA finca, sin recargar.
+2. **Volver por paso**: topbar (Volver) en pasos 2-5/6 → GATE; en el gate → hub Granja; footer Atras retrocede un paso.
+3. **Categoria**: VER paso 4 muestra solo categorias reales + Todas + Sin categoria; filtrar y ver el empty honesto; CREAR paso 4 con vocabulario real; Donacion/Perdida muestran nota "todavia no maneja categorias".
+4. **F5** en paso de categoria (restaura) y en paso final. Desktop + mobile ≤480px.
+5. **Union**: buscar un registro operativo historico (creado con el modal viejo) → debe aparecer en su tile y finca; si existe el mismo registro en ledger y operativo, solo una vez (ledger prima).
+
+### NO se hizo
+- Sin DDL/migraciones (hallazgo: pending/losses/transfers sin columna categoria; documentado, no inventado). Sin tocar agroOperationalCycles.js ni agro.js (0 lineas). Sin QA del agente. Sin git. Sin canonizar D-B. Sin separar el modulo (>1200L, pendiente autorizado).
+
+### Git sugerido (NO ejecutado)
+```bash
+git add apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "feat(finca): Fase 3 — topbar al gate, CREAR al ledger con union en VER, paso de categoria real (VER 5 / CREAR 6)"
+```
