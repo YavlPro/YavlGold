@@ -2695,3 +2695,75 @@ git add apps/gold/agro/agro-facturero-finca-wizard.js \
         apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "fix(finca): ANEXO 6 — categorias reales por chip (cols faltantes), particion estricta crop_id null y borderShimmer §19.5"
 ```
+
+---
+
+## Sesion 2026-09-04 — ANEXO 7: endurecimiento de verificacion (auditoria Fable) — hipotesis (g)-(j), bug B7 y matriz por celda
+
+Agente: GLM (ZCode). Estatus aceptado: el "GREEN parcial" de categorias y la prueba de Q1 quedan INVALIDADOS por B7; gate (b) de dedup REABIERTO. Nada declarado probado por declaracion (§8.5).
+
+### Hipotesis obligatorias (respondidas con lineas del codigo pre-fix)
+
+- **(g) SI — causa raiz de B7.** El fetch del tile solo se disparaba la primera vez: trigger `phase==='loading' && requestId===0` (goStep :310 y mount :1279 pre-fix). Despues del primer fetch `phase='ready'` y `requestId>0` para siempre: al volver al Paso 3 y cambiar de tile, el handler (:1196) solo reseteaba `categoria` — el Paso 5 re-renderizaba `scope.rows` cacheado del tile ANTERIOR. Un gasto cargado como primer tile quedaba servido bajo Ingresos. Exactamente el sintoma: escritura correcta, lectura cruzada.
+- **(h) NO existe asignacion de `type` desde el tile.** El normalizador opera por tabla de origen (alias `concept/amount/date` para expenses; columnas nativas para el resto) y es correcto. El "gasto bajo Ingresos" lo produce (g), no un type mal asignado.
+- **(i) La categoria se normaliza POR TILE desde su columna correcta en el fetch** (`categoryField = gastos→'category' | ingresos→'categoria'`), y la union operativa desde `cycles.category`. income NO cae en vacio (tras fix de cols del ANEXO 6). El vacio percibido en QA anteriores venia de (g) sirviendo filas de otro tile bajo chips ajenos.
+- **(j) SI, mismo punto.** `crop_id IS NULL` (:404) y `farm_id` (:409) viven en la misma cadena de query del ledger; en la union operativa, `farm_id` filtra movements (:440) y `crop_id` filtra ciclos en el join. Si uno fallara, el otro fallaria igual — por eso la matriz exige celdas de cero esperado.
+
+### Fix B7 aplicado (agro-facturero-finca-wizard.js)
+Stamps `scope.tileId`/`scope.farmId` estampados al iniciar el fetch + detector `tileRowsStale()` (refetch si el stamp difiere del estado actual, ademas del caso primera-vez). goStep y mount usan el detector. Cambiar tile o finca ahora SIEMPRE refetchea; requests viejos se descartan por requestId. El dedup (gate b) opera sobre filas del tile correcto una vez eliminado el cacheo cruzado — queda sujeto a los conteos reales de la matriz.
+
+### SQL de verificacion ampliado (owner; ley §5)
+
+```sql
+-- (0) Esquema real de movements (la union usa las columnas reales, no asumidas)
+select column_name, data_type from information_schema.columns
+where table_name = 'agro_operational_movements' order by ordinal_position;
+
+-- (1) Cruce de los registros de QA en las 5 tablas (distinguir del homonimo legacy por created_at)
+select 'agro_expenses' tabla, left(id::text,8) id, farm_id::text, crop_id::text, concept, amount, currency, category, created_at from agro_expenses where deleted_at is null and (concept ilike '%bomba de riego%' or concept ilike '%kit de sistema para regar%')
+union all select 'agro_income', left(id::text,8), farm_id::text, crop_id::text, concepto, monto, currency, categoria, created_at from agro_income where deleted_at is null and (concepto ilike '%bomba de riego%' or concepto ilike '%kit de sistema%')
+union all select 'agro_pending', left(id::text,8), farm_id::text, crop_id::text, concepto, monto, currency, null, created_at from agro_pending where deleted_at is null and (concepto ilike '%bomba%' or concepto ilike '%kit de sistema%')
+union all select 'agro_losses', left(id::text,8), farm_id::text, crop_id::text, concepto, monto, currency, null, created_at from agro_losses where deleted_at is null and (concepto ilike '%bomba%' or concepto ilike '%kit de sistema%')
+union all select 'agro_transfers', left(id::text,8), farm_id::text, crop_id::text, concepto, monto, currency, null, created_at from agro_transfers where deleted_at is null and (concepto ilike '%bomba%' or concepto ilike '%kit de sistema%')
+order by created_at desc;
+```
+Lectura: el gasto del QA debe aparecer SOLO en `agro_expenses` con `crop_id` nulo, `farm_id` de la finca y `created_at` reciente. Si aparece en otra tabla → CREAR rota (autorizado tocar); si aparece duplicado en movements → la union/dedup se reabre con evidencia.
+
+### MATRIZ POST-FIX RESPALDADA POR QUERIES POR CELDA (DoD ANEXO 7)
+
+Cada celda = query QUE REPLICA EL FILTRO EXACTO del codigo (deleted_at null + crop_id null + farm_id + scope del tile) + conteo real pegado por el owner. Reemplazar `'FINCA'` por el nombre real. **Obligatorio incluir al menos una celda con cero esperado** (marcada): usar como finca de prueba la que SOLO tiene gastos (identificable con el SQL (1)); alli Ingresos DEBE dar 0.
+
+```sql
+-- GASTOS × finca:  select count(*) from agro_expenses where deleted_at is null and crop_id is null and farm_id = (select id from agro_farms where name='FINCA');
+-- GASTOS × general: select count(*) from agro_expenses where deleted_at is null and crop_id is null;
+-- INGRESOS × finca: select count(*) from agro_income where deleted_at is null and crop_id is null and reverted_at is null and farm_id = (select id from agro_farms where name='FINCA');   -- ← celda de CERO esperado en la finca solo-gastos
+-- INGRESOS × general: select count(*) from agro_income where deleted_at is null and crop_id is null and reverted_at is null;
+-- FIADOS × finca:  select count(*) from agro_pending where deleted_at is null and crop_id is null and reverted_at is null and coalesce(transfer_state,'') <> 'transferred' and farm_id = (select id from agro_farms where name='FINCA');
+-- FIADOS × general: select count(*) from agro_pending where deleted_at is null and crop_id is null and reverted_at is null and coalesce(transfer_state,'') <> 'transferred';
+-- PÉRDIDAS × finca: select count(*) from agro_losses where deleted_at is null and crop_id is null and reverted_at is null and farm_id = (select id from agro_farms where name='FINCA');
+-- PÉRDIDAS × general: select count(*) from agro_losses where deleted_at is null and crop_id is null and reverted_at is null;
+-- DONACIONES × finca: select count(*) from agro_transfers where deleted_at is null and crop_id is null and farm_id = (select id from agro_farms where name='FINCA');
+-- DONACIONES × general: select count(*) from agro_transfers where deleted_at is null and crop_id is null;
+```
+
+| Tile | Finca (conteo real) | Vista general (conteo real) | ¿Coincide con el wizard? |
+|---|---|---|---|
+| Gastos | ___ | ___ | ___ |
+| Ingresos | ___ (0 esperado en finca solo-gastos) | ___ | ___ |
+| Fiados | ___ | ___ | ___ |
+| Pérdidas | ___ | ___ | ___ |
+| Donaciones | ___ | ___ | ___ |
+
+**Regla de cierre (§8.5)**: la discriminacion de filtros (tile/finca/crop_id/categoria) se declara SOLO cuando los conteos reales del owner coinciden con lo visible en el wizard celda por celda, incluyendo la celda de cero. Hasta entonces, B7 queda en estado "fix aplicado, verificacion pendiente".
+
+### Resultado de build
+`pnpm build:gold` verde (2.24s; UTF-8 OK).
+
+### NO se hizo
+- Sin QA del agente; los conteos de la matriz los ejecuta el owner (ley §5). Sin git. Sin tocar CREAR (el analisis lo exculpa: TYPE_TO_TABLE escribe a agro_expenses; el SQL (1) confirma o refuta). Gate (b) dedup: reabierto por la auditoria; cerrado en papel tras el fix, sujeto a conteos.
+
+### Git sugerido (NO ejecutado)
+```bash
+git add apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(finca): B7 — refetch por tile/finca con stamps (cacheo cruzado servia el gasto bajo Ingresos) + matriz de verificacion por celda"
+```

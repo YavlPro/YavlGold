@@ -304,10 +304,9 @@ function createSession(root) {
         if (nextRama) state.rama = nextRama;
         state.paso = clampPaso(nextPaso);
         render();
-        // D-C: al entrar al Paso 4 de VER se cargan los registros (de ahí salen
-        // las categorías reales); el Paso 5 hereda las filas ya cargadas.
-        if (state.rama === RAMA_VER && state.paso >= 4
-            && state.listScope.phase === 'loading' && state.listScope.requestId === 0) {
+        // D-C + B7: al entrar al Paso 4+ de VER se cargan (o recargan si el
+        // tile o la finca cambiaron desde la ultima carga) los registros.
+        if (state.rama === RAMA_VER && state.paso >= 4 && tileRowsStale()) {
             void fetchTileRows();
         }
         // D-C: vocabulario real de categorías para el tipo elegido en CREAR.
@@ -384,12 +383,25 @@ function createSession(root) {
 
     // ---------- Datos: lectura por tile (ledger crudo, farm scope) ----------
 
+    // B7 (ANEXO 7, hipotesis (g)): el fetch solo corria la primera vez
+    // (phase loading + requestId 0), asi que al cambiar de tile o de finca el
+    // Paso 5 re-renderizaba las filas cacheadas del tile anterior — un gasto
+    // quedaba servido bajo Ingresos. Solucion: el scope se estampa con el
+    // tile+finca que cargó; cualquier desvio fuerza refetch.
+    function tileRowsStale() {
+        const scope = state.listScope;
+        if (scope.phase === 'loading' && scope.requestId === 0) return true;
+        return scope.tileId !== state.tileId || scope.farmId !== (state.farmId || '');
+    }
+
     async function fetchTileRows() {
         const scope = state.listScope;
         const tile = VER_TILES.find((entry) => entry.id === state.tileId) || VER_TILES[0];
         const requestId = ++scope.requestId;
         scope.phase = 'loading';
         scope.error = '';
+        scope.tileId = tile.id;
+        scope.farmId = state.farmId || '';
         render();
 
         try {
@@ -1274,9 +1286,8 @@ function createSession(root) {
     document.body.classList.add(WIZARD_BODY_CLASS);
     render();
 
-    // F5: recargar lo que el paso restaurado necesite (D-C).
-    if (state.rama === RAMA_VER && state.paso >= 4
-        && state.listScope.phase === 'loading' && state.listScope.requestId === 0) {
+    // F5: recargar lo que el paso restaurado necesite (D-C + B7).
+    if (state.rama === RAMA_VER && state.paso >= 4 && tileRowsStale()) {
         void fetchTileRows();
     }
     if (state.rama === RAMA_CREAR && state.paso === 4) {
