@@ -21,6 +21,33 @@
     gap: 0.9rem;
 }
 
+/* Q4 (ANEXO 6, override del owner): borderShimmer canonico ADN §19.5 — una
+   sola linea bajo la topbar del wizard (header de modulo). 3s, opacidad 0.4,
+   gradiente --metallic-border. NUNCA en tiles, footer, botones ni inputs.
+   prefers-reduced-motion: borde estatico var(--border-gold). */
+.fcwz .fcvw__topbar {
+    position: relative;
+}
+
+.fcwz .fcvw__topbar::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 1px;
+    background: var(--metallic-border, linear-gradient(90deg, transparent, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e, transparent));
+    background-size: 200% 100%;
+    animation: fcwzBorderShimmer 3s linear infinite;
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+@keyframes fcwzBorderShimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
 /* ---------- Lista de movimientos (Paso 4 · rama VER) ---------- */
 .fcwz-movements {
     display: flex;
@@ -88,6 +115,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .fcwz .fcvw__topbar::after {
+        animation: none;
+        background: var(--border-gold, rgba(200, 167, 82, 0.25));
+    }
+
     .fcwz *,
     .fcwz *::before,
     .fcwz *::after {

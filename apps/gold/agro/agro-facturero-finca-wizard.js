@@ -73,14 +73,14 @@ const VER_TILES = [
     {
         id: 'gastos', label: 'Gastos', icon: 'fa-solid fa-receipt',
         table: 'agro_expenses', who: '', orderCol: 'date',
-        cols: 'id,concept,amount,currency,date,created_at',
+        cols: 'id,concept,amount,category,currency,date,created_at',
         alias: { concepto: 'concept', monto: 'amount', fecha: 'date' },
         scope: null
     },
     {
         id: 'ingresos', label: 'Ingresos', icon: 'fa-solid fa-circle-check',
         table: 'agro_income', who: '', orderCol: 'fecha',
-        cols: 'id,concepto,monto,monto_usd,currency,fecha,created_at',
+        cols: 'id,concepto,monto,monto_usd,categoria,currency,fecha,created_at',
         scope: (q) => q.is('reverted_at', null)
     },
     {
@@ -394,10 +394,14 @@ function createSession(root) {
 
         try {
             // (1) Ledger crudo (fuente nueva de CREAR desde D-B).
+            // Q1 (ANEXO 6): partición estricta del wizard — solo Movimientos
+            // Generales de finca (crop_id null). El agregado de finca completa
+            // (incluidos cultivos) vive en Períodos, no aquí.
             let query = supabase
                 .from(tile.table)
                 .select(tile.cols)
                 .is('deleted_at', null)
+                .is('crop_id', null)
                 .order(tile.orderCol || 'fecha', { ascending: false })
                 .order('created_at', { ascending: false })
                 .limit(LIST_LIMIT);
@@ -419,12 +423,14 @@ function createSession(root) {
 
             // (2) Union D-B: movimientos operativos historicos del tipo mapeado.
             // La categoria historica vive en agro_operational_cycles (join logico).
+            // Q1/Q5: solo Movimientos Generales (ciclo sin cultivo), congelados
+            // para lectura; backfill de particiones, despues.
             const opType = TILE_TO_OP_TYPE[tile.id];
             let opRows = [];
             if (opType) {
                 const [cyclesResult, movementsResult] = await Promise.all([
                     supabase.from('agro_operational_cycles')
-                        .select('id,economic_type,category')
+                        .select('id,economic_type,category,crop_id')
                         .eq('economic_type', opType)
                         .limit(2000),
                     (() => {
@@ -438,7 +444,9 @@ function createSession(root) {
                 if (cyclesResult.error) throw cyclesResult.error;
                 if (movementsResult.error) throw movementsResult.error;
                 const cycleById = new Map(
-                    (cyclesResult.data || []).map((cycle) => [String(cycle.id), cycle])
+                    (cyclesResult.data || [])
+                        .filter((cycle) => !String(cycle?.crop_id || '').trim())
+                        .map((cycle) => [String(cycle.id), cycle])
                 );
                 opRows = (movementsResult.data || [])
                     .filter((row) => cycleById.has(String(row.cycle_id)))
@@ -796,7 +804,7 @@ function createSession(root) {
             <div class="fcvw-picker">
                 <span class="fcvw-picker__label">Finca</span>
                 <div class="fcvw-picker__strip" role="group" aria-label="Contexto de finca">${chips}</div>
-                <p class="fcvw-note">Este facturero trabaja por finca completa. Los movimientos ligados solo a un cultivo se leen en el Facturero del Cultivo.</p>
+                <p class="fcvw-note">Este facturero lee los movimientos generales de la finca (sin cultivo). Los ligados a un cultivo se leen en el Facturero del Cultivo; Períodos agrega la finca completa por fecha.</p>
             </div>
         `;
     }

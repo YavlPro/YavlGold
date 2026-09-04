@@ -2648,3 +2648,50 @@ order by 1,3 desc;
 git add apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "feat(finca): Fase 3 — topbar al gate, CREAR al ledger con union en VER, paso de categoria real (VER 5 / CREAR 6)"
 ```
+
+---
+
+## Sesion 2026-09-03 (IV) — ANEXO 6: respuestas del owner + fix bug de categorias + Q1/Q4
+
+Agente: GLM (ZCode). Entrada: ANEXO 6 (respuestas Q1-Q6 del owner, prevalecen) + bug de QA: "todas las categorias envian al mismo registro de gasto".
+
+### Fix del bug de QA (causa raiz exacta)
+Los `cols` de los selects NO incluian la columna de categoria: gastos ('id,concept,amount,currency,date,created_at' sin `category`) e ingresos (sin `categoria`). Resultado: TODAS las filas quedaban con categoria '' → los unicos chips eran "Todas" y "Sin categoria", ambos mostrando la misma lista (exactamente el sintoma del owner). Fix: `category` anadido a cols de gastos y `categoria` a cols de ingresos. El filtro (filteredTileRows) ya era correcto; solo faltaba el dato.
+
+### Decisiones del owner (ANEXO 6) registradas y aplicadas donde corresponde
+
+| Item | Respuesta | Efecto en codigo/registro |
+|---|---|---|
+| Q1 | SI con aclaracion | **APLICADO**: particion estricta del wizard — VER filtra `.is('crop_id', null)` en las 5 tablas del ledger (columna verificada en todas) y la union operativa solo toma ciclos SIN cultivo (Movimientos Generales). Períodos (Operaciones de la Finca) queda como agregado de finca completa por rango (su reader con filtro farm_id, todas las particiones) — NO se toca: es superficie propia §4.4. Nota del picker reescrita explicando la particion sin ambiguedad. Ciclos de Cultivo sigue por cultivo. |
+| Q2 | SI (el mismo dinero nunca dos veces) | Ya cubierto: dedup exact-match (fecha+monto+concepto, ledger prima) con no-duplicacion asumida y documentada (item 7-9(b)). |
+| Q3 | SI (Finca lee fiados; no los crea ni gestiona) | Ya vigente desde F1 (Fiado excluido de CREAR; gestion en Clientes). |
+| Q4 | OVERRIDE SI | **APLICADO**: borderShimmer canonico ADN §19.5 — una sola linea bajo la topbar del wizard (`.fcwz .fcvw__topbar::after`): 3s linear infinite, opacidad 0.4, `--metallic-border`, `background-size: 200% 100%`; `prefers-reduced-motion` → borde estatico `var(--border-gold)`. NUNCA en tiles/footer/botones/inputs (verificado: una sola regla). |
+| Q5 | SI (congelar+leer Movimientos Generales ahora) | Ya vigente: la union lee los historicos generales; backfill = deuda documentada. |
+| Q6 | SI + hoja de ruta | Registrado: legacy Cultivo/Personal se decide al construir sus wizards. **Proximo subfrente confirmado: Facturero del Cultivo.** |
+| 7-9 | Vigentes como recomendo el orquestador | (b) dedup asumido documentado; RPC/velocimetro = deuda (reabre solo si (e) positiva); batches B-H + F.3 + ADN §22 en el pase documental post-GREEN con palabra del owner — NO ejecutados ahora. |
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `agro/agro-facturero-finca-wizard.js` | Fix categorias (cols +category/+categoria); particion estricta Q1 (`.is('crop_id', null)` en ledger; ciclos op filtrados a crop_id null en el join; select de ciclos +crop_id); nota del picker Q1. |
+| `agro/agro-facturero-finca-wizard.css` | borderShimmer Q4 bajo la topbar (spec §19.5 textual) + reduced-motion estatico. |
+
+### Resultado de build
+`pnpm build:gold` verde (2.35s; UTF-8 OK; shimmer verificado en dist).
+
+### QA online para el owner
+1. **Categorias (el bug)**: VER → Gastos → las categorias reales ahora DIFIEREN entre chips; cada chip filtra su grupo; "Sin categoria" solo los sin categoria; lo mismo en Ingresos.
+2. **Particion (Q1)**: un movimiento ligado a cultivo NO aparece en el wizard de finca; los generales de finca si; Períodos sigue agregando la finca completa.
+3. **Shimmer (Q4)**: linea dorada animada bajo la topbar (3s); con reduced-motion del SO, estatica dorada; sin shimmer en ningun otro elemento del wizard.
+
+### NO se hizo
+- Períodos/reader sin tocar (agregado propio). Batches B-H + F.3 + ADN §22 pendientes del pase documental post-GREEN con palabra del owner. Backfill congelado (deuda). Sin git.
+
+### Git sugerido (NO ejecutado)
+```bash
+git add apps/gold/agro/agro-facturero-finca-wizard.js \
+        apps/gold/agro/agro-facturero-finca-wizard.css \
+        apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(finca): ANEXO 6 — categorias reales por chip (cols faltantes), particion estricta crop_id null y borderShimmer §19.5"
+```
