@@ -2870,3 +2870,139 @@ git add apps/gold/agro/agro-facturero-finca-wizard.js \
         apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "feat(finca): Fase 6 v2 — categorias canonicas como tiles (VER con conteos, CREAR con desc) y traduccion historica translateCategory"
 ```
+
+---
+
+## Sesion 2026-09-08 — QA owner "nada se soluciona": diagnostico de deploy + honestidad de montos nulos
+
+Agente: GLM (ZCode). Captura del owner (08 sep 21:08): lista Ingresos · finca la ladera con filas "$0.00" y conceptos heredados ("operacion de ciclos", "kit de sistema para regar").
+
+### Diagnostico (antes de tocar)
+- **Todo esta commiteado y PUSHEADO** (`main...origin/main` sin delta; Fase 6 v2 commiteada 08 sep 20:51, 17 min antes de la captura; el build del 04 sep con B7+ANEXO 6-8 llevaba 4 dias desplegado). La hipotesis "deploy viejo" se descarto con `git status -sb`.
+- **Causa real de los "$0.00"**: la union D-B trae movimientos operativos historicos con `amount NULL`; `Number(null) === 0` los pintaba como "$0.00" — falso (no es cero, es sin monto). Linea: `formatMoney` con `Number(row?.monto)`.
+- **Filas cripticas**: son historicos operativos reales (concept heredado del modal viejo) sin distincion visual de origen — parecen bugs sin contexto.
+
+### Cambios realizados
+| Archivo | Cambio |
+|---|---|
+| `agro/agro-facturero-finca-wizard.js` | `formatMoney`: monto null/undefined/vacio → **"Monto no anotado"** (label que el sistema ya usa; §8.5 verdad antes que apariencia). Cero real sigue mostrando $0.00. Fila de la union operacional lleva tag discreto **"historico operacional"** para explicar su origen. |
+| `agro/agro-facturero-finca-wizard.css` | Estilo del tag `.fcwz-movements__tag` (pill discreto). |
+
+### Resultado de build
+`pnpm build:gold` verde (2.56s; UTF-8 OK).
+
+### QA online para el owner
+1. Recargar (Ctrl+Shift+R) el wizard → Ingresos · finca la ladera: los historicos sin monto ahora dicen "Monto no anotado" (no $0.00) y llevan tag "historico operacional".
+2. **Pendiente dirimidor**: el SQL (1) de la sesion 2026-09-04 (cruce de "kit de sistema para regar" en las 5 tablas con created_at) — determina si ese registro se guardo como ingreso (correcto bajo Ingresos) o como gasto (si es gasto ahi, hay un bug de escritura que toco). Sin ese resultado no se declara nada.
+
+### NO se hizo
+- Sin filtrar historicos sin monto (esconder datos = peor; tag honesto). Sin QA del agente. Sin git (comando abajo).
+
+### Git sugerido (NO ejecutado)
+```bash
+git add apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/agro/agro-facturero-finca-wizard.css apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(finca): montos nulos muestran 'Monto no anotado' (no \$0.00 falso) + tag de origen historico operacional"
+```
+
+---
+
+## Sesion 2026-09-08 (II) — Evidencia SQL del owner: lectura y cierre del diagnostico
+
+### Lo que prueban los resultados pegados (movements + cycles)
+1. **Esquema real de movements confirmado**: `concept`/`amount`/`farm_id` existen tal como los lee la union (sin suposiciones pendientes del ANEXO 7).
+2. **"bomba de riego" y "kit de sistema para regar" son registros del SISTEMA VIEJO**: ciclos operativos `economic_type='expense'` con movements `direction='out'` y montos reales (COP 50.000 y 230.000), creados 2026-06-04 y 2026-09-03 22:48 — es decir, creados por el flujo de ciclos (modal/Operaciones de la Finca), NO por el wizard nuevo (que escribe a agro_expenses). Ambos con farm_id de finca la ladera y crop_id null.
+3. **Tile correcto de ambos = GASTOS** (expense → TILE_TO_OP_TYPE). El wizard los muestra bajo Gastos con su monto real y, tras el fix de hoy, con tag "historico operacional".
+4. **Las filas "$0.00" de la captura (fechas de agosto) eran OTROS historicos**: movements de ciclos income con amount null — ya cubiertos por "Monto no anotado" + tag (sesion 2026-09-08).
+
+### Hallazgo de producto (decision del owner, no se toco nada)
+Coexisten DOS puertas de creacion: el wizard nuevo (→ ledger: agro_expenses/agro_income...) y Operaciones de la Finca / period-cycles (→ ciclos operativos, como estos 2 registros). Ambas conviven por diseno (§4.4 mando conservar intacta la superficie de periodos), pero pueden confundir: un gasto creado por periodos NO es el mismo registro que uno creado por el wizard. Opciones futuras del owner: (a) convivencia documentada, (b) unificar creacion en el wizard y dejar periodos solo lectura/agregado. Registrado sin accion.
+
+### Verificacion final para el owner (5 min)
+1. VER → Gastos → finca la ladera: "bomba de riego" (COL$50.000) y "kit de sistema para regar" (COL$230.000) aparecen SOLO aqui, con tag "historico operacional"; Ingresos ya no los muestra.
+2. CREAR desde el WIZARD (gate → Crear registro → Gasto): verificar en SQL que el registro nuevo cae en `agro_expenses` (fuente nueva) y aparece en VER sin recargar.
+3. Los "$0.00" de agosto ahora dicen "Monto no anotado".
+
+### NO se hizo
+- Sin cambios de codigo en esta sesion (la evidencia exculpa al codigo; los fixes del 08 siguen pendientes de push por el owner).
+
+### Git pendiente (recordatorio; NO ejecutado por el agente)
+```bash
+git add apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/agro/agro-facturero-finca-wizard.css apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(finca): montos nulos muestran 'Monto no anotado' + tag de origen historico operacional" && git push
+```
+
+---
+
+## Sesion 2026-09-08 (III) — ANEXO 9: filtros sobre campos normalizados en AMBAS ramas de la union
+
+Agente: GLM (ZCode). Causa raiz confirmada por el owner: "bomba de riego" y "kit de sistema" (cycles expense, movements out) aparecen bajo Ingresos y en toda finca/categoria — la rama operacional de la union no garantizaba los filtros de tipo/finca/categoria. Directiva aplicada: normalizar CADA fila y filtrar DESPUES de normalizar, ambas ramas, sin excepciones.
+
+### Paso 0 — vocabularios reales (queries para el owner; sin editar datos)
+```sql
+select distinct direction from agro_operational_movements;
+select distinct economic_type from agro_operational_cycles;
+-- doble existencia ledger+operacional (dedup actuaria si hay filas):
+select 'expenses' t, concept from agro_expenses where deleted_at is null and (concept ilike '%bomba%' or concept ilike '%kit%')
+union all select 'income', concepto from agro_income where deleted_at is null and (concepto ilike '%bomba%' or concepto ilike '%kit%');
+```
+Vocabulario asumido por la normalizacion (a confirmar con el distinct): direction in/out (evidencia previa: ambos movimientos QA son 'out'); economic_type expense/income/donation/loss (CHECK del schema).
+
+### Paso 1-2 — Cambio aplicado (agro-facturero-finca-wizard.js, solo fetchTileRows)
+- **Normalizacion operacional (fila a fila)**: `type` = direction `'in'`→income; donation/loss del ciclo se conservan; direction `'out'` (o ausente) → economic_type del ciclo (expense por defecto). `farmKey` = movements.farm_id con fallback cycles.farm_id. `categoria` = cycles.category traducida. fecha/monto/currency del movement.
+- **Triple filtro POST-normalizacion en AMBAS ramas**: ledger tambien se normaliza (`type` por tabla, `farmKey`) y se filtra `type === opType && (!finca || farmKey === finca)` — refuerzo inmuniza aunque la query falle. La union trae ciclos (todos, sin eq de tipo) y movements (sin farm filter en query) y **ninguna fila entra sin pasar los tres filtros sobre campos normalizados** (tipo, finca, crop-null del ciclo; categoria se filtra en cliente en filteredTileRows — comun a ambas ramas).
+- Dedup exact-match (fecha+monto+concepto, ledger prima) intacto.
+
+### Paso 3 — MATRIZ POR CELDA (DoD ANEXO 9) con queries reales
+farm_id de "finca la ladera" = `8b219411-a302-409b-8719-86813fb23cc8` (de la evidencia del owner). Cada celda replica EXACTAMENTE la normalizacion + filtros del codigo. El owner pega el conteo real.
+
+```sql
+-- C1: Gastos × finca la ladera — ESPERADO: 2 (bomba + kit), ni una mas
+select count(*) from agro_operational_movements m join agro_operational_cycles c on c.id = m.cycle_id
+where (m.direction = 'in' and false) or (m.direction is null or m.direction <> 'in')
+  and c.economic_type not in ('donation','loss') and c.economic_type = 'expense'
+  and coalesce(c.crop_id::text,'') = '' and coalesce(m.farm_id::text, c.farm_id::text) = '8b219411-a302-409b-8719-86813fb23cc8';
+-- (mas simple y equivalente al codigo: out/expense/crop-null/finca)
+select count(*) from agro_operational_movements m join agro_operational_cycles c on c.id = m.cycle_id
+where m.direction <> 'in' and c.economic_type = 'expense' and c.crop_id is null
+  and coalesce(m.farm_id, c.farm_id) = '8b219411-a302-409b-8719-86813fb23cc8'::uuid;
+
+-- C2: Ingresos × finca la ladera — ESPERADO: 0 (celda cero que prueba discriminacion)
+select count(*) from agro_operational_movements m join agro_operational_cycles c on c.id = m.cycle_id
+where (m.direction = 'in') and c.crop_id is null
+  and coalesce(m.farm_id, c.farm_id) = '8b219411-a302-409b-8719-86813fb23cc8'::uuid;
+
+-- C3: Gastos × OTRA finca (reemplazar <OTRA_FINCA_UUID>) — ESPERADO: 0
+select count(*) from agro_operational_movements m join agro_operational_cycles c on c.id = m.cycle_id
+where m.direction <> 'in' and c.economic_type = 'expense' and c.crop_id is null
+  and coalesce(m.farm_id, c.farm_id) = '<OTRA_FINCA_UUID>'::uuid;
+
+-- C4: Doble existencia ledger+operacional de bomba/kit (dedup actuaria si > 0 en expenses)
+select count(*) from agro_expenses where deleted_at is null and (concept ilike '%bomba%' or concept ilike '%kit%');
+
+-- Ledger por celda (fuente nueva): gastos/ingresos de agro_expenses/agro_income con crop_id null y farm de la ladera
+select count(*) from agro_expenses where deleted_at is null and crop_id is null and farm_id = '8b219411-a302-409b-8719-86813fb23cc8'::uuid;
+select count(*) from agro_income where deleted_at is null and crop_id is null and reverted_at is null and farm_id = '8b219411-a302-409b-8719-86813fb23cc8'::uuid;
+```
+
+| Celda | Query | Esperado | Conteo real (owner) |
+|---|---|---|---|
+| Gastos × la ladera | C1 | **2** (bomba+kit) | ___ |
+| Ingresos × la ladera | C2 | **0** | ___ |
+| Gastos × otra finca | C3 | **0** | ___ |
+| Doble existencia (dedup) | C4 | 0 o manejado por dedup | ___ |
+| Ledger gastos × la ladera | C5 | ___ | ___ |
+| Ledger ingresos × la ladera | C6 | ___ | ___ |
+
+**Cierre (§8.5)**: Gastos×la ladera debe mostrar exactamente 2 filas + C5 del ledger; Ingresos×la ladera 0; en el wizard, bomba/kit SOLO bajo Gastos con tag "historico operacional". Sin conteos reales pegados, no se declara cerrado.
+
+### Resultado de build
+`pnpm build:gold` verde (2.57s; UTF-8 OK; node --check OK).
+
+### NO se hizo
+- Sin DDL. Sin tocar CREAR (regla del anexo). Sin QA del agente. Sin git.
+
+### Git sugerido (NO ejecutado)
+```bash
+git add apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(finca): ANEXO 9 — normalizacion y triple filtro post-normalizacion en ambas ramas de la union (tipo por direction, finca y categoria)"
+```

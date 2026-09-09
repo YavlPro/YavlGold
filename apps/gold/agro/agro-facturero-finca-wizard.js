@@ -405,7 +405,14 @@ function createSession(root) {
     }
 
     function formatMoney(row) {
-        const amount = Number(row?.monto);
+        // Honestidad §8.5: monto null/undefined NO es cero — el sistema ya usa
+        // el label "Monto no anotado" para eso. Number(null)===0 pintaba "$0.00"
+        // falso en los historicos operativos sin monto.
+        const raw = row?.monto;
+        if (raw === null || raw === undefined || String(raw).trim() === '') {
+            return 'Monto no anotado';
+        }
+        const amount = Number(raw);
         if (!Number.isFinite(amount)) return '—';
         const currency = String(row?.currency || 'USD').trim().toUpperCase();
         const symbols = { USD: '$', COP: 'COL$', VES: 'Bs' };
@@ -437,6 +444,9 @@ function createSession(root) {
         render();
 
         try {
+            const opType = TILE_TO_OP_TYPE[tile.id];
+            const farmId = state.farmId || '';
+
             // (1) Ledger crudo (fuente nueva de CREAR desde D-B).
             // Q1 (ANEXO 6): partición estricta del wizard — solo Movimientos
             // Generales de finca (crop_id null). El agregado de finca completa
@@ -450,60 +460,84 @@ function createSession(root) {
                 .order('created_at', { ascending: false })
                 .limit(LIST_LIMIT);
             if (tile.scope) query = tile.scope(query);
-            if (state.farmId) query = query.eq('farm_id', state.farmId);
+            if (farmId) query = query.eq('farm_id', farmId);
             const ledgerResult = await query;
             if (ledgerResult.error) throw ledgerResult.error;
 
             const alias = tile.alias || {};
             const categoryField = tile.id === 'gastos' ? 'category' : (tile.id === 'ingresos' ? 'categoria' : '');
-            const ledgerRows = (Array.isArray(ledgerResult.data) ? ledgerResult.data : []).map((row) => ({
-                ...row,
-                origen: 'ledger',
-                fecha: row?.[alias.fecha || 'fecha'],
-                concepto: row?.[alias.concepto || 'concepto'],
-                monto: row?.[alias.monto || 'monto'],
-                // CAT-3: la categoria se traduce al id canonico en lectura.
-                categoria: translateCategory(row?.[categoryField])
-            }));
+            // ANEXO 9 Paso 2: la rama ledger TAMBIEN se normaliza (type por
+            // tabla de origen) y se filtra sobre campos normalizados — ningún
+            // refuerzo depende solo de la query.
+            const ledgerRows = (Array.isArray(ledgerResult.data) ? ledgerResult.data : [])
+                .map((row) => ({
+                    ...row,
+                    origen: 'ledger',
+                    type: opType,
+                    farmKey: String(row?.farm_id || '').trim(),
+                    fecha: row?.[alias.fecha || 'fecha'],
+                    concepto: row?.[alias.concepto || 'concepto'],
+                    monto: row?.[alias.monto || 'monto'],
+                    // CAT-3: la categoria se traduce al id canonico en lectura.
+                    categoria: translateCategory(row?.[categoryField])
+                }))
+                .filter((row) => row.type === opType
+                    && (!farmId || row.farmKey === farmId));
 
-            // (2) Union D-B: movimientos operativos historicos del tipo mapeado.
-            // La categoria historica vive en agro_operational_cycles (join logico).
-            // Q1/Q5: solo Movimientos Generales (ciclo sin cultivo), congelados
-            // para lectura; backfill de particiones, despues.
-            const opType = TILE_TO_OP_TYPE[tile.id];
+            // (2) Union D-B (ANEXO 9 Paso 1): movimientos operativos historicos
+            // NORMALIZADOS fila por fila antes de filtrar. El tipo se decide por
+            // direction (in→ingreso) y el ciclo aporta el semantico (expense/
+            // donation/loss) cuando direction no basta. NINGUNA fila se inyecta
+            // sin pasar los TRES filtros sobre campos normalizados.
             let opRows = [];
             if (opType) {
                 const [cyclesResult, movementsResult] = await Promise.all([
                     supabase.from('agro_operational_cycles')
-                        .select('id,economic_type,category,crop_id')
-                        .eq('economic_type', opType)
-                        .limit(2000),
+                        .select('id,economic_type,category,crop_id,farm_id')
+                        .limit(3000),
                     (() => {
                         let q = supabase.from('agro_operational_movements')
-                            .select('id,cycle_id,amount,currency,amount_usd,concept,movement_date,created_at,farm_id')
+                            .select('id,cycle_id,direction,amount,currency,amount_usd,concept,movement_date,created_at,farm_id')
                             .limit(3000);
-                        if (state.farmId) q = q.eq('farm_id', state.farmId);
                         return q;
                     })()
                 ]);
                 if (cyclesResult.error) throw cyclesResult.error;
                 if (movementsResult.error) throw movementsResult.error;
+
                 const cycleById = new Map(
-                    (cyclesResult.data || [])
-                        .filter((cycle) => !String(cycle?.crop_id || '').trim())
-                        .map((cycle) => [String(cycle.id), cycle])
+                    (cyclesResult.data || []).map((cycle) => [String(cycle.id), cycle])
                 );
+
+                const normalizeOpType = (movement, cycle) => {
+                    const direction = String(movement?.direction || '').trim().toLowerCase();
+                    const economicType = String(cycle?.economic_type || '').trim().toLowerCase();
+                    if (direction === 'in') return 'income';
+                    if (economicType === 'donation' || economicType === 'loss') return economicType;
+                    if (!direction) return economicType;
+                    return 'expense';
+                };
+
                 opRows = (movementsResult.data || [])
-                    .filter((row) => cycleById.has(String(row.cycle_id)))
-                    .map((row) => ({
-                        ...row,
-                        origen: 'operacional',
-                        fecha: row?.movement_date,
-                        concepto: row?.concept,
-                        monto: row?.amount,
-                        // CAT-3: categoria historica del ciclo, traducida en lectura.
-                        categoria: translateCategory(cycleById.get(String(row.cycle_id))?.category)
-                    }));
+                    .map((movement) => {
+                        const cycle = cycleById.get(String(movement.cycle_id)) || null;
+                        const farmKey = String(movement?.farm_id || cycle?.farm_id || '').trim();
+                        return {
+                            ...movement,
+                            origen: 'operacional',
+                            type: normalizeOpType(movement, cycle),
+                            farmKey,
+                            cycleCropId: String(cycle?.crop_id || '').trim(),
+                            fecha: movement?.movement_date,
+                            concepto: movement?.concept,
+                            monto: movement?.amount,
+                            // CAT-3: categoria historica del ciclo, traducida en lectura.
+                            categoria: translateCategory(cycle?.category)
+                        };
+                    })
+                    .filter((row) => row.type === opType            // tipo normalizado
+                        && !row.cycleCropId                          // Q1: movimientos generales
+                        && (!farmId || row.farmKey === farmId));    // finca normalizada
             }
 
             // (3) Sin duplicados: ledger prima ante coincidencia exacta
@@ -968,7 +1002,7 @@ function createSession(root) {
                 ${rows.map((row) => `
                     <li class="fcwz-movements__item">
                         <span class="fcwz-movements__date">${escapeHtml(String(row?.fecha || '').slice(0, 10) || 'Sin fecha')}</span>
-                        <span class="fcwz-movements__text">${escapeHtml(movementText(row, tile))}${row?.categoria ? ` <span class="fcwz-movements__tag">${escapeHtml(getCategoryLabel(row.categoria))}</span>` : ''}</span>
+                        <span class="fcwz-movements__text">${escapeHtml(movementText(row, tile))}${row?.origen === 'operacional' ? ' <span class="fcwz-movements__tag">histórico operacional</span>' : ''}${row?.categoria ? ` <span class="fcwz-movements__tag">${escapeHtml(getCategoryLabel(row.categoria))}</span>` : ''}</span>
                         <span class="fcwz-movements__amount">${renderMoneyNode(formatMoney(row))}</span>
                     </li>
                 `).join('')}

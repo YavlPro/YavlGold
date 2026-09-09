@@ -125,6 +125,20 @@
     white-space: nowrap;
 }
 
+/* Tag discreto de contexto: categoria canonica y origen "historico
+   operacional" (union D-B) — explica de donde sale cada fila. */
+.fcwz-movements__tag {
+    display: inline-block;
+    margin-left: 0.35rem;
+    padding: 0.05rem 0.45rem;
+    border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.12));
+    border-radius: var(--radius-pill, 999px);
+    color: var(--text-muted, #94a3b8);
+    font-size: 0.68rem;
+    font-weight: 600;
+    vertical-align: middle;
+}
+
 /* ---------- Disclosure: Acciones del sistema (24 h) ---------- */
 .fcwz-actions {
     border-top: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.07));
