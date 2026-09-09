@@ -1,7 +1,7 @@
 /**
  * Facturero de la Finca — Wizard de lectura y creación (gate + 2 ramas).
  * Ruta hash: #view=facturero-finca&subview=wizard&paso=N&rama=ver|crear
- * F5 restaura paso/rama (hash + respaldo localStorage).
+ * F5 restaura paso/rama/finca/categoría por hash (ANEXO 12: sin storage).
  *
  * Decisiones de sesión del owner (2026-09-02, pendientes de canonización §4.5.2):
  * - SIN selector de cultivo en ningún paso: este facturero es exclusivo de finca.
@@ -25,7 +25,6 @@ import { readMoneyValuesHidden } from './agro-privacy.js';
 
 const ROOT_ID = 'agro-operational-root';
 const FINCA_VIEWS = new Set(['facturero-finca', 'operational']);
-const STORAGE_KEY = 'YG_AGRO_FINCA_WIZARD_STATE_V1';
 const WIZARD_BODY_CLASS = 'agro-fcv-wizard-active';
 const ACTIONS_WINDOW_HOURS = 24;
 const LIST_LIMIT = 500;
@@ -213,27 +212,22 @@ function readWizardHash() {
             paso: Number.parseInt(hash.get('paso') || '', 10) || null,
             rama: String(hash.get('rama') || '').trim().toLowerCase() === RAMA_CREAR ? RAMA_CREAR : RAMA_VER,
             finca: String(hash.get('finca') || '').trim(),
-            cat: String(hash.get('cat') || '').trim()
+            cat: String(hash.get('cat') || '').trim(),
+            done: String(hash.get('done') || '').trim() === '1'
         };
     } catch (_err) {
-        return { paso: null, rama: RAMA_VER, finca: '', cat: '' };
-    }
-}
-
-function readStoredState() {
-    try {
-        const raw = window.localStorage.getItem(STORAGE_KEY);
-        return raw ? JSON.parse(raw) : null;
-    } catch (_err) {
-        return null;
+        return { paso: null, rama: RAMA_VER, finca: '', cat: '', done: false };
     }
 }
 
 function createSession(root) {
     let alive = true;
-    const initial = readWizardHash();
-    const stored = initial.paso ? null : readStoredState(); // respaldo si el shell pisó el hash
-    const source = initial.paso ? initial : (stored || {});
+    // ANEXO 12 (B8): la entrada decide SOLO por el hash. Con paso → restaurar
+    // (F5, canon §9.27 — el shell ya preserva el hash profundo). Sin paso →
+    // gate limpio. El storage de respaldo se retiró: revivía la sesión vieja
+    // al entrar desde el hub. El flag `done` viaja en el hash (anti-reconfirmar
+    // tras F5 en la pantalla de éxito).
+    const source = readWizardHash();
 
     const state = {
         rama: source.rama === RAMA_CREAR ? RAMA_CREAR : RAMA_VER,
@@ -252,7 +246,7 @@ function createSession(root) {
         listScope: { phase: 'loading', rows: [], error: '', requestId: 0 },
         actionsScope: { phase: 'idle', rows: [], error: '', requestId: 0 },
         exchangeRates: { USD: 1, COP: null, VES: null },
-        created: source.created === true && source.rama === RAMA_CREAR && Number(source.paso) === CREAR_TOTAL
+        created: source.done === true && source.rama === RAMA_CREAR && Number(source.paso) === CREAR_TOTAL
     };
 
     let exchangeReady = false;
@@ -310,20 +304,15 @@ function createSession(root) {
             params.set('paso', String(state.paso));
             params.set('rama', state.rama);
             if (state.farmId) params.set('finca', state.farmId);
-            // D-C: la categoria restaura con F5 (hash + storage).
+            // D-C: la categoria restaura con F5 (via hash).
             const categoriaValue = state.rama === RAMA_CREAR ? state.crearCategoria : state.categoria;
             if (categoriaValue) params.set('cat', categoriaValue);
+            // ANEXO 12: `done` viaja en el hash (antes en storage) — evita que
+            // un F5 en la pantalla de exito re-ofrezca confirmar dos veces.
+            if (state.created) params.set('done', '1');
             const url = new URL(window.location.href);
             url.hash = `#${params.toString()}`;
             history.replaceState(null, '', url);
-            window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
-                rama: state.rama, paso: state.paso, finca: state.farmId,
-                categoria: state.categoria,
-                crearCategoria: state.crearCategoria,
-                // created evita que un F5 en la pantalla de exito re-ofrezca
-                // confirmar el mismo registro dos veces.
-                created: state.created
-            }));
         } catch (_err) {
             // Ignorar fallos de routing.
         }
@@ -1301,9 +1290,6 @@ function createSession(root) {
     function destroy() {
         alive = false;
         document.body.classList.remove(WIZARD_BODY_CLASS);
-        try {
-            window.localStorage.removeItem(STORAGE_KEY);
-        } catch (_err) { /* ignore */ }
     }
 
     document.body.classList.add(WIZARD_BODY_CLASS);

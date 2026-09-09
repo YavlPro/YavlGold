@@ -658,9 +658,18 @@ function writeViewToHash(view, subview) {
         if (view === AGRO_DEFAULT_VIEW && !subview) {
             url.hash = '';
         } else {
-            url.hash = subview
-                ? `view=${encodeURIComponent(view)}&subview=${encodeURIComponent(subview)}`
-                : `view=${encodeURIComponent(view)}`;
+            // ANEXO 12 (B8): si el hash actual ya expresa exactamente esta
+            // view+subview (F5 o re-navegacion al mismo destino), no reescribir:
+            // preserva los parametros profundos (paso/rama/finca/cat de los
+            // wizards) en vez de pisarlos.
+            const currentParams = new URLSearchParams(url.hash.replace(/^#/, ''));
+            const sameTarget = currentParams.get('view') === view
+                && String(currentParams.get('subview') || '') === String(subview || '');
+            if (!sameTarget) {
+                url.hash = subview
+                    ? `view=${encodeURIComponent(view)}&subview=${encodeURIComponent(subview)}`
+                    : `view=${encodeURIComponent(view)}`;
+            }
         }
         history.replaceState(null, '', url);
     } catch (_err) { /* ignore */ }

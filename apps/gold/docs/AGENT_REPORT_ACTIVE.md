@@ -3048,3 +3048,45 @@ git add apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/docs/AGENT_REPOR
 git commit -m "fix(finca): ANEXO 11 — guard del paso de categoria de VER mapeaba tile ES contra claves EN (tiles canonicos eran codigo muerto)"
 git push
 ```
+
+---
+
+## Sesion 2026-09-09 — ANEXO 12 (B8): entrada al wizard arranca en el gate
+
+Agente: GLM (ZCode). QA del owner: entrar desde el hub aterrizaba en el ultimo paso de VER en vez del gate.
+
+### Trazado (a-d) sin editar — causa raiz
+- **(a)** El paso inicial se decide en `createSession`: `initial = readWizardHash(); stored = initial.paso ? null : readStoredState(); source = initial.paso ? initial : stored`.
+- **(b)** Orden: hash primero; **si el hash no trae paso → localStorage** (`YG_AGRO_FINCA_WIZARD_STATE_V1`, escrito por syncHash en cada render).
+- **(c)** Entrada desde el hub: `setActiveView` → `writeViewToHash('facturero-finca','wizard')` escribia `#view=...&subview=wizard` **SIN paso** → readWizardHash daba paso null → **el fallback al storage revivia la sesion vieja completa** (paso 4, finca, categoria). El "respaldo F5" se habia convertido en persistencia de sesion: cualquier salida que no pasara por mis destroys (gate del hub sin view-changed, cierre de pestana) dejaba el storage vivo.
+- **(d)** destroy limpiaba el storage (:1295 pre-fix) solo por exitToSurface y view-changed — insuficiente (c).
+
+### Fix en dos capas
+| Capa | Archivo | Cambio |
+|---|---|---|
+| 1 — Shell | `agro-shell.js` `writeViewToHash` | Si el hash actual YA expresa exactamente la misma view+subview (F5 o re-navegacion al mismo destino), **no reescribir** — preserva los params profundos (paso/rama/finca/cat) que antes se pisaban. Esto hace que la restauracion F5 viva en el PROPIO hash (mas robusta que cualquier storage) y beneficia a cualquier superficie profunda futura. |
+| 2 — Wizard | `agro-facturero-finca-wizard.js` | **Storage eliminado por completo** (constante, readStoredState, write en syncHash, remove en destroy — 0 referencias). Entrada decide SOLO por hash: con paso → restaurar; sin paso → **gate limpio paso 1**. El flag anti-reconfirmacion `created` migra al hash (`&done=1`) para que el F5 en la pantalla de exito siga protegido. |
+
+### DoD — verificacion estatica de los 3 escenarios (razonados linea a linea)
+1. **Hub → Facturero de la Finca**: hash actual `view=granja` ≠ destino → writeViewToHash escribe `...&subview=wizard` sin paso → readWizardHash paso null → `clampPaso(null||1)` → **gate paso 1** (sin storage que reviva).
+2. **Paso 4 + F5**: syncHash dejo `...&paso=4&rama=ver&finca=X&cat=Y`; al arrancar, writeViewToHash ve sameTarget (misma view+subview) → hash intacto → init lee paso=4+finca+cat → **paso 4 restaurado** (trigger del mount re-fetchea la lista).
+3. **Volver al hub y re-entrar**: exit escribe `#view=granja` (sin params del wizard); re-entrada = escenario 1 → **gate paso 1** otra vez.
+Edge documentado: re-navegar al MISMO destino estando dentro del wizard (favorito) preserva la posicion actual (no resetea a gate) — deseable; y un hash manual con alias `operational` se normaliza a limpio (edge aceptable).
+
+### Resultado de build
+`pnpm build:gold` verde (2.25s; UTF-8 OK; grep storage = 0).
+
+### QA online para el owner
+1. Hub Granja → Facturero de la Finca → **gate Crear/Ver** (paso 1).
+2. Navegar a VER paso 5 → F5 → mismo paso con finca y categoria; lista recargada.
+3. Volver al hub → re-entrar → gate otra vez.
+4. CREAR → Confirmar → exito → F5 → sigue la pantalla de exito (no re-ofrece confirmar).
+
+### NO se hizo
+- Sin git (comando abajo). F5 por hash intacto (canon). Sin tocar otras superficies.
+
+### Git sugerido (NO ejecutado)
+```bash
+git add apps/gold/agro/agro-shell.js apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(finca): ANEXO 12 — entrada al wizard siempre en el gate (shell preserva hash profundo en same-target; storage de sesion retirado; done viaja en hash)"
+```
