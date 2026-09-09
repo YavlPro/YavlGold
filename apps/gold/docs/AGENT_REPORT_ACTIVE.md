@@ -3006,3 +3006,45 @@ select count(*) from agro_income where deleted_at is null and crop_id is null an
 git add apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "fix(finca): ANEXO 9 — normalizacion y triple filtro post-normalizacion en ambas ramas de la union (tipo por direction, finca y categoria)"
 ```
+
+---
+
+## Sesion 2026-09-08 (IV) — ANEXO 11 (fix M1): guard ES/EN hacia muerto el paso de categoria de VER
+
+Agente: GLM (ZCode). **Diagnostico externo: Gemini 3.8 (M1 del owner)** — verificado por GLM contra el codigo antes de aplicar (§8.2). El diagnostico acerto: causa raiz + R15 dirimido (commits en origin/main por reflog; deploy Vercel activo; el codigo nuevo SI corria en vivo).
+
+### Causa raiz (mi error en Fase 6 v2)
+`renderVerCategoria()` validaba el tile con el diccionario equivocado: `TYPE_TO_TABLE_CATEGORY_FIELD[state.tileId]` — el diccionario esta indexado por TIPO en ingles (`expense`/`income`) y `state.tileId` esta en espanol (`gastos`/`ingresos`) → `undefined` → el guard SIEMPRE caia al fallback "todavia no lleva categorias" → **los 6 tiles canonicos de VER eran codigo muerto** (en CREAR si renderizaba: `tipoId` si esta en ingles). Explica la captura del owner (22:18: solo chips Todas/Sin) y la 22:24 (Sin categoria → 0 filas → empty, porque bomba/kit traducen a 'otros').
+
+### Fix aplicado (1 linea, variante robusta del diagnostico)
+```js
+if (!TYPE_TO_TABLE_CATEGORY_FIELD[TILE_TO_OP_TYPE[state.tileId]]) {
+```
+Mapea por los diccionarios existentes: gastos→expense→category; ingresos→income→categoria; fiados/perdidas/donaciones→fallback honesto. Unico punto roto (verificado por grep): el uso gemelo en CREAR (:921) ya era correcto.
+
+### Verificacion estatica (tabla de verdad del guard, ejecutada)
+| tile | resultado |
+|---|---|
+| gastos | TILES canonicos |
+| ingresos | TILES canonicos |
+| fiados | fallback nota |
+| perdidas | fallback nota |
+| donaciones | fallback nota |
+
+### Resultado de build
+`pnpm build:gold` verde (2.32s; UTF-8 OK).
+
+### QA online para el owner (post-push)
+1. VER → Gastos → Paso 4: los 6 tiles canonicos con icono y conteo; **tile "Otros" con badge 2** (bomba+kit de la ladera); sin chip "Sin categoria" (sus categorias traducen a 'otros').
+2. Tap "Otros" → Paso 5: "bomba de riego" y "kit de sistema" con tag "historico operacional"; "Todas" → todo.
+3. VER → Ingresos → Paso 4: tiles con conteos (celda cero esperada en la ladera); fiados/perdidas/donaciones → nota honesta.
+
+### NO se hizo
+- Sin git (comando abajo). Sin tocar CREAR ni el resto. Rotacion del reporte: NO corresponde (3008 < 4000, verificado por M1 y GLM).
+
+### Git sugerido (NO ejecutado)
+```bash
+git add apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(finca): ANEXO 11 — guard del paso de categoria de VER mapeaba tile ES contra claves EN (tiles canonicos eran codigo muerto)"
+git push
+```

@@ -873,7 +873,10 @@ function createSession(root) {
 
         // Tiles cuya tabla no tiene columna de categoria (trazado ANEXO 6/7:
         // pending/losses/transfers): nota honesta en vez de vocabulario inventado.
-        if (!TYPE_TO_TABLE_CATEGORY_FIELD[state.tileId]) {
+        // ANEXO 11 (fix M1): el tileId esta en espanol y el diccionario de campos
+        // esta indexado por tipo en ingles — se mapea via TILE_TO_OP_TYPE
+        // (gastos→expense→category; ingresos→income→categoria; resto→fallback).
+        if (!TYPE_TO_TABLE_CATEGORY_FIELD[TILE_TO_OP_TYPE[state.tileId]]) {
             return `
                 <div class="fcvw-picker">
                     <span class="fcvw-picker__label">Categoría</span>
