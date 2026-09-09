@@ -48,7 +48,39 @@
     100% { background-position: 200% 0; }
 }
 
-/* ---------- Lista de movimientos (Paso 4 · rama VER) ---------- */
+/* ---------- Tiles de categoría (Fase 6 v2) ----------
+   Mismo lenguaje que los tiles de tipo + desc corta (--text-sm) y conteo
+   real en VER. Selección = borde --border-gold + fondo suave, sin glow. */
+.fcvw-tile--cat {
+    gap: 0.4rem;
+}
+
+.fcvw-tile--cat i {
+    font-size: 1.15rem;
+}
+
+.fcvw-tile__desc {
+    color: var(--text-muted, #94a3b8);
+    font-size: var(--text-sm, 0.8rem);
+    line-height: 1.25;
+    text-align: center;
+}
+
+.fcvw-tile__count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.6rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: var(--radius-pill, 999px);
+    background: rgba(200, 167, 82, 0.12);
+    border: 1px solid var(--border-gold, rgba(200, 167, 82, 0.25));
+    color: var(--gold-4, #C8A752);
+    font-size: var(--text-sm, 0.8rem);
+    font-weight: 700;
+}
+
+/* ---------- Lista de movimientos (Paso 5 · rama VER) ---------- */
 .fcwz-movements {
     display: flex;
     flex-direction: column;

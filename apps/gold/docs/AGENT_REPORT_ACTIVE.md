@@ -2808,3 +2808,65 @@ git add apps/gold/agro/agro-facturero-finca-wizard.js \
         apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "fix(wizards): ANEXO 8 — icono Fiados PRO→fa-handshake (finca y clientes) y nota honesta de categoria por tile"
 ```
+
+---
+
+## Sesion 2026-09-04 (III) — FASE 6 FINCA v2: categorias canonicas como tiles de la familia
+
+Agente: GLM (ZCode). Paso 0 ejecutado: fix B7 verificado en el codigo actual (stamps `scope.tileId/farmId` + `tileRowsStale()` x3 referencias) y matriz por celda documentada (sesion 2026-09-04) — visuales autorizados a tocar.
+
+### Vocabulario canonico (CAT-1) e iconos FA 6.5 Free
+Los 6 iconos propuestos verificados Free (ninguno de la familia PRO `hand-hold-*`): seedling, toolbox, people-group, screwdriver-wrench, truck, ellipsis. Sin sustituciones necesarias.
+
+### Cambios realizados (solo `agro-facturero-finca-wizard.js` + su CSS; 1282L, bajo el umbral 1500 — no requiere extraccion)
+
+| Decision | Cambio |
+|---|---|
+| CAT-1 | `FARM_CATEGORIES` canonico fijo de 6 (insumos/herramientas/mano_obra/mantenimiento/transporte/otros) con label + desc + icono. No extensible por el agricultor. |
+| CAT-3 | `translateCategory(oldValue)` pura en la capa de lectura: mapeo completo de legacy (tools→herramientas, maintenance→mantenimiento, labor→mano_obra, transport/transporte→transporte, supplies/insumo→insumos, other/otro→otros; ids canonicos pasan intactos). `general` (default del sistema, no eleccion) → Sin categoria. Valor libre desconocido → 'otros' (comodin honesto). Aplicado al normalizador del ledger Y a la categoria historica de ciclos (join). Sin reescritura de datos. |
+| CAT-2/3.2 CREAR | Paso 4 con 6 TILES canonicos (icono + label + desc, tooltip=title) + chip comodin "Sin categoria" (deja el valor general). Al elegir guarda el id canonico en `category` (expenses) / `categoria` (income); sin columna → paso con nota honesta. Nota: "Puedes usar Otros si no encaja...". |
+| CAT-4/3.3 VER | Paso 4 con los 6 TILES + CONTEO REAL por categoria (finca+tipo activos, del mismo scope B7) + comodines chips "Todas" y "Sin categoria (N)" solo si N>0. SIN montos en este paso (el dinero vive en la lista final). Filtro aplica la traduccion historica: un legacy "Otro" cae bajo el tile Otros. Tipos sin columna: solo chips Todas/Sin categoria + nota. |
+
+Limpieza: `fetchCrearCategorias`, `catScope`, `OP_CATEGORY_LABELS` y el retry de categorias eliminados (el vocabulario es fijo, ya no se consulta). CSS: variante `.fcvw-tile--cat` (desc --text-sm + contador pill dorado), misma seleccion borde/fondo sin glow, reduced-motion heredado. **Incidente durante la limpieza**: un `sed` dejo un `});` huerfano que rompio el build — detectado por el gate, reparado (restaurado el forEach de `data-fcwz-tipo`), build verde. Leccion: no usar sed multilinea para borrar bindings.
+
+### Queries por celda para el owner (conteos reales que alimentan los tiles VER)
+
+```sql
+-- Conteo por categoria canonica para GASTOS × finca (repetir por finca y por ingresos con categoria)
+select coalesce(nullif(category,''),'(sin)') cat, count(*) from agro_expenses
+where deleted_at is null and crop_id is null and farm_id = (select id from agro_farms where name='FINCA')
+group by 1 order by 2 desc;
+select coalesce(nullif(categoria,''),'(sin)') cat, count(*) from agro_income
+where deleted_at is null and crop_id is null and reverted_at is null and farm_id = (select id from agro_farms where name='FINCA')
+group by 1 order by 2 desc;
+-- Cruce de traduccion historica (cuantos legacy caen en cada canonico)
+select category, translate_expected, count(*) from agro_expenses, LATERAL (
+  select case lower(trim(category))
+    when 'tools' then 'herramientas' when 'maintenance' then 'mantenimiento'
+    when 'labor' then 'mano_obra' when 'transport' then 'transporte' when 'transporte' then 'transporte'
+    when 'supplies' then 'insumos' when 'insumo' then 'insumos'
+    when 'other' then 'otros' when 'otro' then 'otros' when 'otros' then 'otros'
+    when '' or 'general' then '(sin)' else 'otros' end as translate_expected
+) t where deleted_at is null group by 1,2 order by 3 desc;
+```
+
+### Resultado de build
+`pnpm build:gold` verde (2.32s; UTF-8 OK; node --check OK; 1282L).
+
+### QA online exacta para el owner
+1. **CREAR**: gasto → paso categoria con 6 tiles con icono+desc; elegir cada uno y confirmar → en la base, `category` guarda el id canonico (insumos/herramientas/mano_obra/mantenimiento/transporte/otros); "Sin categoria" deja 'general'. Repetir con Ingreso (guarda en `categoria`).
+2. **VER**: paso categoria con los 6 tiles + conteo real por finca/tipo; comodines "Todas" y "Sin categoria (N)"; sin montos en este paso.
+3. **Traduccion**: un gasto viejo con "Otro"/"tools"/"supplies" aparece bajo su tile canonico (Otros/Herramientas/Insumos) sin haberse reescrito en la base.
+4. **Filtros discriminan** (continua la matriz B7): elegir cada tile y verificar que la lista cambia acorde al conteo del chip.
+5. Desktop + mobile ≤480px (tiles en grid responsive, touch ≥44px).
+
+### NO se hizo
+- Sin DDL. Sin canonizar el texto §4.5.2 (apartado para pase post-GREEN). Sin QA del agente. Sin git. Sin extraer modulo (1282L < 1500).
+
+### Git sugerido (NO ejecutado)
+```bash
+git add apps/gold/agro/agro-facturero-finca-wizard.js \
+        apps/gold/agro/agro-facturero-finca-wizard.css \
+        apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "feat(finca): Fase 6 v2 — categorias canonicas como tiles (VER con conteos, CREAR con desc) y traduccion historica translateCategory"
+```

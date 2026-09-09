@@ -58,14 +58,51 @@ const TILE_TO_OP_TYPE = Object.freeze({
     donaciones: 'donation',
     perdidas: 'loss'
 });
-const OP_CATEGORY_LABELS = Object.freeze({
-    tools: 'Herramientas',
-    maintenance: 'Mantenimiento',
-    labor: 'Mano de obra',
-    transport: 'Transporte',
-    supplies: 'Insumos',
-    other: 'Otro'
+// CAT-1 (Fase 6 v2): vocabulario canonico de categorias del libro mayor.
+// Iconos verificados FA 6.5 Free (leccion ANEXO 8: hand-hold-* es PRO).
+const FARM_CATEGORIES = Object.freeze([
+    { id: 'insumos', label: 'Insumos agrícolas', desc: 'Semillas, abono, agroquímicos', icon: 'fa-solid fa-seedling' },
+    { id: 'herramientas', label: 'Herramientas y equipos', desc: 'Maquinaria, repuestos', icon: 'fa-solid fa-toolbox' },
+    { id: 'mano_obra', label: 'Mano de obra', desc: 'Jornales y trabajo de campo', icon: 'fa-solid fa-people-group' },
+    { id: 'mantenimiento', label: 'Mantenimiento', desc: 'Cercas, riego, infraestructura', icon: 'fa-solid fa-screwdriver-wrench' },
+    { id: 'transporte', label: 'Transporte y combustible', desc: 'Gasolina, fletes', icon: 'fa-solid fa-truck' },
+    { id: 'otros', label: 'Otros', desc: 'Lo que no encaja arriba', icon: 'fa-solid fa-ellipsis' }
+]);
+
+// CAT-3: traduccion historica en la capa de lectura (sin reescribir datos).
+// 'general' es el default del sistema (no una eleccion) → Sin categoria;
+// los ids canonicos de junio (cycles/operational) y variantes comunes caen
+// en su tile canonico; cualquier valor libre desconocido → 'otros' (comodin).
+const CATEGORY_ALIASES = Object.freeze({
+    tools: 'herramientas',
+    maintenance: 'mantenimiento',
+    labor: 'mano_obra',
+    transport: 'transporte',
+    transporte: 'transporte',
+    supplies: 'insumos',
+    insumos: 'insumos',
+    insumo: 'insumos',
+    other: 'otros',
+    otro: 'otros',
+    otros: 'otros',
+    herramientas: 'herramientas',
+    herramienta: 'herramientas',
+    mano_obra: 'mano_obra',
+    mantenimiento: 'mantenimiento'
 });
+
+function translateCategory(rawValue) {
+    const value = String(rawValue || '').trim().toLowerCase();
+    if (!value || value === 'general') return '';
+    if (CATEGORY_ALIASES[value]) return CATEGORY_ALIASES[value];
+    if (FARM_CATEGORIES.some((category) => category.id === value)) return value;
+    return 'otros';
+}
+
+function getCategoryLabel(id) {
+    const category = FARM_CATEGORIES.find((entry) => entry.id === id);
+    return category ? category.label : 'Sin categoría';
+}
 
 // Tiles de lectura (canon §4.5.2 / D2): Gastos · Ingresos · Fiados · Pérdidas · Donaciones.
 // alias: agro_expenses usa date/concept/amount (los demas fecha/concepto/monto).
@@ -206,7 +243,6 @@ function createSession(root) {
         tipoId: '',
         categoria: String(source.cat || source.categoria || ''),
         crearCategoria: String(source.cat || source.crearCategoria || ''),
-        catScope: { phase: 'idle', values: [], error: '', requestId: 0 },
         concepto: '',
         monto: '',
         moneda: 'COP',
@@ -309,11 +345,7 @@ function createSession(root) {
         if (state.rama === RAMA_VER && state.paso >= 4 && tileRowsStale()) {
             void fetchTileRows();
         }
-        // D-C: vocabulario real de categorías para el tipo elegido en CREAR.
-        if (state.rama === RAMA_CREAR && state.paso === 4
-            && (state.catScope.phase === 'idle' || state.catScope.tipo !== state.tipoId)) {
-            void fetchCrearCategorias();
-        }
+        // Fase 6 v2: el vocabulario de CREAR es canonico fijo (sin fetch).
     }
 
     function goNext() {
@@ -430,7 +462,8 @@ function createSession(root) {
                 fecha: row?.[alias.fecha || 'fecha'],
                 concepto: row?.[alias.concepto || 'concepto'],
                 monto: row?.[alias.monto || 'monto'],
-                categoria: categoryField ? String(row?.[categoryField] || '').trim() : ''
+                // CAT-3: la categoria se traduce al id canonico en lectura.
+                categoria: translateCategory(row?.[categoryField])
             }));
 
             // (2) Union D-B: movimientos operativos historicos del tipo mapeado.
@@ -468,7 +501,8 @@ function createSession(root) {
                         fecha: row?.movement_date,
                         concepto: row?.concept,
                         monto: row?.amount,
-                        categoria: String(cycleById.get(String(row.cycle_id))?.category || '').trim()
+                        // CAT-3: categoria historica del ciclo, traducida en lectura.
+                        categoria: translateCategory(cycleById.get(String(row.cycle_id))?.category)
                     }));
             }
 
@@ -496,55 +530,6 @@ function createSession(root) {
             console.error('[FincaWizard] tile load failed:', err?.message || err);
             scope.rows = [];
             scope.error = String(err?.message || 'No se pudo leer los registros.');
-            scope.phase = 'error';
-        } finally {
-            if (requestId === scope.requestId && alive) render();
-        }
-    }
-
-    // D-C: vocabulario de categorias REALES para la rama CREAR, segun el tipo
-    // (solo agro_expenses/agro_income tienen columna; los demas tipos no).
-    async function fetchCrearCategorias() {
-        const scope = state.catScope;
-        const tipoId = state.tipoId;
-        const field = TYPE_TO_TABLE_CATEGORY_FIELD[tipoId];
-        if (scope.loading || (scope.phase === 'ready' && scope.tipo === tipoId)) return;
-
-        if (!field) {
-            scope.values = [];
-            scope.error = '';
-            scope.phase = 'ready';
-            scope.tipo = tipoId;
-            render();
-            return;
-        }
-
-        const requestId = ++scope.requestId;
-        scope.phase = 'loading';
-        scope.error = '';
-        render();
-
-        try {
-            const { data, error } = await supabase
-                .from(TYPE_TO_TABLE[tipoId])
-                .select(field)
-                .is('deleted_at', null)
-                .limit(1000);
-            if (error) throw error;
-            if (requestId !== scope.requestId || !alive) return;
-            const values = Array.from(new Set(
-                (Array.isArray(data) ? data : [])
-                    .map((row) => String(row?.[field] || '').trim())
-                    .filter(Boolean)
-            )).sort((a, b) => a.localeCompare(b, 'es'));
-            scope.values = values;
-            scope.phase = 'ready';
-            scope.tipo = tipoId;
-        } catch (err) {
-            if (requestId !== scope.requestId || !alive) return;
-            console.error('[FincaWizard] categorias load failed:', err?.message || err);
-            scope.values = [];
-            scope.error = String(err?.message || 'No se pudieron leer las categorías.');
             scope.phase = 'error';
         } finally {
             if (requestId === scope.requestId && alive) render();
@@ -834,18 +819,13 @@ function createSession(root) {
         `;
     }
 
-    function categoryLabel(value) {
-        const safeValue = String(value || '').trim();
-        if (!safeValue) return 'Sin categoría';
-        return OP_CATEGORY_LABELS[safeValue] || safeValue;
-    }
-
-    // D-C (VER, Paso 4): chips con el vocabulario REAL de categorias presentes
-    // en los registros del tile y finca elegidos + "Todas" + "Sin categoria".
+    // Fase 6 v2 (VER, Paso 4): tiles canonicos con CONTEO REAL por categoria
+    // (finca + tipo activos) + comodines como chips ("Todas" / "Sin categoria").
+    // Sin montos aqui: solo conteos; el dinero vive en la lista final.
     function renderVerCategoria() {
         const scope = state.listScope;
         if (scope.phase === 'loading') {
-            return '<p class="fcvw-note">Revisando las categorías reales de estos registros…</p>';
+            return '<p class="fcvw-note">Revisando las categorías de estos registros…</p>';
         }
         if (scope.phase === 'error') {
             return `
@@ -857,38 +837,54 @@ function createSession(root) {
             `;
         }
 
-        const categorias = Array.from(new Set(
-            scope.rows.map((row) => String(row?.categoria || '').trim()).filter(Boolean)
-        )).sort((a, b) => a.localeCompare(b, 'es'));
-        const sinCategoria = scope.rows.some((row) => !String(row?.categoria || '').trim());
         // Tiles cuya tabla no tiene columna de categoria (trazado ANEXO 6/7:
         // pending/losses/transfers): nota honesta en vez de vocabulario inventado.
-        const notaTileSinCategoria = ['fiados', 'perdidas', 'donaciones'].includes(state.tileId)
-            ? 'Este tipo de registro todavía no lleva categorías: usa "Todas" para verlo completo.'
-            : 'Las categorías salen de tus registros reales. Los registros sin categoría viven en "Sin categoría".';
+        if (!TYPE_TO_TABLE_CATEGORY_FIELD[state.tileId]) {
+            return `
+                <div class="fcvw-picker">
+                    <span class="fcvw-picker__label">Categoría</span>
+                    <div class="fcvw-picker__strip" role="group" aria-label="Filtrar por categoría">
+                        <button type="button" class="fcvw-chip${!state.categoria ? ' is-active' : ''}" data-fcwz-cat="">Todas</button>
+                        <button type="button" class="fcvw-chip${state.categoria === '__sin__' ? ' is-active' : ''}" data-fcwz-cat="__sin__">Sin categoría</button>
+                    </div>
+                    <p class="fcvw-note">Este tipo de registro todavía no lleva categorías: usa "Todas" para verlo completo.</p>
+                </div>
+            `;
+        }
 
-        const chips = [
+        const counts = new Map();
+        let sinCategoriaCount = 0;
+        scope.rows.forEach((row) => {
+            const categoria = String(row?.categoria || '').trim();
+            if (categoria) counts.set(categoria, (counts.get(categoria) || 0) + 1);
+            else sinCategoriaCount += 1;
+        });
+
+        const tiles = FARM_CATEGORIES.map((category) => `
+            <button type="button" class="fcvw-tile fcvw-tile--cat${state.categoria === category.id ? ' is-active' : ''}" data-fcwz-cat="${escapeHtml(category.id)}" aria-pressed="${state.categoria === category.id ? 'true' : 'false'}" title="${escapeHtml(category.desc)}">
+                <i class="${category.icon}" aria-hidden="true"></i>
+                <span class="fcvw-tile__label">${escapeHtml(category.label)}</span>
+                <span class="fcvw-tile__desc">${escapeHtml(category.desc)}</span>
+                <span class="fcvw-tile__count">${counts.get(category.id) || 0}</span>
+            </button>
+        `).join('');
+
+        const comodines = [
             `<button type="button" class="fcvw-chip${!state.categoria ? ' is-active' : ''}" data-fcwz-cat="">Todas</button>`,
-            ...categorias.map((value) => `
-                <button type="button" class="fcvw-chip${state.categoria === value ? ' is-active' : ''}" data-fcwz-cat="${escapeHtml(value)}">${escapeHtml(categoryLabel(value))}</button>
-            `),
-            ...(sinCategoria ? [`<button type="button" class="fcvw-chip${state.categoria === '__sin__' ? ' is-active' : ''}" data-fcwz-cat="__sin__">Sin categoría</button>`] : [])
+            ...(sinCategoriaCount > 0 ? [`<button type="button" class="fcvw-chip${state.categoria === '__sin__' ? ' is-active' : ''}" data-fcwz-cat="__sin__">Sin categoría (${sinCategoriaCount})</button>`] : [])
         ].join('');
 
         return `
-            <div class="fcvw-picker">
-                <span class="fcvw-picker__label">Categoría</span>
-                <div class="fcvw-picker__strip" role="group" aria-label="Filtrar por categoría">${chips}</div>
-                <p class="fcvw-note">${escapeHtml(notaTileSinCategoria)}</p>
-            </div>
+            <div class="fcvw-tiles fcvw-tiles--square">${tiles}</div>
+            <div class="fcvw-picker__strip" role="group" aria-label="Comodines de categoría">${comodines}</div>
+            <p class="fcvw-note">El número de cada categoría es real para esta finca y tipo. Los registros viejos se leen en su categoría canónica.</p>
         `;
     }
 
-    // D-C (CREAR, Paso 4): vocabulario REAL de la tabla destino del tipo elegido.
-    // pending/losses/transfers no tienen columna: solo "Sin categoría" + nota.
+    // Fase 6 v2 (CREAR, Paso 4): tiles canonicos fijos + comodin "Sin categoria"
+    // (deja el valor general de la tabla). Tipos sin columna: nota honesta.
     function renderCrearCategoria() {
         const field = TYPE_TO_TABLE_CATEGORY_FIELD[state.tipoId];
-        const scope = state.catScope;
 
         if (!field) {
             return `
@@ -901,32 +897,21 @@ function createSession(root) {
                 </div>
             `;
         }
-        if (scope.phase === 'loading' || (scope.phase !== 'ready' && scope.phase !== 'error')) {
-            return '<p class="fcvw-note">Revisando las categorías que ya usas en este tipo de registro…</p>';
-        }
-        if (scope.phase === 'error') {
-            return `
-                <div class="cartera-viva-empty">
-                    <h3 class="cartera-viva-empty__title">No se pudieron leer las categorías</h3>
-                    <p class="cartera-viva-empty__copy">${escapeHtml(scope.error)}</p>
-                    <button type="button" class="fcvw-btn" data-fcwz-retry-cats><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Reintentar</button>
-                </div>
-            `;
-        }
 
-        const chips = [
-            ...scope.values.map((value) => `
-                <button type="button" class="fcvw-chip${state.crearCategoria === value ? ' is-active' : ''}" data-fcwz-crear-cat="${escapeHtml(value)}">${escapeHtml(categoryLabel(value))}</button>
-            `),
-            `<button type="button" class="fcvw-chip${!state.crearCategoria ? ' is-active' : ''}" data-fcwz-crear-cat="">Sin categoría</button>`
-        ].join('');
+        const tiles = FARM_CATEGORIES.map((category) => `
+            <button type="button" class="fcvw-tile fcvw-tile--cat${state.crearCategoria === category.id ? ' is-active' : ''}" data-fcwz-crear-cat="${escapeHtml(category.id)}" aria-pressed="${state.crearCategoria === category.id ? 'true' : 'false'}" title="${escapeHtml(category.desc)}">
+                <i class="${category.icon}" aria-hidden="true"></i>
+                <span class="fcvw-tile__label">${escapeHtml(category.label)}</span>
+                <span class="fcvw-tile__desc">${escapeHtml(category.desc)}</span>
+            </button>
+        `).join('');
 
         return `
-            <div class="fcvw-picker">
-                <span class="fcvw-picker__label">Categoría</span>
-                <div class="fcvw-picker__strip" role="group" aria-label="Categoría del registro">${chips}</div>
-                <p class="fcvw-note">Salen de las categorías que ya usas. "Sin categoría" deja el valor general del registro.</p>
+            <div class="fcvw-tiles fcvw-tiles--square">${tiles}</div>
+            <div class="fcvw-picker__strip" role="group" aria-label="Comodín de categoría">
+                <button type="button" class="fcvw-chip${!state.crearCategoria ? ' is-active' : ''}" data-fcwz-crear-cat="">Sin categoría</button>
             </div>
+            <p class="fcvw-note">Puedes usar "Otros" si no encaja. "Sin categoría" deja el valor general del registro.</p>
         `;
     }
 
@@ -983,7 +968,7 @@ function createSession(root) {
                 ${rows.map((row) => `
                     <li class="fcwz-movements__item">
                         <span class="fcwz-movements__date">${escapeHtml(String(row?.fecha || '').slice(0, 10) || 'Sin fecha')}</span>
-                        <span class="fcwz-movements__text">${escapeHtml(movementText(row, tile))}${row?.categoria ? ` <span class="fcwz-movements__tag">${escapeHtml(categoryLabel(row.categoria))}</span>` : ''}</span>
+                        <span class="fcwz-movements__text">${escapeHtml(movementText(row, tile))}${row?.categoria ? ` <span class="fcwz-movements__tag">${escapeHtml(getCategoryLabel(row.categoria))}</span>` : ''}</span>
                         <span class="fcwz-movements__amount">${renderMoneyNode(formatMoney(row))}</span>
                     </li>
                 `).join('')}
@@ -994,7 +979,7 @@ function createSession(root) {
     function renderVerStep5() {
         const tile = VER_TILES.find((entry) => entry.id === state.tileId) || VER_TILES[0];
         const actions = state.actionsScope;
-        const catPart = state.categoria ? ` · ${escapeHtml(categoryLabel(state.categoria === '__sin__' ? '' : state.categoria))}` : '';
+        const catPart = state.categoria ? ` · ${escapeHtml(getCategoryLabel(state.categoria === '__sin__' ? '' : state.categoria))}` : '';
         let actionsHtml = '';
         if (actions.phase === 'loading') {
             actionsHtml = '<p class="fcvw-note">Buscando acciones de las últimas 24 horas…</p>';
@@ -1099,7 +1084,7 @@ function createSession(root) {
             <dl class="fcflow-summary">
                 <div class="fcflow-summary__row"><dt>Tipo</dt><dd>${escapeHtml(tipo?.label || '—')}</dd></div>
                 <div class="fcflow-summary__row"><dt>Finca</dt><dd>${escapeHtml(farmLabel())}</dd></div>
-                <div class="fcflow-summary__row"><dt>Categoría</dt><dd>${escapeHtml(state.crearCategoria ? categoryLabel(state.crearCategoria) : 'Sin categoría')}</dd></div>
+                <div class="fcflow-summary__row"><dt>Categoría</dt><dd>${escapeHtml(state.crearCategoria ? getCategoryLabel(state.crearCategoria) : 'Sin categoría')}</dd></div>
                 <div class="fcflow-summary__row"><dt>Concepto</dt><dd>${escapeHtml(state.concepto || '—')}</dd></div>
                 <div class="fcflow-summary__row"><dt>Monto</dt><dd><strong>${escapeHtml(formatMoney({ monto: amount, currency: state.moneda }))}</strong></dd></div>
                 ${state.moneda !== 'USD' ? `<div class="fcflow-summary__row"><dt>≈ USD</dt><dd>${usd != null ? `$${usd.toFixed(2)}` : 'sin tasa'}</dd></div>` : ''}
@@ -1230,10 +1215,6 @@ function createSession(root) {
                 render();
             });
         });
-        root.querySelector('[data-fcwz-retry-cats]')?.addEventListener('click', () => {
-            state.catScope.phase = 'idle';
-            void fetchCrearCategorias();
-        });
         root.querySelectorAll('[data-fcwz-tipo]').forEach((button) => {
             button.addEventListener('click', () => {
                 state.tipoId = String(button.getAttribute('data-fcwz-tipo') || '').trim();
@@ -1292,11 +1273,9 @@ function createSession(root) {
     render();
 
     // F5: recargar lo que el paso restaurado necesite (D-C + B7).
+    // Fase 6 v2: CREAR ya no consulta categorías (vocabulario canónico fijo).
     if (state.rama === RAMA_VER && state.paso >= 4 && tileRowsStale()) {
         void fetchTileRows();
-    }
-    if (state.rama === RAMA_CREAR && state.paso === 4) {
-        void fetchCrearCategorias();
     }
 
     return { destroy };
