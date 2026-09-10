@@ -3090,3 +3090,43 @@ Edge documentado: re-navegar al MISMO destino estando dentro del wizard (favorit
 git add apps/gold/agro/agro-shell.js apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "fix(finca): ANEXO 12 — entrada al wizard siempre en el gate (shell preserva hash profundo en same-target; storage de sesion retirado; done viaja en hash)"
 ```
+
+---
+
+## Sesion 2026-09-09 (II) — ANEXO 13: B9 (gasto Insumos invisible), B10 (fab solapa), B11 (boton del exito)
+
+Agente: GLM (ZCode). QA del owner 19:42; su push fue 19:39 (a3ff8d1d) — race de deploy posible (Vercel ~1-3 min), documentado.
+
+### Trazado sin editar
+- **B9 (a-b)**: CREAR escribe `payload.category = crearCategoria || 'general'` → id canonico ('insumos') ✓; tabla de verdad de translateCategory ejecutada: **identidad para los 6 canonicos** ✓. El exito solo se renderiza sin error de insert (throw→catch→sin exito) → el insert ocurrio. **Causa que encaja en todos los builds**: gasto creado con "Vista general" (default del paso 2) → `farm_id NULL` → invisible al leer bajo "finca la ladera" (particion por finca). Query dirimidera (owner):
+```sql
+select left(id::text,8), concept, category, farm_id, created_at from agro_expenses
+where deleted_at is null order by created_at desc limit 5;
+```
+Si farm_id es null → confirmado; si tiene la ladera y sigue invisible → re-abrir con ese dato.
+- **B10**: `.agro-feedback-fab` = `position:fixed; right/bottom:14px; z-index:9999` (agro.css:7836) solapa el footer sticky. Fix: oculto durante el wizard (body class compartida por la familia).
+- **B11**: handler `data-fcwz-goto-ver` existe; verificado estaticamente: navega a rama VER paso 5 conservando finca, resetea listScope y el trigger re-fetchea. Sin bug en codigo local → causa mas probable: race de deploy (QA 19:42 vs push 19:39). Re-test post-deploy.
+
+### Cambios realizados
+| Archivo | Cambio |
+|---|---|
+| `agro-facturero-finca-wizard.css` | B10: `body.agro-fcv-wizard-active .agro-feedback-fab { display:none !important }` — cubre ambos wizards de la familia (misma body class); cero solape en desktop y ≤480. |
+| `agro-facturero-finca-wizard.js` | B9-UX: pantalla de exito muestra la finca REAL del registro y, si se creo desde Vista general, avisa donde se vera ("Registro general (sin finca): se verá en Vista general..."); empty de VER con finca activa agrega "Los registros generales (sin finca) se ven solo en Vista general."; el exito tambien muestra la categoria guardada. |
+
+### Resultado de build
+`pnpm build:gold` verde (2.43s; UTF-8 OK).
+
+### QA online para el owner (post-push, esperar deploy completo)
+1. **B9**: correr la query dirimidera de arriba. Si farm_id null → comportamiento esperado (esta en Vista general): verificar en VER → Vista general → Gastos → tile Insumos = 1 con la fila SIN tag. Si queres que CREAR exija finca, es decision de producto (registrada pendiente).
+2. **B11**: re-test "Ver registros" del exito (con deploy completo) → llega a VER paso 5 con la misma finca y la fila nueva sin recargar.
+3. **B10**: en el paso final de CREAR, el fab de Feedback ya no aparece (ni desktop ni mobile).
+4. DoD original: crear gasto Insumos CON finca la ladera → tile Insumos = 1, fila sin tag "historico operacional"; Otros sigue en 2.
+
+### NO se hizo
+- Sin exigir finca en CREAR (decision de producto pendiente del owner). Sin tocar el handler de B11 (correcto en codigo local). Sin git (comando abajo).
+
+### Git sugerido (NO ejecutado)
+```bash
+git add apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/agro/agro-facturero-finca-wizard.css apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(finca): ANEXO 13 — fab oculto en wizard (B10), exito y empty explican la finca real (B9-UX)"
+```

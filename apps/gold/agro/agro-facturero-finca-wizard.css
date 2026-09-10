@@ -6,6 +6,15 @@
  * ADN Visual V12: tokens, sin glow, transiciones 120–220ms, reduced-motion.
  */
 
+/* ANEXO 13 (B10): el feedback fab es position:fixed bottom-right con
+   z-index 9999 y solapaba el botón Siguiente/Confirmar del footer sticky.
+   Dentro del wizard (superficie inmersiva §4.12) se oculta — la body class
+   agro-fcv-wizard-active es compartida por los wizards de la familia
+   (clientes y finca), así que la regla los cubre a ambos. */
+body.agro-fcv-wizard-active .agro-feedback-fab {
+    display: none !important;
+}
+
 .fcwz {
     display: flex;
     flex-direction: column;

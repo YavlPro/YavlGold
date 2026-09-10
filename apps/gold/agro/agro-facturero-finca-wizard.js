@@ -982,10 +982,15 @@ function createSession(root) {
             `;
         }
         if (scope.rows.length <= 0) {
+            // ANEXO 13 (B9-UX): con finca activa, recordar donde viven los
+            // registros generales (creados desde Vista general).
+            const notaGenerales = state.farmId
+                ? ' Los registros generales (sin finca) se ven solo en Vista general.'
+                : '';
             return `
                 <div class="cartera-viva-empty">
                     <h3 class="cartera-viva-empty__title">Sin ${tile.label.toLowerCase()} en ${escapeHtml(farmLabel())}</h3>
-                    <p class="cartera-viva-empty__copy">Cuando registres ${tile.label.toLowerCase()} de esta finca, aparecerán aquí.</p>
+                    <p class="cartera-viva-empty__copy">Cuando registres ${tile.label.toLowerCase()} de esta finca, aparecerán aquí.${notaGenerales}</p>
                 </div>
             `;
         }
@@ -1121,13 +1126,19 @@ function createSession(root) {
     }
 
     function renderCrearDone() {
+        // ANEXO 13 (B9-UX): el exito dice la finca REAL del registro; si se creo
+        // desde Vista general, avisa donde se vera (evita buscarlo bajo una finca).
+        const fincaReal = state.farmId
+            ? `Finca: ${escapeHtml(farmLabel())}.`
+            : 'Registro general (sin finca): se verá en Vista general, no dentro de una finca específica.';
         return `
             <div class="fcflow-done">
                 <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
                 <p class="fcflow-done__title">Registro guardado.</p>
-                <p class="fcflow-done__desc">${escapeHtml(state.concepto)} · ${escapeHtml(farmLabel())}</p>
+                <p class="fcflow-done__desc">${escapeHtml(state.concepto)} · ${escapeHtml(state.crearCategoria ? getCategoryLabel(state.crearCategoria) : 'Sin categoría')}</p>
+                <p class="fcvw-note">${fincaReal}</p>
                 <div class="fcflow-done__actions">
-                    <button type="button" class="btn-gold" data-fcwz-goto-ver">Ver registros</button>
+                    <button type="button" class="btn-gold" data-fcwz-goto-ver>Ver registros</button>
                     <button type="button" class="btn-outline-gold" data-fcwz-create-otro>Crear otro</button>
                 </div>
             </div>
