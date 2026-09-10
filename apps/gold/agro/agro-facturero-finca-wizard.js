@@ -329,10 +329,20 @@ function createSession(root) {
         if (nextRama) state.rama = nextRama;
         state.paso = clampPaso(nextPaso);
         render();
-        // D-C + B7: al entrar al Paso 4+ de VER se cargan (o recargan si el
-        // tile o la finca cambiaron desde la ultima carga) los registros.
-        if (state.rama === RAMA_VER && state.paso >= 4 && tileRowsStale()) {
-            void fetchTileRows();
+        // ANEXO 14-B (B9, fix de Arena AI trasladado): tileRowsStale() detecta
+        // cambio de tile/finca, NO datos nuevos — re-entrar a VER con el mismo
+        // tile+finca servia el scope cacheado de antes de la creacion y la fila
+        // nueva no aparecia. Regla: entrada al Paso 4 de VER SIEMPRE refetchea
+        // (los datos pueden haber cambiado); salto directo al Paso 5 refetchea
+        // si el scope no esta listo (goto-ver ya resetea el scope, esto cubre
+        // otros saltos); y cualquier cambio de tile/finca pasa por aqui con
+        // stale (regresion B7 imposible). void + requestId guardan las races.
+        if (state.rama === RAMA_VER && state.paso >= 4) {
+            const isEnteringStep4 = state.paso === 4;
+            const isJumpingToStep5 = state.paso === VER_TOTAL && !tileRowsStale();
+            if (isEnteringStep4 || isJumpingToStep5 || tileRowsStale()) {
+                void fetchTileRows();
+            }
         }
         // Fase 6 v2: el vocabulario de CREAR es canonico fijo (sin fetch).
     }

@@ -3130,3 +3130,64 @@ Si farm_id es null → confirmado; si tiene la ladera y sigue invisible → re-a
 git add apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/agro/agro-facturero-finca-wizard.css apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "fix(finca): ANEXO 13 — fab oculto en wizard (B10), exito y empty explican la finca real (B9-UX)"
 ```
+
+---
+
+## Sesion 2026-09-09 (III) — ANEXOS 11–13 en produccion; B9 reabierto (rama ledger); ANEXO 14-B en cola
+
+Objetivo: cerrar B7/R16/B8 en produccion y diagnosticar la persistencia de B9.
+
+### Diagnostico
+- Diagnostico externo M1 (Gemini 3.8 Flash High) confirmo con git reflog que Fase 6 v2 y ANEXO 9 estaban en origin/main y desplegados; causa raiz de tiles invisibles: guard ES/EN en `agro-facturero-finca-wizard.js:876` (tileId espanol contra diccionario en ingles).
+- QA owner 19:17: tiles canonicos vivos con conteos reales (Otros=2, celdas cero visibles) y tag "historico operacional" → ANEXO 11 verificado en produccion.
+- B8 (entrada aterrizaba al final del wizard): ANEXO 12 elimino storage del wizard; hash como unica fuente de restauracion (F5 preservado, §9.27); shell same-target preserva hash profundo; flag done migro al hash.
+- QA owner 19:42: B10 (fab Feedback solapaba footer) fixeado ocultando el fab en wizards (ANEXO 13, canon §4.12); B11 (boton dorado del exito) atribuido a carrera de deploy, re-test pendiente; B9 REABIERTO: fila viva en `agro_expenses` (concept 'bomba', category 'transporte', farm_id definido, crop_id NULL, deleted_at NULL) invisible en VER → rama ledger de la union muerta; ANEXO 14-B redactado y sin ejecutar.
+
+### Cambios realizados
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro-facturero-finca-wizard.js` | fix | guard ES/EN :876 (ANEXO 11); storage fuera y done en hash (ANEXO 12); fab oculto + exito/empty honestos (ANEXO 13) |
+| `apps/gold/agro/agro-shell.js` | fix | preservacion de hash same-target (ANEXO 12) |
+| `apps/gold/agro/agro-facturero-finca-wizard.css` | fix | fab oculto durante wizard (ANEXO 13) |
+
+### Resultado de build
+`pnpm build:gold` verde en cada fix (2.25–2.43s).
+
+### QA online para el owner (post-push)
+- Tiles/tags/celdas cero OK (QA 19:17–19:42).
+- Pendiente: ANEXO 14-B, re-test B8 (3 escenarios) y B11 (boton dorado).
+
+### NO se hizo
+- Sin DDL, sin canon, sin git sin palabra del owner. ANEXO 14-B sin ejecutar por falta de creditos del ejecutor.
+
+### Git sugerido (NO ejecutado)
+```bash
+git add apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/agro/agro-shell.js apps/gold/agro/agro-facturero-finca-wizard.css apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(finca): ANEXOS 11-13 — tiles canonicos en produccion, entrada en gate, fab oculto, exito honesto"
+```
+
+---
+
+## Sesion 2026-09-10 — ANEXO 14-B: traslado del fix de Arena AI (B9: scope cacheado escondia la fila nueva)
+
+- **Fecha**: 2026-09-10
+- **Objetivo**: trasladar al repo el fix de goStep hallado por agente externo (Arena AI) para B9, con trazado previo y build.
+- **Diagnostico (evidencia)**: SQL del owner — "bomba" (b47e6781) insertada PERFECTA por CREAR (category='transporte' canonico, farm_id=la ladera, deleted null, 09-09 23:42); mas 4 filas QA sembradas (ids 88888888, categorias libres, farm null). El insert no es el problema; la lectura re-utiliza el scope cacheado.
+- **Trazado (a)-(e)**: (a) `goStep` :328, firma (nextPaso, nextRama), trigger `paso >= 4 && tileRowsStale()`. (b) `tileRowsStale()` compara stamps tile/finca + primera vez — NO detecta datos nuevos. (c) `fetchTileRows` = union normalizada con triple filtro (ANEXO 9). (d) unico otro mecanismo de invalidacion: reset manual de goto-ver (:1291) — ese camino ya funcionaba; la re-entrada manual no tenia invalidacion. (e) replicacion estatica de B9: crear "bomba" → volver/gate → VER misma finca+tile → paso 4: stale FALSE → sin fetch → fila ausente → tile Transporte=0. CONFIRMADO.
+- **Cambios realizados**:
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agro/agro-facturero-finca-wizard.js` | fix quirurgico (solo goStep) | ANEXO 14-B: trigger con tres condiciones — entrada al Paso 4 de VER SIEMPRE refetchea; salto directo al Paso 5 refetchea si el scope no esta listo (defensa Arena; goto-ver ya resetea); stale (tile/finca) sigue cubriendo cambios (regresión B7 imposible). `void fetchTileRows()` (no await: goStep sync; requestId guarda races de fetches en vuelo). |
+
+- **Resultado de build**: `pnpm build:gold` verde (1.91s; UTF-8 OK).
+- **QA sugerido (owner, post-push)**: las 4 pruebas del prompt — (1) B9: crear gasto → boton dorado → fila visible sin Actualizar; y la via MANUAL (volver al gate → VER → misma finca/tile → fila tambien visible); (2) B8: gate/F5/re-entrada; (3) B11: boton dorado navega con fila; (4) matriz: Gastos×la ladera×Todas = 3 (2 con tag + "bomba" sin tag), Transporte=1, Otros=2; Insumos en la ladera = 0 (las filas QA sembradas tienen farm null → viven en Vista general; nota: sus categorias libres 'operacion'/'logistica' traducen a Otros).
+- **NO se hizo**: sin tocar CREAR ni otros archivos del wizard (regla: solo goStep); sin extraer modulo (~1345L < 1500); sin canonizar; sin git (comando sugerido abajo).
+- **Verificacion estatica**: tabla de verdad del trigger ejecutada para 5 escenarios (re-entrada/cambio tile/goto-ver/salto 5/paso 3) — todas ✓ (corregido un artefacto del script de verificacion que omitia el guard paso>=4).
+
+### Git sugerido (NO ejecutado)
+```bash
+git add apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(finca): ANEXO 14-B — goStep refetchea en entrada a paso 4 y salto a paso 5 (B9: registro nuevo invisible por scope cacheado)"
+git push origin main
+```
