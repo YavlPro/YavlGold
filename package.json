@@ -52,7 +52,7 @@
     "terser": "^5.36.0",
     "turbo": "^2.9.14",
     "vite": "^7.3.5",
-    "vitest": "^4.1.0"
+    "vitest": "^5.0.0"
   },
   "overrides": {
     "rollup": "4.59.0"
