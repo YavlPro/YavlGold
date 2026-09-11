@@ -3191,3 +3191,27 @@ git add apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/docs/AGENT_REPOR
 git commit -m "fix(finca): ANEXO 14-B — goStep refetchea en entrada a paso 4 y salto a paso 5 (B9: registro nuevo invisible por scope cacheado)"
 git push origin main
 ```
+
+---
+
+## Sesion 2026-09-10 (II) — ANEXO 17: ReferenceError 'user is not defined' en agro-dashboard-v11
+
+- **Fecha**: 2026-09-10
+- **Objetivo**: fix del ReferenceError en produccion (agro-dashboard-v11-v5RYuyHj.js:15, Uncaught in promise).
+- **Diagnostico (trazado sin editar)**: (a) grep de `user` a secas: 6 sitios; 5 declaran `const { data: { user } } = await supabase.auth.getUser()` en su propio scope (sano). (b) El roto: `renderGreeting()` (:89, async) declaraba `user` DENTRO del try (:107) y lo usaba FUERA (:129, PASO 4 "dias contigo") → ReferenceError; llamada desde `initDashboardV11` (:787) sin await ni catch → "Uncaught (in promise)"; moria el PASO 4 en silencio (el saludo ya habia renderizado en el PASO 3; el resto del dashboard no depende del await). (c) Patron canonico de sesion: el mismo `const { data: { user } } = await supabase.auth.getUser()` (:107 ya lo usaba) — bug puramente de scope, no de patron.
+- **Cambios realizados**:
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agro/agro-dashboard-v11.js` | Fix quirurgico (solo renderGreeting) | `let authUser = null` en el scope de la funcion, asignado dentro del try; el PASO 4 usa `authUser?.created_at`. Cero variables globales, cero reescritura, mismo patron canonicо de sesion. |
+
+- **Resultado de build**: `pnpm build:gold` verde (1.84s; UTF-8 OK; node --check OK). Verificacion estatica: los otros 4 usos de `user` (:355, :542, :671, :749) viven en el scope de sus propias declaraciones (sano).
+- **QA sugerido (owner)**: cargar el dashboard → consola sin ReferenceError → el saludo muestra "X dias contigo en YavlGold" (PASO 4 ahora completa: cadena renderGreeting → initDashboardV11 → sin promesas muertas).
+- **NO se hizo**: sin tocar otros bloques del dashboard ni el resto de archivos; sin git (comando abajo).
+
+### Git sugerido (NO ejecutado)
+```bash
+git add apps/gold/agro/agro-dashboard-v11.js apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(dashboard): ANEXO 17 — user declarado dentro del try y usado fuera en renderGreeting (ReferenceError mataba el saludo de dias)"
+git push origin main
+```

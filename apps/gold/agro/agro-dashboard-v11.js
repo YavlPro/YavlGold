@@ -102,9 +102,14 @@ async function renderGreeting() {
     }
 
     // PASO 2 — Resolver nombre canónico async (jerarquía igual a agro.js).
+    // ANEXO 17: `user` se declaraba DENTRO del try y el PASO 4 lo usaba fuera
+    // de su scope → ReferenceError que mataba la promesa en silencio. Ahora
+    // vive en el scope de la función.
+    let authUser = null;
     let displayName = 'Agricultor';
     try {
         const { data: { user } } = await supabase.auth.getUser();
+        authUser = user || null;
         if (user) {
             displayName = String(user.user_metadata?.full_name || user.email || 'Agricultor').trim() || 'Agricultor';
             const { data: profile, error } = await supabase
@@ -126,8 +131,8 @@ async function renderGreeting() {
 
     // PASO 4 — Días en el proyecto (calculado desde created_at del token Auth).
     const daysTarget = $('ygd-greeting-days');
-    if (daysTarget && user?.created_at) {
-        const days = Math.max(1, Math.floor((Date.now() - new Date(user.created_at).getTime()) / 86400000));
+    if (daysTarget && authUser?.created_at) {
+        const days = Math.max(1, Math.floor((Date.now() - new Date(authUser.created_at).getTime()) / 86400000));
         daysTarget.textContent = days === 1
             ? 'Tu primer día en YavlGold'
             : `${days} días contigo en YavlGold`;
