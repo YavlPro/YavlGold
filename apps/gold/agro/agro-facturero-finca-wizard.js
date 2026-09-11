@@ -364,13 +364,11 @@ function createSession(root) {
         exitToSurface();
     }
 
-    // D-A: la topbar regresa al GATE (paso 1, pagina principal crear/ver)
-    // desde cualquier paso >= 2; solo desde el gate sale al hub Granja.
+    // ANEXO 19 (2026-09-11, sustituye a D-A): "Volver" de la topbar y "Atrás"
+    // del footer retroceden UN paso (goBack → goStep, refetch 14-B intacto);
+    // solo desde el paso 1 (gate) se sale al hub Granja. El salto directo al
+    // gate vive en "Ir a inicio" (goToStart).
     function exitToSurface() {
-        if (state.paso > 1) {
-            goStep(1);
-            return;
-        }
         destroyWizard();
         window.dispatchEvent(new CustomEvent('agro:shell:set-view', {
             detail: { view: 'granja', scroll: true }
@@ -382,6 +380,39 @@ function createSession(root) {
         } catch (_err) {
             // Ignorar fallos de routing.
         }
+    }
+
+    // ANEXO 19: ¿hay borrador CREAR sin guardar? Los defaults (fecha de hoy,
+    // moneda COP) no cuentan como borrador.
+    function hasCreateDraft() {
+        return Boolean(
+            state.tipoId
+            || state.crearCategoria
+            || state.concepto.trim()
+            || state.monto.trim()
+            || state.fecha !== todayLocalIso()
+        );
+    }
+
+    // ANEXO 19: "Ir a inicio" salta al gate. En CREAR con borrador sin guardar
+    // pide confirmación de descarte (§4.12.5); tras el éxito (created) el
+    // registro ya está guardado y se limpia en silencio; en VER solo reinicia
+    // la navegación (los filtros de lectura no son un borrador).
+    async function goToStart() {
+        if (state.rama === RAMA_CREAR && !state.created && hasCreateDraft()) {
+            const confirmed = typeof window.showAgroConfirmDialog === 'function'
+                ? await window.showAgroConfirmDialog({
+                    title: 'Ir al inicio',
+                    message: 'Tienes un borrador sin guardar en este wizard. ¿Ir al inicio y descartarlo?',
+                    confirmText: 'Descartar e ir al inicio',
+                    cancelText: 'Quedarme aquí',
+                    iconClass: 'fa-solid fa-house'
+                })
+                : false;
+            if (!confirmed) return;
+        }
+        if (state.rama === RAMA_CREAR) resetCreateFlow();
+        goStep(1);
     }
 
     function showStepError(message) {
@@ -1274,6 +1305,11 @@ function createSession(root) {
                         <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
                         Volver
                     </button>
+                    ${state.paso >= 2 ? `
+                    <button type="button" class="fcvw__home" data-fcwz-home aria-label="Ir al inicio del facturero">
+                        <i class="fa-solid fa-house" aria-hidden="true"></i>
+                        <span class="fcvw__home-label">Ir a inicio</span>
+                    </button>` : ''}
                     <p class="fcvw__title">Facturero de la Finca${sub ? `<span class="fcvw__subtitle">${escapeHtml(sub)}</span>` : ''}</p>
                     <span class="fcvw__step">Paso ${state.paso} de ${totalPasos()}</span>
                 </div>
@@ -1287,7 +1323,8 @@ function createSession(root) {
     }
 
     function bindEvents() {
-        root.querySelector('[data-fcwz-exit]')?.addEventListener('click', exitToSurface);
+        root.querySelector('[data-fcwz-exit]')?.addEventListener('click', goBack);
+        root.querySelector('[data-fcwz-home]')?.addEventListener('click', () => { void goToStart(); });
         root.querySelector('[data-fcwz-back]')?.addEventListener('click', goBack);
         root.querySelector('[data-fcwz-next]')?.addEventListener('click', () => {
             if (state.rama === RAMA_CREAR && state.paso === CREAR_TOTAL && !state.created) {

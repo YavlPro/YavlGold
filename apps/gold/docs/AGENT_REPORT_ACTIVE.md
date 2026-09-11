@@ -3304,3 +3304,36 @@ git add apps/gold/agro/agro-facturero-finca-edit.js apps/gold/agro/agro-facturer
 git commit -m "feat(finca): ANEXO 18 — Fase 7 editar/eliminar registros (modal compacto, soft-delete, derivadas solo lectura)"
 git push origin main
 ```
+
+---
+
+## Sesión 2026-09-11 (II) — ANEXO 19: navegación Volver/Ir a inicio en wizards Finca y Clientes
+
+- **Fecha**: 2026-09-11
+- **Objetivo**: en ambos wizards, "Volver" de topbar retrocede UN paso (solo paso 1 sale al hub/entrada) y nuevo botón "Ir a inicio" salta al paso 1 con guard de borrador; hash intacto; refetch 14-B intacto.
+- **Diagnóstico (trazado)**:
+  - **Finca** (`agro-facturero-finca-wizard.js`): el Volver topbar (`data-fcwz-exit`) llamaba `exitToSurface`, que con paso>1 iba al GATE (decisión D-A de la sesión 2026-09-02, hoy sustituida por el owner) y solo en paso 1 salía al hub. `goBack` (Atrás inferior, `data-fcwz-back`) ya hacía paso-1. Hash: `goStep` → `render` → `syncHash` (paso/rama/finca/cat en hash).
+  - **Clientes** (`agro-facturero-clientes-flow.js`, wizard de compradores, ruta `#view=facturero-clientes&subview=nuevo&paso=N`, modos new 8 pasos / record): la topbar decía "Entrada" (`data-flow-exit` → `exitToEntry`) y salía SIEMPRE a la entrada del facturero; `goBack` (Atrás inferior `data-flow-stepback`) ya retrocedía un paso y en el primero llamaba `options.onExit`. Hash: `syncHash` → `writeFactureroHashRoute`.
+  - `showAgroConfirmDialog` disponible vía `window` (agro.js:6051) en ambas superficies.
+- **Cambios realizados**:
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agro/agro-facturero-finca-wizard.js` | fix nav | `data-fcwz-exit` → `goBack` (Volver = paso-1; paso 1 → exitToSurface al hub). `exitToSurface` pierde su rama paso>1→gate (D-A sustituida por ANEXO 19, comentario actualizado). Nuevo `goToStart()` + `hasCreateDraft()`: guard de borrador CREAR (tipoId/crearCategoria/concepto/monto/fecha≠hoy, y `!created`) con `showAgroConfirmDialog`; tras éxito limpia en silencio; en VER salto directo. Botón `.fcvw__home` "Ir a inicio" en topbar visible con paso≥2 (fa-house Free, aria-label). `goStep`/`syncHash` intocados (hash y refetch 14-B intactos). |
+| `agro/agro-facturero-clientes-flow.js` | fix nav | Topbar "Entrada"→"Volver" y `data-flow-exit` pasa de `exitToEntry` (eliminada) a `goBack`. Literal de state extraído a `draftDefaults` (baseline del borrador; buyerId/buyerName quedan fuera como contexto) + `draftIsDirty()`/`resetDraft()` + `goToStart()` con confirm de descarte → `stepIndex=0`. Botón `.fcflow__home` visible con stepIndex>0 (no existe en 'done'). `syncHash` intacto. |
+| `agro/agro-facturero-finca-wizard.css` | estilo | `.fcvw__home` gemelo del back (44px touch ADN §16, `--border-gold`/`--gold-4`/`--radius-sm`, 160ms, focus ring) + label colapsado a icono en ≤480px. |
+| `agro/agro-facturero-clientes-flow.css` | estilo | `.fcflow__home` igual patrón + `.fcflow__home-label` oculto en ≤480px (media existente). |
+
+- **Tabla de verdad estática (DoD)**:
+  - **Finca**: Volver 5→4 (goStep(4) rama VER → refetch 14-B SIEMPRE) →3→2→1; Volver en 1 → hub Granja (salida actual). "Ir a inicio": paso≥2 sin borrador → goStep(1) directo + hash `paso=1`; CREAR con borrador y sin guardar → confirm (Descartar e ir al inicio / Quedarme aquí) → resetCreateFlow + gate; tras éxito (created) → sin confirm; VER → directo. Atrás inferior intacto. F5 restaura por hash (no tocado).
+  - **Clientes**: Volver N→N-1 (syncHash escribe paso=P del mapa de 8); en el primer paso → `options.onExit` (entrada del facturero). "Ir a inicio": stepIndex>0 sin draft → paso 1 directo; draft dirty (cualquier campo ≠ baseline) → confirm → resetDraft + paso 1; en 'done' no hay topbar (sin botón). Atrás inferior (`data-flow-stepback`) intacto. F5 restaura (view.js lee hash, no tocado).
+- **Resultado de build**: `pnpm build:gold` verde (2.53s; agent-guard + report-check + UTF-8 OK). Verificado en dist: "Ir a inicio"/`data-fcwz-home`/`data-fcwz-exit` en el chunk del wizard finca; "Ir a inicio"/`data-flow-home` en el chunk que empaqueta flow (clientes-view-wizard); ambos labels CSS en el bundle. Sin duplicación de flow.
+- **QA sugerido (owner, producción)**: (1) Finca VER paso 5: Volver → paso 4 y la lista refetchea; cadena hasta 1 y desde 1 → hub. (2) Finca CREAR con formulario lleno → "Ir a inicio" pide descarte; cancelar conserva; confirmar limpia. (3) Clientes wizard con datos a medio llenar → "Ir a inicio" pide descarte; sin datos salta directo. (4) F5 en ambos restaura el paso. (5) ≤480px: "Ir a inicio" solo icono, 44px táctil.
+- **NO se hizo (scope respetado)**: sin git, sin DDL, sin canon, sin archivos nuevos (solo ediciones en 4 archivos existentes), sin tocar `goStep`/`syncHash`/routing del shell, sin QA de agente (§5).
+
+### Git sugerido (NO ejecutado)
+```bash
+git add apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/agro/agro-facturero-clientes-flow.js apps/gold/agro/agro-facturero-finca-wizard.css apps/gold/agro/agro-facturero-clientes-flow.css apps/gold/docs/AGENT_REPORT_ACTIVE.md apps/gold/docs/ops/daily-log-2026-09-11.md
+git commit -m "feat(wizards): ANEXO 19 — Volver de topbar retrocede un paso + botón Ir a inicio con guard de borrador (Finca y Clientes)"
+git push origin main
+```

@@ -281,7 +281,10 @@ export function openFactureroClientFlow(root, options = {}) {
     const steps = mode === 'record' ? STEP_ORDER_RECORD : STEP_ORDER_NEW;
     let stepIndex = Math.min(Math.max(Number(options.startStep) || 0, 0), steps.length - 1);
 
-    const state = {
+    // ANEXO 19: campos de borrador del registro (baseline para detectar el
+    // borrador sucio y limpiarlo sin tocar el contexto del comprador, que
+    // llega precargado por options y no es descartable).
+    const draftDefaults = {
         linkChoice: '',
         linkedEmail: '',
         linkedUserId: '',
@@ -289,8 +292,6 @@ export function openFactureroClientFlow(root, options = {}) {
         farmContext: '',
         phone: '',
         notes: '',
-        buyerId: String(options.buyer?.id || '').trim(),
-        buyerName: String(options.buyer?.name || '').trim(),
         recordType: RECORD_TYPES[options.recordType] ? options.recordType : '',
         farmId: '',
         cropId: String(options.cropId || '').trim(),
@@ -300,7 +301,13 @@ export function openFactureroClientFlow(root, options = {}) {
         currency: 'COP',
         fecha: todayISO(),
         concepto: '',
-        usdConfirmed: false,
+        usdConfirmed: false
+    };
+
+    const state = {
+        ...draftDefaults,
+        buyerId: String(options.buyer?.id || '').trim(),
+        buyerName: String(options.buyer?.name || '').trim(),
         saving: false,
         createdMovementTable: ''
     };
@@ -333,6 +340,8 @@ export function openFactureroClientFlow(root, options = {}) {
     }
 
     // Volver de paso: retrocede exactamente un paso (nunca sale del wizard).
+    // ANEXO 19: la topbar ("Volver", antes "Entrada") también usa goBack;
+    // solo desde el primer paso sale a la entrada del Facturero de Clientes.
     function goBack() {
         if (stepIndex > 0) {
             stepIndex -= 1;
@@ -343,9 +352,33 @@ export function openFactureroClientFlow(root, options = {}) {
         options.onExit?.();
     }
 
-    // Flecha superior: sale siempre a la entrada del Facturero de Clientes.
-    function exitToEntry() {
-        options.onExit?.();
+    // ANEXO 19: "Ir a inicio" salta al primer paso del wizard; con borrador
+    // sin guardar pide confirmación de descarte (§4.12.5) y lo limpia.
+    function draftIsDirty() {
+        return Object.keys(draftDefaults).some((key) => state[key] !== draftDefaults[key]);
+    }
+
+    function resetDraft() {
+        Object.assign(state, { ...draftDefaults });
+    }
+
+    async function goToStart() {
+        if (draftIsDirty()) {
+            const confirmed = typeof window.showAgroConfirmDialog === 'function'
+                ? await window.showAgroConfirmDialog({
+                    title: 'Ir al inicio',
+                    message: 'Tienes un borrador sin guardar en este wizard. ¿Ir al inicio y descartarlo?',
+                    confirmText: 'Descartar e ir al inicio',
+                    cancelText: 'Quedarme aquí',
+                    iconClass: 'fa-solid fa-house'
+                })
+                : false;
+            if (!confirmed) return;
+            resetDraft();
+        }
+        stepIndex = 0;
+        syncHash();
+        render();
     }
 
     function guideText(step) {
@@ -1035,7 +1068,8 @@ export function openFactureroClientFlow(root, options = {}) {
 
     function bindEvents() {
         // Flecha superior: salida a la entrada del facturero (nunca retrocede paso).
-        root.querySelectorAll('[data-flow-exit]').forEach((btn) => btn.addEventListener('click', exitToEntry));
+        root.querySelectorAll('[data-flow-exit]').forEach((btn) => btn.addEventListener('click', goBack));
+        root.querySelectorAll('[data-flow-home]').forEach((btn) => btn.addEventListener('click', () => { void goToStart(); }));
         // Volver de paso: retrocede exactamente un paso.
         root.querySelectorAll('[data-flow-stepback]').forEach((btn) => btn.addEventListener('click', goBack));
 
@@ -1167,8 +1201,13 @@ export function openFactureroClientFlow(root, options = {}) {
                     <div class="fcflow__topbar">
                         <button type="button" class="fcflow__back" data-flow-exit>
                             <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
-                            Entrada
+                            Volver
                         </button>
+                        ${stepIndex > 0 ? `
+                        <button type="button" class="fcflow__home" data-flow-home aria-label="Ir al inicio del wizard">
+                            <i class="fa-solid fa-house" aria-hidden="true"></i>
+                            <span class="fcflow__home-label">Ir a inicio</span>
+                        </button>` : ''}
                         <span class="fcflow__subtitle">Creación de nuevo cliente y registro</span>
                         <span class="fcflow__step">Paso ${stepNumber()} de ${totalSteps()}</span>
                     </div>

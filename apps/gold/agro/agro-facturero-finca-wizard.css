@@ -158,6 +158,36 @@ body.agro-fcv-wizard-active .agro-feedback-fab {
     margin-top: var(--space-3, 0.75rem);
 }
 
+/* ---------- ANEXO 19: "Ir a inicio" en topbar (visible pasos >= 2) ----------
+   Gemelo del .fcvw__back global (44px touch ADN §16, tokens, sin glow);
+   label colapsa a solo-icono en ≤480px. */
+.fcvw__home {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 44px;
+    padding: 0.5rem 0.9rem;
+    background: transparent;
+    border: 1px solid var(--border-gold, rgba(200, 167, 82, 0.25));
+    border-radius: var(--radius-sm, 8px);
+    color: var(--text-muted, #94a3b8);
+    font-family: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: color 160ms ease, border-color 160ms ease;
+}
+
+.fcvw__home:hover,
+.fcvw__home:focus-visible {
+    color: var(--gold-4, #C8A752);
+    border-color: var(--gold-4, #C8A752);
+}
+
+.fcvw__home:focus-visible {
+    outline: none;
+    box-shadow: var(--state-focus-ring);
+}
+
 /* ---------- Fase 7 (ANEXO 18): acciones por fila (Paso 5 · VER) ----------
    Solo filas ledger originales las renderizan; operacionales y derivadas
    quedan sin botones (regla del ANEXO 18). */
@@ -370,6 +400,10 @@ body.agro-fcv-wizard-active .agro-feedback-fab {
 
     .fcwz-movements__date {
         min-width: 0;
+    }
+
+    .fcvw__home-label {
+        display: none;
     }
 
     .fcwz-edit {
