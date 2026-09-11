@@ -109,32 +109,32 @@ const VER_TILES = [
     {
         id: 'gastos', label: 'Gastos', icon: 'fa-solid fa-receipt',
         table: 'agro_expenses', who: '', orderCol: 'date',
-        cols: 'id,concept,amount,category,currency,date,created_at,farm_id',
+        cols: 'id,concept,amount,category,currency,date,created_at,farm_id,split_from_id',
         alias: { concepto: 'concept', monto: 'amount', fecha: 'date' },
         scope: null
     },
     {
         id: 'ingresos', label: 'Ingresos', icon: 'fa-solid fa-circle-check',
         table: 'agro_income', who: '', orderCol: 'fecha',
-        cols: 'id,concepto,monto,monto_usd,categoria,currency,fecha,created_at,farm_id',
+        cols: 'id,concepto,monto,monto_usd,categoria,currency,fecha,created_at,farm_id,origin_table,split_from_id',
         scope: (q) => q.is('reverted_at', null)
     },
     {
         id: 'fiados', label: 'Fiados', icon: 'fa-solid fa-handshake',
         table: 'agro_pending', who: 'cliente', orderCol: 'fecha',
-        cols: 'id,cliente,concepto,monto,monto_usd,currency,fecha,created_at,farm_id',
+        cols: 'id,cliente,concepto,monto,monto_usd,currency,fecha,created_at,farm_id,split_from_id',
         scope: (q) => q.is('reverted_at', null).neq('transfer_state', 'transferred')
     },
     {
         id: 'perdidas', label: 'Pérdidas', icon: 'fa-solid fa-circle-xmark',
         table: 'agro_losses', who: 'causa', orderCol: 'fecha',
-        cols: 'id,causa,concepto,monto,monto_usd,currency,fecha,created_at,farm_id',
+        cols: 'id,causa,concepto,monto,monto_usd,currency,fecha,created_at,farm_id,origin_table,split_from_id',
         scope: (q) => q.is('reverted_at', null)
     },
     {
         id: 'donaciones', label: 'Donaciones', icon: 'fa-solid fa-hand-holding-heart',
         table: 'agro_transfers', who: 'destino', orderCol: 'fecha',
-        cols: 'id,destino,concepto,monto,monto_usd,currency,fecha,created_at,farm_id',
+        cols: 'id,destino,concepto,monto,monto_usd,currency,fecha,created_at,farm_id,split_from_id',
         scope: null
     }
 ];
@@ -591,6 +591,55 @@ function createSession(root) {
         return who ? `${concepto} — ${who}` : concepto;
     }
 
+    // ---------- Fase 7 (ANEXO 18): editar/eliminar solo filas ledger originales ----------
+    // Las operacionales viven en ciclos (intocables aquí) y las derivadas
+    // (origin_table = cobro de fiado; split_from_id = parte de cobro parcial)
+    // las gobierna Facturero de Clientes: sin botones para ellas.
+    function isLedgerRowEditable(row) {
+        return row?.origen === 'ledger' && !row?.origin_table && !row?.split_from_id;
+    }
+
+    function findEditableLedgerRow(rowId) {
+        const id = String(rowId || '');
+        if (!id) return null;
+        const row = state.listScope.rows.find((entry) => String(entry?.id || '') === id);
+        return isLedgerRowEditable(row) ? row : null;
+    }
+
+    async function openRowEditor(rowId) {
+        const row = findEditableLedgerRow(rowId);
+        if (!row) return;
+        const tile = VER_TILES.find((entry) => entry.id === state.tileId) || VER_TILES[0];
+        try {
+            const { openFincaLedgerEditor } = await import('./agro-facturero-finca-edit.js');
+            await openFincaLedgerEditor({
+                table: tile.table,
+                row,
+                onChanged: () => { void fetchTileRows(); }
+            });
+        } catch (err) {
+            console.error('[FincaWizard] edit module failed:', err?.message || err);
+            showStepError('No se pudo abrir el editor del registro.');
+        }
+    }
+
+    async function deleteRowFromList(rowId) {
+        const row = findEditableLedgerRow(rowId);
+        if (!row) return;
+        const tile = VER_TILES.find((entry) => entry.id === state.tileId) || VER_TILES[0];
+        try {
+            const { deleteFincaLedgerRow } = await import('./agro-facturero-finca-edit.js');
+            await deleteFincaLedgerRow({
+                table: tile.table,
+                row,
+                onChanged: () => { void fetchTileRows(); }
+            });
+        } catch (err) {
+            console.error('[FincaWizard] delete failed:', err?.message || err);
+            showStepError('No se pudo eliminar el registro.');
+        }
+    }
+
     // ---------- Datos: acciones del sistema (24 h, farm scope) ----------
 
     function withinWindow(timestamp, sinceMs) {
@@ -1027,6 +1076,11 @@ function createSession(root) {
                         <span class="fcwz-movements__date">${escapeHtml(String(row?.fecha || '').slice(0, 10) || 'Sin fecha')}</span>
                         <span class="fcwz-movements__text">${escapeHtml(movementText(row, tile))}${row?.origen === 'operacional' ? ' <span class="fcwz-movements__tag">histórico operacional</span>' : ''}${row?.categoria ? ` <span class="fcwz-movements__tag">${escapeHtml(getCategoryLabel(row.categoria))}</span>` : ''}</span>
                         <span class="fcwz-movements__amount">${renderMoneyNode(formatMoney(row))}</span>
+                        ${isLedgerRowEditable(row) ? `
+                        <span class="fcwz-movements__actions">
+                            <button type="button" class="fcwz-iconbtn" data-fcwz-edit-row="${escapeHtml(String(row.id || ''))}" aria-label="Editar registro"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
+                            <button type="button" class="fcwz-iconbtn" data-fcwz-del-row="${escapeHtml(String(row.id || ''))}" aria-label="Eliminar registro"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
+                        </span>` : ''}
                     </li>
                 `).join('')}
             </ul>
@@ -1300,6 +1354,12 @@ function createSession(root) {
 
         root.querySelector('[data-fcwz-export]')?.addEventListener('click', exportTileMarkdown);
         root.querySelector('[data-fcwz-refresh-list]')?.addEventListener('click', () => { void fetchTileRows(); });
+        root.querySelectorAll('[data-fcwz-edit-row]').forEach((button) => {
+            button.addEventListener('click', () => { void openRowEditor(button.getAttribute('data-fcwz-edit-row')); });
+        });
+        root.querySelectorAll('[data-fcwz-del-row]').forEach((button) => {
+            button.addEventListener('click', () => { void deleteRowFromList(button.getAttribute('data-fcwz-del-row')); });
+        });
         root.querySelector('[data-fcwz-retry-list]')?.addEventListener('click', () => { void fetchTileRows(); });
         root.querySelector('[data-fcwz-retry-actions]')?.addEventListener('click', () => { void fetchActions(); });
         root.querySelector('details.fcwz-actions')?.addEventListener('toggle', (event) => {

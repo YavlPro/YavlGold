@@ -3266,3 +3266,41 @@ git add apps/gold/docs/AGENT_REPORT_ACTIVE.md apps/gold/docs/ops/daily-log-2026-
 git commit -m "docs(2026-09-10): cierre B9, canary, B12 y alcance Fase 7"
 git push origin main
 ```
+
+---
+
+## Sesión 2026-09-11 — QA estático B8/B12/Vista general OK + ANEXO 18 (Fase 7: editar/eliminar implementado, sin git)
+
+- **Fecha**: 2026-09-11
+- **Objetivo**: (1) QA estático de lectura B8/B12/Vista general con líneas exactas; (2) ANEXO 18 Fase 7 — editar/eliminar registros con modal compacto (asunción por defecto del prompt mientras el owner decide).
+- **Diagnóstico (QA estático, sin ejecutar la app)**:
+  - **B8 OK**: la entrada al wizard decide SOLO por hash — `agro-shell.js:144-145` (`VIEW_CONFIG['facturero-finca'].defaultSubview = 'wizard'` hace que entrar desde el hub escriba un hash limpio sin `paso`) + `writeViewToHash` same-target preserva hash profundo (`agro-shell.js:661-672`). Sin `paso` → `clampPaso(... || 1)` → gate (`agro-facturero-finca-wizard.js:268`, render en `:1175`). F5 en paso 4: `readWizardHash` restaura rama/finca/cat y el bootstrap refetchea (`:1337-1339`); cero `localStorage`/`sessionStorage` en el wizard (grep vacío). Salir al hub reescribe `#view=granja` (`exitToSurface`, `:377-384`) → re-entrar escribe hash limpio → gate.
+  - **B12 OK**: `renderGreeting` (`agro-dashboard-v11.js:89-140`) declara `let authUser = null` en scope de función (`:108`), asigna dentro del try (`:112`), usa `authUser?.created_at` fuera (`:134`). El único await vive dentro del try/catch → la promesa no puede rechazar → sin uncaught. Call site fire-and-forget en `:792`.
+  - **Vista general OK**: el filtro post-normalización vive ahora en `:489-490` (`!farmId || row.farmKey === farmId`) — con finca vacía `!farmId` = true y el ledger pasa; mismo patrón en opRows `:553-555`. Las líneas se movieron de `:483-484` por ANEXOS 14-B/16-C; la semántica está intacta.
+  - **RLS trazado**: las políticas update/delete de las 5 tablas ledger NO viven en migraciones — `20260420120000_security_trust_hardening_v1.sql:137-147` solo hace `enable row level security` + índice `user_id`. Las policies son pre-repo (esquema remoto, 2025). Evidencia operativa de que UPDATE funciona en producción con scope `user_id`: `deleteFactureroItem` (`agro.js:6057-6109`, soft-delete vía update) y `agro-facturero-clientes-assignment.js` (reasigna buyer en movimientos). Sin DDL creado (límite 6 del ANEXO 18).
+  - **Columnas derivadas**: `split_from_id` existe en las 5 tablas (`20260225162000_agro_facturero_split_meta_v1.sql`); `origin_table` existe en `agro_income`/`agro_losses` (referenciado por RPCs desplegados del buyer portfolio) — por eso solo se selecciona en esos dos tiles.
+  - **Desviación declarada del prompt**: `.input-canon` no existe en el repo (grep global vacío); el modal usa `.fcflow-input`/`.fcvw-chip`, las mismas clases del paso 5 del wizard (coherencia ADN).
+- **Cambios realizados**:
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agro/agro-facturero-finca-edit.js` | feat (nuevo, ~330L) | Modal compacto de edición (concepto/monto/moneda/fecha/categoría) + `deleteFincaLedgerRow` (soft-delete con `showAgroConfirmDialog`). Revalida fila editable (ledger, sin `origin_table`/`split_from_id`), update con `.eq('user_id')`, `monto_usd`/`exchange_rate` solo se recalculan si monto/moneda cambiaron, privacidad: montos ocultos bloquean monto/moneda y no viajan en el update. No importa del wizard (anti-circular §3.3). |
+| `agro/agro-facturero-finca-wizard.js` | wiring mínimo | `cols` de los 5 tiles + `split_from_id` (+ `origin_table` en ingresos/pérdidas); helpers `isLedgerRowEditable`/`findEditableLedgerRow`/`openRowEditor`/`deleteRowFromList`; botones editar/eliminar SOLO en filas ledger originales del paso 5; handlers con `import()` dinámico del editor; refetch por `fetchTileRows` tras guardar/eliminar. |
+| `agro/agro-facturero-finca-wizard.css` | estilo | `.fcwz-iconbtn` (acciones por fila) + modal `.fcwz-edit` (tokens ADN, z-index 10090 bajo el confirm 10100, reduced-motion propio). |
+
+- **Resultado de build**: `pnpm build:gold` verde (2.34s; agent-guard + UTF-8 + llms OK). Chunk propio `agro-facturero-finca-edit-COcbtHCR.js` (import dinámico verificado en dist), wiring presente en el chunk del wizard, CSS en el bundle.
+- **QA sugerido (owner, producción)**:
+  1. Editar "compa test" (cambiar monto o categoría) → al guardar, lista/tile/conteos refrescan (fetchTileRows).
+  2. Eliminar "compa test" → Gastos·Todas vuelve a 3 y la fila queda con `deleted_at` NOT NULL: `select id, concept, amount, deleted_at from agro_expenses where id = '<id>';`
+  3. Filas con tag "histórico operacional" y cobros derivados (origin/split) SIN botones de acción.
+  4. Abrir el modal con montos ocultos → monto y moneda bloqueados; concepto/fecha/categoría editables.
+  5. Opcional (verificar policies remotas): `select tablename, policyname, cmd from pg_policies where schemaname = 'public' and tablename in ('agro_expenses','agro_income','agro_pending','agro_losses','agro_transfers') order by tablename, cmd;`
+- **Pendiente del owner**: confirmar modal compacto vs wizard en modo edición (se asumió compacto); confirmar GREEN de lectura B8/B12/Vista general; decidir push.
+- **NO se hizo (scope respetado)**: sin git (ni add/commit/push), sin DDL/migraciones, sin canonización, sin QA de agente (§5 — solo verificación estática + build), sin tocar `agro.js` (confirm dialog reutilizado vía `window.showAgroConfirmDialog`), sin documentación más allá de este INGEST + daily log.
+
+### Git sugerido (NO ejecutado)
+```bash
+git add apps/gold/agro/agro-facturero-finca-edit.js apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/agro/agro-facturero-finca-wizard.css apps/gold/docs/AGENT_REPORT_ACTIVE.md apps/gold/docs/ops/daily-log-2026-09-11.md
+git commit -m "feat(finca): ANEXO 18 — Fase 7 editar/eliminar registros (modal compacto, soft-delete, derivadas solo lectura)"
+git push origin main
+```
