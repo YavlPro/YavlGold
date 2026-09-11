@@ -50,6 +50,36 @@
     font-weight: 600;
 }
 
+/* ANEXO 19: "Ir a inicio" en topbar (visible desde el paso 2 del wizard).
+   Gemelo del .fcflow__back (44px touch ADN §16, tokens, sin glow); el label
+   colapsa a solo-icono en ≤480px. */
+.fcflow__home {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 44px;
+    padding: 0.5rem 0.9rem;
+    background: transparent;
+    border: 1px solid var(--border-gold, rgba(200, 167, 82, 0.25));
+    border-radius: var(--radius-sm, 8px);
+    color: var(--text-muted, #94a3b8);
+    font-family: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: color 160ms ease, border-color 160ms ease;
+}
+
+.fcflow__home:hover,
+.fcflow__home:focus-visible {
+    color: var(--gold-4, #C8A752);
+    border-color: var(--gold-4, #C8A752);
+}
+
+.fcflow__home:focus-visible {
+    outline: none;
+    box-shadow: var(--state-focus-ring);
+}
+
 /* Subtitulo distintivo del wizard (Fase 6): diferencia "nuevo" de
    "ver-clientes" sin tocar la topbar del detalle. */
 .fcflow__subtitle {
@@ -465,6 +495,7 @@ select.fcflow-input option { background: var(--bg-2, #101116); color: var(--text
     .fcflow-grid--2 { grid-template-columns: 1fr; }
     .fcflow__footer { flex-direction: column-reverse; }
     .fcflow__footer > * { width: 100%; }
+    .fcflow__home-label { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
