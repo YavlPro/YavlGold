@@ -3240,3 +3240,29 @@ git add apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/docs/AGENT_REPOR
 git commit -m "fix(finca): ANEXO 16-C — farm_id en el select ledger de los 5 tiles (farmKey vacio descartaba todo con finca activa) + canary de criba"
 git push origin main
 ```
+
+---
+
+## Sesión 2026-09-10 — Cierre de B9 en producción, canary permanente, B12 en el mismo push, Fase 7 abierta con alcance
+
+- **Fecha**: 2026-09-10
+- **Objetivo**: cerrar B9 (ledger invisible) con evidencia de runtime y dejar el frente editar/eliminar (Fase 7) con alcance canónico definido.
+- **Diagnóstico**: Gemini 3.8 Flash High (M2) halló la causa raíz real de B9: `VER_TILES.cols` (`:112`, `:119`, `:125`, `:131`, `:137`) omitía `farm_id`; el filtro post-normalización del ANEXO 9 (`:483-484`) comparaba `farmKey` (siempre `""`) contra `farmId` y descartaba el 100% del ledger con finca activa. Refutó con líneas exactas las afirmaciones estáticas previas de Arena AI. ANEXO 14-B (refetch en `goStep`) era la segunda capa del mismo bug (staleness): necesaria pero no suficiente.
+- **Cambios realizados**:
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agro/agro-facturero-finca-wizard.js` | fix | `,farm_id` en `cols` de 5 tiles (16-C) + refetch `goStep` (14-B) + canary `console.error`/`console.warn` de criba |
+| `agro/agro-dashboard-v11.js` | fix | scope de `user` en `renderGreeting` (17, B12) |
+
+- **Resultado de build**: verde (1.88s y 1.84s). Push `53adfd16` tras `git pull --rebase` por rechazo de divergencia con `origin/main`.
+- **QA sugerido/realizado**: owner online 21:06 y 21:28 — matriz viva (Insumos=1, Transporte=1, Otros=2; `"compa test"` bajo Insumos agrícolas con chip y SIN tag, COL$10.000) → B9 cerrado con evidencia de runtime.
+- **Pendiente**: B8 (3 escenarios), B12 (consola limpia + línea “días contigo”), Vista general sin regresión.
+- **NO se hizo**: sin DDL, sin canon, sin git sin palabra del owner; Fase 7 sin iniciar (pendiente decisión del owner: modal compacto vs wizard en modo edición); daily log y esta sesión NO pusheados el 10-09 por decisión del owner (se pushean mañana con su palabra). `git log --oneline -5` no mostró `53adfd16` por estar fuera de los cinco HEAD recientes; `git show 53adfd16` confirmó el hash y el mensaje de ANEXOS 14-B+16-C+17.
+
+### Git sugerido (NO ejecutado)
+```bash
+git add apps/gold/docs/AGENT_REPORT_ACTIVE.md apps/gold/docs/ops/daily-log-2026-09-10.md
+git commit -m "docs(2026-09-10): cierre B9, canary, B12 y alcance Fase 7"
+git push origin main
+```
