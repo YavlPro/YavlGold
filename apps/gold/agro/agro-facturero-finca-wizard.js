@@ -109,32 +109,32 @@ const VER_TILES = [
     {
         id: 'gastos', label: 'Gastos', icon: 'fa-solid fa-receipt',
         table: 'agro_expenses', who: '', orderCol: 'date',
-        cols: 'id,concept,amount,category,currency,date,created_at',
+        cols: 'id,concept,amount,category,currency,date,created_at,farm_id',
         alias: { concepto: 'concept', monto: 'amount', fecha: 'date' },
         scope: null
     },
     {
         id: 'ingresos', label: 'Ingresos', icon: 'fa-solid fa-circle-check',
         table: 'agro_income', who: '', orderCol: 'fecha',
-        cols: 'id,concepto,monto,monto_usd,categoria,currency,fecha,created_at',
+        cols: 'id,concepto,monto,monto_usd,categoria,currency,fecha,created_at,farm_id',
         scope: (q) => q.is('reverted_at', null)
     },
     {
         id: 'fiados', label: 'Fiados', icon: 'fa-solid fa-handshake',
         table: 'agro_pending', who: 'cliente', orderCol: 'fecha',
-        cols: 'id,cliente,concepto,monto,monto_usd,currency,fecha,created_at',
+        cols: 'id,cliente,concepto,monto,monto_usd,currency,fecha,created_at,farm_id',
         scope: (q) => q.is('reverted_at', null).neq('transfer_state', 'transferred')
     },
     {
         id: 'perdidas', label: 'Pérdidas', icon: 'fa-solid fa-circle-xmark',
         table: 'agro_losses', who: 'causa', orderCol: 'fecha',
-        cols: 'id,causa,concepto,monto,monto_usd,currency,fecha,created_at',
+        cols: 'id,causa,concepto,monto,monto_usd,currency,fecha,created_at,farm_id',
         scope: (q) => q.is('reverted_at', null)
     },
     {
         id: 'donaciones', label: 'Donaciones', icon: 'fa-solid fa-hand-holding-heart',
         table: 'agro_transfers', who: 'destino', orderCol: 'fecha',
-        cols: 'id,destino,concepto,monto,monto_usd,currency,fecha,created_at',
+        cols: 'id,destino,concepto,monto,monto_usd,currency,fecha,created_at,farm_id',
         scope: null
     }
 ];
@@ -461,14 +461,20 @@ function createSession(root) {
             if (tile.scope) query = tile.scope(query);
             if (farmId) query = query.eq('farm_id', farmId);
             const ledgerResult = await query;
-            if (ledgerResult.error) throw ledgerResult.error;
+            // ANEXO 16-C canary (§4.12.5 + §8.5): una query ledger fallada jamas
+            // pasa en silencio — log antes del throw.
+            if (ledgerResult.error) {
+                console.error('[FincaWizard] ledger query error:', ledgerResult.error?.message || ledgerResult.error);
+                throw ledgerResult.error;
+            }
 
             const alias = tile.alias || {};
             const categoryField = tile.id === 'gastos' ? 'category' : (tile.id === 'ingresos' ? 'categoria' : '');
             // ANEXO 9 Paso 2: la rama ledger TAMBIEN se normaliza (type por
             // tabla de origen) y se filtra sobre campos normalizados — ningún
             // refuerzo depende solo de la query.
-            const ledgerRows = (Array.isArray(ledgerResult.data) ? ledgerResult.data : [])
+            const ledgerRaw = Array.isArray(ledgerResult.data) ? ledgerResult.data : [];
+            const ledgerRows = ledgerRaw
                 .map((row) => ({
                     ...row,
                     origen: 'ledger',
@@ -482,6 +488,16 @@ function createSession(root) {
                 }))
                 .filter((row) => row.type === opType
                     && (!farmId || row.farmKey === farmId));
+            // ANEXO 16-C canary: si la criba post-normalizacion descarta TODO
+            // lo crudo, gritar — que una criba ciega nunca vuelva a pasar
+            // invisible en QA (causa raiz del B9 real).
+            if (ledgerRaw.length > 0 && ledgerRows.length === 0) {
+                console.warn('[FincaWizard] ledger rows descartadas por filtro', {
+                    crudas: ledgerRaw.length,
+                    filtradas: ledgerRows.length,
+                    farmId
+                });
+            }
 
             // (2) Union D-B (ANEXO 9 Paso 1): movimientos operativos historicos
             // NORMALIZADOS fila por fila antes de filtrar. El tipo se decide por

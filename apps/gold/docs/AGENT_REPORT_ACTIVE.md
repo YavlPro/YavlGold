@@ -3215,3 +3215,28 @@ git add apps/gold/agro/agro-dashboard-v11.js apps/gold/docs/AGENT_REPORT_ACTIVE.
 git commit -m "fix(dashboard): ANEXO 17 — user declarado dentro del try y usado fuera en renderGreeting (ReferenceError mataba el saludo de dias)"
 git push origin main
 ```
+
+---
+
+## Sesion 2026-09-10 (III) — ANEXO 16-C: B9 real — farm_id ausente del select ledger (M2 Gemini)
+
+- **Fecha**: 2026-09-10
+- **Objetivo**: aplicar el fix contractual de la causa raiz verificada por diagnostico externo (Gemini 3.8 Flash High, M2) — NO re-diagnosticado por regla del anexo.
+- **Diagnostico (M2, aceptado)**: los `cols` de los 5 VER_TILES (:112,:119,:125,:131,:137) omitian `farm_id` → `farmKey` siempre "" → el filtro post-normalizacion del ANEXO 9 (:483-484) descartaba el 100% de las filas ledger con finca activa. Era la causa real de B9 visible (el 14-B arreglo el refetch, pero las filas seguian cayendose en la criba).
+- **Cambios realizados**:
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agro/agro-facturero-finca-wizard.js` | Fix contractual (5 lineas) | `,farm_id` agregado al string cols de los 5 tiles, edicion por linea (sin interpolacion, sin riesgo de duplicar). |
+| `agro/agro-facturero-finca-wizard.js` | Canary permanente (§4.12.5 + §8.5) | (1) `ledgerResult.error` → console.error antes del throw (query fallada jamas silenciosa). (2) Si crudo >0 y filtrado ===0 → console.warn con {crudas, filtradas, farmId} — una criba ciega nunca vuelve a pasar invisible en QA. |
+
+- **Resultado de build**: `pnpm build:gold` verde (1.88s; UTF-8 OK; node --check OK). Simulacion de la logica: ANTES farmKey "" → descartado con finca (false); DESPUES farmKey real → pasa (true); Vista general sin regresion (true).
+- **QA sugerido (owner, matriz viva tras push)**: Gastos × la ladera × Todas = **4** ('bomba' y 'compa test' SIN tag + 2 operacionales CON tag); Insumos = 1 · Transporte = 1 · Otros = 2 · resto 0; Ingresos × la ladera = 0; Vista general sigue mostrando ledger. Consola: sin ReferenceError y sin warns del canary (si aparece el warn, hay otra criba por encontrar).
+- **NO se hizo**: sin re-diagnostico (regla del anexo); sin tocar CREAR ni otras zonas; sin git (comando abajo).
+
+### Git sugerido (NO ejecutado)
+```bash
+git add apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(finca): ANEXO 16-C — farm_id en el select ledger de los 5 tiles (farmKey vacio descartaba todo con finca activa) + canary de criba"
+git push origin main
+```
