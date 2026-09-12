@@ -166,6 +166,8 @@ agro-facturero-clientes-detail.js — Facturero de Clientes: detalle individual 
 agro-facturero-clientes-export.js — Facturero de Clientes: export Markdown de la lista (global y por finca)
 agro-facturero-clientes-flow.js — wizard de creación de cliente y primer registro (8 pasos) y routing hash del facturero (readFactureroHashRoute/writeFactureroHashRoute)
 agro-facturero-clientes-view-wizard.js — wizard de lectura "Ver clientes" (4 pasos), subvista "Acciones del sistema" (24 h) y componente compartido de trazabilidad (renderSystemActionsListHtml)
+agro-facturero-finca-wizard.js — wizard de 5 pasos para Facturero de la Finca (puerta Crear/Ver, tipo de registro, finca, categoría canónica y lista/formulario final con persistencia por hash y navegación guiada)
+agro-facturero-finca-edit.js — modal de edición y eliminación suave de movimientos del ledger de la finca (cargado dinámicamente vía import() desde el wizard, edición multimoneda con respeto de tasa histórica, borrado suave con deleted_at, exclusión de filas originadas en fiados/clientes)
 agro-clients.js      — Mis Clientes: directorio de contactos (clientes manuales + buyers derivados de Facturero de Clientes)
 agro-clima.js        — integración meteorológica
 agro-crop-report.js  — reportes detallados por cultivo (se acceden desde cada card/ciclo, no desde el Centro de Reportes)
@@ -199,11 +201,12 @@ disponible, con fallback defensivo a query directa.
 **Archivos CSS:**
 - `agro.css` — estilos principales + papelera + undo toast
 - `agro-facturero-clientes.css` — Facturero de Clientes: vista, cards, estados, acciones separadas y responsive mobile
-- `agro-facturero-clientes-flow.css` — wizard de creación (chrome y pasos)
+- `agro-facturero-clientes-flow.css` — wizard de creación de clientes (chrome y pasos)
 - `agro-facturero-clientes-view-wizard.css` — wizard de lectura (topbar sticky, tiles, footer)
+- `agro-facturero-finca-wizard.css` — wizard de la finca (topbar sticky, tiles de categorías, layout de pasos y selector de finca)
 - `agro-dashboard.css` — dashboard
 - `agro-dashboard-v11.css` — Dashboard Agro v11 (6 bloques), prefijo `ygd-` *(conserva nomenclatura V11 por legacy, aplica ADN visual V12)*
-- `agro-facturero-finca.css` — operaciones financieras
+- `agro-facturero-finca.css` — operaciones financieras / vista general de la finca
 - `agro-farms.css` — estilos de gestión de fincas (ADN V11)
 - `agro-clients.css` — Mis Clientes
 - `agro-reports-center.css` — Centro de Reportes Generales: vista, cards, estados, botones, selector de finca, nota informativa y responsive mobile
@@ -256,12 +259,18 @@ disponible, con fallback defensivo a query directa.
 - `agro_farmer_profile` - Perfil del agricultor en Agro (display_name, farm_name, location_text, experience_level, farm_type, assistant_goals)
 - `user_onboarding_context` - Contexto de onboarding del usuario; consultado por el Asistente IA para personalizar respuestas (agro_relation, main_activity)
 
-#### Agro — Facturero
-- `agro_expenses` - Gastos (con `deleted_at` soft-delete)
-- `agro_income` - Ingresos/Pagados (con `deleted_at`)
-- `agro_pending` - Fiados/Pendientes (con `deleted_at`)
-- `agro_losses` - Pérdidas (con `deleted_at`)
-- `agro_transfers` - Donaciones/Transferencias (con `deleted_at`)
+#### Agro — Facturero (Ledger financiero)
+- `agro_expenses` - Gastos de la finca y cultivos (soft-delete con `deleted_at`). **Esquema en inglés**: columnas `concept`, `amount`, `date`, `category`, `monto_usd`, `currency`, `exchange_rate`, `farm_id`, `crop_id`, `user_id`, `deleted_at`.
+- `agro_income` - Ingresos y cobros realizados (soft-delete con `deleted_at`). **Esquema en español**: columnas `concepto`, `monto`, `fecha`, `categoria`, `monto_usd`, `currency`, `exchange_rate`, `farm_id`, `crop_id`, `user_id`, `deleted_at`.
+- `agro_pending` - Fiados/Pendientes de clientes (con `deleted_at`).
+- `agro_losses` - Pérdidas asumidas (con `deleted_at`).
+- `agro_transfers` - Donaciones y transferencias entre estados (con `deleted_at`).
+
+> **Asimetría de nombres del ledger:** existe discrepancia histórica en los nombres de columnas entre gastos (`agro_expenses` en inglés: `concept`, `amount`, `date`, `category`) e ingresos (`agro_income` en español: `concepto`, `monto`, `fecha`, `categoria`). Todo mapeo o consulta SQL debe respetar esta asimetría.
+
+**Columnas de trazabilidad del ledger:**
+- `origin_table`: presente **únicamente** en `agro_income` y `agro_losses`. Documenta el origen de la fila cuando proviene de una transferencia (ej. cobro o pérdida derivada desde `agro_pending`).
+- `split_from_id`: presente en las **5 tablas del ledger** (`agro_expenses`, `agro_income`, `agro_pending`, `agro_losses`, `agro_transfers`). Permite trazabilidad completa cuando un movimiento se particiona o se liquida en partes (ej. cobro parcial de un fiado).
 
 #### Agro — Cultivos
 - `agro_crops` - Cultivos activos; campo `farm_id` (FK a `agro_farms`, nullable por migración)
@@ -293,12 +302,17 @@ disponible, con fallback defensivo a query directa.
 - `announcements` - Anuncios generales
 - `feedback` - Retroalimentación de usuarios
 
-### Seguridad
-- Row Level Security (RLS) habilitado
-- Políticas de acceso por usuario
-- Consultas filtradas por `user_id`
-- Soft-delete con `deleted_at` timestamp como patrón estándar
-- Monedas soportadas: COP, USD, VES
+### Seguridad y Políticas RLS
+- Row Level Security (RLS) habilitado en todas las tablas con aislamiento estricto por `user_id`.
+- Consultas filtradas siempre por `auth.uid() = user_id`.
+- Soft-delete con `deleted_at` timestamp como patrón estándar contable.
+- Monedas soportadas: COP, USD, VES.
+
+#### Mapa RLS real por tabla de facturación:
+- `agro_expenses`: **ALL** (`SELECT`, `INSERT`, `UPDATE`, `DELETE`) para el propietario (`auth.uid() = user_id`).
+- `agro_income`: **SELECT, INSERT, UPDATE** para el propietario, **SIN DELETE**. El borrado físico (`hard delete`) está bloqueado por política RLS como salvaguarda canónica para proteger el dinero cobrado; cualquier eliminación debe realizarse exclusivamente vía soft-delete marcando `deleted_at`.
+- `agro_losses`, `agro_pending`, `agro_transfers`: **ALL** (`SELECT`, `INSERT`, `UPDATE`, `DELETE`) para el propietario.
+- Tablas operacionales (`agro_operational_cycles`, `agro_operational_movements`): utilizan **hard delete** directo sin columna `deleted_at` (eliminación en cascada con el ciclo padre).
 
 ---
 
@@ -359,6 +373,24 @@ disponible, con fallback defensivo a query directa.
 - Cada página es un HTML independiente
 - Entradas definidas en `apps/gold/vite.config.js`
 - Clean URLs configuradas en `vercel.json` de la raíz del repo (config canónica del deploy)
+
+### Routing por Hash en Factureros
+La navegación profunda y modular dentro de los factureros se sincroniza de forma reactiva en el fragmento hash de la URL, permitiendo navegación con historial nativo y restauración exacta ante recarga (F5):
+
+- **Wizard Facturero de la Finca (`agro-facturero-finca-wizard.js`):**
+  Estructura hash: `#view=facturero-finca&subview=wizard&paso=N&rama=crear|ver&finca=UUID&cat=SLUG&done=1`
+  * `paso`: paso activo (1: puerta Crear/Ver, 2: tipo de registro, 3: selección de finca, 4: categoría canónica, 5: lista filtrada o formulario de registro).
+  * `rama`: `crear` (registro de operaciones) o `ver` (consulta del libro).
+  * `finca`: UUID de la finca activa.
+  * `cat`: slug de categoría canónica (`insumos`, `herramientas`, `mano-de-obra`, `mantenimiento`, `transporte`, `otros`, `todas`).
+  * `done`: flag de confirmación de guardado.
+  * **Persistencia:** el wizard opera **únicamente por hash**; no utiliza `localStorage` para su estado de navegación, garantizando restauración pura y enlaces reproducibles.
+
+- **Flujos Facturero de Clientes (`agro-facturero-clientes-flow.js` / `agro-facturero-clientes-view-wizard.js`):**
+  Estructura hash:
+  `#view=cartera&subview=nuevo&paso=N` (wizard de creación de cliente y primer registro en 8 pasos).
+  `#view=cartera&subview=ver&paso=N` (wizard de lectura "Ver clientes" en 4 pasos).
+  Sincronización gestionada por `readFactureroHashRoute()` y `writeFactureroHashRoute()`.
 
 ### Proceso de Build
 ```bash
@@ -464,6 +496,8 @@ git status
 - **RPC `get_farm_balance(p_farm_id)`** — ✅ RESUELTA (commit 6c8b0411, 26-jun-2026). Dashboard Bloque 3 ya no hace N queries client-side.
 - **`MutationObserver` en saludo de bienvenida** — el Dashboard Agro lee `.user-profile .user-name` vía `MutationObserver`. Puede fallar si cambia el timing de `resolveHeaderDisplayName`. Migrar a suscripción directa de auth cuando sea posible.
 - **Migración tipográfica V12** — ✅ RESUELTA (28-jun-2026). Orbitron/Rajdhani erradicadas de superficies visibles. Plus Jakarta Sans, Inter y Playfair Display gobiernan la plataforma. Cualquier referencia residual futura debe tratarse como regresión o deuda histórica no visible y auditarse antes de tocar.
+- **`z-index: 10090` en modal de edición (`#modal-edit-facturero` / `agro-facturero-finca-edit.js`)** — se sitúa por encima de la escala canónica de tokens de capas del ADN Visual (§8 tokens, donde `--z-modal: 10000`). Práctica existente a normalizar dentro de una armonización global de capas.
+- **Brecha de clase `.input-canon`** — definida conceptualmente en el ADN Visual V12 §7 como estándar de controles de formulario, pero inexistente como clase global en las hojas de estilo del proyecto (brecha doc-vs-realidad a unificar en futuro refactor de inputs).
 
 ---
 
@@ -476,5 +510,5 @@ git status
 
 ---
 
-**Versión de Ficha:** 1.7
-**Última Actualización:** 24/06/2026
+**Versión de Ficha:** 1.8
+**Última Actualización:** 11/09/2026

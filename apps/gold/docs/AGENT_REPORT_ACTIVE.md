@@ -3337,3 +3337,48 @@ git add apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/agro/agro-factur
 git commit -m "feat(wizards): ANEXO 19 — Volver de topbar retrocede un paso + botón Ir a inicio con guard de borrador (Finca y Clientes)"
 git push origin main
 ```
+
+---
+
+## Sesión 2026-09-11 (III) — Pase documental canónico Factureros (Finca y Clientes) + Archivo de frente cerrado (§4.2) + Skill B9 (§14)
+
+- **Fecha**: 2026-09-11
+- **Autorización**: El owner autorizó expresamente actualizar `MANIFIESTO_AGRO.md`, `FICHA_TECNICA.md` y demás documentos sobre los factureros. Modo: documentación y archivo, sin cambios de producto, sin tocar `ADN-VISUAL-V12.0.md` ni `AGENTS.md`, sin git ejecutado.
+- **Paso 0 — Verificación previa**:
+  - Lectura completa de `MANIFIESTO_AGRO.md` (§4.5.1, §4.5.2, §9.8, §9.14, §12), `FICHA_TECNICA.md` (§3.2, §4.2, §5, §8) y `apps/gold/agro/index.html`.
+  - Confirmados los 15 módulos y CSS de factureros en `apps/gold/agro/`.
+  - Identificados documentos de diagnósticos y planes ejecutados para archivar en `apps/gold/docs/archive/finca/`.
+- **Paso 1 — MANIFIESTO_AGRO.md (lenguaje humano, sin tecnicismos)**:
+  - **§4.5.2 Facturero de la Finca**: asentado el flujo real en 5 pasos (puerta Crear/Ver → tipo de registro → finca → categoría canónica → lista/formulario); persistencia de posición tras F5 vía hash; navegación canónica: "Volver" retrocede un único paso (solo en el inicio sale al hub) e "Ir a inicio" regresa al comienzo protegiendo el borrador con diálogo de confirmación; 6 categorías canónicas del campo (Insumos agrícolas, Herramientas y equipos, Mano de obra, Mantenimiento, Transporte y combustible, y Otros) con lectura integrada de registros históricos; tipos sin categoría (fiados, pérdidas, donaciones) con nota honesta; movimientos previos reconocidos como "histórico operacional" en solo lectura; corrección de la realidad mediante edición y eliminación suave con confirmación canónica (sin papelera para movimientos financieros); regla de origen estricta: registros nacidos de fiados/clientes se gobiernan desde Facturero de Clientes mediante transferencias/reversiones seguras; modo montos ocultos para privacidad; multimoneda honesta respetando tasas históricas; montos no definidos mostrados como "Monto no anotado" (nunca cero).
+  - **§4.5.1 Facturero de Clientes**: navegación alineada al canon ("Volver" retrocede un paso, "Ir a inicio" con protección de borrador); cobro de fiados reflejado en el libro general con trazabilidad de su origen comercial sin duplicar historia ni maquillar deudas.
+  - **§9.14**: creación de registros comerciales alineada al flujo guiado del wizard en 5 pasos en prosa humana.
+  - **§12**: marcado como resuelto el pendiente de documentación de categorías canónicas y flujo en 5 pasos del Facturero de la Finca. Pendientes vivos (multimoneda por superficie, reversión por superficie) conservados abiertos.
+- **Paso 2 — FICHA_TECNICA.md (especificación técnica exhaustiva)**:
+  - **§4.2**: agregados módulos reales `agro-facturero-finca-wizard.js`, `agro-facturero-finca-edit.js`, `agro-facturero-clientes-flow.js` y hojas de estilo asociadas (`agro-facturero-finca-wizard.css`, `agro-facturero-clientes-flow.css`, `agro-facturero-finca.css`) con definición de rol exacto.
+  - **§5 Base de Datos**: documentada la asimetría histórica de columnas en el ledger contable (`agro_expenses` en inglés con `concept/amount/date/category` vs `agro_income` en español con `concepto/monto/fecha/categoria`); mapa de columnas de trazabilidad (`origin_table` solo presente en `agro_income` y `agro_losses`; `split_from_id` presente en las 5 tablas del ledger); mapa RLS real (`agro_expenses` ALL, `agro_income` SELECT/INSERT/UPDATE **SIN DELETE** por salvaguarda canónica de cobros, `agro_losses`/`pending`/`transfers` ALL); tablas operacionales con hard delete sin `deleted_at`.
+  - **§8 Routing**: especificados los parámetros hash del wizard de Finca (`paso`, `rama`, `finca`, `cat`, `done`) y del flow de Clientes (`subview=nuevo|ver&paso=N`); asentada la persistencia por hash pura (sin uso de `localStorage`).
+  - **Deuda técnica registrada**: asentado `z-index: 10090` del modal de edición por encima de la escala ADN (§8 tokens), y brecha de la clase `.input-canon` (definida conceptualmente en ADN §7 pero inexistente en el CSS global). Versión de ficha actualizada a 1.8.
+- **Paso 3 — apps/gold/agro/index.html**:
+  - Verificada la carga dinámica de `agro-facturero-finca-wizard.js` (L3494), `agro-facturero-clientes-view.js` (L3500) y `agro-facturero-finca-edit.js` (import dinámico bajo demanda desde el wizard). CSS en `<head>` completos. Estado: **sin cambios necesarios**.
+- **Paso 4 — Archivo por frente cerrado (AGENTS §4.2)**:
+  - Creado directorio `apps/gold/docs/archive/finca/`.
+  - Movidos cuatro documentos de diagnóstico, matriz y planes del frente cerrado:
+    1. `apps/gold/docs/archive/finca/FACTUREROS_BUG_REPORT.md` (antiguamente en `diagnosticos/`)
+    2. `apps/gold/docs/archive/finca/AGENT_HANDOFF__FACTUREROS__2026-06-26.md`
+    3. `apps/gold/docs/archive/finca/AGENT_SPEC__REPORTES_POR_FINCA__2026-08-03.md`
+    4. `apps/gold/docs/archive/finca/AGENT_SPEC__CLIENTES_FINCA_EXPORT__2026-08-05.md`
+  - Eliminado directorio vacío `apps/gold/docs/diagnosticos/`.
+- **Paso 5 — Skill universal (AGENTS §14)**:
+  - Creado `SKILLS/2026-09-11-LECCIONES-FACTURERO-FINCA.md` con formato canónico §14, documentando las tres lecciones de la saga B9:
+    1. Un filtro post-normalización solo puede consumir campos que el `select` de su query realmente devuelve (`farm_id` en `VER_TILES.cols`).
+    2. Un síntoma de runtime se cierra con evidencia de runtime, no con estática.
+    3. Canary permanente: si una criba descarta todo lo crudo (`rawCount > 0 && filteredCount === 0`), el sistema debe emitir advertencia visible (`console.warn`).
+- **Resultado de build**: `pnpm build:gold` → ✅ GREEN (2.73s, agent-guard OK, agent-report-check OK, check-llms OK, UTF-8 guard OK).
+- **NO se hizo**: sin git ejecutado, sin cambios en código de lógica de producto, sin tocar `ADN-VISUAL-V12.0.md` ni `AGENTS.md`.
+
+### Git sugerido (NO ejecutado)
+```bash
+git add apps/gold/docs/MANIFIESTO_AGRO.md apps/gold/docs/FICHA_TECNICA.md apps/gold/docs/AGENT_REPORT_ACTIVE.md apps/gold/docs/ops/daily-log-2026-09-11.md SKILLS/2026-09-11-LECCIONES-FACTURERO-FINCA.md apps/gold/docs/archive/finca/
+git commit -m "docs(factureros): pase documental canónico Manifiesto + Ficha Técnica, skill B9 y archivo de frente finca (§4.2)"
+git push origin main
+```

@@ -641,6 +641,14 @@ a página completa. No usa modales como pasos.
 - Navegación de la familia de factureros: topbar con `← Entrada`, título del
   módulo y paso visible; pie con `Atrás` y `Siguiente`; `Siguiente` es el
   único avance; al recargar se restaura el paso.
+- Navegación del flujo de clientes alineada al canon: "Volver" retrocede
+  un paso individual y solo desde la puerta inicial sale al hub; "Ir a inicio"
+  regresa al comienzo protegiendo el borrador con confirmación si ya se habían
+  ingresado datos.
+- Trazabilidad y reflejo en el libro general: el cobro de un fiado (total o
+  parcial) queda reflejado en el libro general con trazabilidad clara de su
+  origen comercial, sin duplicar la historia del dinero ni maquillar las deudas
+  vivas que aún resten.
 - Los dos wizards se distinguen con un subtítulo humano en la topbar:
   "Creación de nuevo cliente y registro" y "Ver clientes y registros".
 - La puerta del facturero ofrece dos entradas: `Nuevo cliente` (creación)
@@ -666,7 +674,7 @@ No es el Facturero de Clientes (la sección destinada solo a llevar el saldo de 
 
 ### Para qué sirve
 
-* Registrar gastos de la finca (insumos, mano de obra, transporte, etc.).
+* Registrar gastos de la finca (insumos, herramientas, mano de obra, etc.).
 * Registrar ingresos por ventas cobradas.
 * Registrar pérdidas (producto dañado, robo, etc.).
 * Registrar donaciones.
@@ -681,17 +689,71 @@ No es el Facturero de Clientes (la sección destinada solo a llevar el saldo de 
 * **Donaciones**: Producto que obsequiaste.
 * **Otros**: Cualquier movimiento excepcional.
 
+### Flujo real en 5 pasos
+
+El Facturero de la Finca organiza el trabajo mediante un flujo guiado en cinco pasos:
+
+1. **Puerta de entrada:** dos opciones claras a pantalla completa: `Crear registro` (para asentar una operación nueva) o `Ver registros` (para consultar el libro de movimientos).
+2. **Tipo de registro:** selección entre las naturalezas financieras reales del campo: Gastos, Ingresos, Fiados, Pérdidas o Donaciones.
+3. **Finca:** selección de la finca específica donde tuvo lugar el movimiento.
+4. **Categoría:** selección de la categoría canónica correspondiente al movimiento. En los tipos que no manejan categorías (como fiados, pérdidas o donaciones), el sistema avanza de forma honesta informando que no aplica categoría.
+5. **Lista o Formulario final:** en la rama de creación, el formulario para ingresar concepto, monto, fecha y moneda; en la rama de lectura, la lista detallada de movimientos filtrada según las decisiones tomadas en los pasos previos.
+
+**Reglas de navegación:**
+* **Persistencia con recarga (F5):** la URL conserva en todo momento el paso y los filtros activos, por lo que recargar la página restaura exactamente la posición del agricultor.
+* **Botón "Volver":** retrocede siempre un paso a la vez dentro del flujo. Solo al encontrarse en la puerta de inicio de los 5 pasos, "Volver" sale hacia el hub de navegación de Agro.
+* **Botón "Ir a inicio":** permite regresar directamente al comienzo del facturero. Si el agricultor ya comenzó a escribir o modificar datos en el formulario, el sistema pide confirmación explícita para proteger su borrador de cancelaciones accidentales.
+
+### Categorías canónicas del campo
+
+Para organizar los gastos e ingresos de manera consistente con el trabajo agrícola, el Facturero de la Finca reconoce seis categorías canónicas:
+
+1. **Insumos agrícolas:** semillas, abonos, fertilizantes, pesticidas, sustratos y productos biológicos.
+2. **Herramientas y equipos:** maquinaria, repuestos, implementos manuales, mangueras, bombas y accesorios.
+3. **Mano de obra:** jornales, pagos a trabajadores de campo, cosecheros y labores técnicas.
+4. **Mantenimiento:** reparaciones de cercas, galpones, canales de riego, limpieza de terrenos e infraestructura.
+5. **Transporte y combustible:** fletes, acarreo de cosechas, gasolina, diésel y lubricantes.
+6. **Otros:** cualquier gasto o ingreso operativo que por su naturaleza excepcional no pertenezca a las clasificaciones anteriores.
+
+**Regla de registros históricos:** los movimientos antiguos registrados bajo nomenclaturas previas se leen y muestran ordenados dentro de su categoría canónica equivalente.
+
+**Tipos sin categoría:** los movimientos que por su naturaleza no tienen categoría (como fiados pendientes, pérdidas de cosecha o donaciones) lo comunican en la interfaz con una nota honesta y comprensible, sin inventar ceros engañosos ni clasificaciones ficticias.
+
+### Históricos operacionales
+
+Los movimientos registrados en etapas tempranas anteriores a la consolidación del libro general único se leen e integran dentro del facturero. Para garantizar total fidelidad con la realidad histórica, estos registros se identifican claramente con la nota **"histórico operacional"** y se presentan en modo de solo lectura.
+
+### Corrección de la realidad: edición y eliminación suave
+
+El agricultor tiene derecho a corregir equivocaciones en su libro de cuentas. El Facturero de la Finca permite editar y eliminar registros mediante diálogos de confirmación canónicos:
+
+* **Eliminación suave:** el borrado de un movimiento financiero nunca destruye físicamente la fila en la base de datos; la marca como eliminada para preservar la trazabilidad contable y permitir auditorías posteriores.
+* **Sin papelera para movimientos financieros:** la papelera de reciclaje en Agro aplica únicamente a cultivos; para los movimientos de dinero no existe papelera ni restauraciones desordenadas que confundan la contabilidad del negocio.
+
+### Regla de origen: ciclo de fiados y clientes
+
+Los registros cuyo origen provenga del ciclo de crédito a clientes (por ejemplo, el cobro de una venta fiada o una amortización parcial) **no se editan ni eliminan desde el Facturero de la Finca**.
+
+Su realidad y gobierno pertenecen al **Facturero de Clientes**. Es allí donde, a través de transferencias y reversiones seguras, se actualiza el estado de la deuda y del cobro. Esta regla de origen asegura que nunca existan dos verdades contradictorias para un mismo pago o crédito.
+
+### Privacidad y discreción en campo
+
+Cuando el modo de montos ocultos está activado en el perfil para resguardar la privacidad frente a terceros en la finca, la interfaz de edición del movimiento protege los números: no revela los valores en pantalla ni envía montos no autorizados al guardar.
+
+### Multimoneda honesta y respeto de tasas históricas
+
+El facturero reconoce operaciones en COP, USD y VES:
+* La tasa de cambio histórica guardada en el momento original de registrar un movimiento se respeta íntegramente a lo largo del tiempo.
+* La tasa solo se recalcula si el agricultor decide modificar de manera voluntaria el monto o la moneda del movimiento durante una edición.
+
+### Montos sin dato
+
+Si un movimiento histórico o excepcional no cuenta con un monto numérico asentado, el facturero lo muestra explícitamente como **"Monto no anotado"**, evitando sustituir la ausencia de datos por un cero que confunda la lectura real de las cuentas.
+
 ### Relación con cultivo y no cultivo
 
 * Puedes asociar cada movimiento a un ciclo de cultivo (para saber exactamente qué cultivo generó ese ingreso o gasto).
 * También puedes registrar movimientos generales (sin un cultivo específico), por ejemplo, los gastos de mantenimiento de la finca. Estos «movimientos generales» son financieros y pertenecen a Facturero de la Finca; no se asocian al hub de navegación «Mi Granja».
-
-### Flujo de uso
-
-1. En Facturero de la Finca, seleccionas primero el contexto: ¿es un movimiento general o pertenece a un cultivo específico? Desde el hub Mi Granja puedes acceder a Mis cultivos para ver tus ciclos o a Operaciones de la Finca para tus períodos.
-2. Luego eliges el tipo de registro: gasto, ingreso, fiado, pérdida o donación.
-3. Registras el monto, fecha, concepto.
-4. El movimiento aparece en el historial y afecta las estadísticas.
 
 ### Malentendidos históricos ya resueltos
 
@@ -1567,12 +1629,11 @@ La herramienta no sirve para consultas que no tengan respaldo en lo que ya regis
 
 ### 9.14 ¿Cómo creo un registro o movimiento comercial?
 
-1. En el Dashboard o sidebar, usa "Nuevo registro".
-2. Si no tienes fincas creadas, el sistema te redirige a Mis Fincas con un aviso (2026-06-20).
-3. Seleccionas el tipo: gasto, ingreso recibido, fiado, pérdida u otro.
-4. Si el registro pertenece a un cultivo específico, lo seleccionas. Si no, queda como movimiento general.
-5. Indicas el monto, la fecha y el concepto.
-6. Guardar.
+1. En el Dashboard, el menú o la navegación de Granja, entras al Facturero de la Finca y seleccionas la puerta "Crear registro". (Si aún no tienes fincas creadas, el sistema te invitará primero a registrar tu primera finca).
+2. Seleccionas el tipo de movimiento: gasto, ingreso recibido, fiado pendiente, pérdida o donación.
+3. Eliges la finca a la que corresponde la operación.
+4. Si el tipo de registro requiere categoría (como gastos e ingresos), eliges la categoría correspondiente del campo (Insumos agrícolas, Herramientas y equipos, Mano de obra, Mantenimiento, Transporte y combustible, u Otros). Para los tipos sin categoría, el sistema continúa de manera honesta y guiada.
+5. Completas el concepto, monto, fecha y moneda del registro, y confirmas con "Guardar". Durante todo el proceso puedes retroceder paso a paso con "Volver", o usar "Ir a inicio" sabiendo que el sistema protegerá tu borrador pidiendo confirmación si ya habías ingresado datos.
 
 ### 9.15 ¿Cuándo un registro va a un cultivo y cuándo queda como movimiento general?
 
@@ -1737,6 +1798,7 @@ Cualquier cambio visual debe obedecer el ADN Visual V12 y el canon de modales §
 * [x] Agregar multimoneda real como contexto operativo
 * [x] Documentar transferencia de historial, parcialidad y reversión segura
 * [x] Unificar "Granja" vs "Operación" en hub de navegación — "Operación Comercial" no existe como módulo real; la categoría financiera se llama "Finanzas"
+* [x] Documentar categorías canónicas del campo y flujo en 5 pasos del Facturero de la Finca
 
 ### Pendientes funcionales por validar
 
