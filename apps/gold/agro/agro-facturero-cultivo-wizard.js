@@ -877,6 +877,11 @@ function createSession(root) {
                             <button type="button" class="fcwz-iconbtn" data-fcct-edit-row="${escapeHtml(String(row.id || ''))}" aria-label="Editar registro"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
                             <button type="button" class="fcwz-iconbtn" data-fcct-del-row="${escapeHtml(String(row.id || ''))}" aria-label="Eliminar registro"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
                         </span>` : ''}
+                        ${row?.origen === 'operacional' ? `
+                        <span class="fcwz-movements__actions">
+                            <button type="button" class="fcwz-iconbtn" data-fcct-op-edit-row="${escapeHtml(String(row.id || ''))}" aria-label="Editar movimiento del ciclo"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
+                            <button type="button" class="fcwz-iconbtn" data-fcct-op-del-row="${escapeHtml(String(row.id || ''))}" aria-label="Eliminar movimiento del ciclo"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
+                        </span>` : ''}
                     </li>
                 `).join('')}
             </ul>
@@ -936,7 +941,7 @@ function createSession(root) {
             await deleteFincaLedgerRow({
                 table: ledgerTile().table,
                 row,
-                onChanged: () => { void fetchListRows(); }
+                onChanged: () => { void fetchListRows(); void fetchTileCounts(); }
             });
         } catch (err) {
             console.error('[CultivoWizard] delete failed:', err?.message || err);
@@ -944,14 +949,60 @@ function createSession(root) {
         }
     }
 
+    // ANEXO 20 F1: gestión de históricos operacionales (Opción A) — editar
+    // concepto/monto/fecha del movimiento o eliminarlo del ciclo. Refresca
+    // lista Y conteos (14-B).
+    function findOperationalRow(rowId) {
+        const id = String(rowId || '');
+        if (!id) return null;
+        const row = state.listScope.rows.find((entry) => String(entry?.id || '') === id);
+        return row?.origen === 'operacional' ? row : null;
+    }
+
+    async function openOpRowEditor(rowId) {
+        const row = findOperationalRow(rowId);
+        if (!row) return;
+        try {
+            const { openOperationalMovementEditor } = await import('./agro-operational-edit.js');
+            await openOperationalMovementEditor({
+                row,
+                onChanged: () => { void fetchListRows(); void fetchTileCounts(); }
+            });
+        } catch (err) {
+            console.error('[CultivoWizard] op edit failed:', err?.message || err);
+            showStepError('No se pudo abrir el editor del movimiento.');
+        }
+    }
+
+    async function deleteOpRowFromList(rowId) {
+        const row = findOperationalRow(rowId);
+        if (!row) return;
+        try {
+            const { deleteOperationalMovement } = await import('./agro-operational-edit.js');
+            await deleteOperationalMovement({
+                row,
+                onChanged: () => { void fetchListRows(); void fetchTileCounts(); }
+            });
+        } catch (err) {
+            console.error('[CultivoWizard] op delete failed:', err?.message || err);
+            showStepError('No se pudo eliminar el movimiento del ciclo.');
+        }
+    }
+
+    // ANEXO 20 F2: tipos como cards sobrias del canon (.fcvw-choice, igual
+    // que el paso 2 del wizard Finca) — 2 columnas desktop, 1 columna en
+    // <=480px (regla de la familia) y altura de contenido, sin tiles
+    // cuadrados estirados por el grid.
     function renderCrearTypes() {
         return `
             <div class="fcvw-tiles fcvw-tiles--choice">
                 ${CREAR_TYPES.map((type) => `
-                    <button type="button" class="fcvw-tile${state.tipoId === type.id ? ' is-active' : ''}" data-fcct-tipo="${type.id}" aria-pressed="${state.tipoId === type.id ? 'true' : 'false'}">
+                    <button type="button" class="fcvw-choice${state.tipoId === type.id ? ' is-selected' : ''}" data-fcct-tipo="${type.id}">
                         <i class="${type.icon}" aria-hidden="true"></i>
-                        <span class="fcvw-tile__label">${escapeHtml(type.label)}</span>
-                        <span class="fcvw-tile__desc">${escapeHtml(type.hint)}</span>
+                        <span class="fcvw-choice__body">
+                            <span class="fcvw-choice__label">${escapeHtml(type.label)}</span>
+                            <span class="fcvw-choice__hint">${escapeHtml(type.hint)}</span>
+                        </span>
                     </button>
                 `).join('')}
             </div>
@@ -1210,6 +1261,12 @@ function createSession(root) {
         });
         root.querySelectorAll('[data-fcct-del-row]').forEach((button) => {
             button.addEventListener('click', () => { void deleteRowFromList(button.getAttribute('data-fcct-del-row')); });
+        });
+        root.querySelectorAll('[data-fcct-op-edit-row]').forEach((button) => {
+            button.addEventListener('click', () => { void openOpRowEditor(button.getAttribute('data-fcct-op-edit-row')); });
+        });
+        root.querySelectorAll('[data-fcct-op-del-row]').forEach((button) => {
+            button.addEventListener('click', () => { void deleteOpRowFromList(button.getAttribute('data-fcct-op-del-row')); });
         });
 
         root.querySelectorAll('[data-fcct-tile]').forEach((button) => {

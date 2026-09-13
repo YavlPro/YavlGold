@@ -3602,3 +3602,61 @@ Resultado de build: pnpm build:gold verde (gate documental).
 QA sugerido/realizado: owner online 20:34–20:35 (mayoritario verde + 4 hallazgos); QA de ANEXO 20 pendiente de ejecución.
 
 NO se hizo: sin código, sin canon, sin git hoy 09-12 (reporte y daily log se pushean mañana con palabra del owner); ANEXO 20 sin ejecutar por créditos.
+
+---
+
+## Sesión 2026-09-13 — ANEXO 20 FINAL: fixes QA 12-sep (F1-F4)
+
+Agente: GLM (ZCode). Nota de estado: el owner ya commiteó S1-S8 (el árbol partió limpio); el diff de esta sesión quedó acotado a 4 archivos (3 wizards + módulo nuevo).
+
+- **Fecha**: 2026-09-13
+- **Objetivo**: los 4 fixes del ANEXO 20 con DoD por fix y regla de paro (no disparó).
+
+### Diagnóstico
+
+- Paso 0 F1 (obligatorio): RLS de operacionales TRAZADA y vigente — migración `20260416190000_consolidate_legacy_app_supabase_objects.sql`: `agro_operational_cycles` RLS on (:543) con policies `user_own_cycles_select/insert/update/delete` (:587-648); `agro_operational_movements` RLS on (:579) con `user_own_movements_delete` (:703-713), todas `auth.uid() = user_id`. Evidence runtime del hard delete: `agroOperationalCycles.js:1324` (rollback) y `:1414` (deleteCycleRecord). No se creó DDL.
+- F3: traza completa de la salida — los tres wizards comparten el patrón único `goBack` (paso-1 → exitToSurface → `agro:shell:set-view` view:'granja'); el shell resuelve `granja` por `SHELL_GATE_ROUTES` (:55-61) vía `setShellGate` (:1066) que internamente hace `setActiveView('dashboard')` (:1070-1079) y luego `setShellDepth('hub')` — maquinaria de gates del shell, no de los wizards. El "Volver" del contextbar móvil (shell, `data-agro-mobile-back` :1445-1488) también termina en gate granja/operacion y además está OCULTO durante los wizards (B10: `body.agro-fcv-wizard-active .agro-mobile-contextbar`). Clientes: flow `goBack` → paso-1 → `onExit` (:345-352) → `writeFactureroHashRoute({subview:''})` + renderView = su entrada; view-wizard `exitToEntry` → `onExit` (:165-168).
+- F4: el sistema global de privacidad (`agro-privacy.js`) enmascara `[data-money="1"]` con `••••` (`applyMoneyPrivacy` :185-194), el toggle vive por delegación de `[data-money-privacy-control]` (:269-272), `initBuyerPrivacy(document)` (agro.js:16779) monta un **MutationObserver** sobre body que re-bindea y re-aplica la máscara tras cada render del wizard, y el estado persiste en localStorage (`YG_HIDE_MONEY_VALUES`) con sync entre pestañas.
+
+### Cambios realizados
+
+| Archivo | Fix | Cambio |
+|---|---|---|
+| `agro/agro-operational-edit.js` | F1 (NUEVO, ~300L) | Gestión de históricos operacionales (Opción A): `openOperationalMovementEditor` (modal reusando clases `fcwz-edit` en modo lectura; SOLO concepto/monto/fecha → `concept/amount/movement_date`; sin ciclo/tipo/categoría/partición; amount_usd recalculado SOLO si el monto cambió, con la tasa histórica del propio movimiento; privacidad bloquea monto y no lo envía) + `deleteOperationalMovement` (hard delete del movimiento con `showAgroConfirmDialog` y aviso "pertenece a un ciclo de Operaciones de la Finca; eliminarlo lo saca del ciclo y de su balance") + `isOperationalRowEditable` (solo filas origen 'operacional' del lector). Refresca `agro:operational-portfolio-updated` + `data-refresh`. RLS citada en cabecera. |
+| `agro/agro-facturero-finca-wizard.js` | F1 | Botones editar/eliminar en filas operacionales (`data-fcwz-op-*`), handlers con import dinámico y onChanged → refetch del listScope (los conteos de categorías viven de rows). |
+| `agro/agro-facturero-cultivo-wizard.js` | F1+F2 | F1: ídem con `data-fcct-op-*`, onChanged → refetch lista + conteos. F2: paso 2 CREAR pasa de tiles cuadrados estirados a las cards sobrias del canon (`.fcvw-choice` + hint, espejo del paso 2 de Finca) — 2 col desktop / 1 col ≤480px por regla de la familia (`clientes-view-wizard.css:457-460`), min-height 64px ≥44px touch, tokens heredados. **Desviación declarada del fix**: no se añadió CSS nuevo al css del cultivo porque las clases canon ya cumplen el DoD (duplicarlas violaría el modo-lectura de la familia). |
+| `agro/agro-facturero-personal-wizard.js` | F1 | Ídem con `data-fcp-op-*`, onChanged → refetch lista + conteos. |
+
+F3 y F4: **cero cambios de código** — verificación estática de cumplimiento (ver abajo); el síntoma del Dashboard no se reproduce estáticamente y se deja para evidencia runtime (Lección 2).
+
+### Verificación estática
+
+- **F1 matriz de botones** (`F1_MATRIX_OK`): ledger original ✔ ledger-edit (triple filtro) · derivadas (origin_table/split_from_id) ✖ sin botones · operacionales ✔ op-edit con aviso. Payloads verificados: update toca SOLO concept/movement_date/amount(+amount_usd condicional); jamás cycle_id/farm_id/crop_id/categoria/economic_type; delete = hard delete con confirm canónico; privacidad gatea monto.
+- **F3 tabla de verdad** (`F3_F4_STATIC_OK`): Finca/Cultivo/Personal: 5→4→3→2→1 (un paso por click, hash sync en cada render) → paso 1 → hub Granja (`view:'granja'`; NINGÚN wizard referencia dashboard/inicio). Clientes: paso-1 → entrada del facturero (onExit). Hash de salida `#view=granja` escrito por setShellGate (+replaceState redundante del wizard, inofensivo: el shell no escucha hashchange y la navegación real es el evento).
+- **F4 matriz privacy**: los 3 wizards renderizan barra (`data-money-privacy-control="toggle"`) y montos `[data-money="1" data-raw-money]` (1 punto de render por lista); el toggle global enmascara `••••` en filas (los wizards no renderizan totales en lista — no aplica), MutationObserver re-aplica tras cada render y el estado persiste en storage entre pasos y sesiones.
+- **Build**: verde en cada fix y final (2.31s). **Diff acotado**: solo los 4 archivos de la tabla.
+
+### QA owner sugerido (runtime — Lección 2)
+
+1. F1: editar monto de un operacional (p. ej. 'Fertilizante urea') y verlo en lista y en el balance del ciclo; eliminar uno con confirm (aviso del ciclo) y ver el ciclo ajustado; derivadas de Clientes siguen sin botones.
+2. F2: paso 2 CREAR del Cultivo con cards sobrias (2 col desktop, 1 col mobile).
+3. F3: cadena Volver 5→1→hub Granja en Cultivo, Finca y Personal; Clientes → su entrada. **Si reaparece el salto al Dashboard**: captura + consola — la maquinaria interna de gates del shell (`setActiveView('dashboard')` + `setShellDepth('hub')`) es la única ruta que lo explica estáticamente y pertenece al shell, no a los wizards; con evidencia se corriría en el shell.
+4. F4: toggle "Ocultar montos" en las 3 listas — filas pasan a `••••`, persiste al cambiar de paso y al reentrar.
+
+### NO se hizo (scope respetado)
+
+- Sin git ejecutado. Sin DDL (RLS ya vigente). Sin tocar MANIFIESTO — **deuda declarada**: nota futura en §4.3 sobre la segunda puerta de escritura para movimientos de ciclo (Opción A: wizards editan `agro_operational_movements` directamente) → próximo pase documental con palabra del owner. CSS del cultivo sin cambios (F2 resuelto con clases canon, desviación declarada). Sin mock.
+
+### Git sugerido (NO ejecutado) — un commit por fix
+
+```bash
+# F1 (módulo nuevo + wiring Finca/Personal)
+git add apps/gold/agro/agro-operational-edit.js apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/agro/agro-facturero-personal-wizard.js
+git commit -m "feat(wizards): ANEXO 20 F1 — gestión de históricos operacionales en Finca/Cultivo/Personal (Opción A: editar concepto/monto/fecha + hard delete con aviso de ciclo)"
+
+# F1+F2 en Cultivo (mismo archivo; separar con git add -p si prefieres commits granulares)
+git add apps/gold/agro/agro-facturero-cultivo-wizard.js
+git commit -m "feat(cultivo): ANEXO 20 F1 wiring op-edit + F2 cards canon en paso 2 CREAR"
+
+git push origin main
+```

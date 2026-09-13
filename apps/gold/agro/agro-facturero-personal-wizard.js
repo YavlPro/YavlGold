@@ -669,6 +669,11 @@ function createSession(root) {
                             <button type="button" class="fcwz-iconbtn" data-fcp-edit-row="${escapeHtml(String(row.id || ''))}" aria-label="Editar registro"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
                             <button type="button" class="fcwz-iconbtn" data-fcp-del-row="${escapeHtml(String(row.id || ''))}" aria-label="Eliminar registro"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
                         </span>` : ''}
+                        ${row?.origen === 'operacional' ? `
+                        <span class="fcwz-movements__actions">
+                            <button type="button" class="fcwz-iconbtn" data-fcp-op-edit-row="${escapeHtml(String(row.id || ''))}" aria-label="Editar movimiento del ciclo"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
+                            <button type="button" class="fcwz-iconbtn" data-fcp-op-del-row="${escapeHtml(String(row.id || ''))}" aria-label="Eliminar movimiento del ciclo"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
+                        </span>` : ''}
                     </li>
                 `).join('')}
             </ul>
@@ -725,11 +730,49 @@ function createSession(root) {
             await deleteFincaLedgerRow({
                 table: ledgerTile().table,
                 row,
-                onChanged: () => { void fetchListRows(); }
+                onChanged: () => { void fetchListRows(); void fetchTileCounts(); }
             });
         } catch (err) {
             console.error('[PersonalWizard] delete failed:', err?.message || err);
             showStepError('No se pudo eliminar el registro.');
+        }
+    }
+
+    // ANEXO 20 F1: históricos operacionales gestionables (Opción A).
+    function findOperationalRow(rowId) {
+        const id = String(rowId || '');
+        if (!id) return null;
+        const row = state.listScope.rows.find((entry) => String(entry?.id || '') === id);
+        return row?.origen === 'operacional' ? row : null;
+    }
+
+    async function openOpRowEditor(rowId) {
+        const row = findOperationalRow(rowId);
+        if (!row) return;
+        try {
+            const { openOperationalMovementEditor } = await import('./agro-operational-edit.js');
+            await openOperationalMovementEditor({
+                row,
+                onChanged: () => { void fetchListRows(); void fetchTileCounts(); }
+            });
+        } catch (err) {
+            console.error('[PersonalWizard] op edit failed:', err?.message || err);
+            showStepError('No se pudo abrir el editor del movimiento.');
+        }
+    }
+
+    async function deleteOpRowFromList(rowId) {
+        const row = findOperationalRow(rowId);
+        if (!row) return;
+        try {
+            const { deleteOperationalMovement } = await import('./agro-operational-edit.js');
+            await deleteOperationalMovement({
+                row,
+                onChanged: () => { void fetchListRows(); void fetchTileCounts(); }
+            });
+        } catch (err) {
+            console.error('[PersonalWizard] op delete failed:', err?.message || err);
+            showStepError('No se pudo eliminar el movimiento del ciclo.');
         }
     }
 
@@ -943,6 +986,12 @@ function createSession(root) {
         });
         root.querySelectorAll('[data-fcp-del-row]').forEach((button) => {
             button.addEventListener('click', () => { void deleteRowFromList(button.getAttribute('data-fcp-del-row')); });
+        });
+        root.querySelectorAll('[data-fcp-op-edit-row]').forEach((button) => {
+            button.addEventListener('click', () => { void openOpRowEditor(button.getAttribute('data-fcp-op-edit-row')); });
+        });
+        root.querySelectorAll('[data-fcp-op-del-row]').forEach((button) => {
+            button.addEventListener('click', () => { void deleteOpRowFromList(button.getAttribute('data-fcp-op-del-row')); });
         });
 
         root.querySelectorAll('[data-fcp-tile]').forEach((button) => {

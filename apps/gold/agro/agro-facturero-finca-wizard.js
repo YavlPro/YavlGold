@@ -508,6 +508,46 @@ function createSession(root) {
         }
     }
 
+    // ANEXO 20 F1: históricos operacionales gestionables (Opción A) — editar
+    // concepto/monto/fecha del movimiento o eliminarlo del ciclo. Refetch del
+    // listScope (los conteos de categorías viven de rows, paso 4).
+    function findOperationalRow(rowId) {
+        const id = String(rowId || '');
+        if (!id) return null;
+        const row = state.listScope.rows.find((entry) => String(entry?.id || '') === id);
+        return row?.origen === 'operacional' ? row : null;
+    }
+
+    async function openOpRowEditor(rowId) {
+        const row = findOperationalRow(rowId);
+        if (!row) return;
+        try {
+            const { openOperationalMovementEditor } = await import('./agro-operational-edit.js');
+            await openOperationalMovementEditor({
+                row,
+                onChanged: () => { void fetchTileRows(); }
+            });
+        } catch (err) {
+            console.error('[FincaWizard] op edit failed:', err?.message || err);
+            showStepError('No se pudo abrir el editor del movimiento.');
+        }
+    }
+
+    async function deleteOpRowFromList(rowId) {
+        const row = findOperationalRow(rowId);
+        if (!row) return;
+        try {
+            const { deleteOperationalMovement } = await import('./agro-operational-edit.js');
+            await deleteOperationalMovement({
+                row,
+                onChanged: () => { void fetchTileRows(); }
+            });
+        } catch (err) {
+            console.error('[FincaWizard] op delete failed:', err?.message || err);
+            showStepError('No se pudo eliminar el movimiento del ciclo.');
+        }
+    }
+
     // ---------- Datos: acciones del sistema (24 h, farm scope) ----------
 
     function withinWindow(timestamp, sinceMs) {
@@ -955,6 +995,11 @@ function createSession(root) {
                             <button type="button" class="fcwz-iconbtn" data-fcwz-edit-row="${escapeHtml(String(row.id || ''))}" aria-label="Editar registro"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
                             <button type="button" class="fcwz-iconbtn" data-fcwz-del-row="${escapeHtml(String(row.id || ''))}" aria-label="Eliminar registro"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
                         </span>` : ''}
+                        ${row?.origen === 'operacional' ? `
+                        <span class="fcwz-movements__actions">
+                            <button type="button" class="fcwz-iconbtn" data-fcwz-op-edit-row="${escapeHtml(String(row.id || ''))}" aria-label="Editar movimiento del ciclo"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
+                            <button type="button" class="fcwz-iconbtn" data-fcwz-op-del-row="${escapeHtml(String(row.id || ''))}" aria-label="Eliminar movimiento del ciclo"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
+                        </span>` : ''}
                     </li>
                 `).join('')}
             </ul>
@@ -1238,6 +1283,12 @@ function createSession(root) {
         });
         root.querySelectorAll('[data-fcwz-del-row]').forEach((button) => {
             button.addEventListener('click', () => { void deleteRowFromList(button.getAttribute('data-fcwz-del-row')); });
+        });
+        root.querySelectorAll('[data-fcwz-op-edit-row]').forEach((button) => {
+            button.addEventListener('click', () => { void openOpRowEditor(button.getAttribute('data-fcwz-op-edit-row')); });
+        });
+        root.querySelectorAll('[data-fcwz-op-del-row]').forEach((button) => {
+            button.addEventListener('click', () => { void deleteOpRowFromList(button.getAttribute('data-fcwz-op-del-row')); });
         });
         root.querySelector('[data-fcwz-retry-list]')?.addEventListener('click', () => { void fetchTileRows(); });
         root.querySelector('[data-fcwz-retry-actions]')?.addEventListener('click', () => { void fetchActions(); });
