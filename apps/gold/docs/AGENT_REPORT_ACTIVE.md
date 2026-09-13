@@ -3382,3 +3382,199 @@ git add apps/gold/docs/MANIFIESTO_AGRO.md apps/gold/docs/FICHA_TECNICA.md apps/g
 git commit -m "docs(factureros): pase documental canónico Manifiesto + Ficha Técnica, skill B9 y archivo de frente finca (§4.2)"
 git push origin main
 ```
+
+---
+
+## Sesión 2026-09-12 — Frente Cultivo S1: agro-ledger-reader.js (reader puro, sin wiring)
+
+Agente: GLM (ZCode). Primera sesión de implementación del Frente Facturero del Cultivo, tras el diagnóstico M1/M2 de esta misma fecha (inventario completo en la sección anterior).
+
+- **Fecha**: 2026-09-12
+- **Objetivo**: crear `apps/gold/agro/agro-ledger-reader.js` — lector canónico del ledger por partición — como entregable ÚNICO. Sin wiring, sin tocar superficies vivas.
+
+### Diagnóstico previo (base de la sesión)
+
+- Particiones canónicas (MANIFIESTO §4.5): farm = `farm_id ✓ crop_id ✗` · crop = `crop_id ✓` · orphan = ambos null.
+- Data real (owner, SQL): filas crop tienen `farm_id NULL` en las 5 tablas (con_finca = 0) → regla: **jamás filtrar filas crop por farm_id**; el eje finca del futuro wizard Cultivo solo acota qué cultivos entran en `cropIds`.
+- Lecciones SKILLS/2026-09-11 aplicadas por contrato: (1) todo campo que la criba compara DEBE estar en el select; (2) canary si crudo>0 && filtrado===0; (3) stamps con todos los ejes de la partición.
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agro/agro-ledger-reader.js` | Nuevo (único) | 380 líneas. API: `LEDGER_TILES` (5 tiles, cols SIEMPRE con `farm_id`+`crop_id`, `origin_table` solo income/losses, `split_from_id` en las 5), `TILE_TO_OP_TYPE` (gastos→expense, ingresos→income, fiados→pending, perdidas→loss, donaciones→transfer — vocabulario de 5 tipos alineado a tablas; puente `CYCLE_TYPE_TO_TYPE` traduce donation→transfer de los ciclos), `translateCategory` (identidad 6 canónicos + ventas/venta→ventas **D-3b supuesto reversible en 3 líneas marcadas**; legacy tools/supplies/labor/transport/otro/operacion/logistica; general→Sin categoría; desconocido→otros), `fetchLedgerTile({tileId, partition, limit})` (query por partición + normalización + criba post-normalización + canary), `fetchOperationalUnion({opType, partition, limit})` (unión D-B ANEXO 9: type por direction con semántica del ciclo, farmKey con fallback al ciclo, cropKey del ciclo; skip para `pending` — ciclos no admiten ese tipo, precedente wizard; canary sobre filas ya emparejadas por tipo para no disparar por ruido de otros tiles), `fetchTileRows` (composición + dedup fecha+monto+concepto con ledger prima + sort desc), `stampScope`/`isScopeStale` (B7 a 3 ejes: preset/farmId/cropId/cropIds), `isLedgerRowEditable` (triple filtro límite 3). Partición: `{preset:'farm',farmId?} | {preset:'crop',cropId?|cropIds?} | {preset:'orphan'}`; `cropIds` vacío = selector sin candidatos → cero honesto sin query ni canary. Errores: `console.error` + throw, jamás `[]` silencioso. RLS como el wizard Finca (sin user_id explícito, policies acotan). Sin estado global, sin imports del wizard (§3.3). |
+
+### Verificación estática (declarada; sin runtime — ley §5)
+
+1. **Sintaxis**: esbuild (mismo parser de Vite) sobre el archivo → OK (11.2 kB transpilados). Nota honesta: el reader aún NO entra al bundle (ningún archivo vivo lo importa, por diseño "sin wiring"); la validación de bundle real llega con la sesión de wiring del wizard Cultivo.
+2. **Cols campo-por-campo (Lección 1)**: script de aserciones (en /tmp, fuera del repo, eliminado) verificó: 5 tiles en orden canónico; `farm_id`+`crop_id`+`split_from_id`+`id`+`created_at` en los 5 selects; `origin_table` SOLO en income/losses; `TILE_TO_OP_TYPE` exacto al contrato; canary y 3 logs de error presentes; D-3b = 3 marcas; cero imports de módulos wizard. Resultado: STATIC_CHECK_OK.
+3. **Tabla de verdad de particiones con fixtures reales (estática sobre la criba `partitionPredicate`)**:
+   - `'bomba'` (expenses, category transporte, farm 8b219411, crop null) → preset farm+finca: pasa criba farm (`cropKey===''`, `farmKey===finca`); preset crop: NO pasa (`cropKey===''`); preset orphan: NO pasa (tiene finca). ✔
+   - Filas crop (income 108 / pending 82 / etc., todas farm null) → preset crop sin seleccionar: pasan (`cropKey!==''`); con cropId: solo las del cultivo; preset farm: NO pasan; preset orphan: NO pasan (tienen crop). Y la criba crop **nunca consulta farmKey** (con_finca=0 real). ✔
+   - Seeds QA 88888888 (ambos null) → solo preset orphan pasa (`cropKey==='' && farmKey===''`); en farm+Vista general (farmId vacío) también pasan hoy — comportamiento Finca GREEN documentado, endurecimiento reservado al frente Personal. ✔
+   - Unión op: 16 ciclos expense con cultivo + 16 movements → preset crop: type='expense' matchea, `cropKey` del ciclo decide; preset farm: excluidos (`cropKey!==''`). ✔
+4. **Anti-regresión Finca**: `git status` = solo el archivo nuevo; diff CERO en `agro-facturero-finca-wizard.js`, `agroOperationalCycles.js` y CSS.
+
+### Resultado de build
+
+`pnpm build:gold` → ✅ GREEN (1.83s; agent-guard OK, agent-report-check OK, check-llms OK, UTF-8 OK; warning de chunk >500kB preexistente del monolito, ajeno a esta sesión).
+
+### QA
+
+Ninguna por ley §5 (QA online = owner). Lo que queda pendiente de runtime y NO se declara probado: comportamiento real de las queries por partición en vivo, canary en consola, dedup contra los 75 cobros origin_agro_pending + 4 split_from_id de la partición crop (los derivados ya quedan no-editables por contrato; los cobros aparecerán como filas income de solo lectura, igual que en Finca). Primer consumidor: sesión 3 (rama VER del wizard Cultivo).
+
+### NO se hizo (scope respetado)
+
+- Sin wiring: ningún HTML/JS/CSS vivo modificado; el reader no está importado aún.
+- Sin tocar `agro-facturero-finca-wizard.js`, `agroOperationalCycles.js`, CSS, MANIFIESTO/FICHA/ADN.
+- Sin git ejecutado (bloque sugerido abajo, pendiente palabra del owner).
+- Sin datos mock ni queries inventadas (§5 anti-mock).
+
+### Git sugerido (NO ejecutado)
+
+```bash
+git add apps/gold/agro/agro-ledger-reader.js apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "feat(cultivo): S1 lector canónico agro-ledger-reader.js por partición (farm/crop/orphan), sin wiring"
+git push origin main
+```
+
+---
+
+## Sesión 2026-09-12 (II) — Frente Cultivo S2: esqueleto del wizard + routing + dormición del legacy
+
+Agente: GLM (ZCode). Segunda sesión del Frente Facturero del Cultivo. Entregables: wizard nuevo (JS+CSS), wiring mínimo en shell e index.html.
+
+- **Fecha**: 2026-09-12
+- **Objetivo**: esqueleto navegable del wizard Cultivo (VER 5 / CREAR 6) con gate, selectores reales de contexto, navegación ANEXO 19, hash persistente sin storage, y dormición del legacy agroOperationalCycles.js para facturero-cultivo — sin tocar las superficies GREEN.
+
+### Diagnóstico base (verificado, no re-diagnosticado)
+
+- El legacy sirve cultivo vía VIEW_CONTEXTS preset='crop'; sus guards de dormición (:3947-3951 view-changed y :3569-3576 refreshData) se activan por `subview=wizard` sin importar la vista — mismo mecanismo probado por Finca.
+- Cultivos disponibles vía puente global `window.__AGRO_CROPS_STATE` (status ready/loading + evento AGRO_CROPS_READY; patrón GREEN de flow.js:114-118); fincas vía `window._agroFarms` — cero queries nuevas en S2, cero imports (anti-circular §3.3).
+- CSS de la familia (fcvw_/fcwz_/fcflow-) cargado globalmente; el wrapper `.fcwz` hereda borderShimmer ADN §19.5 bajo topbar y el hide del FAB vía body class compartida (B10).
+
+### Cambios realizados
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agro/agro-facturero-cultivo-wizard.js` | Nuevo | 732 líneas. `initAgroCultivoWizard` (view-changed + hash directo para F5), sesión singleton con `alive`. Estado: rama/paso/finca/crop/tile/tipo/categorías/moneda/fecha/created. Hash completo `view=facturero-cultivo&subview=wizard&paso&rama&finca&crop&cat&done` con `history.replaceState` (ANEXO 12: sin storage). Navegación ANEXO 19: Volver topbar = paso-1 (goBack; paso 1 → exitToSurface al hub Granja), "Ir a inicio" (fa-house, pasos ≥2) con guard de borrador vía `showAgroConfirmDialog` (borrador S2 = tipo/categoría/cultivo elegidos; S4 amplía con concepto/monto/fecha), footer [Atrás][Siguiente]. Paso 2 VER / 3 CREAR = doble tira de contexto REAL: finca ("Vista general" primero) + cultivo dinámico por finca (regla estricta `crop.farm_id === farmId`), cultivos con emoji real de `agro_crops.icon`, 4 estados honestos (revisando/empty/ready + Reintentar), reconciliación cultivo↛finca con nota visible (nunca mudo). D-1: CREAR sin "Vista general" de cultivos + guard en goNext (paso 3 exige cropId). D-3b: categoría CREAR = 6 canónicos + "Ventas" SOLO si tipo=income, con reset de categoría al cambiar tipo (evita ids cruzados). Fiado excluido de CREAR (hogar: Clientes). Pasos 3-5 VER y 5-6 CREAR: placeholders honestos que citan S3/S4 — cero conteos inventados, cero mock. Footer CREAR paso 6 sin "Confirmar" en S2 (botón muerto miente). Sin imports (S3 importa el reader). |
+| `agro/agro-facturero-cultivo-wizard.css` | Nuevo (aditivo) | 67 líneas. Solo namespace `.fcct-*`: doble tira (.fcct-context, .fcct-divider), chips de cultivo (.fcct-crop, .fcct-cropstrip), mobile ≤480px de la doble tira, reduced-motion. Verificado: todos los selectores scoped bajo .fcct- (una regla compuesta `.fcct-context .fcvw-picker__strip` solo vive dentro del wrapper cultivo — Finca nunca renderiza ahí). Cero ediciones a reglas de la familia. |
+| `agro/agro-shell.js` | Cirugía mínima | VIEW_SUBNAV_CONFIG['facturero-cultivo'] → `{defaultSubview:'wizard', allowed:['wizard']}` (patrón Finca :145) + comentario S2. Personal intacto. El alias 'facturero-cultivo-active' cae al default por coerción (normalizeSubview :556) → aterriza en gate. |
+| `agro/index.html` | Wiring mínimo | `<link>` del CSS cultivo tras el de finca-wizard (:156) + import dinámico de `agro-facturero-cultivo-wizard.js` con `initAgroCultivoWizard()` tras el bloque del wizard Finca (:3500-3505). |
+
+### Verificación estática (declarada; runtime = QA owner §5)
+
+1. **Sintaxis**: esbuild JS y CSS → OK. Build: chunk propio `agro-facturero-cultivo-wizard-BT4lCq1j.js` en dist y clases `.fcct-*` presentes en el bundle CSS agregado del agro (mismo archivo/mecanismo mapDeps que sirve el CSS del wizard Finca en producción).
+2. **Contrato del esqueleto** (script de aserciones en /tmp, eliminado): hash completo (8 params) sin storage; Volver/Atrás→goBack, Ir a inicio→goToStart+confirm, salida→hub Granja; D-1 guard; Ventas solo income; reset categoría al cambiar tipo; fiado excluido; placeholders citan S3/S4; cero imports; cero conteos numéricos.
+3. **Anti-regresión**: `git diff` CERO en `agro-facturero-finca-wizard.js/.css`, `agro-facturero-finca.css`, `agroOperationalCycles.js`, `agro-operational-cycles.css`. Diff shell = solo las 3 líneas de VIEW_CONFIG cultivo (+comentario).
+4. **Dormición legacy** (razonamiento estático sobre líneas verificadas): shell siempre escribe subview=wizard para facturero-cultivo (default+allowed) → legacy early-return en view-changed (:3948-3951) y refreshData (:3580) — el monolito no se editó.
+5. **Flujos**: entrada desde hub/desktop-mobile (index.html:400/693) → hash sin paso → `clampPaso(1)` = gate. F5 con hash profundo → estado restaurado (paso/rama/finca/crop/cat/done). Cambio de finca reconcilia cultivo con nota. CREAR sin cultivo → Siguiente bloqueado con error de paso.
+
+### Resultado de build
+
+`pnpm build:gold` → ✅ GREEN (agent-guard OK, agent-report-check OK, vite OK, check-llms OK, UTF-8 OK; warning >500kB preexistente del monolito).
+
+### QA sugerido (owner, online)
+
+1. Hub Granja → Facturero del Cultivo: debe aterrizar en el gate (2 puertas), sin rastro de las 5 subvistas legacy.
+2. VER paso 2: tira finca + tira cultivo (emoji+nombre), "Vista general" en ambas; cambiar de finca re-stringe cultivos; F5 en paso 3 conserva todo.
+3. CREAR paso 3: sin "Vista general" de cultivos; Siguiente sin cultivo → mensaje; "Ir a inicio" con elecciones → confirm de descarte.
+4. Pasos 3-5 VER / 5-6 CREAR: placeholders honestos visibles (S3/S4); footer CREAR 6 sin Confirmar.
+5. FAB oculto dentro del wizard; Volver del gate sale al hub Granja.
+
+### NO se hizo (scope respetado)
+
+- Reader NO importado todavía (S3). Sin tocar wizard Finca/legacy/sus CSS/MANIFIESTO/FICHA/ADN. Sin git ejecutado. Sin mock ni datos inventados.
+
+### Git sugerido (NO ejecutado)
+
+```bash
+git add apps/gold/agro/agro-facturero-cultivo-wizard.js \
+        apps/gold/agro/agro-facturero-cultivo-wizard.css \
+        apps/gold/agro/agro-shell.js \
+        apps/gold/agro/index.html \
+        apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "feat(cultivo): S2 esqueleto wizard + routing VIEW_CONFIG + hash persistente + dormición legacy"
+git push origin main
+```
+
+---
+
+## Sesión 2026-09-12 (III) — Frente Cultivo: etapas S3→S8 en una sesión
+
+Agente: GLM (ZCode). Sesión continua con regla de paro por etapa (ninguna disparó: las 6 etapas cerraron con build verde y diff acotado). Base: S1 (reader) y S2 (esqueleto) de hoy, aún sin commitear por el owner.
+
+### S3 — Reader cableado en VER 3-5 del wizard Cultivo
+
+- **Objetivo**: lectura real por `agro-ledger-reader.js` con conteos, categorías con conteo, lista con tags y botones de edición.
+- **Cambios**: solo `agro/agro-facturero-cultivo-wizard.js`. Imports del reader (LEDGER_TILES/fetchTileRows/stampScope/isScopeStale/isLedgerRowEditable); `currentPartition()` (cropId elegido | cropIds de la finca | crop general; jamás filtra por farm_id); scopes `countsScope`/`listScope` con stamps de 3 ejes y refetch de entrada (14-B/B7: entrada a 3 refresca conteos, entrada a 4 y salto a 5 refrescan lista, stale siempre refetchea); paso 3 tiles con `.fcvw-tile__count` real (5 fetchTileRows en paralelo, misma partición); paso 4 conteos por categoría desde rows ya traducidas (Ventas solo ingresos, D-3b); paso 5 lista espejo Finca (tag "histórico operacional", "Monto no anotado", privacidad strip, Actualizar, empty honesto que apunta al canary de consola); botones editar/eliminar solo con `isLedgerRowEditable` + import dinámico del editor. Fix durante la etapa: template `.join('')` mal cerrado detectado por esbuild antes del build.
+- **Verificación estática**: aserciones de cableo OK; ids de tiles idénticos wizard↔reader; placeholders VER retirados; diff CERO en reader/CSS/shell/Finca/legacy. **Matriz estática vs data real**: Gastos×Todas = 2 ledger + 16 operacionales − dedup (≈18); Insumos=1, Otros=1 ('operacion'→otros); Ingresos×Todas=108, Ventas=108 (104 'ventas' + 4 'venta'); Fiados=82; Pérdidas=2; Donaciones=2. Runtime = QA owner.
+- **Build**: verde.
+
+### S4 — Rama CREAR escribe al ledger
+
+- **Cambios**: solo wizard Cultivo. `TYPE_TO_TABLE`/`TYPE_TO_TILE` espejo Finca; tasas (initExchangeRates) para monto_usd; `confirmCreate` con `assertOperationalPeriodOpen`, D-1 revalidado, payload por tabla con asimetría ES/EN (expense→date/concept/amount/category; income→fecha/concepto/monto/categoria; loss/donation sin categoría), **crop_id del paso 3 + farm_id derivado del cultivo** (null permitido en cultivos legacy), eventos refresh eventByTipo; formulario real (concepto/moneda/monto/fecha), review con resumen, éxito con "Ver registros" (resetea ambos scopes y salta a VER 5 — 14-B) y "Crear otro"; guard de borrador ampliado (concepto/monto/fecha≠hoy); footer con Confirmar. Placeholders retirados.
+- **Verificación estática**: payload por tabla OK; fiado no escribible; build verde; diff cero fuera del wizard Cultivo.
+
+### S5 — Editor + privacidad (reuso puro)
+
+- **Cambios**: ninguno — el wiring se hizo en S3 (botones + import dinámico + onChanged refetch). Verificación de fronteras: editor intacto (diff cero); `crop_id` jamás en payload (TABLE_FIELDS solo concepto/monto/fecha/categoria + límite 4 :312); privacidad `readMoneyValuesHidden()` bloquea monto/moneda (:167); los 75 cobros `origin_table='agro_pending'` + 4 `split_from_id` quedan sin botones por triple filtro (los cols del reader proyectan ambos campos — Lección 1). Build verde.
+
+### S6 — Pase documental (AUTORIZADO por el owner 12-sep)
+
+- **MANIFIESTO_AGRO.md**: nueva §4.5.5 "Facturero del Cultivo" en prosa humana (qué es/no es, lectura en 5 pasos, creación en 5 pasos con cultivo obligatorio, Ventas para ingresos, reglas de cuidado: cultivo intocable en edición, cobros solo lectura, Volver/Ir a inicio, F5). Sin tecnicismos (verificado por grep; única coincidencia = verbo español "importa").
+- **FICHA_TECNICA.md**: módulos agro-ledger-reader.js + agro-facturero-cultivo-wizard.js (+css) en §4.2; hash Cultivo en §8 (`paso/rama/finca/crop/cat/done`, slugs reales con `mano_obra`/`ventas`); mapa de particiones actualizado.
+- **Build**: verde. (AGENTS.md §3.2 NO tocado: fuera del alcance autorizado.)
+
+### S7 — Migración de Finca al reader (superficie GREEN)
+
+- **Cambios**: solo `agro-facturero-finca-wizard.js` (+22/−190). `fetchTileRows` local reemplazado por `fetchReaderTileRows({tileId, partition:{preset:'farm', farmId}})`; el lector conserva criba ANEXO 9 + canary 16-C + unión D-B + dedup + orden. Código muerto eliminado: LIST_LIMIT, translateCategory + CATEGORY_ALIASES locales, y cols/alias/scope/orderCol de VER_TILES (queda id/label/icon/table/who — table/who los consume el editor y movementText). 14-B (refetch de entrada a 4) y B7 (stamps locales) intactos.
+- **Matriz estática de fixtures**: 'bomba' (transporte, farm 8b219411, crop null) → criba farm pasa → visible en Gastos×la ladera; 'compa test' ídem; seeds 88888888 → RLS los oculta al owner (perfil ajeno); filas ambos-null del owner → Vista general como hoy (hasta S8, ejecutada después); 16 op con cultivo → excluidos de Finca (cropKey no vacío). **QA owner posterior requerido** (matriz de 4 filas en producción).
+- **Build**: verde.
+
+### S8 — Personal + limpieza de mezcla + D-2
+
+- **Reader** (solo predicados y query farm): `.is('crop_id',null).not('farm_id','is',null)` + criba farm exige `farmKey !== ''` (unión op simétrica vía predicado compartido: ciclos sin finca quedan para orphan). Crop intacto.
+- **Nuevo** `agro-facturero-personal-wizard.js` (VER 4 / CREAR 5, sin selectores §4.5:494): partición `{preset:'orphan'}` fija, conteos/categorías/lista con la misma disciplina 14-B/B7, creación con farm_id/crop_id null, edición por reuso del editor, hash `paso/rama/cat/done`, franja de identidad `.fcp-identity` (css nuevo, ~60L) que explica la partición. VIEW_CONFIG personal→wizard/wizard; link+import en index.html. Legacy orphan duerme (mismo guard).
+- **D-2 en Finca**: CREAR sin "Vista general" de finca (`renderFarmPicker({obligatorio:true})`) + guard en goNext; copy retirado ("registro general se verá en Vista general" → referencias al Facturero Personal); éxito siempre dice la finca real.
+- **Consecuencia semántica (diseñada)**: Finca Vista general ya NO muestra filas farm-null — migran a Personal (p. ej. 'Insumos agrícolas' B9 del owner). Personal muestra solo ambos-null del owner (6 filas globales; RLS filtra por usuario).
+- **FICHA** (toco del pase autorizado): entrada del reader actualizada (consumen los 3 wizards), módulo+css de Personal, ruta Personal, nota de partición farm exclu-yente.
+- **Verificación estática**: S8_STATIC_OK (predicados, D-2, copy, sin selectores, hash, wiring); build verde.
+
+### QA owner sugerido (online, por etapa)
+
+1. **S3**: VER Cultivo con data real — conteos (Gastos≈18 con tag en 16, Ingresos=108, Fiados=82, Pérdidas=2, Donaciones=2), Ventas=108 en categorías de Ingresos, F5 en paso 5, cambio de tile/finca/cultivo refetchea.
+2. **S4**: CREAR gasto con cultivo → éxito dice cultivo → "Ver registros" lo muestra; income con Ventas; fiado ausente; guard sin cultivo.
+3. **S5**: editar/eliminar solo en filas ledger originales (los 75 cobros y 4 splits sin botones); montos ocultos bloquean monto/moneda.
+4. **S7**: matriz Finca (Gastos×la ladera=4 preexistente, Vista general sin los ambos-null, consola con canary solo si criba descarta todo).
+5. **S8**: Personal gate con franja de identidad; filas ambos-null del owner (ex 'Insumos agrícolas'); CREAR Finca exige finca; Personal crea/ve/edita sus filas.
+
+### NO se hizo (scope respetado)
+
+- Sin git ejecutado. Sin tocar agroOperationalCycles.js ni CSS de Finca/legacy en ninguna etapa. MANIFIESTO sin sección Personal (no estaba en el alcance autorizado del pase documental — queda como pase futuro). Sin mock ni datos inventados. Sin QA runtime (ley §5).
+
+### Git sugerido (NO ejecutado) — un commit por etapa
+
+```bash
+# S1+S2 (si aún no los has commiteado)
+git add apps/gold/agro/agro-ledger-reader.js apps/gold/agro/agro-facturero-cultivo-wizard.js apps/gold/agro/agro-facturero-cultivo-wizard.css apps/gold/agro/agro-shell.js apps/gold/agro/index.html
+git commit -m "feat(cultivo): S1 lector canónico por partición + S2 esqueleto wizard con routing y dormición legacy"
+
+# S3+S4+S5 (wizard Cultivo completo)
+git add apps/gold/agro/agro-facturero-cultivo-wizard.js
+git commit -m "feat(cultivo): S3-S5 lectura real por reader, creación al ledger y edición reutilizada"
+
+# S6 (documental autorizado)
+git add apps/gold/docs/MANIFIESTO_AGRO.md apps/gold/docs/FICHA_TECNICA.md
+git commit -m "docs(cultivo): S6 canon del wizard Cultivo en Manifiesto §4.5.5 + Ficha técnica"
+
+# S7 (migración Finca al reader)
+git add apps/gold/agro/agro-facturero-finca-wizard.js
+git commit -m "refactor(finca): S7 lectura del wizard migra a agro-ledger-reader (criba/canary/dedup del lector, -190L locales)"
+
+# S8 (Personal + mezcla + D-2)
+git add apps/gold/agro/agro-ledger-reader.js apps/gold/agro/agro-facturero-personal-wizard.js apps/gold/agro/agro-facturero-personal-wizard.css apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/agro/agro-shell.js apps/gold/agro/index.html apps/gold/docs/FICHA_TECNICA.md
+git commit -m "feat(personal): S8 wizard ambos-null, partición farm sin huérfanos y D-2 (CREAR Finca exige finca)"
+
+git push origin main
+```

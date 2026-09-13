@@ -843,6 +843,43 @@ La deduplicación es por nombre canónico normalizado. Si un cliente en `agro_cl
 
 ---
 
+## 4.5.5 Facturero del Cultivo
+
+### Qué es
+
+El libro de cuentas de cada cultivo. Aquí viven únicamente los movimientos que pertenecen a un cultivo específico: lo que se invirtió en él, lo que produjo, lo que se le debe a alguien por él, lo que se perdió o lo que se regaló de su cosecha.
+
+### Qué no es
+
+No es el Facturero de la Finca (que lleva los movimientos generales de la finca, sin cultivo) ni el Facturero de Clientes (que gobierna las deudas). Cada registro pertenece a un solo lugar: si tiene cultivo, vive aquí.
+
+### Cómo se lee, paso a paso
+
+1. **Puerta de entrada:** crear un registro o ver los registros del cultivo.
+2. **Contexto:** primero la finca ("Vista general" muestra todas) y luego el cultivo. La lista de cultivos solo muestra los de la finca elegida; si cambias de finca, los cultivos se actualizan al instante y nunca se mezclan. En lectura puedes quedarte en "Vista general de cultivos" para verlos todos juntos.
+3. **Tipo de registro:** Gastos, Ingresos, Fiados, Pérdidas o Donaciones, con el número real de registros de cada uno. Un cero significa cero.
+4. **Categoría:** las mismas categorías canónicas del campo. Los ingresos reconocen además la categoría **Ventas**, que es el hogar natural de lo que produce la cosecha. Los tipos que no llevan categoría lo dicen con honestidad.
+5. **Lista:** los registros del cultivo, tipo y categoría elegidos. Los movimientos muy antiguos del sistema operativo aparecen con la nota "histórico operacional" y no se pueden editar desde aquí.
+
+### Cómo se crea un registro
+
+1. Se elige el tipo de movimiento (gasto, ingreso, donación o pérdida; los fiados se registran desde Facturero de Clientes).
+2. Se elige el cultivo: **siempre es obligatorio** — este facturero se define por el cultivo, y un registro sin cultivo no tendría donde vivir.
+3. Se elige la categoría (con "Ventas" disponible para los ingresos).
+4. Se anotan concepto, monto, moneda y fecha.
+5. La confirmación muestra el resumen y guarda. La pantalla de éxito dice a qué cultivo pertenece el registro y ofrece verlo en la lista de inmediato.
+
+Si el cultivo pertenece a una finca, el registro la recuerda; si es un cultivo sin finca, el registro vive igual aquí, porque lo que importa es el cultivo.
+
+### Reglas de cuidado
+
+* **El cultivo de un registro no se cambia jamás desde la edición.** Corregir un registro permite ajustar concepto, monto, moneda, fecha y categoría; moverlo de cultivo abriría la puerta a contabilidades que mienten.
+* Los cobros de fiados y sus pagos parciales llegan aquí como solo lectura: su realidad la gobierna Facturero de Clientes.
+* El botón "Volver" retrocede un paso; solo desde la puerta de entrada sale a la granja. "Ir a inicio" protege el borrador sin guardar antes de reiniciar.
+* Al refrescar la página, el agricultor vuelve exactamente al paso, finca, cultivo y categoría donde estaba.
+
+---
+
 ## 4.6 Trabajo Diario
 
 ### Qué es

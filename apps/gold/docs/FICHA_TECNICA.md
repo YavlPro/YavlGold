@@ -141,9 +141,9 @@ Regla estricta:
 - Centro de Reportes Generales: índice de reportes generales oficiales con selector de finca (estadísticas globales, perfil agricultor, rankings). Los reportes detallados por cultivo viven en cada card/ciclo, no en el Centro.
 - Operaciones de la Finca: los períodos siguen activos si tienen operaciones vivas asociadas (`activeCycleCount > 0`). Incluye botones internos para Estadísticas de períodos y Comparar períodos.
 - Facturero de Clientes: `Fiados` por pendiente vivo, `Pagados` solo con cobro completo sin pendiente/perdida, `Perdidos` por perdida
-- Facturero de la Finca: registros POR FINCA (farm_id ✓, crop_id ✗) — ruta `#view=facturero-finca`
-- Facturero del Cultivo: registros POR CULTIVO (crop_id ✓) — ruta `#view=facturero-cultivo`
-- Facturero Personal: registros SIN ASOCIAR (ambos null) — ruta `#view=facturero-personal`
+- Facturero de la Finca: registros POR FINCA (farm_id ✓, crop_id ✗) — ruta `#view=facturero-finca&subview=wizard`
+- Facturero del Cultivo: registros POR CULTIVO (crop_id ✓; nunca filtra por farm_id en lectura) — ruta `#view=facturero-cultivo&subview=wizard`
+- Facturero Personal: registros SIN ASOCIAR (ambos null; la partición farm de Finca los excluye desde S8) — ruta `#view=facturero-personal&subview=wizard`
 - Rankings y estadísticas financieras (Rankings se accede desde Mis Clientes)
 - Carrito de compras con lista de insumos
 - Planificación y agenda agrícola
@@ -168,6 +168,9 @@ agro-facturero-clientes-flow.js — wizard de creación de cliente y primer regi
 agro-facturero-clientes-view-wizard.js — wizard de lectura "Ver clientes" (4 pasos), subvista "Acciones del sistema" (24 h) y componente compartido de trazabilidad (renderSystemActionsListHtml)
 agro-facturero-finca-wizard.js — wizard de 5 pasos para Facturero de la Finca (puerta Crear/Ver, tipo de registro, finca, categoría canónica y lista/formulario final con persistencia por hash y navegación guiada)
 agro-facturero-finca-edit.js — modal de edición y eliminación suave de movimientos del ledger de la finca (cargado dinámicamente vía import() desde el wizard, edición multimoneda con respeto de tasa histórica, borrado suave con deleted_at, exclusión de filas originadas en fiados/clientes)
+agro-ledger-reader.js — lector canónico del ledger por partición (farm/crop/orphan): proyección con claves de partición en el select, criba post-normalización, canary de criba ciega, unión de históricos operacionales, dedup con prioridad ledger y stamps de scope para detección de staleness; consumido por los wizards de Cultivo, Finca y Personal (fuente única de lectura del ledger)
+agro-facturero-cultivo-wizard.js — wizard del Facturero del Cultivo (VER 5 pasos / CREAR 6): selectores dinámicos finca→cultivo con regla estricta, conteos reales por tile y categoría vía agro-ledger-reader.js, creación al ledger con crop_id obligatorio y farm_id derivado del cultivo, edición/eliminación por reuso del editor de la finca
+agro-facturero-personal-wizard.js — wizard del Facturero Personal (VER 4 pasos / CREAR 5, sin selectores por canon §4.5): partición ambos-null fija, conteos reales vía lector, creación al ledger con farm_id/crop_id null, edición/eliminación por reuso del editor de la finca
 agro-clients.js      — Mis Clientes: directorio de contactos (clientes manuales + buyers derivados de Facturero de Clientes)
 agro-clima.js        — integración meteorológica
 agro-crop-report.js  — reportes detallados por cultivo (se acceden desde cada card/ciclo, no desde el Centro de Reportes)
@@ -204,6 +207,8 @@ disponible, con fallback defensivo a query directa.
 - `agro-facturero-clientes-flow.css` — wizard de creación de clientes (chrome y pasos)
 - `agro-facturero-clientes-view-wizard.css` — wizard de lectura (topbar sticky, tiles, footer)
 - `agro-facturero-finca-wizard.css` — wizard de la finca (topbar sticky, tiles de categorías, layout de pasos y selector de finca)
+- `agro-facturero-cultivo-wizard.css` — wizard del cultivo (namespace `fcct-`: doble tira de contexto finca+cultivo y su responsive); el resto reutiliza el sistema global de la familia `fcvw`/`fcwz`/`fcflow` en modo lectura
+- `agro-facturero-personal-wizard.css` — wizard personal (franja de identidad `fcp-` que explica la partición sin finca ni cultivo); el resto reutiliza el sistema global de la familia
 - `agro-dashboard.css` — dashboard
 - `agro-dashboard-v11.css` — Dashboard Agro v11 (6 bloques), prefijo `ygd-` *(conserva nomenclatura V11 por legacy, aplica ADN visual V12)*
 - `agro-facturero-finca.css` — operaciones financieras / vista general de la finca
@@ -385,6 +390,13 @@ La navegación profunda y modular dentro de los factureros se sincroniza de form
   * `cat`: slug de categoría canónica (`insumos`, `herramientas`, `mano-de-obra`, `mantenimiento`, `transporte`, `otros`, `todas`).
   * `done`: flag de confirmación de guardado.
   * **Persistencia:** el wizard opera **únicamente por hash**; no utiliza `localStorage` para su estado de navegación, garantizando restauración pura y enlaces reproducibles.
+
+- **Wizard Facturero del Cultivo (`agro-facturero-cultivo-wizard.js`):**
+  Estructura hash: `#view=facturero-cultivo&subview=wizard&paso=N&rama=crear|ver&finca=UUID&crop=UUID&cat=SLUG&done=1`
+  * `paso`: VER 1-5 (puerta, contexto finca+cultivo, tipo, categoría, lista) / CREAR 1-6 (puerta, tipo, cultivo obligatorio, categoría, formulario, confirmación).
+  * `crop`: UUID del cultivo activo; ausente = "Vista general de cultivos" (todos, o los de la finca si `finca` está presente).
+  * `cat`: slug de categoría canónica (`insumos`, `herramientas`, `mano_obra`, `mantenimiento`, `transporte`, `otros`, `ventas` — `ventas` existe solo en ingresos).
+  * **Persistencia:** idéntica al wizard de Finca — únicamente por hash, sin `localStorage`.
 
 - **Flujos Facturero de Clientes (`agro-facturero-clientes-flow.js` / `agro-facturero-clientes-view-wizard.js`):**
   Estructura hash:
