@@ -22,17 +22,18 @@ import { initExchangeRates, getRate, convertToUSD } from './agro-exchange.js';
 import { assertOperationalPeriodOpen } from './agro-period-cycles.js';
 import { renderSystemActionsListHtml } from './agro-facturero-clientes-view-wizard.js';
 import { readMoneyValuesHidden } from './agro-privacy.js';
+import { fetchTileRows as fetchReaderTileRows } from './agro-ledger-reader.js';
 
 const ROOT_ID = 'agro-operational-root';
 const FINCA_VIEWS = new Set(['facturero-finca', 'operational']);
 const WIZARD_BODY_CLASS = 'agro-fcv-wizard-active';
 const ACTIONS_WINDOW_HOURS = 24;
-const LIST_LIMIT = 500;
 
 const RAMA_VER = 'ver';
 const RAMA_CREAR = 'crear';
 const VER_TOTAL = 5;
 const CREAR_TOTAL = 6;
+// S7: el límite de lectura vive en el lector (LEDGER_LIMIT_DEFAULT 500).
 
 // D-B (decision de sesion, pendiente §4.5.2): CREAR escribe al ledger por tipo.
 // Trazado de columnas de categoria (2026-09-03): solo agro_expenses.category y
@@ -68,35 +69,9 @@ const FARM_CATEGORIES = Object.freeze([
     { id: 'otros', label: 'Otros', desc: 'Lo que no encaja arriba', icon: 'fa-solid fa-ellipsis' }
 ]);
 
-// CAT-3: traduccion historica en la capa de lectura (sin reescribir datos).
-// 'general' es el default del sistema (no una eleccion) → Sin categoria;
-// los ids canonicos de junio (cycles/operational) y variantes comunes caen
-// en su tile canonico; cualquier valor libre desconocido → 'otros' (comodin).
-const CATEGORY_ALIASES = Object.freeze({
-    tools: 'herramientas',
-    maintenance: 'mantenimiento',
-    labor: 'mano_obra',
-    transport: 'transporte',
-    transporte: 'transporte',
-    supplies: 'insumos',
-    insumos: 'insumos',
-    insumo: 'insumos',
-    other: 'otros',
-    otro: 'otros',
-    otros: 'otros',
-    herramientas: 'herramientas',
-    herramienta: 'herramientas',
-    mano_obra: 'mano_obra',
-    mantenimiento: 'mantenimiento'
-});
-
-function translateCategory(rawValue) {
-    const value = String(rawValue || '').trim().toLowerCase();
-    if (!value || value === 'general') return '';
-    if (CATEGORY_ALIASES[value]) return CATEGORY_ALIASES[value];
-    if (FARM_CATEGORIES.some((category) => category.id === value)) return value;
-    return 'otros';
-}
+// CAT-3 (S7): la traducción de categorías históricas vive ahora en
+// agro-ledger-reader.js (translateCategory); las filas llegan ya traducidas
+// en row.categoria. Aquí queda solo el vocabulario para labels de UI.
 
 function getCategoryLabel(id) {
     const category = FARM_CATEGORIES.find((entry) => entry.id === id);
@@ -104,39 +79,14 @@ function getCategoryLabel(id) {
 }
 
 // Tiles de lectura (canon §4.5.2 / D2): Gastos · Ingresos · Fiados · Pérdidas · Donaciones.
-// alias: agro_expenses usa date/concept/amount (los demas fecha/concepto/monto).
+// S7: la proyección/alias/scopes viven en LEDGER_TILES del lector; aquí queda
+// solo lo que la UI y el editor consumen (identidad, tabla destino y "quién").
 const VER_TILES = [
-    {
-        id: 'gastos', label: 'Gastos', icon: 'fa-solid fa-receipt',
-        table: 'agro_expenses', who: '', orderCol: 'date',
-        cols: 'id,concept,amount,category,currency,date,created_at,farm_id,split_from_id',
-        alias: { concepto: 'concept', monto: 'amount', fecha: 'date' },
-        scope: null
-    },
-    {
-        id: 'ingresos', label: 'Ingresos', icon: 'fa-solid fa-circle-check',
-        table: 'agro_income', who: '', orderCol: 'fecha',
-        cols: 'id,concepto,monto,monto_usd,categoria,currency,fecha,created_at,farm_id,origin_table,split_from_id',
-        scope: (q) => q.is('reverted_at', null)
-    },
-    {
-        id: 'fiados', label: 'Fiados', icon: 'fa-solid fa-handshake',
-        table: 'agro_pending', who: 'cliente', orderCol: 'fecha',
-        cols: 'id,cliente,concepto,monto,monto_usd,currency,fecha,created_at,farm_id,split_from_id',
-        scope: (q) => q.is('reverted_at', null).neq('transfer_state', 'transferred')
-    },
-    {
-        id: 'perdidas', label: 'Pérdidas', icon: 'fa-solid fa-circle-xmark',
-        table: 'agro_losses', who: 'causa', orderCol: 'fecha',
-        cols: 'id,causa,concepto,monto,monto_usd,currency,fecha,created_at,farm_id,origin_table,split_from_id',
-        scope: (q) => q.is('reverted_at', null)
-    },
-    {
-        id: 'donaciones', label: 'Donaciones', icon: 'fa-solid fa-hand-holding-heart',
-        table: 'agro_transfers', who: 'destino', orderCol: 'fecha',
-        cols: 'id,destino,concepto,monto,monto_usd,currency,fecha,created_at,farm_id,split_from_id',
-        scope: null
-    }
+    { id: 'gastos', label: 'Gastos', icon: 'fa-solid fa-receipt', table: 'agro_expenses', who: '' },
+    { id: 'ingresos', label: 'Ingresos', icon: 'fa-solid fa-circle-check', table: 'agro_income', who: '' },
+    { id: 'fiados', label: 'Fiados', icon: 'fa-solid fa-handshake', table: 'agro_pending', who: 'cliente' },
+    { id: 'perdidas', label: 'Pérdidas', icon: 'fa-solid fa-circle-xmark', table: 'agro_losses', who: 'causa' },
+    { id: 'donaciones', label: 'Donaciones', icon: 'fa-solid fa-hand-holding-heart', table: 'agro_transfers', who: 'destino' }
 ];
 
 // Tipos de creación: mismo destino que el modal (economic_type de ciclos).
@@ -348,6 +298,11 @@ function createSession(root) {
     }
 
     function goNext() {
+        // D-2 (S8): CREAR exige finca — sin ella el registro sería "personal".
+        if (state.rama === RAMA_CREAR && state.paso === 2 && !state.farmId) {
+            showStepError('Elige la finca del registro para continuar.');
+            return;
+        }
         if (state.rama === RAMA_CREAR && state.paso === 5 && !formValid()) {
             showStepError('Completa concepto, monto y fecha para continuar.');
             return;
@@ -474,136 +429,18 @@ function createSession(root) {
         render();
 
         try {
-            const opType = TILE_TO_OP_TYPE[tile.id];
-            const farmId = state.farmId || '';
-
-            // (1) Ledger crudo (fuente nueva de CREAR desde D-B).
-            // Q1 (ANEXO 6): partición estricta del wizard — solo Movimientos
-            // Generales de finca (crop_id null). El agregado de finca completa
-            // (incluidos cultivos) vive en Períodos, no aquí.
-            let query = supabase
-                .from(tile.table)
-                .select(tile.cols)
-                .is('deleted_at', null)
-                .is('crop_id', null)
-                .order(tile.orderCol || 'fecha', { ascending: false })
-                .order('created_at', { ascending: false })
-                .limit(LIST_LIMIT);
-            if (tile.scope) query = tile.scope(query);
-            if (farmId) query = query.eq('farm_id', farmId);
-            const ledgerResult = await query;
-            // ANEXO 16-C canary (§4.12.5 + §8.5): una query ledger fallada jamas
-            // pasa en silencio — log antes del throw.
-            if (ledgerResult.error) {
-                console.error('[FincaWizard] ledger query error:', ledgerResult.error?.message || ledgerResult.error);
-                throw ledgerResult.error;
-            }
-
-            const alias = tile.alias || {};
-            const categoryField = tile.id === 'gastos' ? 'category' : (tile.id === 'ingresos' ? 'categoria' : '');
-            // ANEXO 9 Paso 2: la rama ledger TAMBIEN se normaliza (type por
-            // tabla de origen) y se filtra sobre campos normalizados — ningún
-            // refuerzo depende solo de la query.
-            const ledgerRaw = Array.isArray(ledgerResult.data) ? ledgerResult.data : [];
-            const ledgerRows = ledgerRaw
-                .map((row) => ({
-                    ...row,
-                    origen: 'ledger',
-                    type: opType,
-                    farmKey: String(row?.farm_id || '').trim(),
-                    fecha: row?.[alias.fecha || 'fecha'],
-                    concepto: row?.[alias.concepto || 'concepto'],
-                    monto: row?.[alias.monto || 'monto'],
-                    // CAT-3: la categoria se traduce al id canonico en lectura.
-                    categoria: translateCategory(row?.[categoryField])
-                }))
-                .filter((row) => row.type === opType
-                    && (!farmId || row.farmKey === farmId));
-            // ANEXO 16-C canary: si la criba post-normalizacion descarta TODO
-            // lo crudo, gritar — que una criba ciega nunca vuelva a pasar
-            // invisible en QA (causa raiz del B9 real).
-            if (ledgerRaw.length > 0 && ledgerRows.length === 0) {
-                console.warn('[FincaWizard] ledger rows descartadas por filtro', {
-                    crudas: ledgerRaw.length,
-                    filtradas: ledgerRows.length,
-                    farmId
-                });
-            }
-
-            // (2) Union D-B (ANEXO 9 Paso 1): movimientos operativos historicos
-            // NORMALIZADOS fila por fila antes de filtrar. El tipo se decide por
-            // direction (in→ingreso) y el ciclo aporta el semantico (expense/
-            // donation/loss) cuando direction no basta. NINGUNA fila se inyecta
-            // sin pasar los TRES filtros sobre campos normalizados.
-            let opRows = [];
-            if (opType) {
-                const [cyclesResult, movementsResult] = await Promise.all([
-                    supabase.from('agro_operational_cycles')
-                        .select('id,economic_type,category,crop_id,farm_id')
-                        .limit(3000),
-                    (() => {
-                        let q = supabase.from('agro_operational_movements')
-                            .select('id,cycle_id,direction,amount,currency,amount_usd,concept,movement_date,created_at,farm_id')
-                            .limit(3000);
-                        return q;
-                    })()
-                ]);
-                if (cyclesResult.error) throw cyclesResult.error;
-                if (movementsResult.error) throw movementsResult.error;
-
-                const cycleById = new Map(
-                    (cyclesResult.data || []).map((cycle) => [String(cycle.id), cycle])
-                );
-
-                const normalizeOpType = (movement, cycle) => {
-                    const direction = String(movement?.direction || '').trim().toLowerCase();
-                    const economicType = String(cycle?.economic_type || '').trim().toLowerCase();
-                    if (direction === 'in') return 'income';
-                    if (economicType === 'donation' || economicType === 'loss') return economicType;
-                    if (!direction) return economicType;
-                    return 'expense';
-                };
-
-                opRows = (movementsResult.data || [])
-                    .map((movement) => {
-                        const cycle = cycleById.get(String(movement.cycle_id)) || null;
-                        const farmKey = String(movement?.farm_id || cycle?.farm_id || '').trim();
-                        return {
-                            ...movement,
-                            origen: 'operacional',
-                            type: normalizeOpType(movement, cycle),
-                            farmKey,
-                            cycleCropId: String(cycle?.crop_id || '').trim(),
-                            fecha: movement?.movement_date,
-                            concepto: movement?.concept,
-                            monto: movement?.amount,
-                            // CAT-3: categoria historica del ciclo, traducida en lectura.
-                            categoria: translateCategory(cycle?.category)
-                        };
-                    })
-                    .filter((row) => row.type === opType            // tipo normalizado
-                        && !row.cycleCropId                          // Q1: movimientos generales
-                        && (!farmId || row.farmKey === farmId));    // finca normalizada
-            }
-
-            // (3) Sin duplicados: ledger prima ante coincidencia exacta
-            // (fecha + monto + concepto) dentro del mismo tile y finca.
-            const seenKeys = new Set(ledgerRows.map((row) =>
-                `${String(row.fecha || '')}|${Number(row.monto) || 0}|${String(row.concepto || '').trim().toLowerCase()}`
-            ));
-            const dedupedOp = opRows.filter((row) => {
-                const key = `${String(row.fecha || '')}|${Number(row.monto) || 0}|${String(row.concepto || '').trim().toLowerCase()}`;
-                if (seenKeys.has(key)) return false;
-                seenKeys.add(key);
-                return true;
+            // S7: la lectura vive en agro-ledger-reader.js (partición farm:
+            // crop_id null + finca si hay). El lector conserva intactos la
+            // criba post-normalización (ANEXO 9), el canary 16-C, la unión
+            // D-B con tag operacional, el dedup con prioridad ledger y el
+            // orden por fecha. Este wizard solo orquesta fases y races;
+            // 14-B (refetch de entrada) y B7 (stamps) no se tocan.
+            const rows = await fetchReaderTileRows({
+                tileId: tile.id,
+                partition: { preset: 'farm', farmId: state.farmId || '' }
             });
-
             if (requestId !== scope.requestId || !alive) return;
-            scope.rows = [...ledgerRows, ...dedupedOp].sort((a, b) => {
-                const fa = String(a.fecha || '');
-                const fb = String(b.fecha || '');
-                return fb.localeCompare(fa);
-            });
+            scope.rows = rows;
             scope.phase = 'ready';
         } catch (err) {
             if (requestId !== scope.requestId || !alive) return;
@@ -916,21 +753,30 @@ function createSession(root) {
         `;
     }
 
-    function renderFarmPicker() {
+    // D-2 (S8): en CREAR la finca es obligatoria — la partición de Finca se
+    // define por farm_id y los registros sin finca viven en Facturero Personal.
+    // "Vista general" queda solo para la rama de lectura.
+    function renderFarmPicker({ obligatorio = false } = {}) {
         const farms = getFarms();
+        const generalChip = obligatorio
+            ? ''
+            : `<button type="button" class="fcvw-chip${!state.farmId ? ' is-active' : ''}" data-fcwz-farm="">Vista general</button>`;
         const chips = [
-            `<button type="button" class="fcvw-chip${!state.farmId ? ' is-active' : ''}" data-fcwz-farm="">Vista general</button>`,
+            generalChip,
             ...farms.map((farm) => {
                 const id = String(farm?.id || '').trim();
                 if (!id) return '';
                 return `<button type="button" class="fcvw-chip${state.farmId === id ? ' is-active' : ''}" data-fcwz-farm="${escapeHtml(id)}">${escapeHtml(String(farm?.name || 'Finca').trim())}</button>`;
             })
         ].join('');
+        const nota = obligatorio
+            ? 'Elige la finca del registro: los movimientos de la finca siempre pertenecen a una finca concreta.'
+            : 'Este facturero lee los movimientos generales de la finca (sin cultivo). Los ligados a un cultivo se leen en el Facturero del Cultivo; los sin finca, en el Facturero Personal; Períodos agrega la finca completa por fecha.';
         return `
             <div class="fcvw-picker">
-                <span class="fcvw-picker__label">Finca</span>
+                <span class="fcvw-picker__label">Finca${obligatorio ? ' (obligatoria)' : ''}</span>
                 <div class="fcvw-picker__strip" role="group" aria-label="Contexto de finca">${chips}</div>
-                <p class="fcvw-note">Este facturero lee los movimientos generales de la finca (sin cultivo). Los ligados a un cultivo se leen en el Facturero del Cultivo; Períodos agrega la finca completa por fecha.</p>
+                <p class="fcvw-note">${nota}</p>
             </div>
         `;
     }
@@ -1088,15 +934,12 @@ function createSession(root) {
             `;
         }
         if (scope.rows.length <= 0) {
-            // ANEXO 13 (B9-UX): con finca activa, recordar donde viven los
-            // registros generales (creados desde Vista general).
-            const notaGenerales = state.farmId
-                ? ' Los registros generales (sin finca) se ven solo en Vista general.'
-                : '';
+            // S8: los registros sin finca ya no viven aquí — su hogar es el
+            // Facturero Personal (la mezcla en Vista general quedó limpia).
             return `
                 <div class="cartera-viva-empty">
                     <h3 class="cartera-viva-empty__title">Sin ${tile.label.toLowerCase()} en ${escapeHtml(farmLabel())}</h3>
-                    <p class="cartera-viva-empty__copy">Cuando registres ${tile.label.toLowerCase()} de esta finca, aparecerán aquí.${notaGenerales}</p>
+                    <p class="cartera-viva-empty__copy">Cuando registres ${tile.label.toLowerCase()} de esta finca, aparecerán aquí. Los registros sin finca viven en el Facturero Personal.</p>
                 </div>
             `;
         }
@@ -1237,11 +1080,10 @@ function createSession(root) {
     }
 
     function renderCrearDone() {
-        // ANEXO 13 (B9-UX): el exito dice la finca REAL del registro; si se creo
-        // desde Vista general, avisa donde se vera (evita buscarlo bajo una finca).
-        const fincaReal = state.farmId
-            ? `Finca: ${escapeHtml(farmLabel())}.`
-            : 'Registro general (sin finca): se verá en Vista general, no dentro de una finca específica.';
+        // S8 (D-2): CREAR siempre exige finca — el éxito dice la finca real.
+        // Los registros sin finca (históricos de Vista general) viven hoy en
+        // el Facturero Personal.
+        const fincaReal = `Finca: ${escapeHtml(farmLabel())}.`;
         return `
             <div class="fcflow-done">
                 <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
@@ -1264,7 +1106,7 @@ function createSession(root) {
             if (state.paso === 4) return renderVerCategoria();
             return renderVerStep5();
         }
-        if (state.paso === 2) return renderFarmPicker();
+        if (state.paso === 2) return renderFarmPicker({ obligatorio: true });
         if (state.paso === 3) return renderCrearTypes();
         if (state.paso === 4) return renderCrearCategoria();
         if (state.paso === 5) return renderCrearForm();

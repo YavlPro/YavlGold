@@ -143,8 +143,11 @@ const VIEW_SUBNAV_CONFIG = Object.freeze({
     // redirect `registros` de clientes). Cultivo/Personal conservan su superficie.
     operational: Object.freeze({ defaultSubview: 'wizard', allowed: ['wizard'] }),
     'facturero-finca': Object.freeze({ defaultSubview: 'wizard', allowed: ['wizard'] }),
-    'facturero-cultivo': Object.freeze({ defaultSubview: 'active', allowed: ['active', 'finished', 'donations', 'losses', 'export'] }),
-    'facturero-personal': Object.freeze({ defaultSubview: 'active', allowed: ['active', 'finished', 'donations', 'losses', 'export'] })
+    // S2 Cultivo (patron Finca :145): el wizard es la unica superficie; el
+    // legacy (agroOperationalCycles.js) duerme con subview=wizard.
+    'facturero-cultivo': Object.freeze({ defaultSubview: 'wizard', allowed: ['wizard'] }),
+    // S8 Personal: mismo patron; el preset orphan del legacy queda dormido.
+    'facturero-personal': Object.freeze({ defaultSubview: 'wizard', allowed: ['wizard'] })
 });
 
 const VIEWS_WITH_SUBNAV = new Set(Object.keys(VIEW_SUBNAV_CONFIG));
