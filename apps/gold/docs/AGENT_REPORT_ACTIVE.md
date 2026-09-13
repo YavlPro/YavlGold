@@ -3578,3 +3578,27 @@ git commit -m "feat(personal): S8 wizard ambos-null, partición farm sin huérfa
 
 git push origin main
 ```
+
+---
+
+## Sesión 2026-09-12 — Frente Cultivo/Personal vivo en producción (S1–S8), QA mayoritario verde con 4 hallazgos, decisión F1=A, ANEXO 20 guardado
+
+Objetivo: cerrar el frente Cultivo/Personal en producción y capturar el QA del owner con sus hallazgos y decisiones.
+
+Diagnóstico y hechos:
+- GLM ejecutó S3→S8 en una sesión con regla de paro (nunca disparada): reader agro-ledger-reader.js 404L consumido por los TRES wizards; wizard Cultivo 1275L (deuda >1200 §11.X registrada); wizard Personal 1027L; Finca migrada al reader (−190L de lectura local); MANIFIESTO §4.5.5 y FICHA actualizados (pase autorizado); S8: partición farm excluye farm-null (filas ambos-null migran a Personal), D-2 vivo (CREAR Finca exige finca), copy de "registro general → Vista general" retirado.
+- Push del frente en 3 commits lógicos: `0c9631d6` (S1-S5, S8), `c319df7f` (S7, S8), `4817e52d` (S6 docs); deploy Vercel y QA del owner 20:34–20:35.
+- QA owner mayoritario verde: conteos reales por tile, creación y soft-delete de "cop test" funcionando, tags "histórico operacional" correctos, privacidad visible en paso 5 de Cultivo.
+- 4 hallazgos: F1 filas operacionales sin botones editar/eliminar; F2 tiles gigantes en paso 2 de CREAR Cultivo; F3 Volver retrocede ~2 pasos y salta al Dashboard global en vez del hub Granja; F4 privacidad a verificar en el último paso de los tres wizards.
+- Discriminación F1 con query real: SIN mis-tag; las filas sin botones son 16 movimientos operacionales con crop_id; ledger con crop_id = 2 seeds QA de OTRO perfil (RLS las oculta al owner); "cop test" ya eliminado por el owner en QA.
+- Decisión del owner: F1 = OPCIÓN A (editar concepto/monto/fecha y eliminar con hard-delete + showAgroConfirmDialog + aviso de impacto al ciclo, en los tres wizards; derivadas ledger siguen sin botones). Deuda documental: nota en MANIFIESTO §4.3 (segunda puerta de escritura de movimientos de ciclo) para el próximo pase con su palabra.
+- ANEXO 20 final (F1–F4) emitido y GUARDADO: ejecutor sin créditos hoy.
+
+Cambios:
+| (sesión documental: sin cambios de código) |
+
+Resultado de build: pnpm build:gold verde (gate documental).
+
+QA sugerido/realizado: owner online 20:34–20:35 (mayoritario verde + 4 hallazgos); QA de ANEXO 20 pendiente de ejecución.
+
+NO se hizo: sin código, sin canon, sin git hoy 09-12 (reporte y daily log se pushean mañana con palabra del owner); ANEXO 20 sin ejecutar por créditos.
