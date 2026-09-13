@@ -3660,3 +3660,67 @@ git commit -m "feat(cultivo): ANEXO 20 F1 wiring op-edit + F2 cards canon en pas
 
 git push origin main
 ```
+
+---
+
+## Sesión 2026-09-13 (II) — ANEXO 21: selector de cultivo en dos niveles
+
+Agente: GLM (ZCode). QA del owner 13-sep 11:31 verde; pedido de organización atendido aquí. Diff acotado a `agro-facturero-cultivo-wizard.js` (+144/−18); cero CSS nuevo (las tiras usan `.fcvw-picker` + `.fcct-divider` existentes).
+
+- **Fecha**: 2026-09-13
+- **Objetivo**: selector de cultivo a dos niveles (estado → cultivos del grupo) en paso 2 VER y paso 3 CREAR, con hash `estado=` y restauración F5.
+
+### Diagnóstico (trazado, no inventado)
+
+- Grupos de las tabs Mis Cultivos: el monolito clasifica con `resolveCropStatus` (manual/override/auto-progreso, agro.js:9131) y publica cards `{id=crop_id, ...}` en `window._agroCyclesWorkspace.getSnapshot()` con `active/finished/lost` (agro.js:113-149, publicado en :11884; split closed→lost en `splitClosedCycleHistory` :11397). El wizard consume ESE snapshot por el puente (mismo patrón que `__AGRO_CROPS_STATE`) — cero vocabulario de status inventado, cero resolver duplicado (verificado por aserción con comentarios despojados).
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `agro/agro-facturero-cultivo-wizard.js` | `ESTADO_OPTIONS` (todos/activos/finalizados/perdidos ↔ group active/finished/lost del snapshot); `getCycleGroups()` (puente + `known` con gate por `updatedAt`/total para no mentir grupos vacíos antes de publicar) + listener `agro:cycles:snapshot` con cleanup; nivel 1 "Estado del ciclo" en el picker (misma tira fcvw-chip + divider existente); nivel 2 = `getEstadoScopedCrops()` (grupo ∩ finca, regla estricta §4.5) con comodín canon ("Vista general de cultivos" en Todos; "Todos los activos/finalizados/perdidos" en estados — lectura del grupo sin cultivo individual) y notas honestas de grupo vacío; cambio de estado conserva el cultivo solo si pertenece al nuevo grupo (si datos no listos, la reconciliación dirime luego); `currentPartition()` consciente de estado (grupo→cropIds; cropIds vacío = cero honesto sin query — reader ya lo soporta); `cropLabel()` consciente ("Cultivos finalizados" etc.); hash `estado=` (escrito solo si ≠ todos; leído con validación contra los 4 ids); reconciliación F5 extendida: crop ∉ finca O crop ∉ estado → reset con nota visible. D-1 intacto (goNext paso 3 CREAR + revalidación en confirmCreate); CREAR usa el mismo picker dos niveles. |
+
+### Verificación estática (ANEXO21_STATIC_OK)
+
+**Tabla de verdad de alcances** (sobre `currentPartition`):
+| Selección | partition | Query ledger |
+|---|---|---|
+| Todos los cultivos, sin finca | `{crop}` | `crop_id NOT NULL` (comportamiento exacto anterior) |
+| Todos + finca X | `{crop, cropIds: cultivos(X)}` | `.not(crop_id,null).in(crop_id, ids)` (anterior) |
+| Activos/Finalizados/Perdidos (sin cultivo) | `{crop, cropIds: grupo∩finca}` | `.in(crop_id, ids)`; grupo vacío → `[]` → cero honesto SIN query |
+| Cultivo individual | `{crop, cropId}` | `.eq(crop_id, id)` (anterior) |
+
+**Matriz de restauración de hash (F5)**:
+| Hash restaurado | Resultado |
+|---|---|
+| sin `estado` (enlaces viejos) | 'todos' → comportamiento anterior exacto (retro-compat) |
+| `estado=finalizados&crop=<id finalizado>` | estado+cultivo restaurados |
+| `estado=activos&crop=<id finalizado>` | nota visible "El cultivo restaurado no pertenece al estado «Activos»: se muestra el grupo completo." + cropId reset |
+| `estado=perdidos` + crop de otra finca | nota de finca (regla existente) + reset |
+| `estado=X` antes del snapshot | nivel 2 "Revisando los estados de tus cultivos…" + Reintentar; listener re-renderiza al publicar |
+
+Stamps intactos: el `estado` cambia `cropIds` → stamps del reader detectan el cambio → refetch (14-B/B7 sin tocar).
+
+### Resultado de build
+
+`pnpm build:gold` ✅ verde (2.43s).
+
+### QA owner sugerido (runtime)
+
+1. Elegir "Activos" → nivel 2 desglosa solo activos (de la finca si hay finca); leer el grupo SIN cultivo → tiles con conteos reales del grupo.
+2. "Finalizados"/"Perdidos" vacíos → nota honesta, cero chips fantasma.
+3. F5 con estado+cultivo restaura ambos; crop de otro estado → nota y grupo completo.
+4. CREAR paso 3: mismo picker; estado sin cultivo → "Elige el cultivo del registro para continuar." (D-1).
+5. Cambiar de estado conservando un cultivo que pertenece al nuevo grupo (se mantiene la elección).
+
+### NO se hizo (scope respetado)
+
+- Sin git ejecutado. Sin tocar reader/Finca/Personal/CSS/MANIFIESTO (el selector es sólo Cultivo). Sin re-implementar el resolver de estados. Sin mock.
+
+### Git sugerido (NO ejecutado)
+
+```bash
+git add apps/gold/agro/agro-facturero-cultivo-wizard.js apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "feat(cultivo): ANEXO 21 selector de cultivo en dos niveles (estado→grupo, hash estado=, grupos de Mis Cultivos via snapshot)"
+git push origin main
+```

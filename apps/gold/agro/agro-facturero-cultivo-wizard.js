@@ -46,6 +46,18 @@ const ROOT_ID = 'agro-operational-root';
 const CULTIVO_VIEWS = new Set(['facturero-cultivo']);
 const WIZARD_BODY_CLASS = 'agro-fcv-wizard-active';
 const CROPS_READY_EVENT = 'AGRO_CROPS_READY';
+// ANEXO 21: el nivel 1 agrupa por el MISMO mapeo que las tabs de Mis Cultivos
+// (activo/finished/lost) — se consume del puente window._agroCyclesWorkspace
+// (snapshot publicado por el monolito, agro.js:138-149), sin re-implementar
+// resolveCropStatus ni inventar vocabulario de estados.
+const CYCLES_SNAPSHOT_EVENT = 'agro:cycles:snapshot';
+const ESTADO_TODOS = 'todos';
+const ESTADO_OPTIONS = [
+    { id: ESTADO_TODOS, label: 'Todos los cultivos', group: null },
+    { id: 'activos', label: 'Activos', group: 'active' },
+    { id: 'finalizados', label: 'Finalizados', group: 'finished' },
+    { id: 'perdidos', label: 'Perdidos', group: 'lost' }
+];
 
 const RAMA_VER = 'ver';
 const RAMA_CREAR = 'crear';
@@ -152,16 +164,18 @@ function mountWizard() {
 function readWizardHash() {
     try {
         const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+        const estadoRaw = String(hash.get('estado') || '').trim().toLowerCase();
         return {
             paso: Number.parseInt(hash.get('paso') || '', 10) || null,
             rama: String(hash.get('rama') || '').trim().toLowerCase() === RAMA_CREAR ? RAMA_CREAR : RAMA_VER,
             finca: String(hash.get('finca') || '').trim(),
             crop: String(hash.get('crop') || '').trim(),
+            estado: ESTADO_OPTIONS.some((option) => option.id === estadoRaw) ? estadoRaw : ESTADO_TODOS,
             cat: String(hash.get('cat') || '').trim(),
             done: String(hash.get('done') || '').trim() === '1'
         };
     } catch (_err) {
-        return { paso: null, rama: RAMA_VER, finca: '', crop: '', cat: '', done: false };
+        return { paso: null, rama: RAMA_VER, finca: '', crop: '', estado: ESTADO_TODOS, cat: '', done: false };
     }
 }
 
@@ -177,6 +191,7 @@ function createSession(root) {
         paso: 1,
         farmId: String(source.finca || ''),
         cropId: String(source.crop || ''),
+        estadoId: source.estado || ESTADO_TODOS,
         tileId: 'gastos',
         tipoId: '',
         categoria: String(source.cat || ''),
@@ -258,6 +273,43 @@ function createSession(root) {
         return crops.filter((crop) => String(crop?.farm_id || '') === state.farmId);
     }
 
+    // ANEXO 21: grupos de estado desde el snapshot de Mis Cultivos (puente
+    // global). known=false mientras el monolito no publica (arranque); no se
+    // mienten grupos vacíos antes de tiempo.
+    function getCycleGroups() {
+        const empty = { known: false, ids: new Set() };
+        if (typeof window !== 'object') return empty;
+        const snapshot = window._agroCyclesWorkspace?.getSnapshot?.() || null;
+        if (!snapshot || typeof snapshot !== 'object') return empty;
+        const total = Number(snapshot.summary?.total || 0)
+            + (snapshot.active?.length || 0) + (snapshot.finished?.length || 0) + (snapshot.lost?.length || 0);
+        const known = Boolean(snapshot.updatedAt) || total > 0;
+        if (!known) return empty;
+        const rows = snapshot[groupKeyOf(state.estadoId)] || [];
+        return {
+            known: true,
+            ids: new Set((Array.isArray(rows) ? rows : []).map((card) => String(card?.id || '')).filter(Boolean))
+        };
+    }
+
+    function groupKeyOf(estadoId) {
+        const option = ESTADO_OPTIONS.find((entry) => entry.id === estadoId);
+        return option?.group || 'active';
+    }
+
+    function estadoLabel(estadoId = state.estadoId) {
+        return ESTADO_OPTIONS.find((entry) => entry.id === estadoId)?.label || 'Todos los cultivos';
+    }
+
+    // Nivel 2: cultivos del grupo de estado, filtrados por la finca elegida
+    // (regla estricta §4.5 sobre el grupo, no sobre todas las fincas).
+    function getEstadoScopedCrops() {
+        const scoped = getScopedCrops();
+        if (state.estadoId === ESTADO_TODOS) return scoped;
+        const groups = getCycleGroups();
+        return scoped.filter((crop) => groups.ids.has(String(crop?.id || '')));
+    }
+
     function cropChipLabel(crop) {
         const rawName = String(crop?.name || '').trim().replace(/^[^\p{L}\p{N}]+/u, '').trim();
         const name = rawName || 'Cultivo';
@@ -266,15 +318,24 @@ function createSession(root) {
         return emoji ? `${emoji} ${name}` : name;
     }
 
-    // Reconciliacion honesta: si el cultivo activo no pertenece a la finca
-    // seleccionada, vuelve a "Vista general" con nota visible (nunca mudo).
+    // Reconciliacion honesta (ANEXO 21 extendida): el cultivo activo debe
+    // pertenecer a la finca Y al grupo de estado elegido; si no, vuelve a la
+    // lectura del grupo con nota visible (nunca mudo). Solo dirime cuando los
+    // cultivos estan listos y — con estado especifico — el snapshot publicado.
     function reconcileCropSelection() {
-        if (!state.cropId || !state.farmId) return;
-        const belongs = getScopedCrops().some((crop) => String(crop?.id || '') === state.cropId);
-        if (belongs) return;
-        if (getCropsState().phase !== 'ready') return; // esperar datos antes de dirimir
+        if (!state.cropId) return;
+        if (getCropsState().phase !== 'ready') return;
+        const estadoGrupo = state.estadoId !== ESTADO_TODOS;
+        const groups = estadoGrupo ? getCycleGroups() : { known: true, ids: null };
+        if (!groups.known) return;
+        const inFarm = !state.farmId
+            || getScopedCrops().some((crop) => String(crop?.id || '') === state.cropId);
+        if (inFarm && (!estadoGrupo || groups.ids.has(state.cropId))) return;
+        const motivo = !inFarm
+            ? 'El cultivo seleccionado no pertenece a esta finca: se volvió a la lectura por estado.'
+            : `El cultivo restaurado no pertenece al estado «${estadoLabel()}»: se muestra el grupo completo.`;
         state.cropId = '';
-        state.contextNotice = 'El cultivo seleccionado no pertenece a esta finca: se volvió a Vista general de cultivos.';
+        state.contextNotice = motivo;
     }
 
     function farmLabel() {
@@ -284,18 +345,30 @@ function createSession(root) {
     }
 
     function cropLabel() {
-        if (!state.cropId) return 'Vista general de cultivos';
+        if (!state.cropId) {
+            return state.estadoId === ESTADO_TODOS
+                ? 'Vista general de cultivos'
+                : `Cultivos ${estadoLabel().toLowerCase()}`;
+        }
         const crop = getCropsState().crops.find((entry) => String(entry?.id || '') === state.cropId);
         return crop ? cropChipLabel(crop) : 'Cultivo';
     }
 
     // ---------- Lectura S3: partición crop + fetchers con stamps (14-B/B7) ----------
 
-    // Partición crop del contexto actual: cultivo elegido; o los cultivos de
-    // la finca elegida (cropIds; vacío = cero honesto sin query); o todos los
-    // registros con cultivo (ambos "Vista general"). Nunca filtra por farm_id.
+    // Partición crop del contexto actual (ANEXO 21: consciente del estado):
+    // cultivo individual -> cropId unico; estado especifico sin cultivo ->
+    // cropIds del grupo filtrado por finca (vacio = cero honesto sin query);
+    // "Todos los cultivos" -> comportamiento canon exacto (finca o todo).
+    // Nunca filtra por farm_id de la fila.
     function currentPartition() {
         if (state.cropId) return { preset: 'crop', cropId: state.cropId };
+        if (state.estadoId !== ESTADO_TODOS) {
+            return {
+                preset: 'crop',
+                cropIds: getEstadoScopedCrops().map((crop) => String(crop?.id || '').trim()).filter(Boolean)
+            };
+        }
         if (state.farmId) {
             return {
                 preset: 'crop',
@@ -382,6 +455,7 @@ function createSession(root) {
             params.set('rama', state.rama);
             if (state.farmId) params.set('finca', state.farmId);
             if (state.cropId) params.set('crop', state.cropId);
+            if (state.estadoId !== ESTADO_TODOS) params.set('estado', state.estadoId);
             const categoriaValue = state.rama === RAMA_CREAR ? state.crearCategoria : state.categoria;
             if (categoriaValue) params.set('cat', categoriaValue);
             if (state.created) params.set('done', '1');
@@ -530,6 +604,10 @@ function createSession(root) {
     // Paso 2 VER / Paso 3 CREAR — doble tira de contexto (4.5).
     // obligatorio=true (CREAR, D-1): sin "Vista general" de cultivos y el
     // avance exige cultivo (guard en goNext).
+    // ANEXO 21: selector de cultivo en DOS NIVELES — nivel 1 estado (grupos
+    // de Mis Cultivos via snapshot), nivel 2 cultivos del grupo filtrados por
+    // finca (regla estricta §4.5). "Todos los cultivos" = vista general
+    // canon (comportamiento exacto anterior).
     function renderContextPicker({ obligatorio = false } = {}) {
         const farms = getFarms();
         const farmChips = [
@@ -541,6 +619,10 @@ function createSession(root) {
             })
         ].join('');
 
+        const estadoChips = ESTADO_OPTIONS.map((option) => `
+            <button type="button" class="fcvw-chip${state.estadoId === option.id ? ' is-active' : ''}" data-fcct-estado="${option.id}">${escapeHtml(option.label)}</button>
+        `).join('');
+
         const cropsState = getCropsState();
         let cropStripHtml = '';
         if (cropsState.phase === 'loading') {
@@ -550,20 +632,34 @@ function createSession(root) {
             `;
         } else if (cropsState.phase === 'empty') {
             cropStripHtml = '<p class="fcvw-note">Todavía no hay cultivos registrados. Crea un cultivo en Mi Granja para usar este facturero.</p>';
+        } else if (state.estadoId !== ESTADO_TODOS && !getCycleGroups().known) {
+            cropStripHtml = `
+                <p class="fcvw-note">Revisando los estados de tus cultivos…</p>
+                <button type="button" class="fcvw-btn" data-fcct-retry-crops><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Reintentar</button>
+            `;
         } else {
-            const scoped = getScopedCrops();
+            const scoped = getEstadoScopedCrops();
+            // Comodín canon: primera opción del nivel 2 = lectura sin cultivo
+            // individual ("Vista general de cultivos" o el grupo completo).
+            const comodinLabel = state.estadoId === ESTADO_TODOS
+                ? 'Vista general de cultivos'
+                : `Todos los ${estadoLabel().toLowerCase()}`;
             const generalChip = obligatorio
                 ? ''
-                : `<button type="button" class="fcvw-chip fcct-crop${!state.cropId ? ' is-active' : ''}" data-fcct-crop="">Vista general de cultivos</button>`;
+                : `<button type="button" class="fcvw-chip fcct-crop${!state.cropId ? ' is-active' : ''}" data-fcct-crop="">${escapeHtml(comodinLabel)}</button>`;
             const cropChips = scoped.map((crop) => {
                 const id = String(crop?.id || '').trim();
                 if (!id) return '';
                 return `<button type="button" class="fcvw-chip fcct-crop${state.cropId === id ? ' is-active' : ''}" data-fcct-crop="${escapeHtml(id)}">${escapeHtml(cropChipLabel(crop))}</button>`;
             }).join('');
-            const emptyScopedNote = (!state.farmId || scoped.length > 0)
-                ? ''
-                : '<p class="fcvw-note">Esta finca no tiene cultivos activos todavía.</p>';
-            cropStripHtml = `${generalChip}${cropChips}${emptyScopedNote}`;
+            let emptyNote = '';
+            if (scoped.length === 0) {
+                emptyNote = state.estadoId === ESTADO_TODOS
+                    ? (state.farmId ? 'Esta finca no tiene cultivos todavía.' : '')
+                    : `Sin cultivos ${estadoLabel().toLowerCase()}${state.farmId ? ' en esta finca' : ''}.`;
+                if (emptyNote) emptyNote = `<p class="fcvw-note">${escapeHtml(emptyNote)}</p>`;
+            }
+            cropStripHtml = `${generalChip}${cropChips}${emptyNote}`;
         }
 
         const noticeHtml = state.contextNotice
@@ -576,6 +672,11 @@ function createSession(root) {
                 <div class="fcvw-picker">
                     <span class="fcvw-picker__label">Finca</span>
                     <div class="fcvw-picker__strip" role="group" aria-label="Contexto de finca">${farmChips}</div>
+                </div>
+                <div class="fcct-divider" aria-hidden="true"></div>
+                <div class="fcvw-picker">
+                    <span class="fcvw-picker__label">Estado del ciclo</span>
+                    <div class="fcvw-picker__strip" role="group" aria-label="Estado de cultivos">${estadoChips}</div>
                 </div>
                 <div class="fcct-divider" aria-hidden="true"></div>
                 <div class="fcvw-picker">
@@ -1245,6 +1346,23 @@ function createSession(root) {
                 render();
             });
         });
+        root.querySelectorAll('[data-fcct-estado]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const next = String(button.getAttribute('data-fcct-estado') || '').trim() || ESTADO_TODOS;
+                if (next === state.estadoId) return;
+                state.estadoId = next;
+                state.contextNotice = '';
+                // El cultivo individual se conserva solo si pertenece al nuevo
+                // grupo (y a la finca); si los datos aun no estan listos, la
+                // reconciliacion del render lo dirime con nota cuando lleguen.
+                if (state.cropId && getCropsState().phase === 'ready'
+                    && (next === ESTADO_TODOS || getCycleGroups().known)
+                    && !getEstadoScopedCrops().some((crop) => String(crop?.id || '') === state.cropId)) {
+                    state.cropId = '';
+                }
+                render();
+            });
+        });
         root.querySelectorAll('[data-fcct-crop]').forEach((button) => {
             button.addEventListener('click', () => {
                 state.cropId = String(button.getAttribute('data-fcct-crop') || '').trim();
@@ -1310,14 +1428,22 @@ function createSession(root) {
         if (alive) render();
     }
 
+    // ANEXO 21: cuando el monolito publica los grupos de Mis Cultivos, el
+    // nivel 1 deja de estar "revisando" y la reconciliación puede dirimir.
+    function onCyclesSnapshot() {
+        if (alive) render();
+    }
+
     function destroy() {
         alive = false;
         window.removeEventListener(CROPS_READY_EVENT, onCropsReady);
+        window.removeEventListener(CYCLES_SNAPSHOT_EVENT, onCyclesSnapshot);
         document.body.classList.remove(WIZARD_BODY_CLASS);
     }
 
     document.body.classList.add(WIZARD_BODY_CLASS);
     window.addEventListener(CROPS_READY_EVENT, onCropsReady);
+    window.addEventListener(CYCLES_SNAPSHOT_EVENT, onCyclesSnapshot);
     render();
 
     // F5: recargar lo que el paso restaurado necesite (14-B/B7).
