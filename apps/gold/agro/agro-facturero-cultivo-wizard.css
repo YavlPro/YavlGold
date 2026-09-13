@@ -1,0 +1,67 @@
+/**
+ * Facturero del Cultivo — Wizard (S2: esqueleto).
+ * Solo los estilos propios del paso de contexto (doble tira finca + cultivo).
+ * TODO lo demas se reutiliza EN MODO LECTURA del sistema global de la familia
+ * (fcvw__*, fcwz*, fcflow-* cargados via index.html): topbar con borderShimmer
+ * (ADN §19.5, definido en agro-facturero-finca-wizard.css bajo .fcwz), FAB
+ * oculto via body.agro-fcv-wizard-active (B10) y footer/tiles/chips de
+ * clientes-view-wizard.css. Este archivo NUNCA edita esas reglas.
+ * ADN Visual V12: tokens con fallback, sin glow, sin hex hardcodeados.
+ */
+
+/* Doble tira de contexto (Paso 2 VER / Paso 3 CREAR): dos pickers apilados
+   con separador sutil. La tira de cultivos hereda .fcvw-picker del sistema
+   global; aqui solo se apila y se afina el chip de cultivo (emoji + nombre). */
+.fcct-context {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3, 0.75rem);
+}
+
+.fcct-divider {
+    height: 1px;
+    background: var(--border-neutral, rgba(255, 255, 255, 0.07));
+    margin: calc(var(--space-2, 0.5rem) * -1) 0;
+}
+
+/* Chip de cultivo: el emoji del cultivo viaja dentro del label (dato real de
+   agro_crops.icon); un leve margen separa emoji y nombre. 44px de alto
+   heredado del chip global — aqui solo ritmo horizontal. */
+.fcct-crop {
+    gap: 0.4rem;
+}
+
+/* Tira de cultivos: los nombres pueden ser largos (variedad incluida);
+   wrap normal del sistema, sin scroll horizontal inventado. */
+.fcct-cropstrip {
+    row-gap: 0.4rem;
+}
+
+/* ---------- Mobile (ADN: Small <=480px) ----------
+   La doble tira apila mas compacta para no empujar el footer sticky fuera
+   del primer viewport. Scope bajo .fcct-context: cero efecto sobre el
+   wizard de Finca (que no usa estas clases). */
+@media (max-width: 480px) {
+    .fcct-context {
+        gap: var(--space-2, 0.5rem);
+    }
+
+    .fcct-divider {
+        margin: calc(var(--space-1, 0.25rem) * -1) 0;
+    }
+
+    .fcct-context .fcvw-picker__strip {
+        gap: 0.4rem;
+    }
+}
+
+/* Reduced-motion: esta hoja no anima nada (el shimmer de la topbar y las
+   transiciones viven en el CSS global de la familia con su propio guard). */
+@media (prefers-reduced-motion: reduce) {
+    .fcct-context *,
+    .fcct-context *::before,
+    .fcct-context *::after {
+        transition: none !important;
+        animation: none !important;
+    }
+}

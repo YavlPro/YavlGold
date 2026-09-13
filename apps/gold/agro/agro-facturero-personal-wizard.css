@@ -1,0 +1,52 @@
+/**
+ * Facturero Personal — Wizard (S8).
+ * Solo la franja de identidad del gate (explica la partición sin finca y sin
+ * cultivo). TODO lo demás se reutiliza EN MODO LECTURA del sistema global de
+ * la familia (fcvw__*, fcwz*, fcflow-* cargados via index.html), incluidos
+ * borderShimmer bajo topbar y FAB oculto (body class compartida B10).
+ * ADN Visual V12: tokens con fallback, sin glow, sin hex hardcodeados.
+ */
+
+.fcp-identity {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3, 0.75rem);
+    padding: var(--space-4, 1rem);
+    background: var(--bg-2, #101116);
+    border: 1px solid var(--border-gold, rgba(200, 167, 82, 0.25));
+    border-radius: var(--radius-md, 12px);
+}
+
+.fcp-identity i {
+    color: var(--gold-4, #C8A752);
+    font-size: 1.05rem;
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+}
+
+.fcp-identity p {
+    margin: 0;
+    color: var(--text-muted, #94a3b8);
+    font-size: var(--text-sm, 0.85rem);
+    line-height: 1.5;
+}
+
+.fcp-identity strong {
+    color: var(--text-primary, #f5f5f5);
+    font-weight: 600;
+}
+
+@media (max-width: 480px) {
+    .fcp-identity {
+        padding: var(--space-3, 0.75rem);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fcp-identity *,
+    .fcp-identity *::before,
+    .fcp-identity *::after {
+        transition: none !important;
+        animation: none !important;
+    }
+}
