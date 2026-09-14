@@ -119,6 +119,30 @@ Lo que habría que determinar con una captura que **sí** sea de Bet&Hold:
 
 ---
 
+## 5C. COMUNICADO OFICIAL DEL 14-SEP-2026: ADIÓS A CHAINLINK (análisis)
+
+Bet&Hold anunció a su comunidad que **abandonará Chainlink** como fuente de aleatoriedad (RNG) de los juegos. Puntos literales del comunicado y su lectura:
+
+| Dice el comunicado | Qué significa realmente |
+|---|---|
+| "Dejar de depender de Chainlink para generar y resolver resultados aleatorios" | **Se elimina el RNG externo y verificable.** Chainlink VRF es la única garantía de que ni el operador puede manipular el resultado. Al sustituirlo por un sistema propio, **la casa pasa a controlar la aleatoriedad**. |
+| "Priorizar la jugabilidad, velocidad y fluidez" | Motivo técnicamente posible (VRF añade latencia y coste), pero **el efecto es perder auditabilidad**. El propio sitio se promocionaba como "Verifiable on-chain with Chainlink oracle". |
+| "Fase 1 el viernes 18-sep; segunda actualización más profunda en ~20 días" | La segunda fase (~8-oct) es la que concentra el riesgo: suele ser cuando se redeployan contratos y se piden **nuevas firmas/approvals**. |
+| "Soporte en pausa hasta completar la fase 1" y "los casos se están acumulando" | **Confirma que hay muchos casos sin resolver** (compatible con los drenajes documentados). Los afectados (Sanjorge, Guille) se quedan sin vía de reclamo. |
+| "Se otorgará una compensación… los detalles serán comunicados" | Compensación indefinida = mecanismo clásico de retención. Vigilar si exige depositar o si se paga en "saldo bono" con requisitos de apuesta. |
+| "Seguiremos siendo no custodial" | Técnicamente cierto (el saldo está en la wallet del usuario), pero **engañoso**: los jugadores tienen `approve` de 50 EVA y session keys de 50 EVA vigentes, que sí permiten mover fondos sin custodia. |
+
+**Conclusión del análisis:** es el anuncio más grave hasta la fecha. No porque demuestre fraude, sino porque **elimina la única prueba de juego limpio justo cuando se acumulan los casos de soporte y los drenajes**.
+
+**Recomendaciones derivadas:**
+1. Revocar los `approve` **antes del 18-sep** (coste ~US$0,003).
+2. No firmar nada nuevo: ni migraciones, ni "re-aprobar", ni reclamar compensaciones.
+3. Retirar/mover el EVA restante en wallets conectadas al casino.
+4. Los afectados deben **documentar ya** (hashes, fechas, capturas): si la plataforma desaparece tras la fase 2, eso es lo único usable para denunciar.
+5. Vigilar la fase 2 (~8-oct): redeploy de contratos, token propio, o caída del sitio.
+
+---
+
 ## 6. LICENCIA Y EMPRESA (de sesiones anteriores, sin cambios)
 - Declara licencia **ALSI-012401003-FI1** (Anjouan, *Computer Gaming Licensing Act 007/2005*) a nombre de **B&H EVOLUTION LIMITADA** (Costa Rica).
 - **Verificaciones negativas:** (a) el número no aparece en registros públicos; (b) el Banco Central de las Comoras **no reconoce a la AOFA** y el juego es ilícito en Comoras (FATF-GAFI 2024) → protección nula al jugador; (c) **cero rastros públicos** de la empresa; (d) sin reseñas en Casino.guru, Trustpilot ni AskGamblers.
