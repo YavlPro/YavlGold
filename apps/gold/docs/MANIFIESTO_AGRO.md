@@ -880,6 +880,34 @@ Si el cultivo pertenece a una finca, el registro la recuerda; si es un cultivo s
 
 ---
 
+## 4.5.6 Facturero Personal
+
+### Qué es
+
+El libro del bolsillo del dueño. Aquí viven los movimientos que no pertenecen ni a una finca ni a un cultivo: el dinero que ganaste con tu trabajo, lo que pagaste de tu propio bolsillo y lo que perdiste en lo personal. Una pala comprada con tu dinero es un gasto personal, aunque después se use en la finca: lo que define el registro es de qué bolsillo salió, no dónde terminó usándose.
+
+### Qué no es
+
+No es el Facturero de la Finca ni el del Cultivo, y por eso las categorías del campo (insumos, mano de obra, mantenimiento) no aplican aquí. Este libro habla el idioma de la casa y del bolsillo, no el de la finca.
+
+### Categorías personales
+
+* **Gastos:** Herramientas y equipo, Ropa y protección, Transporte, Alimentación y mercado, Salud y Otros.
+* **Ingresos:** Trabajo y jornales, Ventas propias, Servicios y encargos y Otros.
+* **Pérdidas y donaciones** no llevan categoría, igual que en los demás factureros.
+
+### Regla de los registros antiguos
+
+Los registros viejos guardados con categorías del campo, o sin categoría personal, se leen en "Otros". No se inventan equivalencias: si el registro no trae una categoría propia de este libro, su lugar honesto es Otros.
+
+### Reglas de cuidado
+
+* Este facturero no tiene selectores de finca ni de cultivo: trabaja únicamente con los registros sin finca y sin cultivo.
+* Los fiados no se registran aquí: su hogar es el Facturero de Clientes.
+* Al refrescar la página, el agricultor vuelve al paso, rama y categoría donde estaba.
+
+---
+
 ## 4.6 Trabajo Diario
 
 ### Qué es

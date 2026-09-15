@@ -24,6 +24,7 @@
 import {
     LEDGER_TILES,
     fetchTileRows,
+    translateCategoryPersonal,
     stampScope,
     isScopeStale,
     isLedgerRowEditable
@@ -60,17 +61,32 @@ const CREAR_TYPES = [
     { id: 'loss', label: 'Pérdida', icon: 'fa-solid fa-circle-xmark', hint: 'Algo que se pierde y se cierra.' }
 ];
 
-// Categorías canónicas (mismo vocabulario del libro; Ventas solo income).
-const FARM_CATEGORIES = [
-    { id: 'insumos', label: 'Insumos agrícolas', desc: 'Semillas, abono, agroquímicos', icon: 'fa-solid fa-seedling' },
-    { id: 'herramientas', label: 'Herramientas y equipos', desc: 'Maquinaria, repuestos', icon: 'fa-solid fa-toolbox' },
-    { id: 'mano_obra', label: 'Mano de obra', desc: 'Jornales y trabajo de campo', icon: 'fa-solid fa-people-group' },
-    { id: 'mantenimiento', label: 'Mantenimiento', desc: 'Cercas, riego, infraestructura', icon: 'fa-solid fa-screwdriver-wrench' },
-    { id: 'transporte', label: 'Transporte y combustible', desc: 'Gasolina, fletes', icon: 'fa-solid fa-truck' },
-    { id: 'otros', label: 'Otros', desc: 'Lo que no encaja arriba', icon: 'fa-solid fa-ellipsis' }
+// Categorías personales (ANEXO 22): el bolsillo del dueño, no el campo —
+// una pala pagada de tu bolsillo vive aquí aunque termine usada en la finca.
+// Legacy (ids de finca, vacío, 'general') se lee en Otros (sin mapa inventado).
+const PERSONAL_GASTOS = [
+    { id: 'p_herramientas', label: 'Herramientas y equipo', desc: 'Pala, baretón, machete', icon: 'fa-solid fa-hammer' },
+    { id: 'p_ropa', label: 'Ropa y protección', desc: 'Ropa de trabajo, botas', icon: 'fa-solid fa-shirt' },
+    { id: 'p_transporte', label: 'Transporte', desc: 'Pasajes, gasolina personal', icon: 'fa-solid fa-bus-simple' },
+    { id: 'p_alimentacion', label: 'Alimentación y mercado', desc: 'Mercado y comida del día', icon: 'fa-solid fa-basket-shopping' },
+    { id: 'p_salud', label: 'Salud', desc: 'Medicinas, consultas', icon: 'fa-solid fa-heart-pulse' },
+    { id: 'p_otros', label: 'Otros', desc: 'Lo que no encaja arriba', icon: 'fa-solid fa-ellipsis' }
 ];
-const VENTA_CATEGORY = { id: 'ventas', label: 'Ventas', desc: 'Ingreso por venta fuera del cultivo', icon: 'fa-solid fa-store' };
+const PERSONAL_INGRESOS = [
+    { id: 'p_trabajo', label: 'Trabajo y jornales', desc: 'Sueldo, jornales', icon: 'fa-solid fa-person-digging' },
+    { id: 'p_ventas', label: 'Ventas propias', desc: 'Lo que vendes por tu cuenta', icon: 'fa-solid fa-tag' },
+    { id: 'p_servicios', label: 'Servicios y encargos', desc: 'Encargos que te pagan', icon: 'fa-solid fa-screwdriver-wrench' },
+    { id: 'p_otros', label: 'Otros', desc: 'Lo que no encaja arriba', icon: 'fa-solid fa-ellipsis' }
+];
 const CATEGORY_FIELD_TILES = new Set(['gastos', 'ingresos']);
+
+// ANEXO 22: el vocabulario personal solo se aplica donde el registro lleva
+// categoría (gastos/ingresos); el resto de tiles conserva la lectura sin
+// categoría del traductor de finca (CAT-2 espejo: pérdidas/donaciones sin
+// categoría).
+function translateForTile(tileId) {
+    return CATEGORY_FIELD_TILES.has(tileId) ? translateCategoryPersonal : undefined;
+}
 
 const TYPE_TO_TABLE = Object.freeze({
     expense: 'agro_expenses',
@@ -217,7 +233,7 @@ function createSession(root) {
         scope.stamp = stampScope({ tileId: state.tileId, partition: PARTITION });
         render();
         try {
-            const rows = await fetchTileRows({ tileId: state.tileId, partition: PARTITION });
+            const rows = await fetchTileRows({ tileId: state.tileId, partition: PARTITION, translate: translateForTile(state.tileId) });
             if (requestId !== scope.requestId || !alive) return;
             scope.rows = rows;
             scope.phase = 'ready';
@@ -241,7 +257,7 @@ function createSession(root) {
         render();
         try {
             const results = await Promise.all(VER_TILES.map((tile) =>
-                fetchTileRows({ tileId: tile.id, partition: PARTITION })
+                fetchTileRows({ tileId: tile.id, partition: PARTITION, translate: translateForTile(tile.id) })
             ));
             if (requestId !== scope.requestId || !alive) return;
             const counts = {};
@@ -553,8 +569,8 @@ function createSession(root) {
         });
 
         const vocabulary = state.tileId === 'ingresos'
-            ? [...FARM_CATEGORIES, VENTA_CATEGORY]
-            : FARM_CATEGORIES;
+            ? PERSONAL_INGRESOS
+            : PERSONAL_GASTOS;
         const tiles = vocabulary.map((category) => `
             <button type="button" class="fcvw-tile fcvw-tile--cat${state.categoria === category.id ? ' is-active' : ''}" data-fcp-cat="${escapeHtml(category.id)}" aria-pressed="${state.categoria === category.id ? 'true' : 'false'}" title="${escapeHtml(category.desc)}">
                 <i class="${category.icon}" aria-hidden="true"></i>
@@ -572,12 +588,12 @@ function createSession(root) {
         return `
             <div class="fcvw-tiles fcvw-tiles--square">${tiles}</div>
             <div class="fcvw-picker__strip" role="group" aria-label="Comodines de categoría">${comodines}</div>
-            <p class="fcvw-note">El número de cada categoría es real para tus registros personales. Los registros viejos se leen en su categoría canónica.</p>
+            <p class="fcvw-note">El número de cada categoría es real para tus registros personales. Los registros antiguos sin categoría personal se leen en Otros.</p>
         `;
     }
 
     function getCategoryLabel(id) {
-        const category = [...FARM_CATEGORIES, VENTA_CATEGORY].find((entry) => entry.id === id);
+        const category = [...PERSONAL_GASTOS, ...PERSONAL_INGRESOS].find((entry) => entry.id === id);
         return category ? category.label : 'Sin categoría';
     }
 
@@ -803,8 +819,8 @@ function createSession(root) {
             `;
         }
         const vocabulary = state.tipoId === 'income'
-            ? [...FARM_CATEGORIES, VENTA_CATEGORY]
-            : FARM_CATEGORIES;
+            ? PERSONAL_INGRESOS
+            : PERSONAL_GASTOS;
         const tiles = vocabulary.map((category) => `
             <button type="button" class="fcvw-tile fcvw-tile--cat${state.crearCategoria === category.id ? ' is-active' : ''}" data-fcp-crear-cat="${escapeHtml(category.id)}" aria-pressed="${state.crearCategoria === category.id ? 'true' : 'false'}" title="${escapeHtml(category.desc)}">
                 <i class="${category.icon}" aria-hidden="true"></i>
@@ -812,12 +828,9 @@ function createSession(root) {
                 <span class="fcvw-tile__desc">${escapeHtml(category.desc)}</span>
             </button>
         `).join('');
-        const ventasNote = state.tipoId === 'income'
-            ? ' "Ventas" queda para los ingresos por venta fuera del cultivo.'
-            : '';
         return `
             <div class="fcvw-tiles fcvw-tiles--square">${tiles}</div>
-            <p class="fcvw-note">La categoría se guarda con el registro usando el id canónico.${ventasNote}</p>
+            <p class="fcvw-note">La categoría se guarda con el registro usando el id canónico.</p>
         `;
     }
 

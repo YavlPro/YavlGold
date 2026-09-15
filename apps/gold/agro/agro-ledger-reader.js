@@ -1,10 +1,10 @@
 /**
  * Agro — Lector canonico del ledger por particion (Sesion 1 frente Cultivo).
  *
- * Reader PURO sin wiring: ningun archivo vivo lo importa todavia. Lo consumira
- * primero el wizard del Cultivo (sesion 3); Finca migra despues con QA de
- * matriz. Extraccion fiel de fetchTileRows de agro-facturero-finca-wizard.js
- * (:466-617) con las particiones como parametro en vez de estado de sesion.
+ * Reader PURO sin wiring: lo consumen los wizards de Cultivo y Personal;
+ * Finca conserva su lectura local historica. Extraccion fiel de
+ * fetchTileRows de agro-facturero-finca-wizard.js (:466-617) con las
+ * particiones como parametro en vez de estado de sesion.
  *
  * Particiones canonicas (MANIFIESTO 4.5):
  *   { preset: 'farm',   farmId?  } -> crop_id IS NULL (+eq farm_id si farmId)
@@ -23,6 +23,13 @@
  * Vocabulario de tipo (5 valores, alineado a tablas): expense | income |
  * pending | loss | transfer. La union operacional traduce el vocabulario de
  * ciclos (economic_type donation) a 'transfer' via CYCLE_TYPE_TO_TYPE.
+ *
+ * ANEXO 22 (vocabulario personal): fetchTileRows / fetchLedgerTile /
+ * fetchOperationalUnion aceptan `translate` opcional (default:
+ * translateCategory de finca). El wizard Personal pasa
+ * translateCategoryPersonal SOLO en tiles con categoria (gastos/ingresos);
+ * perdidas y donaciones siguen sin categoria (CAT-2 espejo). Sin translate,
+ * el comportamiento de finca/cultivo queda intacto (cambio aditivo).
  *
  * RLS: igual que el wizard de Finca (GREEN en produccion), no se filtra
  * user_id explicito — las policies por tabla (ALL / sin delete en income)
@@ -222,7 +229,17 @@ export function translateCategory(rawValue) {
     return 'otros';
 }
 
-export async function fetchLedgerTile({ tileId, partition, limit = LEDGER_LIMIT_DEFAULT } = {}) {
+// ANEXO 22: la particion orphan (Personal) habla el idioma del bolsillo del
+// dueno, no el del campo. Solo los ids p_* son categorias personales reales;
+// vacio, 'general', ids de finca y desconocidos se leen en 'p_otros' en
+// lectura (sin reescribir datos y sin mapa inventado). El consumidor lo pasa
+// solo en tiles con categoria: perdidas y donaciones siguen sin categoria.
+export function translateCategoryPersonal(rawValue) {
+    const value = normalizeToken(rawValue);
+    return value.startsWith('p_') ? value : 'p_otros';
+}
+
+export async function fetchLedgerTile({ tileId, partition, limit = LEDGER_LIMIT_DEFAULT, translate } = {}) {
     const tile = LEDGER_TILES.find((entry) => entry.id === normalizeToken(tileId));
     if (!tile) throw new Error(`[ledger-reader] tile desconocido: ${tileId}`);
     const p = normalizePartition(partition);
@@ -257,6 +274,7 @@ export async function fetchLedgerTile({ tileId, partition, limit = LEDGER_LIMIT_
         throw error;
     }
 
+    const translateRowCategory = typeof translate === 'function' ? translate : translateCategory;
     const alias = tile.alias || {};
     const raw = Array.isArray(data) ? data : [];
     const predicate = partitionPredicate(p);
@@ -270,7 +288,7 @@ export async function fetchLedgerTile({ tileId, partition, limit = LEDGER_LIMIT_
             fecha: row?.[alias.fecha || 'fecha'],
             concepto: row?.[alias.concepto || 'concepto'],
             monto: row?.[alias.monto || 'monto'],
-            categoria: translateCategory(row?.[tile.categoryField])
+            categoria: translateRowCategory(row?.[tile.categoryField])
         }))
         .filter((row) => row.type === opType && predicate(row));
 
@@ -282,7 +300,7 @@ export async function fetchLedgerTile({ tileId, partition, limit = LEDGER_LIMIT_
 // fila antes de filtrar. Tipo por direction (in -> income) con la semantica del
 // ciclo (donation -> transfer, loss) cuando direction no basta; farmKey con
 // fallback al ciclo; cultivo del ciclo (los movements no llevan crop propio).
-export async function fetchOperationalUnion({ opType, partition, limit = OPERATIONAL_LIMIT_DEFAULT } = {}) {
+export async function fetchOperationalUnion({ opType, partition, limit = OPERATIONAL_LIMIT_DEFAULT, translate } = {}) {
     const type = normalizeToken(opType);
     if (!type) throw new Error('[ledger-reader] fetchOperationalUnion requiere opType');
     if (OP_UNION_SKIPPED_TYPES.has(type)) return [];
@@ -310,6 +328,7 @@ export async function fetchOperationalUnion({ opType, partition, limit = OPERATI
         (cyclesResult.data || []).map((cycle) => [String(cycle?.id || ''), cycle])
     );
     const predicate = partitionPredicate(p);
+    const translateRowCategory = typeof translate === 'function' ? translate : translateCategory;
 
     const typedRows = [];
     const rows = [];
@@ -331,7 +350,7 @@ export async function fetchOperationalUnion({ opType, partition, limit = OPERATI
             fecha: movement?.movement_date,
             concepto: movement?.concept,
             monto: movement?.amount,
-            categoria: translateCategory(cycle?.category)
+            categoria: translateRowCategory(cycle?.category)
         };
         if (row.type !== type) return;
         typedRows.push(row);
@@ -346,15 +365,15 @@ export async function fetchOperationalUnion({ opType, partition, limit = OPERATI
 // (fecha + monto + concepto; ledger prima) + orden fecha descendente.
 // El manejo de estados (loading/error/empty) y los guards de carrera
 // (requestId) pertenecen al consumidor UI; el reader es stateless y lanza.
-export async function fetchTileRows({ tileId, partition } = {}) {
+export async function fetchTileRows({ tileId, partition, translate } = {}) {
     const tile = LEDGER_TILES.find((entry) => entry.id === normalizeToken(tileId));
     if (!tile) throw new Error(`[ledger-reader] tile desconocido: ${tileId}`);
     const p = normalizePartition(partition);
     const opType = TILE_TO_OP_TYPE[tile.id];
 
     const [ledgerRows, opRows] = await Promise.all([
-        fetchLedgerTile({ tileId: tile.id, partition: p, limit: LEDGER_LIMIT_DEFAULT }),
-        fetchOperationalUnion({ opType, partition: p, limit: OPERATIONAL_LIMIT_DEFAULT })
+        fetchLedgerTile({ tileId: tile.id, partition: p, limit: LEDGER_LIMIT_DEFAULT, translate }),
+        fetchOperationalUnion({ opType, partition: p, limit: OPERATIONAL_LIMIT_DEFAULT, translate })
     ]);
 
     const dedupeKey = (row) =>

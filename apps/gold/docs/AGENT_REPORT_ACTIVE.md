@@ -3724,3 +3724,60 @@ git add apps/gold/agro/agro-facturero-cultivo-wizard.js apps/gold/docs/AGENT_REP
 git commit -m "feat(cultivo): ANEXO 21 selector de cultivo en dos niveles (estado→grupo, hash estado=, grupos de Mis Cultivos via snapshot)"
 git push origin main
 ```
+
+---
+
+## Sesión 2026-09-15 — ANEXO 22: vocabulario personal del Facturero Personal
+
+Agente: GLM (ZCode). QA owner 13-sep 12:23 verde salvo categorías del Personal (este anexo las cierra). Diff acotado a reader (aditivo) + wizard Personal; cero CSS nuevo (clases canon de la familia). Sesión iniciada 13-sep, completada 15-sep.
+
+- **Fecha**: 2026-09-15
+- **Objetivo**: categorías propias del bolsillo del dueño en los pasos de categoría de VER y CREAR del Facturero Personal, traducción legacy → Otros y CAT-2 espejo (pérdidas/donaciones sin categoría).
+
+### Diagnóstico (trazado, no inventado)
+
+- El reader embebía `translateCategory` (finca) en `fetchLedgerTile` (map de filas) y `fetchOperationalUnion` (categoria del ciclo); el wizard Personal usaba `FARM_CATEGORIES` + `VENTA_CATEGORY` (vocabulario de finca) en VER paso 3, CREAR paso 3 y `getCategoryLabel`.
+- Trazado canónico confirmado (finca-wizard :39-42): solo `agro_expenses.category` y `agro_income.categoria` tienen columna; fiados/pérdidas/donaciones viven sin categoría → si el traductor personal se pasara en esos tiles, cada fila cobraría un tag "Otros" falso. Decisión: el wizard pasa `translate` SOLO en tiles gastos/ingresos (`translateForTile`); el resto conserva el default de finca (categoria vacía, igual que hoy).
+- Consumidores del reader: Cultivo (`fetchTileRows` sin translate → default finca, intacto) y Personal. Finca conserva su lectura local histórica (no usa el reader). Cero cambio de comportamiento farm/crop.
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `agro/agro-ledger-reader.js` | ADITIVO: `translate` opcional en `fetchTileRows`/`fetchLedgerTile`/`fetchOperationalUnion` (default `translateCategory` de finca; sin translate el camino ejecutado es el mismo de siempre). Export nuevo `translateCategoryPersonal` (identidad para ids `p_*`; vacío/'general'/ids de finca/desconocidos → `p_otros`). Header: nota ANEXO 22 + corrección de nota stale ("ningún archivo vivo lo importa" → consumidores reales Cultivo/Personal). |
+| `agro/agro-facturero-personal-wizard.js` | `PERSONAL_GASTOS` (6: p_herramientas, p_ropa, p_transporte, p_alimentacion, p_salud, p_otros) y `PERSONAL_INGRESOS` (4: p_trabajo, p_ventas, p_servicios, p_otros) con iconos FA 6.5 Free sobrios y aria-hidden; `translateForTile()` pasa `translateCategoryPersonal` solo en gastos/ingresos (fetchListRows + fetchTileCounts); VER paso 3 y CREAR paso 3 renderizan la lista según el tipo (gastos→6, ingresos→4); `getCategoryLabel` personal; nota bajo tiles "Los registros antiguos sin categoría personal se leen en Otros."; escritura guarda el id p_* en category/categoria (payload existente sin cambio; sin elección → 'general' que se lee en Otros); nota "Ventas fuera del cultivo" retirada (era vocabulario de finca). |
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | §4.5.6 Facturero Personal (nuevo, autorizado por decisión semántica cerrada del owner en el prompt del anexo): el libro del bolsillo del dueño; categorías personales por tipo; regla legacy → Otros sin equivalencias inventadas; pérdidas/donaciones sin categoría. Prosa humana, sin tecnicismos. |
+
+### Verificación estática (ANEXO22_STATIC_OK)
+
+| Registro | Camino trazado | Resultado |
+|---|---|---|
+| Crear gasto "pala" → p_herramientas | CREAR expense → payload.category='p_herramientas' (farm/crop null) → VER gastos (orphan) → translateCategoryPersonal identidad | tile "Herramientas y equipo" + tag correcto |
+| Crear ingreso "jornal semana" → p_trabajo | CREAR income → payload.categoria='p_trabajo' → VER ingresos | tile "Trabajo y jornales" |
+| Legacy personal (id finca 'tools'/null/'general') | orphan → translateCategoryPersonal → 'p_otros' | tile "Otros" + nota visible bajo tiles |
+| Pérdida/donación | CREAR sin paso de categoría (rama existente); VER con traductor default finca → categoria '' | sin tags, sin categoría (CAT-2 espejo) |
+| Fiado | traductor default (finca) → categoria '' | idéntico a hoy |
+| Farm/Crop | Cultivo llama `fetchTileRows` SIN translate; Finca no usa reader | byte-idéntico |
+
+- Hash `cat=` restaura ids p_* (los renderers comparan por id). Privacidad, navegación ANEXO 19 (borrador/Volver), stamps B7, partición ambos-null: intactos. 'Sin categoría' de gastos/ingresos ya no aparece (todo legible cae en Otros; el chip solo se renderizaba con conteo > 0).
+- **Build**: `pnpm build:gold` ✅ verde (2.64s); UTF-8 guard OK; bundle verificado: tokens p_*/translateCategoryPersonal presentes en `agro-facturero-personal-wizard-*.js` y `agro-ledger-reader-*.js`.
+
+### QA owner sugerido (runtime)
+
+1. CREAR gasto personal "pala" con categoría Herramientas y equipo → verlo en su tile con conteo real.
+2. CREAR ingreso "jornal semana" → tile Trabajo y jornales.
+3. VER Gastos (6 tiles) / Ingresos (4 tiles) con conteos reales; registros viejos en Otros con la nota visible.
+4. VER Pérdidas/Donaciones: sin paso de categoría (nota honesta), filas sin tag "Otros".
+5. Consola limpia (sin canary de criba).
+
+### NO se hizo (scope respetado)
+
+- Sin git ejecutado. Sin tocar Cultivo/Finca/Clientes, shell, CSS (clases canon existentes). Sin DDL, sin mock, sin migración de datos (legacy se traduce solo en lectura). Hints de tipo del paso 2 CREAR y texto del gate intactos (partición sin cambio).
+
+### Git sugerido (NO ejecutado)
+
+```bash
+git add apps/gold/agro/agro-ledger-reader.js apps/gold/agro/agro-facturero-personal-wizard.js apps/gold/docs/MANIFIESTO_AGRO.md apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "feat(personal): ANEXO 22 vocabulario del bolsillo — categorías p_* en VER/CREAR, translateCategoryPersonal en reader (aditivo), legacy→Otros + MANIFIESTO 4.5.6"
+git push origin main
+```
