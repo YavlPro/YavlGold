@@ -3738,7 +3738,7 @@ Agente: GLM (ZCode). QA owner 13-sep 12:23 verde salvo categorías del Personal 
 
 - El reader embebía `translateCategory` (finca) en `fetchLedgerTile` (map de filas) y `fetchOperationalUnion` (categoria del ciclo); el wizard Personal usaba `FARM_CATEGORIES` + `VENTA_CATEGORY` (vocabulario de finca) en VER paso 3, CREAR paso 3 y `getCategoryLabel`.
 - Trazado canónico confirmado (finca-wizard :39-42): solo `agro_expenses.category` y `agro_income.categoria` tienen columna; fiados/pérdidas/donaciones viven sin categoría → si el traductor personal se pasara en esos tiles, cada fila cobraría un tag "Otros" falso. Decisión: el wizard pasa `translate` SOLO en tiles gastos/ingresos (`translateForTile`); el resto conserva el default de finca (categoria vacía, igual que hoy).
-- Consumidores del reader: Cultivo (`fetchTileRows` sin translate → default finca, intacto) y Personal. Finca conserva su lectura local histórica (no usa el reader). Cero cambio de comportamiento farm/crop.
+- Consumidores del reader: los TRES wizards — Finca vía wrapper S7 (`fetchReaderTileRows`, sin translate), Cultivo (sin translate → default finca, intacto) y Personal (con `translateForTile`). Cero cambio de comportamiento farm/crop. *(Corrección 15-sep II: la primera redacción de esta línea decía erróneamente que Finca no usaba el reader; Finca migró al reader en S7.)*
 
 ### Cambios realizados
 
@@ -3757,27 +3757,66 @@ Agente: GLM (ZCode). QA owner 13-sep 12:23 verde salvo categorías del Personal 
 | Legacy personal (id finca 'tools'/null/'general') | orphan → translateCategoryPersonal → 'p_otros' | tile "Otros" + nota visible bajo tiles |
 | Pérdida/donación | CREAR sin paso de categoría (rama existente); VER con traductor default finca → categoria '' | sin tags, sin categoría (CAT-2 espejo) |
 | Fiado | traductor default (finca) → categoria '' | idéntico a hoy |
-| Farm/Crop | Cultivo llama `fetchTileRows` SIN translate; Finca no usa reader | byte-idéntico |
+| Farm/Crop | Finca (wrapper S7) y Cultivo llaman al reader SIN translate → default `translateCategory` de finca | byte-idéntico |
 
 - Hash `cat=` restaura ids p_* (los renderers comparan por id). Privacidad, navegación ANEXO 19 (borrador/Volver), stamps B7, partición ambos-null: intactos. 'Sin categoría' de gastos/ingresos ya no aparece (todo legible cae en Otros; el chip solo se renderizaba con conteo > 0).
 - **Build**: `pnpm build:gold` ✅ verde (2.64s); UTF-8 guard OK; bundle verificado: tokens p_*/translateCategoryPersonal presentes en `agro-facturero-personal-wizard-*.js` y `agro-ledger-reader-*.js`.
 
-### QA owner sugerido (runtime)
+### QA owner realizado (15-sep, tras el corte eléctrico): GREEN total
 
-1. CREAR gasto personal "pala" con categoría Herramientas y equipo → verlo en su tile con conteo real.
-2. CREAR ingreso "jornal semana" → tile Trabajo y jornales.
-3. VER Gastos (6 tiles) / Ingresos (4 tiles) con conteos reales; registros viejos en Otros con la nota visible.
-4. VER Pérdidas/Donaciones: sin paso de categoría (nota honesta), filas sin tag "Otros".
-5. Consola limpia (sin canary de criba).
+Vocabulario vivo en producción: gasto "pala" → Herramientas y equipo; ingreso "jornal semana" → Trabajo y jornales; 6/4 tiles por tipo con conteos reales; registros viejos en Otros con la nota visible; pérdidas sin tags falsos; consola limpia. El owner commiteó y pusheó él mismo (ver sesión II).
 
 ### NO se hizo (scope respetado)
 
-- Sin git ejecutado. Sin tocar Cultivo/Finca/Clientes, shell, CSS (clases canon existentes). Sin DDL, sin mock, sin migración de datos (legacy se traduce solo en lectura). Hints de tipo del paso 2 CREAR y texto del gate intactos (partición sin cambio).
+- Sin git ejecutado por agentes en esta sesión. El owner commiteó y pusheó ANEXO 22 él mismo tras el corte eléctrico (`e37c9bd1`, ya en origin/main; incluye reader, wizard, MANIFIESTO §4.5.6 y este reporte). Sin tocar Cultivo/Finca/Clientes, shell, CSS (clases canon existentes). Sin DDL, sin mock, sin migración de datos (legacy se traduce solo en lectura). Hints de tipo del paso 2 CREAR y texto del gate intactos (partición sin cambio).
 
 ### Git sugerido (NO ejecutado)
 
 ```bash
 git add apps/gold/agro/agro-ledger-reader.js apps/gold/agro/agro-facturero-personal-wizard.js apps/gold/docs/MANIFIESTO_AGRO.md apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "feat(personal): ANEXO 22 vocabulario del bolsillo — categorías p_* en VER/CREAR, translateCategoryPersonal en reader (aditivo), legacy→Otros + MANIFIESTO 4.5.6"
+git push origin main
+```
+
+---
+
+## Sesión 2026-09-15 (II) — Documental: QA ANEXO 22 asentado GREEN, commit del owner registrado, corrección de error del INGEST
+
+Agente: GLM (ZCode). Sesión documental pura: cero cambios de código, cero git ejecutado (regla dura del owner 15-sep).
+
+- **Fecha**: 2026-09-15
+- **Objetivo**: asentar el QA GREEN del ANEXO 22, registrar el commit del owner y auditar la documentación generada (MANIFIESTO §4.5.6, FICHA, INGEST).
+
+### Hechos verificados (evidencia, no suposición)
+
+- **QA owner GREEN total** (confirmado tras el corte eléctrico que interrumpió la sesión de código): vocabulario del bolsillo vivo, legacy en Otros, categorías por tipo en VER/CREAR, pérdidas sin tags falsos.
+- **El owner ya commiteó y pusheó ANEXO 22 él mismo**: `e37c9bd1` figura en origin/main (`git status -sb` limpio y sincronizado; `origin/main..HEAD` vacío). El commit incluye reader (+41), wizard Personal (+55/−32), MANIFIESTO §4.5.6 (+28) y el reporte activo (+57).
+- **Corrección de error propio en el INGEST de ANEXO 22**: la redacción original decía "Finca conserva su lectura local histórica (no usa el reader)" — FALSO: Finca migró al reader en S7 (wrapper local `fetchReaderTileRows` sin translate, agro-facturero-finca-wizard.js:25/:421). La conclusión de seguridad se mantiene (sin translate → default finca → intacto), pero el mecanismo documentado estaba mal; corregido arriba en el diagnóstico y en la tabla de verdad.
+- **Deuda puntual detectada (sin tocar código hoy por regla del owner)**: el comentario del header de `agro-ledger-reader.js` ("Finca conserva su lectura local historica") repite el mismo dato stale de S7 — corregir en el próximo pase con código autorizado.
+- Reporte activo: 3783 líneas antes de esta sesión (< 4000, sin rotación).
+
+### Cambios realizados
+
+| Archivo | Cambio |
+|---|---|
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | INGEST ANEXO 22 ajustado: QA sugerido → realizado GREEN; corrección del mecanismo Finca/reader (diagnóstico + tabla de verdad); "NO se hizo" con constancia de la regla dura de git; esta sesión (II) agregada. |
+| `apps/gold/docs/FICHA_TECNICA.md` | §4.2: wizard Personal ahora describe "categorías personales p_* (6 gastos / 4 ingresos; legacy → Otros en lectura)"; línea del reader amplía su rol con "traducción de categorías por partición". |
+| `apps/gold/docs/ops/daily-log-2026-09-15.md` | Actualizado al estado final del día (QA GREEN, e37c9bd1, deudas). Nota: daily logs viven gitignored (`.gitignore:166`); se consolidan en la crónica mensual. |
+
+Verificaciones sin cambio: **MANIFIESTO §4.5.6** cumple los 5 criterios (prosa humana sin tecnicismos, libro del bolsillo del dueño, 6 gastos + 4 ingresos listados, pérdidas/donaciones sin categoría, legacy → Otros) sin contaminación técnica — no se editó. **index.html**: wizard Personal importado (:3508) y su CSS linkeado (:157); el reader no se importa directo en el HTML (lo importan los wizards) y está en el bundle con chunk propio verificado en dist.
+
+### Resultado de build
+
+`pnpm build:gold` ✅ verde (gate documental).
+
+### NO se hizo (scope respetado)
+
+- **Cero git ejecutado por el agente** (regla dura del owner 15-sep: ni add, ni commit, ni push; `e37c9bd1` es del owner). Cero código tocado (ANEXOS 20-22 intactos en su forma commiteada). Sin editar MANIFIESTO (solo verificación en lectura). Los ajustes documentales de hoy quedan en el working tree; push mañana con palabra expresa del owner.
+
+### Git sugerido (NO ejecutado) — para mañana con palabra del owner
+
+```bash
+git add apps/gold/docs/AGENT_REPORT_ACTIVE.md apps/gold/docs/FICHA_TECNICA.md
+git commit -m "docs: sesion documental 2026-09-15 — QA ANEXO 22 GREEN asentado, commit owner e37c9bd1 registrado, correccion INGEST Finca/reader + FICHA p_*"
 git push origin main
 ```
