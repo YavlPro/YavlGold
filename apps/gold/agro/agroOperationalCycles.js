@@ -161,6 +161,14 @@ const state = {
     portfolioByCrop: new Map(),
     operationalExpensesByCrop: new Map(),
     operationalPendingByCrop: new Map(),
+    // ANEXO 23: precisión de los totales del ciclo. Los maps de arriba son
+    // sumas USD con la tasa histórica de cada movimiento; al re-convertir a
+    // la moneda de display con la tasa del día, el roundtrip distorsiona el
+    // monto nativo (200.000 COP podían mostrarse como 199.466). Los dos maps
+    // nuevos exponen la misma información en moneda nativa por movimiento
+    // para que las cards reconcilien con las filas visibles de los wizards.
+    operationalExpenseNativeByCrop: new Map(),
+    operationalExpenseDedupByCrop: new Map(),
     exchangeRates: { USD: 1, COP: null, VES: null },
     cycleIndex: new Map(),
     initialized: false,
@@ -308,17 +316,22 @@ function resolveMovementAmountUsd(movement, exchangeRates = state.exchangeRates)
     return converted != null && converted > 0 ? converted : 0;
 }
 
-function sumOutgoingMovementsUsd(movements = [], exchangeRates = state.exchangeRates) {
-    return (Array.isArray(movements) ? movements : []).reduce((total, movement) => {
-        if (movement?.direction === 'in') return total;
-        return total + resolveMovementAmountUsd(movement, exchangeRates);
-    }, 0);
+// ANEXO 23: misma llave de dedup que la unión del lector del wizard
+// (agro-ledger-reader.js fetchTileRows): fecha|monto|concepto. La
+// precedencia (ledger prima) se aplica en el merge de agro.js, no aquí.
+function buildOperationalDedupKey(movement) {
+    const fecha = String(movement?.movement_date || '').slice(0, 10);
+    const monto = Number(movement?.amount) || 0;
+    const concepto = String(movement?.concept || '').trim().toLowerCase();
+    return `${fecha}|${monto}|${concepto}`;
 }
 
 function rebuildPortfolioByCrop(exchangeRates = state.exchangeRates) {
     const index = new Map();
     const expenseIndex = new Map();
     const pendingIndex = new Map();
+    const expenseNativeIndex = new Map();
+    const expenseDedupIndex = new Map();
     const registerAmount = (targetIndex, cropId, amountUsd) => {
         if (!(amountUsd > 0)) return;
         targetIndex.set(cropId, (targetIndex.get(cropId) || 0) + amountUsd);
@@ -340,16 +353,42 @@ function rebuildPortfolioByCrop(exchangeRates = state.exchangeRates) {
 
         index.set(cropId, current);
 
-        const outgoingUsd = sumOutgoingMovementsUsd(cycle?.movements, exchangeRates);
-        if (!(outgoingUsd > 0)) return;
-
         // Classify by economic_type (nature of the cycle), not by cycle status.
         // expense/loss/donation are real outgoing costs → expenseIndex.
-        // income cycles have direction='in' so outgoingUsd=0 and never reach here.
+        // income cycles have direction='in' and never reach the outgoing loop.
         const economicType = normalizeToken(cycle?.economic_type);
-        if (economicType === 'expense' || economicType === 'loss' || economicType === 'donation') {
-            registerAmount(expenseIndex, cropId, outgoingUsd);
-        }
+        const isOutgoingCost = economicType === 'expense' || economicType === 'loss' || economicType === 'donation';
+        if (!isOutgoingCost) return;
+
+        const movements = Array.isArray(cycle?.movements) ? cycle.movements : [];
+        movements.forEach((movement) => {
+            if (movement?.direction === 'in') return;
+            const amount = toFiniteNumber(movement?.amount);
+            if (amount == null || amount <= 0) return;
+
+            // USD histórico (semántica intacta para reportes): amount_usd
+            // persistido o amount/tasa histórica. Sin tasa → 0, como antes.
+            const usd = resolveMovementAmountUsd(movement, exchangeRates);
+            registerAmount(expenseIndex, cropId, usd);
+
+            // Nativo por moneda: no depende de ninguna tasa — es el monto
+            // crudo que el farmer ve en la fila del wizard.
+            const currency = String(movement?.currency || '').trim().toUpperCase();
+            if (currency === 'USD' || currency === 'COP' || currency === 'VES') {
+                const byCurrency = expenseNativeIndex.get(cropId) || new Map();
+                byCurrency.set(currency, (byCurrency.get(currency) || 0) + amount);
+                expenseNativeIndex.set(cropId, byCurrency);
+
+                const entries = expenseDedupIndex.get(cropId) || [];
+                entries.push({
+                    key: buildOperationalDedupKey(movement),
+                    usd,
+                    currency,
+                    amount
+                });
+                expenseDedupIndex.set(cropId, entries);
+            }
+        });
     };
 
     state.datasets[SUBVIEW_ACTIVE].cycles.forEach(registerCycle);
@@ -357,6 +396,8 @@ function rebuildPortfolioByCrop(exchangeRates = state.exchangeRates) {
     state.portfolioByCrop = index;
     state.operationalExpensesByCrop = expenseIndex;
     state.operationalPendingByCrop = pendingIndex;
+    state.operationalExpenseNativeByCrop = expenseNativeIndex;
+    state.operationalExpenseDedupByCrop = expenseDedupIndex;
 }
 
 function getPortfolioStateByCrop(cropId) {
@@ -376,6 +417,22 @@ function getOperationalExpensesByCrop() {
 function getOperationalPendingByCrop() {
     return state.operationalPendingByCrop instanceof Map
         ? new Map(state.operationalPendingByCrop)
+        : new Map();
+}
+
+// ANEXO 23: Map<cropId, Map<currency, Σamount nativo>> de movimientos
+// salientes de ciclos expense/loss/donation.
+function getOperationalExpenseNativeByCrop() {
+    return state.operationalExpenseNativeByCrop instanceof Map
+        ? new Map(state.operationalExpenseNativeByCrop)
+        : new Map();
+}
+
+// ANEXO 23: Map<cropId, Array<{key, usd, currency, amount}>> — una entrada
+// por movimiento saliente, para dedup ledger-prima en el merge de agro.js.
+function getOperationalExpenseDedupEntriesByCrop() {
+    return state.operationalExpenseDedupByCrop instanceof Map
+        ? new Map(state.operationalExpenseDedupByCrop)
         : new Map();
 }
 
@@ -3576,18 +3633,29 @@ function isFincaWizardSubviewActive() {
 }
 
 async function refreshData(options = {}) {
-    if (!state.root) return;
-    if (isFincaWizardSubviewActive()) return;
+    // ANEXO 23 dataOnly: recarga datasets/maps SIN tocar la UI. Lo usa el
+    // editor F1 (agro-operational-edit.js) tras escribir un movimiento: con
+    // subview=wizard el refresh completo está bloqueado (pisaría al wizard),
+    // pero los totales que leen las cards deben moverse.
+    const dataOnly = options.dataOnly === true;
+    if (!dataOnly) {
+        if (!state.root) return;
+        if (isFincaWizardSubviewActive()) return;
+    }
     if (state.loading) {
         state.needsRefresh = true;
         return;
     }
 
-    captureOperationalDetailsState();
+    if (!dataOnly) {
+        captureOperationalDetailsState();
+    }
     state.loading = true;
     state.schemaMissing = false;
-    renderOverview();
-    renderCurrentSubview();
+    if (!dataOnly) {
+        renderOverview();
+        renderCurrentSubview();
+    }
 
     try {
         const supabase = await getSupabaseClient();
@@ -3626,6 +3694,8 @@ async function refreshData(options = {}) {
         rebuildCycleIndex();
         state.loadedOnce = true;
 
+        if (dataOnly) return;
+
         const preserveOpenCreateWizard = state.modalOpen
             && state.form.mode === 'create'
             && state.refs?.form;
@@ -3658,7 +3728,13 @@ async function refreshData(options = {}) {
             state.portfolioByCrop = new Map();
             state.operationalExpensesByCrop = new Map();
             state.operationalPendingByCrop = new Map();
+            state.operationalExpenseNativeByCrop = new Map();
+            state.operationalExpenseDedupByCrop = new Map();
             rebuildCycleIndex();
+        }
+        if (dataOnly) {
+            console.warn('[agroOperationalCycles] refreshData(dataOnly) falló:', error?.message || error);
+            return;
         }
         renderWizard();
         renderFamilyToggle();
@@ -3668,11 +3744,13 @@ async function refreshData(options = {}) {
         setFeedback(normalizeOperationalError(error), 'error');
     } finally {
         state.loading = false;
-        setControlsDisabled(state.schemaMissing || state.saving);
-        renderFamilyToggle();
-        renderContextPicker();
-        renderCurrentSubview();
-        renderOverview();
+        if (!dataOnly) {
+            setControlsDisabled(state.schemaMissing || state.saving);
+            renderFamilyToggle();
+            renderContextPicker();
+            renderCurrentSubview();
+            renderOverview();
+        }
         emitPortfolioSnapshot();
         if (state.needsRefresh) {
             state.needsRefresh = false;
@@ -4126,10 +4204,15 @@ function exposeGlobalApi() {
     window.YGAgroOperationalCycles = {
         init: initAgroOperationalCycles,
         refresh: () => refreshData(),
+        // ANEXO 23: recarga solo datos (sin renders) para refrescar totales
+        // de las cards tras F1 dentro de un wizard.
+        refreshSilent: () => refreshData({ dataOnly: true }),
         getSnapshot: buildDebugSnapshot,
         getPortfolioStateByCrop,
         getOperationalExpensesByCrop,
         getOperationalPendingByCrop,
+        getOperationalExpenseNativeByCrop,
+        getOperationalExpenseDedupEntriesByCrop,
         createFromPayload,
         updateById,
         deleteById,

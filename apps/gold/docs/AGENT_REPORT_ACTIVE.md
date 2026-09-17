@@ -3820,3 +3820,126 @@ git add apps/gold/docs/AGENT_REPORT_ACTIVE.md apps/gold/docs/FICHA_TECNICA.md
 git commit -m "docs: sesion documental 2026-09-15 — QA ANEXO 22 GREEN asentado, commit owner e37c9bd1 registrado, correccion INGEST Finca/reader + FICHA p_*"
 git push origin main
 ```
+
+---
+
+## Sesión 2026-09-17 — ANEXO 23: Precisión de cálculos del ciclo (Maíz 190826)
+
+Agente: GLM (ZCode). Fix autorizado por el owner (17-sep) tras su QA móvil del 16-sep ("esos cálculos están imprecisos"). Regla de paro respetada: ningún paso del DoD falló. **Cero git ejecutado** (bloque sugerido al final).
+
+- **Objetivo**: que los totales del ciclo (Detalle Mis Cultivos + Desglose) reconcilien con las sumas reales de sus fuentes (wizard Cultivo), que F1 (editar/eliminar operacional) mueva los totales, y cero doble conteo ledger↔operacionales.
+
+### Paso 1 — Trazado (archivo:línea, sin edits)
+
+| Número visible (owner, 16-sep) | Fuente exacta |
+|---|---|
+| INVERSIÓN COP 199.466 | `agrociclos.js` renderCard `inversionText` ← `agro.js` buildActiveCycleCardsData `inversionUSD = baseInvestment + expenseInvestment` (agro.js ~10921) |
+| RENTABILIDAD −COP 199.463 | `agrociclos.js` ← `ciclo.rentabilidad` = `calcularRentabilidad().rentabilidad` (agro-profit-calculator.js:57, `roundMoney` 2 dec) |
+| AHORA MISMO Invirtiendo 199.463 | `agrociclos.js` formatBalanceActualText ← `rentabilidad − fiados` |
+| Gastos totales del cultivo 199.466 | `agrociclos.js:461` ← `gastosUsd = expenseInvestment` (map merge agro.js ~11724: ledger `agro_expenses` + operacionales) |
+| Costos combinados del ciclo 199.463 | `agrociclos.js:462` ← `costosUsd = metrics.costosTotales` (roundMoney) |
+| Facturero de cultivos Pagado 199.466 / Pendiente 0 | `agrociclos.js` summaryItems ← `operationalGastosUsd` = `window.YGAgroOperationalCycles.getOperationalExpensesByCrop()` (agroOperationalCycles.js rebuildPortfolioByCrop) |
+| Wizard 200.000 crudo | `agro-facturero-cultivo-wizard.js` formatMoney — monto nativo por fila, sin pivote USD (lectura agro-ledger-reader.js fetchTileRows) |
+
+**Paso 1d**: `costos_totales` NO existe como columna en `agro_operational_cycles` (migración 20260416190000:522-560) — todo se calcula **en lectura**; no hay columna stale que recalcular en el write. **Paso 1e**: fuentes del desglose = ledger + operacionales SIN dedup en los totales (el wizard sí dedup, ledger prima); filtros deleted_at/reverted simétricos por tabla.
+
+### Paso 2 — Queries reales: BLOQUEADO (ley §5)
+
+El agente no ejecuta QA ni accede a credenciales/SQL Editor. Queries dejadas al owner (verificar R_entry vs R_display):
+
+```sql
+-- 1. Suma de movimientos por ciclo vs lo que veía la card
+select c.name, c.crop_id, count(m.*), sum(m.amount) suma_nat,
+       sum(m.amount_usd) suma_usd_hist, min(m.exchange_rate), max(m.exchange_rate)
+from agro_operational_cycles c
+join agro_operational_movements m on m.cycle_id = c.id
+where c.crop_id is not null and c.economic_type in ('expense','loss','donation')
+group by 1,2;
+
+-- 2. Ledger por cultivo (debe ser 0 para Maíz 190826)
+select crop_id, count(*), sum(amount) from agro_expenses
+where deleted_at is null and crop_id is not null group by 1;
+
+-- 3. Pares sospechosos de doble conteo (misma llave fecha|monto|concepto)
+select e.crop_id, e.date, e.amount, e.concept from agro_expenses e
+join agro_operational_cycles c on c.crop_id = e.crop_id
+join agro_operational_movements m on m.cycle_id = c.id
+  and m.amount = e.amount and m.movement_date = e.date
+  and lower(trim(m.concept)) = lower(trim(e.concept))
+where e.deleted_at is null;
+```
+
+### Paso 3 — Causa raíz (4 causas, evidencia estática + réplica numérica)
+
+1. **C1 — Roundtrip FX COP→USD(histórico)→COP(hoy)**: los movimientos persisten `amount_usd`/`exchange_rate` con la tasa del día de entrada (agroOperationalCycles.js deriveMovementPayload ~1219-1246); los totales leen el USD persistido (~298) y el display re-convierte con la tasa viva (agro-display-currency.js:136-140). Réplica estática con R_entry=4000 / R_display=3989.32 reproduce **exactamente 199.466** desde 200.000 (−0.267%).
+2. **C2 — Cuantización asimétrica**: `gastosUsd` se muestra sin cuantizar y `costosUsd` pasa por `roundMoney` (0.01 USD ≈ 20-40 COP) — mismo origen, delta visible de unos pocos COP (199.466 vs 199.463).
+3. **C3 — Bug latente ×/÷ en F1**: agro-operational-edit.js:266 recalculaba `amount_usd = amount × historicRate` (la tasa es COP/USD: había que **dividir**). Hoy queda dormido porque el reader no proyecta `exchange_rate` (→ `amount_usd = null` y re-lectura correcta), pero era mina activa.
+4. **C4 — Staleness post-F1**: tras editar/eliminar con F1, `refreshData()` del módulo operacional hace early-return con `subview=wizard` (~3569-3581) y nada recarga los maps que leen las cards (agro.js:8991 documenta por qué el evento no se cablea a loadCrops). Totales congelados hasta navegar a Operaciones de la Finca.
+
+### Paso 4 — Fix (opción de menor riesgo declarada)
+
+**Regla elegida — "identidad del pivote"**: cuando TODAS las fuentes de un cultivo (gastos ledger + operacionales dedup + ingresos + pérdidas + fiados + inversión base) comparten UNA moneda nativa, las métricas del ciclo se calculan y muestran en esa moneda **sin pasar por USD** (el pivote debe ser invisible para monomoneda). Mezcla de monedas → camino USD actual intacto (semántica histórica de reportes preservada). `costosTotales` sigue siendo suma en lectura (no hay columna guardada que mantener). La fórmula §4.3 NO cambia: `inversión + gastos + pérdidas` aplicada en nativo.
+
+| Archivo | Cambio |
+|---|---|
+| `agroOperationalCycles.js` | rebuildPortfolioByCrop registra por movimiento: nativos por moneda (`operationalExpenseNativeByCrop`) + entradas de dedup (`operationalExpenseDedupByCrop`, llave fecha\|monto\|concepto igual al reader). Getters nuevos + `refreshSilent()` (refreshData `dataOnly`: recarga datos sin renders, sin bloqueo de wizard). Removida `sumOutgoingMovementsUsd` (huérfana). |
+| `agro.js` | `fetchUsdTotalsByCropIds` acumula nativos por moneda y llaves dedup (proyección +`date`/`concept` en gastos). Merge en loadCrops: **dedup ledger-prima** en la unión (mismo criterio que el wizard), maps operacionales deduped alimentan cards/history/bridge `window._agroMergedOperationalExpensesByCrop`. `buildCycleNativeSourcesByCrop` + `buildCycleNativeMetrics` (regla monomoneda) → fila `native` en cards activas y finalizadas. |
+| `agrociclos.js` | Display nativo cuando la moneda de display coincide con la nativa del ciclo: attrs `data-cycle-money-native(-cur)(-fiados)` + preferencia nativa en render inicial y en el re-render del toggle de moneda. `formatBalanceActualText` acepta formateador nativo. Guards anti `Number(null)===0`. USD/COP/BS toggle intacto. |
+| `agro-operational-edit.js` | **Fix ×/÷** (`amount / historicRate`). Tras write/delete F1: `refreshSilent()` del módulo operacional + `window.loadCrops()` → totales de las cards se mueven en caliente desde el wizard. |
+| `agro-dashboard-v11.js` | Bloque 4 prioriza el bridge deduplicado (misma unión que las cards); fallbacks previos intactos. |
+
+**No tocados**: `agro-ledger-reader.js` (wizards intactos), `calcularRentabilidad`/semántica USD de reportes y rankings (agro.js ~13987 sigue leyendo el map crudo), MANIFIESTO §4.3 (semántica intacta).
+
+### Tabla de verdad estática — Maíz 190826 tras el fix (display COP)
+
+| Línea | Antes (16-sep) | Tras el fix |
+|---|---|---|
+| INVERSIÓN | COP 199.466 | **COP 200.000** |
+| RENTABILIDAD | −COP 199.463 | **−COP 200.000** |
+| AHORA MISMO | Invirtiendo COP 199.463 | **Invirtiendo COP 200.000** |
+| Gastos totales del cultivo | 199.466 | **200.000** |
+| Costos combinados del ciclo | 199.463 | **200.000** (= gastos: misma fuente, cero delta) |
+| Facturero de cultivos Pagado / Pendiente | 199.466 / 0 | **200.000 / 0** |
+| Facturero de Clientes (Total/Pagado/Fiado) | 0/0/0 | **0/0/0** |
+| Wizard Cultivo (filas) | 110.000+55.000+35.000 | sin cambios (= 200.000, cuadra) |
+
+Con ledger del cultivo = 0 (evidencia owner: Gastos totales == Pagado operacional). Si existiera ledger, Gastos totales = ledger + operacionales dedup.
+
+### Matriz F1 (estática)
+
+| Acción | Efecto esperado en totales |
+|---|---|
+| Editar monto (ej: urea 110.000→120.000) | Todos los totales pasan a **COP 210.000** (refreshSilent + loadCrops recalculan maps y cards en caliente) |
+| Eliminar movimiento (ej: gramonson) | Todos los totales pasan a **COP 165.000** |
+| Desglose vs filas visibles | Desglose = Σ filas del wizard (dedup ledger-prima: par exacto fecha+monto+concepto se cuenta una vez, prima ledger — misma regla que la unión del lector) |
+
+### Resultado de build
+
+`pnpm build:gold` ✅ verde (agent-guard + report-check + vite + UTF-8). Diff acotado a los 5 archivos de la causa (+543/−69).
+
+### Límites declarados (verdad antes que apariencia, §8.5)
+
+- Verificación **estática** (trazado + réplica numérica que reproduce 199.466 exacto); runtime queda para el QA online del owner (ley §5).
+- El bloque "Global — <tipo>" del desglose sigue en pivote USD (agregado multi-ciclo, fuera del caso reportado).
+- La unión de **ingresos** operacionales (ciclos income direction='in') NO alimenta `incomeTotal` del ciclo — comportamiento preexistente, sin cambio (documentado, no regresión).
+- Rankings/estadísticas que leen `getOperationalExpensesByCrop()` crudo siguen sin dedup (superficie distinta a la card; fuera del ANEXO).
+
+### QA owner sugerido
+
+1. Desglose de Maíz 190826 en display COP: todas las líneas en 200.000 y cuadran con la lista del wizard.
+2. Toggle USD↔COP↔BS en la card: números re-formatean sin romperse (USD muestra el pivote, COP vuelve a 200.000).
+3. F1 editar monto de un movimiento → volver a Mis Cultivos (o esperar el refresh en caliente) → totales movidos; igual con eliminar.
+4. Dashboard Bloque 4 coherente con el detalle (mismo estado semántico).
+5. Consola limpia (sin canary del reader ni warns nuevos).
+
+### NO se hizo (scope respetado)
+
+- Cero git ejecutado (regla dura). No se tocó `agro-ledger-reader.js`, ni MANIFIESTO_AGRO.md, ni semántica USD de reportes/rankings, ni los wizards Finca/Cultivo/Personal.
+
+### Git sugerido (NO ejecutado) — requiere palabra expresa del owner
+
+```bash
+git add apps/gold/agro/agroOperationalCycles.js apps/gold/agro/agro.js apps/gold/agro/agrociclos.js apps/gold/agro/agro-operational-edit.js apps/gold/agro/agro-dashboard-v11.js apps/gold/docs/AGENT_REPORT_ACTIVE.md apps/gold/docs/ops/daily-log-2026-09-17.md
+git commit -m "fix(cultivo): ANEXO 23 precision de calculos del ciclo — metricas nativas monomoneda (identidad del pivote), dedup ledger-prima en totales, F1 divide tasa + refresh silencioso, bridge Bloque 4"
+git push origin main
+```

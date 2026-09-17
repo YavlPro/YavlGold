@@ -65,6 +65,28 @@ function notifyChanged() {
     document.dispatchEvent(new CustomEvent('data-refresh'));
 }
 
+// ANEXO 23: tras escribir un movimiento, los totales del ciclo que leen las
+// cards (maps de YGAgroOperationalCycles + loadCrops) deben refrescar. Con
+// subview=wizard el refresh completo está bloqueado (pisaría al wizard), por
+// eso se usa refreshSilent (solo datos, sin renders) y luego loadCrops.
+async function refreshCycleTotalsAfterWrite() {
+    try {
+        const opsApi = window.YGAgroOperationalCycles;
+        if (typeof opsApi?.refreshSilent === 'function') {
+            await opsApi.refreshSilent();
+        }
+    } catch (err) {
+        console.warn('[OpEdit] refresh silencioso de ciclos falló:', err?.message || err);
+    }
+    try {
+        if (typeof window.loadCrops === 'function') {
+            await window.loadCrops();
+        }
+    } catch (err) {
+        console.warn('[OpEdit] recarga de cultivos falló:', err?.message || err);
+    }
+}
+
 async function requireUser() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user?.id) throw new Error('Sesión expirada. Recarga la página.');
@@ -99,6 +121,7 @@ export async function deleteOperationalMovement({ row, onChanged } = {}) {
             .eq('user_id', user.id);
         if (error) throw error;
         notifyChanged();
+        await refreshCycleTotalsAfterWrite();
         if (typeof onChanged === 'function') onChanged();
     } catch (err) {
         console.error('[OpEdit] delete failed:', err?.message || err);
@@ -255,7 +278,9 @@ export async function openOperationalMovementEditor({ row, onChanged } = {}) {
 
                 // La equivalencia USD se recalcula SOLO si el monto cambió,
                 // con la tasa histórica del propio movimiento (no se pisa por
-                // la tasa del día): respeta multimoneda del canon.
+                // la tasa del día): respeta multimoneda del canon. OJO: la
+                // tasa es COP/USD (o VES/USD) — el monto nativo se DIVIDE por
+                // ella para obtener USD (ANEXO 23: antes multiplicaba).
                 const originalAmount = (rawMonto === null || rawMonto === undefined || String(rawMonto).trim() === '')
                     ? null
                     : Number(rawMonto);
@@ -263,7 +288,7 @@ export async function openOperationalMovementEditor({ row, onChanged } = {}) {
                 if (amountChanged) {
                     const historicRate = Number(row?.exchange_rate);
                     payload.amount_usd = Number.isFinite(historicRate) && historicRate > 0
-                        ? Number((amount * historicRate).toFixed(2))
+                        ? Number((amount / historicRate).toFixed(2))
                         : null;
                 }
             }
@@ -276,6 +301,7 @@ export async function openOperationalMovementEditor({ row, onChanged } = {}) {
             if (error) throw error;
 
             notifyChanged();
+            await refreshCycleTotalsAfterWrite();
             finish();
             if (typeof onChanged === 'function') onChanged();
         } catch (err) {

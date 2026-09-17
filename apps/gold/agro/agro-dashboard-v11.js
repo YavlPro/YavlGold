@@ -519,9 +519,14 @@ async function computeCropFinances(cropId) {
 }
 
 // Gastos del "Facturero de cultivos": agro_operational_cycles + agro_operational_movements.
-// Prioriza la API ya calculada por agroOperationalCycles (fuente de verdad de Mis Cultivos);
-// si no está cargada, hace la query directa (agro-crop-report.js:740-766).
+// ANEXO 23: prioriza el bridge de agro.js (unión ledger+operacional con dedup
+// ledger-prima y la MISMA composición que la card de Mis Cultivos); si no
+// existe, la API de agroOperationalCycles; si no, query directa.
 async function fetchOperationalExpenses(cropId) {
+    const bridge = typeof window !== 'undefined' ? window._agroMergedOperationalExpensesByCrop : null;
+    if (bridge instanceof Map && bridge.has(cropId)) {
+        return safeNum(bridge.get(cropId));
+    }
     const opsApi = window.YGAgroOperationalCycles;
     if (opsApi?.getOperationalExpensesByCrop) {
         const map = opsApi.getOperationalExpensesByCrop();

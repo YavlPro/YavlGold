@@ -9599,12 +9599,23 @@ async function fetchUsdTotalsByCropIds(tableName, userId, cropIds, options = {})
         : ['amount', 'monto'])
         .map((field) => String(field || '').trim())
         .filter((field) => field && !missingColumns.has(field));
+    // ANEXO 23: nativos por moneda (para que el display reconcilie con las
+    // filas crudas de los wizards) + llaves de dedup ledger↔operacionales
+    // (misma llave fecha|monto|concepto que agro-ledger-reader.js).
+    const nativeByCrop = options.nativeByCrop instanceof Map ? options.nativeByCrop : null;
+    const dedupKeysByCrop = options.dedupKeysByCrop instanceof Map ? options.dedupKeysByCrop : null;
+    const dedupDateField = dedupKeysByCrop ? String(options.dedupDateField || '').trim() : '';
+    const dedupConceptField = dedupKeysByCrop ? String(options.dedupConceptField || '').trim() : '';
+    const dedupFields = [];
+    if (dedupKeysByCrop && dedupDateField) dedupFields.push(dedupDateField);
+    if (dedupKeysByCrop && dedupConceptField) dedupFields.push(dedupConceptField);
     let selectFields = Array.from(new Set([
         'crop_id',
         ...amountFields,
         'currency',
         'exchange_rate',
         'monto_usd',
+        ...dedupFields,
         ...(Array.isArray(options.optionalFields) ? options.optionalFields : [])
     ].map((field) => String(field || '').trim()).filter((field) => field && !missingColumns.has(field))));
     let nullFilters = Array.from(new Set((Array.isArray(options.nullFilters) ? options.nullFilters : [])
@@ -9655,6 +9666,23 @@ async function fetchUsdTotalsByCropIds(tableName, userId, cropIds, options = {})
 
                 const cropId = normalizeCropId(row?.crop_id);
                 if (!cropId) continue;
+
+                const rawAmount = resolveMoneyAmountFromRow(row, amountFields);
+                const currency = normalizeMoneyCurrency(row?.currency ?? row?.moneda ?? row?.currency_code);
+
+                if (nativeByCrop && currency && Number.isFinite(rawAmount)) {
+                    const byCurrency = nativeByCrop.get(cropId) || new Map();
+                    byCurrency.set(currency, (byCurrency.get(currency) || 0) + rawAmount);
+                    nativeByCrop.set(cropId, byCurrency);
+                }
+                if (dedupKeysByCrop && dedupDateField && dedupConceptField
+                    && selectFields.includes(dedupDateField) && selectFields.includes(dedupConceptField)
+                    && Number.isFinite(rawAmount)) {
+                    const dedupKey = `${String(row?.[dedupDateField] || '').slice(0, 10)}|${Number(rawAmount) || 0}|${String(row?.[dedupConceptField] || '').trim().toLowerCase()}`;
+                    const keys = dedupKeysByCrop.get(cropId) || new Set();
+                    keys.add(dedupKey);
+                    dedupKeysByCrop.set(cropId, keys);
+                }
 
                 const conversionMeta = {};
                 const usd = resolveRecordAmountUsd(row, amountFields, conversionMeta, fallbackRates);
@@ -10830,6 +10858,108 @@ function mapStatusToFinishedCycleMeta(rawStatus, fallbackMeta = null) {
     return { estado: 'finalizado', estadoTexto: fallbackText || 'Finalizado' };
 }
 
+// ANEXO 23: reúne por cultivo las fuentes nativas (una por moneda) que
+// alimentan las métricas del ciclo. Solo lectura de los maps ya calculados.
+function buildCycleNativeSourcesByCrop(crops, options = {}) {
+    const sourcesByCrop = new Map();
+    const rows = Array.isArray(crops) ? crops : [];
+    if (!rows.length) return sourcesByCrop;
+
+    const ensureEntry = (cropId) => {
+        const id = normalizeCropId(cropId);
+        if (!id) return null;
+        let entry = sourcesByCrop.get(id);
+        if (!entry) {
+            entry = {
+                expenseByCur: new Map(),
+                incomeByCur: new Map(),
+                lossByCur: new Map(),
+                pendingByCur: new Map(),
+                opsExpenseByCur: new Map()
+            };
+            sourcesByCrop.set(id, entry);
+        }
+        return entry;
+    };
+    const fold = (sourceMap, targetKey) => {
+        if (!(sourceMap instanceof Map)) return;
+        sourceMap.forEach((byCurrency, cropId) => {
+            const entry = ensureEntry(cropId);
+            if (!entry || !(byCurrency instanceof Map)) return;
+            byCurrency.forEach((amount, currency) => {
+                const target = entry[targetKey];
+                target.set(currency, (target.get(currency) || 0) + (Number(amount) || 0));
+            });
+        });
+    };
+
+    fold(options.expenseNativeByCrop, 'expenseByCur');
+    fold(options.incomeNativeByCrop, 'incomeByCur');
+    fold(options.lossNativeByCrop, 'lossByCur');
+    fold(options.pendingNativeByCrop, 'pendingByCur');
+    fold(options.operationalExpenseNativeByCrop, 'opsExpenseByCur');
+    return sourcesByCrop;
+}
+
+// ANEXO 23: métricas del ciclo en moneda nativa cuando TODAS las fuentes del
+// cultivo (gastos ledger + operacionales dedup, ingresos, pérdidas, fiados e
+// inversión base) comparten una sola moneda. Con una sola moneda el pivote
+// USD debe ser identidad: sin esto, el roundtrip COP→USD(histórico)→COP(hoy)
+// distorsionaba los totales visibles (200.000 → 199.466). Mezcla de monedas
+// → null y la card conserva el camino USD actual.
+function buildCycleNativeMetrics(crop, nativeSources) {
+    if (!nativeSources || !(nativeSources instanceof Map)) return null;
+    const entry = nativeSources.get(normalizeCropId(crop?.id));
+    if (!entry) return null;
+
+    const investmentSnapshot = resolveCropInvestmentSnapshot(crop);
+    const baseAmount = Number(investmentSnapshot?.amount) || 0;
+    const baseCurrency = baseAmount > 0 ? String(investmentSnapshot?.currency || 'USD') : '';
+
+    const currencies = new Set();
+    if (baseCurrency) currencies.add(baseCurrency);
+    ['expenseByCur', 'incomeByCur', 'lossByCur', 'pendingByCur', 'opsExpenseByCur'].forEach((key) => {
+        const byCurrency = entry[key];
+        if (!(byCurrency instanceof Map)) return;
+        byCurrency.forEach((amount, currency) => {
+            if (Number(amount) > 0) currencies.add(currency);
+        });
+    });
+    if (currencies.size !== 1) return null;
+
+    const currency = Array.from(currencies)[0];
+    const pick = (key) => (entry[key] instanceof Map ? (Number(entry[key].get(currency)) || 0) : 0);
+
+    const base = baseAmount > 0 ? baseAmount : 0;
+    const directGastos = pick('expenseByCur');
+    const opsGastos = pick('opsExpenseByCur');
+    const gastos = directGastos + opsGastos;
+    const pagados = pick('incomeByCur');
+    const perdidas = pick('lossByCur');
+    const fiados = pick('pendingByCur');
+    // Fórmula canónica §4.3: inversión + gastos + pérdidas (pérdidas una
+    // sola vez). En nativo no hace falta cuantizar a 2 decimales USD.
+    const costos = base + gastos + perdidas;
+    const rentabilidad = pagados - costos;
+    const balanceActual = rentabilidad - fiados;
+    const potencialNeto = rentabilidad + fiados;
+
+    return {
+        currency,
+        base,
+        directGastos,
+        opsGastos,
+        gastos,
+        pagados,
+        perdidas,
+        fiados,
+        costos,
+        rentabilidad,
+        balanceActual,
+        potencialNeto
+    };
+}
+
 function buildActiveCycleCardsData(crops, options = {}) {
     const expenseTotalsByCrop = options.expenseTotalsByCrop instanceof Map ? options.expenseTotalsByCrop : null;
     const directExpenseTotalsByCrop = options.directExpenseTotalsByCrop instanceof Map ? options.directExpenseTotalsByCrop : null;
@@ -10840,6 +10970,7 @@ function buildActiveCycleCardsData(crops, options = {}) {
     const globalTotalsByCropType = options.globalTotalsByCropType instanceof Map ? options.globalTotalsByCropType : null;
     const operationalExpenseTotalsByCrop = options.operationalExpenseTotalsByCrop instanceof Map ? options.operationalExpenseTotalsByCrop : null;
     const operationalPendingTotalsByCrop = options.operationalPendingTotalsByCrop instanceof Map ? options.operationalPendingTotalsByCrop : null;
+    const cycleNativeSourcesByCrop = options.cycleNativeSourcesByCrop instanceof Map ? options.cycleNativeSourcesByCrop : null;
     const rows = Array.isArray(crops) ? crops : [];
 
     return rows.map((crop) => {
@@ -10930,6 +11061,7 @@ function buildActiveCycleCardsData(crops, options = {}) {
             perdidasUsd: lossesTotal,
             operationalGastosUsd,
             operationalPendingUsd,
+            native: buildCycleNativeMetrics(crop, cycleNativeSourcesByCrop),
             globalBreakdown: buildCycleGlobalBreakdown(crop, {
                 globalTotalsByCropType,
                 displayName: displayCrop.name
@@ -10960,6 +11092,7 @@ function buildFinishedCycleCardsData(crops, options = {}) {
     const globalTotalsByCropType = options.globalTotalsByCropType instanceof Map ? options.globalTotalsByCropType : null;
     const operationalExpenseTotalsByCrop = options.operationalExpenseTotalsByCrop instanceof Map ? options.operationalExpenseTotalsByCrop : null;
     const operationalPendingTotalsByCrop = options.operationalPendingTotalsByCrop instanceof Map ? options.operationalPendingTotalsByCrop : null;
+    const cycleNativeSourcesByCrop = options.cycleNativeSourcesByCrop instanceof Map ? options.cycleNativeSourcesByCrop : null;
     const groupType = String(options.groupType || '').toLowerCase().trim();
     const rows = Array.isArray(crops) ? crops : [];
 
@@ -11062,6 +11195,7 @@ function buildFinishedCycleCardsData(crops, options = {}) {
             perdidasUsd: lossesTotal,
             operationalGastosUsd,
             operationalPendingUsd,
+            native: buildCycleNativeMetrics(crop, cycleNativeSourcesByCrop),
             mode: 'finished',
             globalBreakdown: buildCycleGlobalBreakdown(crop, {
                 globalTotalsByCropType,
@@ -11424,6 +11558,7 @@ function renderCropCycleGroup(gridEl, crops, emptyText, options = {}) {
     const pendingTotalsByCrop = options.pendingTotalsByCrop instanceof Map ? options.pendingTotalsByCrop : null;
     const missingRateCountsByCrop = options.missingRateCountsByCrop instanceof Map ? options.missingRateCountsByCrop : null;
     const globalTotalsByCropType = options.globalTotalsByCropType instanceof Map ? options.globalTotalsByCropType : null;
+    const cycleNativeSourcesByCrop = options.cycleNativeSourcesByCrop instanceof Map ? options.cycleNativeSourcesByCrop : null;
     const rows = Array.isArray(crops) ? crops : [];
 
     if (USE_V10_HISTORY) {
@@ -11437,6 +11572,7 @@ function renderCropCycleGroup(gridEl, crops, emptyText, options = {}) {
             pendingTotalsByCrop,
             missingRateCountsByCrop,
             globalTotalsByCropType,
+            cycleNativeSourcesByCrop,
             groupType: options.groupType
         });
         renderFinishedCycles(gridEl, cardsData, {
@@ -11483,6 +11619,7 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
     const pendingTotalsByCrop = options.pendingTotalsByCrop instanceof Map ? options.pendingTotalsByCrop : null;
     const missingRateCountsByCrop = options.missingRateCountsByCrop instanceof Map ? options.missingRateCountsByCrop : null;
     const globalTotalsByCropType = options.globalTotalsByCropType instanceof Map ? options.globalTotalsByCropType : null;
+    const cycleNativeSourcesByCrop = options.cycleNativeSourcesByCrop instanceof Map ? options.cycleNativeSourcesByCrop : null;
 
     const closedCrops = Array.isArray(crops) ? crops : [];
     const { finished: finishedCrops, lost: lostCrops } = splitClosedCycleHistory(closedCrops);
@@ -11528,6 +11665,7 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
             pendingTotalsByCrop,
             missingRateCountsByCrop,
             globalTotalsByCropType,
+            cycleNativeSourcesByCrop,
             groupType: 'finished'
         });
     }
@@ -11543,6 +11681,7 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
             pendingTotalsByCrop,
             missingRateCountsByCrop,
             globalTotalsByCropType,
+            cycleNativeSourcesByCrop,
             groupType: 'lost'
         });
     }
@@ -11671,9 +11810,28 @@ export async function loadCrops() {
         let unitTotalsByCrop = new Map();
         let missingRateCountsByCrop = new Map();
         let pendingGeneralTotalUsd = null;
+        // ANEXO 23: fuentes nativas por moneda (reconciliación con filas de
+        // los wizards) y llaves de dedup ledger (precedencia ledger prima,
+        // misma llave fecha|monto|concepto que agro-ledger-reader.js).
+        const expenseNativeByCrop = new Map();
+        const incomeNativeByCrop = new Map();
+        const lossNativeByCrop = new Map();
+        const pendingNativeByCrop = new Map();
+        const expenseDedupKeysByCrop = new Map();
+        let cycleNativeSourcesByCrop = new Map();
         if (source === 'supabase' && currentUserId && visibleCrops.length > 0) {
             const allCropIds = visibleCrops.map((crop) => crop?.id);
             const totalsOptions = { missingRateCountsByCrop };
+            const expenseNativeOptions = {
+                ...totalsOptions,
+                nativeByCrop: expenseNativeByCrop,
+                dedupKeysByCrop: expenseDedupKeysByCrop,
+                dedupDateField: 'date',
+                dedupConceptField: 'concept'
+            };
+            const incomeNativeOptions = { ...totalsOptions, nativeByCrop: incomeNativeByCrop };
+            const lossNativeOptions = { ...totalsOptions, nativeByCrop: lossNativeByCrop };
+            const pendingNativeOptions = { ...totalsOptions, nativeByCrop: pendingNativeByCrop };
             const [
                 expenseTotals,
                 incomeTotals,
@@ -11685,10 +11843,10 @@ export async function loadCrops() {
                 pendingUnitTotals,
                 pendingTransferredUnitTotals
             ] = await Promise.all([
-                fetchExpenseTotalsByCropIds(currentUserId, allCropIds, totalsOptions),
-                fetchIncomeTotalsByCropIds(currentUserId, allCropIds, totalsOptions),
-                fetchLossTotalsByCropIds(currentUserId, allCropIds, totalsOptions),
-                fetchPendingTotalsByCropIds(currentUserId, allCropIds, totalsOptions),
+                fetchExpenseTotalsByCropIds(currentUserId, allCropIds, expenseNativeOptions),
+                fetchIncomeTotalsByCropIds(currentUserId, allCropIds, incomeNativeOptions),
+                fetchLossTotalsByCropIds(currentUserId, allCropIds, lossNativeOptions),
+                fetchPendingTotalsByCropIds(currentUserId, allCropIds, pendingNativeOptions),
                 fetchPendingGeneralTotalUsd(currentUserId, totalsOptions),
                 fetchIncomeUnitTotalsByCropIds(currentUserId, allCropIds),
                 fetchLossUnitTotalsByCropIds(currentUserId, allCropIds),
@@ -11715,18 +11873,66 @@ export async function loadCrops() {
             if (requestId !== cropsLoadSeq) return;
 
             const opsApi = typeof window !== 'undefined' ? window.YGAgroOperationalCycles : null;
-            if (opsApi?.getOperationalExpensesByCrop) {
+            // ANEXO 23: la unión operacional entra deduplicada contra el
+            // ledger (ledger prima). Los maps crudos del módulo quedan para
+            // superficies que reportan el histórico operacional puro.
+            const operationalDedupEntries = opsApi?.getOperationalExpenseDedupEntriesByCrop
+                ? opsApi.getOperationalExpenseDedupEntriesByCrop()
+                : null;
+            if (operationalDedupEntries instanceof Map) {
+                const operationalNativeByCrop = new Map();
+                operationalDedupEntries.forEach((entries, cropId) => {
+                    const ledgerKeys = expenseDedupKeysByCrop.get(cropId) || null;
+                    entries.forEach((entry) => {
+                        if (ledgerKeys && ledgerKeys.has(entry.key)) return;
+                        if (entry.usd > 0) {
+                            operationalExpenseTotalsByCrop.set(
+                                cropId,
+                                (operationalExpenseTotalsByCrop.get(cropId) || 0) + entry.usd
+                            );
+                        }
+                        if (entry.currency) {
+                            const byCurrency = operationalNativeByCrop.get(cropId) || new Map();
+                            byCurrency.set(
+                                entry.currency,
+                                (byCurrency.get(entry.currency) || 0) + Number(entry.amount || 0)
+                            );
+                            operationalNativeByCrop.set(cropId, byCurrency);
+                        }
+                    });
+                });
+                operationalExpenseTotalsByCrop.forEach((amount, cropId) => {
+                    if (amount > 0) {
+                        expenseTotalsByCrop.set(cropId, (expenseTotalsByCrop.get(cropId) || 0) + amount);
+                    }
+                });
+                cycleNativeSourcesByCrop = buildCycleNativeSourcesByCrop(visibleCrops, {
+                    expenseNativeByCrop,
+                    incomeNativeByCrop,
+                    lossNativeByCrop,
+                    pendingNativeByCrop,
+                    operationalExpenseNativeByCrop: operationalNativeByCrop
+                });
+            } else if (opsApi?.getOperationalExpensesByCrop) {
                 operationalExpenseTotalsByCrop = opsApi.getOperationalExpensesByCrop();
+                operationalExpenseTotalsByCrop.forEach((amount, cropId) => {
+                    if (amount > 0) {
+                        expenseTotalsByCrop.set(cropId, (expenseTotalsByCrop.get(cropId) || 0) + amount);
+                    }
+                });
             }
             if (opsApi?.getOperationalPendingByCrop) {
                 operationalPendingTotalsByCrop = opsApi.getOperationalPendingByCrop();
             }
-            operationalExpenseTotalsByCrop.forEach((amount, cropId) => {
-                if (amount > 0) {
-                    expenseTotalsByCrop.set(cropId, (expenseTotalsByCrop.get(cropId) || 0) + amount);
-                }
-            });
+            // ANEXO 23: bridge para que el Dashboard Bloque 4 lea la MISMA
+            // unión deduplicada que consumen las cards de Mis Cultivos.
+            if (typeof window !== 'undefined') {
+                window._agroMergedOperationalExpensesByCrop = operationalExpenseTotalsByCrop;
+            }
         } else {
+            if (typeof window !== 'undefined') {
+                window._agroMergedOperationalExpensesByCrop = new Map();
+            }
             publishBuyerPortfolioState();
         }
 
@@ -11827,7 +12033,8 @@ export async function loadCrops() {
             lossTotalsByCrop,
             pendingTotalsByCrop,
             missingRateCountsByCrop,
-            globalTotalsByCropType
+            globalTotalsByCropType,
+            cycleNativeSourcesByCrop
         });
         const emptyActiveText = visibleFinishedCrops.length > 0
             ? 'No hay ciclos activos por ahora.'
@@ -11847,6 +12054,7 @@ export async function loadCrops() {
             pendingTotalsByCrop,
             missingRateCountsByCrop,
             globalTotalsByCropType,
+            cycleNativeSourcesByCrop,
             groupType: 'finished'
         });
         const lostCycleCards = buildFinishedCycleCardsData(visibleLostCrops, {
@@ -11859,6 +12067,7 @@ export async function loadCrops() {
             pendingTotalsByCrop,
             missingRateCountsByCrop,
             globalTotalsByCropType,
+            cycleNativeSourcesByCrop,
             groupType: 'lost'
         });
         renderCropCycleHistory(visibleFinishedCrops, orphanFinishedCrops, {
@@ -11870,7 +12079,8 @@ export async function loadCrops() {
             lossTotalsByCrop,
             pendingTotalsByCrop,
             missingRateCountsByCrop,
-            globalTotalsByCropType
+            globalTotalsByCropType,
+            cycleNativeSourcesByCrop
         });
         renderCropArchiveTrash(document.getElementById('agro-crop-archive-root'), {
             archivedCrops,

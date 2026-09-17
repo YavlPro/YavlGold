@@ -8,6 +8,7 @@ import {
   getCycleDisplayCurrencyLabel,
   getNextCycleDisplayCurrencyLabel,
   initCycleDisplayCurrency,
+  normalizeCycleDisplayCurrency,
   rotateCycleDisplayCurrency
 } from './agro-display-currency.js';
 
@@ -114,6 +115,50 @@ function formatSignedUsd(value) {
   return formatSignedCycleDisplayMoneyFromUsd(value);
 }
 
+// ANEXO 23: formato nativo (misma apariencia que agro-display-currency para
+// cada moneda, pero sin pasar por el pivote USD).
+function formatNativeAmount(value, currency) {
+  const amount = Math.abs(Number(value) || 0);
+  if (currency === 'COP') {
+    return `COP ${Math.round(amount).toLocaleString('es-CO')}`;
+  }
+  if (currency === 'VES') {
+    return `Bs ${amount.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+  return amount.toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  });
+}
+
+function formatSignedNativeAmount(value, currency) {
+  const sign = Number(value) >= 0 ? '+' : '-';
+  return `${sign}${formatNativeAmount(value, currency)}`;
+}
+
+// ANEXO 23: cuando el ciclo es monomoneda y la moneda de display coincide,
+// el número se toma del total nativo (reconcilia 1:1 con las filas de los
+// wizards). Si no coincide, se conserva el camino USD existente.
+function isNativeActive(native) {
+  if (!native || !native.currency) return false;
+  // Number(null) === 0: validar el valor crudo antes de convertir (lección
+  // de la saga factureros — null no es un total nativo válido).
+  if (native.value === null || native.value === undefined || native.value === '') return false;
+  const value = Number(native.value);
+  return Number.isFinite(value) && normalizeCycleDisplayCurrency() === String(native.currency).toUpperCase();
+}
+
+function pickDisplayText(usdValue, native, { signed = false } = {}) {
+  if (isNativeActive(native)) {
+    return signed
+      ? formatSignedNativeAmount(native.value, native.currency)
+      : formatNativeAmount(native.value, native.currency);
+  }
+  return signed ? formatSignedUsd(usdValue) : formatUsdCompact(usdValue);
+}
+
 function buildCycleMoneyAttrs(value, displayValue, options = {}) {
   const parsed = Number(value);
   const rawAttr = Number.isFinite(parsed)
@@ -132,7 +177,22 @@ function buildCycleMoneyAttrs(value, displayValue, options = {}) {
   const fiadosAttr = Number.isFinite(Number(options.fiados))
     ? ` data-cycle-money-fiados="${escapeAttr(Number(options.fiados))}"`
     : '';
-  return ` data-money="1" data-raw-money="${escapeAttr(displayValue)}"${rawAttr}${signedAttr}${trendAttr}${phraseAttr}${rentRealAttr}${fiadosAttr}`;
+  // ANEXO 23: valor nativo + fiados nativos para el re-render del toggle.
+  const native = options.native || null;
+  const nativeHasValue = !!(native && native.currency
+    && native.value !== null && native.value !== undefined && native.value !== ''
+    && Number.isFinite(Number(native.value)));
+  const nativeValue = nativeHasValue ? Number(native.value) : null;
+  const nativeAttr = nativeHasValue
+    ? ` data-cycle-money-native="${escapeAttr(nativeValue)}" data-cycle-money-native-cur="${escapeAttr(String(native.currency).toUpperCase())}"`
+    : '';
+  const nativeFiados = native && native.fiados !== null && native.fiados !== undefined
+    ? Number(native.fiados)
+    : null;
+  const nativeFiadosAttr = Number.isFinite(nativeFiados)
+    ? ` data-cycle-money-native-fiados="${escapeAttr(nativeFiados)}"`
+    : '';
+  return ` data-money="1" data-raw-money="${escapeAttr(displayValue)}"${rawAttr}${signedAttr}${trendAttr}${phraseAttr}${rentRealAttr}${fiadosAttr}${nativeAttr}${nativeFiadosAttr}`;
 }
 
 function buildCurrencyToggleMarkup() {
@@ -158,6 +218,32 @@ function refreshCycleMoneyNode(node) {
   if (!Number.isFinite(rawValue)) return;
 
   const phrase = String(node.dataset.cycleMoneyPhrase || '').trim();
+
+  // ANEXO 23: display nativo cuando la moneda del ciclo coincide con la
+  // moneda de display (identidad del pivote, sin roundtrip de tasas).
+  const nativeCurrency = String(node.dataset.cycleMoneyNativeCur || '').toUpperCase();
+  const nativeValue = Number(node.dataset.cycleMoneyNative);
+  if (nativeCurrency && Number.isFinite(nativeValue)
+    && normalizeCycleDisplayCurrency() === nativeCurrency) {
+    if (phrase === 'balance-actual') {
+      const nativeFiados = Number(node.dataset.cycleMoneyNativeFiados);
+      node.textContent = formatBalanceActualText(
+        nativeValue,
+        Number.isFinite(nativeFiados) ? nativeFiados : 0,
+        (amount) => formatNativeAmount(amount, nativeCurrency)
+      );
+      node.dataset.rawMoney = node.textContent;
+      return;
+    }
+    const signed = node.dataset.cycleMoneySigned === '1';
+    const displayValue = signed ? formatSignedNativeAmount(nativeValue, nativeCurrency) : formatNativeAmount(nativeValue, nativeCurrency);
+    const trend = String(node.dataset.cycleMoneyTrend || '').trim();
+    const finalText = trend ? `${trend} ${displayValue}` : displayValue;
+    node.textContent = finalText;
+    node.dataset.rawMoney = displayValue;
+    return;
+  }
+
   if (phrase === 'balance-actual') {
     const fiados = Number(node.dataset.cycleMoneyFiados);
     node.textContent = formatBalanceActualText(rawValue, fiados);
@@ -279,17 +365,17 @@ function renderBreakdownMoneyRow(label, rawValue) {
   `;
 }
 
-function renderBreakdownUsdRow(label, usdValue, fallbackValue = 'N/D') {
+function renderBreakdownUsdRow(label, usdValue, fallbackValue = 'N/D', native = null) {
   const parsed = Number(usdValue);
   if (!Number.isFinite(parsed)) {
     return renderBreakdownMoneyRow(label, fallbackValue);
   }
 
-  const displayValue = formatUsdCompact(parsed);
+  const displayValue = pickDisplayText(parsed, native);
   return `
     <div class="desglose-row">
       <span>${escapeHtml(label)}</span>
-      <span${buildCycleMoneyAttrs(parsed, displayValue)}>${escapeHtml(displayValue)}</span>
+      <span${buildCycleMoneyAttrs(parsed, displayValue, { native })}>${escapeHtml(displayValue)}</span>
     </div>
   `;
 }
@@ -306,11 +392,16 @@ function renderBreakdownSectionSummary(items = []) {
       ${rows.map((item) => {
         const parsed = Number(item.usdValue);
         const hasUsdValue = Number.isFinite(parsed);
-        const displayValue = hasUsdValue ? formatUsdCompact(parsed) : String(item.value || 'N/D');
+        const native = item.native || null;
+        const displayValue = hasUsdValue
+          ? (isNativeActive(native)
+            ? formatNativeAmount(native.value, native.currency)
+            : formatUsdCompact(parsed))
+          : String(item.value || 'N/D');
         return `
         <span class="desglose-section-chip">
           <span class="desglose-section-chip__label">${escapeHtml(item.label)}</span>
-          <span class="desglose-section-chip__value"${hasUsdValue ? buildCycleMoneyAttrs(parsed, displayValue) : ` data-money="1" data-raw-money="${escapeAttr(displayValue)}"`}>${escapeHtml(displayValue)}</span>
+          <span class="desglose-section-chip__value"${hasUsdValue ? buildCycleMoneyAttrs(parsed, displayValue, { native }) : ` data-money="1" data-raw-money="${escapeAttr(displayValue)}"`}>${escapeHtml(displayValue)}</span>
         </span>
       `;
       }).join('')}
@@ -370,12 +461,12 @@ function resolveBalanceActualTone(value, fiadosPendientes) {
   return 'neutral';
 }
 
-function formatBalanceActualText(value, fiadosPendientes) {
+function formatBalanceActualText(value, fiadosPendientes, formatAmount = formatUsdCompact) {
   const balance = toNumber(value, 0);
   const fiados = toNumber(fiadosPendientes, 0);
-  if (balance > 0) return `Ganado ${formatUsdCompact(Math.abs(balance))}`;
-  if (balance < 0 && fiados > 0) return `Recuperando ${formatUsdCompact(fiados)}`;
-  if (balance < 0) return `Invirtiendo ${formatUsdCompact(Math.abs(balance))}`;
+  if (balance > 0) return `Ganado ${formatAmount(Math.abs(balance))}`;
+  if (balance < 0 && fiados > 0) return `Recuperando ${formatAmount(fiados)}`;
+  if (balance < 0) return `Invirtiendo ${formatAmount(Math.abs(balance))}`;
   return 'Equilibrio';
 }
 
@@ -390,13 +481,34 @@ function renderCard(ciclo, index = 0) {
   const perdidasUsd = toNumber(ciclo?.perdidasUsd, 0);
   const hasFiadosPendientes = fiadosUsd > 0;
   const balanceActualUsd = rentabilidadUsd - fiadosUsd;
-  const balanceActualText = formatBalanceActualText(balanceActualUsd, fiadosUsd);
-  const rentabilidadTone = resolveRealProfitTone(rentabilidadUsd);
-  const balanceActualTone = resolveBalanceActualTone(balanceActualUsd, fiadosUsd);
+  // ANEXO 23: métricas nativas (monomoneda) — reconcilian con las filas de
+  // los wizards sin roundtrip COP→USD(hist)→COP(hoy).
+  const native = ciclo?.native && ciclo?.native?.currency ? ciclo.native : null;
+  const nativeCur = native ? String(native.currency).toUpperCase() : '';
+  const nativeActive = !!(native && normalizeCycleDisplayCurrency() === nativeCur);
+  const rentabilidadDisplay = nativeActive ? toNumber(native.rentabilidad, 0) : rentabilidadUsd;
+  const fiadosDisplay = nativeActive ? toNumber(native.fiados, 0) : fiadosUsd;
+  const balanceActualDisplay = rentabilidadDisplay - fiadosDisplay;
+  const balanceActualText = formatBalanceActualText(
+    balanceActualDisplay,
+    fiadosDisplay,
+    nativeActive ? (amount) => formatNativeAmount(amount, nativeCur) : undefined
+  );
+  const rentabilidadTone = resolveRealProfitTone(rentabilidadDisplay);
+  const balanceActualTone = resolveBalanceActualTone(balanceActualDisplay, fiadosDisplay);
   const statusClass = statusClassFor(ciclo?.estado);
-  const rentabilidadText = formatSignedUsd(ciclo?.rentabilidad);
-  const inversionText = formatUsdCompact(ciclo?.inversionUSD);
-  const potentialIfCollectedText = formatSignedUsd(potencialNetoUsd);
+  const rentabilidadText = pickDisplayText(ciclo?.rentabilidad, {
+    value: native ? native.rentabilidad : null,
+    currency: nativeCur
+  }, { signed: true });
+  const inversionText = pickDisplayText(ciclo?.inversionUSD, {
+    value: native ? toNumber(native.base, 0) + toNumber(native.gastos, 0) : null,
+    currency: nativeCur
+  });
+  const potentialIfCollectedText = pickDisplayText(potencialNetoUsd, {
+    value: native ? native.potencialNeto : null,
+    currency: nativeCur
+  }, { signed: true });
   const trendIcon = rentabilidadTone === 'success' ? '↗' : rentabilidadTone === 'neutral' ? '→' : '↘';
   const profitLabel = 'Ahora mismo';
   const currencyToggleMarkup = buildCurrencyToggleMarkup();
@@ -441,11 +553,26 @@ function renderCard(ciclo, index = 0) {
   const carteraVivaTotal = baseInvestmentUsd + directGastosUsd + perdidasUsd;
   const carteraVivaRows = [
     renderBreakdownUsdRow('Base inversión multimoneda', baseInvestmentUsd, desgloseBase),
-    renderBreakdownUsdRow('Gastos directos del cultivo', directGastosUsd, desgloseGastosDirectos),
-    renderBreakdownUsdRow('Pagados Facturero de Clientes', pagadosUsd, desglosePagados),
-    renderBreakdownUsdRow('Fiados Facturero de Clientes', fiadosUsd, desgloseFiados),
-    hasFiadosPendientes ? renderBreakdownUsdRow('Si cobra todo', potencialNetoUsd, potentialIfCollectedText) : '',
-    renderBreakdownUsdRow('Pérdidas Facturero de Clientes', perdidasUsd, desglosePerdidasCarteraViva)
+    renderBreakdownUsdRow('Gastos directos del cultivo', directGastosUsd, desgloseGastosDirectos, {
+      value: native ? native.directGastos : null,
+      currency: nativeCur
+    }),
+    renderBreakdownUsdRow('Pagados Facturero de Clientes', pagadosUsd, desglosePagados, {
+      value: native ? native.pagados : null,
+      currency: nativeCur
+    }),
+    renderBreakdownUsdRow('Fiados Facturero de Clientes', fiadosUsd, desgloseFiados, {
+      value: native ? native.fiados : null,
+      currency: nativeCur
+    }),
+    hasFiadosPendientes ? renderBreakdownUsdRow('Si cobra todo', potencialNetoUsd, potentialIfCollectedText, {
+      value: native ? native.potencialNeto : null,
+      currency: nativeCur
+    }) : '',
+    renderBreakdownUsdRow('Pérdidas Facturero de Clientes', perdidasUsd, desglosePerdidasCarteraViva, {
+      value: native ? native.perdidas : null,
+      currency: nativeCur
+    })
   ].filter(Boolean);
   if (globalBreakdownMarkup) {
     carteraVivaRows.push(globalBreakdownMarkup);
@@ -458,8 +585,14 @@ function renderCard(ciclo, index = 0) {
   const carteraVivaIsShort = carteraVivaRows.length <= 5;
   const breakdownSectionsMarkup = `
     <div class="desglose-summary">
-      ${renderBreakdownUsdRow('Gastos totales del cultivo', gastosUsd, desgloseGastos)}
-      ${renderBreakdownUsdRow('Costos combinados del ciclo', costosUsd, desgloseCostos)}
+      ${renderBreakdownUsdRow('Gastos totales del cultivo', gastosUsd, desgloseGastos, {
+        value: native ? native.gastos : null,
+        currency: nativeCur
+      })}
+      ${renderBreakdownUsdRow('Costos combinados del ciclo', costosUsd, desgloseCostos, {
+        value: native ? native.costos : null,
+        currency: nativeCur
+      })}
     </div>
     ${operationalGastosUsd > 0 || operationalPendingUsd > 0 ? renderBreakdownSection({
     title: 'Facturero de cultivos',
@@ -467,11 +600,14 @@ function renderCard(ciclo, index = 0) {
     modifierClass: 'is-operativa',
     defaultOpen: true,
     summaryItems: [
-      { label: 'Pagado', usdValue: operationalGastosUsd },
+      { label: 'Pagado', usdValue: operationalGastosUsd, native: { value: native ? native.opsGastos : null, currency: nativeCur } },
       { label: 'Pendiente', usdValue: operationalPendingUsd }
     ],
     bodyMarkup: [
-      operationalGastosUsd > 0 ? renderBreakdownUsdRow('Factureros de cultivos pagados', operationalGastosUsd, desgloseGastosOperativos) : '',
+      operationalGastosUsd > 0 ? renderBreakdownUsdRow('Factureros de cultivos pagados', operationalGastosUsd, desgloseGastosOperativos, {
+        value: native ? native.opsGastos : null,
+        currency: nativeCur
+      }) : '',
       operationalPendingUsd > 0 ? renderBreakdownUsdRow('Gastos operativos pendientes', operationalPendingUsd, desglosePendientesOperativos) : ''
     ].filter(Boolean).join('')
   }) : ''}
@@ -481,9 +617,9 @@ function renderCard(ciclo, index = 0) {
     modifierClass: 'is-viva',
     defaultOpen: carteraVivaIsShort,
     summaryItems: [
-      { label: 'Total', usdValue: carteraVivaTotal },
-      { label: 'Pagado', usdValue: pagadosUsd },
-      { label: 'Fiado', usdValue: fiadosUsd }
+      { label: 'Total', usdValue: carteraVivaTotal, native: { value: native ? toNumber(native.base, 0) + toNumber(native.directGastos, 0) + toNumber(native.perdidas, 0) : null, currency: nativeCur } },
+      { label: 'Pagado', usdValue: pagadosUsd, native: { value: native ? native.pagados : null, currency: nativeCur } },
+      { label: 'Fiado', usdValue: fiadosUsd, native: { value: native ? native.fiados : null, currency: nativeCur } }
     ],
     bodyMarkup: carteraVivaRows.join('')
   })}
@@ -533,17 +669,31 @@ function renderCard(ciclo, index = 0) {
         </div>
         <div class="data-cell">
           <span class="data-label data-label--with-currency">Inversión ${currencyToggleMarkup}</span>
-          <span class="data-value gold"${buildCycleMoneyAttrs(ciclo?.inversionUSD, inversionText)}>${escapeHtml(inversionText)}</span>
+          <span class="data-value gold"${buildCycleMoneyAttrs(ciclo?.inversionUSD, inversionText, {
+            native: { value: native ? toNumber(native.base, 0) + toNumber(native.gastos, 0) : null, currency: nativeCur }
+          })}>${escapeHtml(inversionText)}</span>
         </div>
         <div class="data-cell">
           <span class="data-label">Rentabilidad</span>
-          <span class="data-value ${rentabilidadTone}"${buildCycleMoneyAttrs(ciclo?.rentabilidad, rentabilidadText, { signed: true, trend: trendIcon })}>${trendIcon} ${escapeHtml(rentabilidadText)}</span>
+          <span class="data-value ${rentabilidadTone}"${buildCycleMoneyAttrs(ciclo?.rentabilidad, rentabilidadText, {
+            signed: true,
+            trend: trendIcon,
+            native: { value: native ? native.rentabilidad : null, currency: nativeCur }
+          })}>${trendIcon} ${escapeHtml(rentabilidadText)}</span>
         </div>
       </div>
 
       <div class="profit-row">
         <span class="profit-label">${profitLabel}</span>
-        <span class="profit-value ${balanceActualTone}"${buildCycleMoneyAttrs(balanceActualUsd, balanceActualText, { phrase: 'balance-actual', fiados: fiadosUsd })}>${escapeHtml(balanceActualText)}</span>
+        <span class="profit-value ${balanceActualTone}"${buildCycleMoneyAttrs(balanceActualUsd, balanceActualText, {
+          phrase: 'balance-actual',
+          fiados: fiadosUsd,
+          native: {
+            value: native ? native.balanceActual : null,
+            currency: nativeCur,
+            fiados: native ? native.fiados : null
+          }
+        })}>${escapeHtml(balanceActualText)}</span>
       </div>
 
       <details class="desglose">
