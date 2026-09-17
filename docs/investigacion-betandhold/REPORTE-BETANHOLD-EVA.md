@@ -158,6 +158,8 @@ Brief recibido el 17-sep-2026 (investigación de otro agente para la comunidad).
 **Corroboración independiente (datos propios del 10-sep-2026):**
 - `0x0F6B56C3…1deA552`, uno de los remitentes directos a `Eba` según el brief, fue fondeado con gas por `0xC8E31828…84B8C898C` (el dispensador de gas con 2.752 tx identificado en el §2.2), el 10-sep-2026 a las 17:43 UTC, y ejecutó el guion completo (Approve EVA → Authorize ×2 → Swap 1inch → envío de USD₮0) en **~65 minutos**. El tx de salida coincide con el citado en el brief (`0xeda38d03…`).
 
+**⚠️ Contexto y sesgo de fuente (17-sep-2026):** el usuario aclaró que **Javier (javitoo8)** —quien en el brief acusa a "Darwin" y aporta la autoatribución de `c46`— **fue despedido por el casino**, y que **el casino cortó la colaboración de reparto de bonos con su equipo** (del que el usuario formaba parte). Por tanto el brief **procede de una parte interesada en un conflicto interno**. Los datos on-chain son verificables e independientes de eso; **las imputaciones personales del brief deben tratarse con cautela reforzada** y nunca como hechos probados.
+
 **Advertencia metodológica — DOS CASOS DISTINTOS, NO MEZCLAR:**
 1. **Drenajes** (Sanjorge, Guille): ETH + WBTC + EVA hacia `0x22031b…` / `0x1c2946…`. Vector: control total de la wallet (semilla).
 2. **Red de cashout** (c46 → Eba → Binance): jugadores que convierten y consolidan. Destinos distintos; no hay evidencia de que sea el mismo actor.
