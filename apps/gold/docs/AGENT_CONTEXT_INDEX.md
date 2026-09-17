@@ -76,6 +76,8 @@ Actualizado: 2026-08-05.
 
 ## Contexto historico
 
+- [AGENT_LEGACY_CONTEXT__2026-08-01__2026-09-17.md](./AGENT_LEGACY_CONTEXT__2026-08-01__2026-09-17.md) — Wiki viva anterior (4,006 líneas archivadas; saga factureros ANEXOS 1-23-b)
+- [AGENT_LEGACY_CONTEXT__2026-06-03__2026-07-31.md](./AGENT_LEGACY_CONTEXT__2026-06-03__2026-07-31.md) — Wiki viva anterior (junio-julio 2026)
 - [AGENT_LEGACY_CONTEXT__2026-04-16__2026-04-17.md](./AGENT_LEGACY_CONTEXT__2026-04-16__2026-04-17.md) — Wiki viva anterior (17,610 líneas archivadas)
 - [AGENT_REPORT.md](./AGENT_REPORT.md) — Histórico diagnostics (solo consulta)
 - [AGRO_V1_BASELINE.md](./AGRO_V1_BASELINE.md) — Baseline V1 de Agro

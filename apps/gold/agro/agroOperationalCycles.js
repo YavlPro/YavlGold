@@ -361,6 +361,18 @@ function rebuildPortfolioByCrop(exchangeRates = state.exchangeRates) {
         if (!isOutgoingCost) return;
 
         const movements = Array.isArray(cycle?.movements) ? cycle.movements : [];
+        // ANEXO 23-b: moneda null/vacía/desconocida en un movimiento NO es
+        // una moneda distinta — hereda la moneda del ciclo (primera moneda
+        // válida de sus movimientos) para no romper el pivote nativo.
+        const isKnownCurrency = (value) => {
+            const token = String(value || '').trim().toUpperCase();
+            return token === 'USD' || token === 'COP' || token === 'VES' ? token : '';
+        };
+        let cycleCurrency = '';
+        for (const movement of movements) {
+            cycleCurrency = isKnownCurrency(movement?.currency);
+            if (cycleCurrency) break;
+        }
         movements.forEach((movement) => {
             if (movement?.direction === 'in') return;
             const amount = toFiniteNumber(movement?.amount);
@@ -373,8 +385,8 @@ function rebuildPortfolioByCrop(exchangeRates = state.exchangeRates) {
 
             // Nativo por moneda: no depende de ninguna tasa — es el monto
             // crudo que el farmer ve en la fila del wizard.
-            const currency = String(movement?.currency || '').trim().toUpperCase();
-            if (currency === 'USD' || currency === 'COP' || currency === 'VES') {
+            const currency = isKnownCurrency(movement?.currency) || cycleCurrency;
+            if (currency) {
                 const byCurrency = expenseNativeIndex.get(cropId) || new Map();
                 byCurrency.set(currency, (byCurrency.get(currency) || 0) + amount);
                 expenseNativeIndex.set(cropId, byCurrency);

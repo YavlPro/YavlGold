@@ -11879,8 +11879,8 @@ export async function loadCrops() {
             const operationalDedupEntries = opsApi?.getOperationalExpenseDedupEntriesByCrop
                 ? opsApi.getOperationalExpenseDedupEntriesByCrop()
                 : null;
+            let operationalNativeByCrop = new Map();
             if (operationalDedupEntries instanceof Map) {
-                const operationalNativeByCrop = new Map();
                 operationalDedupEntries.forEach((entries, cropId) => {
                     const ledgerKeys = expenseDedupKeysByCrop.get(cropId) || null;
                     entries.forEach((entry) => {
@@ -11924,14 +11924,17 @@ export async function loadCrops() {
             if (opsApi?.getOperationalPendingByCrop) {
                 operationalPendingTotalsByCrop = opsApi.getOperationalPendingByCrop();
             }
-            // ANEXO 23: bridge para que el Dashboard Bloque 4 lea la MISMA
-            // unión deduplicada que consumen las cards de Mis Cultivos.
+            // ANEXO 23/23-b: bridge para que el Dashboard Bloque 4 lea la
+            // MISMA unión deduplicada que consumen las cards de Mis Cultivos,
+            // en USD (pivote) y en nativo por moneda (identidad del pivote).
             if (typeof window !== 'undefined') {
                 window._agroMergedOperationalExpensesByCrop = operationalExpenseTotalsByCrop;
+                window._agroMergedOperationalNativeByCrop = operationalNativeByCrop;
             }
         } else {
             if (typeof window !== 'undefined') {
                 window._agroMergedOperationalExpensesByCrop = new Map();
+                window._agroMergedOperationalNativeByCrop = new Map();
             }
             publishBuyerPortfolioState();
         }

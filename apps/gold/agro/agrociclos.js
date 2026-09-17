@@ -5,10 +5,10 @@ import supabase from '../assets/js/config/supabase-config.js';
 import {
   formatCycleDisplayMoneyFromUsd,
   formatSignedCycleDisplayMoneyFromUsd,
+  getCycleDisplayCurrency,
   getCycleDisplayCurrencyLabel,
   getNextCycleDisplayCurrencyLabel,
   initCycleDisplayCurrency,
-  normalizeCycleDisplayCurrency,
   rotateCycleDisplayCurrency
 } from './agro-display-currency.js';
 
@@ -141,13 +141,22 @@ function formatSignedNativeAmount(value, currency) {
 // ANEXO 23: cuando el ciclo es monomoneda y la moneda de display coincide,
 // el número se toma del total nativo (reconcilia 1:1 con las filas de los
 // wizards). Si no coincide, se conserva el camino USD existente.
+// ANEXO 23-b: la moneda ACTIVA del toggle la devuelve getCycleDisplayCurrency().
+// OJO: normalizeCycleDisplayCurrency() SIN argumento es un normalizador puro
+// que siempre devuelve 'USD' (agro-display-currency.js:78-83) — usarlo como
+// getter fue el bug residual del ANEXO 23: isNativeActive jamás activaba y
+// las 6 líneas caían al camino USD con roundtrip de tasa.
+function currentDisplayCurrencyCode() {
+  return String(getCycleDisplayCurrency() || 'USD').trim().toUpperCase();
+}
+
 function isNativeActive(native) {
   if (!native || !native.currency) return false;
   // Number(null) === 0: validar el valor crudo antes de convertir (lección
   // de la saga factureros — null no es un total nativo válido).
   if (native.value === null || native.value === undefined || native.value === '') return false;
   const value = Number(native.value);
-  return Number.isFinite(value) && normalizeCycleDisplayCurrency() === String(native.currency).toUpperCase();
+  return Number.isFinite(value) && currentDisplayCurrencyCode() === String(native.currency).toUpperCase();
 }
 
 function pickDisplayText(usdValue, native, { signed = false } = {}) {
@@ -224,7 +233,7 @@ function refreshCycleMoneyNode(node) {
   const nativeCurrency = String(node.dataset.cycleMoneyNativeCur || '').toUpperCase();
   const nativeValue = Number(node.dataset.cycleMoneyNative);
   if (nativeCurrency && Number.isFinite(nativeValue)
-    && normalizeCycleDisplayCurrency() === nativeCurrency) {
+    && currentDisplayCurrencyCode() === nativeCurrency) {
     if (phrase === 'balance-actual') {
       const nativeFiados = Number(node.dataset.cycleMoneyNativeFiados);
       node.textContent = formatBalanceActualText(
@@ -485,7 +494,7 @@ function renderCard(ciclo, index = 0) {
   // los wizards sin roundtrip COP→USD(hist)→COP(hoy).
   const native = ciclo?.native && ciclo?.native?.currency ? ciclo.native : null;
   const nativeCur = native ? String(native.currency).toUpperCase() : '';
-  const nativeActive = !!(native && normalizeCycleDisplayCurrency() === nativeCur);
+  const nativeActive = !!(native && currentDisplayCurrencyCode() === nativeCur);
   const rentabilidadDisplay = nativeActive ? toNumber(native.rentabilidad, 0) : rentabilidadUsd;
   const fiadosDisplay = nativeActive ? toNumber(native.fiados, 0) : fiadosUsd;
   const balanceActualDisplay = rentabilidadDisplay - fiadosDisplay;
