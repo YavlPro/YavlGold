@@ -143,6 +143,31 @@ Bet&Hold anunció a su comunidad que **abandonará Chainlink** como fuente de al
 
 ---
 
+## 5D. INVESTIGACIÓN PARALELA: RED DE CASHOUT (c46 → Eba → Binance)
+
+Brief recibido el 17-sep-2026 (investigación de otro agente para la comunidad). Verificación propia en cadena:
+
+**Confirmado:**
+- `c46` (`0xc46Fb934e7Fe86E5AB427c1c1bE8249d72197606`) tiene **33 transacciones USD₮0**, saldo **0** → es un **passthrough/agregador**, no una cuenta de ahorro.
+- Patrón verificado: recibe USD₮0 de wallets de jugadores y de swaps (1inch, Uniswap V4 Universal Router) y lo reenvía a `Eba` (`0xEba87cAE…EFC084c8c`) pocos minutos después. Ejemplo exacto: `0x3db5fB42… → c46` 4.926167 USD₮0 (12-sep 01:27:01 UTC) → `c46 → Eba` 4.926167 USD₮0 (12-sep 02:25:06 UTC). **Monto idéntico, 58 minutos después.**
+- `Eba` fue fondeada para gas por `Binance: Deposit Funder 1` y barre a Binance → patrón de dirección de depósito de exchange.
+
+**Hallazgo nuevo (no incluido en el brief):**
+- **`c46` también es una wallet jugadora de Bet&Hold.** El 16-sep-2026 22:58 UTC ejecutó `authorize(sessionKey, expiresAt, 50 EVA)` sobre **AuthHub** `0x86543287…` (tx `0x6c96dc0cffb7f95d816ac1996d2a2d56d074b6da134605daf39486fee14779f4`). Es decir: la wallet atribuida al "agregador" opera dentro del mismo casino, con las mismas herramientas que los jugadores.
+
+**Corroboración independiente (datos propios del 10-sep-2026):**
+- `0x0F6B56C3…1deA552`, uno de los remitentes directos a `Eba` según el brief, fue fondeado con gas por `0xC8E31828…84B8C898C` (el dispensador de gas con 2.752 tx identificado en el §2.2), el 10-sep-2026 a las 17:43 UTC, y ejecutó el guion completo (Approve EVA → Authorize ×2 → Swap 1inch → envío de USD₮0) en **~65 minutos**. El tx de salida coincide con el citado en el brief (`0xeda38d03…`).
+
+**Advertencia metodológica — DOS CASOS DISTINTOS, NO MEZCLAR:**
+1. **Drenajes** (Sanjorge, Guille): ETH + WBTC + EVA hacia `0x22031b…` / `0x1c2946…`. Vector: control total de la wallet (semilla).
+2. **Red de cashout** (c46 → Eba → Binance): jugadores que convierten y consolidan. Destinos distintos; no hay evidencia de que sea el mismo actor.
+
+**El usuario (`0x969E0a1f…`) NO forma parte de esta red:** su salida fue EVA → dirección de depósito de **BingX** (`0xe48E3ACE…`), sin paso por `c46` ni `Eba`.
+
+**Pendiente:** dirección incompleta `0xba9b5bbf97cd1d796558f75fd3d67dcdcb984ae` (39 hex). Sin acceso a RPC no es posible fuerza bruta sobre 640 combinaciones; requiere recuperar el carácter desde la fuente (texto original de Telegram, captura en alta resolución u OCR múltiple).
+
+---
+
 ## 6. LICENCIA Y EMPRESA (de sesiones anteriores, sin cambios)
 - Declara licencia **ALSI-012401003-FI1** (Anjouan, *Computer Gaming Licensing Act 007/2005*) a nombre de **B&H EVOLUTION LIMITADA** (Costa Rica).
 - **Verificaciones negativas:** (a) el número no aparece en registros públicos; (b) el Banco Central de las Comoras **no reconoce a la AOFA** y el juego es ilícito en Comoras (FATF-GAFI 2024) → protección nula al jugador; (c) **cero rastros públicos** de la empresa; (d) sin reseñas en Casino.guru, Trustpilot ni AskGamblers.
