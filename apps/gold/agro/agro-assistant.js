@@ -398,12 +398,14 @@ function updateAssistantCooldownUI() {
     const cooldownEl = document.getElementById('assistant-cooldown');
     if (!sendBtn || !cooldownEl) return 0;
 
-    const now = Date.now();
     const queueLen = assistantRuntime.queue.length;
+
+    // ANEXO 26: el countdown vive DENTRO del botón de envío; el nodo
+    // #assistant-cooldown se conserva para compatibilidad (oculto por CSS).
 
     // Priority 1: In-flight
     if (assistantRuntime.inFlight) {
-        sendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>';
+        sendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Enviando</span>';
         sendBtn.disabled = true;
         cooldownEl.textContent = queueLen > 0 ? `En cola (${queueLen})` : '';
         return 1;
@@ -414,10 +416,10 @@ function updateAssistantCooldownUI() {
     if (remaining > 0) {
         const seconds = Math.ceil(remaining / 1000);
         if (mode === 'lock') {
-            sendBtn.innerHTML = '<i class="fa-solid fa-lock" aria-hidden="true"></i>';
+            sendBtn.innerHTML = `<i class="fa-solid fa-lock" aria-hidden="true"></i><span>IA en ${seconds}s</span>`;
             cooldownEl.textContent = `Limite IA: espera ${seconds}s`;
         } else {
-            sendBtn.innerHTML = '<i class="fa-solid fa-clock" aria-hidden="true"></i>';
+            sendBtn.innerHTML = `<i class="fa-solid fa-clock" aria-hidden="true"></i><span>Enviar en ${seconds}s</span>`;
             cooldownEl.textContent = `Espera ${seconds}s`;
         }
         sendBtn.disabled = true;
@@ -429,14 +431,14 @@ function updateAssistantCooldownUI() {
 
     // Priority 3: Queue pending
     if (queueLen > 0) {
-        sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane" aria-hidden="true"></i>';
+        sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>En cola</span>';
         sendBtn.disabled = false;
         cooldownEl.textContent = `En cola (${queueLen})`;
         return 0;
     }
 
     // Default: Ready
-    sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane" aria-hidden="true"></i>';
+    sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Enviar</span>';
     sendBtn.disabled = false;
     cooldownEl.textContent = '';
     return 0;
@@ -663,7 +665,7 @@ function deleteActiveThread() {
 
     renderThreads();
     renderAssistantHistory(preloadThreadMessages(assistantState.activeThreadId));
-    showAssistantToast('Conversacion eliminada');
+    showAssistantToast('Conversación eliminada');
     return true;
 }
 
@@ -698,7 +700,7 @@ function deleteThreadById(threadId) {
     }
 
     renderThreads();
-    showAssistantToast('Conversacion eliminada');
+    showAssistantToast('Conversación eliminada');
     return true;
 }
 
@@ -904,7 +906,7 @@ function openAgroAssistant() {
         hydrateAssistantState();
         renderThreads();
         renderAssistantHistory(preloadThreadMessages(assistantState.activeThreadId || ''));
-        setAssistantStatus('En linea');
+        setAssistantStatus('En línea');
         setAssistantLoading(false);
         setAssistantDrawerOpen(false);
         const initialMessages = preloadThreadMessages(assistantState.activeThreadId || '');
@@ -1104,7 +1106,7 @@ function initAgroAssistantSurface() {
     // Delete thread button (in sidebar footer)
     const deleteThreadBtn = document.getElementById('btn-assistant-delete-thread');
     deleteThreadBtn?.addEventListener('click', () => {
-        if (confirm('Eliminar esta conversacion?')) {
+        if (confirm('Eliminar esta conversación?')) {
             deleteActiveThread();
         }
     });

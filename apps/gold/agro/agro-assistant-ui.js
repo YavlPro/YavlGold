@@ -35,7 +35,7 @@ function renderThreadList({ threads = [], activeThreadId = null, onSelectThread,
     if (!sorted.length) {
         const empty = document.createElement('div');
         empty.className = 'assistant-thread assistant-empty';
-        empty.textContent = 'Aun no hay conversaciones.';
+        empty.textContent = 'Aún no hay conversaciones.';
         list.appendChild(empty);
         return;
     }
@@ -66,10 +66,10 @@ function renderThreadList({ threads = [], activeThreadId = null, onSelectThread,
         deleteBtn.type = 'button';
         deleteBtn.className = 'assistant-thread-delete';
         deleteBtn.textContent = '🗑️';
-        deleteBtn.title = 'Eliminar conversacion';
+        deleteBtn.title = 'Eliminar conversación';
         deleteBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            if (confirm('¿Eliminar esta conversacion?')) {
+            if (confirm('¿Eliminar esta conversación?')) {
                 onDeleteThread?.(thread.id);
             }
         });
@@ -200,6 +200,17 @@ function renderAssistantHistory(messages = []) {
                     : 'assistant';
         message.className = `assistant-message ${role}`;
         renderMessageContent(message, item?.text || '');
+        const ts = Number(item?.ts);
+        if (Number.isFinite(ts) && ts > 0) {
+            const meta = document.createElement('div');
+            meta.className = 'assistant-message-meta';
+            try {
+                meta.textContent = new Date(ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+            } catch (_e) {
+                meta.textContent = '';
+            }
+            if (meta.textContent) message.appendChild(meta);
+        }
         container.appendChild(message);
     });
     syncAssistantGuideLayout({ messagesCount: messages.length });
@@ -218,7 +229,7 @@ function setAssistantLoading(isLoading) {
     if (typingEl) {
         typingEl.setAttribute('aria-hidden', isLoading ? 'false' : 'true');
     }
-    setAssistantStatus(isLoading ? 'Pensando...' : 'En linea');
+    setAssistantStatus(isLoading ? 'Pensando...' : 'En línea');
     if (isLoading) {
         scrollAssistantToBottom(true);
     }

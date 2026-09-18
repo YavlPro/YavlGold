@@ -156,6 +156,7 @@
     <link rel="stylesheet" href="./agro-facturero-cultivo-wizard.css">
     <link rel="stylesheet" href="./agro-facturero-personal-wizard.css">
     <link rel="stylesheet" href="./agro-assistant.css">
+    <link rel="stylesheet" href="./agro-assistant-chat.css">
     <link rel="stylesheet" href="./agro-clients.css">
     <link rel="stylesheet" href="./agro-reports-center.css">
     <link rel="stylesheet" href="./agro-farms.css">
@@ -3620,17 +3621,17 @@
                         </div>
                     </div>
                     <div class="ast-page-actions">
-                        <span class="ast-header-status" id="assistant-status">En linea</span>
+                        <span class="ast-header-status" id="assistant-status">En línea</span>
                         <button type="button" class="ast-header-icon" id="ast-toggle-context"
-                            aria-label="Panel de contexto" title="Contexto">
+                            aria-label="Panel de contexto" title="Panel de contexto">
                             <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
                         </button>
-                        <button type="button" class="ast-header-icon" id="ast-export-chat" aria-label="Exportar"
-                            title="Exportar">
+                        <button type="button" class="ast-header-icon" id="ast-export-chat"
+                            aria-label="Exportar conversación" title="Exportar conversación">
                             <i class="fa-solid fa-download" aria-hidden="true"></i>
                         </button>
                         <button type="button" class="ast-header-icon ast-header-icon--back"
-                            id="btn-close-agro-assistant" aria-label="Volver al dashboard" title="Volver al dashboard"
+                            id="btn-close-agro-assistant" aria-label="Volver" title="Volver"
                             data-agro-view="dashboard">
                             <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
                         </button>
@@ -3656,7 +3657,7 @@
                         <div class="ast-sidebar-actions">
                             <button type="button" class="ast-btn-new" id="assistant-new-thread">
                                 <i class="fa-solid fa-plus" aria-hidden="true"></i>
-                                Nueva conversacion
+                                Nueva conversación
                             </button>
                         </div>
                         <div class="ast-sidebar-section-label">
@@ -3671,7 +3672,7 @@
                                 <span class="ast-stat-val" id="ast-stat-messages">0</span>
                             </div>
                             <button type="button" class="ast-sidebar-clear" id="btn-assistant-delete-thread"
-                                aria-label="Eliminar conversacion" title="Eliminar conversacion">
+                                aria-label="Eliminar conversación" title="Eliminar conversación">
                                 <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
                             </button>
                         </div>
@@ -3687,32 +3688,27 @@
                                 <div class="ast-welcome-icon" aria-hidden="true"><i class="fa-solid fa-seedling"></i>
                                 </div>
                                 <div class="ast-welcome-title">Asistente Agro</div>
-                                <div class="ast-welcome-desc">Tu centro de consulta sobre cultivos, plagas, riego, clima
-                                    y mas. Escribe tu pregunta o selecciona una sugerencia.</div>
+                                <div class="ast-welcome-desc">Respuestas cruzadas sobre lo que ya registraste en Agro:
+                                    cultivos, finanzas y bitácora.</div>
                                 <div class="ast-welcome-suggestions">
                                     <button class="ast-suggestion"
-                                        data-suggestion="Que plagas son comunes en esta epoca del año?">
-                                        <span class="ast-suggestion-icon"><i class="fa-solid fa-bug"
+                                        data-suggestion="¿A cuánto me suma específicamente el total general de los clientes que dejé con abonos atrasados en marzo?">
+                                        <span class="ast-suggestion-icon"><i class="fa-solid fa-users"
                                                 aria-hidden="true"></i></span>
-                                        <span class="ast-suggestion-text">Plagas comunes en esta epoca</span>
+                                        <span class="ast-suggestion-text">Total de clientes con abonos atrasados</span>
                                     </button>
                                     <button class="ast-suggestion"
-                                        data-suggestion="Como optimizo el riego de mis cultivos?">
-                                        <span class="ast-suggestion-icon"><i class="fa-solid fa-droplet"
+                                        data-suggestion="¿De qué marca y cómo justifiqué aplicar la última tanda de fertilizante apuntada para sector norte el semestre pasado?">
+                                        <span class="ast-suggestion-icon"><i class="fa-solid fa-flask"
                                                 aria-hidden="true"></i></span>
-                                        <span class="ast-suggestion-text">Optimizar riego de cultivos</span>
+                                        <span class="ast-suggestion-text">Última tanda de fertilizante del sector
+                                            norte</span>
                                     </button>
                                     <button class="ast-suggestion"
-                                        data-suggestion="Necesito un plan de fertilizacion para mi cultivo principal">
-                                        <span class="ast-suggestion-icon"><i class="fa-solid fa-leaf"
+                                        data-suggestion="¿Cómo varió el gasto recurrente general que dediqué al tomate este verano contra el anterior?">
+                                        <span class="ast-suggestion-icon"><i class="fa-solid fa-chart-line"
                                                 aria-hidden="true"></i></span>
-                                        <span class="ast-suggestion-text">Plan de fertilizacion</span>
-                                    </button>
-                                    <button class="ast-suggestion"
-                                        data-suggestion="Que debo considerar para la proxima siembra?">
-                                        <span class="ast-suggestion-icon"><i class="fa-solid fa-calendar-check"
-                                                aria-hidden="true"></i></span>
-                                        <span class="ast-suggestion-text">Planificar proxima siembra</span>
+                                        <span class="ast-suggestion-text">Gasto en tomate: verano contra verano</span>
                                     </button>
                                 </div>
                                 <button type="button" class="ast-configure-btn" id="btn-configure-ia"
@@ -3722,13 +3718,13 @@
                                 <!-- Collapsible guide -->
                                 <details class="ast-guide" id="assistant-guide">
                                     <summary class="ast-guide-summary">
-                                        <span><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Guia de
+                                        <span><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Guía de
                                             uso</span>
                                     </summary>
                                     <ul id="assistant-guide-list">
-                                        <li>Agrupa tus dudas en 1 solo mensaje (max 5-8 lineas).</li>
+                                        <li>Agrupa tus dudas en 1 solo mensaje (máx 5-8 líneas).</li>
                                         <li>Espera unos segundos entre mensajes (evita spamear).</li>
-                                        <li>Si te sale "Limite alcanzado", espera y vuelve a intentar.</li>
+                                        <li>Si te sale "Límite alcanzado", espera y vuelve a intentar.</li>
                                         <li>No recargues 10 veces: no aumenta cupo.</li>
                                     </ul>
                                 </details>
@@ -3755,8 +3751,8 @@
                             </div>
                             <div class="ast-input-hint">
                                 <span><kbd>Enter</kbd> enviar &middot; <kbd>Shift+Enter</kbd> nueva linea</span>
-                                <span class="ast-input-mode" id="assistant-mode-hint">1 mensaje (5-8 lineas). Espera
-                                    8-12s</span>
+                                <span class="ast-input-mode" id="assistant-mode-hint">1 mensaje (5-8 líneas) · espera
+                                    10s</span>
                             </div>
                             <button type="button" class="assistant-new-messages" id="assistant-new-messages"
                                 style="display:none;">Nuevos mensajes</button>
@@ -3789,13 +3785,13 @@
                             <div class="ast-context-section" id="ast-ctx-weather">
                                 <div class="ast-context-section-title"><i class="fa-solid fa-cloud-sun"
                                         aria-hidden="true"></i> Clima</div>
-                                <div class="ast-context-empty" id="ast-ctx-weather-empty">Sin datos climaticos</div>
+                                <div class="ast-context-empty" id="ast-ctx-weather-empty">Sin datos climáticos</div>
                                 <div class="ast-context-items" id="ast-ctx-weather-items"></div>
                             </div>
                             <div class="ast-context-section" id="ast-ctx-location">
                                 <div class="ast-context-section-title"><i class="fa-solid fa-location-dot"
-                                        aria-hidden="true"></i> Ubicacion</div>
-                                <div class="ast-context-empty" id="ast-ctx-location-empty">Sin ubicacion</div>
+                                        aria-hidden="true"></i> Ubicación</div>
+                                <div class="ast-context-empty" id="ast-ctx-location-empty">Sin ubicación</div>
                                 <div class="ast-context-items" id="ast-ctx-location-items"></div>
                             </div>
                         </div>
@@ -3806,7 +3802,7 @@
                 <div class="ast-modal-overlay hidden" id="ast-export-modal" role="dialog" aria-modal="true">
                     <div class="ast-modal">
                         <div class="ast-modal-header">
-                            <h3><i class="fa-solid fa-download" aria-hidden="true"></i> Exportar conversacion</h3>
+                            <h3><i class="fa-solid fa-download" aria-hidden="true"></i> Exportar conversación</h3>
                             <button type="button" class="ast-context-close" id="ast-close-export" aria-label="Cerrar"><i
                                     class="fa-solid fa-xmark" aria-hidden="true"></i></button>
                         </div>
