@@ -2885,6 +2885,10 @@
                 const statusOverride = statusMode === 'manual' ? normalizedEffectiveStatus : null;
                 const initialStatus = normalizeCycleStatus(document.getElementById('form-new-crop')?.dataset?.initialStatus || '');
                 // ANEXO 28 S1: guard unidireccional (D-1/D-2/B1) antes de escribir.
+                // S3-b: pre→Sembrado por este camino ES la conversión (mismo
+                // write único del botón "Registrar siembra": status+mode+
+                // override+start_date+seed_kg+expected_harvest_date, más las
+                // correcciones de datos D-1b del modal).
                 const forwardCheck = window._agroPrecultivo?.assertForwardTransition?.(initialStatus, normalizedEffectiveStatus);
                 if (forwardCheck && !forwardCheck.ok) {
                     showValidationError(forwardCheck.reason);

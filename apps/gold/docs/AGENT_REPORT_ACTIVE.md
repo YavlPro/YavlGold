@@ -413,3 +413,33 @@ git commit -m "feat(db): ANEXO 28 — CHECK agro_crops_status_check admite 'prec
 ---
 
 **Estado del frente ANEXO 28:** CERRADO (código S1-S4 + migración DB + documentación S5)
+
+---
+
+## Sesión 2026-09-18 (IV) — ANEXO 28 S3-b: puerta de siembra en el modal de edición
+
+Agente: GLM (ZCode). Refinamiento autorizado por el owner: desde un pre-cultivo, la opción "Sembrado" del modal de edición queda HABILITADA como vía de conversión equivalente al botón de la card. Regla de paro no activada: DoD completo verde.
+
+**Trazado (sin edits previos)**: (a) bloque especial de la máquina en `agro-precultivo.js:275-281` deshabilitaba todo salvo lost desde precultivo; (b) `syncCropFormForStatus` ya desbloquea semilla + fila siembra/cosecha vía el listener `change` (una sola `.input-row` con ambos dates, index.html:1785-1794); (c) `saveCrop` YA es el camino de conversión de un write: guard `assertForwardTransition('precultivo','sembrado')` pasa (forward D-1) y el payload de edición escribe exactamente `status/status_mode/status_override/start_date/seed_kg/expected_harvest_date` (:2898-2919) + correcciones D-1b (nombre/área/inversión) — cero doble write; (d) `#crop-name` nunca se bloquea (sync solo toca las dos filas).
+
+**Cambios**:
+
+| Archivo | Cambio |
+|---|---|
+| `agro-precultivo.js` | Máquina: desde precultivo quedan habilitados Sembrado (nuevo) y Perdido; saltos largos (creciendo/produccion/finalizado/auto) bloqueados con título honesto "Desde pre-cultivo la fase pasa a Sembrado registrando la siembra…" (:293-300). Nota del modal reemplazada por la prosa del owner: "Al pasar a Sembrado se registran fecha de siembra, semilla y cosecha; el pre-cultivo evoluciona a ciclo de cultivo y su nomenclatura desaparece." Sync S3-b: al desbloquear pre→Sembrado en edición se LIMPIA la fecha (la de registro del plan no es la siembra real; entrada consciente forzada por el `required` nativo) y si el usuario vuelve a pre se restaura la fecha guardada desde `window.__AGRO_CROPS_STATE` — flag `lastSyncPreState` con guard por `dataset.initialStatus` para no tocar cultivos ya sembrados. |
+| `index.html` | Comentario de equivalencia en saveCrop (:2886-2890): pre→Sembrado por el modal ES la conversión del botón (mismo write único). Cero cambios de lógica. |
+| `MANIFIESTO_AGRO.md` §4.3 | La sección de pre-cultivos ya existía (S5, sesión III): prosa ajustada a las dos vías equivalentes (botón de card + edición eligiendo Sembrado), autorizado por esta decisión del owner. **Contaminación corregida**: el párrafo escrito en S5 contenía texto chino ("sin搬家") — reemplazado por "sin moverse de lugar". |
+
+**Matriz estática DoD**: (a) un update con fechas/semilla ✓ (payload :2898-2919, un solo `.update`); (b) siembra vacía → bloqueo nativo (`required` vivo: form sin novalidate, 0 matches; index.html:1788) + respaldo JS (throw :2810 → popup YGUX) ✓; (c) cosecha < siembra → `showValidationError` :2835 ✓; (d) desde sembrado, precultivo NO ofrecido (guard rank-decrease lo deshabilita con razón) ✓; (e) Perdido lateral intacto (:77 lateral-exit) ✓; (f) botón de card intacto (agrociclos.js:320) ✓; (g) tras convertir, badge/notas/chips pre desaparecen (todo condicionado a `effectiveStatus==='precultivo'`, agro.js:11044) ✓.
+
+**Resultado de build**: `pnpm build:gold` ✅ verde (1.94s; chunk `agro-precultivo-BUf2sOdb.js` 11.06 kB).
+
+**QA sugerido (owner)**: editar un pre-cultivo → elegir Sembrado → la fecha se limpia y los campos se desbloquean → guardar sin fecha = bloqueo; completar fecha/semilla/cosecha → guardar → ciclo queda Sembrado con sus datos, sin badge "Pre-cultivo" y gastos leyendo como del ciclo; reabrir edición → Sembrado activo, precultivo no ofrecido, retrocesos bloqueados; volver de Sembrado a Pre-cultivo sin guardar → la fecha de registro se restaura.
+
+**NO se hizo**: git (bloque sugerido abajo, NO ejecutado); cambios en el botón de la card ni en el mini-modal (vía alternativa conservada); otros arcos de la máquina; re-auditoría del resto del pase S5 (solo se corrigió la contaminación dentro del párrafo autorizado).
+
+**Bloque git sugerido (NO ejecutado)**:
+```bash
+git add apps/gold/agro/agro-precultivo.js apps/gold/agro/index.html apps/gold/docs/MANIFIESTO_AGRO.md
+git commit -m "feat(agro): ANEXO 28 S3-b — puerta de siembra en el modal (pre→Sembrado habilitado, conversión un write vía saveCrop, fecha consciente, prosa MANIFIESTO dos vías + limpieza de contaminación)"
+```

@@ -386,7 +386,7 @@ Esto asegura que los reportes individuales, estadísticas globales y rankings re
 
 Un pre-cultivo es un plan de siembra registrado antes de llevar la semilla a tierra. El agricultor lo crea cuando aún no tiene semilla lista o cuando quiere preparar el terreno: registra gastos de preparación (herbicida, arada, insumos) y pérdidas si algo sale mal en esa fase, pero no puede registrar ingresos ni donaciones porque aún no hay producto vendido.
 
-Cuando llega el momento de sembrar, el pre-cultivo evoluciona a un cultivo normal con un solo paso: se asigna la fecha de siembra real, la semilla utilizada y la cosecha esperada. Los gastos y pérdidas que ya vivían asociados al pre-cultivo permanecen en el ciclo sin搬家; simplemente la nomenclatura "pre" desaparece para siempre.
+Cuando llega el momento de sembrar, el pre-cultivo evoluciona a un cultivo normal en un solo paso: se registran la fecha de siembra real, la semilla utilizada y la cosecha esperada. Hay dos vías equivalentes para dar ese paso: el botón "Registrar siembra" en la tarjeta del cultivo, o editar el cultivo y elegir la fase Sembrado, que habilita esos mismos campos dentro del modal. En ambas vías los gastos y pérdidas que ya vivían asociados al pre-cultivo permanecen en el ciclo sin moverse de lugar; la nomenclatura "pre" desaparece para siempre.
 
 La cadena de fases es unidireccional: Pre-cultivo → Sembrado → Creciendo → Producción → Finalizado. Nunca se retrocede. Si algo sale mal en cualquier fase, se marca como Perdido como salida lateral, sin afectar las fases anteriores.
 

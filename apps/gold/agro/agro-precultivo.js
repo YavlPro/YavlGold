@@ -167,7 +167,7 @@ function ensurePrecultivoNote() {
     note.id = 'crop-precultivo-note';
     note.className = 'agro-new-crop-modal__meta';
     note.style.display = 'none';
-    note.textContent = 'Pre-cultivo: fecha de siembra, semilla y cosecha se registran al sembrar (botón "Registrar siembra" en la card).';
+    note.textContent = 'Al pasar a Sembrado se registran fecha de siembra, semilla y cosecha; el pre-cultivo evoluciona a ciclo de cultivo y su nomenclatura desaparece.';
     statusBlock.parentNode.insertBefore(note, statusBlock.nextSibling);
     return note;
 }
@@ -186,6 +186,12 @@ function setRowEnabled(row, enabled) {
  * esperada; la fecha de siembra se normaliza a hoy para que start_date
  * guarde la fecha de registro del plan (D-4).
  */
+// S3-b: al desbloquear pre→Sembrado en edición, la fecha de registro del plan
+// NO es la siembra real — se limpia para forzar entrada consciente (required
+// vivo de saveCrop). Si el usuario vuelve a pre-cultivo, se restaura la fecha
+// guardada del cultivo desde el estado runtime.
+let lastSyncPreState = null;
+
 export function syncCropFormForStatus() {
     const statusSelect = document.getElementById('crop-status');
     if (!statusSelect) return;
@@ -201,8 +207,20 @@ export function syncCropFormForStatus() {
     // en edición se conserva la fecha ya guardada.
     const editId = String(document.getElementById('crop-edit-id')?.value || '').trim();
     if (isPre && startInput && !editId) startInput.value = getTodayKey();
+    if (isPre && startInput && editId && !startInput.value) {
+        const crops = Array.isArray(window.__AGRO_CROPS_STATE?.crops) ? window.__AGRO_CROPS_STATE.crops : [];
+        const cropRow = crops.find((item) => String(item?.id || '').trim() === editId);
+        const savedDate = String(cropRow?.start_date || '').slice(0, 10);
+        if (savedDate) startInput.value = savedDate;
+    }
     const harvestInput = document.getElementById('crop-harvest-date');
     if (isPre && harvestInput) harvestInput.value = '';
+    const cropForm = document.getElementById('form-new-crop');
+    const initialStatus = normalizeStatusToken(cropForm?.dataset?.initialStatus || '');
+    if (!isPre && lastSyncPreState === true && editId && initialStatus === PRE_CULTIVO && startInput) {
+        startInput.value = '';
+    }
+    lastSyncPreState = isPre;
 
     const note = ensurePrecultivoNote();
     if (note) note.style.display = isPre ? '' : 'none';
@@ -272,10 +290,11 @@ export function applyStatusSelectMachine() {
             option.title = '';
             return;
         }
-        if (initial === PRE_CULTIVO && value !== 'lost') {
-            // D-4: la única puerta de pre-cultivo a sembrado es "Registrar siembra".
+        if (initial === PRE_CULTIVO && value !== 'lost' && value !== 'sembrado') {
+            // S3-b: desde pre-cultivo solo adelante (Sembrado, registrando la
+            // siembra aquí mismo) o lateral (Perdido). Saltos largos, no.
             option.disabled = true;
-            option.title = 'Usa "Registrar siembra" en la card del cultivo.';
+            option.title = 'Desde pre-cultivo la fase pasa a Sembrado registrando la siembra (fecha, semilla y cosecha).';
             anyDisabled = true;
             return;
         }
