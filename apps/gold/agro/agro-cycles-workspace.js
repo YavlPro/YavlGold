@@ -282,8 +282,8 @@ function buildCycleCollection(snapshot) {
                 fiadosUsd: toNumber(row?.fiadosUsd, 0),
                 rentabilidad: toNumber(row?.rentabilidad, 0),
                 potencialNeto: toNumber(row?.potencialNeto, 0),
-                siembra: String(row?.siembra || 'N/D').trim() || 'N/D',
-                cosechaEst: String(row?.cosechaEst || 'N/D').trim() || 'N/D',
+                siembra: row?.preCultivo ? '—' : (String(row?.siembra || 'N/D').trim() || 'N/D'),
+                cosechaEst: row?.preCultivo ? '—' : (String(row?.cosechaEst || 'N/D').trim() || 'N/D'),
                 variedad: String(row?.variedad || 'Sin variedad').trim() || 'Sin variedad',
                 nombre: String(row?.nombre || 'Cultivo').trim() || 'Cultivo'
             });
@@ -340,6 +340,10 @@ function resolveMetricValue(metric, item) {
                 sub: item.lifecycleLabel
             };
         case 'progreso':
+            // ANEXO 28: pre-cultivo sin progreso falso (D-3).
+            if (item.preCultivo === true) {
+                return { raw: 0, main: '—', sub: 'Sin sembrar' };
+            }
             return {
                 raw: item.progreso,
                 main: formatPercent(item.progreso),

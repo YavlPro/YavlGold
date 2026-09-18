@@ -22,7 +22,7 @@ import { getMarketTickerSnapshot, initMarketIntelligence } from './agro-market.j
 // ============================================================
 const STORAGE_SELECTED_FARM = 'YG_AGRO_DASH_V11_FARM';
 
-const CROP_ACTIVE_STATUSES = ['sembrado', 'creciendo', 'produccion'];
+const CROP_ACTIVE_STATUSES = ['precultivo', 'sembrado', 'creciendo', 'produccion'];
 const TASK_DONE_STATUSES = ['completed', 'not_executed'];
 const TASK_PENDING_STATUSES = ['pending', 'active'];
 

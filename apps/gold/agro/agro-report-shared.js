@@ -10,6 +10,7 @@
 // ---------------------------------------------------------------------------
 
 export const CROP_STATUS_UI = {
+    precultivo: { emoji: '⏳', text: 'Pre-cultivo · aún no sembrado' },
     sembrado: { emoji: '🌱', text: 'Sembrado' },
     creciendo: { emoji: '🌿', text: 'Creciendo' },
     produccion: { emoji: '🌾', text: 'Producción' },

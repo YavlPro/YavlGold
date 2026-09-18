@@ -170,6 +170,50 @@
   border-color: var(--border-gold);
 }
 
+/* ANEXO 28: pre-cultivo — plan vivo antes de la siembra (token dorado tenue). */
+.agro-cycles .status-badge.status-precultivo {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  border-color: var(--border-gold);
+}
+
+/* ANEXO 28 S4 (D-6): chips de acción — touch 44px (ADN §16), tokens, 160ms. */
+.agro-cycles .crop-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.55rem;
+}
+
+.agro-cycles .crop-chip {
+  min-height: 44px;
+  padding: 0 0.9rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-gold);
+  background: color-mix(in srgb, var(--gold-4) 6%, transparent);
+  color: var(--gold-4);
+  font-family: var(--font-heading);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.agro-cycles .crop-chip:hover {
+  opacity: 0.85;
+}
+
+.agro-cycles .crop-chip:active {
+  transform: scale(0.98);
+}
+
+.agro-cycles .crop-chip:focus-visible {
+  box-shadow: 0 0 0 2px var(--bg-1), 0 0 0 4px var(--gold-4);
+}
+
 /* === Finished mode variants === */
 .agro-cycles .status-badge.status-finalizado {
   background: color-mix(in srgb, var(--gold-4) 8%, transparent);

@@ -921,6 +921,9 @@ function checkCropAlerts(crop) {
     // Map legacy English status to Spanish if needed (though DB migration fixed this)
     const isActive = ['sembrado', 'creciendo', 'produccion', 'growing', 'ready'].includes(status);
 
+    // ANEXO 28: un pre-cultivo no tiene cosecha en agenda; sin alertas de ciclo.
+    if (status === 'precultivo') return;
+
     // console.log(`[AgroNotif] Checking crop: ${crop.name}, status=${status}, harvest=${crop.expected_harvest_date}`);
 
     if (harvestDate) {
