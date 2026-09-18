@@ -12,6 +12,7 @@ Este directorio conserva JavaScript histórico que ya no forma parte de la super
 
 - `auth.js`
 - `auth/authGuard.js`
+- `agro-cart.js` — Mi Carrito, retirado del producto por decisión del owner el 2026-09-17 (ANEXO 24): era intención de compra sin uso real y nunca registró gasto.
 
 ## Regla
 

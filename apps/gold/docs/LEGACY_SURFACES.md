@@ -53,6 +53,7 @@ Incluye:
 - `archive/legacy-html/public/agro/roadmap.html` — roadmap historico de YavlAgro (blockchain, e-commerce, etc.)
 - `archive/legacy-js/auth.js`
 - `archive/legacy-js/auth/authGuard.js`
+- `archive/legacy-js/agro-cart.js` — Mi Carrito, retirado del producto por decisión del owner (2026-09-17, ANEXO 24): intención de compra sin uso real; nunca registró gasto.
 
 ## Alias legacy en routing
 

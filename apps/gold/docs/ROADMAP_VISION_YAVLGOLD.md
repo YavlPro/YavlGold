@@ -90,7 +90,7 @@ Las primitives son funciones humanas esenciales que pueden existir dentro de Agr
 | Primitive | En Agro hoy | Posible uso personal futuro | Regla |
 |---|---|---|---|
 | Dinero | ingresos, gastos, fiados, cobros, pérdidas | finanzas personales operativas | no mezclar con historial puro |
-| Recursos | cultivos, insumos, carrito, unidades | inventario personal o recursos de trabajo | no contar intención como gasto real |
+| Recursos | cultivos, insumos, unidades | inventario personal o recursos de trabajo | no contar intención como gasto real |
 | Contactos | clientes, compradores, fincas, contactos derivados | relaciones operativas personales | no confundir contacto con deuda |
 | Pendientes | fiados, tareas, cobros, ciclos abiertos | cosas por atender o resolver | cada pendiente debe tener próximo paso claro |
 | Historial | movimientos, ciclos, registros, cambios de estado | memoria cronológica del usuario | historial no es dashboard |
@@ -127,7 +127,6 @@ Cada nueva sección de Agro debe diseñarse con esta pregunta:
 Ejemplos orientativos:
 
 - Facturero de Clientes (antes Cartera Viva) → pendientes, deudas, contactos.
-- Mi Carrito → recursos, intención de compra.
 - AgroRepo → memoria operativa.
 - Centro de Reportes → evidencias y exportes.
 - Trabajo Diario → planificación y ejecución.
@@ -144,7 +143,6 @@ Reglas:
 - una vista = una tarea principal;
 - historial no es dashboard;
 - cliente no es deuda;
-- carrito no es gasto real;
 - memoria no es facturero;
 - planificación no es estadística;
 - dashboard no debe tragarse todo;

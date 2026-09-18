@@ -145,7 +145,6 @@ Regla estricta:
 - Facturero del Cultivo: registros POR CULTIVO (crop_id ✓; nunca filtra por farm_id en lectura) — ruta `#view=facturero-cultivo&subview=wizard`
 - Facturero Personal: registros SIN ASOCIAR (ambos null; la partición farm de Finca los excluye desde S8) — ruta `#view=facturero-personal&subview=wizard`
 - Rankings y estadísticas financieras (Rankings se accede desde Mis Clientes)
-- Carrito de compras con lista de insumos
 - Planificación y agenda agrícola
 - Inteligencia de mercado
 - Feedback y encuestas
@@ -158,7 +157,6 @@ Regla estricta:
 ```
 agro.js              — monolito principal (facturero, CRUD, historial)
 agro-agenda.js       — agenda agrícola
-agro-cart.js         — carrito de insumos
 agro-facturero-clientes-assignment.js — reasignación segura de cliente dentro del editor de movimientos, sin borrar historial
 agro-facturero-clientes-merge.js — modal seguro para unificar clientes duplicados moviendo movimientos al cliente destino
 agro-facturero-clientes-view.js — Facturero de Clientes: vista de clientes, tabs por saldo vivo, cultivos asociados en cards, wizard de compradores y flujos separados Nuevo cliente / Cliente existente
@@ -184,7 +182,7 @@ agro-planning.js     — planificación
 agro-privacy.js      — privacidad de datos
 agro-reports-center.js — Centro de Reportes Generales: índice de reportes generales oficiales con selector de finca (estadísticas globales, perfil agricultor, rankings). No consulta Supabase, no selecciona cultivos, no inventa Markdown.
 agro-selection.js    — selección de cultivos
-agro-shell.js        — shell UI de Agro: gestiona navegación hub/module con puertas Inicio · Granja · Memoria · Menú con persistencia por hash, hub central Mi Granja con Mis fincas y cultivos (Mis Fincas, Mis cultivos, Operaciones de la Finca), Mi Planificación (Mi Carrito, Clima Agro) y Trabajo y lectura (Mis Clientes, Trabajo Diario, Centro de Reportes Generales), barra inferior mobile, topbar contextual con Volver en módulos profundos, launcher/favoritos/búsqueda compacta cuando aplican, y entrada inicial al Dashboard Agro
+agro-shell.js        — shell UI de Agro: gestiona navegación hub/module con puertas Inicio · Granja · Memoria · Menú con persistencia por hash, hub central Mi Granja con Mis fincas y cultivos (Mis Fincas, Mis cultivos, Operaciones de la Finca), Mi Planificación (Clima Agro) y Trabajo y lectura (Mis Clientes, Trabajo Diario, Centro de Reportes Generales), barra inferior mobile, topbar contextual con Volver en módulos profundos, launcher/favoritos/búsqueda compacta cuando aplican, y entrada inicial al Dashboard Agro
 agro-stats.js        — estadísticas financieras
 agro-stats-report.js — reportes estadísticos
 agro-trash.js        — papelera de eliminados

@@ -238,7 +238,6 @@ function readCurrentUserCropsCache() {
 let selectedCropId = null;
 let editExchangeRates = { USD: 1, COP: null, VES: null };
 let syncAgendaCropsFn = null;
-let syncCartCropsFn = null;
 let buyerProfileClickHandlersBound = false;
 let agroSocialButtonBound = false;
 const revertTransferInFlightLocks = new Set();
@@ -307,13 +306,6 @@ function syncLazyCropConsumers(nextCrops) {
         }
     } catch (err) {
         console.warn('[AGRO] Agenda crops sync error:', err?.message || err);
-    }
-    try {
-        if (typeof syncCartCropsFn === 'function') {
-            syncCartCropsFn(safeCrops);
-        }
-    } catch (err) {
-        console.warn('[AGRO] Cart crops sync error:', err?.message || err);
     }
 }
 
@@ -12895,7 +12887,7 @@ async function loadIncomes() {
 }
 const FIN_TAB_STORAGE_KEY = 'YG_AGRO_FIN_TAB_V1';
 const FIN_TAB_STORAGE_LEGACY_KEY = 'lastTab';
-const FIN_TAB_NAMES = new Set(['gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias', 'otros', 'carrito', 'rankings']);
+const FIN_TAB_NAMES = new Set(['gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias', 'otros', 'rankings']);
 
 function readStoredTab() {
     try {
@@ -13357,49 +13349,6 @@ function scheduleOpsMovementSummaryRefresh() {
     }, 90);
 }
 
-// V9.8: CARRITO DEDICATED VIEW (reparent pattern)
-// ============================================================
-
-let carritoDedicatedEventsBound = false;
-
-function resolveCarritoMountTarget() {
-    const activeView = String(document.body.dataset.agroActiveView || '').trim();
-
-    if (activeView === 'carrito') {
-        return document.getElementById('carrito-dedicated-root');
-    }
-
-    return document.getElementById('tab-panel-carrito');
-}
-
-function syncCarritoDedicatedView() {
-    const cartNode = document.getElementById('agro-cart-root');
-    const target = resolveCarritoMountTarget();
-    if (!cartNode || !target) return;
-
-    if (cartNode.parentElement !== target) {
-        target.appendChild(cartNode);
-    }
-
-    if (target.id !== 'tab-panel-carrito') {
-        initCartTabLazy();
-    }
-}
-
-function bindCarritoDedicatedView() {
-    if (carritoDedicatedEventsBound) return;
-    carritoDedicatedEventsBound = true;
-
-    window.addEventListener('agro:shell:view-changed', syncCarritoDedicatedView);
-    document.addEventListener('data-refresh', syncCarritoDedicatedView);
-}
-
-function initCarritoDedicatedView() {
-    bindCarritoDedicatedView();
-    syncCarritoDedicatedView();
-}
-
-// ============================================================
 // V9.8: RANKINGS DEDICATED VIEW (reparent pattern)
 // ============================================================
 
@@ -14861,11 +14810,6 @@ function switchTab(tabName, options = {}) {
         }));
     }
 
-    // Lazy-load Carrito module when tab is first activated
-    if (tabName === 'carrito') {
-        initCartTabLazy();
-    }
-
     if (tabName === 'rankings') {
         initOpsRankingsPanel();
         refreshOpsRankings().catch((err) => {
@@ -14902,33 +14846,6 @@ window.openAgroAgenda = async function (opts) {
         alert('Error al cargar la agenda: ' + err.message);
     }
 };
-
-let _cartModuleLoaded = false;
-async function initCartTabLazy() {
-    if (_cartModuleLoaded) return;
-    _cartModuleLoaded = true;
-    try {
-        const { initAgroCart, injectCartStyles, updateCartCrops } = await import('./agro-cart.js');
-        syncCartCropsFn = typeof updateCartCrops === 'function' ? updateCartCrops : null;
-        syncLazyCropConsumers(cropsCache);
-        injectCartStyles();
-        await initAgroCart({
-            supabase,
-            cropsCache,
-            refreshFactureroHistory
-        });
-    } catch (err) {
-        console.error('[AGRO] Failed to load cart module:', err);
-        const root = document.getElementById('agro-cart-root');
-        if (root) {
-            root.replaceChildren();
-            const errBox = document.createElement('div');
-            errBox.style.cssText = 'color:#ef4444; padding:1rem; text-align:center;';
-            errBox.textContent = 'Error al cargar el carrito.';
-            root.appendChild(errBox);
-        }
-    }
-}
 
 function initFinanceTabs() {
     const tabButtons = Array.from(document.querySelectorAll('.financial-tab-btn'));
@@ -17003,7 +16920,6 @@ export function initAgro() {
     console.info('[AGRO] V9.6: facturero who-field enabled');
     initFactureroHistories(); // V9.5.1: Cargar historiales al init
     initAgroShell();
-    initCarritoDedicatedView();
     initRankingsDedicatedView();
     initFactureroSelection();
     injectAgroMobilePatches();

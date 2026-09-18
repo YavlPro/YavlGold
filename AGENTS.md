@@ -71,7 +71,6 @@ El sistema de diseño activo vive en `apps/gold/docs/ADN-VISUAL-V12.0.md`. Es el
 agro.js                              — monolito principal (facturero, CRUD, historial, Asistente IA V9.5.6+)
 agro-agenda.js                       — agenda agrícola
 agro-buyer-identity.js               — resolución de identidad de compradores
-agro-cart.js                         — carrito de insumos
 agro-clients.js                      — Mis Clientes: directorio de contactos
 agro-clima.js                        — integración meteorológica
 agro-crop-archive.js                 — archivo/restauración de cultivos

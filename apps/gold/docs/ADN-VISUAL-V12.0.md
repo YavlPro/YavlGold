@@ -427,7 +427,6 @@ Mis fincas y cultivos
 Mis finanzas
   Facturero de Clientes
   Facturero de la Finca
-  Mi Carrito
   Mis Clientes
 
 Trabajo y lectura

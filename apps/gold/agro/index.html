@@ -423,12 +423,14 @@
                             class="fa-solid fa-clipboard-list agro-shell-sidebar__label-icon"
                             aria-hidden="true"></i><span>Mi planificación</span></p>
                     <div class="agro-launcher__tiles">
-                        <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="carrito"
-                            data-agro-mode-scope="non_crop">
-                            <i class="fa-solid fa-cart-shopping agro-shell-link__icon" aria-hidden="true"></i>
+                        <!-- ANEXO 24: Mi Carrito retirado (2026-09-17); Clima Agro
+                             queda como lectura de planificación (espejo del hub mobile). -->
+                        <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="clima"
+                            data-agro-mode-scope="tools">
+                            <i class="fa-solid fa-cloud-sun agro-shell-link__icon" aria-hidden="true"></i>
                             <span class="agro-launcher__tile-copy">
-                                <span class="agro-shell-link__label">Mi Carrito</span>
-                                <span class="agro-launcher__tile-desc">Lista de compras y planeación.</span>
+                                <span class="agro-shell-link__label">Clima Agro</span>
+                                <span class="agro-launcher__tile-desc">Consulta de clima y señales de campo.</span>
                             </span>
                         </button>
                     </div>
@@ -504,14 +506,6 @@
                             class="fa-solid fa-screwdriver-wrench agro-shell-sidebar__label-icon"
                             aria-hidden="true"></i><span>Sistema</span></p>
                     <div class="agro-launcher__tiles">
-                        <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="clima"
-                            data-agro-mode-scope="tools">
-                            <i class="fa-solid fa-cloud-sun agro-shell-link__icon" aria-hidden="true"></i>
-                            <span class="agro-launcher__tile-copy">
-                                <span class="agro-shell-link__label">Clima Agro</span>
-                                <span class="agro-launcher__tile-desc">Consulta de clima y señales de campo.</span>
-                            </span>
-                        </button>
                         <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="herramientas"
                             data-agro-mode-scope="tools">
                             <i class="fa-solid fa-toolbox agro-shell-link__icon" aria-hidden="true"></i>
@@ -702,10 +696,6 @@
                     </button>
 
                     <p class="agro-mobile-hub__section-title">Mi planificación</p>
-                    <button type="button" class="agro-mobile-hub__item" data-agro-view="carrito">
-                        <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
-                        <span>Mi Carrito</span>
-                    </button>
                     <button type="button" class="agro-mobile-hub__item" data-agro-view="clima">
                         <i class="fa-solid fa-cloud-sun" aria-hidden="true"></i>
                         <span>Clima Agro</span>
@@ -1888,12 +1878,9 @@
                 <div class="module-heading">
                     <p class="ops-module-eyebrow">Finanzas Agro</p>
                     <h2 class="module-title ops-header-default">Operaciones</h2>
-                    <h2 class="module-title ops-header-carrito">Mi Carrito</h2>
                     <h2 class="module-title ops-header-rankings">Rankings de Clientes</h2>
                     <p class="module-subtitle ops-header-default">Movimientos, privacidad y vistas del facturero
                         en una sola mesa operativa.</p>
-                    <p class="module-subtitle ops-header-carrito">Gestiona tu lista de compras agro.
-                        Agrega insumos, revisa totales y exporta el pedido.</p>
                     <p class="module-subtitle ops-header-rankings">Vista rápida de clientes cobrados, pendientes y
                         comportamiento por cultivo.</p>
                 </div>
@@ -1964,7 +1951,7 @@
                             <p class="ops-step-title">Abrir vista del facturero</p>
                             <p class="ops-step-note ops-step-helper">Gastos, ingresos cobrados, fiados, pérdidas,
                                 donaciones,
-                                otros, carrito y rankings.</p>
+                                otros y rankings.</p>
                         </div>
                     </div>
                     <div class="financial-tabs" role="tablist" aria-label="Pestañas de finanzas agro">
@@ -1984,9 +1971,6 @@
                             data-tab="transferencias">Donaciones</button>
                         <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-otros"
                             aria-selected="false" aria-controls="tab-panel-otros" data-tab="otros">Otros</button>
-                        <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-carrito"
-                            aria-selected="false" aria-controls="tab-panel-carrito" data-tab="carrito">&#x1F6D2;
-                            Carrito</button>
                         <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-rankings"
                             aria-selected="false" aria-controls="tab-panel-rankings" data-tab="rankings">
                             <i class="fa-solid fa-chart-column" aria-hidden="true"></i>
@@ -2203,15 +2187,6 @@
                     </details>
                 </div>
 
-                <div class="tab-panel is-hidden" id="tab-panel-carrito" role="tabpanel"
-                    aria-labelledby="tab-btn-carrito" aria-hidden="true" data-tab="carrito">
-                    <div id="agro-cart-root" style="padding: 0.5rem 0;">
-                        <div style="text-align: center; color: rgba(255,255,255,0.4); padding: 2rem;">
-                            Cargando carrito...
-                        </div>
-                    </div>
-                </div>
-
                 <div class="tab-panel is-hidden" id="tab-panel-rankings" role="tabpanel"
                     aria-labelledby="tab-btn-rankings" aria-hidden="true" data-tab="rankings">
                     <div class="ops-rankings-panel" id="ops-rankings-panel">
@@ -2271,28 +2246,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <div class="agro-carrito-dedicated agro-pagados-dedicated" id="agro-carrito-dedicated"
-            aria-label="Vista dedicada de Carrito">
-            <div class="agro-pagados-dedicated__hero">
-                <div class="agro-pagados-dedicated__copy">
-                    <p class="agro-pagados-dedicated__eyebrow">Vista dedicada</p>
-                    <h3 class="agro-pagados-dedicated__title">Mi Carrito</h3>
-                    <p class="agro-pagados-dedicated__subtitle">Gestiona compras y usa accesos rápidos
-                        y cálculo sin salir de la superficie comercial.</p>
-                </div>
-                <div class="agro-privacy-strip">
-                    <span class="agro-privacy-strip__label">Privacidad</span>
-                    <button type="button" class="btn-privacy-toggle" data-buyer-privacy-control="toggle"
-                        aria-pressed="false">👁 Ocultar nombres</button>
-                    <button type="button" class="btn-privacy-toggle" data-money-privacy-control="toggle"
-                        aria-pressed="false">💰 Ocultar montos</button>
-                </div>
-            </div>
-            <div id="carrito-dedicated-root" class="agro-carrito-dedicated__content">
-                <!-- agro-cart.js renders here when dedicated view is active -->
             </div>
         </div>
 

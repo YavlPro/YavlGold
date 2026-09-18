@@ -940,19 +940,13 @@ function renderAgendaContent(container, isInline) {
     const plannerActions = document.createElement('div');
     plannerActions.className = 'aga-planner-actions';
 
-    const cartLink = document.createElement('button');
-    cartLink.type = 'button';
-    cartLink.className = 'aga-inline-link';
-    cartLink.dataset.action = 'open-cart-view';
-    cartLink.textContent = 'Ir a Mi Carrito';
-
     const addBtn = document.createElement('button');
     addBtn.type = 'button';
     addBtn.className = 'aga-add-btn';
     addBtn.dataset.action = 'open-create';
     addBtn.textContent = 'Nueva actividad';
 
-    plannerActions.append(cartLink, addBtn);
+    plannerActions.append(addBtn);
     todayHead.append(todayCopy, plannerActions);
     todaySection.appendChild(todayHead);
     todaySection.appendChild(createAgendaActivityList(todayOpenItems, {
@@ -1454,14 +1448,6 @@ function attachAgendaListeners(container, isInline) {
         }
 
         if (action === 'open-create') { openCreateModal(); return; }
-
-        if (action === 'open-cart-view') {
-            window.dispatchEvent(new CustomEvent('agro:shell:set-view', {
-                detail: { view: 'carrito', scroll: true }
-            }));
-            if (!inlineCtx) closeAgendaModal();
-            return;
-        }
 
         if (action === 'toggle-complete') {
             const itemId = actionEl.dataset.itemId;

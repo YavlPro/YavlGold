@@ -39,7 +39,6 @@ const TAB_TO_VIEW = Object.freeze({
     perdidas: 'facturero-finca',
     transferencias: 'facturero-finca',
     otros: 'facturero-finca',
-    carrito: 'carrito',
     rankings: 'rankings'
 });
 
@@ -57,7 +56,11 @@ const SHELL_GATE_ROUTES = Object.freeze({
     granja: Object.freeze({ hashView: 'granja', hub: 'operacion' }),
     operacion: Object.freeze({ hashView: 'granja', hub: 'operacion' }),
     memoria: Object.freeze({ hashView: 'memoria', hub: 'memoria' }),
-    menu: Object.freeze({ hashView: 'menu', hub: 'menu' })
+    menu: Object.freeze({ hashView: 'menu', hub: 'menu' }),
+    // ANEXO 24 (2026-09-17): Mi Carrito retirado del producto. Sus rutas legacy
+    // (hash y navegacion programatica) aterrizan en el hub Granja sin error.
+    carrito: Object.freeze({ hashView: 'granja', hub: 'operacion' }),
+    'operational-cart': Object.freeze({ hashView: 'granja', hub: 'operacion' })
 });
 
 const VIEW_TO_MOBILE_HUB = Object.freeze({
@@ -67,7 +70,6 @@ const VIEW_TO_MOBILE_HUB = Object.freeze({
     'facturero-finca': 'operacion',
     'facturero-cultivo': 'operacion',
     'facturero-personal': 'operacion',
-    carrito: 'operacion',
     clients: 'operacion',
     rankings: 'operacion',
     reportes: 'operacion',
@@ -93,13 +95,11 @@ const VIEW_ALIASES = Object.freeze({
     facturero: Object.freeze({ view: 'facturero-finca', subview: 'active' }),
     clientes: Object.freeze({ view: 'clients', subview: '' }),
     'mis-clientes': Object.freeze({ view: 'clients', subview: '' }),
-    carrito: Object.freeze({ view: 'carrito', subview: 'summary' }),
     'operational-periods': Object.freeze({ view: 'period-cycles', subview: '' }),
     'period-cycles-active': Object.freeze({ view: 'period-cycles', subview: 'calendario' }),
     'period-cycles-calendario': Object.freeze({ view: 'period-cycles', subview: 'calendario' }),
     'period-cycles-compare': Object.freeze({ view: 'period-cycles', subview: 'comparar' }),
     'period-cycles-stats': Object.freeze({ view: 'period-cycles', subview: 'estadisticas' }),
-    'operational-cart': Object.freeze({ view: 'carrito', subview: 'summary' }),
     'operational-active': Object.freeze({ view: 'facturero-finca', subview: 'active' }),
     'operational-finished': Object.freeze({ view: 'facturero-finca', subview: 'finished' }),
     'operational-donations': Object.freeze({ view: 'facturero-finca', subview: 'donations' }),
@@ -136,7 +136,6 @@ const NAV_PARENT_GROUPS = Object.freeze({
 const VIEW_SUBNAV_CONFIG = Object.freeze({
     ciclos: Object.freeze({ defaultSubview: 'mis-cultivos', allowed: ['mis-cultivos', 'mis-fincas', 'comparar', 'estadisticas'] }),
     'period-cycles': Object.freeze({ defaultSubview: 'calendario', allowed: ['calendario', 'comparar', 'estadisticas'] }),
-    carrito: Object.freeze({ defaultSubview: 'summary', allowed: ['summary', 'planning', 'calculator'] }),
     // D1 (Fase 2 Finca, 2026-09-03): el wizard ES la superficie principal del
     // Facturero de la Finca. Cualquier subview legacy (active/finished/...)
     // redirige al wizard via normalizeSubview -> defaultSubview (patron del
@@ -163,7 +162,6 @@ const VIEW_CONFIG = Object.freeze({
     'facturero-personal': { region: 'operational', label: 'Facturero Personal', focusSelector: '#agro-operational-root' },
     clients: { region: 'clients', label: 'Mis Clientes', focusSelector: '#agro-clients-root' },
     'task-cycles': { region: 'task-cycles', label: 'Ciclos de Tareas', focusSelector: '#agro-task-cycles-root' },
-    carrito: { region: 'ops', label: 'Mi Carrito', tab: 'carrito', focusSelector: '#agro-carrito-dedicated', dense: true },
     rankings: { region: 'ops', label: 'Rankings de Clientes', tab: 'rankings', focusSelector: '#agro-rankings-dedicated', dense: true },
     reportes: { region: 'reports-center', label: 'Centro de Reportes Generales', focusSelector: '#agro-reports-center-root' },
     'cartera-viva': { region: 'cartera-viva', label: 'Facturero de Clientes', focusSelector: '#agro-cartera-viva-root' },
@@ -185,7 +183,6 @@ const SHELL_VIEW_KEYWORDS = Object.freeze({
     'facturero-personal': Object.freeze(['facturero', 'personal', 'registros', 'gastos', 'sin asociar']),
     clients: Object.freeze(['clientes', 'mis clientes', 'contactos', 'libreta', 'directorio', 'registrados', 'no registrados', 'yavlgold']),
     'task-cycles': Object.freeze(['tareas', 'trabajo diario', 'pendientes', 'agenda']),
-    carrito: Object.freeze(['carrito', 'insumos', 'compras', 'lista']),
     rankings: Object.freeze(['ranking', 'rankings', 'clientes', 'estadisticas', 'top', 'comparacion']),
     reportes: Object.freeze(['reportes', 'markdown', 'exportar', 'exportes', 'informes', 'md', 'centro']),
     'cartera-viva': Object.freeze(['facturero clientes', 'clientes', 'fiados', 'deudas', 'pendientes']),
@@ -1558,8 +1555,7 @@ export function initAgroShell() {
     window.addEventListener('agro:finance-tab:changed', (event) => {
         const tabName = normalizeViewToken(event.detail?.tabName);
         const nextView = mapTabToView(tabName);
-        const nextSubview = nextView === 'carrito' ? 'summary' : activeSubview;
-        setActiveView(nextView, { scroll: false, syncTab: false, subview: nextSubview });
+        setActiveView(nextView, { scroll: false, syncTab: false, subview: activeSubview });
     });
 
     window.addEventListener('agro:shell:set-view', (event) => {

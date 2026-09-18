@@ -1,6 +1,6 @@
 # YavlGold
 
-> YavlGold es una plataforma agrícola digital. El único módulo released en V1 es **Agro** (facturero, cultivos, clientes, dashboard, estadísticas, carrito, planificación). Rutas como `Academia`, `Social`, `Tecnologia` y `Crypto` existen como placeholders de compatibilidad pero no son productos activos. Stack: Vanilla JS (ES6 modules) + Vite MPA + Supabase + Vercel. Diseño gobernado por ADN Visual V12.0.
+> YavlGold es una plataforma agrícola digital. El único módulo released en V1 es **Agro** (facturero, cultivos, clientes, dashboard, estadísticas, planificación). Rutas como `Academia`, `Social`, `Tecnologia` y `Crypto` existen como placeholders de compatibilidad pero no son productos activos. Stack: Vanilla JS (ES6 modules) + Vite MPA + Supabase + Vercel. Diseño gobernado por ADN Visual V12.0.
 
 YavlGold es una aplicación web agrícola construida sobre Vanilla JavaScript y Vite Multi-Page Application, con Supabase como backend y Vercel como plataforma de despliegue. Reglas estrictas documentadas en [`AGENTS.md`](AGENTS.md).
 

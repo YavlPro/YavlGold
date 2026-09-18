@@ -13,7 +13,6 @@ Modulo operativo principal de YavlGold. Herramienta agricola digital construida 
 - Gestion de cultivos con ciclos productivos.
 - Clima en tiempo real integrado en el flujo agricola.
 - Rankings y estadisticas financieras.
-- Carrito de insumos.
 - Planificacion y agenda agricola.
 - Inteligencia de mercado.
 - Cartera viva y cartera operativa con desglose por categoria.

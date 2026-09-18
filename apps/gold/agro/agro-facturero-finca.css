@@ -152,19 +152,6 @@
   opacity: 0.7;
 }
 
-/* Header swap: Carrito view */
-.ops-header-carrito {
-  display: none;
-}
-
-body[data-agro-active-view='carrito'] .ops-header-default {
-  display: none;
-}
-
-body[data-agro-active-view='carrito'] .ops-header-carrito {
-  display: block;
-}
-
 /* Header swap: Rankings view */
 .ops-header-rankings {
   display: none;
@@ -682,14 +669,6 @@ body[data-agro-active-view='rankings'] .ops-header-rankings {
   position: relative;
   isolation: isolate;
   z-index: 0;
-}
-
-body[data-agro-active-view='carrito'] .agro-ops-v10 .financial-operations-card {
-  display: none;
-}
-
-body[data-agro-active-view='carrito'] .agro-ops-v10 .agro-carrito-dedicated {
-  display: flex;
 }
 
 body[data-agro-active-view='rankings'] .agro-ops-v10 .financial-operations-card {

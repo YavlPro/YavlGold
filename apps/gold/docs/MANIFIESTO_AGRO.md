@@ -119,7 +119,6 @@ El valor de Agro no está solo en registrar. Está en conectar lo que pasa en el
     * Facturero del Cultivo — registros POR CULTIVO (crop_id ✓) — selectores dinámicos de finca y cultivo
     * Facturero Personal — registros SIN ASOCIAR (ambos null)
   * Mi Planificación
-    * Mi Carrito (ver §4.5.3)
     * Clima Agro (ver §4.8)
   * Trabajo y lectura
     * Mis Clientes (ver §4.5.4)
@@ -475,7 +474,6 @@ No es el registro de crecimiento de un cultivo ni tu lista de tareas. Es, concre
 **Mis finanzas:**
 
 * Mis Clientes — libreta de contactos (ver §4.5.4)
-* Mi Carrito — lista de compras de insumos (ver §4.5.3)
 
 ### Regla de separación
 
@@ -773,32 +771,7 @@ Pero cuando una de ellas está abierta como módulo profundo, debe presentarse c
 
 ## 4.5.3 Mi Carrito
 
-### Qué es
-
-Una lista de compras de insumos. Es como una lista del supermercado: vas agregando lo que necesitas comprar y cuánto cuesta estimado.
-
-### Qué no es
-
-No es un gasto real. No es Facturero de la Finca. Es una **lista de intención de compra**.
-
-### Para qué sirve
-
-* Planificar compras de insumos antes de comprarlos.
-* Ver el total estimado antes de salir a comprar.
-* Exportar la lista para llevar al proveedor o tienda.
-* Comparar con lo que realmente terminaste comprando (vs. lo planificado).
-
-### Cómo se usa
-
-1. Agregas productos/servicios a la lista con cantidad y precio estimado.
-2. Revisas el total estimado durante el proceso.
-3. Cuando realizas la compra, puedes convertir ese ítem en un gasto real y registrarlo en el Facturero de la Finca.
-4. También puedes exportar la lista completa.
-
-### Cómo se relaciona con las finanzas
-
-* Es una herramienta de planificación que alimenta el Facturero de la Finca.
-* Los ítems del carrito NO son gastos hasta que los registras como tales.
+Mi Carrito fue retirado del producto por decisión del owner (2026-09-17): era intención de compra sin uso real y nunca registró gasto.
 
 ---
 
@@ -1050,7 +1023,7 @@ Los reportes detallados por cultivo viven en cada card/ciclo de cultivo mediante
 | Informe Global Agro | `window.exportAgroGlobalMd()` | Perfil del agricultor con resumen de cultivos, totales y clientes principales |
 | Rankings de clientes (Markdown) | `window.exportOpsRankingsMarkdown()` | Rankings de clientes y cultivos desde Ciclos Operativos |
 
-No pertenecen al Centro de Reportes: reporte detallado por cultivo (vive en cada card), Facturero de Clientes, Facturero de la Finca, Mi Carrito, AgroRepo, Trabajo Diario, Mis Clientes, reportes financieros inventados, exportadores internos sueltos.
+No pertenecen al Centro de Reportes: reporte detallado por cultivo (vive en cada card), Facturero de Clientes, Facturero de la Finca, AgroRepo, Trabajo Diario, Mis Clientes, reportes financieros inventados, exportadores internos sueltos.
 
 ### Selector de finca
 
@@ -1295,7 +1268,7 @@ El patrón hub/module organiza Agro en dos estados de experiencia:
 #### Puertas principales del hub
 
 - **Inicio:** Mi Perfil, Dashboard Agro y Crear Finca (acceso directo a Mis Fincas).
-- **Granja:** cultivos, períodos, Facturero de Clientes, Facturero de la Finca, Mi Carrito, Mis Clientes, Trabajo Diario y Clima Agro.
+- **Granja:** cultivos, períodos, Facturero de Clientes, Facturero de la Finca, Mis Clientes, Trabajo Diario y Clima Agro.
 - **Memoria:** AgroRepo y Asistente IA.
 - **Menú:** perfil, documentación, feedback, ajustes y soporte.
 
@@ -1422,7 +1395,7 @@ Su propósito es concentrar el acceso a:
 - **Ciclos de Cultivo** (via Mis cultivos)
 - **Operaciones de la Finca** (via Mis fincas y cultivos)
 - **Mis factureros** (Facturero de Clientes, Facturero de la Finca)
-- **Mi Planificación** (Mi Carrito, Clima Agro)
+- **Mi Planificación** (Clima Agro)
 - **Trabajo y lectura** (Mis Clientes, Trabajo Diario, Centro de Reportes)
 
 **Los movimientos financieros no asociados a un cultivo específico** (gasolina, mantenimiento de infraestructura, etc.) se registran como «movimiento general» dentro de Facturero de la Finca (§4.5.2). No pertenecen a Mi Granja. El término «movimiento general» es financiero y vive en Facturero de la Finca.
@@ -1444,7 +1417,6 @@ Su propósito es concentrar el acceso a:
 
 * Facturero de Clientes
 * Facturero de la Finca
-* Mi Carrito
 * Mis Clientes
 
 ### 5.4 Lo cotidiano
