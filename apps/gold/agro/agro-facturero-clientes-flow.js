@@ -64,6 +64,14 @@ const UNIT_OPTIONS = [
 // Restricción del diseño aprobado (P4): solo producción o finalizados.
 const FLOW_ALLOWED_CROP_STATUSES = new Set(['produccion', 'finalizado']);
 
+// ANEXO 28 S4: vocabulario compartido por puente (§3.3) — los chips de Mis
+// Cultivos (agrociclos.js) leen esta MISMA lista, sin duplicar el Set.
+if (typeof window !== 'undefined') {
+    window._agroClientesFlow = Object.assign(window._agroClientesFlow || {}, {
+        allowedCropStatuses: FLOW_ALLOWED_CROP_STATUSES
+    });
+}
+
 const USD_GUARDRAIL_MIN = 1000;
 
 let activeFlowToken = 0;

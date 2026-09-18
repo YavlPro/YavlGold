@@ -9022,6 +9022,7 @@ if (typeof window !== 'undefined') {
 // ============================================================
 
 const CROP_STATUS_UI = {
+    precultivo: { class: 'status-precultivo', text: 'Pre-cultivo' },
     sembrado: { class: 'status-attention', text: 'Sembrado' },
     creciendo: { class: 'status-growing', text: 'Creciendo' },
     produccion: { class: 'status-ready', text: 'En producción' },
@@ -9195,6 +9196,11 @@ function isCropFinishedCycle(crop, progress) {
     const resolvedStatus = resolveCropStatus(crop, progress);
     const normalizedResolved = normalizeCropStatus(resolvedStatus);
     const explicitStatus = normalizeStatusToken(crop?.status_override || crop?.status || resolvedStatus);
+    // ANEXO 28: un pre-cultivo siempre está vivo; el progreso calculado desde
+    // la fecha de registro del plan jamás lo clasifica como cerrado (D-3).
+    if (normalizedResolved === 'precultivo' || explicitStatus === 'precultivo') {
+        return false;
+    }
     const finishedByStatus = normalizedResolved === 'finalizado'
         || normalizedResolved === 'lost'
         || CROP_FINISHED_STATUS_TOKENS.has(explicitStatus);
@@ -10823,6 +10829,7 @@ function createCropCardElement(crop, index, options = {}) {
 
 function mapStatusToCycleState(status) {
     const normalized = normalizeCropStatus(status);
+    if (normalized === 'precultivo') return 'precultivo';
     if (normalized === 'produccion') return 'produccion';
     if (normalized === 'sembrado' || normalized === 'creciendo') return 'siembra';
     return 'cosecha';
@@ -11033,6 +11040,8 @@ function buildActiveCycleCardsData(crops, options = {}) {
             icono: displayCrop.icon || '🌱',
             estado: cycleState,
             estadoTexto: statusMeta?.text || 'En producción',
+            resolvedStatus: effectiveStatus,
+            preCultivo: effectiveStatus === 'precultivo',
             area: areaText,
             siembra: formatDate(crop?.start_date),
             cosechaEst: formatDate(crop?.expected_harvest_date),
@@ -15422,7 +15431,9 @@ export function initAgro() {
         getCropMetrics: (crop) => {
             const templateDuration = getTemplateDurationForCrop(crop);
             const progress = computeCropProgress(crop, templateDuration);
-            return { progress, status: normalizeCropStatus(resolveCropStatus(crop, progress)) };
+            const status = normalizeCropStatus(resolveCropStatus(crop, progress));
+            // ANEXO 28: label humano para el payload del Asistente (D-3).
+            return { progress, status: status === 'precultivo' ? 'Pre-cultivo · aún no sembrado' : status };
         },
         readActiveTab: () => readStoredTab()
     };
@@ -15615,6 +15626,7 @@ export function openCropModal() {
     if (lostAtInput) lostAtInput.value = '';
     const statusSelect = document.getElementById('crop-status');
     if (statusSelect) statusSelect.value = 'sembrado';
+    window._agroPrecultivo?.syncCropModal?.();
     const investmentInput = document.getElementById('crop-investment');
     if (investmentInput) investmentInput.value = '';
     const investmentCurrency = document.getElementById('crop-investment-currency');
@@ -15715,6 +15727,8 @@ export function openEditModal(id) {
     }
     const editInput = document.getElementById('crop-edit-id');
     if (editInput) editInput.value = String(crop.id || '');
+    // Tras fijar edit-id: el sync distingue creación (fecha→hoy) de edición (conserva fecha).
+    window._agroPrecultivo?.syncCropModal?.();
     const templateSelect = document.getElementById('crop-template');
     if (templateSelect) {
         templateSelect.value = '';

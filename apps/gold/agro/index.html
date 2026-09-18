@@ -1809,6 +1809,7 @@
                     <label class="input-label" for="crop-status">Estado</label>
                     <select id="crop-status" class="styled-input agro-modal-input--select">
                         <option value="auto">Auto (por fechas)</option>
+                        <option value="precultivo">A&uacute;n no he sembrado (pre-cultivo)</option>
                         <option value="sembrado">Sembrado</option>
                         <option value="creciendo">Creciendo</option>
                         <option value="produccion">En producci&oacute;n</option>
@@ -2801,15 +2802,19 @@
                 const templateDuration = templateOption?.dataset?.duration
                     ? Number(templateOption.dataset.duration)
                     : null;
+                // ANEXO 28: en pre-cultivo no se piden siembra/cosecha/semilla (D-4/D-5).
+                const isPreCultivoSave = normalizeCropStatusForSave(
+                    document.getElementById('crop-status')?.value || 'sembrado'
+                ) === 'precultivo';
 
-                if (!name || area <= 0 || !sowDate) throw new Error("Completa Nombre, Área y Fecha.");
+                if (!name || area <= 0 || (!sowDate && !isPreCultivoSave)) throw new Error("Completa Nombre, Área y Fecha.");
 
                 // =====================================
                 // DATE VALIDATION (No Past / No Inverted)
                 // =====================================
                 const todayKey = getTodayKey();
 
-                if (!harvestDate && sowDate && Number.isFinite(templateDuration) && templateDuration > 0) {
+                if (!harvestDate && !isPreCultivoSave && sowDate && Number.isFinite(templateDuration) && templateDuration > 0) {
                     harvestDate = addDaysToKey(sowDate, templateDuration);
                     const harvestInput = document.getElementById('crop-harvest-date');
                     if (harvestInput && harvestDate) {
@@ -2818,13 +2823,13 @@
                 }
 
                 // 1) Siembra: permitir cualquier fecha pasada o actual, solo bloquear FUTURAS
-                if (sowDate > todayKey) {
+                if (sowDate && sowDate > todayKey) {
                     showValidationError('La fecha de siembra no puede ser futura.');
                     return;
                 }
 
                 // 2) Cosecha (si existe) validaciones
-                if (harvestDate) {
+                if (harvestDate && sowDate) {
                     // Cosecha no puede ser anterior a siembra
                     if (harvestDate < sowDate) {
                         showValidationError('La cosecha estimada no puede ser anterior a la siembra.');
@@ -2879,6 +2884,12 @@
                 const normalizedEffectiveStatus = normalizeCropStatusForSave(effectiveStatus) || 'sembrado';
                 const statusOverride = statusMode === 'manual' ? normalizedEffectiveStatus : null;
                 const initialStatus = normalizeCycleStatus(document.getElementById('form-new-crop')?.dataset?.initialStatus || '');
+                // ANEXO 28 S1: guard unidireccional (D-1/D-2/B1) antes de escribir.
+                const forwardCheck = window._agroPrecultivo?.assertForwardTransition?.(initialStatus, normalizedEffectiveStatus);
+                if (forwardCheck && !forwardCheck.ok) {
+                    showValidationError(forwardCheck.reason);
+                    return;
+                }
                 const shouldPromptLostWizard = normalizedEffectiveStatus === 'lost' && initialStatus !== 'lost';
 
                 let insertedId = null;
@@ -3423,6 +3434,13 @@
                         mod.initAgroAssistantSurface();
                     }
                 }).catch(err => console.warn('[AGRO] Assistant module load error:', err.message));
+
+                // ANEXO 28 S1: pre-cultivos — guard de fases + conversión a sembrado (un write).
+                import('./agro-precultivo.js').then((mod) => {
+                    if (typeof mod.initAgroPrecultivo === 'function') {
+                        mod.initAgroPrecultivo();
+                    }
+                }).catch(err => console.warn('[AGRO] Precultivo module load error:', err.message));
 
                 // Wire comprehensive stats report export button (non-blocking)
                 import('./agro-stats-report.js').then((mod) => {

@@ -22,7 +22,7 @@
  * AGRO_CROPS_READY; fincas desde window._agroFarms.
  *
  * Dormicion del legacy: agroOperationalCycles.js duerme con subview=wizard
- * (guards :3948-3951 y :3580, por subview sin importar la vista) —
+ * (guards :3637-3642 y :4037-4041, por subview sin importar la vista) —
  * misma convivencia probada por el wizard de Finca.
  *
  * ADN V12: tokens, FA 6.5 Free con aria-hidden, sin glow, transiciones
@@ -318,6 +318,18 @@ function createSession(root) {
         return emoji ? `${emoji} ${name}` : name;
     }
 
+    // ANEXO 28 (D-5): token canonico directo — sin re-implementar
+    // resolveCropStatus ni inventar vocabulario (header §49-52).
+    function isPreCultivoCrop(crop) {
+        const token = String(crop?.status_override || crop?.status || '').trim().toLowerCase();
+        return token === 'precultivo';
+    }
+
+    function crearTypeBlocksPreCultivo() {
+        return state.rama === RAMA_CREAR
+            && (state.tipoId === 'income' || state.tipoId === 'donation');
+    }
+
     // Reconciliacion honesta (ANEXO 21 extendida): el cultivo activo debe
     // pertenecer a la finca Y al grupo de estado elegido; si no, vuelve a la
     // lectura del grupo con nota visible (nunca mudo). Solo dirime cuando los
@@ -325,6 +337,15 @@ function createSession(root) {
     function reconcileCropSelection() {
         if (!state.cropId) return;
         if (getCropsState().phase !== 'ready') return;
+        // ANEXO 28 (D-5): un pre-cultivo no admite Ingreso ni Donación.
+        if (crearTypeBlocksPreCultivo()) {
+            const selected = getCropsState().crops.find((crop) => String(crop?.id || '') === state.cropId);
+            if (selected && isPreCultivoCrop(selected)) {
+                state.cropId = '';
+                state.contextNotice = 'El cultivo seleccionado es un pre-cultivo: solo admite Gasto y Pérdida.';
+                return;
+            }
+        }
         const estadoGrupo = state.estadoId !== ESTADO_TODOS;
         const groups = estadoGrupo ? getCycleGroups() : { known: true, ids: null };
         if (!groups.known) return;
@@ -638,7 +659,15 @@ function createSession(root) {
                 <button type="button" class="fcvw-btn" data-fcct-retry-crops><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Reintentar</button>
             `;
         } else {
-            const scoped = getEstadoScopedCrops();
+            let scoped = getEstadoScopedCrops();
+            // ANEXO 28 (D-5): en CREAR con Ingreso/Donación los pre-cultivos
+            // no aplican (aún no hay cosecha que vender ni regalar).
+            const preCultivoNote = obligatorio && crearTypeBlocksPreCultivo()
+                ? '<p class="fcvw-note">Los pre-cultivos solo admiten Gasto y Pérdida.</p>'
+                : '';
+            if (obligatorio && crearTypeBlocksPreCultivo()) {
+                scoped = scoped.filter((crop) => !isPreCultivoCrop(crop));
+            }
             // Comodín canon: primera opción del nivel 2 = lectura sin cultivo
             // individual ("Vista general de cultivos" o el grupo completo).
             const comodinLabel = state.estadoId === ESTADO_TODOS
@@ -659,7 +688,7 @@ function createSession(root) {
                     : `Sin cultivos ${estadoLabel().toLowerCase()}${state.farmId ? ' en esta finca' : ''}.`;
                 if (emptyNote) emptyNote = `<p class="fcvw-note">${escapeHtml(emptyNote)}</p>`;
             }
-            cropStripHtml = `${generalChip}${cropChips}${emptyNote}`;
+            cropStripHtml = `${generalChip}${cropChips}${preCultivoNote}${emptyNote}`;
         }
 
         const noticeHtml = state.contextNotice

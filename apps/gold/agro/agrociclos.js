@@ -48,6 +48,7 @@ function normalizeToken(value) {
 
 function statusClassFor(state) {
   const token = normalizeToken(state);
+  if (token === 'precultivo') return 'status-precultivo';
   if (token === 'produccion') return 'status-produccion';
   if (token === 'siembra') return 'status-siembra';
   if (token === 'cosecha') return 'status-cosecha';
@@ -316,6 +317,9 @@ function buildActions(ciclo) {
 
   return `
     <div class="cycle-actions">
+      ${ciclo?.preCultivo ? `<button type="button" class="cycle-action btn-sow-crop" data-id="${escapeAttr(id)}" title="Registrar siembra" aria-label="Registrar siembra">
+        <i class="fa-solid fa-seedling" aria-hidden="true"></i>
+      </button>` : ''}
       <button type="button" class="cycle-action btn-report-crop" data-id="${escapeAttr(id)}"${orphanAttr} title="Informe del Cultivo" aria-label="Informe del cultivo">
         <i class="fa-solid fa-chart-bar" aria-hidden="true"></i>
       </button>
@@ -330,6 +334,70 @@ function buildActions(ciclo) {
       </button>
     </div>
   `;
+}
+
+// ANEXO 28 S4 (D-6): chips de acción de la card activa. Chips 1+2 siempre en
+// cultivos visibles; chips 3+4 solo con fase habilitada por el Facturero de
+// Clientes — misma lista vía puente window._agroClientesFlow (flow.js), sin
+// duplicar vocabulario. Labels estáticos, cero datos inventados.
+function buildCropChips(ciclo, mode) {
+  const id = String(ciclo?.id || '').trim();
+  if (!id || mode !== 'active' || ciclo?.isAuditCard === true) return '';
+  const resolvedStatus = String(ciclo?.resolvedStatus || '').trim();
+  const flowAllowed = window._agroClientesFlow?.allowedCropStatuses?.has?.(resolvedStatus) === true;
+  return `
+    <div class="crop-chip-row">
+      <button type="button" class="crop-chip" data-crop-chip="cultivo-crear" data-crop-id="${escapeAttr(id)}">Crear registro</button>
+      <button type="button" class="crop-chip" data-crop-chip="cultivo-ver" data-crop-id="${escapeAttr(id)}">Ver registros</button>
+      ${flowAllowed ? `<button type="button" class="crop-chip" data-crop-chip="clientes-crear">Crear factura de cliente</button>
+      <button type="button" class="crop-chip" data-crop-chip="clientes-ver">Ver registros de clientes</button>` : ''}
+    </div>
+  `;
+}
+
+// Navegación por hash completo + evento agro:shell:set-view (patrón
+// openModernFactureroDestination, agro.js). writeViewToHash preserva los
+// params profundos en same-target (agro-shell.js), y el wizard restaura
+// rama/paso/crop desde el hash (readWizardHash).
+function navigateFromCropChip(kind, cropId) {
+  const id = String(cropId || '').trim();
+  const navigate = (hash, view, subview) => {
+    try {
+      const url = new URL(window.location.href);
+      url.hash = hash;
+      history.replaceState(null, '', url);
+    } catch (_err) { /* ignore */ }
+    window.dispatchEvent(new CustomEvent('agro:shell:set-view', {
+      detail: { view, subview, scroll: true }
+    }));
+  };
+  if (kind === 'cultivo-crear' && id) {
+    navigate(`view=facturero-cultivo&subview=wizard&rama=crear&paso=2&crop=${encodeURIComponent(id)}`, 'facturero-cultivo', 'wizard');
+    return;
+  }
+  if (kind === 'cultivo-ver' && id) {
+    navigate(`view=facturero-cultivo&subview=wizard&rama=ver&paso=2&crop=${encodeURIComponent(id)}`, 'facturero-cultivo', 'wizard');
+    return;
+  }
+  if (kind === 'clientes-crear') {
+    navigate('view=facturero-clientes&subview=nuevo&paso=1', 'facturero-clientes', 'nuevo');
+    return;
+  }
+  if (kind === 'clientes-ver') {
+    navigate('view=facturero-clientes&subview=ver-clientes&paso=1', 'facturero-clientes', 'ver-clientes');
+  }
+}
+
+function bindCropChipNavigation(container) {
+  if (!container || container.dataset.cropChipBound === '1') return;
+  container.dataset.cropChipBound = '1';
+  container.addEventListener('click', (event) => {
+    const chip = event.target?.closest?.('[data-crop-chip]');
+    if (!chip || !container.contains(chip)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    navigateFromCropChip(chip.dataset?.cropChip || '', chip.dataset?.cropId || '');
+  });
 }
 
 function renderGlobalUnitChips(globalBreakdown) {
@@ -523,11 +591,13 @@ function renderCard(ciclo, index = 0) {
   const currencyToggleMarkup = buildCurrencyToggleMarkup();
   const badges = resolveAllPortfolioBadges(ciclo);
   const isLost = ciclo?.estado === 'perdido';
+  // ANEXO 28: pre-cultivo no tiene siembra — sin "Día X/Y" ni barra (D-3).
+  const isPreCultivo = ciclo?.preCultivo === true;
   const progressText = mode === 'finished'
     ? (Number.isFinite(ciclo?.durationDays) && ciclo?.durationDays > 0
         ? `Inicio a ${isLost ? 'pérdida' : 'fin'}: ${ciclo.durationDays} días`
         : (isLost ? 'Perdido' : 'Completado'))
-    : `Día ${toNumber(ciclo?.diaActual, 0)}/${toNumber(ciclo?.diasTotales, 0)} (${porcentaje}%)`;
+    : (isPreCultivo ? 'Sin sembrar' : `Día ${toNumber(ciclo?.diaActual, 0)}/${toNumber(ciclo?.diasTotales, 0)} (${porcentaje}%)`);
   const progressClass = mode === 'finished' ? 'progress-track progress-complete' : 'progress-track';
   const dataId = String(ciclo?.id || '').trim();
   const orphanData = ciclo?.isAuditCard ? ' data-crop-orphan="1"' : '';
@@ -539,6 +609,7 @@ function renderCard(ciclo, index = 0) {
   const seedMeta = Number.isFinite(seedKg) && seedKg > 0
     ? `<span class="crop-seed-meta">Semilla: ${seedKgText} kg</span>`
     : '';
+  const cropChips = buildCropChips(ciclo, mode);
 
   const desglose = ciclo?.desglose || {};
   const desgloseBase = String(desglose.base || 'N/D');
@@ -659,22 +730,23 @@ function renderCard(ciclo, index = 0) {
           <span class="progress-label">Progreso</span>
           <span class="progress-days">${escapeHtml(progressText)}</span>
         </div>
-        <div class="${progressClass}">
+        ${isPreCultivo ? '' : `<div class="${progressClass}">
           <div class="progress-fill" style="width:${porcentaje}%">
             <span class="progress-dot"></span>
           </div>
-        </div>
+        </div>`}
         ${seedMeta}
+        ${cropChips}
       </div>
 
       <div class="data-grid">
         <div class="data-cell">
           <span class="data-label">Siembra</span>
-          <span class="data-value">${escapeHtml(ciclo?.siembra || 'N/A')}</span>
+          <span class="data-value">${escapeHtml(isPreCultivo ? '—' : (ciclo?.siembra || 'N/A'))}</span>
         </div>
         <div class="data-cell">
           <span class="data-label">Cosecha Est.</span>
-          <span class="data-value">${escapeHtml(ciclo?.cosechaEst || 'N/A')}</span>
+          <span class="data-value">${escapeHtml(isPreCultivo ? '—' : (ciclo?.cosechaEst || 'N/A'))}</span>
         </div>
         <div class="data-cell">
           <span class="data-label data-label--with-currency">Inversión ${currencyToggleMarkup}</span>
@@ -760,6 +832,7 @@ export function renderCycleCards(container, cycles = [], options = {}) {
   `;
   syncOperationalPortfolioBadges(container);
   bindCycleCurrencyToggle(container);
+  bindCropChipNavigation(container);
   refreshCycleDisplayCurrency(container);
   initCycleDisplayCurrency().then(() => {
     refreshCycleDisplayCurrency(container);
