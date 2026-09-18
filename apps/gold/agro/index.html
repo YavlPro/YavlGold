@@ -155,6 +155,7 @@
     <link rel="stylesheet" href="./agro-facturero-finca-wizard.css">
     <link rel="stylesheet" href="./agro-facturero-cultivo-wizard.css">
     <link rel="stylesheet" href="./agro-facturero-personal-wizard.css">
+    <link rel="stylesheet" href="./agro-assistant.css">
     <link rel="stylesheet" href="./agro-clients.css">
     <link rel="stylesheet" href="./agro-reports-center.css">
     <link rel="stylesheet" href="./agro-farms.css">
@@ -3412,6 +3413,15 @@
                     const { supabase: sb } = await import('../assets/js/config/supabase-config.js');
                     mod.initIAContext({ supabase: sb, userId: session.user?.id });
                 }).catch(err => console.warn('[AGRO] IA wizard module load error:', err.message));
+
+                // ANEXO 25 S1: Asistente IA extraído del monolito (núcleo + ui).
+                // Init idempotente (guard document.__agroAssistantBound); el monolito
+                // también llama window.initAgroAssistantSurface?.() como defensa.
+                import('./agro-assistant.js').then((mod) => {
+                    if (typeof mod.initAgroAssistantSurface === 'function') {
+                        mod.initAgroAssistantSurface();
+                    }
+                }).catch(err => console.warn('[AGRO] Assistant module load error:', err.message));
 
                 // Wire comprehensive stats report export button (non-blocking)
                 import('./agro-stats-report.js').then((mod) => {
