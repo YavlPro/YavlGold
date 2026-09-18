@@ -18,9 +18,11 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-08-01__2026-09-17.md`
 ## Frente abierto (activo)
 
 - **ANEXO 23-b — pivote nativo en totales del ciclo**: commiteado por el owner como `10347911` (HEAD al abrir esta sesión; tree limpio). Causa raíz del residual: `normalizeCycleDisplayCurrency()` sin argumento siempre devuelve 'USD' (normalizador puro, no getter) → el guard nativo del ANEXO 23 jamás activaba y las 6 líneas de la card seguían en camino USD (200.110/200.106 vs 200.000 reales). Fix: `getCycleDisplayCurrency()` real en los 3 guards de `agrociclos.js`; moneda null del movimiento hereda la del ciclo (`agroOperationalCycles.js`); bridge expone `window._agroMergedOperationalNativeByCrop`. Detalle completo y tabla de verdad: final del archivo archivado (sesión 2026-09-17 II).
-- **ANEXO 24 — retiro de Mi Carrito**: ejecutado completo en working tree (build verde), **QA owner pendiente**. Módulo `agro-cart.js` archivado en `archive/legacy-js/`; rutas legacy `#view=carrito`/`#view=operational-cart` coercen al hub Granja vía `SHELL_GATE_ROUTES`; tablas Supabase `agro_cart`/`agro_cart_items` NO se tocaron (datos del owner intactos en remoto). Ver sesión 2026-09-17 (III).
+- **ANEXO 24 — retiro de Mi Carrito**: commiteado por el owner como `d5a9cccf`. Módulo `agro-cart.js` archivado en `archive/legacy-js/`; rutas legacy `#view=carrito`/`#view=operational-cart` coercen al hub Granja vía `SHELL_GATE_ROUTES`; tablas Supabase intactas. Ver sesión 2026-09-17 (III).
 - **ANEXO 25 S1 — extracción del Asistente IA del monolito**: commiteado por el owner como `a1274f84` (QA funcional GREEN 17-sep 20:40). Split D-IA-2: `agro-assistant.js` (core 1,167L) + `agro-assistant-ui.js` (render 426L) + `agro-assistant.css` (1,433L); `agro.js` 17.780→16.292; Edge Function intacta; claves localStorage idénticas. Ver sesión 2026-09-17 (IV).
-- **ANEXO 26 — pulido visual del Asistente IA**: ejecutado completo en working tree (build verde), **QA owner pendiente**. CSS dividido (layout 863L + chat 619L), columna de conversación centrada con burbujas con aire, welcome con 3 chips §9.11 que envían al click, cooldown DENTRO del botón ("Enviar en Xs"), ortografía y aria corregidas. Cero cambio de datos/red/persistencia. Ver sesión 2026-09-17 (V).
+- **ANEXO 26 — pulido visual del Asistente IA**: commiteado por el owner como `a240b5d8` (diseño desplegado y validado). CSS dividido (layout 863L + chat 619L), columna centrada, burbujas card-canon, welcome con 3 chips §9.11, cooldown DENTRO del botón. Ver sesión 2026-09-17 (V).
+- **ANEXO 27 — "Error de conexión" del asistente post-deploy 26 (QA 21:09/21:12)**: Fase 0 solo-lectura completada. ANEXO 26 exonerado estáticamente; causa del MENSAJE probada (clasificador `!status` atrapa `FunctionsFetchError`/`FunctionsRelayError` sin status); causa del FALLO pendiente de evidencia runtime del owner (consola+network+logs Supabase). El incidente sigue ABIERTO. Ver sesión 2026-09-17 (VI).
+- **Reconciliación documental de listas de módulos**: completada en working tree (`AGENTS.md` §3.2 con 8 módulos JS agregados: `agro-assistant.js`, `agro-assistant-ui.js`, 4 wizards facturero, `agro-ledger-reader.js`, `agro-operational-edit.js`; `FICHA_TECNICA.md` §4.2 con 3 módulos JS y 2 CSS agregados; verificación de cero residuos de "Mi Carrito" fuera de lápida §4.5.3). Push documental pendiente de palabra del owner.
 
 ## Decisiones canónicas vigentes (resumen)
 
@@ -40,8 +42,10 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-08-01__2026-09-17.md`
 ## Últimos cambios relevantes aún vivos
 
 - `10347911` (owner): ANEXO 23-b — getter real de moneda del ciclo, herencia de moneda, bridge nativo.
-- `a1274f84` (owner): ANEXO 25 S1 — extracción del Asistente IA (d5a9cccf = ANEXO 24).
-- Working tree 17-sep (sin commit): ANEXO 26 pulido visual del Asistente (sesión V) — único pendiente de commit.
+- `d5a9cccf` (owner): ANEXO 24 — retiro de Mi Carrito del producto.
+- `a1274f84` (owner): ANEXO 25 S1 — extracción del Asistente IA del monolito.
+- `a240b5d8` (owner): ANEXO 26 — pulido visual del Asistente IA.
+- Working tree 17-sep (sin commit): reconciliación documental de listas de módulos y reportes de cierre del día — pendiente de palabra del owner para commit/push.
 - Crónica activa del año: `chronicles/CRONICA-YAVLGOLD-2026-ACTIVA.md`; diarios en `ops/daily-log-*.md` (se purgan al cierre mensual).
 
 ---
@@ -192,3 +196,69 @@ Agente: GLM (ZCode). Front SOLO visual/UX de #view=asistente; cero cambio de com
 git add -A
 git commit -m "style(agro): ANEXO 26 — pulido visual del Asistente IA (split css layout+chat, burbujas card-canon, chips §9.11, cooldown en botón, aria+ortografía)"
 ```
+
+---
+
+## Sesión 2026-09-17 (VI) — ANEXO 27 Fase 0: "Error de conexión" del asistente
+
+Agente: GLM (ZCode). MODO SOLO LECTURA (cero edits de código, cero git). Síntoma: QA owner 21:09 y 21:12 (post-deploy `a240b5d8`) — invoke termina en "Error de conexión: No se pudo contactar al asistente. Verifica tu red." ×2. A las 20:40 respondía normal. Cooldown/cola vivos; diseño 26 desplegado OK.
+
+**Diagnóstico (con archivo:línea y evidencia)**:
+
+(a) Camino de envío: `sendAgroAssistantMessage` (:1082) → cola → `processAssistantQueue` (:467) → `invoke` (:549, payload `{message, prompt, context}` = contrato Edge index.ts:944) → rama `if (error)` (:553-575) o `catch` (:607-624). El string exacto SOLO lo produce `getAssistantErrorMessage` (:933), rama `!status || status===0 || 'failed to fetch'|'networkerror'|'cors'|'load failed'` (:953-962). **Causa del MENSAJE probada**: en @supabase/functions-js 2.90.1 (instalado, fuente leída en node_modules), `FunctionsFetchError` ("Failed to send a request to the Edge Function") y `FunctionsRelayError` ("Relay Error...") NO llevan `.status` → `!status` → rama conexión. Es un clasificador catch-all: no prueba red local.
+
+(b) Runtime verificado: 9/9 nodos del camino existen en index.html (btn-send, input, cooldown oculto, scroll, history, typing, status, toast, page); delegación de chips intacta en #assistant-scroll; build verde del deploy (imports/nodos resueltos); bundle `agro-assistant-C7CYZgsi.js` contiene invoke+errores. Cero referencias a nodos retirados por ANEXO 26.
+
+(c) Cliente supabase: import directo de supabase-config (agro-assistant.js:22), sin cambios entre deploys.
+
+**Exoneración de ANEXO 26 (evidencia)**: diff `a1274f84→a240b5d8` del core toca SOLO `updateAssistantCooldownUI` (hunks @@398-445) y 4 strings de copy (@@665/@@700/@@906/@@1106); `processAssistantQueue`, `getAssistantErrorMessage`, invoke, contexto e import con 0 bytes de diff; Edge Function 0 diff; allowlist CORS cubre www+apex.
+
+**Defecto real encontrado (preexistente, explica la mala UX)**: el diseño "network error → keep in queue for retry" del `catch` (:608-618) JAMÁS aplica a fallos reales de red: `functions.invoke` no lanza, devuelve `{error}` → `FunctionsFetchError` cae en `if (error)` → shift (:570) → el mensaje del owner se DROPEA con error de conexión en vez de quedar en cola. Además `error.name` (que distingue Fetch vs Relay) no se consulta.
+
+**Causa raíz del FALLO — NO determinable estáticamente (regla de paro)**: dos hipótesis vivas: H1 fetch del navegador nunca completó (red local/VPN/DNS; ojo: el QA 20:40 pudo ser localhost:5173 — está en allowlist y usa otro camino que producción); H2 FunctionsRelayError (relay Supabase no alcanzó/levantó la función). Discriminador exacto para el owner: (1) consola: si dice `[AGRO][AI] invoke error unknown` confirma nivel invoke; (2) Network: estado de la petición a `/functions/v1/agro-assistant` (failed/CORS = H1; 5xx-relay = H2); (3) logs de la función en Supabase Dashboard 21:09/21:12 (ausentes = no llegó). Si NO reproduce → transitorio, cierre sin código.
+
+**Plan de fix mínimo (≤10 líneas, SOLO micro-sesión siguiente y si el owner lo ordena)**: en `processAssistantQueue`, detectar `error?.name === 'FunctionsFetchError' || error?.name === 'FunctionsRelayError'` → no shift (reintentar vía cola, cooldown corto) + mensaje honesto por `error.name` ("no se pudo contactar" vs "el servicio no respondió"); mismo patrón en `getAssistantErrorMessage`.
+
+**No trazado (honesto)**: consola/network del navegador del owner; logs Supabase; si el QA 20:40 fue localhost o producción; reproducción actual.
+
+**NO se hizo**: edits de código, git, fix (regla de paro sin evidencia runtime).
+
+---
+
+## Sesión 2026-09-17 (cierre documental)
+
+Agente: Antigravity / DeepMind. MODO DOCUMENTAL ESTRICTO (cero código, cero git, sin tocar trabajo de GLM, sin diagnóstico del incidente ANEXO 27). Asentado como 2026-09-17 por palabra del owner.
+
+**Objetivo**: reconciliación de listas de módulos en documentos canónicos (`AGENTS.md` §3.2, `FICHA_TECNICA.md` §4.2), verificación de residuos de "Mi Carrito" tras ANEXO 24, consolidación del daily log `daily-log-2026-09-17.md` y cierre de bitácora del día.
+
+**Diagnóstico (archivos inspeccionados y greps)**:
+(a) Residuos "Mi Carrito" / `agro-cart`: grep en `MANIFIESTO_AGRO.md`, `FICHA_TECNICA.md`, `AGENTS.md`, `docs-agro.html`, `public/llms.txt` y `agro/README.md`. Resultado: único match es la lápida canónica §4.5.3 de `MANIFIESTO_AGRO.md`; cero residuos en `public/llms.txt` ni `agro/README.md`. Por regla de Paso 2(a), MANIFIESTO se declara sin residuos y permanece intacto.
+(b) Módulos JS: comparación de `apps/gold/agro/*.js` contra `AGENTS.md` §3.2 y `FICHA_TECNICA.md` §4.2.
+  - `AGENTS.md` §3.2: faltaban 8 módulos extraídos/existentes: `agro-assistant.js`, `agro-assistant-ui.js`, `agro-facturero-cultivo-wizard.js`, `agro-facturero-finca-edit.js`, `agro-facturero-finca-wizard.js`, `agro-facturero-personal-wizard.js`, `agro-ledger-reader.js`, `agro-operational-edit.js`. Se agregaron en orden alfabético con rol de una línea.
+  - `FICHA_TECNICA.md` §4.2: faltaban `agro-assistant.js`, `agro-assistant-ui.js` y `agro-operational-edit.js` en la lista JS. Se agregaron con rol de una línea.
+(c) Archivos CSS: comparación contra `FICHA_TECNICA.md` §4.2. Faltaban `agro-assistant.css` y `agro-assistant-chat.css`. Se agregaron.
+(d) Daily log: `daily-log-2026-09-17.md` fusionado bajo formato estricto §4.3/§4.3.1 con los 3 commits reales del día (`d5a9cccf`, `a1274f84`, `a240b5d8`), estado YELLOW por incidente de conexión y próximos pasos.
+
+**Tabla de cambios**:
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `AGENTS.md` | canon | §3.2: reconciliación de 8 módulos faltantes (`agro-assistant.js`, `agro-assistant-ui.js`, 4 wizards facturero, `agro-ledger-reader.js`, `agro-operational-edit.js`) |
+| `apps/gold/docs/FICHA_TECNICA.md` | canon | §4.2: agregados `agro-assistant.js`, `agro-assistant-ui.js`, `agro-operational-edit.js` a JS y `agro-assistant.css`, `agro-assistant-chat.css` a CSS |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | reporte | Frente abierto actualizado, registro de sesión de cierre documental y estado del working tree |
+| `apps/gold/docs/ops/daily-log-2026-09-17.md` | ops | Fusión y consolidación bajo formato estricto §4.3/§4.3.1 con hashes reales y estado YELLOW |
+
+**Resultado de build**: Pipeline de build verificado (`node scripts/agent-guard.mjs && node scripts/agent-report-check.mjs && vite build && node scripts/check-llms.mjs && node scripts/check-dist-utf8.mjs`) ✅ verde (guard OK, agent-report-check OK, bundle Vite generado en 2.66s, check-llms OK, UTF-8 OK).
+
+**QA sugerido (revisión documental del owner)**:
+1. Inspeccionar diff en `AGENTS.md` y `FICHA_TECNICA.md` (listas de módulos JS y CSS actualizadas, cero cambios de código).
+2. Revisar `AGENT_REPORT_ACTIVE.md` y `daily-log-2026-09-17.md`.
+3. Validar que los cambios quedan en working tree listos para commit documental cuando el owner lo autorice.
+
+**NO se hizo**:
+- Cero código (.js / .css / .html intactos).
+- Cero git (sin `git add`, `commit` ni `push`).
+- Sin tocar trabajo previo de GLM en ANEXO 25/26/27.
+- Sin diagnóstico ni fix del incidente de conexión del Asistente (reservado a ANEXO 27 Fase 0/1 con evidencia runtime del owner).
+- Sin cambios en `MANIFIESTO_AGRO.md` (verificado sin residuos fuera de lápida §4.5.3).
+- Sin tocar `yavlgold-context.md` (snapshot histórico V10 declarado).

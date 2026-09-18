@@ -70,6 +70,8 @@ El sistema de diseño activo vive en `apps/gold/docs/ADN-VISUAL-V12.0.md`. Es el
 ```
 agro.js                              — monolito principal (facturero, CRUD, historial, Asistente IA V9.5.6+)
 agro-agenda.js                       — agenda agrícola
+agro-assistant.js                    — núcleo del Asistente IA (cola, persistencia, invoke, contexto)
+agro-assistant-ui.js                 — render del Asistente IA (conversación, historial, componentes UI)
 agro-buyer-identity.js               — resolución de identidad de compradores
 agro-clients.js                      — Mis Clientes: directorio de contactos
 agro-clima.js                        — integración meteorológica
@@ -87,6 +89,10 @@ agro-facturero-clientes-flow.js      — wizard de creación (8 pasos) + routing
 agro-facturero-clientes-merge.js     — modal para unificar clientes duplicados
 agro-facturero-clientes-view.js      — vista principal: tabs por saldo vivo, wizard de compradores
 agro-facturero-clientes-view-wizard.js — wizard de lectura "Ver clientes" (4 pasos) + Acciones del sistema
+agro-facturero-cultivo-wizard.js     — wizard del Facturero del Cultivo (lectura y registro por cultivo)
+agro-facturero-finca-edit.js         — modal de edición y eliminación suave de movimientos de finca
+agro-facturero-finca-wizard.js       — wizard del Facturero de la Finca (5 pasos, lectura y registro)
+agro-facturero-personal-wizard.js    — wizard del Facturero Personal (lectura y registro sin finca ni cultivo)
 agro-farm-compare.js                 — comparación lado a lado de dos fincas
 agro-farm-movements.js               — movimientos financieros por finca
 agro-farm-report.js                  — reportes por finca
@@ -95,9 +101,11 @@ agro-feedback.js                     — feedback y encuestas
 agro-format.js                       — helpers de formateo de moneda y métricas
 agro-ia-wizard.js                    — wizard de configuración del Asistente IA (experiencia + objetivos)
 agro-interactions.js                 — interacciones
+agro-ledger-reader.js                — lector canónico del ledger por partición (farm/crop/orphan)
 agro-market.js                       — inteligencia de mercado
 agro-mode.js                         — switch de modo de lectura del shell (General/Cultivo/No Cultivo/Herramientas)
 agro-notifications.js                — notificaciones
+agro-operational-edit.js             — modal de edición de movimientos operacionales del ciclo
 agro-period-cycles.js                — ciclos de período (Operaciones de la Finca)
 agro-planning.js                     — planificación
 agro-privacy.js                      — privacidad de datos (ocultar nombres/montos)

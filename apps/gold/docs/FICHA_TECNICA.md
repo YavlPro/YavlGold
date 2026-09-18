@@ -157,6 +157,8 @@ Regla estricta:
 ```
 agro.js              — monolito principal (facturero, CRUD, historial)
 agro-agenda.js       — agenda agrícola
+agro-assistant.js    — núcleo del Asistente IA (cola anti-429, persistencia, invoke, contexto y puentes)
+agro-assistant-ui.js — render del Asistente IA (conversación, historial y componentes UI)
 agro-facturero-clientes-assignment.js — reasignación segura de cliente dentro del editor de movimientos, sin borrar historial
 agro-facturero-clientes-merge.js — modal seguro para unificar clientes duplicados moviendo movimientos al cliente destino
 agro-facturero-clientes-view.js — Facturero de Clientes: vista de clientes, tabs por saldo vivo, cultivos asociados en cards, wizard de compradores y flujos separados Nuevo cliente / Cliente existente
@@ -169,6 +171,7 @@ agro-facturero-finca-edit.js — modal de edición y eliminación suave de movim
 agro-ledger-reader.js — lector canónico del ledger por partición (farm/crop/orphan): proyección con claves de partición en el select, criba post-normalización, canary de criba ciega, unión de históricos operacionales, dedup con prioridad ledger, traducción de categorías por partición (vocabulario de finca por defecto; personal p_* para el Facturero Personal) y stamps de scope para detección de staleness; consumido por los wizards de Cultivo, Finca y Personal (fuente única de lectura del ledger)
 agro-facturero-cultivo-wizard.js — wizard del Facturero del Cultivo (VER 5 pasos / CREAR 6): selectores dinámicos finca→cultivo con regla estricta, conteos reales por tile y categoría vía agro-ledger-reader.js, creación al ledger con crop_id obligatorio y farm_id derivado del cultivo, edición/eliminación por reuso del editor de la finca
 agro-facturero-personal-wizard.js — wizard del Facturero Personal (VER 4 pasos / CREAR 5, sin selectores por canon §4.5): partición ambos-null fija, categorías personales p_* (6 gastos / 4 ingresos; legacy → Otros en lectura), conteos reales vía lector, creación al ledger con farm_id/crop_id null, edición/eliminación por reuso del editor de la finca
+agro-operational-edit.js — modal de edición de movimientos operacionales del ciclo
 agro-clients.js      — Mis Clientes: directorio de contactos (clientes manuales + buyers derivados de Facturero de Clientes)
 agro-clima.js        — integración meteorológica
 agro-crop-report.js  — reportes detallados por cultivo (se acceden desde cada card/ciclo, no desde el Centro de Reportes)
@@ -201,6 +204,8 @@ disponible, con fallback defensivo a query directa.
 
 **Archivos CSS:**
 - `agro.css` — estilos principales + papelera + undo toast
+- `agro-assistant.css` — layout, sidebar, header y contexto del Asistente IA
+- `agro-assistant-chat.css` — columna de conversación, burbujas y welcome card del Asistente IA
 - `agro-facturero-clientes.css` — Facturero de Clientes: vista, cards, estados, acciones separadas y responsive mobile
 - `agro-facturero-clientes-flow.css` — wizard de creación de clientes (chrome y pasos)
 - `agro-facturero-clientes-view-wizard.css` — wizard de lectura (topbar sticky, tiles, footer)
