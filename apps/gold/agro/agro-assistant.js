@@ -551,7 +551,7 @@ async function processAssistantQueue() {
 
         if (error) {
             const status = error?.status || error?.statusCode;
-            console.warn('[AGRO][AI] invoke error', status || 'unknown');
+            console.warn('[AGRO][AI] invoke error', status || error?.name || 'unknown');
 
             if (isRateLimitError(error)) {
                 // 429: Exponential backoff, DO NOT shift (keep item for retry)
@@ -564,6 +564,17 @@ async function processAssistantQueue() {
                 addAssistantMessage({
                     role: 'system',
                     text: `Limite de consultas alcanzado. Tu mensaje esta en cola y se enviara automaticamente en ${backoffSec}s.`
+                });
+            } else if (error?.name === 'FunctionsFetchError' || error?.name === 'FunctionsRelayError') {
+                // ANEXO 27: invoke no lanza en fallos de red/relay — llegan como {error}
+                // sin status. El mensaje queda en cola (diseño V9.7) y se reintenta al
+                // expirar el cooldown, igual que el path de excepciones de red del catch.
+                setCooldownUntil(AGRO_ASSISTANT_MIN_INTERVAL_MS * 2);
+                addAssistantMessage({
+                    role: 'system',
+                    text: error?.name === 'FunctionsRelayError'
+                        ? 'El servicio del asistente no respondió. Tu mensaje está en cola y se reintentará.'
+                        : 'No se pudo contactar al asistente. Tu mensaje está en cola y se reintentará.'
                 });
             } else {
                 // Other error: shift the item, apply short cooldown
@@ -950,6 +961,14 @@ function getAssistantErrorMessage(error) {
     // Errores de Servidor (5xx)
     if (status >= 500) {
         return 'El asistente tiene problemas técnicos momentáneos. Intenta más tarde.';
+    }
+
+    // Errores de red/relay de functions.invoke (sin status; ver ANEXO 27)
+    if (error?.name === 'FunctionsRelayError') {
+        return 'El servicio del asistente no respondió. Intenta nuevamente en unos momentos.';
+    }
+    if (error?.name === 'FunctionsFetchError') {
+        return 'No se pudo contactar al asistente. Verifica tu conexión.';
     }
 
     // Errores de Red / CORS / Offline

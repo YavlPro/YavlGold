@@ -21,7 +21,7 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-08-01__2026-09-17.md`
 - **ANEXO 24 — retiro de Mi Carrito**: commiteado por el owner como `d5a9cccf`. Módulo `agro-cart.js` archivado en `archive/legacy-js/`; rutas legacy `#view=carrito`/`#view=operational-cart` coercen al hub Granja vía `SHELL_GATE_ROUTES`; tablas Supabase intactas. Ver sesión 2026-09-17 (III).
 - **ANEXO 25 S1 — extracción del Asistente IA del monolito**: commiteado por el owner como `a1274f84` (QA funcional GREEN 17-sep 20:40). Split D-IA-2: `agro-assistant.js` (core 1,167L) + `agro-assistant-ui.js` (render 426L) + `agro-assistant.css` (1,433L); `agro.js` 17.780→16.292; Edge Function intacta; claves localStorage idénticas. Ver sesión 2026-09-17 (IV).
 - **ANEXO 26 — pulido visual del Asistente IA**: commiteado por el owner como `a240b5d8` (diseño desplegado y validado). CSS dividido (layout 863L + chat 619L), columna centrada, burbujas card-canon, welcome con 3 chips §9.11, cooldown DENTRO del botón. Ver sesión 2026-09-17 (V).
-- **ANEXO 27 — "Error de conexión" del asistente post-deploy 26 (QA 21:09/21:12)**: Fase 0 solo-lectura completada. ANEXO 26 exonerado estáticamente; causa del MENSAJE probada (clasificador `!status` atrapa `FunctionsFetchError`/`FunctionsRelayError` sin status); causa del FALLO pendiente de evidencia runtime del owner (consola+network+logs Supabase). El incidente sigue ABIERTO. Ver sesión 2026-09-17 (VI).
+- **ANEXO 27 — "Error de conexión" del asistente post-deploy 26 (QA 21:09/21:12)**: Fase 0 completada (ANEXO 26 exonerado; el string es el clasificador `!status` atrapando errores Fetch/Relay sin status) y **F1 aplicado con luz verde del owner** (sesión VII): fallos Fetch/Relay ya no dropean el mensaje — quedan en cola con reintento (20s) y mensaje honesto por `error.name`. **QA owner pendiente**; causa raíz del incidente original sigue pendiente de evidencia runtime (consola ahora mostrará `error.name` como firma). Ver sesiones 2026-09-17 (VI-VII).
 - **Reconciliación documental de listas de módulos**: completada en working tree (`AGENTS.md` §3.2 con 8 módulos JS agregados: `agro-assistant.js`, `agro-assistant-ui.js`, 4 wizards facturero, `agro-ledger-reader.js`, `agro-operational-edit.js`; `FICHA_TECNICA.md` §4.2 con 3 módulos JS y 2 CSS agregados; verificación de cero residuos de "Mi Carrito" fuera de lápida §4.5.3). Push documental pendiente de palabra del owner.
 
 ## Decisiones canónicas vigentes (resumen)
@@ -262,3 +262,28 @@ Agente: Antigravity / DeepMind. MODO DOCUMENTAL ESTRICTO (cero código, cero git
 - Sin diagnóstico ni fix del incidente de conexión del Asistente (reservado a ANEXO 27 Fase 0/1 con evidencia runtime del owner).
 - Sin cambios en `MANIFIESTO_AGRO.md` (verificado sin residuos fuera de lápida §4.5.3).
 - Sin tocar `yavlgold-context.md` (snapshot histórico V10 declarado).
+
+---
+
+## Sesión 2026-09-17 (VII) — ANEXO 27 F1: fix de cola en fallos Fetch/Relay
+
+Agente: GLM (ZCode). "Luz verde" del owner para el plan mínimo de la sesión VI. Único archivo tocado: `agro-assistant.js` (+20/−1). Cero Edge Function, cero persistencia, cero red nueva.
+
+**Cambios**:
+1. `processAssistantQueue`, rama `if (error)`: nueva rama ANTES del shift genérico — `error?.name === 'FunctionsFetchError' || 'FunctionsRelayError'` → **sin shift** (mensaje queda en cola, diseño V9.7), cooldown 20s (mismo valor que el path de excepciones de red del catch) y mensaje system honesto por nombre: Relay "El servicio del asistente no respondió..." / Fetch "No se pudo contactar al asistente... Tu mensaje está en cola y se reintentará". El reintento automático lo hace el timer existente al expirar el cooldown; los mensajes system consecutivos idénticos ya se deduplican en `addAssistantMessage` (sin spam); el 429 se sigue evaluando primero (intacto).
+2. `getAssistantErrorMessage`: dos checks por `error.name` ANTES del clasificador `!status` genérico (Relay → "El servicio del asistente no respondió..."; Fetch → "No se pudo contactar al asistente. Verifica tu conexión."). El string genérico "Error de conexión..." se conserva para otros errores sin status.
+3. `console.warn` del invoke ahora incluye `error?.name` (`status || error?.name || 'unknown'`) — forensia para la próxima vez.
+
+**Semántica lograda**: un fallo real de red/relay ya NO dropea el mensaje del usuario (defecto preexistente documentado en sesión VI); queda en cola con reintento automático, igual que el diseño anti-429. El caso 21:09/21:12 habría mostrado "Tu mensaje está en cola y se reintentará" en vez del error de conexión definitivo.
+
+**Build**: `pnpm build:gold` ✅ verde (2.60s). Verificación: 4 referencias a FunctionsFetch/RelayError en el archivo; diff +20/−1.
+
+**QA sugerido (owner)**: con red normal, flujo idéntico (mensaje → respuesta). Si quieres validar el fix sin cortar tu red: DevTools → Network → offline, enviar mensaje → debe aparecer el system "en cola y se reintentará" y NO perderse el mensaje; al volver online, esperar cooldown → se envía solo. Consola: `[AGRO][AI] invoke error FunctionsFetchError` como firma clara.
+
+**NO se hizo**: git (bloque sugerido abajo); Edge Function; cambios en el clasificador genérico `!status` (queda como fallback); backoff exponencial para red (cooldown fijo 20s, fiel al diseño del catch V9.7).
+
+**Bloque git sugerido (NO ejecutado)**:
+```bash
+git add -A
+git commit -m "fix(agro): ANEXO 27 — fallos Fetch/Relay del asistente dejan el mensaje en cola con reintento (sin drop) y mensajes honestos por error.name"
+```
