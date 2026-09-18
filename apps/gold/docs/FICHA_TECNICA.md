@@ -182,6 +182,7 @@ agro-interactions.js — interacciones
 agro-market.js       — inteligencia de mercado
 agro-notifications.js — notificaciones
 agro-planning.js     — planificación
+agro-precultivo.js   — conversión pre-cultivo→sembrado y guard de transiciones unidireccionales
 agro-privacy.js      — privacidad de datos
 agro-reports-center.js — Centro de Reportes Generales: índice de reportes generales oficiales con selector de finca (estadísticas globales, perfil agricultor, rankings). No consulta Supabase, no selecciona cultivos, no inventa Markdown.
 agro-selection.js    — selección de cultivos
@@ -281,7 +282,7 @@ disponible, con fallback defensivo a query directa.
 - `split_from_id`: presente en las **5 tablas del ledger** (`agro_expenses`, `agro_income`, `agro_pending`, `agro_losses`, `agro_transfers`). Permite trazabilidad completa cuando un movimiento se particiona o se liquida en partes (ej. cobro parcial de un fiado).
 
 #### Agro — Cultivos
-- `agro_crops` - Cultivos activos; campo `farm_id` (FK a `agro_farms`, nullable por migración)
+- `agro_crops` - Cultivos activos; campo `farm_id` (FK a `agro_farms`, nullable por migración). `status` admite 'precultivo' (migración 20260918120000 aplicada)
 - `agro_crop_cycles` - Ciclos productivos
 - `agro_events` - Eventos agrícolas por cultivo (riego, abono, cosecha, observaciones, etc.); escritura vía herramienta `log_event` del Asistente IA
 

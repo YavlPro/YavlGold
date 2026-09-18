@@ -375,3 +375,41 @@ git commit -m "feat(agro): ANEXO 28 S1-S4 — pre-cultivos (status 'precultivo')
 git add supabase/migrations/20260918120000_agro_crops_status_allow_precultivo.sql
 git commit -m "feat(db): ANEXO 28 — CHECK agro_crops_status_check admite 'precultivo' (patrón allow_lost, con notify pgrst)"
 ```
+
+---
+
+## Sesión 2026-09-18 (III) — ANEXO 28 S5: cierre documental (solo docs)
+
+**Fecha:** 2026-09-18
+**Objetivo:** Actualizar documentos canónicos con el frente ANEXO 28 cerrado en código y DB.
+
+**Archivos inspeccionados (greps):**
+- `MANIFIESTO_AGRO.md`: 0 menciones precultivo; §4.5.3 Mi Carrito ya marcado retirado (ANEXO 24)
+- `FICHA_TECNICA.md`: 0 menciones precultivo; lista de módulos JS y tabla agro_crops revisadas
+- `AGENTS.md`: 0 menciones agro-precultivo.js; lista §3.2 verificada
+- `llms.txt`: 0 menciones pre-cultivos
+- `docs-agro.html`: 0 menciones pre-cultivos; Mi Carrito limpio (ANEXO 24)
+- `AGENT_REPORT_ACTIVE.md`: S0 y S1-S4 ya documentados
+- `agro-precultivo.css`: no existe (CSS vive en agrociclos.css)
+- `daily-log-2026-09-18.md`: no existía
+- `git status --porcelain`: limpio (0 archivos pendientes)
+
+**Cambios realizados:**
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | insert | Nueva subsección "Pre-cultivos (ciclo antes de sembrar)" en §4.3, después de "Campos opcionales" y antes de "Relación con otros módulos" |
+| `apps/gold/docs/FICHA_TECNICA.md` | insert | `agro-precultivo.js` en lista §4.2; nota de migración 20260918120000 en `agro_crops.status` §5 |
+| `AGENTS.md` | insert | `agro-precultivo.js` en §3.2 lista de módulos (orden alfabético) |
+| `apps/gold/docs-agro.html` | edit | Mención de pre-cultivos en card "Mis cultivos" (§ Que puedes hacer) |
+| `apps/gold/public/llms.txt` | insert | Línea de pre-cultivos y cadena de fases unidireccionales (§ Funcionalidades Agro) |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | append | Esta sesión S5 + ANEXO 28 marcado cerrado |
+
+**Resultado de build:** pendiente (se ejecuta al cierre)
+**QA sugerido:** verificar que las docs publicadas reflejan pre-cultivos correctamente; comparar docs-agro.html y llms.txt con la funcionalidad real.
+
+**NO se hizo:** cero edits de código, cero comandos git ejecutados, cero trabajo de GLM reescrito (S1-S4 intactos).
+
+---
+
+**Estado del frente ANEXO 28:** CERRADO (código S1-S4 + migración DB + documentación S5)

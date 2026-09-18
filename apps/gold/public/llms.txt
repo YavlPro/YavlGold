@@ -25,6 +25,9 @@ Semántica del producto Agro: [`MANIFIESTO_AGRO.md`](apps/gold/docs/MANIFIESTO_A
 - [YouTube / YavlGold Pro](https://youtube.com/@yavlgoldpro)
 - [LinkedIn / Yerikson Varela](https://www.linkedin.com/in/yavl-gold-7372b0302)
 
+## Funcionalidades Agro
+- Pre-cultivos: planes de siembra sin semilla (solo gastos/pérdidas), cadena de fases unidireccional (Pre→Sembrado→Creciendo→Producción→Finalizado), perdido como salida lateral.
+
 ## Arquitectura
 - Vanilla JavaScript (ES6+ Modules)
 - Vite Multi-Page Application — prohibido SPA

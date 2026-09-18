@@ -382,6 +382,16 @@ Esto asegura que los reportes individuales, estadísticas globales y rankings re
 * **Semilla (kg)**: Campo opcional. Permite registrar la cantidad de semilla utilizada en la siembra. No es obligatorio; el agricultor Puede omitirlo si no tiene el dato.
 * **Duración real del ciclo**: La duración del ciclo refleja el tiempo real de vida del cultivo, no solo la fecha de cosecha esperada. Cuando un ciclo se finaliza o se pierde, su duración real se calcula desde la fecha de siembra hasta la fecha de cierre, no hasta la fecha estimada.
 
+### Pre-cultivos (ciclo antes de sembrar)
+
+Un pre-cultivo es un plan de siembra registrado antes de llevar la semilla a tierra. El agricultor lo crea cuando aún no tiene semilla lista o cuando quiere preparar el terreno: registra gastos de preparación (herbicida, arada, insumos) y pérdidas si algo sale mal en esa fase, pero no puede registrar ingresos ni donaciones porque aún no hay producto vendido.
+
+Cuando llega el momento de sembrar, el pre-cultivo evoluciona a un cultivo normal con un solo paso: se asigna la fecha de siembra real, la semilla utilizada y la cosecha esperada. Los gastos y pérdidas que ya vivían asociados al pre-cultivo permanecen en el ciclo sin搬家; simplemente la nomenclatura "pre" desaparece para siempre.
+
+La cadena de fases es unidireccional: Pre-cultivo → Sembrado → Creciendo → Producción → Finalizado. Nunca se retrocede. Si algo sale mal en cualquier fase, se marca como Perdido como salida lateral, sin afectar las fases anteriores.
+
+Corregir datos (fechas, kilogramos, cosecha) siempre está permitido. Retroceder de fase, nunca.
+
 ### Relación con otros módulos
 
 * Se conecta con Facturero de Clientes (los movimientos del cultivo aparecen en la cartera).

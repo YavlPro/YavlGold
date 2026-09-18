@@ -111,6 +111,7 @@ agro-planning.js                     — planificación
 agro-privacy.js                      — privacidad de datos (ocultar nombres/montos)
 agro-profit-calculator.js            — calculadora de rentabilidad
 agro-prompt-modal.js                 — modal de prompt canónico
+agro-precultivo.js                   — conversión pre-cultivo→sembrado y guard de transiciones unidireccionales
 agro-repo-app.js                     — AgroRepo/Bitácora: app principal
 agro-repo-search.js                  — búsqueda en AgroRepo
 agro-repo-storage.js                 — almacenamiento de entradas AgroRepo
