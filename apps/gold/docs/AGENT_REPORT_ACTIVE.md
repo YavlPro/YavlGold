@@ -287,3 +287,91 @@ Agente: GLM (ZCode). "Luz verde" del owner para el plan mínimo de la sesión VI
 git add -A
 git commit -m "fix(agro): ANEXO 27 — fallos Fetch/Relay del asistente dejan el mensaje en cola con reintento (sin drop) y mensajes honestos por error.name"
 ```
+
+---
+
+## Sesión 2026-09-18 (I) — ANEXO 28 Fase 0: pre-cultivos, fases unidireccionales y chips (solo lectura)
+
+Agente: GLM (ZCode). MODO SOLO LECTURA (cero edits de código, cero git). Decisiones D-1…D-6 del owner cerradas; este inventario no re-abre ninguna.
+
+**Objetivo**: trazado (a)–(f) con archivo:línea; propuesta de migración de status; diseño de conversión (un write); guard unidireccional; diseño de chips; plan S1–S4 (+S5 documental GATEADO a palabra del owner).
+
+**Diagnóstico (evidencia clave)**:
+
+(a) **Schema**: `agro_crops.status` text NOT NULL default 'sembrado' con **CHECK** `agro_crops_status_check` (sembrado|creciendo|produccion|finalizado|lost) — `supabase/migrations/20260224195900_agro_crops_order_repair.sql:29,51-52`, re-afirmado en `20260224200000:7-17` y `20260417104335:85-96` → **migración SÍ requerida** (drop+re-add con 'precultivo', patrón `20260224200000` con `notify pgrst`). `start_date` date **NOT NULL** default current_date (`20260224195900:33`) → no existe ni puede existir fila con fecha de siembra NULL; 'precultivo' solo existirá si se escribe explícito. `seed_kg`/`lost_at`/`closed_at` nullable (`20260502180000:4-11`); `status_mode`/`status_override` nullable (`20260503194603:6-10`). Escritura de status HOY: único camino vivo = `window.saveCrop` (index.html:2663-3076; payload update :2893-2922 / insert :2954-2986; select estático :1810-1817 con auto|sembrado|creciendo|produccion|finalizado|lost). **CERO guards de transición** en todo el repo; no hay botones rápidos de estado (solo modal editar); `closed_at` nunca se escribe no-null (:2910 siempre null); saveCrop legacy de agro.js:15765-15871 está deshabilitado (:15763-15764, :15876-15877).
+
+(b) **4 resolvedores independientes**: agro.js:9083/9123 (desconocido pasa tal cual :9093/:9131-9132), agro-report-shared.js:125/179 (vocabulario divergente: 'cancelado' en vez de 'lost'), agro-facturero-clientes-flow.js:126/135, agroestadistica.js:332. Mapa de 'precultivo' HOY sin cambios: tab Activos con badge "Creciendo" + clase cosecha (agro.js:9264 fallback, :10824-10829 else→cosecha; agrociclos.js:56); **Dashboard B4 DROPPED** (filtro DB `.in('status', CROP_ACTIVE_STATUSES)` agro-dashboard-v11.js:25/:480 — B4 no renderiza % hoy, solo estado semántico+fiados :608-644); snapshot bridge → grupo active (agro.js:9214-9230, publish :113-149); picker del wizard cultivo aparece en Activos/Todos (consume snapshot :279-298); Clientes flow EXCLUIDO (`FLOW_ALLOWED_CROP_STATUSES` {produccion, finalizado} flow.js:65) y cartera viva bloqueada (view.js:52, :597-600) — **ya coincide con D-6 sin tocar nada**; estadísticas/fincas/reportes lo contarían como activo (agroestadistica.js:337, report-shared.js:212, agro-farms.js:241, agro-farm-compare.js:152, agro-farm-report.js:206/316); riesgo notificación "Atrasada" si expected_harvest_date vence (agro-notifications.js:933); asistente imprime token crudo (agro-assistant.js:491).
+
+(c) **Movimientos SOLO por crop_id — confirmado** (agro-ledger-reader.js:14-16, :196-208, :257-267; wizard cultivo :827-837 "crop_id es el eje"; 5 tablas LEDGER_TILES :112-153) → conversión sin migración de datos estructuralmente cierta; splits heredan crop_id (agro.js:2244/2304/2333).
+
+(d) **Gates CREAR**: wizard cultivo ofrece SIEMPRE 4 tipos (`CREAR_TYPES` agro-facturero-cultivo-wizard.js:77-82) — falta gate gasto/pérdida para pre; launcher global `launchAgroWizard` (agro.js:9007, :5791-5843; flujo perdido ya usa forcedCropId index.html:3045-3058); composer operacional legacy liga crop (agroOperationalCycles.js:1362-1371; dormido bajo subview=wizard :3637-3642/:4037-4041).
+
+(e) **Rutas reales**: cultivo `#view=facturero-cultivo&subview=wizard&rama=crear|ver&paso=N&finca=&crop=&cat=&done=` (wizard :3-4, readWizardHash :164-180); clientes CREAR `#view=facturero-clientes&subview=nuevo&paso=N` (flow.js:84-112) y VER `#view=facturero-clientes&subview=ver-clientes` (view-wizard :3; routing view.js:3201-3218); hash de clientes SIN params finca/cultivo (contexto vía bridges `window.__AGRO_CROPS_STATE` y syncVisibleCropScope view.js:3298). **No existe listener hashchange**: navegación por evento `agro:shell:set-view` (patrón agro.js:14880-14891); writeViewToHash preserva params same-target (agro-shell.js:655-676).
+
+(f) **Riesgos**: cultivos legacy sin farm_id (20260530090000:18-19 nullable; auto-asignación al crear finca default agro-farms.js:376-381); Dashboard B4 exige farm_id (agro-dashboard-v11.js:466-468) → precultivo sin finca no aparecería en B4 (coherente con finca obligatoria en el modal, index.html:2887-2890); privacidad: badges/chips sin montos no requieren mask (patrón data-money agrociclos.js:171-205 si algún día llevan montos).
+
+**Matiz D-4 declarado**: `start_date` es NOT NULL → en precultivo guarda la fecha de registro del plan; la conversión la sobrescribe con la fecha real de siembra (un solo write). Ninguna superficie debe mostrarla como "siembra" mientras status='precultivo'.
+
+**Plan propuesto**: S1 migración CHECK + opción de creación 'precultivo' + conversión (un write) + guard de escritura por rango de cadena · S2 vocabulario y superficies (CROP_STATUS_UI+mapStatusToCycleState+allow-list B4+day counter "Sin sembrar"+notificaciones) · S3 máquina unidireccional en UI (options disabled hacia atrás en modal) · S4 chips con visibilidad D-6 · S5 documental GATEADO (MANIFIESTO §4.3 "estados manuales" y FICHA §5 vocabulario agro_crops — solo con palabra del owner al cierre).
+
+**Resultado de build**: `pnpm build:gold` ✅ verde de partida (2.44s; agent-guard + agent-report-check + vite + check-llms + UTF-8 OK). Sin cambios de código.
+
+**QA sugerido (owner)**: ninguno de runtime (sesión solo lectura); revisar inventario/diseños y autorizar S1 cuando proceda.
+
+**No trazado (honesto)**: datos reales en DB (cero queries Supabase ejecutadas por ley QA/anti-mock — recuento de filas por status queda para el owner si lo pide); consumo fino del param `crop` del hash en preselección del wizard CREAR (readWizardHash lo lee :172; wiring visual se valida en S4); tablas `agro_crop_cycles`/`agro_events` no auditadas para precultivo (agro_events vía log_event del asistente podría escribir sobre un precultivo — sin impacto de fase); preservación de params cross-target en writeViewToHash (citado solo same-target :661-672).
+
+**NO se hizo**: edits de código, git, canon, daily log (el DoD de esta fase autoriza únicamente este INGEST).
+
+---
+
+## Sesión 2026-09-18 (II) — ANEXO 28 S1→S4: pre-cultivos, fases unidireccionales y chips
+
+Agente: GLM (ZCode). Ejecución de las 4 etapas autorizadas sobre el inventario de la sesión (I). Regla de paro respetada: **ninguna etapa falló su DoD**. Cero git.
+
+**S1 — Migración + creación + conversión + guard**:
+- Migración NUEVA `supabase/migrations/20260918120000_agro_crops_status_allow_precultivo.sql` (patrón literal 20260224200000: drop+add CHECK con 'precultivo' + notify pgrst). **SOLO archivo; aplicar a remoto es paso del owner**.
+- Módulo NUEVO `apps/gold/agro/agro-precultivo.js` (463L): `CROP_PHASE_RANK` + `assertForwardTransition` (D-1 cadena, D-2 lost lateral, B1 finalizado solo desde produccion, nunca salir de lost/finalizado, tokens legacy fail-open), `convertPreCropToSowed` = 1 read de guard + **UN update** (status/status_mode/status_override/start_date/seed_kg/expected_harvest_date; cero movimientos), mini-modal "Registrar siembra" (3 campos, reusa reglas vivas: siembra obligatoria no futura, cosecha ≥ siembra) + `syncCropFormForStatus` (oculta semilla/siembra/cosecha en pre; fecha→hoy SOLO en creación) + init con bridge `window._agroPrecultivo`.
+- `index.html`: option "Aún no he sembrado (pre-cultivo)" (:1813), sonda temprana `isPreCultivoSave` que relaja la validación de siembra (:2805), skip del autofill de cosecha por plantilla en pre, guard `assertForwardTransition` antes del write (:2888-2893), import del módulo en bootstrap (:3427-3432).
+- `agro.js` (quirúrgico, 4 puntos): `preCultivo`/`resolvedStatus` en `buildActiveCycleCardsData` (:11036-11037), `syncCropModal` en openCropModal (:15619) y openEditModal (tras fijar edit-id :15720).
+- `agrociclos.js`: botón "Registrar siembra" (fa-seedling) en `buildActions` solo en cards pre (:320-322).
+
+**S2 — Vocabulario y superficies**: `precultivo` en `CROP_STATUS_UI` (agro.js:9025, badge "Pre-cultivo" + clase propia) y `mapStatusToCycleState` (:10826); guard anti-cierre en `isCropFinishedCycle` (:9198-9202: el progreso calculado desde la fecha de registro jamás cierra un pre); allow-list B4 `CROP_ACTIVE_STATUSES` (agro-dashboard-v11.js:25; B4 no renderiza % ni día — sin cambios extra); card: "Sin sembrar" + sin barra + Siembra/Cosecha "—" (agrociclos.js:527-531, :660-673); comparador: métrica progreso "—/Sin sembrar" y siembra "—" (agro-cycles-workspace.js:285-286, :343-347); notificaciones sin alertas para pre (agro-notifications.js:926-927); label humano "Pre-cultivo · aún no sembrado" en exports MD (agro-report-shared.js:13 — **deuda preexistente declarada, NO reescrita: cancelado vs lost**) y en métricas del Asistente (agro.js:15429-15431); badge CSS `.status-precultivo` (agrociclos.css:173-178); comentario stale del wizard corregido (:24-25 → guards reales :3637/:4037).
+
+**S3 — Máquina unidireccional UI**: `applyStatusSelectMachine` en el módulo — options deshabilitadas por rango desde `dataset.initialStatus`, 'auto' evaluado con réplica del computeAutoStatus de saveCrop, finalizado solo desde produccion, lost lateral siempre, desde precultivo SOLO precultivo/lost ("Usa Registrar siembra"), fase vigente nunca bloqueada, nota de una línea; reset total en creación. Cableada como `syncCropModal` (1 línea por opener).
+
+**S4 — Chips D-6 + gate D-5**: chips en cards Activos tras el chip de semilla (agrociclos.js `buildCropChips` :343-357): 1 "Crear registro" + 2 "Ver registros" siempre; 3 "Crear factura de cliente" + 4 "Ver registros de clientes" solo si `resolvedStatus ∈ window._agroClientesFlow.allowedCropStatuses` — **Set único exportado por puente desde flow.js:65-73, sin duplicar vocabulario**. Navegación `navigateFromCropChip`: hash completo + dispatch `agro:shell:set-view` (patrón agro.js:14883); same-target de writeViewToHash (agro-shell.js:666-672) preserva rama/paso/crop — verificado. Targets: `#view=facturero-cultivo&subview=wizard&rama=crear|ver&paso=2&crop=<id>` (preselección confirmada: createSession restaura cropId :193 y reconcileCropSelection :325 lo conserva); `#view=facturero-clientes&subview=nuevo|ver-clientes&paso=1`. **Gate D-5** en el wizard CREAR (agro-facturero-cultivo-wizard.js): con tipo Ingreso/Donación los pre-cultivos se filtran del picker con nota "Los pre-cultivos solo admiten Gasto y Pérdida." y reconcile limpia preselecciones inválidas. CSS chips: touch 44px (ADN §16), tokens, 160ms, focus ring.
+
+**Tabla de cambios**:
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `supabase/migrations/20260918120000_agro_crops_status_allow_precultivo.sql` | DB | CHECK con 'precultivo' (NO aplicada a remoto) |
+| `apps/gold/agro/agro-precultivo.js` | módulo nuevo | guard + conversión un write + mini-modal + máquina S3 (463L) |
+| `agro/index.html` | quirúrgico | option pre + validaciones + guard + bootstrap import |
+| `agro/agro.js` | quirúrgico (4 puntos) | vocabulario + guard anti-cierre + flags card + sync modal + label asistente |
+| `agro/agrociclos.js` | feature | botón siembra, badge/clase, Sin sembrar, chips D-6 + navegación |
+| `agro/agrociclos.css` | estilo | badge status-precultivo + chips (tokens, 44px) |
+| `agro/agro-dashboard-v11.js` | 1 línea | 'precultivo' en CROP_ACTIVE_STATUSES |
+| `agro/agro-notifications.js` | 3 líneas | sin alertas de ciclo en pre |
+| `agro/agro-report-shared.js` | 1 línea | label humano en exports (deuda cancelado/lost declarada) |
+| `agro/agro-cycles-workspace.js` | quirúrgico | comparador sin progreso falso |
+| `agro/agro-facturero-clientes-flow.js` | puente | allowedCropStatuses compartido vía window |
+| `agro/agro-facturero-cultivo-wizard.js` | gate D-5 + doc | filtro pre en CREAR ingreso/donación + comentario corregido |
+
+**Resultado de build**: `pnpm build:gold` ✅ verde tras cada etapa (S1 2.90s, S2 2.32s, S3 2.67s, final 1.91s; chunk `agro-precultivo-Bob8Cxsw.js` 10.62 kB). Verificación estática: 1 solo write a agro_crops en la conversión (1 read guard + 1 update), cero touches al ledger, delegación de agro.js sin colisión con el botón nuevo.
+
+**QA sugerido (owner)**: crear pre-cultivo sin fechas → badge "Pre-cultivo" en Activos y Bloque 4 sin %; registrar gasto/pérdida en pre (en CREAR con Ingreso/Donación el pre no aparece y la nota lo explica); "Registrar siembra" → evoluciona a Sembrado y los gastos ya viven en el ciclo sin rastro "pre"; editar desde finalizado → options deshabilitadas + nota (fechas corregibles); marcar perdido desde pre → sale lateral; chips 1+2 siempre, 3+4 solo en producción/finalizado y navegan con contexto (CREAR aterrizá con el cultivo preseleccionado).
+
+**No trazado / no gateado (honesto)**: launcher legacy `launchAgroWizard` (tabs generales del facturero) sin gate D-5 — superficie legacy fuera del alcance de esta fase; `agro_events` (log_event del asistente) puede escribir eventos sobre un pre-cultivo; wizard de Finca/Personal sin cambios (sus registros no ligan crop); QA runtime cero (ley QA del owner).
+
+**NO se hizo**: git (bloques sugeridos abajo, NO ejecutados); aplicar la migración a remoto; S5 documental (MANIFIESTO §4.3 + FICHA §5) — **QUEDA GATEADO a palabra expresa del owner**; daily log (no autorizado por esta fase).
+
+**Bloque git sugerido (NO ejecutado) — código y migración por separado**:
+```bash
+git add apps/gold/agro/
+git commit -m "feat(agro): ANEXO 28 S1-S4 — pre-cultivos (status 'precultivo'), cadena de fases unidireccional con guard, conversión a sembrado en un write, badge/superficies S2, máquina UI S3 y chips D-6 con gate D-5"
+```
+```bash
+git add supabase/migrations/20260918120000_agro_crops_status_allow_precultivo.sql
+git commit -m "feat(db): ANEXO 28 — CHECK agro_crops_status_check admite 'precultivo' (patrón allow_lost, con notify pgrst)"
+```
