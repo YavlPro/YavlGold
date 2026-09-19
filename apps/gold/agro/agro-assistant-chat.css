@@ -556,16 +556,13 @@
   color: var(--text-muted, rgba(255, 255, 255, 0.3));
 }
 
-.asistente-dedicado .ast-input-hint kbd {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
-  border-radius: 3px;
-  padding: 0 4px;
-  font-size: 0.6rem;
-  font-family: var(--font-body);
-}
+/* ANEXO 29 MF-1 (18-sep): cluster kbd de hints de teclado retirado del markup
+   (regla .ast-input-hint kbd eliminada como huérfana). El contador queda
+   anclado a la derecha con margin-left:auto (con un solo hijo, el
+   space-between de la fila lo dejaría a la izquierda). */
 
 .asistente-dedicado .ast-input-mode {
+  margin-left: auto;
   font-size: 0.62rem;
   color: rgba(255, 255, 255, 0.25);
 }

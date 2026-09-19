@@ -712,3 +712,25 @@ Agente: GLM (ZCode). QA owner 22:13/22:14 ROJO: la contextbar del shell sigue vi
 git add apps/gold/agro/agro-memory-workspace.css
 git commit -m "fix(memoria): ANEXO 29 QA-fix 3 — contextbar del shell suprimida en ambas capas de memoria (el chrome del shell es CSS-driven: display:flex a depth módulo pisaba el [hidden] de syncShellDepth; regla por flag de capa, resto de módulos intactos)"
 ```
+
+---
+
+## Sesión 2026-09-18 (XIII) — ANEXO 29 MF-1: fuera hints de teclado del compositor
+
+Agente: GLM (ZCode). Micro-fix por orden del owner (22:26): eliminar el cluster `<kbd>` "Enter enviar · Shift+Enter nueva línea" de la fila de helpers del compositor; conservar el contador derecho. Git NO ejecutado.
+
+**Trazado**: (a) markup en `index.html:3791-3795` (fila `.ast-input-hint`: span kbd + contador `#assistant-mode-hint`); (b) **cero referencias JS** a esa fila (grep `assistant-mode-hint` en agro-assistant.js/ui.js = 0; el cooldown vive en el botón vía `updateAssistantCooldownUI` y su nodo oculto `#assistant-cooldown` :3798 NO se tocó); (c) CSS en `agro-assistant-chat.css` (`.ast-input-hint kbd` :559 — huérfana tras el fix; la fila usa `justify-content: space-between`, que con un solo hijo habría alineado el contador a la IZQUIERDA).
+
+**Cambios (2 archivos)**: index.html retira el span kbd (con comentario arqueológico); agro-assistant-chat.css elimina la regla `.ast-input-hint kbd` y añade `margin-left: auto` a `.ast-input-mode` (contador anclado a la derecha, sin salto de layout en ≤768).
+
+**Resultado de build**: `pnpm build:gold` ✅ verde (2.30s). Grep: cero `<kbd>` residuales en source; contador y nodo cooldown intactos.
+
+**QA sugerido (owner)**: abrir Memoria → IA: el compositor muestra solo el contador a la derecha; enviar mensaje verifica cooldown y flujo sin cambios.
+
+**NO se hizo**: nada más (micro-fix puro).
+
+**Bloque git sugerido (NO ejecutado)**:
+```bash
+git add apps/gold/agro/index.html apps/gold/agro/agro-assistant-chat.css
+git commit -m "chore(agro): ANEXO 29 MF-1 — fuera hints de teclado del compositor del asistente (cluster kbd retirado, contador derecho anclado con margin-auto, css huérfano eliminado)"
+```
