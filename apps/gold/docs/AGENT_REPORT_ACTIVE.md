@@ -1055,3 +1055,43 @@ Agente: GLM (ZCode). Micro-fix de pulido con decisiones del owner CERRADAS (no r
 git add apps/gold/agro/index.html apps/gold/agro/agro-assistant-chat.css apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "fix(memoria): ANEXO 29 MF-4 — pulido de textos y rename Agente Agro (welcome sin título duplicado con desc breve, placeholder corto, helper cooldown-only vía :empty sobre nodo compat sin tocar JS, chips a text-primary, labels cortos Configurar/Guía)"
 ```
+
+---
+
+## Sesión 2026-09-19 (VI) — ANEXO 31 S1→S3: puertas reorganizadas (Inicio=Dashboard, Crear Finca en Granja, Mi Perfil en Menú)
+
+Agente: GLM (ZCode). Skill de patrones de navegación leída antes de tocar nada (obligatoria). Previo: owner commiteó MF-2/3/4 (42da2317, 8464e03f, 202e8cea). Git NO ejecutado.
+
+**Trazado (a)–(g) con evidencia archivo:línea**:
+
+- (a) Hub intermedio = `#agro-mobile-panel-inicio` (index.html, 3 botones); a depth hub la regla global `body[depth="hub"] [region] { display:none !important }` (agro.css:9932) oculta TODAS las regiones en ambos breakpoints y muestra el hub (9936). Dashboard era vista-módulo (VIEW_CONFIG agro-shell.js:167) con contextbar vía setActiveView→setShellDepth('module') (:1308). Boot default usaba setShellDepth('hub') SIN gate flag (:1618) — el CSS de superficie necesitaba ese flag también ahí. Chip del header apuntaba a `/dashboard` (dashboard general de la plataforma, externo a Agro).
+- (b) Auto-migración §4.13 corre AL BOOT: dashboard automonta (initDashboardV11 en bootstrap) → ensureFarms → `_agroFarms.loadFarms` → si 0 fincas, runAutoMigration crea "Mi Finca" default (agro-farms.js:117-123, 348+). NO solo al entrar a Mis Fincas. Comportamiento declarado, sin cambio semántico.
+- (c) Mis Fincas NO tiene "+" interno: renderFarmsView (agro-farms.js:426) renderiza solo cards; el handler soporta `data-farm-action="create"`→openFarmModal('create') (:53) pero ningún botón lo dispara. El ítem del hub ES la entrada de creación (no redundante).
+- (d) Menú: 3 links sueltos sin encabezados; patrón de títulos = `.agro-mobile-hub__section-title` (uppercase por CSS, agro.css).
+- (e) Referencias: data-agro-view="dashboard" en rail (invisible ambos breakpoints), tile sidebar "Principal", perfil-actions "Dashboard" y Volver del asistente (oculto en memoria) — todas coercen al gate sin edición. Cero data-agro-view gate raros; cero set-view dashboard desde JS; agro-mode.js sin refs; keywords/favoritos reconciliados vía activateShellEntry.
+- (f) FAB: regla hub-depth existente lo eleva sobre tabbar (agro.css ~9899) y app-container padding-bottom hub (~9617) despeja contenido; overlay flotante por diseño (igual que hoy sobre los panels). Sin solape real demostrable → sin fix, declarado.
+- (g) Persistencia: gate key ya existía (YG_AGRO_ACTIVE_SHELL_GATE_V1); stored gate solo contenía hashViews reales. Volver de módulos → setShellGate(activeMobileHub) intactos; F5 por hash o stored gate → setShellGate.
+
+**Cambios (3 archivos)**:
+
+| Archivo | Cambio |
+|---|---|
+| `agro/agro-shell.js` | **S1**: `SHELL_GATE_ROUTES.dashboard → inicio` (coerción de rutas legacy #view=dashboard/favoritos view:dashboard, Lección 9: sin breakage); gate-check en `activateShellEntry` (favoritos/búsqueda) y en el click handler genérico `[data-agro-view]` (mirror del handler set-view); boot default `setShellDepth('hub')` → `setShellGate('inicio')` (unifica flag/hash/persistencia); `syncMobileHub` aplica aria-selected/tabindex solo a `role="tab"` (Inicio es botón plano — un tabindex=-1 lo sacaría del tab order). |
+| `agro/agro.css` | **S1**: excepción `body[depth="hub"][gate="inicio"] [region="dashboard"] { display:block !important }` (specificity 3 attrs > 2 de la regla de ocultamiento) — el Dashboard es superficie de hub, sin contextbar; reglas de `.agro-header-dashboard-link` eliminadas como huérfanas (chip retirado). |
+| `agro/index.html` | **S1**: panel-hub "Inicio" (3 botones) retirado; tabs Inicio (tabbar + strip desktop) sin role=tab/aria-controls (botón plano, precedente puerta Memoria); chip "Dashboard" del header retirado (apuntaba a /dashboard plataforma y duplicaba concepto; salida = logo). **S2**: Granja — "Crear Finca" entre Mis Fincas y Operaciones, despacha directo al flujo existente (`onclick _agroFarms.openFarmModal('create')`, mismo bridge que el welcome IA); Menú — grupo "MI CUENTA" con Mi Perfil + grupo "AYUDA" con Documentación/Soporte/Privacidad (section-title mayúscula de Mi Granja). |
+
+**DoD verificado estáticamente**: `#view=inicio` muestra la región Dashboard (excepción CSS + montaje al boot — el dashboard se automonta independiente de la vista, PARO S1 despejado: ni bloques ni observer de identidad dependen de la vista); cero contextbar "Dashboard Agro" (dashboard nunca llega a depth module — toda entrada coerciona al gate); favoritos dashboard/perfil navegan sin error (gate-check; perfil sigue siendo vista-módulo); orden Granja exacto; greps de cierre limpios (solo el id del propio botón inicio); F5/Volver/persistencia intactos; focusTarget null-safe sin panel (verificado); cero listeners de gate-changed (seguro disparar al boot).
+
+**Resultado de build**: `pnpm build:gold` ✅ verde (1.84s y 1.92s, dos pasadas).
+
+**Declaraciones honestas**: (1) Chip header retirado (elección declarada): apuntaba al dashboard GENERAL de la plataforma (/dashboard), no al de Agro — dentro de Agro duplicaba el concepto; la salida a la plataforma sigue siendo el logo. (2) "Crear Finca" abre el modal directamente desde el hub ( Mis Fincas no tiene "+": el ítem ES la entrada, no redundante — decisión 2 anticipaba ambos casos). (3) Auto-migración de finca default corre al BOOT vía el dashboard (declarado en trazado b). (4) El tile del sidebar "Dashboard Agro" conserva su label (coherente: ES la superficie) y su is-active funciona (activeView='dashboard' en el gate). (5) Tabs operacion/menu conservan roving tabindex; inicio/memoria son botones planos en el mismo nav (precedente existente). (6) QA runtime no ejecutado (ley §5).
+
+**QA sugerido (owner)**: usuario nuevo sin finca → Inicio muestra Dashboard con auto-migración corriendo; Inicio↔Granja↔Memoria↔Menú sin rutas rotas en mobile y desktop; cero hub de 3 botones y cero contextbar en Inicio; #view=dashboard (deep link viejo) aterriza en Inicio sin error; favorito dashboard navega; Granja: orden Mis Fincas·Crear Finca·Operaciones y el modal abre/guarda/cancela desde el hub; Menú: MI CUENTA separado de AYUDA y Mi Perfil abre; F5 conserva puerta; consola limpia.
+
+**NO se hizo (scope respetado)**: git (bloque sugerido abajo); S4 documental GATEADO (MANIFIESTO §3.1/§4.12.4, ADN §9, FICHA §4.2, docs-agro/llms — a palabra del owner); rail desktop (invisible en ambos breakpoints, relicto declarado sin tocar); "+" interno en Mis Fincas (no pedido); capa rag/Edge/markdown.
+
+**Bloque git sugerido (NO ejecutado)**:
+```bash
+git add apps/gold/agro/agro-shell.js apps/gold/agro/agro.css apps/gold/agro/index.html apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "feat(agro): ANEXO 31 S1-S3 — puertas reorganizadas: Inicio=Dashboard directo (gate inicio renderiza la región, sin hub de 3 botones ni contextbar, coerción de rutas dashboard legacy), Crear Finca en Mi Granja (orden Mis Fincas·Crear·Operaciones, modal directo), Menú con MI CUENTA+AYUDA, chip Dashboard del header retirado"
+```

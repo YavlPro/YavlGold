@@ -9031,39 +9031,8 @@ body.agro-shell-rail-collapsed.agro-shell-ready .app-container {
   transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease;
 }
 
-.agro-header-dashboard-link {
-  min-height: 2.75rem;
-  padding: 0 var(--space-4, 1rem);
-  border-color: transparent;
-  border-radius: var(--radius-sm, 8px);
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  letter-spacing: 0;
-}
-
-.agro-header-dashboard-link i {
-  color: var(--gold-3);
-  font-size: 0.95rem;
-}
-
-.agro-header-dashboard-link:hover,
-.agro-header-dashboard-link:focus-visible {
-  background: color-mix(in srgb, var(--gold-4) 10%, transparent);
-  border-color: var(--border-gold);
-  color: var(--text-primary);
-  transform: none;
-}
-
-.agro-header-dashboard-link:focus-visible {
-  outline: none;
-  box-shadow: var(--state-focus-ring, 0 0 0 2px var(--bg-1), 0 0 0 4px var(--gold-4));
-}
-
-.agro-header-dashboard-link:hover i,
-.agro-header-dashboard-link:focus-visible i {
-  color: var(--gold-5);
-}
+/* ANEXO 31 S1: reglas de .agro-header-dashboard-link eliminadas como huérfanas
+   (el chip del header fue retirado — Inicio ES el Dashboard). */
 
 .agro-dash-guide {
   margin-bottom: 0.95rem;
@@ -9931,6 +9900,14 @@ body.agro-shell-rail-collapsed.agro-shell-ready .app-container {
 
 body[data-agro-shell-depth="hub"] [data-agro-shell-region] {
   display: none !important;
+}
+
+/* ANEXO 31 S1: puerta Inicio = Dashboard directo. Con gate inicio la región
+   dashboard ES la superficie del hub (excepción a la regla de ocultamiento
+   de regiones a depth hub, por specificity superior): sin hub intermedio de
+   3 botones y sin contextbar — el Dashboard no es módulo profundo. */
+body[data-agro-shell-depth="hub"][data-agro-shell-gate="inicio"] [data-agro-shell-region="dashboard"] {
+  display: block !important;
 }
 
 body[data-agro-shell-depth="hub"] .agro-mobile-hub {

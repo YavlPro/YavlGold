@@ -518,8 +518,9 @@
         </div>
     </aside>
     <nav class="agro-mobile-tabbar" data-agro-mobile-tabbar aria-label="Navegación móvil Agro" role="tablist">
-        <button type="button" class="agro-mobile-tabbar__item" id="agro-mobile-tab-inicio" data-agro-mobile-tab="inicio"
-            role="tab" aria-controls="agro-mobile-panel-inicio" aria-selected="true">
+        <!-- ANEXO 31 S1: Inicio sin role=tab/aria-controls — despacha al gate
+             inicio cuya superficie es la región Dashboard (no un tabpanel). -->
+        <button type="button" class="agro-mobile-tabbar__item" id="agro-mobile-tab-inicio" data-agro-mobile-tab="inicio">
             <i class="fa-solid fa-house" aria-hidden="true"></i>
             <span>Inicio</span>
         </button>
@@ -552,11 +553,10 @@
 
             <div class="agro-shell-header__right">
                 <div class="agro-shell-header__utilities">
-                    <a class="agro-header-link agro-header-dashboard-link" href="/dashboard"
-                        aria-label="Ir al Dashboard general" title="Ir al Dashboard general">
-                        <i class="fa-solid fa-table-columns" aria-hidden="true"></i>
-                        <span>Dashboard</span>
-                    </a>
+                    <!-- ANEXO 31 S1: chip "Dashboard" del header retirado — apuntaba
+                         al dashboard general de la plataforma (/dashboard) y
+                         duplicaba el concepto: dentro de Agro, Inicio ES el
+                         Dashboard. La salida a la plataforma sigue siendo el logo. -->
                     <!-- Notification Center (Dashboard Style) -->
                     <div class="agro-header-notifications">
                         <button id="notif-btn" class="notification-bell notification-bell--agro yg-glowpulse"
@@ -600,8 +600,9 @@
 
         <section class="agro-mobile-hub agro-shell-hub" data-agro-mobile-hub-root aria-label="Hub Agro">
             <nav class="agro-shell-hub-tabs" aria-label="Puertas principales Agro" role="tablist">
-                <button type="button" class="agro-shell-hub-tab" id="agro-hub-tab-inicio" data-agro-mobile-tab="inicio"
-                    role="tab" aria-controls="agro-mobile-panel-inicio" aria-selected="true">
+                <!-- ANEXO 31 S1: Inicio sin role=tab/aria-controls — su "panel" es
+                     la región Dashboard (superficie de hub), no un tabpanel. -->
+                <button type="button" class="agro-shell-hub-tab" id="agro-hub-tab-inicio" data-agro-mobile-tab="inicio">
                     <i class="fa-solid fa-house" aria-hidden="true"></i>
                     <span>Inicio</span>
                 </button>
@@ -629,28 +630,10 @@
                 </button>
             </nav>
 
-            <div class="agro-mobile-hub__panel" id="agro-mobile-panel-inicio" data-agro-mobile-panel="inicio"
-                role="tabpanel" aria-labelledby="agro-mobile-tab-inicio">
-                <div class="agro-mobile-hub__head">
-                    <p class="agro-mobile-hub__eyebrow">Agro V1</p>
-                    <h2 class="agro-mobile-hub__title">Inicio</h2>
-                </div>
-                <div class="agro-mobile-hub__grid">
-                    <button type="button" class="agro-mobile-hub__item" data-agro-view="perfil">
-                        <i class="fa-solid fa-circle-user" aria-hidden="true"></i>
-                        <span>Mi Perfil</span>
-                    </button>
-                    <button type="button" class="agro-mobile-hub__item" data-agro-view="dashboard">
-                        <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
-                        <span>Dashboard Agro</span>
-                    </button>
-                    <button type="button" class="agro-mobile-hub__item" data-agro-view="ciclos"
-                        data-agro-subview="mis-fincas">
-                        <i class="fa-solid fa-mountain-sun" aria-hidden="true"></i>
-                        <span>Crear Finca</span>
-                    </button>
-                </div>
-            </div>
+            <!-- ANEXO 31 S1: panel-hub "Inicio" retirado — la puerta Inicio ES el
+                 Dashboard (región dashboard visible a depth hub con gate inicio;
+                 ver excepción en agro.css). Mi Perfil vive ahora en Menú (MI
+                 CUENTA) y Crear Finca en Mi Granja (ANEXO 31 S2). -->
 
             <div class="agro-mobile-hub__panel" id="agro-mobile-panel-operacion" data-agro-mobile-panel="operacion"
                 role="tabpanel" aria-labelledby="agro-mobile-tab-operacion" hidden inert>
@@ -664,6 +647,15 @@
                         data-agro-subview="mis-fincas">
                         <i class="fa-solid fa-mountain-sun" aria-hidden="true"></i>
                         <span>Mis Fincas</span>
+                    </button>
+                    <!-- ANEXO 31 S2: Crear Finca despacha directo al flujo de creación
+                         existente (modal #modal-farm via _agroFarms.openFarmModal —
+                         misma superficie que usa el modo create del subview). Mis
+                         Fincas no tiene "+" interno: este ítem ES la entrada. -->
+                    <button type="button" class="agro-mobile-hub__item"
+                        onclick="window._agroFarms?.openFarmModal?.('create')">
+                        <i class="fa-solid fa-circle-plus" aria-hidden="true"></i>
+                        <span>Crear Finca</span>
                     </button>
 
                     <button type="button" class="agro-mobile-hub__item" data-agro-view="period-cycles"
@@ -722,6 +714,14 @@
                     <h2 class="agro-mobile-hub__title">Menú</h2>
                 </div>
                 <div class="agro-mobile-hub__grid">
+                    <!-- ANEXO 31 S2: jerarquía propia del Menú — MI CUENTA separada
+                         de AYUDA (mismo patrón de títulos mayúscula de Mi Granja). -->
+                    <p class="agro-mobile-hub__section-title">Mi cuenta</p>
+                    <button type="button" class="agro-mobile-hub__item" data-agro-view="perfil">
+                        <i class="fa-solid fa-circle-user" aria-hidden="true"></i>
+                        <span>Mi Perfil</span>
+                    </button>
+                    <p class="agro-mobile-hub__section-title">Ayuda</p>
                     <a href="/docs-agro" class="agro-mobile-hub__item agro-mobile-hub__item--link" target="_blank"
                         rel="noopener">
                         <i class="fa-solid fa-book" aria-hidden="true"></i>

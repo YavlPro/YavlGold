@@ -55,6 +55,13 @@ const SHELL_GATE_ROUTES = Object.freeze({
     granja: Object.freeze({ hashView: 'granja', hub: 'operacion' }),
     operacion: Object.freeze({ hashView: 'granja', hub: 'operacion' }),
     menu: Object.freeze({ hashView: 'menu', hub: 'menu' }),
+    // ANEXO 31 S1: Inicio ES el Dashboard (decisión owner). La vista-módulo
+    // dashboard dejó de existir como destino: toda ruta legacy (#view=dashboard,
+    // favoritos view:dashboard, tiles del sidebar/rail) coerciona al gate
+    // inicio, que renderiza la región dashboard como superficie de hub (sin
+    // contextbar). La ruta hash #view=dashboard sigue llegando sin error
+    // (Lección 9: preservar rutas — se normaliza a #view=inicio).
+    dashboard: Object.freeze({ hashView: 'inicio', hub: 'inicio' }),
     // ANEXO 24 (2026-09-17): Mi Carrito retirado del producto. Sus rutas legacy
     // (hash y navegacion programatica) aterrizan en el hub Granja sin error.
     carrito: Object.freeze({ hashView: 'granja', hub: 'operacion' }),
@@ -1034,8 +1041,13 @@ export function initAgroShell() {
         mobileHubTabs.forEach((tab) => {
             const isActive = normalizeMobileHub(tab.dataset.agroMobileTab) === activeMobileHub;
             tab.classList.toggle('is-active', isActive);
-            tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
-            tab.setAttribute('tabindex', isActive ? '0' : '-1');
+            // ANEXO 31 S1: aria-selected/tabindex solo para tabs reales — Inicio
+            // es botón plano (su superficie es la región Dashboard) y un
+            // tabindex=-1 lo sacaría del tab order.
+            if (tab.getAttribute('role') === 'tab') {
+                tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                tab.setAttribute('tabindex', isActive ? '0' : '-1');
+            }
         });
 
         mobileHubPanels.forEach((panel) => {
@@ -1334,6 +1346,14 @@ export function initAgroShell() {
         }
 
         if (!entry.view) return false;
+        // ANEXO 31 S1: favoritos/búsqueda con vista gate (dashboard→inicio)
+        // aterrizan en el gate, no en una vista-módulo inexistente.
+        const entryGate = resolveShellGateRoute(entry.view);
+        if (entryGate) {
+            setShellGate(entryGate.hashView, { focus: true });
+            closeSidebar();
+            return true;
+        }
         setActiveView(entry.view, {
             scroll: true,
             subview: entry.subview || null,
@@ -1563,6 +1583,16 @@ export function initAgroShell() {
 
         const viewButton = event.target.closest('[data-agro-view]');
         if (!viewButton) return;
+        // ANEXO 31 S1: vistas gate despachan por el gate (dashboard→inicio
+        // muestra el Dashboard como superficie de hub, sin contextbar).
+        const buttonGate = resolveShellGateRoute(viewButton.dataset.agroView);
+        if (buttonGate) {
+            event.preventDefault();
+            event.stopPropagation();
+            setShellGate(buttonGate.hashView, { focus: true });
+            closeSidebar();
+            return;
+        }
         const nextView = normalizeView(viewButton.dataset.agroView);
         const subviewAttr = viewButton.dataset.agroSubview || null;
         setActiveView(nextView, {
@@ -1616,7 +1646,10 @@ export function initAgroShell() {
     if (initialIsShellGate) {
         setShellGate(initial.shellGate);
     } else if (initial.view === AGRO_DEFAULT_VIEW) {
-        setShellDepth('hub');
+        // ANEXO 31 S1: el default ES el gate inicio (Inicio = Dashboard).
+        // Antes: setShellDepth('hub') sin flag de gate — el CSS de superficie
+        // del gate necesita data-agro-shell-gate="inicio" también aquí.
+        setShellGate('inicio');
     } else {
         const initialConfig = VIEW_CONFIG[initial.view];
         setMobileHub(VIEW_TO_MOBILE_HUB[initial.view] || activeMobileHub);
