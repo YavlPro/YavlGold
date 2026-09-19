@@ -195,17 +195,40 @@ let lastSyncPreState = null;
 export function syncCropFormForStatus() {
     const statusSelect = document.getElementById('crop-status');
     if (!statusSelect) return;
-    const isPre = normalizeStatusToken(statusSelect.value) === PRE_CULTIVO;
+    const status = normalizeStatusToken(statusSelect.value);
+    const isPre = status === PRE_CULTIVO;
+    const isLost = status === 'lost';
+    const editId = String(document.getElementById('crop-edit-id')?.value || '').trim();
 
     const seedRow = document.getElementById('crop-seed-kg')?.closest('.input-row');
     const sowRow = document.getElementById('crop-start-date')?.closest('.input-row');
     setRowEnabled(seedRow, !isPre);
     setRowEnabled(sowRow, !isPre);
 
+    // Matriz de fechas (QA-fix): pre oculta todo el bloque de cierre;
+    // activos muestran cosecha real pero no pérdida; perdido muestra todo.
+    // Al ocultar, los inputs se deshabilitan (sin required nativo no bloquean
+    // el guard) y CONSERVAN su valor guardado: al volver a mostrarse, el valor
+    // original reaparece sin inventar fechas.
+    const closureFields = document.getElementById('crop-closure-fields');
+    const lostGroup = document.getElementById('crop-lost-date')?.closest('.input-group');
+    const lostInput = document.getElementById('crop-lost-date');
+    const actualHarvestInput = document.getElementById('crop-actual-harvest-date');
+    if (closureFields) {
+        closureFields.style.display = isPre ? 'none' : '';
+        if (lostGroup) lostGroup.style.display = (!isPre && isLost) ? '' : 'none';
+    }
+    if (actualHarvestInput) actualHarvestInput.disabled = isPre;
+    if (lostInput) lostInput.disabled = !isLost;
+    // En creación no hay valor guardado que preservar: una fecha tipeada y
+    // luego oculta sería residual en el payload. En edición se conserva
+    // (restauración natural al volver a mostrar la fila).
+    if (!editId && actualHarvestInput && isPre) actualHarvestInput.value = '';
+    if (!editId && lostInput && !isLost) lostInput.value = '';
+
     const startInput = document.getElementById('crop-start-date');
     // Solo en creación se normaliza a hoy (fecha de registro del plan, D-4):
     // en edición se conserva la fecha ya guardada.
-    const editId = String(document.getElementById('crop-edit-id')?.value || '').trim();
     if (isPre && startInput && !editId) startInput.value = getTodayKey();
     if (isPre && startInput && editId && !startInput.value) {
         const crops = Array.isArray(window.__AGRO_CROPS_STATE?.crops) ? window.__AGRO_CROPS_STATE.crops : [];

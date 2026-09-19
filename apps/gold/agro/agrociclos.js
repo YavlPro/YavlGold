@@ -376,7 +376,7 @@ function navigateFromCropChip(kind, cropId) {
     return;
   }
   if (kind === 'cultivo-ver' && id) {
-    navigate(`view=facturero-cultivo&subview=wizard&rama=ver&paso=2&crop=${encodeURIComponent(id)}`, 'facturero-cultivo', 'wizard');
+    navigate(`view=facturero-cultivo&subview=wizard&rama=ver&paso=3&crop=${encodeURIComponent(id)}`, 'facturero-cultivo', 'wizard');
     return;
   }
   if (kind === 'clientes-crear') {

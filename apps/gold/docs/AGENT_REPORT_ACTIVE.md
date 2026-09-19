@@ -443,3 +443,30 @@ Agente: GLM (ZCode). Refinamiento autorizado por el owner: desde un pre-cultivo,
 git add apps/gold/agro/agro-precultivo.js apps/gold/agro/index.html apps/gold/docs/MANIFIESTO_AGRO.md
 git commit -m "feat(agro): ANEXO 28 S3-b — puerta de siembra en el modal (pre→Sembrado habilitado, conversión un write vía saveCrop, fecha consciente, prosa MANIFIESTO dos vías + limpieza de contaminación)"
 ```
+
+---
+
+## Sesión 2026-09-18 (V) — ANEXO 28 QA-fix: chip VER a paso 3 + matriz de fechas del modal
+
+Agente: GLM (ZCode). Dos cirugías de QA. DoD completo verde, regla de paro no activada. Cero git.
+
+**Cambios (2 archivos)**:
+
+| Archivo | Cambio |
+|---|---|
+| `agrociclos.js` | Chip "Ver registros" (rama=ver) ahora escribe `paso=3` (tipos con conteos reales) — el crop ya viaja en el hash y el paso 2 re-confirmaría contexto. Chip CREAR intacto en `paso=2` (:375). Orden write-hash + dispatch `agro:shell:set-view` sin cambios (:379). Verificado que el montaje en 3 no dispara limpieza: hash sin `finca=` ni `estado=` → `state.farmId=''` + ESTADO_TODOS → `reconcileCropSelection` (wizard :325-339) no reconcilia; `clampPaso(3)` válido (VER_TOTAL=5). |
+| `agro-precultivo.js` | `syncCropFormForStatus` extiende la matriz de fechas: **pre** oculta fila siembra + bloque de cierre completo; **sembrado/creciendo/produccion** los muestra pero con el grupo de fecha de pérdida OCULTO; **perdido** muestra todo. Inputs ocultos deshabilitados (los `required` viven solo en finca/nombre/área/siembra — start_date solo se oculta en pre donde la validación JS ya está relajada por `isPreCultivoSave`): cero validación fantasma. Restauración sin inventar: al ocultar NO se borran valores (persisten disabled; al volver a mostrarse reaparecen los guardados); única excepción en CREACIÓN (sin edit-id), donde una fecha tipeada y luego oculta sería residual en el payload → se limpia (:226-227). Corregido en caliente un TDZ (uso de `editId` antes de su `const`). |
+
+**Matriz estática DoD**: (a) VER paso=3 con crop ✓ (:379); (b) CREAR paso=2 ✓ (:375); (c) pre oculta las 3 filas y guarda sin ellas ✓ (fila siembra `setRowEnabled(false)` + closure display:none; guard `isPreCultivoSave` en saveCrop); (d) sembrado muestra siembra+cosecha y oculta pérdida ✓ (:218-219); (e) perdido muestra pérdida ✓; (f) filas ocultas sin required → no bloquean el guard ✓.
+
+**Resultado de build**: `pnpm build:gold` ✅ verde (2.01s).
+
+**QA sugerido (owner)**: chip "Ver registros" de un cultivo → aterriza en paso 3 con tipos y conteos reales del cultivo; chip CREAR sigue en paso 2; editar pre-cultivo → sin filas de cosecha/pérdida; elegir Sembrado → aparecen siembra+cosecha (pérdida no); marcar Perdido → aparece fecha de pérdida; guardar en cada estado sin errores fantasma; en edición, ocultar/reaparecer filas conserva los valores guardados.
+
+**NO se hizo**: git (bloque sugerido abajo); cambios en CREAR chip, en el botón de card, ni en la nota del modal (S3-b intacta).
+
+**Bloque git sugerido (NO ejecutado)**:
+```bash
+git add apps/gold/agro/agrociclos.js apps/gold/agro/agro-precultivo.js
+git commit -m "fix(agro): ANEXO 28 QA-fix — chip VER aterriza en paso 3 (conteos reales) y matriz de fechas del modal por estado (pre oculta cierre, pérdida solo en Perdido, restauración sin fechas inventadas)"
+```
