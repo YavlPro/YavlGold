@@ -104,15 +104,15 @@ El valor de Agro no está solo en registrar. Está en conectar lo que pasa en el
 
 ### 3.1 Superficies principales
 
-* Mi Perfil
-* Dashboard Agro
+* Inicio — Dashboard Agro directo (la puerta Inicio es directamente el Dashboard, superficie de orientación diaria; no existe hub intermedio de tres botones)
 * Mi Granja *(agrupador de navegación — no es un módulo financiero)*
   * Mis fincas y cultivos
-    * Mis Fincas (entrada principal del hub)
-    * Mis cultivos (accesible por sidebar y URL directa) — contiene:
+    1. Mis Fincas (entrada principal de propiedades y cultivos)
+    2. Crear Finca (acceso directo al flujo de creación de fincas)
+    3. Operaciones de la Finca (activos, finalizados) — contiene:
+       + Crear ciclo del mes / Estadísticas de períodos / Comparar períodos
+    * Mis cultivos (accesible desde la tarjeta de finca y navegación directa) — contiene:
       + Nuevo cultivo / Estadísticas de cultivos / Comparar cultivos
-    * Operaciones de la Finca (activos, finalizados) — contiene:
-      + Crear ciclo del mes / Estadísticas de períodos / Comparar períodos
   * Mis factureros
     * Facturero de Clientes (ver §4.5.1) — selectores dinámicos de finca y cultivo
     * Facturero de la Finca — registros POR FINCA (farm_id ✓, crop_id ✗) — selectores dinámicos de finca y cultivo
@@ -125,8 +125,11 @@ El valor de Agro no está solo en registrar. Está en conectar lo que pasa en el
     * Trabajo Diario (ver §4.6)
     * Centro de Reportes Generales (ver §4.9)
 * Memoria conectada (puerta principal directa, sin pantalla intermedia — ver §4.10 y §4.11)
-  * Asistente IA (hogar de la superficie)
+  * Asistente IA (hogar de la superficie, nombre visible Agente Agro)
   * AgroRepo / Bitácora (capa interna, con Volver al asistente)
+* Menú
+  * MI CUENTA: Mi Perfil (ver §4.1)
+  * AYUDA: Documentación · Soporte oficial · Privacidad
 
 > **Nota (2026-06-17):** Rankings de Clientes ya no aparece en el hub. Se accede desde el botón "Rankings de Clientes" dentro de la vista Mis Clientes.
 
@@ -187,6 +190,8 @@ No es un módulo de registro ni un reporte profundo — es el punto de partida.
 
 **Pregunta que responde:** ¿Cómo estoy hoy? ¿Cómo va mi finca? ¿Qué tengo
 pendiente?
+
+> **Superficie de la puerta Inicio:** El Dashboard vive directamente como la superficie de hub de la puerta Inicio (a nivel de hub, sin barra contextual de Volver). Conserva intactos sus 6 bloques y su estado vacío con la guía "Cómo empezar" cuando el agricultor no tiene fincas registradas.
 
 ---
 
@@ -370,6 +375,8 @@ costosTotales = inversión + gastos_operativos + pérdidas
 
 Esto asegura que los reportes individuales, estadísticas globales y rankings reflejen la realidad operativa completa del cultivo.
 
+> **Aclaración lectura-vs-cómputo:** `costosTotales` conserva la inclusión íntegra de gastos de finca vinculados a cultivo mediante lectura directa de las tablas de datos (alimentando las tarjetas de Mis Cultivos, reportes detallados y el Bloque 4 del Dashboard). La lectura plana del módulo de períodos (Operaciones de la Finca, §4.4), que filtra y muestra únicamente los movimientos generales no vinculados a un cultivo, responde a una separación de superficies de lectura y no elimina el vínculo del dato ni altera en ningún momento este cómputo.
+
 ### Cómo se usa
 
 1. **Crear cultivo**: Botón "+ Nuevo Cultivo" → nombre, variedad, área, inversión, fecha de siembra, fecha de cosecha esperada.
@@ -419,32 +426,38 @@ Esto importa porque el campo no se entiende solo con una fecha y un nombre. Un c
 
 ---
 
-## 4.4 Ciclos de Período
+## 4.4 Ciclos de Período (Operaciones de la Finca)
 
 ### Qué es
 
-El sistema que agrupa y da seguimiento a los ciclos operativos por tiempo. Es una agrupación organizativa, no biológica. No representa la historia de una siembra específica, sino un rango temporal definido (como un mes, un semestre o una temporada completa) donde puedes ver todas tus operaciones comerciales juntas.
+El libro de la finca organizado por tiempo. Cada ciclo de período está atado a una finca específica y reúne de forma plana los movimientos operativos generales de esa finca durante un rango temporal definido (como un mes, un semestre o una temporada).
 
 ### Qué no es
 
-No es un ciclo de cultivo. No representa la vida biológica/productiva de una siembra. No es un cultivo específico — es un contenedor temporal.
+No es un ciclo de cultivo. No representa la vida biológica ni productiva de una siembra. No es la lectura de un cultivo individual — es el libro temporal de las operaciones generales de la finca.
 
 ### Para qué sirve
 
-* Organizar lectura por períodos cuando tienes muchas operaciones.
-* Agrupar comportamiento temporal (ej: "trimestre 1", "temporada de lluvias").
-* Comparar períodos entre sí.
-* Ver estadísticas por período (gastos del período, ingresos del período, resultado del período).
-* Responder preguntas como "este semestre gané menos que el anterior?"
+* Llevar el libro de operaciones generales de cada finca mes a mes.
+* Organizar la lectura temporal cuando existen gastos y movimientos recurrentes de la finca (mantenimiento, combustible, jornales generales).
+* Comparar períodos entre sí dentro de una finca o en vista general.
+* Ver estadísticas por período (gastos generales del período, ingresos generales, resultado).
+* Responder preguntas como "¿en este mes la finca gastó más en mantenimiento general que en el anterior?"
 
-### Subsuperficies
+### Subsuperficies y organización
 
-* Operaciones de la Finca — entrada única con tabs internas y botones de acción:
-  * Activos — los períodos que están en curso
-  * Finalizados — los períodos ya cerrados
-  * Crear ciclo del mes — botón de acción principal
-  * Estadísticas de períodos — botón de acción (subvista interna)
-  * Comparar períodos — botón de acción (subvista interna)
+* Operaciones de la Finca — entrada única con selector de fincas (chips), tabs internas y botones de acción:
+  * Chips de finca: "Vista general" (agrega todas las fincas) + un chip por cada finca registrada.
+  * Tabs de estado: Activos (períodos en curso o con operaciones vivas) y Finalizados (períodos cerrados).
+  * Crear ciclo del mes: creación obligatoria asociada a una finca específica (con selector de finca y guard que impide registrar el mismo mes dos veces en la misma finca). Si existe una sola finca, se preselecciona automáticamente.
+  * Estadísticas de períodos — subvista interna de consolidados temporales.
+  * Comparar períodos — subvista interna para comparar dos períodos lado a lado.
+
+### Lectura de movimientos generales
+
+Operaciones de la Finca lee y presenta exclusivamente los **movimientos generales de la finca** (aquellos sin vinculación a un cultivo específico).
+
+Los movimientos financieros asociados a un cultivo (ej: insumos o labores de una siembra concreta) pertenecen y se leen en las superficies propias del cultivo: la tarjeta del cultivo, su ciclo de vida y el Facturero del Cultivo. Esta separación mantiene la lectura del libro de la finca clara y libre de mezclas, sin desvirtuar la contabilidad del cultivo.
 
 ### Vigencia operativa
 
@@ -452,16 +465,16 @@ Un período no se considera finalizado solo porque venció el calendario si toda
 
 ### Relación con otros módulos
 
-* **Vs. Ciclos de cultivo**: Los ciclos de período agrupan TODAS las operaciones de ese tiempo, sin importar el cultivo. Los ciclos de cultivo son específicos a cada siembra.
-* Los períodos alimentan estadísticas temporales.
-* Se usan para comparaciones de rendimiento entre temporadas.
+* **Vs. Ciclos de cultivo**: Los ciclos de período leen las operaciones generales de la finca en un lapso determinado. Los ciclos de cultivo son específicos a cada siembra y concentran los costos e ingresos de ese cultivo.
+* **Con Facturero de la Finca**: Los movimientos generales registrados en Facturero de la Finca alimentan la lectura de los períodos correspondientes.
+* **Con el selector de fincas**: Permite aislar el libro de cuentas temporal de una sola propiedad o revisar la vista agregada general.
 
 ### Regla semántica importante
 
 Si existe duda sobre si usar "ciclo de cultivo" o "período", puedes hacerte la siguiente pregunta:
 
 * **¿Estoy hablando de una siembra específica en particular?** → Ciclo de cultivo
-* **¿Estoy hablando de un rango de tiempo a nivel general?** → Período
+* **¿Estoy hablando del libro de operaciones generales de la finca en un rango de tiempo?** → Período
 
 ---
 
@@ -765,6 +778,7 @@ Si un movimiento histórico o excepcional no cuenta con un monto numérico asent
 
 * Puedes asociar cada movimiento a un ciclo de cultivo (para saber exactamente qué cultivo generó ese ingreso o gasto).
 * También puedes registrar movimientos generales (sin un cultivo específico), por ejemplo, los gastos de mantenimiento de la finca. Estos «movimientos generales» son financieros y pertenecen a Facturero de la Finca; no se asocian al hub de navegación «Mi Granja».
+* **Nota cruzada con períodos:** un movimiento registrado en la finca puede llevar asociación a cultivo para alimentar los costos del ciclo de cultivo (§4.3); en cambio, el módulo de períodos (Operaciones de la Finca, §4.4) lee y resume exclusivamente los movimientos generales de la finca (sin cultivo asociado).
 
 ### Malentendidos históricos ya resueltos
 
@@ -1099,6 +1113,8 @@ No es una aplicación separada ni un segundo facturero. Es una libreta que puede
 
 ## 4.11 Asistente IA
 
+**Nombre visible de la superficie:** **Agente Agro** (el concepto y nombre semántico canónico del módulo permanece como **Asistente IA**).
+
 ### Qué es
 
 Un asistente dentro de Agro que puede leer tus anotaciones, ventas y bitácoras de forma conectada. Te da respuestas cruzadas que normalmente requerirían revisar varias pantallas a mano.
@@ -1284,10 +1300,10 @@ El patrón hub/module organiza Agro en dos estados de experiencia:
 
 #### Puertas principales del hub
 
-- **Inicio:** Mi Perfil, Dashboard Agro y Crear Finca (acceso directo a Mis Fincas).
-- **Granja:** cultivos, períodos, Facturero de Clientes, Facturero de la Finca, Mis Clientes, Trabajo Diario y Clima Agro.
+- **Inicio:** Dashboard Agro directo (la puerta Inicio es directamente el Dashboard, sin hub intermedio; los deep links o accesos previos a `#view=dashboard` se coercionan a inicio de forma transparente).
+- **Granja:** cultivos, Crear Finca, períodos (Operaciones de la Finca), Facturero de Clientes, Facturero de la Finca, Facturero del Cultivo, Facturero Personal, Mis Clientes, Trabajo Diario, Clima Agro y Centro de Reportes.
 - **Memoria:** abre directo a Memoria conectada (el asistente como hogar y la bitácora como capa interna), sin pantalla intermedia.
-- **Menú:** perfil, documentación, feedback, ajustes y soporte.
+- **Menú:** MI CUENTA (Mi Perfil) + AYUDA (Documentación · Soporte oficial · Privacidad).
 
 > **Nota (2026-06-17):** Rankings de Clientes ya no aparece en el hub. Se accede desde el botón "Rankings de Clientes" dentro de la vista Mis Clientes.
 
@@ -1643,7 +1659,7 @@ Un archivo `.md` se abre en cualquier editor de texto, en cualquier equipo, sin 
 ### 9.9 ¿Cómo separo la idea de Ciclo de Cultivo frente al Ciclo de Período?
 
 * **Ciclo de Cultivo:** Acompaña solamente el desarrollo de una siembra específica desde que la plantas en tierra hasta el fin de su venta o consumo.
-* **Ciclo de Período (Operaciones de la Finca):** Abarca un rango temporal (como "enero a junio") agrupando todos los movimientos operativos de ese lapso, sin importar a qué cultivo correspondían. Los movimientos financieros del período provienen de Facturero de la Finca. Se accede desde el hub Mi Granja bajo "Mis fincas y cultivos".
+* **Ciclo de Período (Operaciones de la Finca):** Es el libro de la finca organizado por rangos temporales (como meses o temporadas): cada ciclo de período está atado a una finca y reúne de forma plana exclusivamente los movimientos generales de esa finca (gastos y operaciones no asociados a un cultivo). Los movimientos ligados a una siembra se consultan en las superficies del cultivo. Se accede desde el hub Mi Granja bajo "Mis fincas y cultivos".
 
 ### 9.10 ¿El asistente IA auditará la rentabilidad general para aconsejarme opciones de inversión bursátil?
 
@@ -1660,9 +1676,9 @@ La herramienta no sirve para consultas que no tengan respaldo en lo que ya regis
 
 ### 9.12 ¿Cómo arranca YavlGold Agro el primer día?
 
-1. Entras al Dashboard y revisas las condiciones del día.
-2. Si es tu primera vez, entra a "Mis Fincas" (la entrada principal del hub).
-3. Si no tienes fincas creadas, crea tu primera finca con nombre y ubicación.
+1. Entras al Dashboard en Inicio y revisas las condiciones del día.
+2. Si es tu primera vez, entra a la puerta Granja y selecciona "Crear Finca" (o accede desde "Mis Fincas").
+3. Si no tienes fincas creadas, registra tu primera finca con nombre y ubicación.
 4. Desde la finca, usa el botón "Ver cultivos" para crear tu primer cultivo con nombre, variedad, área, inversión y fecha de siembra.
 5. Luego registra algún gasto real de insumos en el Facturero correspondiente. Tu pantalla irá creciendo y notarás la utilidad con el tiempo.
 

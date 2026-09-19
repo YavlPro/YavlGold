@@ -416,13 +416,14 @@ Contiene tres grupos:
 ```
 Mis fincas y cultivos
   Mis Fincas
-  Mis cultivos (Activos · Finalizados · Perdidos) — contiene:
-    Estadísticas de cultivos
-    Comparar cultivos
+  Crear Finca
   Operaciones de la Finca (Activos · Finalizados) — contiene:
     Crear ciclo del mes
     Estadísticas de períodos
     Comparar períodos
+  Mis cultivos (Activos · Finalizados · Perdidos) — contiene:
+    Estadísticas de cultivos
+    Comparar cultivos
 
 Mis finanzas
   Facturero de Clientes
@@ -454,7 +455,11 @@ Memoria conectada — puerta directa a módulo profundo (sin sub-hub):
 ### Menú
 
 ```
-Documentación · Soporte oficial · Privacidad
+MI CUENTA
+  Mi Perfil
+
+AYUDA
+  Documentación · Soporte oficial · Privacidad
 ```
 
 ---

@@ -194,7 +194,7 @@ agro-repo-templates.js — AgroRepo: carpetas sistema y plantillas de nota (obse
 agrorepo.js          — entrada de compatibilidad que re-exporta agro-repo-app.js (carga lazy desde agro.js)
 agro-reports-center.js — Centro de Reportes Generales: índice de reportes generales oficiales con selector de finca (estadísticas globales, perfil agricultor, rankings). No consulta Supabase, no selecciona cultivos, no inventa Markdown.
 agro-selection.js    — selección de cultivos
-agro-shell.js        — shell UI de Agro: gestiona navegación hub/module con puertas Inicio · Granja · Memoria · Menú con persistencia por hash, hub central Mi Granja con Mis fincas y cultivos (Mis Fincas, Mis cultivos, Operaciones de la Finca), Mi Planificación (Clima Agro) y Trabajo y lectura (Mis Clientes, Trabajo Diario, Centro de Reportes Generales), barra inferior mobile, topbar contextual con Volver en módulos profundos, launcher/favoritos/búsqueda compacta cuando aplican, y entrada inicial al Dashboard Agro
+agro-shell.js        — shell UI de Agro: gestiona navegación hub/module con puertas Inicio · Granja · Memoria · Menú con persistencia por hash; Inicio renderiza el Dashboard Agro directamente como superficie de hub (sin contextbar Volver; hub anterior de 3 botones retirado; coerción transparente de rutas legacy #view=dashboard y favoritos/aliases hacia inicio sin roturas); Granja organiza Mis fincas y cultivos (orden Mis Fincas, Crear Finca, Operaciones de la Finca), Mis factureros, Mi Planificación (Clima Agro) y Trabajo y lectura (Mis Clientes, Trabajo Diario, Centro de Reportes); Memoria abre directo al workspace por capas; Menú organiza MI CUENTA (Mi Perfil) y AYUDA; barra inferior mobile, topbar contextual con Volver en módulos profundos, y launcher/favoritos/búsqueda compacta
 agro-stats.js        — estadísticas financieras
 agro-stats-report.js — reportes estadísticos
 agro-trash.js        — papelera de eliminados
@@ -307,9 +307,10 @@ disponible, con fallback defensivo a query directa.
 - `agro_clients` - Contactos manuales del agricultor (soft-delete con `deleted_at`, RLS owner-only, campos `display_name` y `client_type`)
 - `agro_buyers` - Vista/entidad derivada de compradores provenientes del Facturero de Clientes. Solo lectura. No tiene tabla propia editable; los registros se derivan automáticamente de `agro_pending`/movimientos del Facturero de Clientes. Se deduplican por nombre canónico normalizado contra `agro_clients` al mostrarse en Mis Clientes.
 
-#### Agro — Operaciones (Facturero de la Finca)
+#### Agro — Operaciones (Facturero de la Finca y Períodos)
 - `agro_operational_cycles` - Ciclos operativos de Facturero de la Finca (hard delete, no usan `deleted_at`)
 - `agro_operational_movements` - Movimientos de ciclos operativos (hard delete, cascade con ciclo padre)
+- `agro_period_cycles` - Ciclos de período / libro de la finca por tiempo (soft-delete con `deleted_at`, RLS owner-only). Columnas: `id`, `user_id`, `farm_id` (UUID nullable, FK a `agro_farms` on delete set null), `name`, `period_year`, `period_month`, `start_date`, `end_date`, `created_at`, `updated_at`, `deleted_at`. Índice único parcial: `(user_id, farm_id, period_year, period_month) WHERE deleted_at IS NULL`. Nota de backfill: filas históricas con `farm_id` NULL pertenecen al bucket "Vista general".
 
 #### Contenido y Módulos
 - `modules` - Definición de módulos

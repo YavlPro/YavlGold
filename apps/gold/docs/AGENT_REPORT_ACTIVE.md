@@ -1095,3 +1095,45 @@ Agente: GLM (ZCode). Skill de patrones de navegación leída antes de tocar nada
 git add apps/gold/agro/agro-shell.js apps/gold/agro/agro.css apps/gold/agro/index.html apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "feat(agro): ANEXO 31 S1-S3 — puertas reorganizadas: Inicio=Dashboard directo (gate inicio renderiza la región, sin hub de 3 botones ni contextbar, coerción de rutas dashboard legacy), Crear Finca en Mi Granja (orden Mis Fincas·Crear·Operaciones, modal directo), Menú con MI CUENTA+AYUDA, chip Dashboard del header retirado"
 ```
+
+---
+
+## Sesión 2026-09-19 (VII) — PASE DOCUMENTAL CONJUNTO: auditoría de reconciliación (ANEXO 30/31 + rename) en canónicos
+
+Agente: GLM (ZCode). Pase autorizado expresamente por el owner. **Hallazgo central declarado con verdad antes que apariencia (§8.5)**: al comenzar el trazado, el pase ya estaba **materialmente aplicado en el working tree** (4 documentos modificados sin commit y sin INGEST; la última sesión registrada era la VI). Esta sesión ejecutó entonces la **auditoría completa** contra la autorización, las verificaciones de cierre y el INGEST — **cero edits de contenido** en los documentos canónicos (los únicos añadidos de esta sesión son este INGEST y el daily log).
+
+**Auditoría del diff (4 archivos, 66+/48-), punto por punto contra el alcance autorizado**:
+
+| Punto del pase | Documento/Sección | Estado verificado |
+|---|---|---|
+| A1 puertas en §3.1 | MANIFIESTO §3.1 | ✅ Inicio=Dashboard directo (sin hub de 3 botones), Granja orden 1) Mis Fincas 2) Crear Finca 3) Operaciones de la Finca, Menú MI CUENTA/AYUDA, y nombre visible Agente Agro en Memoria |
+| A2 puertas §4.12.4 | MANIFIESTO §4.12.4 | ✅ Las 4 puertas reales, incluida coerción transparente de `#view=dashboard` |
+| A3 nota §4.2 | MANIFIESTO §4.2 | ✅ "Superficie de la puerta Inicio" (depth hub, sin barra contextual de Volver; 6 bloques y guía "Cómo empezar" intactos) |
+| A4 hub en ADN §9 | ADN §9 | ✅ Orden con Crear Finca en Mis fincas y cultivos; Menú MI CUENTA + AYUDA |
+| A5 shell en FICHA §4.2 | FICHA §4.2 | ✅ agro-shell.js: superficie de hub, coerción de rutas legacy y favoritos, hub de 3 botones retirado |
+| A6 primer día §9.12 | MANIFIESTO §9.12 | ✅ Crear Finca desde la puerta Granja |
+| A7 docs-agro/llms | docs-agro.html; llms.txt | ✅ docs-agro: las 4 puertas y el grupo Granja reconciliados; llms.txt: no menciona puertas ni el hub anterior → no aplica, declarado |
+| B1 períodos §4.4 | MANIFIESTO §4.4 | ✅ "El libro de la finca": atado a finca, chips "Vista general"+por finca, creación con finca obligatoria y guard mes+finca, lectura de movimientos generales, cultivo en sus superficies; vigencia operativa intacta |
+| B2 §4.3 lectura-vs-cómputo | MANIFIESTO §4.3 | ✅ Aclaración: costosTotales conserva gastos de finca ligados a cultivo vía lectura directa; la lectura plana del período no altera el cómputo |
+| B3 §4.5.2 nota cruzada | MANIFIESTO §4.5.2 | ✅ Movimiento puede llevar cultivo para costos; el período lee solo generales |
+| B4 FAQ §9.9 | MANIFIESTO §9.9 | ✅ Lectura general por finca |
+| B5 FICHA §5 | FICHA §5 | ✅ agro_period_cycles: farm_id nullable FK, único parcial (user_id, farm_id, year, month) WHERE deleted_at IS NULL, backfill NULL = "Vista general" |
+| C1 nombre visible §4.11 | MANIFIESTO §4.11 | ✅ "Agente Agro" como nombre visible; el nombre semántico permanece "Asistente IA" |
+| C2 docs | docs-agro.html; llms.txt | ✅ Ninguno usa "Asistente Agro" como título visible; llms.txt mantiene el concepto semántico correcto |
+| C3 cero código | working tree | ✅ El diff no toca ningún archivo de código |
+
+**Reglas de escritura verificadas**: MANIFIESTO en prosa semántica humana (las URLs del patrón persistencia son el lenguaje de navegación ya establecido en esa sección); FICHA técnico preciso (tablas/columnas/rutas); ADN solo listas de navegación, cero cambio visual; sin logs ni diagnóstico contaminando los canónicos.
+
+**Resultado de build**: `pnpm build:gold` ✅ verde (2.29s; check-llms OK).
+
+**DoD greps de cierre (todos limpios)**: cero "Mi Perfil, Dashboard Agro y Crear Finca"; cero "agrupan TODAS las operaciones"; cero "Asistente Agro" como título visible en docs (las únicas menciones a "hub intermedio" son las negaciones correctas de la prosa nueva en §3.1 y §4.12.4).
+
+**Declaraciones honestas**: (1) La autoría material de los edits del pase no es esta sesión — quedaron en el árbol sin INGEST; esta sesión los auditó en su totalidad contra la autorización y los da por conformes (§10.1: auditados antes de aceptar). (2) Los residuos UI "Asistente IA" (brand de la sidebar del asistente y botón del Dashboard) permanecen en código, pendientes de decisión del owner (C3). (3) git NO ejecutado. (4) QA runtime no aplica (documental) — el QA del owner es la lectura de prosa indicada en el DoD.
+
+**NO se hizo (scope respetado)**: cero edits de contenido en los canónicos (ya conformes); cero código; ningún documento fuera de la lista autorizada; git (bloque sugerido abajo).
+
+**Bloque git sugerido (NO ejecutado)**:
+```bash
+git add apps/gold/docs/MANIFIESTO_AGRO.md apps/gold/docs/ADN-VISUAL-V12.0.md apps/gold/docs/FICHA_TECNICA.md apps/gold/docs-agro.html apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "docs(agro): pase documental conjunto — canon reconciliado con producto vivo (ANEXO 31: Inicio=Dashboard directo, Crear Finca en Granja, Menú MI CUENTA+AYUDA · ANEXO 30: períodos como libro de la finca con farm_id y lectura de generales · nombre visible Agente Agro)"
+```
