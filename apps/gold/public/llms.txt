@@ -27,6 +27,7 @@ Semántica del producto Agro: [`MANIFIESTO_AGRO.md`](apps/gold/docs/MANIFIESTO_A
 
 ## Funcionalidades Agro
 - Pre-cultivos: planes de siembra sin semilla (solo gastos/pérdidas), cadena de fases unidireccional (Pre→Sembrado→Creciendo→Producción→Finalizado), perdido como salida lateral.
+- Memoria conectada (`#view=memoria`): asistente IA a pantalla completa con la bitácora AgroRepo como capa interna; el asistente consulta las notas por relevancia y cita las usadas ("Contexto consultado") con enlace a la nota. Bitácora 100% local (localStorage).
 
 ## Arquitectura
 - Vanilla JavaScript (ES6+ Modules)

@@ -103,6 +103,8 @@ agro-ia-wizard.js                    — wizard de configuración del Asistente 
 agro-interactions.js                 — interacciones
 agro-ledger-reader.js                — lector canónico del ledger por partición (farm/crop/orphan)
 agro-market.js                       — inteligencia de mercado
+agro-memory-retrieval.js             — retrieval local full-text de AgroRepo para el contexto del Asistente IA (sin embeddings, sin Supabase)
+agro-memory-workspace.js             — workspace Memoria conectada por capas (IA hogar fullscreen + AgroRepo capa interna; wiring de drawer/citas, assistant.js intocado)
 agro-mode.js                         — switch de modo de lectura del shell (General/Cultivo/No Cultivo/Herramientas)
 agro-notifications.js                — notificaciones
 agro-operational-edit.js             — modal de edición de movimientos operacionales del ciclo

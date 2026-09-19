@@ -151,6 +151,7 @@ Regla estricta:
 - Interacciones sociales
 - Notificaciones
 - Papelera de cultivos eliminados (soft-delete con restore). Alcance real: solo aplica a cultivos. Factureros, clientes, movimientos financieros y demás superficies NO tienen papelera (ver MANIFIESTO_AGRO.md §12 Pendientes — "Facturero de Clientes Lifecycle" es futuro, no implementado)
+- Memoria conectada: workspace por capas en `#view=memoria` (IA hogar fullscreen + AgroRepo capa interna con Volver); retrieval local por relevancia sobre la bitácora con citas verificables "Contexto consultado" y deep-link a la nota; aliases `#view=asistente`/`#view=agrorepo` con coerción
 - Geolocalización con prioridad: Manual > GPS > IP
 
 **Módulos JS (carga dinámica):**
@@ -180,10 +181,17 @@ agro-farms.js        — CRUD de fincas, selector, estadísticas por finca
 agro-feedback.js     — feedback y encuestas
 agro-interactions.js — interacciones
 agro-market.js       — inteligencia de mercado
+agro-memory-retrieval.js — retrieval local full-text de AgroRepo para el contexto del Asistente IA (scoring título/path/línea + recencia, excerpt con caps, sin embeddings ni Supabase)
+agro-memory-workspace.js — workspace Memoria conectada por capas: IA hogar fullscreen + AgroRepo capa interna con Volver a la IA; estado de capa persistido, drawer de historial mobile y reveal de citas
 agro-notifications.js — notificaciones
 agro-planning.js     — planificación
 agro-precultivo.js   — conversión pre-cultivo→sembrado y guard de transiciones unidireccionales
 agro-privacy.js      — privacidad de datos
+agro-repo-app.js     — AgroRepo/Bitácora: app del explorador (árbol, tabs, editor, búsqueda, papelera interna); reubicado dentro del workspace Memoria
+agro-repo-search.js  — AgroRepo: búsqueda local (normalización diacrítica, match por título/línea, snippets)
+agro-repo-storage.js — AgroRepo: almacenamiento local en árbol (localStorage `agrorepo_mvp_v1`, soft-delete con purge 30d, migraciones legacy, buildRepoContext)
+agro-repo-templates.js — AgroRepo: carpetas sistema y plantillas de nota (observación, incidencia, decisión, prueba, nota libre)
+agrorepo.js          — entrada de compatibilidad que re-exporta agro-repo-app.js (carga lazy desde agro.js)
 agro-reports-center.js — Centro de Reportes Generales: índice de reportes generales oficiales con selector de finca (estadísticas globales, perfil agricultor, rankings). No consulta Supabase, no selecciona cultivos, no inventa Markdown.
 agro-selection.js    — selección de cultivos
 agro-shell.js        — shell UI de Agro: gestiona navegación hub/module con puertas Inicio · Granja · Memoria · Menú con persistencia por hash, hub central Mi Granja con Mis fincas y cultivos (Mis Fincas, Mis cultivos, Operaciones de la Finca), Mi Planificación (Clima Agro) y Trabajo y lectura (Mis Clientes, Trabajo Diario, Centro de Reportes Generales), barra inferior mobile, topbar contextual con Volver en módulos profundos, launcher/favoritos/búsqueda compacta cuando aplican, y entrada inicial al Dashboard Agro
@@ -207,6 +215,8 @@ disponible, con fallback defensivo a query directa.
 - `agro.css` — estilos principales + papelera + undo toast
 - `agro-assistant.css` — layout, sidebar, header y contexto del Asistente IA
 - `agro-assistant-chat.css` — columna de conversación, burbujas y welcome card del Asistente IA
+- `agro-memory-workspace.css` — workspace Memoria por capas (topbar de la capa AgroRepo, chrome móvil de la capa IA, supresión de contextbar)
+- `agro-repo.css` — AgroRepo: explorador de árbol, tabs, editor y modales (cargado por agro-repo-app.js)
 - `agro-facturero-clientes.css` — Facturero de Clientes: vista, cards, estados, acciones separadas y responsive mobile
 - `agro-facturero-clientes-flow.css` — wizard de creación de clientes (chrome y pasos)
 - `agro-facturero-clientes-view-wizard.css` — wizard de lectura (topbar sticky, tiles, footer)
@@ -237,6 +247,10 @@ disponible, con fallback defensivo a query directa.
 - `YG_AGRO_ASSISTANT_ACTIVE_THREAD_V1` — thread activo del Asistente IA
 - `YG_AGRO_ASSISTANT_MESSAGES_V1_<threadId>` — mensajes por thread del Asistente IA (clave dinámica por threadId)
 - `YG_AGRO_ASSISTANT_COOLDOWN_V1` — estado de cooldown anti-429 del Asistente IA
+- `YG_AGRO_MEMORIA_PANEL_V1` — capa activa del workspace Memoria (`ia` | `rag`; legacy `both` coerciona a `ia`)
+- `agrorepo_mvp_v1` — AgroRepo: árbol completo de notas (localStorage, fuente de verdad de la bitácora; sin tabla Supabase)
+- `agrorepo_virtual_v3` / `agrorepo_ultimate_v2` — AgroRepo: claves legacy de migración (solo lectura al arrancar)
+- `agrorepo_tabs` / `agrorepo_active` — AgroRepo: tabs abiertos y archivo activo
 
 ### 4.3 Crypto
 **Ubicación:** `apps/gold/crypto/`
@@ -407,6 +421,12 @@ La navegación profunda y modular dentro de los factureros se sincroniza de form
   `#view=cartera&subview=nuevo&paso=N` (wizard de creación de cliente y primer registro en 8 pasos).
   `#view=cartera&subview=ver&paso=N` (wizard de lectura "Ver clientes" en 4 pasos).
   Sincronización gestionada por `readFactureroHashRoute()` y `writeFactureroHashRoute()`.
+
+- **Workspace Memoria (`agro-memory-workspace.js`):**
+  Estructura hash: `#view=memoria` (capa IA, hogar) y `#view=memoria&subview=rag` (capa AgroRepo).
+  * `subview`: capa activa (`ia` | `rag`); viaja también a `YG_AGRO_MEMORIA_PANEL_V1` para entradas sin parámetro.
+  * Aliases coercitivos: `#view=asistente` → `memoria` (capa IA) y `#view=agrorepo` → `memoria&subview=rag`; los favoritos guardados con esos ids se remapean al leer.
+  * **Persistencia:** hash como fuente de verdad en recarga; `localStorage` recuerda la última capa para la puerta directa.
 
 ### Proceso de Build
 ```bash

@@ -446,7 +446,9 @@ Trabajo y lectura
 ### Memoria
 
 ```
-AgroRepo · Asistente IA
+Memoria conectada — puerta directa a módulo profundo (sin sub-hub):
+  IA (hogar, fullscreen, barra del hub como salida)
+  AgroRepo (capa interna fullscreen, Volver → IA)
 ```
 
 ### Menú

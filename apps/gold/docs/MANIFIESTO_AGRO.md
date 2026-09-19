@@ -124,6 +124,9 @@ El valor de Agro no está solo en registrar. Está en conectar lo que pasa en el
     * Mis Clientes (ver §4.5.4)
     * Trabajo Diario (ver §4.6)
     * Centro de Reportes Generales (ver §4.9)
+* Memoria conectada (puerta principal directa, sin pantalla intermedia — ver §4.10 y §4.11)
+  * Asistente IA (hogar de la superficie)
+  * AgroRepo / Bitácora (capa interna, con Volver al asistente)
 
 > **Nota (2026-06-17):** Rankings de Clientes ya no aparece en el hub. Se accede desde el botón "Rankings de Clientes" dentro de la vista Mis Clientes.
 
@@ -1088,7 +1091,8 @@ No es una aplicación separada ni un segundo facturero. Es una libreta que puede
 ### Relación con el resto
 
 * Se asocia a cultivos específicos.
-* La IA la consulta para dar contexto en sus respuestas.
+* Vive dentro de la superficie Memoria conectada: el asistente es el hogar y la bitácora se abre como capa interna desde él.
+* La IA la consulta para dar contexto en sus respuestas: busca por relevancia entre tus notas según lo que preguntas y cita las notas que tuvo a la vista ("Contexto consultado"), con enlace directo a cada una.
 * Alimenta el historial operacional.
 
 ---
@@ -1098,6 +1102,8 @@ No es una aplicación separada ni un segundo facturero. Es una libreta que puede
 ### Qué es
 
 Un asistente dentro de Agro que puede leer tus anotaciones, ventas y bitácoras de forma conectada. Te da respuestas cruzadas que normalmente requerirían revisar varias pantallas a mano.
+
+Es el hogar de la superficie **Memoria conectada**: la conversación ocupa la pantalla y la bitácora se abre como capa interna cuando la necesitas, sin perder el hilo de la conversación al volver.
 
 ### Qué no es
 
@@ -1117,6 +1123,7 @@ El asistente entiende las herramientas de Agro tal como las usas en la plataform
 ### Qué datos utiliza y cuáles no
 
 * Se basa **únicamente** en los ingresos, gastos y anotaciones que tengas en la bitácora o en los totales contables.
+* Al responder con tu bitácora a la vista, busca las notas más relevantes para tu pregunta — no solo las últimas — y te muestra cuáles consultó bajo "Contexto consultado", con enlace a la nota original. Si la respuesta no tiene respaldo en tus registros, no se inventa citas.
 * **No hace predicciones** sobre el mercado externo ni sobre situaciones que no estén registradas en el sistema.
 * Para obtener respuestas útiles, pregúntale cosas concretas, como se las pedirías a un técnico de confianza.
 
@@ -1279,7 +1286,7 @@ El patrón hub/module organiza Agro en dos estados de experiencia:
 
 - **Inicio:** Mi Perfil, Dashboard Agro y Crear Finca (acceso directo a Mis Fincas).
 - **Granja:** cultivos, períodos, Facturero de Clientes, Facturero de la Finca, Mis Clientes, Trabajo Diario y Clima Agro.
-- **Memoria:** AgroRepo y Asistente IA.
+- **Memoria:** abre directo a Memoria conectada (el asistente como hogar y la bitácora como capa interna), sin pantalla intermedia.
 - **Menú:** perfil, documentación, feedback, ajustes y soporte.
 
 > **Nota (2026-06-17):** Rankings de Clientes ya no aparece en el hub. Se accede desde el botón "Rankings de Clientes" dentro de la vista Mis Clientes.
@@ -1287,6 +1294,8 @@ El patrón hub/module organiza Agro en dos estados de experiencia:
 #### Regla de módulos profundos
 
 Al entrar a un módulo profundo, la navegación global desaparece. La vista debe mostrar una topbar contextual con `Volver` y el título del módulo.
+
+Excepción canónica (Memoria conectada): la capa del asistente conserva visible la barra de puertas del hub como salida, y la capa de bitácora trae su propio Volver, que regresa al asistente conservando la conversación. Ninguna capa queda sin salida visible.
 
 Esto reduce ruido visual y evita que la navegación compita con la tarea principal.
 
