@@ -172,6 +172,18 @@
     }
 }
 
+/* ---------- Supresión de la contextbar del shell en Memoria ----------
+   QA-fix 3 (18-sep 22:13): el chrome del shell es CSS-driven — sus reglas
+   `body[data-agro-shell-depth="module"] .agro-mobile-contextbar { display:flex }`
+   (agro.css ~:9750 móvil y ~:10204 general) PISAN el atributo [hidden] que
+   syncShellDepth sí aplica en memoria (agro-shell.js syncShellDepth). La
+   supresión debe ganar en el mismo plano: display:none !important con el
+   flag de capa, presente SOLO durante memoria (ambas subvistas). El resto
+   de los módulos profundos no tiene flag → contextbar canónica intacta. */
+body[data-agro-memoria-layer] .agro-mobile-contextbar {
+    display: none !important;
+}
+
 /* En la capa rag la barra del hub queda oculta: mandan las reglas nativas
    del shell (depth=module) y el flag no está en 'ia'. */
 

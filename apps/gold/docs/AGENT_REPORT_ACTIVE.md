@@ -680,3 +680,35 @@ Agente: GLM (ZCode). Rediseño del workspace por decisiones cerradas del owner: 
 git add apps/gold/agro/agro-memory-workspace.js apps/gold/agro/agro-memory-workspace.css apps/gold/agro/index.html apps/gold/agro/agro-shell.js
 git commit -m "feat(memoria): ANEXO 29 S3-b — Memoria inmersiva por capas: IA hogar fullscreen (toggle/split retirados) + AgroRepo capa interna con Volver a la IA; contextbar suprimida y barra del hub como salida de la capa IA"
 ```
+
+> **Nota posterior (sesión XII):** el owner commiteó S3-b como `ce8f9cb8`. El bloque de arriba queda como registro histórico; el fix 3 va en la sesión XII.
+
+---
+
+## Sesión 2026-09-18 (XII) — ANEXO 29 QA-fix 3: contextbar "Volver|Memoria" sigue visible (dos Volvers en rag)
+
+Agente: GLM (ZCode). QA owner 22:13/22:14 ROJO: la contextbar del shell sigue visible en ambas subvistas de memoria; en rag se apila con la topbar del workspace ("Volver|AgroRepo") → dos Volvers. Orden del owner: eliminar la barra que dice Memoria con la flecha. Previo: S3-b commiteado por el owner (`ce8f9cb8`). Git NO ejecutado.
+
+**Trazado (a)-(c) con evidencia**:
+
+(a) La contextbar se renderiza en `index.html` (`[data-agro-mobile-contextbar]`, ".agro-mobile-contextbar") y su visibilidad la deciden REGLAS CSS por profundidad, no atributos: `body[data-agro-shell-depth="module"] .agro-mobile-contextbar { display: flex; }` existe DOS veces — agro.css:9750 (media ≤768) y agro.css:10204 (contexto general/desktop, junto a un caso especial `body[data-agro-active-view="operational"]` :10198). El shell solo gestiona attrs (hidden+inert) en syncShellDepth (agro-shell.js:1063-1066).
+
+(b) S3-b YA suprimía la contextbar en el punto de sync (`setElementHiddenInert(mobileContextbar, shellDepth !== 'module' || isMemoria)`, agro-shell.js:1066 — verificado presente en el árbol commiteado). **No tomó efecto porque el chrome del shell es CSS-driven por diseño**: una regla de autor `display:flex` pisa el `[hidden]` del UA (misma clase de bug que QA-fix 1, invertida: allí mi display:flex pisaba el hidden nativo; aquí el display:flex del shell pisa el hidden que el propio shell setea — es el motivo por el que el tabbar se oculta con fade opacity y no con attrs). Ninguna supresión por atributos puede ocultar esta barra; hay que ganar en el plano CSS.
+
+(c) El Volver redundante de rag es el de la contextbar: su botón `[data-agro-mobile-back]` cae en la rama else del handler (agro-shell.js:~1483) → `setShellGate(activeMobileHub)` → regresa al hub PREVIO (Inicio/Granja), NO a la capa IA. No está muerto literalmente: es una segunda salida que compite con las canónicas (rag → topbar workspace → IA; ia → barra del hub) y viola la decisión S3-b "SIN barra contextual Volver|Memoria".
+
+**Fix (1 archivo, 1 regla — en el punto real de render, el plano CSS)**: `agro-memory-workspace.css` añade `body[data-agro-memoria-layer] .agro-mobile-contextbar { display: none !important; }`. El flag de capa existe SOLO durante memoria (ambas subvistas, seteado por applyLayer con guard de vista activa y borrado al salir) → la supresión vence a las dos reglas gemelas (importante vs no-importante) y **el resto de los módulos profundos conserva su contextbar canónica** (sin flag, cero cambio). La supresión por attrs de S3-b se conserva como capa inert/a11y (botones muertos incluso en la ventana de carrera de arranque). Diff = 1 archivo workspace CSS (la causa lo exigía: el flag de capa y todas las overrides de chrome de memoria viven ahí; 0 líneas de shell).
+
+**Resultado de build**: `pnpm build:gold` ✅ verde (2.44s; regla presente en `assets/agro-Bo8p8WRk.css`).
+
+**Matriz estática DoD**: ia sin contextbar y con franja de puertas (regla mata ambas variantes de display:flex) ✓; rag con UN solo Volver (topbar workspace, → ia conservando thread; solo [hidden], cero destroy) ✓; otros módulos intactos (selector exige el flag) ✓; F5/aliases sin cambio (0 diff en shell/routing) ✓; topbar rag y franja de hub NO tocadas ✓.
+
+**QA sugerido (owner)**: (1) Memoria ia → ya no existe la barra "Volver|Memoria" (móvil y desktop); franja de puertas visible; (2) botón AgroRepo → rag con UN solo Volver que regresa al chat con el thread intacto; (3) abrir un módulo profundo clásico (ej. Facturero de Clientes) → su contextbar "Volver|…" sigue ahí; (4) F5 en ambas capas; consola limpia.
+
+**NO se hizo (scope respetado)**: git (bloque sugerido abajo); shell (0 diff — la supresión de syncShellDepth ya era correcta como capa inert); topbar rag; franja de puertas; Edge/assistant (B1).
+
+**Bloque git sugerido (NO ejecutado)**:
+```bash
+git add apps/gold/agro/agro-memory-workspace.css
+git commit -m "fix(memoria): ANEXO 29 QA-fix 3 — contextbar del shell suprimida en ambas capas de memoria (el chrome del shell es CSS-driven: display:flex a depth módulo pisaba el [hidden] de syncShellDepth; regla por flag de capa, resto de módulos intactos)"
+```
