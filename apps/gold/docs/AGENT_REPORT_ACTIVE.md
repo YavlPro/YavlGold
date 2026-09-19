@@ -1240,3 +1240,41 @@ git add supabase/functions/agro-assistant/index.ts apps/gold/docs/AGENT_REPORT_A
 git commit -m "agro: Fase 2 Agente Agro — verdad financiera multimoneda (normalización USD canon RPC + balance de 5 tablas del ledger)"
 git push
 ```
+
+---
+
+## Sesión 2026-09-20 (III) — FASE 3 AGENTE AGRO: conciencia del módulo (fincas, tareas, multi-turn, clima) (Camino A, autorizada por owner)
+
+Agente: GLM (ZCode). Objetivo: cerrar P2-1 (fincas), P2-2 (tareas), P2-5 (sin historia multi-turn) y P2-7 (clima dependiente del DOM). **Nota operativa:** el prompt del paquete llegó truncado tras la query de F3-1; se ejecutó sobre la tabla de alcance (8 cambios, 2 archivos) + hallazgos de la auditoría, documentando cada decisión interpretativa.
+
+**Diagnóstico**: la IA no tenía tools de fincas ni tareas (`agro_farms`/`agro_task_cycles` invisibles); el invoke no enviaba historia (reglas multi-turn del system prompt muertas); el clima se scrapeaba de `#weather-*` (null si el Dashboard no cargó).
+
+**Cambios (2 archivos, 8 acciones)**:
+
+| ID | Cambio | Evidencia |
+|---|---|---|
+| F3-1 | Tool `get_my_farms`: `agro_farms?select=id,name&deleted_at=is.null` (esquema verificado en migración `20260530090000:5-16`). TOOLS_DEF index.ts:141; handler :601; dispatch :1347. | index.ts |
+| F3-2 | Tool `get_today_tasks`: `agro_task_cycles` por `task_date=eq.<hoy BUSINESS_TZ>` + `deleted_at=is.null`, con `task_status` (pending/active/completed/not_executed, migraciones `20260404120000`+`20260404221000`) y `counts.open` para "qué me falta". TOOLS_DEF :146; handler :613; dispatch :1349. | index.ts |
+| F3-3 | Cláusula prompt FINCAS Y TAREAS (usa las tools, no inventar, decir si no hay datos). | index.ts :108-112 |
+| F3-4 | `buildInvokeHistory(prompt)`: últimos 6 turnos user/assistant del thread activo, excluyendo el turno actual (dedupe por cola), 4000 chars/turno; viaja como `history` en el body. | agro-assistant.js :565, :899-927 |
+| F3-5 | Edge inyecta `history` en `contents` antes del turno actual (roles Gemini user/model), con validación estructural server-side (máx 6, strings no vacíos, cap 4000) — cuerpo sin validar jamás entra a la conversación. | index.ts :1245-1261 |
+| F3-6 | Clima cache-first: lee el cache canónico de dashboard.js (`yavlgold_weather_<lat>_<lon>`, TTL 15 min, espejo del redondeo a 2 dec y del mapeo WMO→español de dashboard.js:741-758); DOM solo como fallback si no hay cache válido. | agro-assistant.js :770-838 |
+| F3-7 | Privacidad en history: con montos ocultos, cada turno pasa el mismo `REPO_MONEY_PATTERN` de F1-1 → `[monto oculto]`. Nombres en texto libre no enmascarables (limitación documentada, sin NLP). | agro-assistant.js :899-927 |
+| F3-8 | Cláusula prompt HISTORIA CONVERSACIONAL (seguimientos cortos: nombre de cultivo/finca como respuesta aplica a la pregunta anterior). | index.ts :114-118 |
+
+**Decisiones interpretativas (prompt truncado, documentadas)**: (1) `get_today_tasks` incluye `counts.open` (pending+active) — ayuda a "¿qué me falta hoy?" sin costo; (2) history excluye roles error/system (ruido UI tipo "mensaje en cola"); (3) clima mantiene el DOM como fallback tras el cache (especulaba "no DOM" = no DEPENDER del DOM; si el owner quiere DOM eliminado del todo, es un cambio de 3 líneas); (4) nuevas tools fuera de `PRIVACY_MASKED_TOOLS` — nombres de finca no son nombres de cliente (canon §8) y títulos de tarea son texto libre (misma limitación que bitácora).
+
+**Resultado de build**: `pnpm build:gold` ✅ verde (2.29s; agent-guard OK; check-llms OK; UTF-8 OK). esbuild parse exit 0 en ambos archivos. Bundle verificado: `agro-assistant-*.js` contiene `history:` y `yavlgold_weather_`. Deploy Edge: owner.
+
+**Verificación estática**: 8 tools en TOOLS_DEF = 8 ramas de dispatch = 8 handlers; despacho de las 2 tools nuevas insertado junto a `log_event` (evita la línea bloqueada por Mimosa en Fase 1 — sin bloqueos esta vez); queries de farms/tasks con `deleted_at=is.null` y sin user_id manual (RLS).
+
+**QA sugerido online (owner, tras deploy)**: (1) "¿qué fincas tengo?" → lista nombres reales; (2) "¿qué hay que hacer hoy?" → tareas del día con estados, honesto si no hay; (3) multi-turn: preguntar deudas → responder solo "batata" → la IA filtra por cultivo sin repetir la pregunta; (4) clima: abrir Memoria sin pasar por el Dashboard → el contexto/respuestas siguen knowing clima (con cache <15 min); (5) montos ocultos + history: conversación previa con cifras → el payload de turnos antiguos lleva `[monto oculto]`.
+
+**NO se hizo (scope respetado)**: Fase 4 (migración AgroRepo), limpieza de `sumMoney`, veredicto Mimosa, factureros/agro.js/agro-privacy.js, deploy, git.
+
+**Bloque git sugerido (NO ejecutado)**:
+```bash
+git add supabase/functions/agro-assistant/index.ts apps/gold/agro/agro-assistant.js apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "agro: Fase 3 Agente Agro — conciencia del módulo (tools fincas+tareas, historia multi-turn en invoke, clima cache-first)"
+git push
+```

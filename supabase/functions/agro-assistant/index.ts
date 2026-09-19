@@ -103,7 +103,19 @@ const SYSTEM_PROMPT = [
   'operacionales. Todos los montos estan normalizados a USD usando la tasa',
   'historica registrada en cada movimiento. Si el usuario pregunta por una',
   'finca especifica, aclara que el balance es global (sin filtro por farm_id',
-  'en esta version).'
+  'en esta version).',
+  '',
+  'FINCAS Y TAREAS:',
+  'Para preguntas sobre fincas usa get_my_farms (lista id y nombre de las fincas registradas).',
+  'Para "que hay que hacer hoy" o tareas del dia usa get_today_tasks; el estado de cada tarea es',
+  'pending (pendiente), active (en curso), completed (finalizada) o not_executed (no ejecutada).',
+  'No inventes tareas ni fincas: si get_my_farms o get_today_tasks no devuelven datos, dilo.',
+  '',
+  'HISTORIA CONVERSACIONAL:',
+  'Recibes los ultimos turnos de la conversacion antes de la consulta actual.',
+  'Usalos para resolver respuestas cortas de seguimiento: si pediste aclaracion y el',
+  'usuario responde solo un nombre de cultivo o finca, aplicalo a la pregunta anterior',
+  'sin repetir la pregunta completa.'
 ].join('\n');
 
 const TOOLS_DEF = [
@@ -123,6 +135,16 @@ const TOOLS_DEF = [
   {
     name: "get_my_crops",
     description: "Lista los cultivos del usuario para encontrar IDs por nombre.",
+    parameters: { type: "OBJECT", properties: {}, required: [] }
+  },
+  {
+    name: "get_my_farms",
+    description: "Lista las fincas registradas del usuario (id y nombre).",
+    parameters: { type: "OBJECT", properties: {}, required: [] }
+  },
+  {
+    name: "get_today_tasks",
+    description: "Lista las tareas agendadas para HOY (titulo, tipo, estado, duracion). Estados: pending (pendiente), active (en curso), completed (finalizada), not_executed (no ejecutada).",
     parameters: { type: "OBJECT", properties: {}, required: [] }
   },
   {
@@ -571,6 +593,44 @@ async function handleGetMyCrops(_args: any, authHeader: string) {
      return { ok: true, data: result };
   } catch(e: any) {
      return { ok: false, error: 'GET_CROPS_ERROR', message: e.message };
+  }
+}
+
+// F3-1: fincas del usuario. Esquema verificado en migracion
+// 20260530090000_agro_farms_resources.sql (id, name, ..., deleted_at).
+async function handleGetMyFarms(_args: any, authHeader: string) {
+  try {
+     const result = await supabaseRequest('GET', 'agro_farms?select=id,name&deleted_at=is.null', null, authHeader);
+     return { ok: true, data: result };
+  } catch(e: any) {
+     return { ok: false, error: 'GET_FARMS_ERROR', message: e.message };
+  }
+}
+
+// F3-2: tareas de hoy. Esquema verificado en migraciones
+// 20260404120000 (tabla base) y 20260404221000 (task_status NOT NULL:
+// pending/active/completed/not_executed). "Hoy" en zona de negocio canonica.
+async function handleGetTodayTasks(_args: any, authHeader: string) {
+  try {
+     const today = getTodayYMD(BUSINESS_TZ);
+     const result = await supabaseRequest(
+        'GET',
+        `agro_task_cycles?select=id,title,task_type,task_date,task_status,duration_minutes,duration_label,crop_id&task_date=eq.${today}&deleted_at=is.null&order=created_at.asc`,
+        null,
+        authHeader
+     );
+     const tasks = Array.isArray(result) ? result : [];
+     const openCount = tasks.filter((t: any) => t.task_status === 'pending' || t.task_status === 'active').length;
+     return {
+        ok: true,
+        data: {
+          date: today,
+          counts: { total: tasks.length, open: openCount },
+          tasks
+        }
+     };
+  } catch(e: any) {
+     return { ok: false, error: 'GET_TASKS_ERROR', message: e.message };
   }
 }
 
@@ -1181,10 +1241,22 @@ Deno.serve(async (req) => {
   const contextText = body.context ? `Contexto usuario (JSON): ${JSON.stringify(body.context)}\n\n` : '';
   const fullPrompt = `${contextText}Consulta del usuario: ${prompt}`;
 
-  // Initial Content Payload
-  const contents = [
-    { role: 'user', parts: [{ text: fullPrompt }] }
-  ];
+  // F3-5: historia conversacional — los turnos previos viajan ANTES del turno
+  // actual (roles Gemini: user/model). Validacion estructural server-side:
+  // max 6 turnos, solo textos string no vacios, cada uno acotado a 4000 chars.
+  const historyTurns = Array.isArray(body.history) ? body.history.slice(-6) : [];
+  const contents: any[] = [];
+  for (const turn of historyTurns) {
+    const text = typeof turn?.text === 'string' ? turn.text.trim().slice(0, 4000) : '';
+    if (!text) continue;
+    contents.push({
+      role: turn?.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text }]
+    });
+  }
+
+  // Turno actual
+  contents.push({ role: 'user', parts: [{ text: fullPrompt }] });
 
   // Try Models Loop
   for (const model of MODELS) {
@@ -1272,6 +1344,10 @@ Deno.serve(async (req) => {
           toolResult = await handleGetCropStatus(toolArgs, authHeader);
         } else if (toolName === 'log_event') {
           toolResult = await handleLogEvent(toolArgs, authHeader);
+        } else if (toolName === 'get_my_farms') {
+          toolResult = await handleGetMyFarms(toolArgs, authHeader);
+        } else if (toolName === 'get_today_tasks') {
+          toolResult = await handleGetTodayTasks(toolArgs, authHeader);
         } else if (toolName === 'get_finance_summary') {
           toolResult = await handleGetFinanceSummary(toolArgs, authHeader);
         } else if (toolName === 'get_my_crops') {

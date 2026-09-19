@@ -555,11 +555,14 @@ async function processAssistantQueue() {
         // THE INVOKE CALL REMAINS UNCHANGED (as required)
         // F1-1: la privacidad activa viaja en el invoke; la Edge es fail-closed
         // (sin este campo asume ocultamiento total).
+        // F3-4: history = ultimos 6 turnos del thread (sin el turno actual),
+        // con montos enmascarados si la privacidad lo pide (F3-7).
         const { data, error } = await supabase.functions.invoke('agro-assistant', {
             body: {
                 message: promptForModel,
                 prompt: promptForModel,
                 context: contextPayload,
+                history: buildInvokeHistory(item.prompt),
                 privacy: {
                     hide_names: readBuyerNamesHidden(),
                     hide_money: readMoneyValuesHidden()
@@ -766,7 +769,57 @@ function getAssistantLocationContext() {
     };
 }
 
+// F3-6: clima directo desde el cache canonico de dashboard.js (localStorage
+// 'yavlgold_weather_<lat>_<lon>', TTL 15 min), sin depender de que el
+// Dashboard haya renderizado. Espejo del formato de clave de dashboard.js
+// (coordenadas redondeadas a 2 decimales) y de su mapeo codigo WMO ->
+// etiqueta en espanol. Si no hay cache valido cae al scrapeo DOM previo.
+const WEATHER_CACHE_PREFIX = 'yavlgold_weather_';
+const WEATHER_CACHE_TTL_MS = 15 * 60 * 1000;
+
+function weatherCodeToLabel(code) {
+    if (code === 0 || code === 1) return 'Despejado';
+    if (code >= 2 && code <= 3) return 'Nublado';
+    if (code >= 45 && code <= 48) return 'Niebla';
+    if (code >= 51 && code <= 55) return 'Llovizna';
+    if (code >= 56 && code <= 57) return 'Llovizna helada';
+    if (code >= 61 && code <= 67) return 'Lluvia';
+    if (code >= 71 && code <= 77) return 'Nieve';
+    if (code >= 80 && code <= 82) return 'Chubascos';
+    if (code >= 85 && code <= 86) return 'Nevada';
+    if (code >= 95 && code <= 99) return 'Tormenta';
+    return 'Desconocido';
+}
+
+function getCachedWeatherContext() {
+    const location = getAssistantLocationContext();
+    if (!location) return null;
+    try {
+        const lat = Math.round(location.lat * 100) / 100;
+        const lon = Math.round(location.lon * 100) / 100;
+        const raw = localStorage.getItem(`${WEATHER_CACHE_PREFIX}${lat}_${lon}`);
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        const ts = Number(data?.timestamp);
+        if (!Number.isFinite(ts) || Date.now() - ts > WEATHER_CACHE_TTL_MS) return null;
+        const temp = Number(data.temp);
+        const humidity = Number(data.humidity);
+        const code = Number(data.code);
+        return {
+            summary: Number.isFinite(code) ? weatherCodeToLabel(code) : null,
+            temp_c: Number.isFinite(temp) ? temp : null,
+            humidity: Number.isFinite(humidity) ? humidity : null
+        };
+    } catch (_e) {
+        return null;
+    }
+}
+
 function getAssistantWeatherContext() {
+    // Cache canonico primero (F3-6); DOM solo como fallback.
+    const cached = getCachedWeatherContext();
+    if (cached) return cached;
+
     const descEl = document.getElementById('weather-desc');
     const tempEl = document.getElementById('weather-temp');
     const humEl = document.getElementById('weather-humidity');
@@ -838,6 +891,39 @@ function maskRepoMoneyInPlace(repoMemory) {
         if (entry && typeof entry.content === 'string' && entry.content) {
             entry.content = entry.content.replace(REPO_MONEY_PATTERN, '[monto oculto]');
         }
+    });
+}
+
+// F3-4/F3-7: historia conversacional que viaja en el invoke. Ultimos 6 turnos
+// (user/assistant), excluyendo el turno actual (viaja como message). Con
+// montos ocultos se aplica a cada turno el mismo enmascaramiento de cifras
+// que a la bitacora; los nombres en texto libre NO son enmascarables (misma
+// limitacion documentada de F1-1: sin NLP confiable).
+const INVOKE_HISTORY_MAX_TURNS = 6;
+const INVOKE_HISTORY_TURN_MAX_CHARS = 4000;
+
+function buildInvokeHistory(currentPrompt) {
+    const threadId = assistantState.activeThreadId;
+    const messages = threadId ? preloadThreadMessages(threadId) : [];
+    const turns = messages.filter((msg) => msg
+        && (msg.role === 'user' || msg.role === 'assistant')
+        && typeof msg.text === 'string'
+        && msg.text.trim());
+    // El prompt actual ya quedo agregado al thread al enviar: excluir SOLO
+    // ese turno final para no duplicarlo en contents.
+    const last = turns[turns.length - 1];
+    if (last && last.role === 'user' && last.text === currentPrompt) {
+        turns.pop();
+    }
+    if (!turns.length) return undefined;
+
+    const hideMoney = readMoneyValuesHidden();
+    return turns.slice(-INVOKE_HISTORY_MAX_TURNS).map((msg) => {
+        const text = msg.text.slice(0, INVOKE_HISTORY_TURN_MAX_CHARS);
+        return {
+            role: msg.role,
+            text: hideMoney ? text.replace(REPO_MONEY_PATTERN, '[monto oculto]') : text
+        };
     });
 }
 
