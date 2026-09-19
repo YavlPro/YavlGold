@@ -645,3 +645,38 @@ Agente: GLM (ZCode). QA owner 21:34 ROJO: hub desktop muestra solo Inicio · Gra
 git add apps/gold/agro/index.html
 git commit -m "fix(memoria): ANEXO 29 QA-fix 2 — puerta Memoria restaurada en la barra del hub desktop (canon §4.12.4), despacha directo al workspace sin gate ni pantalla intermedia"
 ```
+
+> **Nota posterior (sesión XI):** el owner commiteó el QA-fix 2 como `6c2a8763`. El bloque de arriba queda como registro histórico.
+
+---
+
+## Sesión 2026-09-18 (XI) — ANEXO 29 S3-b: Memoria inmersiva por capas (IA hogar + AgroRepo capa interna)
+
+Agente: GLM (ZCode). Rediseño del workspace por decisiones cerradas del owner: IA = hogar inmersivo fullscreen (100% ancho), toggle [Ambas·Memoria·IA] y split MUERTOS, AgroRepo = capa interna fullscreen con Volver→IA. Previo: QA-fix 2 commiteado (`6c2a8763`). Git NO ejecutado. B1 intacta: agro-assistant.js 0 diff (el wiring del botón AgroRepo vive en el workspace).
+
+**Cambios (4 archivos)**:
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agro/agro-memory-workspace.js` | re-escrito (267L) | Capas `ia\|rag` solamente: `normalizeLayerState` migra 'both'→'ia' al leer (localStorage y hash); `applyLayer` gobierna visibilidad (host [hidden] + topbar rag + `data-amw-layer` en la sección); flag `body[data-agro-memoria-layer]` SOLO con memoria activa (guard por `dataset.agroActiveView` — sin él, el init en frío dejaría el tabbar desvanecido-anulado dentro de otros módulos en móvil); revealRag = capa rag completa (móvil y desktop por igual); Volver de la topbar rag → `applyLayer('ia')` (conserva thread); botón "AgroRepo" de la sidebar del asistente wired desde el workspace (markup estático, sin tocar assistant.js); al salir de memoria se borra el flag (view-changed else). Se retiran: toggle, split, resize-coerción, lastHub/gate-changed (la salida ya no es un Volver del workspace). |
+| `agro/agro-memory-workspace.css` | re-escrito | Topbar rag (Volver btn sober + título PJS); cuerpo grid 1 columna full-width; visibilidad por `[data-amw-layer]`; botón `.ast-btn-agrorepo` outline-gold canon (scope `.agro-memory-workspace`); **barra del hub como salida de ia**: ≤768 des-vanece el tabbar (`opacity/pointer-events/transform !important` solo con flag=ia), ≥769 muestra la franja `.agro-shell-hub-tabs` del root del hub forzando sus paneles a `display:none !important` (solo puertas, cero contenido del hub); en rag mandan las reglas nativas del shell (oculta). Touch targets ≥44px móvil; reduced-motion; cero hex/rgba fuera de var() (verificado). |
+| `agro/index.html` | edit | Sección workspace: header del workspace (Volver+Memoria+toggle) reemplazado por topbar de la capa rag (`#amw-rag-topbar` hidden + `#amw-rag-back` + título AgroRepo); sidebar del asistente: botón "AgroRepo" (`#ast-open-agrorepo`) debajo de "Nueva conversación". |
+| `agro/agro-shell.js` | edit (2 puntos) | `VIEW_SUBNAV_CONFIG.memoria.allowed` = ['rag','ia'] ('both' fuera → hash legacy subview=both coerciona a '' por normalizeSubview); `syncShellDepth`: en memoria (`activeView === 'memoria'`) el shell deja de ocultar por atributo tabbar+hubRoot (disponibles como salida; visibilidad real por el flag de capa en CSS) y SUPRIME la contextbar "Volver\|Módulo" (el workspace provee su salida). |
+
+**Cadena de salida verificada estáticamente (regla de PARO no activada)**: rag → topbar Volver (visible por CSS en capa rag, ≥44px) → ia con thread intacto (solo [hidden], cero destroy). ia → móvil: tabbar inferior des-vaneado (attrs un-hidden por syncShellDepth + CSS flag=ia) con las 4 puertas; desktop: franja de puertas del hub (paneles forzados none). Salida por puerta → setShellGate → hub depth → reglas nativas (flag borrado en view-changed). Navegación directa a otro módulo desde memoria → syncShellDepth re-oculta attrs (isMemoria false) + flag limpio. **Cero superficie sin salida visible.**
+
+**Matriz estática DoD**: build verde ✓; IA hogar 100% ancho sin toggle ni contextbar con barra del hub visible (por construcción CSS/flag) ✓; botón AgroRepo conmuta a rag ✓; rag fullscreen con Volver→ia y hub oculta ✓; citas: ui.js YA llama `_agroMemoriaRevealRag` (semántica ahora = capa rag completa) + `_agroRepoOpenEntry` — **cero diff en ui.js** ✓; aliases asistente/agrorepo y favoritos intactos (0 diff) ✓; F5: #view=memoria&subview=rag restaura capa (boot normalizeSubview + readHashLayer), subview=both legacy → '' → stored migrado 'ia' ✓; migración 'both'→'ia' al leer storage ✓; single-instance y sin pérdida de estado heredados de S2 (guards intactos, revealEmbeddedSection conservado) ✓.
+
+**Declaraciones honestas**: (1) El mecanismo "barra del hub visible en ia" en desktop desentierra el root del hub a profundidad módulo con sus paneles forzados a none por CSS del workspace (`!important` — necesario contra reglas depth del shell de igual especificidad): si el owner ve artefacto visual en esa franja (padding del hub), ajuste fino en S3-c. (2) El botón simétrico "Asistente IA" en la toolbar de AgroRepo NO se agregó: el Volver de la topbar basta (la spec lo dejaba opcional con declaración). (3) QA runtime no ejecutado (ley §5); la foto final es del owner. (4) `.freebuff/` (untracked, ajeno a este frente) no se tocó.
+
+**Resultado de build**: `pnpm build:gold` ✅ verde (2.55s; chunk `agro-memory-workspace-DrTyQciT.js` con la lógica de capas; grep 0 huérfanos de amw-toggle/data-amw-state/amw-header).
+
+**QA sugerido (owner)**: (1) Memoria → IA inmersiva a ancho completo, sin fila de toggle y sin barra "Volver|Memoria"; en móvil con tabbar inferior visible, en desktop con franja de puertas arriba; (2) botón AgroRepo (sidebar, bajo Nueva conversación) → libreta fullscreen con Volver; (3) Volver → IA con el thread intacto; (4) cita de nota vieja → capa rag con la entrada abierta; (5) #view=asistente → ia y #view=agrorepo → rag; favoritos viejos; (6) F5 en ambas capas persiste; (7) conmutar ia↔rag varias veces → consola limpia y sin duplicados.
+
+**NO se hizo (scope respetado)**: git (bloque sugerido abajo); agro-assistant.js (B1); Edge; retrieval; hub de Granja; botón simétrico en toolbar de AgroRepo (declarado innecesario); S4 documental (gateado).
+
+**Bloque git sugerido (NO ejecutado)**:
+```bash
+git add apps/gold/agro/agro-memory-workspace.js apps/gold/agro/agro-memory-workspace.css apps/gold/agro/index.html apps/gold/agro/agro-shell.js
+git commit -m "feat(memoria): ANEXO 29 S3-b — Memoria inmersiva por capas: IA hogar fullscreen (toggle/split retirados) + AgroRepo capa interna con Volver a la IA; contextbar suprimida y barra del hub como salida de la capa IA"
+```

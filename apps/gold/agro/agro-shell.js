@@ -155,7 +155,9 @@ const VIEW_SUBNAV_CONFIG = Object.freeze({
     'facturero-personal': Object.freeze({ defaultSubview: 'wizard', allowed: ['wizard'] }),
     // ANEXO 29 S2: panel del workspace Memoria. defaultSubview '' = "sin
     // preferencia" → el workspace aplica lo persistido/viewport default.
-    memoria: Object.freeze({ defaultSubview: '', allowed: ['both', 'rag', 'ia'] })
+    // S3-b: capas ia|rag solamente ('both' murió con el split; un hash
+    // legacy con subview=both coerciona a '' vía normalizeSubview).
+    memoria: Object.freeze({ defaultSubview: '', allowed: ['rag', 'ia'] })
 });
 
 const VIEWS_WITH_SUBNAV = new Set(Object.keys(VIEW_SUBNAV_CONFIG));
@@ -1053,9 +1055,15 @@ export function initAgroShell() {
 
     const syncShellDepth = () => {
         document.body.dataset.agroShellDepth = shellDepth;
-        setElementHiddenInert(mobileHubRoot, shellDepth !== 'hub');
-        setElementHiddenInert(mobileTabbar, shellDepth !== 'hub');
-        setElementHiddenInert(mobileContextbar, shellDepth !== 'module');
+        // ANEXO 29 S3-b: en memoria el workspace provee su propia salida —
+        // la contextbar del shell se suprime y la barra del hub (tabbar móvil
+        // / franja de puertas desktop) queda disponible para la capa IA
+        // (visibilidad real por body[data-agro-memoria-layer] en el CSS del
+        // workspace: solo 'ia' la muestra, 'rag' la deja oculta).
+        const isMemoria = activeView === 'memoria';
+        setElementHiddenInert(mobileHubRoot, shellDepth !== 'hub' && !isMemoria);
+        setElementHiddenInert(mobileTabbar, shellDepth !== 'hub' && !isMemoria);
+        setElementHiddenInert(mobileContextbar, shellDepth !== 'module' || isMemoria);
 
         if (mobileContextTitle) {
             mobileContextTitle.textContent = shellContextTitle || 'Módulo';

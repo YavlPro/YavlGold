@@ -2306,29 +2306,21 @@
          AGROREPO MODULE (Lazy Load)
          ═══════════════════════════════════════════════════════════════════════ -->
     <!-- ============================================
-         🧠 ANEXO 29 S2/S3 — WORKSPACE MEMORIA
-         Región fullscreen: panel RAG (AgroRepo, reubicado aquí por
-         agro-memory-workspace.js) + panel IA (Asistente). Sin hub intermedio.
+         🧠 ANEXO 29 S2/S3/S3-b — WORKSPACE MEMORIA
+         Capas inmersivas: IA hogar (ancho completo) y AgroRepo como capa
+         interna fullscreen. Sin toggle split: la conmutación vive en la
+         sidebar del asistente (botón AgroRepo) y en el Volver de la capa rag.
          ============================================ -->
     <section class="agro-memory-workspace" id="agro-memory-workspace" data-agro-shell-region="memoria" hidden
-        inert aria-labelledby="amw-title">
-        <header class="amw-header">
-            <button type="button" class="amw-back" id="amw-back" aria-label="Volver" title="Volver">
+        inert aria-labelledby="amw-rag-title">
+        <!-- Topbar de la capa AgroRepo (visible solo en rag; Volver regresa a la IA) -->
+        <header class="amw-rag-topbar" id="amw-rag-topbar" hidden>
+            <button type="button" class="amw-back" id="amw-rag-back" aria-label="Volver al asistente"
+                title="Volver al asistente">
                 <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
                 <span>Volver</span>
             </button>
-            <div class="amw-heading">
-                <p class="amw-eyebrow">Agro V1</p>
-                <h2 class="amw-title" id="amw-title">Memoria conectada</h2>
-            </div>
-            <div class="amw-toggle" id="amw-toggle" role="tablist" aria-label="Paneles de Memoria">
-                <button type="button" class="amw-toggle__btn is-active" data-amw-panel="both" role="tab"
-                    aria-selected="true">Ambas</button>
-                <button type="button" class="amw-toggle__btn" data-amw-panel="rag" role="tab"
-                    aria-selected="false">Memoria</button>
-                <button type="button" class="amw-toggle__btn" data-amw-panel="ia" role="tab"
-                    aria-selected="false">IA</button>
-            </div>
+            <h2 class="amw-rag-title" id="amw-rag-title">AgroRepo</h2>
         </header>
         <div class="amw-body" id="amw-body">
             <!-- El widget AgroRepo y la superficie del asistente se reubican
@@ -3699,6 +3691,12 @@
                             <button type="button" class="ast-btn-new" id="assistant-new-thread">
                                 <i class="fa-solid fa-plus" aria-hidden="true"></i>
                                 Nueva conversación
+                            </button>
+                            <!-- ANEXO 29 S3-b: puerta a la capa AgroRepo (bitácora) -->
+                            <button type="button" class="ast-btn-agrorepo" id="ast-open-agrorepo"
+                                aria-label="Abrir AgroRepo" title="Abrir AgroRepo">
+                                <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+                                AgroRepo
                             </button>
                         </div>
                         <div class="ast-sidebar-section-label">

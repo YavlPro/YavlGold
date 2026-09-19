@@ -1,14 +1,14 @@
 /**
- * agro-memory-workspace.js — Workspace "Memoria" (AgroRepo + Asistente IA)
- * ANEXO 29 S2/S3 (2026-09-18). Decisiones cerradas del owner (D-1/D-3):
- * superficie única tipo IDE, toggle [Ambas | Memoria | IA], sin hub intermedio.
+ * agro-memory-workspace.js — Workspace "Memoria" por capas (ANEXO 29 S3-b)
+ * IA = superficie HOGAR inmersiva fullscreen (ancho completo); AgroRepo =
+ * capa INTERNA fullscreen con topbar propia cuyo Volver regresa a la IA.
+ * El toggle de tres estados [Ambas|Memoria|IA] y el split murieron por
+ * decisión del owner (18-sep): una capa a la vez, sin media pantalla.
  *
  * Responsabilidad: montar la región fullscreen `memoria`, reubicar los dos
- * paneles EXISTENTES (sección AgroRepo y superficie del asistente) bajo su
- * control y gobernar el estado de paneles con clases/atributos — NUNCA
- * destruye ni re-crea: los init de AgroRepo (initWidget guard) y del
- * asistente (openAgroAssistantInline) se llaman UNA sola vez y ocultar es
- * solo [hidden] sobre el contenedor del panel.
+ * paneles EXISTENTES bajo su control (appendChild, sin destruir estado) y
+ * gobernar la capa activa [ia|rag] con visibilidad por clases/atributos.
+ * Los init de AgroRepo y del asistente se llaman UNA sola vez (guards).
  *
  * Contrato de dependencias (§3.3, sin circulares):
  * - No importa agro-assistant.js ni agro-repo-app.js: los consume por sus
@@ -16,76 +16,75 @@
  *   carga defensiva de agrorepo.js si el puente aún no existe.
  * - agro-assistant.js NO crece en este frente (bandera B1 del ANEXO).
  *
- * Persistencia: YG_AGRO_MEMORIA_PANEL_V1 ('both' | 'rag' | 'ia'). Primera
- * vez: 'both' en desktop, 'ia' en móvil (≤768px). El panel también viaja
- * como subview del hash (#view=memoria&subview=ia) usando la maquinaria
- * nativa del shell (VIEW_SUBNAV_CONFIG + aliases asistente/agrorepo).
+ * Capa IA: sin contextbar del shell ni Volver propio — la salida es la barra
+ * del hub (tabbar móvil / franja de puertas desktop), gestionada por el flag
+ * body[data-agro-memoria-layer] con la colaboración de syncShellDepth
+ * (agro-shell.js deja de ocultar por atributo tabbar+hub en memoria).
+ * Capa RAG: barra del hub oculta; salida = Volver de su topbar → IA.
+ *
+ * Persistencia: YG_AGRO_MEMORIA_PANEL_V1 con valores 'ia'|'rag' (migración:
+ * 'both' → 'ia' al leer). La capa también viaja como subview del hash
+ * (#view=memoria&subview=rag) usando la maquinaria nativa del shell.
  */
 
 import './agro-memory-workspace.css';
 
 const PANEL_STORAGE_KEY = 'YG_AGRO_MEMORIA_PANEL_V1';
-const PANEL_STATES = ['both', 'rag', 'ia'];
+const LAYER_STATES = ['ia', 'rag'];
+const DEFAULT_LAYER = 'ia';
 const VIEW_NAME = 'memoria';
 
 const state = {
     initialized: false,
     panelsReady: false,
-    panel: 'both',
-    lastHub: 'inicio',
+    layer: DEFAULT_LAYER,
     root: null,
-    toggleRoot: null,
+    ragTopbar: null,
     ragHost: null,
     iaHost: null,
     repoSection: null,
     assistantSection: null
 };
 
-function isMobileViewport() {
-    return typeof window !== 'undefined' && window.innerWidth <= 768;
-}
-
-function normalizePanelState(value) {
+function normalizeLayerState(value) {
     const token = String(value || '').trim().toLowerCase();
-    return PANEL_STATES.includes(token) ? token : '';
+    // Migración S3-b: el estado 'both' del split de S2/S3 coerciona a 'ia'.
+    if (token === 'both') return DEFAULT_LAYER;
+    return LAYER_STATES.includes(token) ? token : '';
 }
 
-function resolveDefaultPanel() {
-    return isMobileViewport() ? 'ia' : 'both';
-}
-
-function readStoredPanel() {
+function readStoredLayer() {
     try {
-        return normalizePanelState(localStorage.getItem(PANEL_STORAGE_KEY));
+        return normalizeLayerState(localStorage.getItem(PANEL_STORAGE_KEY));
     } catch (_err) {
         return '';
     }
 }
 
-function writeStoredPanel(panel) {
+function writeStoredLayer(layer) {
     try {
-        localStorage.setItem(PANEL_STORAGE_KEY, panel);
+        localStorage.setItem(PANEL_STORAGE_KEY, layer);
     } catch (_err) {
-        // Ignore storage failures; panel state remains runtime-only.
+        // Ignore storage failures; layer state remains runtime-only.
     }
 }
 
-function readHashPanel() {
+function readHashLayer() {
     try {
         const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
         if (params.get('view') !== VIEW_NAME) return '';
-        return normalizePanelState(params.get('subview'));
+        return normalizeLayerState(params.get('subview'));
     } catch (_err) {
         return '';
     }
 }
 
-function syncHashPanel() {
+function syncHashLayer() {
     try {
         const url = new URL(window.location.href);
         const params = new URLSearchParams(url.hash.replace(/^#/, ''));
         if (params.get('view') !== VIEW_NAME) return;
-        params.set('subview', state.panel);
+        params.set('subview', state.layer);
         url.hash = params.toString();
         history.replaceState(null, '', url);
     } catch (_err) {
@@ -112,35 +111,34 @@ function setHostVisible(host, visible, animate) {
     }
 }
 
-function setPanelVisibility(animate) {
-    const showRag = state.panel === 'both' || state.panel === 'rag';
-    const showIa = state.panel === 'both' || state.panel === 'ia';
-    setHostVisible(state.ragHost, showRag, animate);
-    setHostVisible(state.iaHost, showIa, animate);
+function setLayerVisibility(animate) {
+    setHostVisible(state.ragHost, state.layer === 'rag', animate);
+    setHostVisible(state.iaHost, state.layer === 'ia', animate);
+    if (state.ragTopbar) state.ragTopbar.hidden = state.layer !== 'rag';
 }
 
-function applyPanelState(nextPanel, options = {}) {
-    let panel = normalizePanelState(nextPanel) || resolveDefaultPanel();
-    if (isMobileViewport() && panel === 'both') panel = 'ia';
+function applyLayer(nextLayer, options = {}) {
+    const layer = normalizeLayerState(nextLayer) || DEFAULT_LAYER;
+    const changed = layer !== state.layer;
+    state.layer = layer;
 
-    const changed = panel !== state.panel;
-    state.panel = panel;
+    if (state.root) state.root.dataset.amwLayer = layer;
+    // Flag de capa SOLO con memoria activa: el CSS del workspace (y solo él)
+    // reactiva la barra del hub como salida en 'ia'; en 'rag' las reglas del
+    // shell mandan (oculta). Sin el guard, el init en frío dejaría el tabbar
+    // desvanecido-anulado dentro de OTROS módulos en móvil.
+    if (document.body?.dataset?.agroActiveView === VIEW_NAME) {
+        document.body.dataset.agroMemoriaLayer = layer;
+    }
 
-    if (state.root) state.root.dataset.amwState = panel;
-    state.toggleRoot?.querySelectorAll('[data-amw-panel]').forEach((btn) => {
-        const isActive = btn.dataset.amwPanel === panel;
-        btn.classList.toggle('is-active', isActive);
-        btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
-    });
+    setLayerVisibility(changed && options.animate !== false);
 
-    setPanelVisibility(changed && options.animate !== false);
-
-    if (options.persist !== false) writeStoredPanel(panel);
-    if (options.updateHash === true) syncHashPanel();
+    if (options.persist !== false) writeStoredLayer(layer);
+    if (options.updateHash === true) syncHashLayer();
 }
 
 // Carga defensiva: agro.js ya importa agrorepo.js en el bootstrap, pero el
-// workspace no debe asumir ordenes de carga entre imports dinámicos.
+// workspace no debe asumir órdenes de carga entre imports dinámicos.
 async function ensurePanels() {
     if (state.panelsReady) return;
     state.panelsReady = true;
@@ -163,15 +161,11 @@ async function ensurePanels() {
     }
 }
 
-// QA-fix (ANEXO 29, 18-sep 21:22 — workspace montado pero paneles vacíos):
-// syncRegions oculta las regiones que no coinciden con la vista activa con la
-// clase .is-shell-hidden (display:none !important, agro.css:9373) MÁS el
-// atributo hidden. Las secciones reubicadas fueron capturadas en
-// topLevelRegions del shell antes de la reubicación, así que el shell les
-// re-aplica esa clase en CADA cambio de vista. Limpiar solo hidden/inert no
-// basta: hay que retirar la clase también, aquí (reubicación) y en cada
-// activación — el evento view-changed llega DESPUÉS de syncRegions, así que
-// el orden desoculta correctamente.
+// QA-fix 1 (18-sep): syncRegions oculta las regiones no activas con la clase
+// .is-shell-hidden (display:none !important, agro.css) MÁS el atributo hidden,
+// y las secciones reubicadas siguen viviendo en topLevelRegions del shell.
+// Hay que retirar clase y atributo aquí y en cada activación (el evento
+// view-changed llega DESPUÉS de syncRegions, así que el orden es correcto).
 function revealEmbeddedSection(section) {
     if (!section) return;
     section.hidden = false;
@@ -187,11 +181,11 @@ function activateFromContext() {
     ensurePanels();
     unhideEmbeddedSections();
 
-    const hashPanel = readHashPanel();
-    if (hashPanel) {
-        applyPanelState(hashPanel, { persist: true, updateHash: false });
+    const hashLayer = readHashLayer();
+    if (hashLayer) {
+        applyLayer(hashLayer, { persist: true, updateHash: false });
     } else {
-        applyPanelState(readStoredPanel() || resolveDefaultPanel(), { persist: false, updateHash: false });
+        applyLayer(readStoredLayer() || DEFAULT_LAYER, { persist: false, updateHash: false });
     }
 }
 
@@ -215,20 +209,17 @@ function relocatePanels() {
     }
 }
 
-// ANEXO 29 S2: revela el panel RAG desde una cita del asistente.
-// Desktop: IA → Ambas; ya Ambas/Memoria se mantiene. Móvil: → Memoria.
+// ANEXO 29 S3-b: revela la capa AgroRepo desde una cita del asistente o desde
+// el botón "AgroRepo" de su sidebar. Móvil y desktop por igual: capa completa.
 window._agroMemoriaRevealRag = () => {
     if (!state.root) return;
     const workspaceActive = state.root.classList.contains('is-shell-active');
-    const nextPanel = isMobileViewport()
-        ? 'rag'
-        : (state.panel === 'ia' ? 'both' : state.panel);
     if (!workspaceActive) {
         window.dispatchEvent(new CustomEvent('agro:shell:set-view', {
-            detail: { view: VIEW_NAME, subview: nextPanel, scroll: false }
+            detail: { view: VIEW_NAME, subview: 'rag', scroll: false }
         }));
     }
-    applyPanelState(nextPanel, { persist: true, updateHash: true });
+    applyLayer('rag', { persist: true, updateHash: true });
 };
 
 export function initAgroMemoryWorkspace() {
@@ -238,37 +229,30 @@ export function initAgroMemoryWorkspace() {
 
     state.initialized = true;
     state.root = root;
-    state.toggleRoot = document.getElementById('amw-toggle');
+    state.ragTopbar = document.getElementById('amw-rag-topbar');
     state.ragHost = document.querySelector('[data-amw-panel-container="rag"]');
     state.iaHost = document.querySelector('[data-amw-panel-container="ia"]');
 
     relocatePanels();
 
-    state.toggleRoot?.addEventListener('click', (event) => {
-        const btn = event.target.closest('[data-amw-panel]');
-        if (!btn || !state.toggleRoot.contains(btn)) return;
-        applyPanelState(btn.dataset.amwPanel, { persist: true, updateHash: true });
+    // Capa rag: su Volver regresa a la IA (NO al hub) conservando el thread.
+    document.getElementById('amw-rag-back')?.addEventListener('click', () => {
+        applyLayer('ia', { persist: true, updateHash: true });
     });
 
-    document.getElementById('amw-back')?.addEventListener('click', () => {
-        window.dispatchEvent(new CustomEvent('agro:shell:set-view', {
-            detail: { view: state.lastHub }
-        }));
-    });
-
-    window.addEventListener('agro:shell:gate-changed', (event) => {
-        const gate = String(event.detail?.view || '').trim();
-        if (gate) state.lastHub = gate;
+    // Botón "AgroRepo" de la sidebar del asistente (markup estático): entra a
+    // la capa rag. El wiring vive aquí para no tocar agro-assistant.js (B1).
+    document.getElementById('ast-open-agrorepo')?.addEventListener('click', () => {
+        window._agroMemoriaRevealRag();
     });
 
     window.addEventListener('agro:shell:view-changed', (event) => {
-        if (event.detail?.view === VIEW_NAME) activateFromContext();
-    });
-
-    window.addEventListener('resize', () => {
-        // Móvil no soporta "Ambas": coerción suave sin pisar lo persistido.
-        if (isMobileViewport() && state.panel === 'both') {
-            applyPanelState('ia', { persist: false, updateHash: false });
+        if (event.detail?.view === VIEW_NAME) {
+            activateFromContext();
+        } else if (document.body?.dataset?.agroMemoriaLayer) {
+            // Al salir de memoria, devolver el control de la barra del hub a
+            // las reglas nativas del shell (flag de capa fuera).
+            delete document.body.dataset.agroMemoriaLayer;
         }
     });
 
@@ -277,8 +261,8 @@ export function initAgroMemoryWorkspace() {
     if (document.body?.dataset?.agroActiveView === VIEW_NAME) {
         activateFromContext();
     } else {
-        applyPanelState(resolveDefaultPanel(), { persist: false, updateHash: false, animate: false });
+        applyLayer(DEFAULT_LAYER, { persist: false, updateHash: false, animate: false });
     }
 
-    console.info('[Memoria] workspace wired');
+    console.info('[Memoria] workspace por capas wired');
 }

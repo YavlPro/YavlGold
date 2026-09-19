@@ -1,7 +1,7 @@
 /* ============================================================
-   agro-memory-workspace.css — ANEXO 29 S2/S3
-   Workspace "Memoria": panel RAG (AgroRepo) + panel IA (Asistente)
-   Toggle [Ambas | Memoria | IA] — desktop 2 columnas, móvil exclusivo.
+   agro-memory-workspace.css — ANEXO 29 S3-b
+   Memoria por capas: IA hogar fullscreen + AgroRepo como capa
+   interna con topbar propia. El toggle split de S2/S3 murió.
    Tokens ADN V12 only (mismo idioma que agro-assistant-chat.css).
    ============================================================ */
 
@@ -13,22 +13,23 @@
     min-height: calc(100dvh - 140px);
 }
 
-/* QA-fix ANEXO 29: display:flex del autor NO puede pisar el [hidden] nativo
-   (la sección arranca hidden en el HTML y el shell la gestiona por
-   hidden + is-shell-hidden; sin esto habría flash pre-init del shell). */
+/* display:flex del autor NO puede pisar el [hidden] nativo */
 .agro-memory-workspace[hidden] {
     display: none;
 }
 
-/* ---------- Header: Volver + título + segmented chips ---------- */
+/* ---------- Topbar de la capa AgroRepo (Volver → IA) ---------- */
 
-.amw-header {
+.amw-rag-topbar {
     display: flex;
     align-items: center;
     gap: var(--space-3, 0.75rem);
-    flex-wrap: wrap;
     padding-bottom: var(--space-3, 0.75rem);
     border-bottom: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
+}
+
+.amw-rag-topbar[hidden] {
+    display: none;
 }
 
 .amw-back {
@@ -54,23 +55,7 @@
     outline: none;
 }
 
-.amw-heading {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    margin: 0;
-}
-
-.amw-eyebrow {
-    margin: 0;
-    font-family: var(--font-body);
-    font-size: var(--text-xs, 0.7rem);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-muted, #94A3B8);
-}
-
-.amw-title {
+.amw-rag-title {
     margin: 0;
     font-family: var(--font-heading);
     font-size: 1.05rem;
@@ -78,51 +63,12 @@
     color: var(--text-primary, rgba(255, 255, 255, 0.9));
 }
 
-.amw-toggle {
-    margin-left: auto;
-    display: inline-flex;
-    gap: var(--space-1, 0.25rem);
-    padding: var(--space-1, 0.25rem);
-    border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.1));
-    border-radius: var(--radius-pill, 9999px);
-    background: var(--bg-2, #141414);
-}
-
-.amw-toggle__btn {
-    border: 1px solid transparent;
-    background: transparent;
-    padding: 0.45rem 0.95rem;
-    min-height: 34px;
-    border-radius: var(--radius-pill, 9999px);
-    color: var(--text-secondary, rgba(255, 255, 255, 0.7));
-    font-family: var(--font-body);
-    font-size: var(--text-xs, 0.7rem);
-    cursor: pointer;
-    transition: color 160ms ease, border-color 160ms ease;
-}
-
-.amw-toggle__btn:hover {
-    color: var(--text-primary, rgba(255, 255, 255, 0.9));
-}
-
-.amw-toggle__btn:focus-visible {
-    outline: none;
-    border-color: var(--gold-4, #C8A752);
-}
-
-.amw-toggle__btn.is-active {
-    border-color: var(--border-gold, rgba(200, 167, 82, 0.25));
-    background: var(--bg-1, #0a0a0a);
-    color: var(--gold-4, #C8A752);
-}
-
-/* ---------- Cuerpo: dos paneles con divisor 1px ---------- */
+/* ---------- Cuerpo: una capa a la vez, ancho completo ---------- */
 
 .amw-body {
     flex: 1;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: var(--space-4, 1rem);
+    grid-template-columns: minmax(0, 1fr);
     min-height: 0;
 }
 
@@ -140,21 +86,9 @@
     display: none;
 }
 
-.amw-panel--rag {
-    border-right: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
-    padding-right: var(--space-4, 1rem);
-}
-
-/* Estado de paneles: el colapso OCULTA (display:none), el reveal anima */
-.agro-memory-workspace[data-amw-state="rag"] .amw-panel--ia,
-.agro-memory-workspace[data-amw-state="ia"] .amw-panel--rag {
+.agro-memory-workspace[data-amw-layer="ia"] .amw-panel--rag,
+.agro-memory-workspace[data-amw-layer="rag"] .amw-panel--ia {
     display: none;
-}
-
-.agro-memory-workspace[data-amw-state="rag"] .amw-panel--rag,
-.agro-memory-workspace[data-amw-state="ia"] .amw-panel--ia {
-    border-right: none;
-    padding-right: 0;
 }
 
 @keyframes amwPanelIn {
@@ -177,29 +111,75 @@
     min-height: 0;
 }
 
-/* El Volver del asistente es redundante dentro del workspace: vive en el header */
+/* El Volver interno del asistente es redundante: en ia la salida es la barra
+   del hub; en rag, la topbar propia. */
 .agro-memory-workspace #btn-close-agro-assistant {
     display: none;
 }
 
-/* ---------- Móvil ≤768px: toggle exclusivo [Memoria | IA] ---------- */
+/* ---------- Botón "AgroRepo" en la sidebar del asistente ---------- */
+
+.agro-memory-workspace .ast-btn-agrorepo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2, 0.5rem);
+    width: 100%;
+    padding: 0.55rem 0.9rem;
+    min-height: 40px;
+    border: 1px solid var(--border-gold, rgba(200, 167, 82, 0.25));
+    border-radius: var(--radius-md, 8px);
+    background: transparent;
+    color: var(--gold-4, #C8A752);
+    font-family: var(--font-body);
+    font-size: var(--text-xs, 0.7rem);
+    cursor: pointer;
+    transition: color 160ms ease, border-color 160ms ease;
+}
+
+.agro-memory-workspace .ast-btn-agrorepo:hover,
+.agro-memory-workspace .ast-btn-agrorepo:focus-visible {
+    color: var(--text-primary, rgba(255, 255, 255, 0.9));
+    border-color: var(--gold-4, #C8A752);
+    outline: none;
+}
+
+/* ---------- Barra del hub como salida de la capa IA ----------
+   Móvil (≤768): el tabbar inferior se des-vaneció solo en 'ia'
+   (syncShellDepth ya no lo inerte-oculta en memoria).
+   Desktop (≥769): la franja de puertas del hub sola — los paneles
+   del hub se fuerzan a none para no filtrar contenido del hub. */
 
 @media (max-width: 768px) {
-    .amw-toggle__btn[data-amw-panel="both"] {
-        display: none;
+    body[data-agro-memoria-layer="ia"] .agro-mobile-tabbar {
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        transform: translateY(0) !important;
+    }
+}
+
+@media (min-width: 769px) {
+    body[data-agro-memoria-layer="ia"] .agro-mobile-hub {
+        display: block !important;
     }
 
-    .amw-body {
-        grid-template-columns: minmax(0, 1fr);
+    body[data-agro-memoria-layer="ia"] .agro-mobile-hub__panel {
+        display: none !important;
     }
 
-    .amw-panel--rag {
-        border-right: none;
-        padding-right: 0;
+    body[data-agro-memoria-layer="ia"] .agro-shell-hub-tabs {
+        display: flex !important;
     }
+}
 
-    .amw-toggle__btn,
-    .amw-back {
+/* En la capa rag la barra del hub queda oculta: mandan las reglas nativas
+   del shell (depth=module) y el flag no está en 'ia'. */
+
+/* ---------- Móvil: touch targets ---------- */
+
+@media (max-width: 768px) {
+    .amw-back,
+    .agro-memory-workspace .ast-btn-agrorepo {
         min-height: 44px;
     }
 }
@@ -212,7 +192,7 @@
     }
 
     .amw-back,
-    .amw-toggle__btn {
+    .agro-memory-workspace .ast-btn-agrorepo {
         transition: none;
     }
 }
