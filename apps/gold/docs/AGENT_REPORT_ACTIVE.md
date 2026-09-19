@@ -1172,3 +1172,71 @@ Agente: GLM (ZCode). Relanzamiento tras PARO de carrera (el owner commiteó el p
 git add apps/gold/docs/ADN-VISUAL-V12.0.md apps/gold/agro/agro-tokens.css apps/gold/agro/agro-assistant.css apps/gold/agro/agro-assistant-chat.css apps/gold/agro/agro-memory-workspace.css apps/gold/agro/agro.css apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "feat(dna): ANEXO 29 MF-5 — pulido premium canon-compliant (token --gold-soft-bg §2 + shadow-dark/focus completados en capa, contraste funcional secondary/primary, profundidad bg-2/3+shadow-dark en cards del asistente, bordes neutros en reposo con dorado solo hover/focus, fila de acciones en escala, indicador fino 2px del tab activo)"
 ```
+
+---
+
+## Sesión 2026-09-20 — AUDITORÍA PROFUNDA AGENTE AGRO + FASE 0/FASE 1 (Camino A autorizado por owner)
+
+Agente: GLM (ZCode). Dos partes: (1) auditoría técnica de solo lectura del Agente Agro contra canon; (2) ejecución quirúrgica del paquete Fase 0 + Fase 1 (5 acciones, autorización expresa del owner incluyendo cambio canónico MANIFIESTO §8).
+
+**Diagnóstico (auditoría)**: P0 privacidad (toggles no aplican al contexto que viaja a Gemini ni a respuestas de tools — agro-privacy.js es máscara DOM-only); P1-1 agregaciones sin normalizar moneda COP/USD/VES; P1-3 tools de cultivos sin `deleted_at=is.null` (papelera puede reaparecer); 4/9 módulos invisibles para la IA (Fincas, Tareas, Períodos, Clientes); sin historia multi-turn en el invoke; MAX_TOOL_STEPS=3; `agro_events` sin migración raíz. Versión/modelos Edge = FICHA_TECNICA (v10.0.0-agro-agent, gemini-2.5-flash-lite + gemini-3-flash) sin divergencia.
+
+**Cambios (3 archivos)**:
+
+| Archivo | Cambio |
+|---|---|
+| `supabase/functions/agro-assistant/index.ts` | **F0-1**: `deleted_at=is.null` en `get_my_crops` y `get_crop_status` (crops); query de `agro_events` con TODO comentado (columna no verificable sin migración raíz — NO se agregó el filtro, decisión fail-safe). **F0-2**: cláusula prompt "venta vía log_event ≠ ingreso facturado". **F1-2**: `normalizePrivacy` FAIL-CLOSED en serve (sin `privacy` en body → todo oculto); helper `applyPrivacy` (alias deterministas Cliente N para nombres; "oculto por privacidad" para montos; counts intactos); aplicación central en `functionResponse` para las 3 tools financieras; cláusula prompt anti-adivinación. **Endurecimiento Mimosa (exigido por hook de seguridad para desbloquear F1-2)**: `assertValidUuid` sobre `crop_id` del modelo en las 3 tools financieras (fail-closed: id inválido → error de tool, query no ejecuta) + filtro UUID de `origin_id` en `in.()` + guarda SSRF `assertAllowedSupabaseUrl` en `supabaseRequest` (origen anclado al Supabase de env, https salvo localhost dev). |
+| `agro/agro-assistant.js` | **F1-1**: import de lectores canónicos `readBuyerNamesHidden`/`readMoneyValuesHidden` de agro-privacy.js (módulo hoja, sin circularidad); campo `privacy` en el body del invoke; `maskRepoMoneyInPlace` — regex anclada a divisa ($, COP, USD, VES, Bs + cifra) sobre excerpts de bitácora con montos ocultos → `[monto oculto]`. Nombres en texto libre NO se enmascaran (limitación documentada: sin NLP confiable). |
+| `docs/MANIFIESTO_AGRO.md` | **F1-3 (autorizado)**: §8 "En qué superficies aplican" + Asistente IA (Agente Agro) con el texto exacto autorizado. Ninguna otra línea tocada. |
+
+**Resultado de build**: `pnpm build:gold` ✅ verde (2.39s; agent-guard OK; check-llms OK; UTF-8 OK). Sintaxis Edge verificada estáticamente con esbuild (parse TS exit 0; deploy real lo hace el owner). Bundle verificado: `agro-assistant-*.js` contiene el campo `privacy` del invoke y el mask `monto oculto`; `agro-privacy-*.js` chunk independiente confirma el import resuelto.
+
+**Verificación estática (sin QA runtime, ley §5)**: (1) queries revisadas una a una — crops con deleted_at, ledger ya lo tenía, events sin filtro documentado; (2) contrato del body: `{message, prompt, context, privacy:{hide_names,hide_money}}` — cliente viejo sin privacy cae en fail-closed; (3) ejemplo payload enmascarado: `get_pending_payments` con ambos flags → `by_client:[{client:"Cliente 1", total:"oculto por privacidad", count:3}]`, `totals:{active:"oculto por privacidad", transferred:"oculto por privacidad", grand_total:"oculto por privacidad"}`, `counts` numéricos intactos; (4) application point único (`functionResponse`) — el modelo jamás ve datos crudos de tools financieras cuando hay privacidad activa; (5) `assertValidUuid` dentro de try en los 3 handlers (error de tool recuperable, no 500).
+
+**QA sugerido online (owner, tras deploy de la Edge)**: QA-1 papelera (cultivo eliminado → IA dice "no encuentro"); QA-2 venta semántica (aclara bitácora ≠ facturero); QA-3 nombres ocultos (alias Cliente N + payload `privacy.hide_names:true` en Network); QA-4 montos ocultos (sin cifras verbalizadas + `privacy.hide_money:true`); QA-5 fail-closed (invoke manual sin privacy → todo enmascarado); QA-6 canon §8 (línea exacta en MANIFIESTO).
+
+**NO se hizo (scope respetado)**: Fase 2 (monedas/balance), Fase 3 (fincas/tareas/multi-turn), migración AgroRepo a Supabase, cambios en agro.js u otros módulos, deploy Supabase, git.
+
+**Bloque git sugerido (NO ejecutado)**:
+```bash
+git add supabase/functions/agro-assistant/index.ts apps/gold/agro/agro-assistant.js apps/gold/docs/MANIFIESTO_AGRO.md apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "agro: Fase 0+1 Agente Agro (privacidad P0 + deleted_at + canon §8)"
+git push
+```
+
+---
+
+## Sesión 2026-09-20 (II) — FASE 2 AGENTE AGRO: verdad financiera multimoneda (Camino A, autorizada por owner)
+
+Agente: GLM (ZCode). Objetivo: corregir P1-1 de la auditoría (tools financieras sumaban COP+USD+VES sin normalizar) y ampliar el balance a las 5 tablas del ledger. Solo `supabase/functions/agro-assistant/index.ts`; ningún otro archivo tocado.
+
+**Diagnóstico**: `get_finance_summary` sumaba `Number(item.amount)`/`Number(item.monto)` crudos ignorando `monto_usd/currency/exchange_rate` (index.ts pre-F2); ídem `get_pending_payments` y `get_payments_received`. Balance limitado a expenses+income (sin pérdidas, donaciones ni operacionales).
+
+**Cambios (1 archivo, 6 acciones F2-1..F2-6)**:
+
+| Cambio | Detalle |
+|---|---|
+| Helper `normalizeMoney(row, isIncome)` + `roundUsd` | Precedencia canónica copiada del RPC `get_farm_balance`: `monto_usd → amount_usd → nativo si USD → nativo/exchange_rate → nativo`. `isIncome` selecciona la **convención de columna** del ledger (true=`monto` español: income/pending/losses/transfers; false=`amount` inglés: expenses/operacionales), no la semántica contable — corrección documentada del borrador (este pedía isIncome=false para pending, que leería columna inexistente). Fallback `amount_usd` añadido porque `agro_operational_movements` usa esa columna (verificado en migración `20260416190000:559-575`), no `monto_usd`. |
+| F2-1 `get_finance_summary` | 5 queries en `Promise.all`: expenses+income (antes) + `agro_losses` + `agro_transfers` (donaciones) + `agro_operational_movements`. Todas con `monto_usd,currency,exchange_rate` en select. Totales USD redondeados a 2 dec; `net = income − expenses − losses − donations − operational`; `counts` extendido; `top_expense_categories` normalizado. |
+| F2-2 `get_pending_payments` | select + `sumAmount` + `by_client` normalizados (agro_pending usa `monto`). `latest_items` conserva monto nativo por fila. |
+| F2-3 `get_payments_received` | select + totales + `by_client` normalizados (número USD, no bigint cents); `last_payments` agrega `currency` nativo por fila para no confundir con totales USD. |
+| F2-4/5/6 esquemas verificados anti-invención | `agro_losses`/`agro_transfers`: columnas españolas `monto/monto_usd/currency/exchange_rate/fecha/deleted_at` + crop_id (migración `20260327001000:94-112,149-167`). `agro_operational_movements`: `amount/amount_usd/currency/exchange_rate/movement_date/direction(in|out)`, **hard delete sin deleted_at** (migración `20260416190000:559-575`) — query SIN filtro deleted_at y con `direction=neq.in` siguiendo el canon del RPC (`20260625120000:87-92`); sin filtro crop (ligadas a cycle_id). RLS confía en authHeader (sin user_id manual, consideración #6 del paquete). |
+| Privacidad (QA-3) | `PRIVACY_MONEY_TOTAL_KEYS` += `losses/donations/operational` → `applyPrivacy` enmascara los nuevos totales con `hide_money`. |
+| System prompt | Cláusula única autorizada F2-6: balance ampliado + montos normalizados a USD con tasa histórica + balance global sin farm_id. Ninguna otra línea del prompt tocada. |
+
+**Decisiones quirúrgicas documentadas (desviaciones mínimas del borrador, con evidencia)**: (1) estructura de respuesta conservada (`range_resolved/totals/counts/top_expense_categories`) en vez de la plana `*_total/net_balance/by_category` del borrador — el propio borrador decía "mantener estructura actual" y la anidada preserva el enmascaramiento `applyPrivacy` de Fase 1 (consideración #5); (2) `isIncome` re-interpretado como selector de columna; (3) operacionales solo `direction=neq.in` (canon RPC) en vez de "todo como salidas"; (4) sin user_id manual (RLS).
+
+**Resultado de build**: `pnpm build:gold` ✅ verde (2.82s; agent-guard OK; check-llms OK; UTF-8 OK). Sintaxis Edge: esbuild parse TS exit 0. Deploy real: owner.
+
+**Verificación estática (checks del paquete)**: (1) las 5 queries llevan `monto_usd/currency/exchange_rate` (index.ts:619-623); (2) `normalizeMoney` maneja asimetría amount/monto (index.ts:495); (3) `opsUrl` SIN deleted_at (index.ts:623); (4) losses/donations/operational en `PRIVACY_MONEY_TOTAL_KEYS` (index.ts:259) → pasan por `applyPrivacy`. Residual declarado: `sumMoney` queda definido sin llamadas (reemplazado por sumas normalizadas) — se conserva para no ampliar diff en archivo vigilado por Mimosa.
+
+**QA sugerido online (owner, tras deploy de la Edge)**: QA-1 multimoneda (gastos $100 USD + 200.000 COP@4000 + 500.000 VES@50 → la IA debe responder ~$10.150 USD, no 700.100 crudo); QA-2 balance completo (menciona gastos, ingresos, pérdidas, donaciones y operacionales por separado); QA-3 privacidad (montos ocultos → "oculto por privacidad" también para pérdidas).
+
+**NO se hizo (scope respetado)**: Fase 3 (fincas/tareas/multi-turn/clima), migración AgroRepo, agro.js/agro-assistant.js/agro-privacy.js, deploy, git.
+
+**Bloque git sugerido (NO ejecutado)**:
+```bash
+git add supabase/functions/agro-assistant/index.ts apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "agro: Fase 2 Agente Agro — verdad financiera multimoneda (normalización USD canon RPC + balance de 5 tablas del ledger)"
+git push
+```

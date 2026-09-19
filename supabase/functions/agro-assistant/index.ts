@@ -83,7 +83,27 @@ const SYSTEM_PROMPT = [
   '',
   '6) Prohibido decir "No veo ese cultivo" sin haber llamado get_my_crops primero y haber recibido 0 resultados.',
   '',
-  '**Cuando el usuario diga solo “mi <cultivo>” o pregunte por estado/progreso (ej: “¿Cómo va mi batata?”), debes: (1) llamar `get_my_crops` para resolver el `crop_id` si no está explícito; (2) luego llamar `get_crop_status` con `include_last_events=true` y `events_limit=5`. En la respuesta, muestra 2–5 eventos recientes (fecha + tipo + nota). No prometas monitoreo automático ni avisos futuros; ofrece registrar eventos o recordatorios manuales.**'
+  '**Cuando el usuario diga solo “mi <cultivo>” o pregunte por estado/progreso (ej: “¿Cómo va mi batata?”), debes: (1) llamar `get_my_crops` para resolver el `crop_id` si no está explícito; (2) luego llamar `get_crop_status` con `include_last_events=true` y `events_limit=5`. En la respuesta, muestra 2–5 eventos recientes (fecha + tipo + nota). No prometas monitoreo automático ni avisos futuros; ofrece registrar eventos o recordatorios manuales.**',
+  '',
+  'REGLA SEMANTICA DE log_event (VENTAS):',
+  'Cuando el usuario pida registrar una venta con log_event, aclara SIEMPRE:',
+  'el evento queda anotado en la bitácora del cultivo, pero NO cuenta como',
+  'ingreso cobrado ni como fiado. Para que afecte las cuentas, el agricultor',
+  'debe registrarlo en el Facturero de la Finca (si ya cobró) o en el',
+  'Facturero de Clientes (si quedó fiado).',
+  '',
+  'PRIVACIDAD DE DATOS DEL AGRICULTOR:',
+  'Si los datos llegan enmascarados por privacidad, NUNCA intentes adivinar',
+  'el valor real. Responde con lo disponible y, si falta un dato protegido,',
+  'dilo con honestidad.',
+  '',
+  'BALANCE FINANCIERO (get_finance_summary):',
+  'Cuando el usuario pregunte por el balance financiero, usa get_finance_summary',
+  'que ahora incluye: gastos, ingresos, perdidas, donaciones y movimientos',
+  'operacionales. Todos los montos estan normalizados a USD usando la tasa',
+  'historica registrada en cada movimiento. Si el usuario pregunta por una',
+  'finca especifica, aclara que el balance es global (sin filtro por farm_id',
+  'en esta version).'
 ].join('\n');
 
 const TOOLS_DEF = [
@@ -217,6 +237,138 @@ function isOutOfScopeQuery(prompt: string) {
   return hasNonAgro && !hasAgro;
 }
 
+// --- PRIVACY (F1-2) ---
+
+interface PrivacyFlags {
+  hide_names: boolean;
+  hide_money: boolean;
+}
+
+const PRIVACY_MASKED_TOOLS = new Set([
+  'get_pending_payments',
+  'get_payments_received',
+  'get_finance_summary'
+]);
+
+// Totales que son dinero (los *count* quedan intactos: no son sensibles).
+// F2-4..F2-6: losses/donations/operational entran al enmascaramiento.
+const PRIVACY_MONEY_TOTAL_KEYS = new Set([
+  'active', 'transferred', 'grand_total',
+  'total_amount', 'from_pending_amount', 'direct_amount',
+  'expenses', 'income', 'net',
+  'losses', 'donations', 'operational'
+]);
+
+// FAIL-CLOSED: sin campo privacy en el body (cliente viejo, error de red)
+// se asume ocultamiento total. La privacidad falla a favor del agricultor,
+// nunca en contra.
+function normalizePrivacy(raw: any): PrivacyFlags {
+  if (!raw || typeof raw !== 'object') {
+    return { hide_names: true, hide_money: true };
+  }
+  return {
+    hide_names: raw.hide_names !== false,
+    hide_money: raw.hide_money !== false
+  };
+}
+
+// --- INPUT VALIDATION (tool args -> PostgREST) ---
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Los ids que llegan del modelo (tool args) nunca viajan libres en la URL
+// de PostgREST: se validan como UUID canónico o la query no se ejecuta.
+function assertValidUuid(value: any, field: string): string {
+  const raw = String(value ?? '').trim();
+  if (!UUID_PATTERN.test(raw)) {
+    throw new Error(`Invalid ${field}: must be a UUID`);
+  }
+  return raw;
+}
+
+// SSRF guard: toda peticion debe quedar anclada al UNICO origen permitido
+// (el Supabase configurado en env) y ese origen debe ser https, salvo
+// localhost/127.0.0.1 con http para desarrollo local.
+function assertAllowedSupabaseUrl(rawUrl: string, configuredOrigin: string) {
+  let target: URL;
+  let configured: URL;
+  try {
+    target = new URL(rawUrl);
+    configured = new URL(configuredOrigin);
+  } catch {
+    throw new Error('Invalid request URL');
+  }
+  if (target.origin !== configured.origin) {
+    throw new Error('Request target outside configured Supabase origin');
+  }
+  const isHttps = configured.protocol === 'https:';
+  const isLocalDev = configured.protocol === 'http:' &&
+    (configured.hostname === 'localhost' || configured.hostname === '127.0.0.1');
+  if (!isHttps && !isLocalDev) {
+    throw new Error('Supabase origin must be https (or localhost http for dev)');
+  }
+}
+
+// Enmascara nombres de clientes con alias deterministas dentro de la misma
+// respuesta (Cliente 1, Cliente 2...) y sustituye montos por texto neutro:
+// la IA puede razonar referencias y conteos sin conocer identidades ni cifras.
+function applyPrivacy(data: any, privacy: PrivacyFlags) {
+  if (!data || (!privacy.hide_names && !privacy.hide_money)) return data;
+
+  const aliasByClient = new Map<string, string>();
+  const aliasFor = (value: any): string => {
+    const raw = (value === null || value === undefined || String(value).trim() === '')
+      ? '(sin cliente)'
+      : String(value);
+    if (!aliasByClient.has(raw)) {
+      aliasByClient.set(raw, `Cliente ${aliasByClient.size + 1}`);
+    }
+    return aliasByClient.get(raw) as string;
+  };
+  const HIDDEN_MONEY = 'oculto por privacidad';
+
+  if (Array.isArray(data.by_client)) {
+    data.by_client = data.by_client.map((row: any) => ({
+      ...row,
+      ...(privacy.hide_names ? { client: aliasFor(row?.client) } : {}),
+      ...(privacy.hide_money ? { total: HIDDEN_MONEY, amount: HIDDEN_MONEY } : {})
+    }));
+  }
+
+  if (Array.isArray(data.latest_items)) {
+    data.latest_items = data.latest_items.map((row: any) => ({
+      ...row,
+      ...(privacy.hide_names ? { cliente: aliasFor(row?.cliente) } : {}),
+      ...(privacy.hide_money ? { monto: HIDDEN_MONEY } : {})
+    }));
+  }
+
+  if (Array.isArray(data.last_payments)) {
+    data.last_payments = data.last_payments.map((row: any) => ({
+      ...row,
+      ...(privacy.hide_names && row?.cliente !== null ? { cliente: aliasFor(row?.cliente) } : {}),
+      ...(privacy.hide_money ? { monto: HIDDEN_MONEY } : {})
+    }));
+  }
+
+  if (privacy.hide_money && data.totals && typeof data.totals === 'object') {
+    for (const key of Object.keys(data.totals)) {
+      if (PRIVACY_MONEY_TOTAL_KEYS.has(key)) {
+        data.totals[key] = HIDDEN_MONEY;
+      }
+    }
+  }
+
+  if (privacy.hide_money && Array.isArray(data.top_expense_categories)) {
+    data.top_expense_categories = data.top_expense_categories.map((row: any) => ({
+      ...row,
+      total: HIDDEN_MONEY
+    }));
+  }
+
+  return data;
+}
+
 // --- DATE & MONEY HELPERS ---
 
 const BUSINESS_TZ = 'America/Caracas';
@@ -332,6 +484,36 @@ function sumMoney(values: any[], scale = 2) {
   return formatCents(total, scale);
 }
 
+// --- MULTICURRENCY NORMALIZATION (F2-1..F2-3) ---
+// Precedencia canonica (RPC get_farm_balance / resolveRecordUsd):
+//   monto_usd -> amount_usd -> nativo si USD -> nativo/exchange_rate -> nativo.
+// isIncome selecciona la CONVENCION DE COLUMNA del ledger (true = monto,
+// esquema espanol: agro_income/agro_pending/agro_losses/agro_transfers;
+// false = amount, esquema ingles: agro_expenses/agro_operational_movements),
+// no la semantica contable de la fila.
+function normalizeMoney(row: any, isIncome: boolean): number {
+  const amount = Number((isIncome ? row.monto : row.amount) ?? 0) || 0;
+  const montoUsdRaw = (row.monto_usd !== undefined && row.monto_usd !== null)
+    ? row.monto_usd
+    : ((row.amount_usd !== undefined && row.amount_usd !== null) ? row.amount_usd : null);
+  const montoUsd = montoUsdRaw === null ? null : Number(montoUsdRaw);
+  const currency = row.currency || 'USD';
+  const exchangeRate = (row.exchange_rate !== undefined && row.exchange_rate !== null)
+    ? Number(row.exchange_rate)
+    : null;
+
+  if (montoUsd !== null && !isNaN(montoUsd)) return montoUsd;
+  if (currency === 'USD') return amount;
+  if (exchangeRate !== null && !isNaN(exchangeRate) && exchangeRate > 0) {
+    return amount / exchangeRate;
+  }
+  return amount; // fallback: sin tasa registrada, valor nativo sin convertir
+}
+
+function roundUsd(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
 // --- DB HELPERS ---
 
 async function supabaseRequest(method: string, path: string, body: any, authHeader: string) {
@@ -341,6 +523,7 @@ async function supabaseRequest(method: string, path: string, body: any, authHead
   if (!supabaseUrl || !supabaseAnonKey) throw new Error('Missing Supabase Config');
 
   const url = `${supabaseUrl}/rest/v1/${path}`;
+  assertAllowedSupabaseUrl(url, supabaseUrl);
   const headers = {
     'apikey': supabaseAnonKey,
     'Authorization': authHeader,
@@ -384,7 +567,7 @@ async function requireUser(authHeader: string | null) {
 
 async function handleGetMyCrops(_args: any, authHeader: string) {
   try {
-     const result = await supabaseRequest('GET', 'agro_crops?select=id,name,variety,status', null, authHeader);
+     const result = await supabaseRequest('GET', 'agro_crops?select=id,name,variety,status&deleted_at=is.null', null, authHeader);
      return { ok: true, data: result };
   } catch(e: any) {
      return { ok: false, error: 'GET_CROPS_ERROR', message: e.message };
@@ -394,6 +577,7 @@ async function handleGetMyCrops(_args: any, authHeader: string) {
 async function handleGetFinanceSummary(args: any, authHeader: string) {
   try {
     const { range, crop_id } = args || {};
+    const cropIdSafe = crop_id ? assertValidUuid(crop_id, 'crop_id') : null;
     let startStr, endStr;
 
     // 1. Resolve Dates
@@ -424,33 +608,52 @@ async function handleGetFinanceSummary(args: any, authHeader: string) {
        endStr = today;
     }
 
-    // 2. Parallel Fetch (Expenses & Income)
-    const expUrl = `agro_expenses?select=amount,category&deleted_at=is.null&date=gte.${startStr}&date=lte.${endStr}` + (crop_id ? `&crop_id=eq.${crop_id}` : '');
-    const incUrl = `agro_income?select=monto,fecha&deleted_at=is.null&fecha=gte.${startStr}&fecha=lte.${endStr}` + (crop_id ? `&crop_id=eq.${crop_id}` : '');
+    // 2. Parallel Fetch — 5 tablas del ledger (F2-1, F2-4..F2-6)
+    // Asimetria canonica: agro_expenses en ingles (amount/date);
+    // agro_income/agro_losses/agro_transfers en español (monto/fecha);
+    // agro_operational_movements en ingles con amount_usd/movement_date y
+    // HARD DELETE (sin deleted_at — no filtrar). Operacionales: solo salidas
+    // (direction neq.in), igual que el RPC canonico get_farm_balance; sin
+    // filtro de cultivo (se ligan a cycle_id de la finca, no a crop_id).
+    const cropFilter = cropIdSafe ? `&crop_id=eq.${cropIdSafe}` : '';
+    const expUrl = `agro_expenses?select=amount,monto_usd,currency,exchange_rate,category&deleted_at=is.null&date=gte.${startStr}&date=lte.${endStr}` + cropFilter;
+    const incUrl = `agro_income?select=monto,monto_usd,currency,exchange_rate,fecha&deleted_at=is.null&fecha=gte.${startStr}&fecha=lte.${endStr}` + cropFilter;
+    const lossUrl = `agro_losses?select=monto,monto_usd,currency,exchange_rate,fecha&deleted_at=is.null&fecha=gte.${startStr}&fecha=lte.${endStr}` + cropFilter;
+    const trfUrl = `agro_transfers?select=monto,monto_usd,currency,exchange_rate,fecha&deleted_at=is.null&fecha=gte.${startStr}&fecha=lte.${endStr}` + cropFilter;
+    const opsUrl = `agro_operational_movements?select=amount,amount_usd,currency,exchange_rate,movement_date&direction=neq.in&movement_date=gte.${startStr}&movement_date=lte.${endStr}`;
 
-    const [expRes, incRes] = await Promise.all([
+    const [expRes, incRes, lossRes, trfRes, opsRes] = await Promise.all([
        supabaseRequest('GET', expUrl, null, authHeader),
-       supabaseRequest('GET', incUrl, null, authHeader)
+       supabaseRequest('GET', incUrl, null, authHeader),
+       supabaseRequest('GET', lossUrl, null, authHeader),
+       supabaseRequest('GET', trfUrl, null, authHeader),
+       supabaseRequest('GET', opsUrl, null, authHeader)
     ]);
 
-    // 3. Aggregation
+    // 3. Aggregation — todo normalizado a USD (precedencia canonica)
     const expenses = Array.isArray(expRes) ? expRes : [];
     const income = Array.isArray(incRes) ? incRes : [];
+    const losses = Array.isArray(lossRes) ? lossRes : [];
+    const transfers = Array.isArray(trfRes) ? trfRes : [];
+    const operational = Array.isArray(opsRes) ? opsRes : [];
 
-    const totalExp = expenses.reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0);
-    const totalInc = income.reduce((sum: number, item: any) => sum + (Number(item.monto) || 0), 0);
+    const totalExp = roundUsd(expenses.reduce((sum: number, item: any) => sum + normalizeMoney(item, false), 0));
+    const totalInc = roundUsd(income.reduce((sum: number, item: any) => sum + normalizeMoney(item, true), 0));
+    const totalLoss = roundUsd(losses.reduce((sum: number, item: any) => sum + normalizeMoney(item, true), 0));
+    const totalDon = roundUsd(transfers.reduce((sum: number, item: any) => sum + normalizeMoney(item, true), 0));
+    const totalOps = roundUsd(operational.reduce((sum: number, item: any) => sum + normalizeMoney(item, false), 0));
 
-    // Group Expense Categories
+    // Group Expense Categories (normalizadas)
     const catMap: Record<string, number> = {};
     expenses.forEach((item: any) => {
        const cat = item.category || 'Otros';
-       catMap[cat] = (catMap[cat] || 0) + (Number(item.amount) || 0);
+       catMap[cat] = (catMap[cat] || 0) + normalizeMoney(item, false);
     });
 
     const topExp = Object.entries(catMap)
-       .map(([cat, amount]) => ({ category: cat, total: amount }))
-       .sort((a, b) => b.total - a.total)
-       .slice(0, 5);
+      .map(([cat, amount]) => ({ category: cat, total: roundUsd(amount) }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5);
 
     return {
       ok: true,
@@ -459,11 +662,17 @@ async function handleGetFinanceSummary(args: any, authHeader: string) {
         totals: {
            expenses: totalExp,
            income: totalInc,
-           net: totalInc - totalExp
+           losses: totalLoss,
+           donations: totalDon,
+           operational: totalOps,
+           net: roundUsd(totalInc - totalExp - totalLoss - totalDon - totalOps)
         },
         counts: {
-           expenses: expenses.length,
-           income: income.length
+          expenses: expenses.length,
+          income: income.length,
+          losses: losses.length,
+          donations: transfers.length,
+          operational: operational.length
         },
         top_expense_categories: topExp
       }
@@ -484,7 +693,7 @@ async function handleGetCropStatus(args: any, authHeader: string) {
     if (!crop_id) throw new Error('crop_id is required');
 
     // 1. Get Crop
-    const crops = await supabaseRequest('GET', `agro_crops?id=eq.${crop_id}&select=*`, null, authHeader);
+    const crops = await supabaseRequest('GET', `agro_crops?id=eq.${crop_id}&select=*&deleted_at=is.null`, null, authHeader);
     if (!crops || crops.length === 0) {
       return { ok: false, error: 'NOT_FOUND', message: 'Cultivo no encontrado o sin acceso.' };
     }
@@ -532,6 +741,9 @@ async function handleGetCropStatus(args: any, authHeader: string) {
     let last_events = [];
     if (include_last_events) {
       const limit = events_limit || 10;
+      // TODO: columna deleted_at no verificable en agro_events (sin migracion
+      // raiz en el repo; ver docs/security/SUPABASE_SECURITY_AUDIT_2026-04-20.md).
+      // No agregar el filtro hasta confirmar el contrato de la tabla remota.
       last_events = await supabaseRequest(
         'GET',
         `agro_events?crop_id=eq.${crop_id}&order=occurred_at.desc&limit=${limit}`,
@@ -628,6 +840,7 @@ async function handleGetPendingPayments(args: any, authHeader: string) {
 
   try {
     const { range = '30d', crop_id, group_by = 'client', include_transferred = false } = args;
+    const cropIdSafe = crop_id ? assertValidUuid(crop_id, 'crop_id') : null;
 
     // 1. Calculate Date Range
     const now = new Date();
@@ -649,13 +862,14 @@ async function handleGetPendingPayments(args: any, authHeader: string) {
     }
 
     // 2. Build Query - Fetch ALL non-deleted (we split in memory to provide full summary)
-    let query = `agro_pending?select=id,monto,fecha,cliente,concepto,crop_id,transfer_state,transferred_to,transferred_at,created_at&deleted_at=is.null`;
+    // F2-2: columnas de normalizacion multimoneda (agro_pending = esquema espanol)
+    let query = `agro_pending?select=id,monto,monto_usd,currency,exchange_rate,fecha,cliente,concepto,crop_id,transfer_state,transferred_to,transferred_at,created_at&deleted_at=is.null`;
 
     if (startStr) {
         query += `&fecha=gte.${startStr}`;
     }
-    if (crop_id) {
-        query += `&crop_id=eq.${crop_id}`;
+    if (cropIdSafe) {
+        query += `&crop_id=eq.${cropIdSafe}`;
     }
 
     query += `&order=fecha.desc`;
@@ -682,11 +896,13 @@ async function handleGetPendingPayments(args: any, authHeader: string) {
         }
     });
 
-    const sumAmount = (arr: any[]) => arr.reduce((sum, item) => sum + (Number(item.monto) || 0), 0);
+    // F2-2: suma normalizada a USD (precedencia canonica). agro_pending usa
+    // columna monto -> convencion espanol (isIncome=true en normalizeMoney).
+    const sumAmount = (arr: any[]) => arr.reduce((sum, item) => sum + normalizeMoney(item, true), 0);
 
-    const activeTotal = sumAmount(activeRows);
-    const transferredTotal = sumAmount(transferredRows);
-    const grandTotal = activeTotal + transferredTotal;
+    const activeTotal = roundUsd(sumAmount(activeRows));
+    const transferredTotal = roundUsd(sumAmount(transferredRows));
+    const grandTotal = roundUsd(activeTotal + transferredTotal);
 
     // 5. Select items for Detail View
     // Standard: show valid active items. If user asked for transferred, show everything.
@@ -703,17 +919,19 @@ async function handleGetPendingPayments(args: any, authHeader: string) {
         };
     });
 
-    // Grouping
+    // Grouping (totales por cliente normalizados a USD; monto nativo por fila intacto)
     let grouped = null;
     if (group_by === 'client') {
         const map: Record<string, { client: string, total: number, count: number }> = {};
         enriched.forEach((item: any) => {
             const client = item.cliente || 'Sin Cliente';
             if (!map[client]) map[client] = { client, total: 0, count: 0 };
-            map[client].total += Number(item.monto) || 0;
+            map[client].total += normalizeMoney(item, true);
             map[client].count += 1;
         });
-        grouped = Object.values(map).sort((a, b) => b.total - a.total);
+        grouped = Object.values(map)
+            .map((entry) => ({ ...entry, total: roundUsd(entry.total) }))
+            .sort((a, b) => b.total - a.total);
     }
 
     const duration = Math.round(performance.now() - start);
@@ -752,20 +970,21 @@ async function handleGetPaymentsReceived(args: any, authHeader: string) {
   const start = performance.now();
 
   const rangePreset = args?.range?.preset || args?.range || '30d';
-  const cropId = args?.crop_id || null;
+  const cropIdRaw = args?.crop_id || null;
   const onlyFromPending = args?.only_from_pending === true;
   const includeDetails = args?.include_details !== false;
   const includeReverted = args?.include_reverted === true;
 
-  const cropMasked = cropId ? String(cropId).slice(-6) : 'N/A';
+  const cropMasked = cropIdRaw ? String(cropIdRaw).slice(-6) : 'N/A';
   console.log(`[Tool:Start] tool=get_payments_received preset=${rangePreset} crop=${cropMasked} include_details=${includeDetails} only_from_pending=${onlyFromPending}`);
 
   try {
+    const cropId = cropIdRaw ? assertValidUuid(cropIdRaw, 'crop_id') : null;
     const range = resolveRangePreset(rangePreset);
     const notes: string[] = [];
 
     let query = [
-      'agro_income?select=id,concepto,monto,fecha,categoria,soporte_url,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state,reverted_at,created_at',
+      'agro_income?select=id,concepto,monto,monto_usd,currency,exchange_rate,fecha,categoria,soporte_url,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state,reverted_at,created_at',
       'deleted_at=is.null'
     ].join('&');
 
@@ -798,13 +1017,17 @@ async function handleGetPaymentsReceived(args: any, authHeader: string) {
 
     if (pendingIds.length > 0) {
       try {
-        const uniqueIds = Array.from(new Set(pendingIds));
-        const pendingQuery = `agro_pending?select=id,cliente&id=in.(${uniqueIds.join(',')})`;
-        const pendingRows = await supabaseRequest('GET', pendingQuery, null, authHeader);
-        const pendings = Array.isArray(pendingRows) ? pendingRows : [];
-        for (const row of pendings) {
-          if (row?.id) {
-            pendingClientMap[row.id] = row.cliente || '(sin cliente)';
+        // Los origin_id provienen de filas propias de agro_income; igualmente
+        // solo ids con formato UUID canónico entran al filtro in.().
+        const uniqueIds = Array.from(new Set(pendingIds)).filter((id) => UUID_PATTERN.test(String(id)));
+        if (uniqueIds.length > 0) {
+          const pendingQuery = `agro_pending?select=id,cliente&id=in.(${uniqueIds.join(',')})`;
+          const pendingRows = await supabaseRequest('GET', pendingQuery, null, authHeader);
+          const pendings = Array.isArray(pendingRows) ? pendingRows : [];
+          for (const row of pendings) {
+            if (row?.id) {
+              pendingClientMap[row.id] = row.cliente || '(sin cliente)';
+            }
           }
         }
       } catch (err: any) {
@@ -828,11 +1051,13 @@ async function handleGetPaymentsReceived(args: any, authHeader: string) {
     const fromPendingRows = normalized.filter((row: any) => row.from_pending);
     const directRows = normalized.filter((row: any) => !row.from_pending);
 
-    const totalAmount = sumMoney(normalized.map((row: any) => row.monto));
-    const fromPendingAmount = sumMoney(fromPendingRows.map((row: any) => row.monto));
-    const directAmount = sumMoney(directRows.map((row: any) => row.monto));
+    // F2-3: totales normalizados a USD (precedencia canonica). agro_income
+    // usa columna monto -> convencion espanol (isIncome=true).
+    const totalAmount = roundUsd(normalized.reduce((sum: number, row: any) => sum + normalizeMoney(row, true), 0));
+    const fromPendingAmount = roundUsd(fromPendingRows.reduce((sum: number, row: any) => sum + normalizeMoney(row, true), 0));
+    const directAmount = roundUsd(directRows.reduce((sum: number, row: any) => sum + normalizeMoney(row, true), 0));
 
-    const byClientMap: Record<string, { client: string; count: number; amount: bigint; last_date: string }> = {};
+    const byClientMap: Record<string, { client: string; count: number; amount: number; last_date: string }> = {};
 
     for (const row of normalized) {
       const clientLabel = row.from_pending ? (row.cliente || '(sin cliente)') : '(ingreso directo)';
@@ -840,12 +1065,12 @@ async function handleGetPaymentsReceived(args: any, authHeader: string) {
         byClientMap[clientLabel] = {
           client: clientLabel,
           count: 0,
-          amount: 0n,
+          amount: 0,
           last_date: row.fecha
         };
       }
       byClientMap[clientLabel].count += 1;
-      byClientMap[clientLabel].amount += moneyToCents(row.monto);
+      byClientMap[clientLabel].amount += normalizeMoney(row, true);
       if (row.fecha && row.fecha > byClientMap[clientLabel].last_date) {
         byClientMap[clientLabel].last_date = row.fecha;
       }
@@ -855,14 +1080,12 @@ async function handleGetPaymentsReceived(args: any, authHeader: string) {
       .map((entry) => ({
         client: entry.client,
         count: entry.count,
-        amount: formatCents(entry.amount),
+        amount: roundUsd(entry.amount),
         last_date: entry.last_date
       }))
       .sort((a, b) => {
-        const aVal = moneyToCents(a.amount);
-        const bVal = moneyToCents(b.amount);
-        if (aVal === bVal) return b.count - a.count;
-        return aVal > bVal ? -1 : 1;
+        if (a.amount === b.amount) return b.count - a.count;
+        return a.amount > b.amount ? -1 : 1;
       })
       .slice(0, 20);
 
@@ -871,6 +1094,7 @@ async function handleGetPaymentsReceived(args: any, authHeader: string) {
         id: row.id,
         fecha: row.fecha,
         monto: formatCents(moneyToCents(row.monto)),
+        currency: row.currency || null, // nativo de la fila; los totales son USD
         concepto: row.concepto || null,
         categoria: row.categoria || null,
         crop_id: row.crop_id || null,
@@ -943,6 +1167,9 @@ Deno.serve(async (req) => {
 
   const prompt = (body.message || body.prompt || '').trim();
   if (!prompt) return jsonResponse({ error: 'EMPTY_PROMPT' }, 400, cors);
+
+  // F1-2: privacidad declarada por el cliente; fail-closed si no viaja.
+  const privacy = normalizePrivacy(body.privacy);
 
   if (isOutOfScopeQuery(prompt)) {
     return jsonResponse({ reply: OUT_OF_SCOPE_REPLY, category: 'out_of_scope' }, 200, cors);
@@ -1071,12 +1298,18 @@ Deno.serve(async (req) => {
           parts: [{ functionCall: fn }]
         });
 
+        // F1-2: enmascaramiento server-side — las respuestas de tools
+        // financieras entran a la conversacion del modelo ya protegidas.
+        const toolResultForModel = (toolResult?.ok && PRIVACY_MASKED_TOOLS.has(toolName))
+          ? { ...toolResult, data: applyPrivacy(toolResult.data, privacy) }
+          : toolResult;
+
         payload.contents.push({
           role: 'function',
           parts: [{
             functionResponse: {
               name: toolName,
-              response: { result: toolResult }
+              response: { result: toolResultForModel }
             }
           }]
         });
