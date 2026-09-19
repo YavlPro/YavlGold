@@ -124,6 +124,12 @@ apps/gold/public/env.local.js
 .kilocode/
 .roo/
 
+# Herramientas auxiliares ajenas al producto
+.freebuff/
+.mimosa/
+apps/gold/agro/.mimosa/
+.zcodeignore
+
 # Documentación interna (NO subir al repo)
 docs/AUDITORIA_REPOSITORIO.md
 docs/ADN_VISUAL_OFICIAL.md
