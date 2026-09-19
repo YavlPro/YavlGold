@@ -219,6 +219,15 @@ https://arbiscan.io/tokenapprovalchecker?search=0x969E0a1f1b276dC036bf8Cd28B3De7
 
 **Balance final del usuario:** salió con ~US$26,5 en USDT (BingX + MEXC) más ~US$10 previos, **sin haber depositado nunca un centavo**, mientras otros miembros de la comunidad fueron drenados.
 
+**Confirmación final (19-sep-2026):** el usuario vendió el EVA en MEXC, retiró el USDT por **red BEP20 (BSC)** y **confirmó la acreditación en BingX**. Estado final:
+
+| Dónde | Monto | Rol |
+|---|---:|---|
+| BingX (cuenta operativa) | ~US$26 | Día a día / P2P |
+| Wallet propia en Arbitrum (caja fuerte) | ~US$10 USDT + ~US$1,18 ETH | Ahorro en autocustodia |
+
+**Caso cerrado.** Pendiente único y definitivo: revocar los dos `approve` de 50 EVA en `0x969E0a1f…` (coste ~US$0,003). Mientras existan, un futuro ingreso de EVA en esa wallet quedaría expuesto hasta 50 EVA, aunque el saldo actual sea cero.
+
 ---
 
 ## 9. LIMITACIONES
