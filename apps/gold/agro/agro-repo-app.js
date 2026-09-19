@@ -1796,6 +1796,17 @@ export function initAgroRepo() {
 
   window.ensureAgroRepoReady = ensureWidgetReady;
 
+  // ANEXO 29 S1: deep-link de citas del asistente — abre una entrada concreta
+  // (tab + árbol expandido + editor) aunque el widget aún no esté montado.
+  // openFile sigue siendo privada del módulo; el puente es la única puerta.
+  window._agroRepoOpenEntry = (entryId) => {
+    ensureWidgetReady();
+    const node = getNode(state.repo?.nodes, entryId);
+    if (!node || node.type !== 'file' || node.deletedAt) return false;
+    openFile(node.id);
+    return true;
+  };
+
   // The module now renders as a flat dedicated view (no accordion wrapper).
   // Initialize as soon as the DOM is ready, or immediately if it already is.
   const bootstrap = () => {

@@ -17,6 +17,7 @@
  */
 
 import { supabase } from '../assets/js/config/supabase-config.js';
+import { retrieveRepoMemory } from './agro-memory-retrieval.js';
 import {
     autoResizeInput,
     closeAssistantExportModal,
@@ -285,7 +286,7 @@ function formatThreadTitle(text) {
     return `${trimmed.slice(0, 39)}...`;
 }
 
-function addAssistantMessage({ role, text }) {
+function addAssistantMessage({ role, text, sources }) {
     const safeText = String(text || '').trim();
     if (!safeText) return;
 
@@ -310,6 +311,10 @@ function addAssistantMessage({ role, text }) {
         text: safeText,
         ts: Date.now()
     };
+    // ANEXO 29 S1: las citas viajan con el mensaje (persisten por thread).
+    if (normalizedRole === 'assistant' && Array.isArray(sources) && sources.length) {
+        message.sources = sources;
+    }
     messages.push(message);
 
     const trimmed = messages.slice(-AGRO_ASSISTANT_MAX_HISTORY);
@@ -538,7 +543,9 @@ async function processAssistantQueue() {
 
     try {
         // Build context with crops preamble
-        const contextPayload = getAssistantContext();
+        // ANEXO 29 S1: el prompt real de la consulta alimenta el retrieval de
+        // memoria (repo_memory por relevancia en lugar de recientes fijas).
+        const contextPayload = getAssistantContext(item.prompt);
         const cropsPreamble = buildCropsPreamble();
 
         // V9.7: Prefix prompt with preamble (NOT saved to UI history)
@@ -601,7 +608,14 @@ async function processAssistantQueue() {
             addAssistantMessage({ role: 'error', text: 'No se pudo consultar IA. Intenta luego.' });
         } else {
             setAssistantLoading(false);
-            addAssistantMessage({ role: 'assistant', text: reply.trim() });
+            addAssistantMessage({
+                role: 'assistant',
+                text: reply.trim(),
+                // ANEXO 29 S1: citas verificables — solo ids que estuvieron en
+                // el contexto enviado de verdad (se construyen desde
+                // contextPayload, nunca desde texto libre del modelo).
+                sources: buildSentSources(contextPayload)
+            });
         }
 
         // Reset backoff on success
@@ -801,7 +815,7 @@ function getAssistantCropFocus(activeTab) {
     };
 }
 
-function getAssistantContext() {
+function getAssistantContext(promptText = '') {
     const context = {
         date: new Date().toISOString(),
         app: 'YavlGold Agro',
@@ -867,6 +881,18 @@ function getAssistantContext() {
     context.stats = { crops_count: crops.length };
 
     // AgroRepo memory bridge (bitacora entries for IA continuity)
+    // ANEXO 29 S1: con el prompt real de la consulta se usa retrieval local
+    // full-text (agro-memory-retrieval.js) en lugar del cap fijo de 8
+    // recientes. Sin prompt (panel de contexto) el comportamiento es el de
+    // siempre: recientes del bridge window._agroRepoContext.
+    const repoQuery = typeof promptText === 'string' ? promptText.trim() : '';
+    if (repoQuery) {
+        const retrieved = retrieveRepoMemory(repoQuery);
+        if (retrieved) {
+            context.repo_memory = retrieved;
+            return context;
+        }
+    }
     const repo = window._agroRepoContext;
     if (repo && repo.total_reports > 0) {
         context.repo_memory = {
@@ -877,6 +903,22 @@ function getAssistantContext() {
     }
 
     return context;
+}
+
+// ANEXO 29 S1: fuentes del footer "Contexto consultado" — derivadas
+// exclusivamente del repo_memory enviado en el invoke (validación cliente
+// por construcción). Solo roles 'assistant' las reciben.
+function buildSentSources(contextPayload) {
+    const recent = contextPayload?.repo_memory?.recent;
+    if (!Array.isArray(recent) || !recent.length) return undefined;
+    const sources = recent
+        .filter((entry) => entry?.id)
+        .map((entry) => ({
+            id: String(entry.id),
+            title: String(entry.path || '').split(' / ').pop() || entry.bitacora || 'Nota',
+            date: entry.date || null
+        }));
+    return sources.length ? sources : undefined;
 }
 
 function isLikelyNonAgroQuestion(text) {

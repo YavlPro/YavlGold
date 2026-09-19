@@ -160,6 +160,75 @@ function getAssistantScrollContainer() {
     return document.getElementById('assistant-scroll') || document.getElementById('assistant-history');
 }
 
+// ANEXO 29 S1 — footer de citas "Contexto consultado". Los sources llegan por
+// mensaje desde el core (construidos desde el contexto realmente enviado);
+// este módulo nunca parsea texto del modelo para fabricar citas.
+function formatSourceDate(value) {
+    const ts = Date.parse(value);
+    if (!Number.isFinite(ts)) return '';
+    try {
+        return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    } catch (_e) {
+        return '';
+    }
+}
+
+function navigateToRepoEntry(entryId) {
+    if (!entryId || typeof window._agroRepoOpenEntry !== 'function') return;
+    // Patrón canónico de navegación (agrociclos.js:364): hash + evento del
+    // shell. El bridge asegura el montaje del widget y abre la entrada.
+    try {
+        const url = new URL(window.location.href);
+        url.hash = 'view=agrorepo';
+        history.replaceState(null, '', url);
+    } catch (_err) { /* ignore */ }
+    window.dispatchEvent(new CustomEvent('agro:shell:set-view', {
+        detail: { view: 'agrorepo', scroll: true }
+    }));
+    window._agroRepoOpenEntry(entryId);
+}
+
+function renderMessageSources(container, sources) {
+    const footer = document.createElement('div');
+    footer.className = 'assistant-message-sources';
+
+    const label = document.createElement('span');
+    label.className = 'assistant-message-sources-label';
+    label.textContent = 'Contexto consultado';
+    footer.appendChild(label);
+
+    const chips = document.createElement('div');
+    chips.className = 'assistant-message-sources-chips';
+
+    sources.forEach((source) => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'assistant-message-source-chip';
+        chip.dataset.agroSourceId = String(source?.id || '');
+        chip.title = source?.path || source?.title || 'Ver en AgroRepo';
+
+        const chipTitle = document.createElement('span');
+        chipTitle.textContent = String(source?.title || 'Nota');
+        chip.appendChild(chipTitle);
+
+        const dateLabel = formatSourceDate(source?.date);
+        if (dateLabel) {
+            const chipDate = document.createElement('span');
+            chipDate.className = 'assistant-message-source-chip-date';
+            chipDate.textContent = dateLabel;
+            chip.appendChild(chipDate);
+        }
+
+        chip.addEventListener('click', () => {
+            navigateToRepoEntry(chip.dataset.agroSourceId);
+        });
+        chips.appendChild(chip);
+    });
+
+    footer.appendChild(chips);
+    container.appendChild(footer);
+}
+
 function isNearBottom(container) {
     const threshold = 80;
     return container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
@@ -200,6 +269,9 @@ function renderAssistantHistory(messages = []) {
                     : 'assistant';
         message.className = `assistant-message ${role}`;
         renderMessageContent(message, item?.text || '');
+        if (role === 'assistant' && Array.isArray(item?.sources) && item?.sources.length) {
+            renderMessageSources(message, item.sources);
+        }
         const ts = Number(item?.ts);
         if (Number.isFinite(ts) && ts > 0) {
             const meta = document.createElement('div');

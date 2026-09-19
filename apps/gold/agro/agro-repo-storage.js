@@ -1003,6 +1003,7 @@ export function buildRepoContext(repoLike) {
         active_bitacora: activeNode ? getRootFolderForNode(repo.nodes, activeNode.id)?.title || null : null,
         active_path: activeNode ? getPathNodes(repo.nodes, activeNode.id).map((node) => node.title).join(' / ') : '',
         recent_entries: files.slice(0, 12).map((file) => ({
+            id: file.id,
             bitacora: getRootFolderForNode(repo.nodes, file.id)?.title || getTemplateLabel(file.templateKey),
             path: getPathNodes(repo.nodes, file.id).map((node) => node.title).join(' / '),
             type: file.templateKey,

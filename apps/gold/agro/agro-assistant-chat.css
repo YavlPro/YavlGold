@@ -287,6 +287,61 @@
   color: var(--text-muted, #94A3B8);
 }
 
+/* ANEXO 29 S1 — footer de citas "Contexto consultado" bajo la respuesta */
+.asistente-dedicado .assistant-message-sources {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 0.25rem);
+  margin-top: var(--space-2, 0.5rem);
+  padding-top: var(--space-2, 0.5rem);
+  border-top: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
+}
+
+.asistente-dedicado .assistant-message-sources-label {
+  font-family: var(--font-body);
+  font-size: var(--text-xs, 0.7rem);
+  color: var(--text-muted, #94A3B8);
+}
+
+.asistente-dedicado .assistant-message-sources-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1, 0.25rem);
+}
+
+.asistente-dedicado .assistant-message-source-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1, 0.25rem);
+  max-width: 100%;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--border-gold, rgba(200, 167, 82, 0.25));
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+  font-family: var(--font-body);
+  font-size: var(--text-xs, 0.7rem);
+  line-height: 1.3;
+  cursor: pointer;
+  transition: border-color 160ms ease, color 160ms ease;
+}
+
+.asistente-dedicado .assistant-message-source-chip > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.asistente-dedicado .assistant-message-source-chip:hover,
+.asistente-dedicado .assistant-message-source-chip:focus-visible {
+  border-color: var(--gold-4, #C8A752);
+  color: var(--text-primary, rgba(255, 255, 255, 0.9));
+}
+
+.asistente-dedicado .assistant-message-source-chip-date {
+  color: var(--text-muted, #94A3B8);
+}
+
 .asistente-dedicado .assistant-message-body {
   display: grid;
   gap: var(--space-2, 0.5rem);

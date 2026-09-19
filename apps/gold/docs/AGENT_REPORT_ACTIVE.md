@@ -470,3 +470,68 @@ Agente: GLM (ZCode). Dos cirugías de QA. DoD completo verde, regla de paro no a
 git add apps/gold/agro/agrociclos.js apps/gold/agro/agro-precultivo.js
 git commit -m "fix(agro): ANEXO 28 QA-fix — chip VER aterriza en paso 3 (conteos reales) y matriz de fechas del modal por estado (pre oculta cierre, pérdida solo en Perdido, restauración sin fechas inventadas)"
 ```
+
+---
+
+## Sesión 2026-09-18 (VI) — ANEXO 29 Fase 0: Memoria Conectada (solo lectura)
+
+Agente: GLM (ZCode). MODO SOLO LECTURA: cero edits de código, cero git, cero canon (este INGEST es el único cambio). Build de partida verde. Decisiones D-1…D-4 del owner NO re-abiertas.
+
+**Objetivo**: trazado (a)–(g) del proto-RAG vivo (AgroRepo ↔ Asistente IA) para diseñar la superficie unificada "Memoria conectada" y el retrieval Fase 1 (full-text, sin embeddings).
+
+**Veredicto de almacenamiento (carga crítica resuelta)**: AgroRepo vive **100% en localStorage** bajo `agrorepo_mvp_v1` (agro-repo-storage.js:14); `agro-repo-storage.js` (1.015L) no importa nada de Supabase. Lectura `loadRepoState()` (:899-938) con migraciones legacy (`agrorepo_virtual_v3` :15, `agrorepo_ultimate_v2` :16); escritura `persistRepoState()` (:940-954) serializa el árbol completo. Nodo file (:226-248): `id agrpn_*, title, templateKey, content, createdAt, updatedAt, deletedAt` — **sin crop_id** (la "asociación a cultivo" es solo la carpeta sistema `Cultivos`, agro-repo-templates.js:10-14). Trash interno con purge 30d (:446-466). La tabla `agro_events` (FICHA §5) es de la Edge (`log_event`), NO de AgroRepo.
+
+**Diagnóstico clave (archivo:línea)**:
+- (b) Búsqueda local (agro-repo-search.js, 88L): `normalizeSearchText` NFD-sin-diacríticos (:1-6), `searchFiles` substring por título y por línea con lineNum (:49-84). **Sin ranking de relevancia** — base reutilizable, falta scoring.
+- (c) Contexto: puente `window._agroRepoContext = buildRepoContext(repo)` (agro-repo-app.js:379-381, refresh en persistAll :417); `getAssistantContext()` (agro-assistant.js:804-880) incrusta `repo_memory.recent = slice(0,8)` de las 12 recientes (:875; orden updatedAt desc desde storage :994). Invoke (:541-550) con preamble de cultivos (:472-504). Edge v10.0.0-agro-agent: 6 tools (index.ts:89-179), contexto del cliente embebido como texto (:954-955), loop agéntico máx 3 pasos (:975). **No existe tool de memoria.**
+- (d) Superficies: `VIEW_CONFIG` agrorepo/asistente (agro-shell.js:171-172), ambos al hub `memoria` (:79-80), gate (:58). Hub Memoria con **2 botones** (index.html:729-736); sidebar "Memoria e IA" 2 tiles scope `tools` (:478-494; en modo General se ven por defecto, :522-526). `asistente` es región fullscreen (:1194). **No hay deep-link a una entrada** (agro-repo-app sin hash/location; `openFile` :912-931 es privado; solo `window.ensureAgroRepoReady` :1797). No hay aliases legacy hoy (VIEW_ALIASES :91-113 no las incluye).
+- (e) UX: Asistente post-ANEXO 26 = columna 820px, welcome 3 chips, historial threads; render de mensaje = texto plano + code fences (agro-assistant-ui.js:101-157) — **sin markdown de enlaces → las citas deben renderizarse desde datos locales, no parseando texto del modelo**. AgroRepo = explorador de archivos (árbol, tabs, editor md, búsqueda global Ctrl+K :862-873).
+- (f) Privacidad (declarado, sin cambio): viaja a Gemini name/farm/location_text (:821-823), **lat/lon** (:737-741), clima del DOM (:744-760), cultivos+fechas (:792-801 + preamble), y repo_memory con path completo + snippet 180 (:875). `agro-privacy.js` NO interviene. Logs Edge enmascaran ids (:1036-1037).
+- (g) Citas: metadatos por entrada disponibles (id/fechas/templateKey/path/bitácora) pero `buildRepoContext.recent_entries` **no expone `id`** (:1005-1012) — añadirlo es aditivo y necesario para chip "[Ver en AgroRepo]".
+
+**Diseño Fase 1 (según veredicto localStorage)**: retrieval client-side — módulo nuevo `agro-memory-retrieval.js` con `retrieveRepoMemory(query, {limit})`: scoring título×4 / path×2 / línea×1 + recencia, fallback a recientes si no hay match; reemplaza el `slice(0,8)` fijo usando `item.prompt` real (getAssistantContext gana parámetro opcional; panel sin prompt conserva comportamiento). Citas desde datos locales validados (solo ids presentes en el payload). Tool server-side `search_memory` NO aplica en Fase 1 (los datos no están en Supabase); migración futura a tabla con RLS = decisión de producto del owner.
+
+**Plan propuesto**: S1 retrieval+citas (núcleo) · S2 superficie unificada switch Conversar|Bitácora + aliases `asistente`/`agrorepo` vía VIEW_ALIASES con subview (mecanismo :92-113 + subnav :552/:655) + puente `window._agroRepoOpenEntry` · S3 hub card única + visual ADN V12 (ojo remapeo de favoritos: ids derivan de data-agro-view) · S4 pase documental GATEADO (MANIFIESTO §4.10/§4.11/§5.5, ADN §9, FICHA §4.2/§5 — que hoy omite toda la familia agro-repo-*.js y las 5 claves localStorage agrorepo_*, AGENTS §3.2).
+
+**Cambios realizados**: ninguno de código. Solo este INGEST.
+
+**Resultado de build**: `pnpm build:gold` ✅ verde de partida (2.1s) y al cierre.
+
+**QA sugerido (owner)**: ninguno (sin cambios). Para S1: preguntar al asistente algo que esté textualmente en una nota vieja y verificar que la respuesta la cita.
+
+**NO se hizo (scope respetado)**: edits de código, git, canónicos, re-apertura de D-1…D-4, QA runtime (ley §5).
+
+**No trazado (honesto)**: agro-repo-app.js (1.809L) y agro-assistant-ui.js (437L) leídos por zonas load-bearing, no línea a línea; agro-repo.css sin auditar; agro-shell-search.js (162L) solo verificado su consumo de keywords (:33); tamaño real del localStorage del owner sin medir; todo el trazado es estático (cero runtime).
+
+---
+
+## Sesión 2026-09-18 (VII) — ANEXO 29 S1: retrieval local + citas verificables
+
+Agente: GLM (ZCode). Implementación del scope S1 exacto (D-2 full-text sin embeddings). Git NO ejecutado. Previo: Fase 0 (sesión VI) sin re-diagnosticar.
+
+**Cambios (5 archivos del DoD + 1 CSS declarado)**:
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `agro/agro-memory-retrieval.js` | nuevo (244L) | `retrieveRepoMemory(query, {limit=6})`: tokens con `normalizeSearchText` real + stopwords ES cerradas (~40); scoring título×4 / path·bitácora×2 / línea×1 (cap 6/archivo) + boost recencia (máx +2, vida media 60d); excerpt centrado en línea con match (≤200 chars, índice lax sobre línea cruda por diacríticos); presupuesto total 2560 chars; sin matches → top 8 recientes (= comportamiento previo); lectura PURA vía `normalizeRepo` (no usa `loadRepoState`, que persiste). Imports: storage + search (hoja), consumido solo por agro-assistant.js (§3.3 sin circulares). |
+| `agro/agro-repo-storage.js` | +1L | `recent_entries` expone `id` (:1006) — aditivo, para citas con deep-link. |
+| `agro/agro-assistant.js` | +42L | Import retrieval; `getAssistantContext(promptText='')` (:824): con prompt → `retrieveRepoMemory` (:890) y return temprano; sin prompt → bridge recientes de siempre (:893-900). Cola pasa `item.prompt` real (:548). `buildSentSources(contextPayload)` (:911) construye las citas SOLO desde el repo_memory enviado; se adjuntan al mensaje assistant en éxito (:617). `addAssistantMessage` acepta `sources` y las persiste con el mensaje (:316) → sobreviven reload y re-render. |
+| `agro/agro-assistant-ui.js` | +73L | `renderMessageSources` (:191): footer "Contexto consultado" + chips título·fecha (texto seguro, sin innerHTML); `navigateToRepoEntry` (:175): patrón canónico hash + `agro:shell:set-view` (agrociclos.js:364) + `_agroRepoOpenEntry`. Hook en `renderAssistantHistory` solo para role assistant con sources (:273) — cubre live y persisted. Guard `typeof window._agroRepoOpenEntry` (widget no cargado → no-op). |
+| `agro/agro-repo-app.js` | +11L | Puente `window._agroRepoOpenEntry(entryId)` (:1802): `ensureWidgetReady()` (idempotente) + validación nodo vivo + `openFile` (privado sigue privado; tabs+árbol+editor :912-931). |
+| `agro/agro-assistant-chat.css` | +62L | **Desviación declarada del DoD (6º archivo)**: chips del footer necesitan estilo ADN (§7 botones canon); bloques `.assistant-message-sources*` con solo `var(--token, fallback)` (verificado: cero hex/rgba fuera de var()), transición 160ms. Sin animaciones nuevas (nada que respetar en reduced-motion más allá de lo existente). |
+
+**Matriz estática DoD (harness node sobre módulos REALES con localStorage stub + siembra por funciones reales de storage — lección ANEXO 23-b aplicada, 12/12 PASS)**: (a) nota vieja (40d) con match de título entra y lidera el top-K fuera de las 8 recientes ✓ a1-a4; (b) sin match/ query vacía → 8 recientes updatedAt desc ✓ b1-b4; sin storage → null (caller conserva fallback bridge) ✓ b5; (c) excerpt ≤200 ✓ c1-c2, presupuesto total ≤2560 ✓ c3. (d) por construcción: sources derivadas del payload enviado, nunca de texto del modelo ✓. (e) estático: bridge → ensure + openFile (tab+árbol+editor); nav = hash + evento (listener agro-shell.js:1561) ✓. (f) panel: las 2 llamadas `refreshContextPanel(getAssistantContext())` siguen sin prompt (:970, :1141) ✓. (g) `git diff` supabase/ + index.html + agro-shell.js = 0 líneas ✓.
+
+**Resultado de build**: `pnpm build:gold` ✅ verde (1.85s; guard+report-check+llms+UTF-8 OK). Bundle: retrieval viaja en `assets/agro-assistant-BI5v-Kzg.js` (import estático del core), puente en `assets/agrorepo-CtoGfwNr.js`, string "Contexto consultado" presente.
+
+**Deuda declarada**: agro-assistant.js crece 1.188→1.230L (§11.X: supera el umbral de vigilancia 1200 — próxima intervención en ese módulo debe evaluar extracción, no seguir creciendo). Harness temporal ejecutado y eliminado (no vive en el repo).
+
+**QA sugerido (owner)**: (1) preguntar algo que esté textual en una nota VIEJA (fuera de las 8 recientes) → la respuesta debería apoyarse en ella y el chip abrirla en AgroRepo (tab+árbol+editor); (2) pregunta sin respaldo en notas → sin footer de citas (o con recientes si había memoria); (3) chip click desde el asistente → navega a AgroRepo con la entrada abierta y Volver operativo; (4) conversación vieja recargada → mensajes antiguos sin footer (sin sources persistidas antes del ANEXO) y los nuevos lo conservan; (5) panel de contexto muestra recientes como siempre.
+
+**NO se hizo (scope respetado)**: git (bloque sugerido abajo); Edge Function; rutas/VIEW_CONFIG/aliases/hub/switch (S2-S3); migración Supabase; crop_id; wording distinto de "Contexto consultado".
+
+**Bloque git sugerido (NO ejecutado)**:
+```bash
+git add apps/gold/agro/agro-memory-retrieval.js apps/gold/agro/agro-repo-storage.js apps/gold/agro/agro-assistant.js apps/gold/agro/agro-assistant-ui.js apps/gold/agro/agro-repo-app.js apps/gold/agro/agro-assistant-chat.css
+git commit -m "feat(agro): ANEXO 29 S1 — retrieval local full-text de AgroRepo para el asistente (scoring+recencia, excerpt con caps) + citas verificables 'Contexto consultado' con deep-link a la entrada"
+```
