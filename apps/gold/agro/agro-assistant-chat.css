@@ -627,14 +627,19 @@
     padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
     position: sticky;
     bottom: 0;
+    /* ANEXO 29 MF-2: fondo opaco — si el sticky llega a desplazarlo, la
+       conversación nunca se ve a través del compositor (antes rgba 0.95). */
+    background: var(--bg-1, #0a0a0a);
   }
 
-  /* ANEXO 29 QA-fix: en la capa IA de Memoria el tabbar inferior vive como
-     salida (S3-b) — el compositor sticky se eleva sobre él. Solo con el flag
-     de capa, presente únicamente en memoria-ia (en rag la barra está oculta
-     y el offset no aplica). */
-  body[data-agro-memoria-layer="ia"] .asistente-dedicado .ast-input-area {
-    bottom: calc(var(--agro-mobile-tabbar-height, 4.9rem) + var(--space-2, 0.5rem) + env(safe-area-inset-bottom, 0px));
+  /* ANEXO 29 MF-2: en la capa IA de Memoria el tabbar inferior vive como
+     salida (S3-b). El clearance vive en el CONTENEDOR (.ast-main), no como
+     offset sticky del compositor: con bottom:0 el constraint queda saturado
+     en reposo, el compositor ancla en su posición natural sobre la tab bar
+     (sin solape) y no flota tapando la conversación con velo semitransparente.
+     El strip despejado muestra el fondo opaco de .ast-layout. */
+  body[data-agro-memoria-layer="ia"] .asistente-dedicado .ast-main {
+    padding-bottom: calc(var(--agro-mobile-tabbar-height, 4.9rem) + var(--space-2, 0.5rem) + env(safe-area-inset-bottom, 0px));
   }
 
   .asistente-dedicado .assistant-message { max-width: 92%; }

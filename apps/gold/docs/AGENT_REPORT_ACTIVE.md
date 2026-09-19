@@ -915,3 +915,71 @@ Agente: GLM (ZCode). QA owner 18-sep 22:13/22:14 (mobile, capa IA): sidebar apil
 git add apps/gold/agro/agro-assistant-ui.js apps/gold/agro/index.html apps/gold/agro/agro-assistant.css apps/gold/agro/agro-assistant-chat.css apps/gold/agro/agro-memory-workspace.js
 git commit -m "fix(memoria): ANEXO 29 QA-fix — asistente mobile protagonista (sidebar→fila de acciones + historial en bottom sheet, header compacto, compositor sobre tab bar, thread en una línea) + markdown mínimo en burbujas con escapes + regex de fences reparado (preexistente)"
 ```
+
+---
+
+## Sesión 2026-09-19 (II) — ANEXO 29 S4: cierre documental ( Memoria conectada en canónicos) + daily log 18-sep
+
+Agente: GLM (ZCode). S4 desbloqueado por orden del owner tras commitear el QA-fix mobile+markdown. MODO documental. Git NO ejecutado. Daily log actualizado y **fuera del bloque git** (owner: "no se sube" — además estructural: `gitignore:166 apps/gold/docs/ops/daily-log-*.md`).
+
+**Cambios (6 documentos)**:
+
+| Documento | Cambio |
+|---|---|
+| `MANIFIESTO_AGRO.md` | §3.1: Memoria conectada como superficie principal (IA hogar + AgroRepo capa interna). §4.10 "Relación con el resto": vive dentro de Memoria conectada; la IA busca por relevancia y cita las notas consultadas con enlace. §4.11: el asistente es el hogar de Memoria conectada; nueva viñeta de citas "Contexto consultado" (sin citas inventadas si no hay respaldo). §4.12.4: puerta Memoria abre directo sin pantalla intermedia + excepción canónica de módulo profundo (capa IA conserva barra del hub; capa bitácora Volver→asistente; ninguna capa sin salida). Prosa semántica, cero técnica. |
+| `ADN-VISUAL-V12.0.md` | §9 bloque Memoria: de "AgroRepo · Asistente IA" al workspace por capas (puerta directa a módulo profundo, IA hogar fullscreen con barra del hub como salida, AgroRepo capa interna con Volver→IA). |
+| `FICHA_TECNICA.md` | §4.2: bullet de funcionalidad Memoria conectada; módulos `agro-memory-retrieval.js`, `agro-memory-workspace.js` + familia completa `agro-repo-app/search/storage/templates` y `agrorepo.js` (deuda de Fase 0 saldada); CSS `agro-memory-workspace.css` y `agro-repo.css`; claves localStorage (`YG_AGRO_MEMORIA_PANEL_V1`, `agrorepo_mvp_v1` + legacy + UI); §8: routing hash del workspace (subview ia/rag, aliases coercitivos, remap de favoritos, persistencia). |
+| `AGENTS.md` | §3.2: agro-memory-retrieval.js y agro-memory-workspace.js en la lista de módulos. |
+| `docs-agro.html` | Cards: "Asistente IA" → "Memoria conectada" (respuestas cruzadas + qué notas consultó con enlace); card AgroRepo referencia la superficie Memoria. |
+| `llms.txt` | Bullet de Memoria conectada en Funcionalidades Agro (workspace por capas, citas, bitácora local). |
+
+**Daily log**: `docs/ops/daily-log-2026-09-18.md` reescrito al día completo (existía solo con ANEXO 28 S5 de la mañana): ANEXO 29 saga completa, ANEXO 30, incidente de deploy, commits reales, PARO vivo de ANEXO 30 QA-fix 2, próximos pasos. No entra al bloque git (gitignore + instrucción del owner).
+
+**Resultado de build**: `pnpm build:gold` ✅ verde (2.39s; check-llms OK).
+
+**QA sugerido (owner)**: revisar prosa del MANIFIESTO (§3.1/§4.10/§4.11/§4.12.4) y docs-agro desplegado; el resto es referencia interna.
+
+**NO se hizo (scope respetado)**: git (bloque sugerido abajo, SIN daily log); ROADMAP (no estaba en el gate S4); código.
+
+**Bloque git sugerido (NO ejecutado)**:
+```bash
+git add AGENTS.md apps/gold/docs-agro.html apps/gold/docs/ADN-VISUAL-V12.0.md apps/gold/docs/FICHA_TECNICA.md apps/gold/docs/MANIFIESTO_AGRO.md apps/gold/public/llms.txt
+git commit -m "docs(agro): ANEXO 29 S4 — Memoria conectada en canónicos (MANIFIESTO §3.1/§4.10/§4.11/§4.12.4, ADN §9, FICHA §4.2/§8 con familia agro-repo y claves, AGENTS §3.2, docs-agro, llms)"
+```
+
+---
+
+## Sesión 2026-09-19 (III) — ANEXO 29 MF-2: asistente mobile inmersivo (fila de acciones real, compositor sólido, título completo)
+
+Agente: GLM (ZCode). QA owner 19-sep 08:11 (mobile, capa IA): tres botones apilados a ancho completo + fila "Mensajes: N" consumiendo ~40% de pantalla antes del primer mensaje; compositor dejando ver mensajes a través (velo semitransparente); título truncado ("Asistente A…"). Micro-fix de edición mínima. Git NO ejecutado.
+
+**Diagnóstico (causas raíz verificadas en código)**:
+
+1. **Apilamiento**: `.ast-sidebar-actions` (agro-assistant.css:296) NO tiene `display` en base — es un bloque plano; la regla ≤768 de QA-fix 3 solo añadió `flex-direction: row`, no-op sobre un contenedor no-flex. Los botones `width:100%` apilaban en TODOS los anchos ≤768. Además `.ast-sidebar-footer` ("Mensajes: N") nunca entró a la lista de ocultos mobile.
+2. **Compositor transparente**: la regla `body[data-agro-memoria-layer="ia"] .ast-input-area { bottom: calc(tabbar+…) }` desplazaba el sticky ~5.4rem hacia ARRIBA dentro de `.ast-main` (su scrollport por `overflow:hidden`), flotando sobre la conversación con fondo `rgba(8,8,8,0.95)` — los mensajes se veían a través del velo.
+3. **Título truncado**: el badge "EN LÍNEA" (~64px) + 2 iconos de 44px + gaps exprimían el h2 "Asistente Agro" hasta el ellipsis en 360-375px (el Volver ya está oculto en memoria).
+4. **Chips de ejemplo**: YA EXISTEN (`#ast-welcome` con 3 sugerencias tapeables, wiring delegado en agro-assistant.js:1176-1185 que envía al tocar) — cirugía 4 del scope declarada como ya satisfecha, sin cambios.
+
+**Cambios (3 archivos)**:
+
+| Archivo | Cambio |
+|---|---|
+| `agro/agro-assistant.css` | ≤768: `display: flex` en `.ast-sidebar-actions` (la fila horizontal por fin existe; botones `flex: 1 1 0` + `min-height: 44px` ya presentes); `.ast-sidebar-footer` agregado a la lista de ocultos mobile — "Mensajes: N" vive solo dentro del bottom sheet (la regla `.open` existente 0,3,0 lo re-muestra); `.ast-header-status` oculto ≤768 (terciario; el estado "Pensando..." ya lo comunica el typing indicator); label dual del botón Nueva: base `.ast-label-compact{display:none}` + swap ≤768 (`Nueva conversación` → `Nueva`, sin ellipsis). |
+| `agro/agro-assistant-chat.css` | ≤768: `.ast-input-area` con fondo opaco `var(--bg-1)` (antes rgba 0.95); hack de offset sticky ELIMINADO y reemplazado por clearance en el CONTENEDOR: `body[data-agro-memoria-layer="ia"] .ast-main { padding-bottom: calc(tabbar + gap + safe-area) }` — con `bottom:0` el sticky queda saturado en reposo, el compositor ancla en posición natural sobre la tab bar sin flotar sobre la conversación y el strip despejado muestra el fondo opaco de `.ast-layout`. |
+| `agro/index.html` | Botón Nueva con label dual (`<span class="ast-label-full">Nueva conversación</span><span class="ast-label-compact">Nueva</span>`). |
+
+**Verificación estática (ley §5, QA runtime no ejecutado)**: sin reglas conflictivas en el monolito ni otros CSS (`ast-btn-*` sin matches legacy; `arw-sidebar-actions` es namespace del widget AgroRepo); JS del badge solo toca `textContent` (ui.js:365-370), nunca display; wiring del drawer (workspace.js:255-274) intacto. Desktop ≥769 sin cambios: todas las ediciones viven en `@media (max-width: 768px)` salvo `.ast-label-compact{display:none}` (clase nueva, sin efecto visual desktop).
+
+**Resultado de build**: `pnpm build:gold` ✅ verde (2.79s; warning de chunk >500kB preexistente del monolito; UTF-8 OK).
+
+**Declaraciones honestas**: (1) El ellipsis del h2 se CONSERVA como guard de anchos patológicos — con el badge oculto el título cabe completo desde 320px (verificado aritméticamente, no runtime); si el owner exige su eliminación total, es un follow-up de 1 línea. (2) En el sheet de historial abierto, la fila de acciones también queda horizontal (antes apilaba allí también) — mejora colateral, no pedida. (3) La banda mobile de acciones pasa de ~170px (3 botones + footer) a ~62px (1 fila). (4) QA runtime no ejecutado (ley §5).
+
+**QA sugerido (owner)**: móvil → Memoria·IA: fila única [Nueva · AgroRepo · Historial] ≥44px, "Mensajes: N" ausente (visible solo al abrir el sheet de historial), título "Asistente Agro" completo, conversación protagonista visible al entrar; compositor opaco anclado sobre la tab bar sin ver mensajes detrás ni solape; chips del estado vacío envían al tocar; sheet abre/cierra con los 3 botones funcionales; desktop sin regresión; consola limpia.
+
+**NO se hizo (scope respetado)**: git (bloque sugerido abajo); Edge Function, retrieval, citas, capas rag, desktop layout, markdown renderer (fuera de scope); chips nuevos (ya existían).
+
+**Bloque git sugerido (NO ejecutado)**:
+```bash
+git add apps/gold/agro/agro-assistant.css apps/gold/agro/agro-assistant-chat.css apps/gold/agro/index.html apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(memoria): ANEXO 29 MF-2 — asistente mobile inmersivo real (display:flex que QA-fix 3 omitió: fila de 3 acciones en 1 línea, footer solo en sheet, compositor opaco con clearance de tabbar en contenedor en vez de sticky flotante, título completo sin badge) + label compacto Nueva"
+```

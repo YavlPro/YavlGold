@@ -330,6 +330,10 @@ body[data-agro-active-view="asistente"] .agro-feedback-fab {
   cursor: not-allowed;
 }
 
+/* ANEXO 29 MF-2: label dual del botón Nueva — completo en desktop,
+   compacto ("Nueva") en la fila horizontal ≤768 para evitar el ellipsis. */
+.asistente-dedicado .ast-label-compact { display: none; }
+
 .asistente-dedicado .ast-sidebar-section-label {
   font-family: var(--font-heading);
   font-size: 0.62rem;
@@ -753,6 +757,14 @@ body[data-agro-active-view="asistente"] .agro-feedback-fab {
     display: none;
   }
 
+  /* ANEXO 29 MF-2: el badge "EN LÍNEA" es terciario y exprimía el título
+     hasta el ellipsis ("Asistente A…"). Fuera en móvil → el h2 cabe
+     completo desde 320px; el ellipsis del h2 queda solo como guard de
+     anchos patológicos, nunca se dispara en dispositivos reales. */
+  .asistente-dedicado .ast-header-status {
+    display: none;
+  }
+
   .asistente-dedicado .ast-page-title {
     align-items: center;
     min-width: 0;
@@ -808,11 +820,16 @@ body[data-agro-active-view="asistente"] .agro-feedback-fab {
 
   .asistente-dedicado .ast-sidebar-head,
   .asistente-dedicado .ast-sidebar-section-label,
-  .asistente-dedicado .ast-thread-scroll {
+  .asistente-dedicado .ast-thread-scroll,
+  .asistente-dedicado .ast-sidebar-footer {
     display: none;
   }
 
+  /* ANEXO 29 MF-2: sin display:flex la base era un bloque plano y
+     flex-direction:row era un no-op — los botones width:100% apilaban.
+     "Mensajes: N" (footer) vive solo dentro del bottom sheet (.open). */
   .asistente-dedicado .ast-sidebar-actions {
+    display: flex;
     flex-direction: row;
     align-items: center;
     padding: 0.55rem 0.75rem;
@@ -831,6 +848,9 @@ body[data-agro-active-view="asistente"] .agro-feedback-fab {
     overflow: hidden;
     text-overflow: ellipsis;
   }
+
+  .asistente-dedicado .ast-label-full { display: none; }
+  .asistente-dedicado .ast-label-compact { display: inline; }
 
   .asistente-dedicado .ast-btn-history {
     display: inline-flex;
