@@ -205,10 +205,14 @@ async function toggleAgendaComplete(itemId) {
             completed_at: nowCompleted ? new Date().toISOString() : null
         };
 
+        const { data: { user } } = await _supabase.auth.getUser();
+        if (!user) throw new Error('Sesión no disponible');
+
         const { error } = await _supabase
             .from('agro_agenda')
             .update(updates)
-            .eq('id', itemId);
+            .eq('id', itemId)
+            .eq('user_id', user.id);
         if (error) throw error;
 
         Object.assign(item, updates);
@@ -241,7 +245,10 @@ async function toggleAgendaComplete(itemId) {
 async function deleteAgendaItem(itemId) {
     if (!confirm('¿Eliminar esta actividad?')) return;
     try {
-        const { error } = await _supabase.from('agro_agenda').delete().eq('id', itemId);
+        const { data: { user } } = await _supabase.auth.getUser();
+        if (!user) throw new Error('Sesión no disponible');
+
+        const { error } = await _supabase.from('agro_agenda').delete().eq('id', itemId).eq('user_id', user.id);
         if (error) throw error;
         _agendaItems = _agendaItems.filter(i => i.id !== itemId);
         renderAgendaContent();

@@ -1320,3 +1320,51 @@ git add supabase/migrations/20260920120000_create_agro_repo_entries.sql apps/gol
 git commit -m "agro: Fase 4 AgroRepo — persistencia en Supabase (tabla agro_repo_entries + sync LWW con respaldo local previo y cola offline; localStorage pasa a caché)"
 git push
 ```
+
+---
+
+## Sesión 2026-09-20 (V) — REMEDIACIÓN INTEGRAL P0→P2 del diagnóstico de seguridad 2026-09-19
+
+Agente: GLM (ZCode). Objetivo: remediación autorizada por owner del diagnóstico integral 2026-09-19 (sello Mimosa `scan-2026-09-19T21-23-47.366Z-6d976c4d71cf`), en oleadas A (P0) / B (P1, salvo B-4 y B-5 que quedan en decisión del owner) / C (P2 Edge Function) con gates de build. Sesión de cirugía: sin QA, sin browser, sin git, sin mocks.
+
+**VERIFICACIÓN PREVIA (regla de oro anti-invención) — todo confirmado, CERO discrepancias con el diagnóstico:**
+- A-1 `get_farm_balance` SECURITY DEFINER filtrando por `p_user_id` del cliente sin `auth.uid()` (20260626120000:14-22; filtros en 51/59/77/94/117/134/151/174). Caller único: `agro-dashboard-v11.js:313` (siempre envía uid propio con early-return si falta → el guard estricto no rompe flujo legítimo).
+- A-2 sinks XSS en `agro.js:14690-14693` (nombre de finca) y `agro.js:14721-14724` (label de cultivo vía `getCropDisplayParts`:276-299, sin escape); `escapeHtml` ya definido en `agro.js:962` pero no usado ahí. 15 usos de `getCropDisplayParts` → escape en los 2 sinks, no en la función compartida.
+- B-1 `agro_events` SIN migración raíz (grep exit 1 en migrations/ y sql/); uso real: SELECT index.ts:809 + INSERT index.ts:884 + INSERT agro-agenda.js:222. TODO del propio código lo admite (index.ts:804-806).
+- B-2 `GRANT ALL TO anon/authenticated` en 4 tablas (20260825185053:122-136), incl. TRUNCATE (no pasa por RLS). Consumidores vivos verificados: agenda CRUD completo; carts SOLO desde `archive/legacy-js` (policies ya SELECT-only); admin_audit_log sin consumidores en cliente.
+- B-3 update/delete de agenda sin user_id (agro-agenda.js:208-211, 244) mientras el propio módulo sí filtra selects/inserts (118-146).
+- C-1 `crop_id` interpolado sin validar en index.ts:756 y :809; `events_limit` sin acotar (:751); `assertValidUuid` ya existe (:303-309).
+- C-2 `?key=${apiKey}` en URL de Gemini (index.ts:1264); clave correctamente en `Deno.env.get` (:1238).
+- Mimosa (4 findings sellados): verificación manual — `authClient.js:194` y `authUI.js:564` son **falsos positivos** (detección de magic link en hash y log de ✓/✗, no credenciales); SSRF `supabaseRequest` **mitigado** por `assertAllowedSupabaseUrl`:314-332 + `UUID_PATTERN`; advisory XSS shell-favorites: datos internos estáticos, riesgo bajo.
+
+**Cambios (3 migraciones nuevas + 2 archivos JS editados + 1 Edge Function):**
+
+| ID | Cambio | Archivo |
+|---|---|---|
+| A-1 | Guard anti-IDOR `p_user_id is distinct from auth.uid() → raise 42501` al inicio de `get_farm_balance`; cuerpo de cálculo reproducido íntegro de la versión vigente (sin cambios de lógica); patrón canónico revoke public + grant authenticated reafirmado. | **NUEVA** `supabase/migrations/20260920130000_agro_get_farm_balance_auth_guard.sql` |
+| A-2 | `escapeHtml()` envolviendo nombre de finca (14690) y `display.label` de cultivo (14722) en los chips del panel Rankings. Estructura HTML intacta; solo datos de usuario escapados. | `apps/gold/agro/agro.js` (2 líneas) |
+| B-1 | Materialización idempotente de `agro_events` (CREATE TABLE IF NOT EXISTS + ADD COLUMN IF NOT EXISTS por contrato): columnas de los writers reales + `deleted_at` (canon §6), CHECK de los 10 types de la edge, FKs a auth.users/agro_crops, 3 índices, RLS owner-only "Users manage own events" USING+WITH CHECK, grants mínimos. En remoto existente es no-op seguro. | **NUEVA** `supabase/migrations/20260920130100_agro_events_materialize_rls.sql` |
+| B-2 | REVOKE ALL a anon en las 4 tablas; admin_audit_log sin grants a roles de cliente (escritura solo vía trigger SECURITY DEFINER); agenda CRUD a authenticated; carts SELECT-only (fiel a sus policies). RLS re-afirmado antes de grants. service_role intacto. | **NUEVA** `supabase/migrations/20260920130200_restrict_anon_grants_remote_tables.sql` |
+| B-3 | `auth.getUser()` + `.eq('user_id', user.id)` en update (toggleAgendaComplete) y delete (deleteAgendaItem) de agro_agenda, replicando el patrón del propio módulo. | `apps/gold/agro/agro-agenda.js` |
+| C-1 | `assertValidUuid(crop_id)` en handleGetCropStatus; interpolación de la query de crops (:756) y de eventos (:809) usa el UUID validado; `events_limit` acotado a entero 1-50 con `Math.min/max/floor(Number(...)\|\|5)`. | `supabase/functions/agro-assistant/index.ts` |
+| C-2 | Clave Gemini movida de query-string a header `x-goog-api-key` (alternativa oficial de la Generative Language API) en el único endpoint/fetch del archivo. | `supabase/functions/agro-assistant/index.ts` |
+
+**Resultado de build**: `pnpm build:gold` ✅ verde en los 3 gates (A: 1.92s, B y C: OK; agent-guard OK; check-llms OK; UTF-8 OK). esbuild parse exit 0 en `functions/agro-assistant/index.ts` (47.3kb transform OK).
+
+**Migraciones SQL para que el owner despliegue** (`supabase db push`): `20260920130000_agro_get_farm_balance_auth_guard.sql`, `20260920130100_agro_events_materialize_rls.sql`, `20260920130200_restrict_anon_grants_remote_tables.sql`. El deploy de la Edge Function queda a cargo del owner.
+
+**QA sugerido online (owner)**: (1) Dashboard Agro V11 Bloque 3 "Cómo va mi finca": balance carga igual que antes (el guard acepta el uid propio; si lanzara error 42501 visible en consola, revertir de inmediato); (2) panel Rankings (Operaciones de la Finca): chips de finca/cultivo renderizan nombres con `&` u `<` correctamente escapados; (3) agenda: completar y eliminar actividades propias funciona (y en consola no hay errores RLS); (4) Asistente IA: "¿cómo va el cultivo X?" sigue devolviendo últimos eventos; registrar evento desde la agenda completando una tarea sigue insertando en agro_events; (5) tras aplicar B-1: verificar en Supabase Studio que agro_events tiene RLS enabled + policy "Users manage own events" (si la tabla ya existía, confirmar que las columnas nuevas no rompen los INSERT existentes); (6) chat IA responde normal (clave Gemini por header — si devolviera 401/403 de Google, revisar header en deploy).
+
+**EN ESPERA DE DECISIÓN DEL OWNER (no ejecutado):**
+- **B-4 profiles**: policy `USING (true)` (001:16) + lookup `ilike` por email (agro-facturero-clientes-flow.js:472-475). Opciones: (a) añadir `to authenticated` a la policy (mínimo, sigue permitiendo enumeración entre autenticados); (b) policy owner-only + columna/función de búsqueda acotada (rompe la resolución de compradores si depende de leer perfiles ajenos — requiere verificar el flujo completo de buyer identity); (c) mantener y documentar riesgo. Riesgo de regresión: ALTO en (b) — la resolución de identidad de compradores cruza perfiles.
+- **B-5 PII asistente en localStorage** (agro-assistant.js:126,146): (a) no enmascarar (dato del usuario en su dispositivo) y documentar; (b) purgar historial al cerrar sesión; (c) enmascarar persistencia cuando los toggles estén activos (cambia lo que el usuario ve de SU historial). Decisión de producto.
+- **Nota técnica adicional**: tras aplicar B-1, el filtro `deleted_at is null` en la query de eventos de la edge (TODO index.ts:804) pasa a ser seguro; agregarlo es decisión aparte (no incluido para no ampliar alcance).
+
+**NO se hizo (scope respetado)**: B-4 y B-5 (esperan decisión), Oleada D de higiene (recomendada sesión aparte: .tmp-qa/ gitignore, `git rm -r --cached .kilocode/`, archivado de docs legacy ~2.4MB, fecha de AGENT_CONTEXT_INDEX), P3 diferido (listeners, ensure_profile_exists, console.error PostgREST, doble canon import buyer-identity, GPS/clima/tasas en localStorage), QA/browser/Playwright, deploy, git, MANIFIESTO/FICHA (sin cambios semánticos de producto).
+
+**Bloque git sugerido (NO ejecutado)**:
+```bash
+git add supabase/migrations/20260920130000_agro_get_farm_balance_auth_guard.sql supabase/migrations/20260920130100_agro_events_materialize_rls.sql supabase/migrations/20260920130200_restrict_anon_grants_remote_tables.sql supabase/functions/agro-assistant/index.ts apps/gold/agro/agro.js apps/gold/agro/agro-agenda.js apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "security: remediación P0-P2 diagnóstico 2026-09-19 (guard IDOR get_farm_balance, XSS rankings, agro_events RLS, grants mínimos, ownership agenda, sanitización edge)"
+git push
+```

@@ -748,12 +748,15 @@ async function handleGetCropStatus(args: any, authHeader: string) {
     const { crop_id } = args;
     // Defaults: include_last_events=true unless explicitly false, limit=5
     const include_last_events = args.include_last_events !== false;
-    const events_limit = args.events_limit || 5;
+    // crop_id viaja a PostgREST solo tras validacion UUID canonica (anti
+    // inyeccion de query) y events_limit se acota a entero seguro 1-50.
+    const events_limit = Math.min(50, Math.max(1, Math.floor(Number(args.events_limit) || 5)));
 
     if (!crop_id) throw new Error('crop_id is required');
+    const validCropId = assertValidUuid(crop_id, 'crop_id');
 
     // 1. Get Crop
-    const crops = await supabaseRequest('GET', `agro_crops?id=eq.${crop_id}&select=*&deleted_at=is.null`, null, authHeader);
+    const crops = await supabaseRequest('GET', `agro_crops?id=eq.${validCropId}&select=*&deleted_at=is.null`, null, authHeader);
     if (!crops || crops.length === 0) {
       return { ok: false, error: 'NOT_FOUND', message: 'Cultivo no encontrado o sin acceso.' };
     }
@@ -806,7 +809,7 @@ async function handleGetCropStatus(args: any, authHeader: string) {
       // No agregar el filtro hasta confirmar el contrato de la tabla remota.
       last_events = await supabaseRequest(
         'GET',
-        `agro_events?crop_id=eq.${crop_id}&order=occurred_at.desc&limit=${limit}`,
+        `agro_events?crop_id=eq.${validCropId}&order=occurred_at.desc&limit=${limit}`,
         null,
         authHeader
       );
@@ -1261,7 +1264,10 @@ Deno.serve(async (req) => {
   // Try Models Loop
   for (const model of MODELS) {
     try {
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      // La clave viaja en header (no en query-string) para no filtrar en
+      // logs de proxy/telemetria: x-goog-api-key es la alternativa oficial
+      // al parametro ?key= de la Generative Language API.
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
       const payload: any = {
         systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
@@ -1279,7 +1285,7 @@ Deno.serve(async (req) => {
       while (keepGoing && step < MAX_TOOL_STEPS) {
 
         let response = await fetch(endpoint, {
-           method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(payload)
+           method: 'POST', headers: { ...JSON_HEADERS, 'x-goog-api-key': apiKey }, body: JSON.stringify(payload)
         });
 
         if (response.status === 429) {

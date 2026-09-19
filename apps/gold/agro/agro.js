@@ -14687,7 +14687,7 @@ function renderOpsRankingsFarmSelector() {
 
     let html = `<button type="button" class="ops-rankings-chip${!selectedId ? ' is-active' : ''}" data-ops-rank-farm="">Vista general</button>`;
     farms.forEach(farm => {
-        const name = farm.name || farm.farm_name || 'Finca';
+        const name = escapeHtml(farm.name || farm.farm_name || 'Finca');
         html += `<button type="button" class="ops-rankings-chip${selectedId === farm.id ? ' is-active' : ''}" data-ops-rank-farm="${farm.id}">${name}</button>`;
     });
     farmChips.innerHTML = html;
@@ -14719,7 +14719,7 @@ function renderOpsRankingsCropSelector() {
     let html = `<button type="button" class="ops-rankings-chip ops-rankings-chip--crop${!selectedCropId ? ' is-active' : ''}" data-ops-rank-crop="">Vista general</button>`;
     scopedCrops.forEach(crop => {
         const display = getCropDisplayParts(crop, { fallbackIcon: '🌱', fallbackName: 'Cultivo' });
-        html += `<button type="button" class="ops-rankings-chip ops-rankings-chip--crop${selectedCropId === crop.id ? ' is-active' : ''}" data-ops-rank-crop="${crop.id}">${display.label}</button>`;
+        html += `<button type="button" class="ops-rankings-chip ops-rankings-chip--crop${selectedCropId === crop.id ? ' is-active' : ''}" data-ops-rank-crop="${crop.id}">${escapeHtml(display.label)}</button>`;
     });
     cropChips.innerHTML = html;
 }
