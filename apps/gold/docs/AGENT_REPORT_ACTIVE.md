@@ -808,3 +808,29 @@ git commit -m "feat(db): ANEXO 30 S1 — farm_id en agro_period_cycles (FK agro_
 git add apps/gold/agro/agro-period-cycles.js apps/gold/agro/agro-period-cycles.css apps/gold/agro/agro-facturero-cultivo-wizard.js apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/agro/agroOperationalCycles.js
 git commit -m "feat(agro): ANEXO 30 S2-S4 — períodos como libro de finca: lectura plana sin partición por cultivo + chips de finca (Vista general / COALESCE D-30-1) + creación con finca obligatoria (guard mes+finca) + assertOperationalPeriodOpen con farmId en wizards y compositor"
 ```
+
+---
+
+## Sesión 2026-09-18 (XVI) — ANEXO 30 QA-fix: chips vacíos + lectura debe ser solo de generales
+
+Agente: GLM (ZCode). QA owner 23:13 ROJO con dos hallazgos en `#view=period-cycles&subview=calendario`. Previo: S1→S4 commiteado por el owner (`abee3288` migración, `145cda3c` código, `299c4c40` archivos faltantes) y migración APLICADA a remoto (la vista ya renderizaba). Git NO ejecutado.
+
+**Regla aclarada por el owner en QA (cerrada)**: la lectura de Operaciones de la Finca (lista, métricas, snapshot, comparador, VG y por finca) filtra SOLO ciclos/movimientos SIN vínculo a cultivo (`crop_id null`). Lo ligado a cultivo SIGUE en la DB, alimenta §4.3 costosTotales + Dashboard Bloque 4 (lectura directa de tablas) y se lee en las superficies del cultivo. Filtro de lectura, no migración. Para S5 GATEADO: MANIFIESTO §4.4 = lectura de operaciones GENERALES de la finca por período.
+
+**(a) Chips vacíos — causa raíz**: bug de mapeo propio de S3. `renderFarmFilter` construía `chips = [{id:'',label:'Vista general'}, ...farms]` donde `getFarmsList()` devuelve `{id, name}` — el template lee `chip.label` → las fincas renderizaban `undefined` → círculos sin texto (el botón funcionaba: id/is-active/aria correctos; solo la etiqueta moría). La forma real del cache es `.select('*')` de `agro_farms` (agro-farms.js:83) → campo `name` confirmado. **Fix**: mapeo explícito `farms.map(f => ({id: f.id, label: f.name}))`; `getFarmsList` ya traía fallback honesto 'Finca sin nombre' para nombres vacíos. Cero CSS (las pillas se llenan solas).
+
+**(b) Lectura solo generales — punto único**: `fetchOperationalPeriodActivity` (agro-period-cycles.js:~405): filtro `.is('crop_id', null)` EN la query de ciclos operacionales — los movimientos se criban por herencia (`.in('cycle_id', cycleIds)` de ciclos ya filtrados; crop_id vive en el CICLO, no en el movimiento, DDL 20260416190000). Al excluir lo ligado a cultivo, el COALESCE de D-30-1 degenera a `cycle.farm_id` sobre filas crop-null → la query extra de `agro_crops` se ELIMINÓ (simplificación honesta, misma semántica). Composición: VG (farmId='') = todos los generales incluidos los sin finca (Personal, bucket D-30-2); chip de finca = generales con ese `farm_id`. Counts/activeCycleCount/vigencia §4.4, snapshot, comparador y meses derivados heredan el filtro por construcción (todos beben del mismo activity map); los meses con SOLO actividad ligada a cultivo dejan de generar cards derivadas (correcto: la lectura del período no los conoce). Copys: subtitle calendario, título de sección plana ("Movimientos generales del período"), empty copy de la lista y empty-state del módulo actualizados a "movimientos generales de la finca". Creación de períodos y `assertOperationalPeriodOpen` SIN cambio (escriben igual — el assert ni siquiera lee movimientos).
+
+**(c) Superficies del cultivo — cero diff verificado**: `git status`/`diff --stat` de la sesión = SOLO agro-period-cycles.js (17+/19−). Sin tocar: `agro-dashboard-v11.js` (`fetchOperationalExpensesDirect` sigue `.eq('crop_id', cropId)`), bridge `_agroMergedOperationalExpensesByCrop` de agro.js (cards de Mis Cultivos / costosTotales §4.3), `agro-facturero-cultivo-wizard.js` (lector canónico preset crop), `agro-crop-report.js` (:742-751 por crop_id), rankings RPC.
+
+**Resultado de build**: `pnpm build:gold` ✅ verde. Greps: `.is('crop_id', null)` presente; query `agro_crops` ausente del módulo (exit 1); mapeo `chip.label` correcto.
+
+**QA sugerido (owner)**: (1) chips con nombres reales de finca, cero vacíos; con una sola finca, pre-select del modal + chips coherentes; (2) el período muestra "bomba de riego" pero NO "kilo de maíz" ni "Fertilizante urea"; métricas/snapshot/comparador cuentan solo generales; (3) chip por finca y Vista general componen el filtro; (4) la card del cultivo sigue mostrando sus gastos ligados y el Dashboard Bloque 4 no cambia; (5) registrar un gasto general aparece en el período; uno ligado a cultivo aparece solo en el cultivo.
+
+**NO se hizo (scope respetado)**: git (bloque sugerido abajo); S5 documental GATEADO; cambios en superficies del cultivo (cero diff); CSS (no exigido por el fix); QA runtime (ley §5).
+
+**Bloque git sugerido (NO ejecutado)**:
+```bash
+git add apps/gold/agro/agro-period-cycles.js
+git commit -m "fix(agro): ANEXO 30 QA-fix — chips de finca con nombre real (mapeo label) + lectura del período solo con movimientos generales (crop_id null en query, COALESCE degenera a farm_id, copys a generales)"
+```

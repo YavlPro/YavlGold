@@ -407,10 +407,15 @@ function buildOperationalActivityIndex(cycles, movements) {
 }
 
 async function fetchOperationalPeriodActivity(userId, farmId = '') {
+    // Regla owner (QA 18-sep): la lectura del período es el libro de finca —
+    // SOLO ciclos sin vínculo a cultivo (crop_id null). Los ligados a cultivo
+    // siguen en la DB, alimentan §4.3 costosTotales y el Dashboard Bloque 4,
+    // y se leen en las superficies del cultivo. Filtro de lectura, no migración.
     const { data: cycles, error: cyclesError } = await supabase
         .from('agro_operational_cycles')
         .select('id,user_id,name,economic_type,category,crop_id,farm_id,status,opened_at,closed_at,created_at')
         .eq('user_id', userId)
+        .is('crop_id', null)
         .order('opened_at', { ascending: false })
         .order('created_at', { ascending: false });
 
@@ -418,21 +423,11 @@ async function fetchOperationalPeriodActivity(userId, farmId = '') {
 
     let scopedCycles = Array.isArray(cycles) ? cycles : [];
 
-    // D-30-1: atribución de lectura por finca = COALESCE(cycle.farm_id, crop.farm_id).
-    // Solo se criba al elegir una finca; Vista general agrega toda la actividad.
+    // D-30-1 sobre filas crop-null: la atribución degenera a cycle.farm_id.
+    // Los generales sin finca son del Facturero Personal: solo viven en
+    // Vista general (mismo bucket D-30-2 de los períodos null).
     if (farmId) {
-        const { data: crops, error: cropsError } = await supabase
-            .from('agro_crops')
-            .select('id,farm_id')
-            .eq('user_id', userId)
-            .is('deleted_at', null);
-        if (cropsError) throw cropsError;
-        const cropFarmById = new Map((Array.isArray(crops) ? crops : [])
-            .map((crop) => [normalizeId(crop?.id), normalizeId(crop?.farm_id)]));
-        scopedCycles = scopedCycles.filter((cycle) => {
-            const attributedFarmId = normalizeId(cycle?.farm_id) || cropFarmById.get(normalizeId(cycle?.crop_id)) || '';
-            return attributedFarmId === farmId;
-        });
+        scopedCycles = scopedCycles.filter((cycle) => normalizeId(cycle?.farm_id) === farmId);
     }
 
     const cycleIds = scopedCycles.map((cycle) => normalizeId(cycle?.id)).filter(Boolean);
@@ -528,7 +523,7 @@ function buildSummary(cycles) {
 const PERIOD_SUBVIEW_META = Object.freeze({
     calendario: Object.freeze({
         title: 'Operaciones de la Finca',
-        subtitle: 'Operaciones de tu finca agrupadas por período, en una sola lectura plana por tipo y fecha.',
+        subtitle: 'Movimientos generales de la finca agrupados por período, en una sola lectura plana por tipo y fecha.',
         overviewEyebrow: 'Operaciones de la Finca',
         overviewTitle: 'Períodos en calendario',
         overviewCopy: 'Meses activos y finalizados concentrados en una sola vista para seguimiento de las operaciones de la finca.',
@@ -682,7 +677,10 @@ function renderFarmFilter() {
     if (state.schemaMissing) return '';
     const farms = getFarmsList();
     if (farms.length === 0) return '';
-    const chips = [{ id: '', label: 'Vista general' }, ...farms];
+    const chips = [
+        { id: '', label: 'Vista general' },
+        ...farms.map((farm) => ({ id: farm.id, label: farm.name }))
+    ];
     return `
         <div class="agro-period-cycles__farm-filter" role="group" aria-label="Filtro de finca de los períodos">
             ${chips.map((chip) => `
@@ -949,10 +947,10 @@ function renderFlatMovementSection(cycle) {
         <section class="agro-period-cycle-card__groups">
             <article class="agro-period-cycle-card__group">
                 <div class="agro-period-cycle-card__group-head">
-                    <p class="agro-period-cycle-card__group-title">Movimientos del período</p>
+                    <p class="agro-period-cycle-card__group-title">Movimientos generales del período</p>
                     <span class="agro-period-cycle-card__group-count">${cycle.movementCount}</span>
                 </div>
-                ${renderMovementList(cycle.movements, 'Sin movimientos en este período.')}
+                ${renderMovementList(cycle.movements, 'Sin movimientos generales en este período.')}
             </article>
         </section>
     `;
@@ -1180,7 +1178,7 @@ function renderEmptyState() {
     return `
         <div class="agro-period-cycles__empty" id="${escapeAttr(meta.regionId)}">
             <p class="agro-period-cycles__empty-title">Todavía no hay períodos operativos visibles.</p>
-            <p class="agro-period-cycles__empty-copy">Crea un ciclo del mes o registra operativa real para que esta familia empiece a poblarse.</p>
+            <p class="agro-period-cycles__empty-copy">Crea un ciclo del mes o registra movimientos generales de la finca para que esta familia empiece a poblarse.</p>
             <button type="button" class="btn btn-primary" data-period-action="toggle-form">Crear ciclo del mes</button>
         </div>
     `;
