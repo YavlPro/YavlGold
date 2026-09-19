@@ -1602,6 +1602,7 @@ Esta regla se aplica en tres capas del sistema:
 * Facturero de Clientes
 * Facturero de la Finca (tabs de gastos, ingresos, fiados)
 * Estadísticas
+* Asistente IA (Agente Agro): la privacidad aplica al contexto que viaja al modelo y a sus respuestas. Con montos ocultos, la IA no recibe ni verbaliza cifras. Con nombres ocultos, los clientes se referencian con alias. El asistente nunca intenta reconstruir datos protegidos.
 
 ### Privacidad y exportes
 

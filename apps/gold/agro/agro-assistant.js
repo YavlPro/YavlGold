@@ -17,6 +17,7 @@
  */
 
 import { supabase } from '../assets/js/config/supabase-config.js';
+import { readBuyerNamesHidden, readMoneyValuesHidden } from './agro-privacy.js';
 import { retrieveRepoMemory } from './agro-memory-retrieval.js';
 import {
     autoResizeInput,
@@ -552,8 +553,18 @@ async function processAssistantQueue() {
         const promptForModel = cropsPreamble.preamble + '\n\n---\nPregunta del usuario:\n' + item.prompt;
 
         // THE INVOKE CALL REMAINS UNCHANGED (as required)
+        // F1-1: la privacidad activa viaja en el invoke; la Edge es fail-closed
+        // (sin este campo asume ocultamiento total).
         const { data, error } = await supabase.functions.invoke('agro-assistant', {
-            body: { message: promptForModel, prompt: promptForModel, context: contextPayload }
+            body: {
+                message: promptForModel,
+                prompt: promptForModel,
+                context: contextPayload,
+                privacy: {
+                    hide_names: readBuyerNamesHidden(),
+                    hide_money: readMoneyValuesHidden()
+                }
+            }
         });
 
         if (error) {
@@ -815,6 +826,21 @@ function getAssistantCropFocus(activeTab) {
     };
 }
 
+// F1-1: con montos ocultos, los excerpts de bitacora viajan enmascarados al
+// modelo. Solo patrones anclados a divisa ($, COP, USD, VES, Bs + cifra
+// formateada); no se intenta enmascarar nombres en texto libre de bitacora
+// (sin NLP confiable — limitacion documentada como decision).
+const REPO_MONEY_PATTERN = /(\$\s?\d[\d.,]*|\b(?:cop|usd|ves|bs)\.?\s?\d[\d.,]*|\b\d[\d.,]*\s?(?:cop|usd|ves|bs\.?)\b)/gi;
+
+function maskRepoMoneyInPlace(repoMemory) {
+    if (!repoMemory || !Array.isArray(repoMemory.recent)) return;
+    repoMemory.recent.forEach((entry) => {
+        if (entry && typeof entry.content === 'string' && entry.content) {
+            entry.content = entry.content.replace(REPO_MONEY_PATTERN, '[monto oculto]');
+        }
+    });
+}
+
 function getAssistantContext(promptText = '') {
     const context = {
         date: new Date().toISOString(),
@@ -890,6 +916,7 @@ function getAssistantContext(promptText = '') {
         const retrieved = retrieveRepoMemory(repoQuery);
         if (retrieved) {
             context.repo_memory = retrieved;
+            if (readMoneyValuesHidden()) maskRepoMoneyInPlace(context.repo_memory);
             return context;
         }
     }
@@ -900,6 +927,7 @@ function getAssistantContext(promptText = '') {
             total_entries: repo.total_reports,
             recent: (repo.recent_entries || []).slice(0, 8)
         };
+        if (readMoneyValuesHidden()) maskRepoMoneyInPlace(context.repo_memory);
     }
 
     return context;
