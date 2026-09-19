@@ -619,3 +619,29 @@ console.log('módulo:', typeof window._agroMemoriaRevealRag);
 git add apps/gold/agro/agro-memory-workspace.js apps/gold/agro/agro-memory-workspace.css
 git commit -m "fix(memoria): ANEXO 29 QA-fix — paneles del workspace quedaban invisibles: is-shell-hidden (display:none !important) viajaba con las secciones reubicadas y nunca se limpiaba (revealEmbeddedSection en reubicación + cada activación) + guard [hidden] en la sección"
 ```
+
+> **Nota posterior (sesión X):** el owner commiteó el QA-fix 1 como `1e3c8b12`. El bloque de arriba queda como registro histórico; el fix 2 va en la sesión X.
+
+---
+
+## Sesión 2026-09-18 (X) — ANEXO 29 QA-fix 2: puerta Memoria restaurada en el hub
+
+Agente: GLM (ZCode). QA owner 21:34 ROJO: hub desktop muestra solo Inicio · Granja · Menú — falta Memoria (violación §4.12.4 y decisión D-3 v2). Previo: QA-fix 1 commiteado por el owner (`1e3c8b12`). Git NO ejecutado.
+
+**Causa raíz (confesada en el propio INGEST VIII)**: la barra de puertas del hub desktop ES `agro-shell-hub-tabs` (index.html), visible solo ≥769px a profundidad hub (agro.css:9967 `display:none` por defecto, :9984 `body[data-agro-shell-depth="hub"] { display:flex }` dentro de `@media (min-width:769px)`). Al retirar en S3 el tab-hub "Memoria" para matar la pantalla intermedia, el render de la PUERTA desktop se fue con él. La barra inferior móvil NO estaba afectada (su botón Memoria existe con `data-agro-view` desde S3; CSS de `.agro-mobile-tabbar__item` por clase, sin dependencia del attr). El retiro del gate en `SHELL_GATE_ROUTES`/`MOBILE_HUBS` era correcto y NO se reintroduce.
+
+**Fix (1 archivo, markup puro — cero JS, cero CSS, cero shell)**: botón puerta restaurado en `agro-shell-hub-tabs` entre Granja y Menú (orden canónico §4.12.4), con clase `.agro-shell-hub-tab` (estilo idéntico por clase — el CSS no depende del attr), `data-agro-view="memoria"` y SIN `data-agro-mobile-tab` ni panel propio: no es gate ni tab de hub, es puerta al módulo profundo. El click cae en el handler genérico `[data-agro-view]` del shell (agro-shell.js document click) → `setActiveView('memoria')` → workspace fullscreen; `VIEW_TO_MOBILE_HUB` sin entrada memoria conserva el hub activo previo → Volver regresa al hub de origen. Cero pantalla intermedia (D-3 v2 intacta).
+
+**Verificación estática (dist tras build)**: grep de dist/agro/index.html confirma las 4 puertas en orden canónico en las tres superficies — rail desktop (Dashboard·Cultivos·Granja·Agenda·**Memoria**·Estadísticas·Perfil), tabs del hub desktop (Inicio·Granja·**Memoria**·Menú) y tabbar móvil (Inicio·Granja·**Memoria**·Menú). El botón no matchea `[data-agro-mobile-tab]` → `syncMobileHub` no lo toca (sin estado activo espurio, igual que la puerta móvil). `pnpm build:gold` ✅ verde (2.69s).
+
+**Respuesta a la pregunta abierta del owner (estado de los paneles por #view=memoria)**: no ejecutable por el agente (ley §5). Estáticamente la cadena del QA-fix 1 es completa: syncRegions aplica `is-shell-hidden` a las secciones capturadas → el evento `agro:shell:view-changed` (posterior a syncRegions) dispara `activateFromContext` → `revealEmbeddedSection` limpia clase+attr+inert en cada activación, y la reubicación temprana también lo hace. El fix está commiteado (`1e3c8b12`); su validez runtime la confirma el re-QA del owner entrando a mano por `#view=memoria` tras desplegar este fix 2.
+
+**QA sugerido (owner)**: (1) hub desktop → barra con las 4 puertas en orden; (2) click Memoria → workspace fullscreen con AMBOS paneles visibles y toggle funcional (esto valida a la vez el fix 1 de paneles); (3) móvil → barra inferior con 4 puertas, Memoria entra al workspace en panel IA; (4) Volver del workspace regresa al hub de origen; (5) Inicio/Granja/Menú siguen operando como puertas de hub; (6) cita "Contexto consultado" revela RAG con la entrada abierta.
+
+**NO se hizo (scope respetado)**: git (bloque sugerido abajo); reintroducción del gate memoria (que reviviría el sub-hub); toques en aliases/favoritos (intactos, sin conflicto demostrado); shell/JS/CSS.
+
+**Bloque git sugerido (NO ejecutado)**:
+```bash
+git add apps/gold/agro/index.html
+git commit -m "fix(memoria): ANEXO 29 QA-fix 2 — puerta Memoria restaurada en la barra del hub desktop (canon §4.12.4), despacha directo al workspace sin gate ni pantalla intermedia"
+```

@@ -611,9 +611,17 @@
                     <i class="fa-solid fa-briefcase" aria-hidden="true"></i>
                     <span>Granja</span>
                 </button>
-                <!-- ANEXO 29 S3: el tab-hub "Memoria" se retiró — la puerta Memoria
-                     (tabbar inferior y tile desktop) entra directo al workspace
-                     #view=memoria sin pantalla intermedia. -->
+                <!-- ANEXO 29 QA-fix 2 (18-sep): puerta Memoria RESTAURADA en la barra
+                     del hub (canon §4.12.4: Inicio · Granja · Memoria · Menú). No es
+                     gate ni tab de hub: despacha directo al módulo profundo
+                     #view=memoria (workspace), por eso no lleva data-agro-mobile-tab
+                     ni panel propio — cero pantalla intermedia (D-3 v2). En móvil la
+                     puerta vive en la barra inferior (data-agro-view="memoria"). -->
+                <button type="button" class="agro-shell-hub-tab" id="agro-hub-tab-memoria" data-agro-view="memoria"
+                    aria-label="Memoria" title="Memoria">
+                    <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+                    <span>Memoria</span>
+                </button>
                 <button type="button" class="agro-shell-hub-tab" id="agro-hub-tab-menu" data-agro-mobile-tab="menu"
                     role="tab" aria-controls="agro-mobile-panel-menu" aria-selected="false">
                     <i class="fa-solid fa-compass" aria-hidden="true"></i>
