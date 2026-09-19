@@ -1107,6 +1107,7 @@ No es una aplicación separada ni un segundo facturero. Es una libreta que puede
 * Se asocia a cultivos específicos.
 * Vive dentro de la superficie Memoria conectada: el asistente es el hogar y la bitácora se abre como capa interna desde él.
 * La IA la consulta para dar contexto en sus respuestas: busca por relevancia entre tus notas según lo que preguntas y cita las notas que tuvo a la vista ("Contexto consultado"), con enlace directo a cada una.
+* Tu bitácora se respalda en tu cuenta YavlGold: esa copia en la nube es la que manda, y el dispositivo guarda una copia de trabajo para consultar y anotar sin conexión. Al reconectar, lo que hiciste sin conexión se sincroniza solo. La primera vez que se sincroniza, se guarda un respaldo de seguridad local antes de migrar. La IA sigue leyendo la copia local ya sincronizada.
 * Alimenta el historial operacional.
 
 ---

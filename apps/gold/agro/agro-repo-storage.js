@@ -950,7 +950,37 @@ export function persistRepoState(repoLike) {
         deletedSystemFolders: repo.deletedSystemFolders || [],
         renamedSystemFolders: repo.renamedSystemFolders || {}
     });
+    notifyRepoSync('persist');
     return repo;
+}
+
+// ---------------------------------------------------------------------------
+// F4-3: cableado de sincronización (Fase 4). persistRepoState es el embudo
+// único de persistencia (carga inicial y toda mutación), así que notificar
+// aquí cubre "pull al arranque + push tras cada mutación" sin tocar
+// agro-repo-app.js. La carga es DINÁMICA y perezosa: agro-repo-sync.js
+// importa este módulo, así que un import estático crearía un ciclo (§3.3).
+// Fire-and-forget: la escritura local nunca depende de la red.
+// ---------------------------------------------------------------------------
+
+let repoSyncModulePromise = null;
+
+function ensureRepoSyncModule() {
+    if (!repoSyncModulePromise) {
+        repoSyncModulePromise = import('./agro-repo-sync.js').catch(() => {
+            repoSyncModulePromise = null;
+            return null;
+        });
+    }
+    return repoSyncModulePromise;
+}
+
+function notifyRepoSync(event) {
+    try {
+        ensureRepoSyncModule().then((mod) => mod?.notifyRepoSyncEvent?.(event));
+    } catch (_err) {
+        // La sincronización es best-effort: la caché local sigue mandando.
+    }
 }
 
 export function loadTabState(repoLike) {

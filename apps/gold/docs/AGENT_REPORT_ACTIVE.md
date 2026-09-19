@@ -1278,3 +1278,45 @@ git add supabase/functions/agro-assistant/index.ts apps/gold/agro/agro-assistant
 git commit -m "agro: Fase 3 Agente Agro — conciencia del módulo (tools fincas+tareas, historia multi-turn en invoke, clima cache-first)"
 git push
 ```
+
+---
+
+## Sesión 2026-09-20 (IV) — FASE 4 AGROREPO: migración a Supabase (Camino A, autorizada por owner)
+
+Agente: GLM (ZCode). Objetivo: AgroRepo persiste en Supabase (fuente de verdad, A1) con localStorage como caché offline (C2), migración automática con respaldo local previo obligatorio (B1) y conflictos V1 último-gana por `updated_at`. **Nota operativa:** el prompt del paquete llegó truncado tras el SQL de F4-1; se ejecutó sobre las decisiones canónicas + tabla de alcance (5 cambios), documentando cada corrección.
+
+**VERIFICACIÓN PREVIA OBLIGATORIA (anti-invención, documentada antes de editar):**
+1. **Forma exacta del árbol** (`agro-repo-storage.js` completo, 1017 líneas): `agrorepo_mvp_v1` = `{ version:'1.1.0', nodes:[...] }` con array PLANO (sin children ni position: el orden de hermanos es el orden del array), nodos `{ id: 'agrpf_<ts36>_<rand6>'|'agrpn_...', type: folder|file, parentId: id|null, title, folderKey, system, templateKey, content, createdAt, updatedAt, legacyPath, deletedAt: ''|ISO, deletedFromParentId }`, y estado repo-level `{ activeNodeId, expandedIds, lastSaved, migratedFrom, deletedSystemFolders:[], renamedSystemFolders:{} }`. Soft-delete = papelera con restore (purge 30d); `ensureSystemRoots` crea roots de sistema con tombstones/renames persistidos.
+2. **Mutaciones** (agro-repo-app.js, solo listado — no tocado): createFolder (:976), createFile (:988, import :1322), rename/edit (:1021), move (:1137), softDelete (:1048), restore (:1078), purgeNode (:1092), purgeExpired (:1103,:1758), paste/duplicate (:1229,:1248). **Todas confluyen en `persistRepoState`** → único punto de cableado posible sin tocar app.js.
+3. **Convenciones de migraciones**: begin/commit, `create table if not exists`, gen_random_uuid, RLS con 4 policies owner estilo `((select auth.uid()) = user_id)` (análogo `agro_farms`, migración 20260530090000), índices `<tabla>_<col>_idx`, comments.
+4. **Sin `agro_repo_*` previo** (único hit = enum `agro_reports` de entry_preference, falso positivo).
+5. **Cliente Supabase**: `apps/gold/assets/js/config/supabase-config.js` (export `supabase`, mismo import que agro-assistant.js).
+
+**Correcciones al SQL propuesto del borrador (con evidencia)**: (a) `client_id TEXT`, no UUID — los ids locales son `agrpf_/agrpn_<ts>_<rand>`; (b) añadidas `folder_key` (reconstrucción de roots de sistema y derivación de renames) y `deleted_from_parent_id` (ubicación de restore en papelera); (c) índices renombrados a la convención `<tabla>__<col>_idx`; (d) SIN trigger de `updated_at` — el LWW es controlado por cliente y un trigger now() lo rompería.
+
+**Cambios (5 acciones, 2 archivos nuevos + 2 editados + canon):**
+
+| ID | Cambio | Evidencia |
+|---|---|---|
+| F4-1 | Migración `20260920120000_create_agro_repo_entries.sql`: tabla + UNIQUE(user_id, client_id) + 4 policies owner + 4 índices + comments. `crop_id` queda nullable sin uso en V1 (los nodos no tienen linkage a cultivo hoy). | supabase/migrations/ |
+| F4-2 | `agro-repo-sync.js` (nuevo, 449 líneas): pull con merge LWW por `updated_at` que NUNCA elimina nodos locales; push por diferencias de CONTENIDO contra baseline del pull (el storage no bumpa updatedAt en soft-delete/restore — un guard por timestamp perdería esas mutaciones); upsert por chunks de 200 con `onConflict user_id,client_id`; NUNCA hace DELETE (el purge no se propaga en V1: las filas ya viajan con deleted_at); derivación de `renamedSystemFolders`/`deletedSystemFolders` desde filas server (título≠canónico / root trashed) para que otro dispositivo no revierta renombres ni recreé roots borrados; sin sesión → no-op (local-only intacto). | apps/gold/agro/agro-repo-sync.js |
+| F4-3 | Cableado en `persistRepoState` (embudo único de carga+mutaciones): `notifyRepoSync('persist')` fire-and-forget con import DINÁMICO perezoso de sync (evita el ciclo estático storage↔sync, §3.3). El pull del arranque llega vía load→persist→notify; el guard por contenido hace que las persistencias sin cambios (normalizaciones de carga) sean no-op en el server. | agro-repo-storage.js:953-983 |
+| F4-4 | Cola offline: errores de red → marcador `agrorepo_sync_pending_v1`; listener `window 'online'` (vida de la app, singleton documentado §11.2) hace flush pull+push; también se reintenta en la próxima mutación online. | agro-repo-sync.js:377-435 |
+| F4-5 | Canon: MANIFIESTO §4.10 "Relación con el resto" + bullet humano (respaldo en la cuenta, copia de trabajo offline, sincronización al reconectar, respaldo local previo a la primera migración, la IA lee la copia local sincronizada). FICHA_TECNICA: §4.2 memoria conectada + módulo agro-repo-sync.js en la lista + §5 tabla `agro_repo_entries` + claves localStorage actualizadas (backup/marcadores). | MANIFIESTO_AGRO.md, FICHA_TECNICA.md |
+
+**B1 (nada debe perderse)**: `ensurePreSyncBackup()` copia el string crudo de `agrorepo_mvp_v1` a `agrorepo_mvp_v1_backup_pre_sync` ANTES de cualquier contacto con el server; si el respaldo no puede escribirse, la sincronización no ocurre (`REPO_SYNC_BACKUP_FAILED`).
+
+**Resultado de build**: `pnpm build:gold` ✅ verde (2.38s; agent-guard OK; check-llms OK; UTF-8 OK). esbuild parse exit 0 en sync y storage. Chunk `agro-repo-sync-CDX3YSY1.js` presente en dist (import dinámico code-split correcto).
+
+**Verificación estática adicional**: 4 policies en la migración; UNIQUE y columnas corregidas confirmadas por grep; cableado storage→sync en un solo punto; sin import estático inverso.
+
+**QA sugerido online (owner, tras aplicar la migración + deploy)**: (1) primera carga con datos locales → verificar en DevTools/Application que existe `agrorepo_mvp_v1_backup_pre_sync` y en Supabase Studio que `agro_repo_entries` tiene las filas del árbol; (2) crear/editar/mover/a-papelera una nota → <2s después la fila refleja el cambio (updated_at client); (3) segundo dispositivo/navegador con la misma cuenta → el árbol aparece tras la carga; (4) offline: editar notas con DevTools offline → reconectar → flush automático; (5) renombrar/borrar un root de sistema en dispositivo A → no se revierte ni recrea en B; (6) la IA (Memoria) sigue citando notas normalmente (C2 — lectura local intacta).
+
+**NO se hizo (scope respetado)**: agro-repo-app.js/agro-repo-search.js/agro-repo-templates.js/agro-memory-retrieval.js (intactos), factureros, agro.js, limpieza sumMoney, veredicto Mimosa, deploy, git.
+
+**Bloque git sugerido (NO ejecutado)**:
+```bash
+git add supabase/migrations/20260920120000_create_agro_repo_entries.sql apps/gold/agro/agro-repo-sync.js apps/gold/agro/agro-repo-storage.js apps/gold/docs/MANIFIESTO_AGRO.md apps/gold/docs/FICHA_TECNICA.md apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "agro: Fase 4 AgroRepo — persistencia en Supabase (tabla agro_repo_entries + sync LWW con respaldo local previo y cola offline; localStorage pasa a caché)"
+git push
+```
