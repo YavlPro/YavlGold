@@ -200,5 +200,26 @@ Brief recibido el 17-sep-2026 (investigación de otro agente para la comunidad).
 
 ---
 
+## 8B. CIERRE PARA EL USUARIO (19-sep-2026) — SALIDA COMPLETADA
+
+**Última operación verificada:**
+- Tx `0x40506cbef662b1525fdba755935a1c3a4ea4d38104828ff53a559f03bf681ce6` — 19-sep-2026 18:41:17 UTC
+- `0x969E0a1f…da8AAA` → `0x685e37ab7cb2545b0f0c05fd4b21f8954aa974fa` — **0.13727 EVA** (~US$5,70)
+
+**Confirmación de recepción en MEXC (patrón de depósito de exchange):**
+1. 18:43:30 UTC — MEXC inyecta **0.000005 ETH** para gas a la dirección de depósito (`0xc2149f0d…3b29 → 0x685e37ab…`).
+2. 18:44:01 UTC — la dirección barre **el mismo monto exacto** (0.13727 EVA) al hot wallet de MEXC `0x9b64203878f24eb0cdf55c8c6fa7d08ba0cf77e5`.
+
+→ MEXC **sí acepta depósitos de EVA por Arbitrum One** y el depósito entró correctamente.
+
+**Estado del casino tras la migración del 18-sep:** `AuthHub` **sigue recibiendo `authorize`** (último verificado 19-sep 18:23 UTC), con el **mismo límite de 50 EVA**. La migración **no cambió el modelo de permisos**.
+
+**Pendiente único del usuario:** revocar los dos `approve` de 50 EVA (los `authorize` caducan solos; los `approve` no). Coste ~US$0,003.
+https://arbiscan.io/tokenapprovalchecker?search=0x969E0a1f1b276dC036bf8Cd28B3De75ea5da8AAA
+
+**Balance final del usuario:** salió con ~US$26,5 en USDT (BingX + MEXC) más ~US$10 previos, **sin haber depositado nunca un centavo**, mientras otros miembros de la comunidad fueron drenados.
+
+---
+
 ## 9. LIMITACIONES
 Sin acceso directo a RPC: los conteos provienen de la paginación de Arbiscan/Blockscout y el muestreo de session keys es parcial (3 de miles). Que no aparezcan drenajes en las direcciones muestreadas **no** implica que no existan. Las direcciones atacantes están **sin verificar**.
