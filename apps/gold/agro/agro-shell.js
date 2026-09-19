@@ -42,12 +42,11 @@ const TAB_TO_VIEW = Object.freeze({
     rankings: 'rankings'
 });
 
-const MOBILE_HUBS = new Set(['inicio', 'operacion', 'memoria', 'menu']);
+const MOBILE_HUBS = new Set(['inicio', 'operacion', 'menu']);
 
 const MOBILE_HUB_TO_GATE_VIEW = Object.freeze({
     inicio: 'inicio',
     operacion: 'granja',
-    memoria: 'memoria',
     menu: 'menu'
 });
 
@@ -55,12 +54,14 @@ const SHELL_GATE_ROUTES = Object.freeze({
     inicio: Object.freeze({ hashView: 'inicio', hub: 'inicio' }),
     granja: Object.freeze({ hashView: 'granja', hub: 'operacion' }),
     operacion: Object.freeze({ hashView: 'granja', hub: 'operacion' }),
-    memoria: Object.freeze({ hashView: 'memoria', hub: 'memoria' }),
     menu: Object.freeze({ hashView: 'menu', hub: 'menu' }),
     // ANEXO 24 (2026-09-17): Mi Carrito retirado del producto. Sus rutas legacy
     // (hash y navegacion programatica) aterrizan en el hub Granja sin error.
     carrito: Object.freeze({ hashView: 'granja', hub: 'operacion' }),
     'operational-cart': Object.freeze({ hashView: 'granja', hub: 'operacion' })
+    // ANEXO 29 S3 (2026-09-18): el gate "memoria" fue retirado — la puerta
+    // Memoria entra directo al workspace #view=memoria (módulo profundo),
+    // sin pantalla intermedia de dos cards.
 });
 
 const VIEW_TO_MOBILE_HUB = Object.freeze({
@@ -76,8 +77,8 @@ const VIEW_TO_MOBILE_HUB = Object.freeze({
     'facturero-clientes': 'operacion',
     clima: 'operacion',
     'task-cycles': 'operacion',
-    agrorepo: 'memoria',
-    asistente: 'memoria',
+    // ANEXO 29 S2: "memoria" no mapea a ningún hub — setActiveView conserva el
+    // hub activo previo para que el Volver del workspace regrese ahí.
     perfil: 'inicio',
     herramientas: 'menu'
 });
@@ -90,6 +91,11 @@ const ACTION_TO_MOBILE_CONTEXT = Object.freeze({
 
 const VIEW_ALIASES = Object.freeze({
     cultivos: Object.freeze({ view: 'ciclos', subview: 'mis-cultivos' }),
+    // ANEXO 29 S2 (2026-09-18): las superficies asistente/agrorepo viven ahora
+    // dentro del workspace Memoria (coerción tipo carrito ANEXO 24). El panel
+    // viaja como subview (VIEW_SUBNAV_CONFIG.memoria): ia | rag | both.
+    asistente: Object.freeze({ view: 'memoria', subview: 'ia' }),
+    agrorepo: Object.freeze({ view: 'memoria', subview: 'rag' }),
     'historial-comercial': Object.freeze({ view: 'facturero-clientes', subview: '' }),
     operaciones: Object.freeze({ view: 'facturero-finca', subview: 'active' }),
     facturero: Object.freeze({ view: 'facturero-finca', subview: 'active' }),
@@ -146,7 +152,10 @@ const VIEW_SUBNAV_CONFIG = Object.freeze({
     // legacy (agroOperationalCycles.js) duerme con subview=wizard.
     'facturero-cultivo': Object.freeze({ defaultSubview: 'wizard', allowed: ['wizard'] }),
     // S8 Personal: mismo patron; el preset orphan del legacy queda dormido.
-    'facturero-personal': Object.freeze({ defaultSubview: 'wizard', allowed: ['wizard'] })
+    'facturero-personal': Object.freeze({ defaultSubview: 'wizard', allowed: ['wizard'] }),
+    // ANEXO 29 S2: panel del workspace Memoria. defaultSubview '' = "sin
+    // preferencia" → el workspace aplica lo persistido/viewport default.
+    memoria: Object.freeze({ defaultSubview: '', allowed: ['both', 'rag', 'ia'] })
 });
 
 const VIEWS_WITH_SUBNAV = new Set(Object.keys(VIEW_SUBNAV_CONFIG));
@@ -168,8 +177,10 @@ const VIEW_CONFIG = Object.freeze({
     'facturero-clientes': { region: 'cartera-viva', label: 'Facturero de Clientes', focusSelector: '#agro-cartera-viva-root' },
     clima: { region: 'clima', label: 'Clima Agro', focusSelector: '[data-agro-shell-region="clima"]' },
     herramientas: { region: 'herramientas', label: 'Ayuda y soporte', focusSelector: '#agro-tools-section' },
-    agrorepo: { region: 'agrorepo', label: 'AgroRepo', focusSelector: '#agro-repo-section', dense: true },
-    asistente: { region: 'asistente', label: 'Asistente IA', focusSelector: '[data-agro-shell-region="asistente"]' }
+    // ANEXO 29 S2: workspace Memoria (region fullscreen que contiene ambos
+    // paneles reubicados). Las vistas legacy asistente/agrorepo coercionan
+    // aquí vía VIEW_ALIASES y ya no tienen entrada propia.
+    memoria: { region: 'memoria', label: 'Memoria', focusSelector: '#agro-memory-workspace', dense: true }
 });
 
 const SHELL_VIEW_KEYWORDS = Object.freeze({
@@ -189,8 +200,8 @@ const SHELL_VIEW_KEYWORDS = Object.freeze({
     'facturero-clientes': Object.freeze(['facturero', 'clientes', 'fiados', 'deudas', 'pendientes', 'facturero de clientes']),
     clima: Object.freeze(['clima', 'temperatura', 'lluvia', 'tiempo']),
     herramientas: Object.freeze(['ayuda', 'soporte', 'documentacion', 'privacidad', 'herramientas']),
-    agrorepo: Object.freeze(['bitacora', 'agrorepo', 'memoria', 'notas', 'historial']),
-    asistente: Object.freeze(['asistente', 'ia', 'ayuda', 'contexto'])
+    // ANEXO 29 S2: keywords fusionadas de las entradas legacy agrorepo+asistente.
+    memoria: Object.freeze(['memoria', 'bitacora', 'agrorepo', 'notas', 'historial', 'asistente', 'ia', 'contexto', 'conectada'])
 });
 
 const SHELL_SUBVIEW_KEYWORDS = Object.freeze({
@@ -632,7 +643,10 @@ function resolveInitialView() {
             }
             const normalized = normalizeView(hashView);
             if (Object.prototype.hasOwnProperty.call(VIEW_CONFIG, normalized)) {
-                return { view: normalized, subview: hash.get('subview') || '' };
+                // ANEXO 29 S2: un hash legacy (#view=asistente) coerciona a
+                // memoria; el subview del alias (panel ia|rag) se respeta en F5.
+                const aliasSubview = resolveViewAlias(hashView)?.subview || '';
+                return { view: normalized, subview: hash.get('subview') || aliasSubview };
             }
         }
     } catch (_err) { /* ignore */ }
@@ -1191,7 +1205,7 @@ export function initAgroShell() {
         syncSubnav();
     };
 
-    const FULLSCREEN_REGIONS = new Set(['asistente', 'perfil']);
+    const FULLSCREEN_REGIONS = new Set(['asistente', 'perfil', 'memoria']);
 
     const syncRegions = (regionName) => {
         topLevelRegions.forEach((section) => {

@@ -175,16 +175,22 @@ function formatSourceDate(value) {
 
 function navigateToRepoEntry(entryId) {
     if (!entryId || typeof window._agroRepoOpenEntry !== 'function') return;
-    // Patrón canónico de navegación (agrociclos.js:364): hash + evento del
-    // shell. El bridge asegura el montaje del widget y abre la entrada.
-    try {
-        const url = new URL(window.location.href);
-        url.hash = 'view=agrorepo';
-        history.replaceState(null, '', url);
-    } catch (_err) { /* ignore */ }
-    window.dispatchEvent(new CustomEvent('agro:shell:set-view', {
-        detail: { view: 'agrorepo', scroll: true }
-    }));
+    // ANEXO 29 S2: dentro del workspace Memoria la cita revela el panel RAG
+    // (desktop: IA→Ambas; móvil: →Memoria) y abre la entrada. El fallback
+    // legacy (navegación a la vista agrorepo, hoy alias de memoria) cubre
+    // un workspace no cargado.
+    if (typeof window._agroMemoriaRevealRag === 'function') {
+        window._agroMemoriaRevealRag();
+    } else {
+        try {
+            const url = new URL(window.location.href);
+            url.hash = 'view=agrorepo';
+            history.replaceState(null, '', url);
+        } catch (_err) { /* ignore */ }
+        window.dispatchEvent(new CustomEvent('agro:shell:set-view', {
+            detail: { view: 'agrorepo', scroll: true }
+        }));
+    }
     window._agroRepoOpenEntry(entryId);
 }
 

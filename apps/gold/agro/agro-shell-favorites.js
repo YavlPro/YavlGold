@@ -1,6 +1,14 @@
 const STORAGE_KEY = 'YG_AGRO_SHELL_FAVORITES_V1';
 const MAX_VISIBLE_FAVORITES = 5;
 
+// ANEXO 29 S2 (2026-09-18): las vistas legacy asistente/agrorepo viven ahora
+// dentro del workspace Memoria (VIEW_ALIASES del shell). Los ids de favoritos
+// guardados antes del ANEXO se remapean al leer para que sigan navegando.
+const LEGACY_FAVORITE_ID_MAP = Object.freeze({
+    'view:asistente': 'view:memoria',
+    'view:agrorepo': 'view:memoria'
+});
+
 function escapeHtml(value) {
     return String(value ?? '')
         .replace(/&/g, '&amp;')
@@ -12,7 +20,9 @@ function escapeHtml(value) {
 function readFavoriteIds() {
     try {
         const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-        return Array.isArray(parsed) ? parsed.filter(Boolean).map(String) : [];
+        return Array.isArray(parsed)
+            ? parsed.filter(Boolean).map(String).map((id) => LEGACY_FAVORITE_ID_MAP[id] || id)
+            : [];
     } catch (_err) {
         return [];
     }

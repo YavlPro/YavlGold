@@ -157,6 +157,7 @@
     <link rel="stylesheet" href="./agro-facturero-personal-wizard.css">
     <link rel="stylesheet" href="./agro-assistant.css">
     <link rel="stylesheet" href="./agro-assistant-chat.css">
+    <link rel="stylesheet" href="./agro-memory-workspace.css">
     <link rel="stylesheet" href="./agro-clients.css">
     <link rel="stylesheet" href="./agro-reports-center.css">
     <link rel="stylesheet" href="./agro-farms.css">
@@ -215,15 +216,10 @@
                     <i class="fa-solid fa-list-check" aria-hidden="true"></i>
                     <span>Agenda</span>
                 </button>
-                <button type="button" class="agro-shell-rail__item" data-agro-view="agrorepo" aria-label="AgroRepo"
-                    title="AgroRepo">
+                <button type="button" class="agro-shell-rail__item" data-agro-view="memoria" aria-label="Memoria"
+                    title="Memoria">
                     <i class="fa-solid fa-book-open" aria-hidden="true"></i>
-                    <span>AgroRepo</span>
-                </button>
-                <button type="button" class="agro-shell-rail__item" data-agro-view="asistente" aria-label="Asistente IA"
-                    title="Asistente IA">
-                    <i class="fa-solid fa-robot" aria-hidden="true"></i>
-                    <span>Asistente</span>
+                    <span>Memoria</span>
                 </button>
                 <button type="button" class="agro-shell-rail__item" data-agro-view="rankings"
                     aria-label="Estadísticas y rankings" title="Estadísticas">
@@ -473,23 +469,15 @@
 
                 <section class="agro-shell-sidebar__group agro-launcher__section">
                     <p class="agro-shell-sidebar__label"><i class="fa-solid fa-book-open agro-shell-sidebar__label-icon"
-                            aria-hidden="true"></i><span>Memoria e IA</span></p>
+                            aria-hidden="true"></i><span>Memoria</span></p>
                     <div class="agro-launcher__tiles">
-                        <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="agrorepo"
+                        <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="memoria"
                             data-agro-mode-scope="tools">
                             <i class="fa-solid fa-book-open agro-shell-link__icon" aria-hidden="true"></i>
                             <span class="agro-launcher__tile-copy">
-                                <span class="agro-shell-link__label">AgroRepo</span>
-                                <span class="agro-launcher__tile-desc">Repositorio de notas y memoria del trabajo
-                                    agrícola.</span>
-                            </span>
-                        </button>
-                        <button type="button" class="agro-shell-link agro-launcher__tile" data-agro-view="asistente"
-                            data-agro-mode-scope="tools">
-                            <i class="fa-solid fa-robot agro-shell-link__icon" aria-hidden="true"></i>
-                            <span class="agro-launcher__tile-copy">
-                                <span class="agro-shell-link__label">Asistente IA</span>
-                                <span class="agro-launcher__tile-desc">Apoyo contextual para decisiones de finca.</span>
+                                <span class="agro-shell-link__label">Memoria conectada</span>
+                                <span class="agro-launcher__tile-desc">Bitácora y asistente con contexto real de tus
+                                    notas.</span>
                             </span>
                         </button>
                         <a href="/docs-agro" class="agro-launcher__tile agro-launcher__tile--link"
@@ -541,8 +529,8 @@
             <i class="fa-solid fa-briefcase" aria-hidden="true"></i>
             <span>Granja</span>
         </button>
-        <button type="button" class="agro-mobile-tabbar__item" id="agro-mobile-tab-memoria"
-            data-agro-mobile-tab="memoria" role="tab" aria-controls="agro-mobile-panel-memoria" aria-selected="false">
+        <button type="button" class="agro-mobile-tabbar__item" id="agro-mobile-tab-memoria" data-agro-view="memoria"
+            aria-label="Memoria" title="Memoria">
             <i class="fa-solid fa-book-open" aria-hidden="true"></i>
             <span>Memoria</span>
         </button>
@@ -623,12 +611,9 @@
                     <i class="fa-solid fa-briefcase" aria-hidden="true"></i>
                     <span>Granja</span>
                 </button>
-                <button type="button" class="agro-shell-hub-tab" id="agro-hub-tab-memoria"
-                    data-agro-mobile-tab="memoria" role="tab" aria-controls="agro-mobile-panel-memoria"
-                    aria-selected="false">
-                    <i class="fa-solid fa-book-open" aria-hidden="true"></i>
-                    <span>Memoria</span>
-                </button>
+                <!-- ANEXO 29 S3: el tab-hub "Memoria" se retiró — la puerta Memoria
+                     (tabbar inferior y tile desktop) entra directo al workspace
+                     #view=memoria sin pantalla intermedia. -->
                 <button type="button" class="agro-shell-hub-tab" id="agro-hub-tab-menu" data-agro-mobile-tab="menu"
                     role="tab" aria-controls="agro-mobile-panel-menu" aria-selected="false">
                     <i class="fa-solid fa-compass" aria-hidden="true"></i>
@@ -719,23 +704,8 @@
                 </div>
             </div>
 
-            <div class="agro-mobile-hub__panel" id="agro-mobile-panel-memoria" data-agro-mobile-panel="memoria"
-                role="tabpanel" aria-labelledby="agro-mobile-tab-memoria" hidden inert>
-                <div class="agro-mobile-hub__head">
-                    <p class="agro-mobile-hub__eyebrow">Agro V1</p>
-                    <h2 class="agro-mobile-hub__title">Memoria</h2>
-                </div>
-                <div class="agro-mobile-hub__grid">
-                    <button type="button" class="agro-mobile-hub__item" data-agro-view="agrorepo">
-                        <i class="fa-solid fa-book-open" aria-hidden="true"></i>
-                        <span>AgroRepo</span>
-                    </button>
-                    <button type="button" class="agro-mobile-hub__item" data-agro-view="asistente">
-                        <i class="fa-solid fa-robot" aria-hidden="true"></i>
-                        <span>Asistente IA</span>
-                    </button>
-                </div>
-            </div>
+            <!-- ANEXO 29 S3: panel-hub "Memoria" (dos cards) retirado — el
+                 workspace #view=memoria ES la superficie de la puerta Memoria. -->
 
             <div class="agro-mobile-hub__panel" id="agro-mobile-panel-menu" data-agro-mobile-panel="menu"
                 role="tabpanel" aria-labelledby="agro-mobile-tab-menu" hidden inert>
@@ -2327,6 +2297,39 @@
     <!-- ═══════════════════════════════════════════════════════════════════════
          AGROREPO MODULE (Lazy Load)
          ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- ============================================
+         🧠 ANEXO 29 S2/S3 — WORKSPACE MEMORIA
+         Región fullscreen: panel RAG (AgroRepo, reubicado aquí por
+         agro-memory-workspace.js) + panel IA (Asistente). Sin hub intermedio.
+         ============================================ -->
+    <section class="agro-memory-workspace" id="agro-memory-workspace" data-agro-shell-region="memoria" hidden
+        inert aria-labelledby="amw-title">
+        <header class="amw-header">
+            <button type="button" class="amw-back" id="amw-back" aria-label="Volver" title="Volver">
+                <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                <span>Volver</span>
+            </button>
+            <div class="amw-heading">
+                <p class="amw-eyebrow">Agro V1</p>
+                <h2 class="amw-title" id="amw-title">Memoria conectada</h2>
+            </div>
+            <div class="amw-toggle" id="amw-toggle" role="tablist" aria-label="Paneles de Memoria">
+                <button type="button" class="amw-toggle__btn is-active" data-amw-panel="both" role="tab"
+                    aria-selected="true">Ambas</button>
+                <button type="button" class="amw-toggle__btn" data-amw-panel="rag" role="tab"
+                    aria-selected="false">Memoria</button>
+                <button type="button" class="amw-toggle__btn" data-amw-panel="ia" role="tab"
+                    aria-selected="false">IA</button>
+            </div>
+        </header>
+        <div class="amw-body" id="amw-body">
+            <!-- El widget AgroRepo y la superficie del asistente se reubican
+                 aquí al init del workspace (appendChild, sin destruir estado). -->
+            <div class="amw-panel amw-panel--rag" data-amw-panel-container="rag"></div>
+            <div class="amw-panel amw-panel--ia" data-amw-panel-container="ia"></div>
+        </div>
+    </section>
+
     <section class="agro-repo-section agrorepo-section agro-ops-v10 animate-in delay-6" id="agro-repo-section"
         style="margin-top: 2rem;" data-agro-section="agroRepo" data-agro-shell-region="agrorepo" hidden inert>
         <div id="agro-widget-root">
@@ -3438,6 +3441,14 @@
                         mod.initAgroAssistantSurface();
                     }
                 }).catch(err => console.warn('[AGRO] Assistant module load error:', err.message));
+
+                // ANEXO 29 S2/S3: workspace Memoria — reubica AgroRepo + Asistente
+                // bajo una región fullscreen con toggle de paneles.
+                import('./agro-memory-workspace.js').then((mod) => {
+                    if (typeof mod.initAgroMemoryWorkspace === 'function') {
+                        mod.initAgroMemoryWorkspace();
+                    }
+                }).catch(err => console.warn('[AGRO] Memory workspace load error:', err.message));
 
                 // ANEXO 28 S1: pre-cultivos — guard de fases + conversión a sembrado (un write).
                 import('./agro-precultivo.js').then((mod) => {

@@ -1,0 +1,211 @@
+/* ============================================================
+   agro-memory-workspace.css — ANEXO 29 S2/S3
+   Workspace "Memoria": panel RAG (AgroRepo) + panel IA (Asistente)
+   Toggle [Ambas | Memoria | IA] — desktop 2 columnas, móvil exclusivo.
+   Tokens ADN V12 only (mismo idioma que agro-assistant-chat.css).
+   ============================================================ */
+
+.agro-memory-workspace {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3, 0.75rem);
+    padding: var(--space-4, 1rem) var(--space-5, 1.25rem) var(--space-5, 1.25rem);
+    min-height: calc(100dvh - 140px);
+}
+
+/* ---------- Header: Volver + título + segmented chips ---------- */
+
+.amw-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3, 0.75rem);
+    flex-wrap: wrap;
+    padding-bottom: var(--space-3, 0.75rem);
+    border-bottom: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
+}
+
+.amw-back {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2, 0.5rem);
+    padding: 0.5rem 0.95rem;
+    min-height: 40px;
+    border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.14));
+    border-radius: var(--radius-md, 8px);
+    background: transparent;
+    color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+    font-family: var(--font-body);
+    font-size: var(--text-xs, 0.7rem);
+    cursor: pointer;
+    transition: color 160ms ease, border-color 160ms ease;
+}
+
+.amw-back:hover,
+.amw-back:focus-visible {
+    color: var(--gold-4, #C8A752);
+    border-color: var(--gold-4, #C8A752);
+    outline: none;
+}
+
+.amw-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0;
+}
+
+.amw-eyebrow {
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: var(--text-xs, 0.7rem);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted, #94A3B8);
+}
+
+.amw-title {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-size: 1.05rem;
+    line-height: 1.2;
+    color: var(--text-primary, rgba(255, 255, 255, 0.9));
+}
+
+.amw-toggle {
+    margin-left: auto;
+    display: inline-flex;
+    gap: var(--space-1, 0.25rem);
+    padding: var(--space-1, 0.25rem);
+    border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.1));
+    border-radius: var(--radius-pill, 9999px);
+    background: var(--bg-2, #141414);
+}
+
+.amw-toggle__btn {
+    border: 1px solid transparent;
+    background: transparent;
+    padding: 0.45rem 0.95rem;
+    min-height: 34px;
+    border-radius: var(--radius-pill, 9999px);
+    color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+    font-family: var(--font-body);
+    font-size: var(--text-xs, 0.7rem);
+    cursor: pointer;
+    transition: color 160ms ease, border-color 160ms ease;
+}
+
+.amw-toggle__btn:hover {
+    color: var(--text-primary, rgba(255, 255, 255, 0.9));
+}
+
+.amw-toggle__btn:focus-visible {
+    outline: none;
+    border-color: var(--gold-4, #C8A752);
+}
+
+.amw-toggle__btn.is-active {
+    border-color: var(--border-gold, rgba(200, 167, 82, 0.25));
+    background: var(--bg-1, #0a0a0a);
+    color: var(--gold-4, #C8A752);
+}
+
+/* ---------- Cuerpo: dos paneles con divisor 1px ---------- */
+
+.amw-body {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-4, 1rem);
+    min-height: 0;
+}
+
+.amw-panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+/* [hidden] del host debe ganar sobre display:flex del autor */
+.amw-panel[hidden] {
+    display: none;
+}
+
+.amw-panel--rag {
+    border-right: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
+    padding-right: var(--space-4, 1rem);
+}
+
+/* Estado de paneles: el colapso OCULTA (display:none), el reveal anima */
+.agro-memory-workspace[data-amw-state="rag"] .amw-panel--ia,
+.agro-memory-workspace[data-amw-state="ia"] .amw-panel--rag {
+    display: none;
+}
+
+.agro-memory-workspace[data-amw-state="rag"] .amw-panel--rag,
+.agro-memory-workspace[data-amw-state="ia"] .amw-panel--ia {
+    border-right: none;
+    padding-right: 0;
+}
+
+@keyframes amwPanelIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+}
+
+.amw-panel--enter {
+    animation: amwPanelIn 160ms ease-out;
+}
+
+/* ---------- Secciones embebidas (reubicadas por el workspace) ---------- */
+
+.agro-memory-workspace .amw-embedded {
+    margin: 0;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+}
+
+/* El Volver del asistente es redundante dentro del workspace: vive en el header */
+.agro-memory-workspace #btn-close-agro-assistant {
+    display: none;
+}
+
+/* ---------- Móvil ≤768px: toggle exclusivo [Memoria | IA] ---------- */
+
+@media (max-width: 768px) {
+    .amw-toggle__btn[data-amw-panel="both"] {
+        display: none;
+    }
+
+    .amw-body {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .amw-panel--rag {
+        border-right: none;
+        padding-right: 0;
+    }
+
+    .amw-toggle__btn,
+    .amw-back {
+        min-height: 44px;
+    }
+}
+
+/* ---------- Reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+    .amw-panel--enter {
+        animation: none;
+    }
+
+    .amw-back,
+    .amw-toggle__btn {
+        transition: none;
+    }
+}
