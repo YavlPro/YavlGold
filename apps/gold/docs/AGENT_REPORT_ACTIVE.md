@@ -1022,3 +1022,36 @@ Agente: GLM (ZCode). QA owner 19-sep (mobile, capa IA): aún hay scroll de entra
 git add apps/gold/agro/agro-memory-workspace.css apps/gold/agro/agro-assistant-chat.css apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "fix(memoria): ANEXO 29 MF-3 — inmersión mobile sin scroll de entrada (columna fija 100dvh-tabbar en capa ia con scroll interno del chat, header global oculto en Memoria §4.12.3, hueco muerto fuera, welcome compacto en grid, compositor flex-none anclado, clearance MF-2 absorbido) + un solo tab dorado en la barra del hub (look CSS-only, estado Volver intacto)"
 ```
+
+---
+
+## Sesión 2026-09-19 (V) — ANEXO 29 MF-4: pulido de textos y rename "Agente Agro"
+
+Agente: GLM (ZCode). Micro-fix de pulido con decisiones del owner CERRADAS (no re-interpretadas). Git NO ejecutado.
+
+**Trazado (a) — mapa exacto de "Asistente Agro" en apps/gold/**: solo 3 matches: `index.html:3652` (h2 header card, UI → renombrado), `index.html:3737` (welcome title, UI → eliminado con el bloque de título), `agro.js:14958` (comentario histórico de versión `// V9.5.6:`, NO UI → intacto por §7.5 y política de referencias históricas). PARO verificado: cero matches en `supabase/` (Edge) y cero en docs canónicos dentro del scope UI (docs-agro/llms/MANIFIESTO usan "Asistente IA"/"el asistente" — alcance del pase documental GATEADO).
+
+**Cambios (index.html + agro-assistant-chat.css, CSS declarado como exigido por el pulido)**:
+
+| Archivo | Cambio |
+|---|---|
+| `agro/index.html` | h2 → "Agente Agro"; welcome sin icono ni título (bloque retirado, decisión 1); desc → "Respuestas cruzadas de lo que ya registraste: cultivos, finanzas y bitácora." (ejemplo del owner verbatim); "Configurar asistente" → "Configurar"; summary "Guía de uso" → "Guía" con aria-label="Guía de uso" (contexto completo para lectores, ADN §16); placeholder → "Escribe tu consulta…" (21 chars, ejemplo del owner); `#assistant-mode-hint` vaciado (nodo conservado, sin texto). |
+| `agro/agro-assistant-chat.css` | Reglas base `.ast-welcome-icon`/`.ast-welcome-title` y overrides mobile MF-3 eliminadas como huérfanas (misma higiene que MF-1 con kbd); grilla mobile `auto 1fr` conserva el emparejado Configurar\|Guía; chips `--text-secondary` → `--text-primary` (acción tapeable, ADN §2); fila estática `.ast-input-hint` fuera del flujo (`display:none`) y **cooldown como única línea helper**: `.ast-cooldown` visible solo con contenido (`:empty → display:none`), 0.65rem, `--text-muted`, alineado a la derecha — el nodo compat `#assistant-cooldown` NO se tocó (posición, id y escritura por `updateAssistantCooldownUI` intactos, lección ANEXO 27); countdown dentro del botón Enviar conservado (ANEXO 26). |
+
+**Solución clave sin tocar agro-assistant.js**: `updateAssistantCooldownUI` ya escribe "Espera Xs"/"Limite IA: espera Xs"/"En cola (N)" en el nodo compat — en lugar de un observer espejo en ui.js (que violaría el contrato "render puro sin estado" de ese módulo), el CSS deja de ocultar el nodo y lo muestra solo cuando tiene texto. Cero JS nuevo, cero riesgo de carrera.
+
+**Resultado de build**: `pnpm build:gold` ✅ verde (1.96s).
+
+**DoD greps**: "Asistente Agro" en `apps/gold/agro/` → 1 match residual = comentario histórico agro.js:14958 (declarado no-UI); "Agente Agro" visible en el h2 del header (mobile y desktop comparten nodo); cero referencias JS/CSS huérfanas a `.ast-welcome-icon`/`.ast-welcome-title`/`#assistant-mode-hint`.
+
+**Declaraciones honestas**: (1) La cadena "Asistente IA" NO se renombró — decisión 2 cubre literalmente "Asistente Agro"; queda visible en el brand de la sidebar ("Asistente IA" + sub "Agro", sheet de historial mobile y sidebar desktop) y en un botón `ygd-btn-ai` del dashboard (index.html:1026-1032): inconsistencia detectada y declarada, decisión del owner (rename de 2 líneas si la quiere). (2) El eyebrow "Centro de consulta Agro" y la desc desktop del header no contienen "Asistente Agro" → intactos. (3) La desc del welcome puede envolver a 2 líneas en 360px (76 chars) — es el ejemplo textual del owner, declarado. (4) QA runtime no ejecutado (ley §5).
+
+**QA sugerido (owner)**: mobile y desktop → un solo título "Agente Agro" (header de la card); welcome abre con desc breve + chips (buen contraste, envían al tocar) + fila Configurar|Guía; input con placeholder corto; al enviar, la línea "Espera Xs" aparece bajo el compositor solo durante el cooldown y desaparece sin dejar hueco; countdown en el botón intacto; consola limpia.
+
+**NO se hizo (scope respetado)**: git (bloque sugerido abajo); docs canónicos, docs-agro, llms.txt, MANIFIESTO (pase documental GATEADO); Edge Function; sidebar brand "Asistente IA" y botón dashboard "Asistente IA" (fuera de la decisión cerrada, declarados); markdown/citas/retrieval.
+
+**Bloque git sugerido (NO ejecutado)**:
+```bash
+git add apps/gold/agro/index.html apps/gold/agro/agro-assistant-chat.css apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(memoria): ANEXO 29 MF-4 — pulido de textos y rename Agente Agro (welcome sin título duplicado con desc breve, placeholder corto, helper cooldown-only vía :empty sobre nodo compat sin tocar JS, chips a text-primary, labels cortos Configurar/Guía)"
+```

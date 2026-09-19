@@ -3649,7 +3649,7 @@
                         <span class="ast-page-icon" aria-hidden="true"><i class="fa-solid fa-seedling"></i></span>
                         <div class="ast-page-title-copy">
                             <p class="ast-page-eyebrow">Centro de consulta Agro</p>
-                            <h2 id="agro-assistant-title">Asistente Agro</h2>
+                            <h2 id="agro-assistant-title">Agente Agro</h2>
                             <p>Consulta cultivos, clima, plagas y decisiones de campo con tu contexto.</p>
                         </div>
                     </div>
@@ -3732,11 +3732,10 @@
                             aria-live="polite">
                             <!-- Welcome / guide rendered by JS -->
                             <div class="ast-welcome" id="ast-welcome">
-                                <div class="ast-welcome-icon" aria-hidden="true"><i class="fa-solid fa-seedling"></i>
-                                </div>
-                                <div class="ast-welcome-title">Asistente Agro</div>
-                                <div class="ast-welcome-desc">Respuestas cruzadas sobre lo que ya registraste en Agro:
-                                    cultivos, finanzas y bitácora.</div>
+                                <!-- ANEXO 29 MF-4: icono+título retirados (duplicaban el header
+                                     de la card); el welcome abre con descripción + chips. -->
+                                <div class="ast-welcome-desc">Respuestas cruzadas de lo que ya registraste: cultivos,
+                                    finanzas y bitácora.</div>
                                 <div class="ast-welcome-suggestions">
                                     <button class="ast-suggestion"
                                         data-suggestion="¿A cuánto me suma específicamente el total general de los clientes que dejé con abonos atrasados en marzo?">
@@ -3760,13 +3759,12 @@
                                 </div>
                                 <button type="button" class="ast-configure-btn" id="btn-configure-ia"
                                     onclick="window.openAgroIAWizard?.()">
-                                    <i class="fa-solid fa-sliders" aria-hidden="true"></i> Configurar asistente
+                                    <i class="fa-solid fa-sliders" aria-hidden="true"></i> Configurar
                                 </button>
                                 <!-- Collapsible guide -->
                                 <details class="ast-guide" id="assistant-guide">
-                                    <summary class="ast-guide-summary">
-                                        <span><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Guía de
-                                            uso</span>
+                                    <summary class="ast-guide-summary" aria-label="Guía de uso">
+                                        <span><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Guía</span>
                                     </summary>
                                     <ul id="assistant-guide-list">
                                         <li>Agrupa tus dudas en 1 solo mensaje (máx 5-8 líneas).</li>
@@ -3789,18 +3787,16 @@
                         <div class="ast-input-area">
                             <div class="ast-input-wrap">
                                 <textarea id="agro-assistant-input" class="ast-input" rows="1"
-                                    placeholder="Escribe tu consulta sobre cultivos, plagas, riego, clima..."
-                                    aria-label="Campo de mensaje"></textarea>
+                                    placeholder="Escribe tu consulta…" aria-label="Campo de mensaje"></textarea>
                                 <button type="button" class="ast-send-btn" id="btn-assistant-send"
                                     aria-label="Enviar mensaje" disabled>
                                     <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
                                 </button>
                             </div>
                             <div class="ast-input-hint">
-                                <!-- ANEXO 29 MF-1 (18-sep): hints de teclado retirados por orden del
-                                     owner — no aportan al usuario. Se conserva el contador de estado. -->
-                                <span class="ast-input-mode" id="assistant-mode-hint">1 mensaje (5-8 líneas) · espera
-                                    10s</span>
+                                <!-- ANEXO 29 MF-4: texto estático retirado (helper cooldown-only).
+                                     Nodo conservado; la línea visible vive en #assistant-cooldown. -->
+                                <span class="ast-input-mode" id="assistant-mode-hint"></span>
                             </div>
                             <button type="button" class="assistant-new-messages" id="assistant-new-messages"
                                 style="display:none;">Nuevos mensajes</button>

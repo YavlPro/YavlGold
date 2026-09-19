@@ -55,6 +55,8 @@
 }
 
 /* ── Estado de bienvenida (thread vacío) ── */
+/* ANEXO 29 MF-4: icono+título del welcome retirados (duplicaban el header
+   de la card, decisión owner) — sus reglas eliminadas como huérfanas. */
 .asistente-dedicado .ast-welcome {
   flex: 1;
   display: flex;
@@ -72,28 +74,6 @@
   border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.06));
   border-radius: var(--radius-md, 12px);
   animation: fadeInUp 0.3s ease;
-}
-
-.asistente-dedicado .ast-welcome-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: var(--radius-md, 12px);
-  background: linear-gradient(135deg, rgba(200, 167, 82, 0.2), rgba(200, 167, 82, 0.08));
-  border: 1px solid var(--border-gold, rgba(200, 167, 82, 0.25));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--gold-4, #C8A752);
-  font-size: 1.5rem;
-  margin-bottom: var(--space-4, 1rem);
-}
-
-.asistente-dedicado .ast-welcome-title {
-  font-family: var(--font-heading);
-  font-size: clamp(1rem, 2.5vw, 1.4rem);
-  font-weight: 700;
-  color: var(--gold-4, #C8A752);
-  margin-bottom: var(--space-2, 0.5rem);
 }
 
 .asistente-dedicado .ast-welcome-desc {
@@ -126,7 +106,8 @@
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  color: var(--text-secondary, rgba(255, 255, 255, 0.75));
+  /* ANEXO 29 MF-4: contraste — chips son acción primaria tapeable (ADN §2). */
+  color: var(--text-primary, rgba(255, 255, 255, 0.9));
   font-family: var(--font-body);
   font-size: 0.78rem;
   min-height: 44px;
@@ -558,31 +539,28 @@
   cursor: not-allowed;
 }
 
-/* Fila de helpers unificada y discreta */
+/* ANEXO 29 MF-4: la línea helper del compositor pasó a cooldown-only — la fila
+   estática (.ast-input-hint) se retira del flujo visual; sus nodos quedan en
+   el markup por compatibilidad y sin texto. */
 .asistente-dedicado .ast-input-hint {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3, 0.75rem);
+  display: none;
+}
+
+/* Cooldown como ÚNICA línea helper: el nodo compat #assistant-cooldown
+   (escrito por updateAssistantCooldownUI con "Espera Xs" / "Limite IA…" /
+   "En cola (N)") se muestra solo con contenido; vacío no ocupa espacio.
+   El countdown dentro del botón de envío se conserva (ANEXO 26). */
+.asistente-dedicado .ast-cooldown {
+  display: block;
   font-family: var(--font-body);
   font-size: 0.65rem;
-  color: var(--text-muted, rgba(255, 255, 255, 0.3));
+  color: var(--text-muted, rgba(255, 255, 255, 0.4));
+  text-align: right;
 }
 
-/* ANEXO 29 MF-1 (18-sep): cluster kbd de hints de teclado retirado del markup
-   (regla .ast-input-hint kbd eliminada como huérfana). El contador queda
-   anclado a la derecha con margin-left:auto (con un solo hijo, el
-   space-between de la fila lo dejaría a la izquierda). */
-
-.asistente-dedicado .ast-input-mode {
-  margin-left: auto;
-  font-size: 0.62rem;
-  color: rgba(255, 255, 255, 0.25);
+.asistente-dedicado .ast-cooldown:empty {
+  display: none;
 }
-
-/* Cooldown huérfano retirado del flujo visual (el countdown vive en el botón).
-   El nodo se conserva para compatibilidad JS (updateAssistantCooldownUI). */
-.asistente-dedicado .ast-cooldown { display: none; }
 
 .asistente-dedicado .assistant-new-messages { display: none; }
 
@@ -646,36 +624,16 @@
 
   .asistente-dedicado .assistant-message { max-width: 92%; }
 
-  /* MF-1 dejó un solo hijo (el contador) — fila en dirección natural con el
-     contador anclado a la derecha por margin-left:auto. */
-  .asistente-dedicado .ast-input-hint {
-    flex-direction: row;
-    align-items: center;
-  }
-
-  /* ── ANEXO 29 MF-3: welcome compacto (≤ ~40% del viewport en 360×740) ──
-     Icono+título en una fila, descripción corta, chips como pills wrap
-     (touch ≥44px §16) y Configurar+Guía compartiendo fila. */
+  /* ── ANEXO 29 MF-3/MF-4: welcome compacto (≤ ~40% del viewport en 360×740) ──
+     Sin icono ni título (MF-4: el header de la card ya da la identidad):
+     descripción corta, chips como pills wrap (touch ≥44px §16) y la grilla
+     auto 1fr empareja Configurar|Guía en una fila. */
   .asistente-dedicado .ast-welcome {
     display: grid;
     grid-template-columns: auto 1fr;
     gap: 0.4rem 0.6rem;
     align-content: center;
     padding: 0.85rem 0.75rem;
-    text-align: left;
-  }
-
-  .asistente-dedicado .ast-welcome-icon {
-    width: 32px;
-    height: 32px;
-    font-size: 0.9rem;
-    margin: 0;
-    align-self: center;
-  }
-
-  .asistente-dedicado .ast-welcome-title {
-    align-self: center;
-    margin: 0;
     text-align: left;
   }
 
