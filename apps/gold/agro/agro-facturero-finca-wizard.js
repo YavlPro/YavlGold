@@ -700,7 +700,8 @@ function createSession(root) {
 
             const tipo = CREAR_TYPES.find((entry) => entry.id === state.tipoId);
             const economicType = tipo?.id || 'expense';
-            await assertOperationalPeriodOpen({ movementDate: state.fecha, userId: user.id });
+            // ANEXO 30 S4: período de la finca del registro (D-2 exige finca en CREAR).
+            await assertOperationalPeriodOpen({ movementDate: state.fecha, userId: user.id, farmId: state.farmId || '' });
 
             const amount = Number(state.monto);
             const rate = effectiveRate();
