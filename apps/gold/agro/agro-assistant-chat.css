@@ -358,6 +358,19 @@
 }
 
 .asistente-dedicado .assistant-message-body strong { color: var(--gold-4, #C8A752); }
+
+/* ANEXO 29 QA-fix: markdown mínimo — listas de guiones renderizadas reales */
+.asistente-dedicado .assistant-message-body ul {
+  margin: 0.2rem 0;
+  padding-left: 1.05rem;
+  display: grid;
+  gap: 2px;
+}
+
+.asistente-dedicado .assistant-message-body li::marker {
+  color: var(--gold-4, #C8A752);
+}
+
 .asistente-dedicado .assistant-message-body code {
   background: rgba(0, 0, 0, 0.4);
   padding: 0.1rem 0.3rem;
@@ -616,12 +629,21 @@
     bottom: 0;
   }
 
+  /* ANEXO 29 QA-fix: en la capa IA de Memoria el tabbar inferior vive como
+     salida (S3-b) — el compositor sticky se eleva sobre él. Solo con el flag
+     de capa, presente únicamente en memoria-ia (en rag la barra está oculta
+     y el offset no aplica). */
+  body[data-agro-memoria-layer="ia"] .asistente-dedicado .ast-input-area {
+    bottom: calc(var(--agro-mobile-tabbar-height, 4.9rem) + var(--space-2, 0.5rem) + env(safe-area-inset-bottom, 0px));
+  }
+
   .asistente-dedicado .assistant-message { max-width: 92%; }
 
+  /* MF-1 dejó un solo hijo (el contador) — fila en dirección natural con el
+     contador anclado a la derecha por margin-left:auto. */
   .asistente-dedicado .ast-input-hint {
-    flex-direction: column;
-    gap: 2px;
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
   }
 }
 

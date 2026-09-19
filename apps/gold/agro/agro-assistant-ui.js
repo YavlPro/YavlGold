@@ -82,7 +82,11 @@ function renderThreadList({ threads = [], activeThreadId = null, onSelectThread,
 function splitMessageParts(text) {
     const parts = [];
     const input = String(text || '');
-    const regex = /```([a-zA-Z0-9_-]+)?\\n([\\s\\S]*?)```/g;
+    // QA-fix ANEXO 29: el regex traía backslashes DOBLES desde el monolito
+    // (agro.js:15256, pre-ANEXO 25) y nunca matcheaba fences reales — los
+    // ``` se renderizaban como texto plano. Con \n y [\s\S] reales, los
+    // code fences vuelven por el camino de textContent (sin markdown).
+    const regex = /```([a-zA-Z0-9_-]+)?\n([\s\S]*?)```/g;
     let lastIndex = 0;
     let match;
     while ((match = regex.exec(input)) !== null) {
@@ -96,6 +100,71 @@ function splitMessageParts(text) {
         parts.push({ type: 'text', value: input.slice(lastIndex) });
     }
     return parts;
+}
+
+// ANEXO 29 QA-fix (18-sep): markdown mínimo en burbujas, SIN parser completo
+// y SIN inyección de HTML ajeno. Se escapa & < > ANTES de insertar las
+// únicas etiquetas que generamos nosotros (<strong>/<em>). Code fences
+// siguen intactos (splitMessageParts + textContent). Los mensajes
+// persistidos re-renderizan limpio por pasar por este mismo camino.
+function escapeMarkdownText(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+function renderInlineMarkdown(escaped) {
+    return escaped
+        .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
+}
+
+function appendMarkdownBlock(container, tagName, inlineHtml) {
+    const block = document.createElement(tagName);
+    // innerHtml seguro: inlineHtml solo contiene texto escapado + nuestras
+    // etiquetas strong/em (ningún atributo, ninguna tag de usuario).
+    block.innerHTML = inlineHtml;
+    container.appendChild(block);
+}
+
+function renderTextPart(body, rawText) {
+    const lines = String(rawText || '').split(/\r?\n/);
+    let listItems = null;
+
+    const flushList = () => {
+        if (!listItems) return;
+        const ul = document.createElement('ul');
+        listItems.forEach((itemHtml) => {
+            const li = document.createElement('li');
+            li.innerHTML = itemHtml;
+            ul.appendChild(li);
+        });
+        body.appendChild(ul);
+        listItems = null;
+    };
+
+    lines.forEach((line) => {
+        const trimmed = line.trim();
+        if (!trimmed) {
+            flushList();
+            return;
+        }
+
+        const listItem = trimmed.match(/^[-*]\s+(.*)$/);
+        if (listItem) {
+            listItems = listItems || [];
+            listItems.push(renderInlineMarkdown(escapeMarkdownText(listItem[1])));
+            return;
+        }
+
+        flushList();
+        const heading = trimmed.match(/^#{1,6}\s+(.*)$/);
+        const content = heading ? heading[1] : trimmed;
+        appendMarkdownBlock(body, 'p', renderInlineMarkdown(escapeMarkdownText(content)));
+    });
+
+    flushList();
 }
 
 function renderMessageContent(container, text) {
@@ -141,9 +210,7 @@ function renderMessageContent(container, text) {
         }
 
         if (part.value) {
-            const paragraph = document.createElement('p');
-            paragraph.textContent = part.value;
-            body.appendChild(paragraph);
+            renderTextPart(body, part.value);
         }
     });
 

@@ -834,3 +834,84 @@ Agente: GLM (ZCode). QA owner 23:13 ROJO con dos hallazgos en `#view=period-cycl
 git add apps/gold/agro/agro-period-cycles.js
 git commit -m "fix(agro): ANEXO 30 QA-fix — chips de finca con nombre real (mapeo label) + lectura del período solo con movimientos generales (crop_id null en query, COALESCE degenera a farm_id, copys a generales)"
 ```
+
+---
+
+## Sesión 2026-09-18 (XVII) — ANEXO 30 QA-fix 2: throw en cadena de navegación — PARO por regla (sin causa estática en HEAD)
+
+Agente: GLM (ZCode). QA owner 23:24 ROJO: hash `#view=facturero-clientes` con contextbar "Volver | Operaciones de la Finca" y cuerpo 100% vacío. Previo: QA-fix commiteado (`fdf653b3`). **Resultado de la sesión: PARO honesto — el punto (d) del DoD (reproducir estáticamente la ruta del throw) FALLA: en HEAD no existe throw alcanzable para esa navegación. Cero edits, cero git.** Regla de paro del prompt aplicada literalmente.
+
+**Trazado completo (todo con archivo:línea verificado)**:
+
+(a) **Estado vivo**: HEAD = `fdf653b3` (QA-fix). dist local (23:19) lleva los marcadores del QA-fix ('Movimientos generales del per…' en `agro-period-cycles-9qZ-MmBm.js`; cero `agro_crops` en el chunk). El bundle que el owner sirvió a las 23:24 no es verificable desde aquí.
+
+(b) **Listeners globales del módulo de períodos** (agro-period-cycles.js): exactamente DOS — `document 'data-refresh'` (:1474) y `window 'agro:operational-portfolio-updated'` (:1479), ambos con guard `if (state.mounted)` y `void refreshPeriodCycles()` cuya ejecución es 100% try/catch/finally con `renderRoot()` null-guard (`if (!state.root) return`). Los listeners de root (click/input/change/submit) viven en `#agro-period-cycles-root` y mueren con el nodo. **No existe camino global sin guard; el "fix mínimo" sugerido (guard de vista activa) no tiene defecto real sobre el que aplicar** — el guard YA es `state.mounted`.
+
+(c) **Cadena setActiveView** (agro-shell.js:1283-1320): hash `writeViewToHash` :1298-1300 (replaceState, try/catch — nadie escucha hashchange en toda la app, grep 0 matches) → `syncRegions` :1301 → `syncViewButtons` :1302 → `applyViewEffects` :1303 (switchTab condicionado, updateAccordionState/syncCultivosSubview/focusTarget todos null-guard :750-784, :846-881) → `setMobileHub` :1305 + `setShellDepth` :1308 (**único escritor del título de contextbar**, :1068-1069) → **dispatch view-changed :1312 como ÚLTIMA sentencia**. Una excepción en un listener aborta a los posteriores (el montaje del módulo destino muere → cuerpo vacío), pero SIEMPRE DESPUÉS de que el título se actualizó.
+
+(d) **Reproducción estática: IMPOSIBLE en HEAD**. El estado reportado (hash nuevo + título VIEJO + región conmutada pero sin montar) exige un aborto en la ventana :1300-:1308 (post-hash, pre-setShellDepth) — y TODA esa ventana es null-safe verificada línea a línea. Los 13 listeners de `agro:shell:view-changed` fueron auditados: ops-legacy :4029 (para facturero-clientes termina en `closeComposerModal→return` tras `syncStandalonePeriodCyclesView` → `unmountAgroPeriodCycles` → `resetForm` → `defaultDraftFarmId` → `getFarmsList` — cadena segura), section-stats :895 (guard subview==='stats'), clients :1050 (guard), 3 wizards :113/:118/:124 (sleep en `destroyWizard`), taskCycles, reports-center, cycles-workspace :610 (corre en toda navegación desde antes de ANEXO 30), rankings del shell :395 (difiere a rAF — async, no puede abortar el dispatch), agro.js :13392, memory-workspace :249 (QA GREEN ANEXO 29). En la ruta de boot con hash (:1608, preserveDepth → setShellDepth saltado en :1308 y ejecutado recién en :1620-1623 DESPUÉS del dispatch), un throw en listener sí produciría título viejo + cuerpo vacío — pero el título rancio sería el default del markup ("Módulo"), no "Operaciones de la Finca": mismatch parcial.
+
+**Diagnóstico residual (2 hipótesis, ninguna confirmable sin evidencia del owner)**: (1) **despliegue desincronizado** — chunks de dist mixtos (CDN/caché del navegador) con shell viejo + módulos nuevos; el historial del proyecto ya documentó "races de deploy" (saga factureros); un Ctrl+Shift+R lo revelaría si el ROJO desaparece. (2) excepción async/invisible al análisis estático (extensión, etc.). **NO se aplicó fix**: sin evidencia, parchar los globals del módulo (ya guardados) o envolver el shell sería maquillaje (§8.8 causa raíz; §8.5 verdad antes que apariencia).
+
+**Evidencia requerida del owner (1 mensaje)**: (1) texto+stack EXACTO del error rojo en consola DevTools en el momento del ROJO; (2) el repro fue click en puerta o F5/hash directo; (3) retry con Ctrl+Shift+R (hard refresh) — si el bug desaparece, es skew de caché de chunks, no código.
+
+**Matriz estática de navegación (DoD parcial, sin runtime)**: en HEAD, para period-cycles → facturero-clientes (y reversa) y puertas Inicio/Granja/Memoria/Menú: click de puerta → setActiveView completa SIEMPRE (título contextbar correcto en :1308) salvo aborto en :1300-:1308 (ventana null-safe) — la única forma de cuerpo-vacío en HEAD es excepción de listener en el dispatch :1312 (montaje del destino abortado), que deja título CORRECTO, no viejo.
+
+**Resultado de build**: `pnpm build:gold` ✅ verde (árbol sin cambios de esta sesión: 0 diffs más allá de `.freebuff/` untracked).
+
+**NO se hizo (scope respetado)**: cero edits de código; cero git; no se tocó el shell ni los globals del módulo de períodos (sin causa raíz demostrada); QA runtime (ley §5).
+
+---
+
+## Sesión 2026-09-18 (XVIII) — ANEXO 30 QA-fix 2 (continuación): causa raíz del ROJO intermitente = ventana de deploy + caché de chunks (producción sana, código sano)
+
+Agente: GLM (ZCode). Dato nuevo del owner: el ROJO aparece al ACTUALIZAR (F5) en `#view=facturero-clientes`, es INTERMITENTE ("a veces sí carga correcto"), y la contextbar muestra el título rancio "Operaciones de la Finca". Cero edits, cero git.
+
+**Investigación con artefactos reales de producción (curl, solo lectura)**:
+- Index desplegado (`/agro`, 192KB) referencia entry `assets/agro-BgOEZhu3.js`; mi dist local (build 23:19) produce `agro-CBtFp3SI.js` — artefactos distintos (builds distintos de la misma fuente; el build de producción lo generó el owner al desplegar).
+- Chunk de períodos desplegado `agro-period-cycles-DxqVJC-S.js` (vía dep-map del entry): **contiene los marcadores del QA-fix** — "Movimientos generales del período" ✓, "Filtro de finca" ✓, "Elige la finca del período" ✓, "La finca del ciclo es obligatoria" ✓, "Vinculados a cultivo" = 0 ✓. Byte-distinto del local (grafos de build difieren) pero lógicamente equivalente. **Producción SÍ ejecuta el QA-fix.**
+- Todos los chunks del set desplegado responden 200 (probes: facturero-clientes-view, monolito, clients, farms) — el set desplegado es autoconsistente.
+- **Cabeceras**: index `cache-control: public, max-age=0, must-revalidate` ✓; assets `max-age=31536000, immutable` ✓; `last-modified: Sat, 19 Sep 2026 03:24:27 GMT` = **18-sep 23:24:27 local (UTC-4)**.
+
+**Síntesis causal**: el owner desplegó el QA-fix a las 23:24:27 local y su captura del ROJO es de las 23:24:38 — **once segundos después**. El navegador venía de la sesión 23:13 con el build anterior cacheado (S1→S4: chips rotos, "Movimientos del período"). Durante la ventana de deploy, un F5 pudo combinar index/chunks viejos cacheados con el set nuevo purgado → algún `import()` dinámico 404 → el bootstrap lo traga (`import('./...').catch(err => console.warn('[AGRO] ... module load error:', err.message))` en index.html bootstrap, ~:3487-3533) → vista sin montar, SIN UI de error. La intermitencia ("a veces sí") = qué chunks conservaba aún el caché del navegador. El título rancio de la contextbar es la huella de ejecución mixta de versiones en esa pestaña — **estáticamente irreproducible con el código vivo** (verificado línea a línea en sesión XVII: el boot de HEAD pone "Facturero de Clientes" sincrónicamente en :1621-1623).
+
+**Clasificación**: incidente de despliegue/caché, no bug de código. El único defecto de software expuesto es de RESILIENCIA (no de lógica): fallos de carga de módulos de vista son silenciados con console.warn y dejan cuerpo vacío sin retry ni mensaje. Propuesta declarada (requiere palabra del owner, es infraestructura-adyacente): endurecer el bootstrap — 1 retry del import y, si la vista del hash activo falla, toast con acción Recargar. NO aplicado en esta sesión.
+
+**Acción del owner**: (1) UN Ctrl+Shift+R en la pestaña → set consistente; (2) verificar en `#view=period-cycles` que los chips ya tienen nombres (el fix está en producción desde 23:24) y el período solo muestra generales; (3) repetir F5 simple 3-4 veces en `#view=facturero-clientes` — con el deploy asentado debe ser estable; (4) si algùn día reaparece un cuerpo vacío: la línea `[AGRO] <X> module load error:` en consola nombra el chunk exacto — con ese texto se vuelve trazable en minutos.
+
+**Resultado de build**: n/a (cero cambios; build de registro en sesión XVII verde).
+
+**NO se hizo (scope respetado)**: cero edits; cero git; no se endureció el bootstrap sin autorización; no se auditó el código de builds históricos cacheados (innecesario: la clase de incidente está confirmada con cabeceras y marcadores).
+
+---
+
+## Sesión 2026-09-19 (I) — ANEXO 29 QA-fix: asistente mobile (sidebar/drawer/header/compositor) + markdown mínimo
+
+Agente: GLM (ZCode). QA owner 18-sep 22:13/22:14 (mobile, capa IA): sidebar apilada sobre el chat, header gigante duplicado, markdown crudo con asteriscos, compositor tras la tab bar, ítem de historial clipado. Git NO ejecutado. Previo: árbol en `fdf653b3` (ANEXO 30 QA-fix) con reporte pendiente de commit.
+
+**Cambios (6 archivos, cada uno declarado)**:
+
+| Archivo | Cambio |
+|---|---|
+| `agro/agro-assistant-ui.js` | **Markdown mínimo en burbujas (global, defecto 3)**: `renderTextPart` por líneas con `escapeMarkdownText` (& < > ANTES de todo) + `renderInlineMarkdown` (**x**→strong, *x*→em, únicas tags generadas por nosotros); `- x`→ul/li; `#{1,6} `→texto sin hashes; code fences intactos vía `splitMessageParts`+`textContent`; fallback textContent si el cuerpo queda vacío. Persistidos re-renderizan limpio (mismo camino). **Fix preexistente declarado**: el regex de fences traía backslashes dobles desde el monolito (`git show a1274f84^:agro.js:15256` = `\\n`/`[\\s\\S]`) y NUNCA matcheaba fences reales (``` como texto plano desde antes de ANEXO 25); corregido a `\n`/`[\s\S]` — los fences vuelven a ser bloques Copiar. |
+| `agro/index.html` | Botón `#ast-history-toggle` ("Historial") en `.ast-sidebar-actions` junto a Nueva/AgroRepo (defecto 1: drawer móvil). |
+| `agro/agro-memory-workspace.js` | Wiring del drawer (B1: assistant.js congelado; mismo patrón que #ast-open-agrorepo): toggle → `setAssistantDrawerOpen` importado de ui.js (sin ciclos: ui no importa nada) + aria-expanded; click en un thread cierra el sheet; Escape ya cerraba (binding existente del core). |
+| `agro/agro-assistant.css` | **≤768 reescrito**: header compacto en UNA fila (eyebrow+descripción fuera, icono 34px, título con ellipsis, acciones a la derecha — identidad única, defecto 2); sidebar = fila compacta de acciones [Nueva · AgroRepo · Historial] ≥44px (brand/label/lista ocultos, defecto 1); `.ast-sidebar.open` = bottom sheet fijo (78dvh, brand+X+lista+footer visibles dentro, defecto 1); thread en UNA línea (título ellipsis + fecha nowrap, defecto 5). ≥769: botón Historial oculto (desktop lista fija) y cero reglas nuevas fuera del media → desktop intacto. |
+| `agro/agro-assistant-chat.css` | **Defecto 4**: `body[data-agro-memoria-layer="ia"] .ast-input-area { bottom: calc(tabbar-height + gap + safe-area) }` (solo capa IA donde la barra vive como salida; en rag no aplica) ≤768. Fix stale post-MF-1: `.ast-input-hint` volvía a column con un solo hijo → row (contador a la derecha por margin-auto). Estilos ul/li del markdown (marker dorado). |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Este INGEST. |
+
+**Harness sobre funciones REALES (10/10 PASS)**: import de ui.js con stub mínimo de document; negrita/itálica/lista/heading exactos; fence con asteriscos literales intactos vía textContent; XSS `<img onerror>`+`<script>`+`&` escapados (`&lt;...&gt; &amp;`); bold dentro de li; re-render determinista. Harness temporal eliminado.
+
+**Resultado de build**: `pnpm build:gold` ✅ verde (2.34s; CSS nuevo sin hex/rgba fuera de var() — shadow envuelto en `var(--overlay-shadow, ...)`).
+
+**Declaraciones honestas**: (1) DoD listaba "ui.js + CSS" — se sumaron index.html (botón del drawer) y workspace js (wiring, B1), justificados por los propios defectos 1/5. (2) El sheet de historial no tiene backdrop: cierra por X, Escape o selección de thread (declarado). (3) aria-expanded del toggle puede quedar rancio si el drawer se cierra por Escape; se auto-corrige en el próximo toggle (lee el estado real de clases). (4) Fence-fix cambia el render de mensajes viejos que contenían ``` (pasan de texto plano a bloque Copiar) — mejora, declarada. (5) QA runtime no ejecutado (ley §5).
+
+**QA sugerido (owner)**: móvil: Memoria→IA muestra header de una fila + fila de acciones + conversación protagonista sin scroll previo; botón Historial abre sheet con ítems en una línea y cierra al elegir; Nueva/AgroRepo accesibles; compositor SOBRE la tab bar (≤480 también); mensaje con **negritas** limpio (móvil y desktop); code fence con botón Copiar; desktop sin cambios; consola limpia.
+
+**NO se hizo (scope respetado)**: git (bloque sugerido abajo); Edge/prompt del modelo; rutas/aliases; capas rag; retrieval/citas; sidebar desktop.
+
+**Bloque git sugerido (NO ejecutado)**:
+```bash
+git add apps/gold/agro/agro-assistant-ui.js apps/gold/agro/index.html apps/gold/agro/agro-assistant.css apps/gold/agro/agro-assistant-chat.css apps/gold/agro/agro-memory-workspace.js
+git commit -m "fix(memoria): ANEXO 29 QA-fix — asistente mobile protagonista (sidebar→fila de acciones + historial en bottom sheet, header compacto, compositor sobre tab bar, thread en una línea) + markdown mínimo en burbujas con escapes + regex de fences reparado (preexistente)"
+```

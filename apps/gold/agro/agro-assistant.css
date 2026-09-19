@@ -737,25 +737,47 @@ body[data-agro-active-view="asistente"] .agro-feedback-fab {
     border-radius: var(--radius-md, 12px);
   }
 
+  /* ANEXO 29 QA-fix (mobile): header compacto en UNA fila — icono + título +
+     EN LÍNEA + iconos de acción. Eyebrow y descripción fuera (identidad
+     única; la marca de la sidebar no se muestra en la fila compacta). */
   .asistente-dedicado .ast-page-header {
-    align-items: flex-start;
-    flex-direction: column;
-    padding: 0.85rem 0.75rem;
-    gap: 0.75rem 0;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: nowrap;
+    padding: 0.55rem 0.75rem;
+    gap: 0.6rem;
   }
 
-  .asistente-dedicado .ast-page-actions {
-    width: 100%;
-    justify-content: flex-start;
-    flex-wrap: wrap;
+  .asistente-dedicado .ast-page-eyebrow,
+  .asistente-dedicado .ast-page-title-copy > p:not(.ast-page-eyebrow) {
+    display: none;
   }
 
   .asistente-dedicado .ast-page-title {
-    align-items: flex-start;
+    align-items: center;
+    min-width: 0;
+    flex: 1 1 auto;
   }
 
-  .asistente-dedicado .ast-page-title p:not(.ast-page-eyebrow) {
-    font-size: 0.82rem;
+  .asistente-dedicado .ast-page-title h2 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .asistente-dedicado .ast-page-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  .asistente-dedicado .ast-page-actions {
+    width: auto;
+    margin-left: auto;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
   }
 
   .asistente-dedicado .ast-header-icon {
@@ -769,31 +791,124 @@ body[data-agro-active-view="asistente"] .agro-feedback-fab {
     overflow: hidden;
   }
 
+  /* ANEXO 29 QA-fix (mobile): la conversación es la protagonista — la sidebar
+     se vuelve fila compacta de acciones [Nueva · AgroRepo · Historial]; la
+     lista de threads vive en un bottom sheet (.ast-sidebar.open, clases del
+     mecanismo drawer-open existente). */
   .asistente-dedicado .ast-sidebar {
     position: static;
     width: 100%;
     min-width: 0;
-    max-height: 220px;
+    max-height: none;
     transform: none;
     border-right: 0;
     border-bottom: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.06));
     box-shadow: none;
   }
 
-  .asistente-dedicado .ast-sidebar.open {
-    transform: none;
-  }
-
-  .asistente-dedicado .ast-sidebar-close {
-    display: none;
-  }
-
+  .asistente-dedicado .ast-sidebar-head,
+  .asistente-dedicado .ast-sidebar-section-label,
   .asistente-dedicado .ast-thread-scroll {
-    max-height: 96px;
+    display: none;
   }
 
-  .asistente-dedicado .ast-sidebar-footer {
-    display: none;
+  .asistente-dedicado .ast-sidebar-actions {
+    flex-direction: row;
+    align-items: center;
+    padding: 0.55rem 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .asistente-dedicado .ast-sidebar-actions .ast-btn-new,
+  .asistente-dedicado .ast-sidebar-actions .ast-btn-agrorepo,
+  .asistente-dedicado .ast-sidebar-actions .ast-btn-history {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0.5rem 0.55rem;
+    font-size: 0.72rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .asistente-dedicado .ast-btn-history {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2, 0.5rem);
+    width: 100%;
+    border: 1px solid var(--border-gold, rgba(200, 167, 82, 0.25));
+    border-radius: var(--radius-md, 8px);
+    background: transparent;
+    color: var(--gold-4, #C8A752);
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: color 160ms ease, border-color 160ms ease;
+  }
+
+  .asistente-dedicado .ast-btn-history:hover,
+  .asistente-dedicado .ast-btn-history:focus-visible {
+    color: var(--text-primary, rgba(255, 255, 255, 0.9));
+    border-color: var(--gold-4, #C8A752);
+    outline: none;
+  }
+
+  /* Bottom sheet de historial */
+  .asistente-dedicado .ast-sidebar.open {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    max-height: 78dvh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    z-index: 140;
+    border-right: 0;
+    border-top: 1px solid var(--border-gold, rgba(200, 167, 82, 0.3));
+    border-radius: var(--radius-lg, 16px) var(--radius-lg, 16px) 0 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-shadow: 0 -18px 48px var(--overlay-shadow, rgba(0, 0, 0, 0.55));
+  }
+
+  .asistente-dedicado .ast-sidebar.open .ast-sidebar-head,
+  .asistente-dedicado .ast-sidebar.open .ast-sidebar-section-label {
+    display: flex;
+  }
+
+  .asistente-dedicado .ast-sidebar.open .ast-thread-scroll {
+    display: block;
+    max-height: 48dvh;
+    overflow-y: auto;
+    padding: 0.4rem 0.6rem;
+  }
+
+  .asistente-dedicado .ast-sidebar.open .ast-sidebar-close {
+    display: flex;
+  }
+
+  .asistente-dedicado .ast-sidebar.open .ast-sidebar-footer {
+    display: flex;
+  }
+
+  /* Ítem de historial en una línea (título con ellipsis + fecha estable),
+     sin fragmentos clipados dentro del sheet. */
+  .asistente-dedicado .assistant-thread {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .asistente-dedicado .assistant-thread-title {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .asistente-dedicado .assistant-thread-meta {
+    flex-shrink: 0;
+    white-space: nowrap;
   }
 
   .asistente-dedicado .ast-context-panel {
@@ -834,6 +949,14 @@ body[data-agro-active-view="asistente"] .agro-feedback-fab {
 /* ── Compat: drawer-open toggle for JS ── */
 .asistente-dedicado .ast-layout.drawer-open .ast-sidebar {
   transform: translateX(0);
+}
+
+/* ANEXO 29 QA-fix: el botón Historial (drawer móvil) no existe en desktop —
+   allí la lista vive fija en la sidebar lateral. */
+@media (min-width: 769px) {
+  .asistente-dedicado .ast-btn-history {
+    display: none;
+  }
 }
 
 /* ── Animación de identidad (ADN §19.5, headers de módulo) ── */

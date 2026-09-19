@@ -28,6 +28,7 @@
  */
 
 import './agro-memory-workspace.css';
+import { setAssistantDrawerOpen } from './agro-assistant-ui.js';
 
 const PANEL_STORAGE_KEY = 'YG_AGRO_MEMORIA_PANEL_V1';
 const LAYER_STATES = ['ia', 'rag'];
@@ -244,6 +245,32 @@ export function initAgroMemoryWorkspace() {
     // la capa rag. El wiring vive aquí para no tocar agro-assistant.js (B1).
     document.getElementById('ast-open-agrorepo')?.addEventListener('click', () => {
         window._agroMemoriaRevealRag();
+    });
+
+    // ANEXO 29 QA-fix (mobile): drawer de historial del asistente. En ≤768 la
+    // sidebar es una fila compacta y la lista de threads vive en un bottom
+    // sheet (clases drawer-open/open de setAssistantDrawerOpen, mecanismo
+    // existente). Seleccionar un thread cierra el sheet. Desktop intacto:
+    // los estilos del drawer viven solo dentro del media ≤768.
+    const historyToggle = document.getElementById('ast-history-toggle');
+    const assistantSidebar = document.getElementById('assistant-sidebar');
+    const threadListEl = document.getElementById('assistant-thread-list');
+
+    const closeHistoryDrawer = () => {
+        setAssistantDrawerOpen(false);
+        historyToggle?.setAttribute('aria-expanded', 'false');
+    };
+
+    historyToggle?.addEventListener('click', () => {
+        const isOpen = assistantSidebar?.classList.contains('open') === true;
+        setAssistantDrawerOpen(!isOpen);
+        historyToggle?.setAttribute('aria-expanded', String(!isOpen));
+    });
+
+    threadListEl?.addEventListener('click', (event) => {
+        if (event.target instanceof Element && event.target.closest('.assistant-thread')) {
+            closeHistoryDrawer();
+        }
     });
 
     window.addEventListener('agro:shell:view-changed', (event) => {
