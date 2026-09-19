@@ -118,6 +118,18 @@ const CURRENCY_OPTIONS = [
     { value: 'VES', label: 'Bs (VES)' }
 ];
 
+// Vive a nivel de módulo (no dentro del closure de sesión) para que el
+// análisis estático de CodeQL la reconozca como sanitizador (alertas
+// #74-76); mismo patrón canónico que agro.js:962.
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 let activeSession = null;
 
 export function initAgroCultivoWizard() {
@@ -232,15 +244,6 @@ function createSession(root) {
 
     function totalPasos() {
         return state.rama === RAMA_CREAR ? CREAR_TOTAL : VER_TOTAL;
-    }
-
-    function escapeHtml(value) {
-        return String(value ?? '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
     }
 
     function todayLocalIso() {

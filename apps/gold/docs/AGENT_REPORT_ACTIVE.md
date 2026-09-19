@@ -1368,3 +1368,40 @@ git add supabase/migrations/20260920130000_agro_get_farm_balance_auth_guard.sql 
 git commit -m "security: remediación P0-P2 diagnóstico 2026-09-19 (guard IDOR get_farm_balance, XSS rankings, agro_events RLS, grants mínimos, ownership agenda, sanitización edge)"
 git push
 ```
+
+---
+
+## Sesión 2026-09-20 (VI) — OLEADA E: alertas CodeQL #74-76 (XSS factureros, "DOM text reinterpreted as HTML")
+
+Agente: GLM (ZCode). Objetivo: remediación de las 3 alertas High de GitHub Code Scanning en main: #76 `agro-facturero-personal-wizard.js` (~951), #75 `agro-facturero-cultivo-wizard.js` (~1295), #74 `agro-facturero-finca-wizard.js` (~1189). Cirugía pura: sin QA, sin browser, sin git.
+
+**VERIFICACIÓN PREVIA (regla de oro) — resultado INESPERADO y documentado:**
+1. Los 3 sinks confirmados: son el `root.innerHTML = \`...\`` del `render()` del shell de cada wizard (personal:951, cultivo:1295, finca:1189 — líneas exactas, no aproximadas).
+2. **Todos los datos de usuario que alcanzan esos sinks YA estaban escapados**. Auditoría exhaustiva de cada rama de `bodyHtml()` en los 3 archivos: listas de registros (fecha/movementText/categoría/montos/data-attrs: personal:680-691, cultivo:1005-1016, finca:991-1002), review de creación (concepto/fecha: 877-882 / 1218-1221 / 1119-1122), done (893 / 1232 / 1137), formularios (`value="${escapeHtml(state.concepto)}"` en 845/860/864, 1183/1198/1202, 1084/1099/1103), chips de contexto (cultivo:639/644/678/682, finca:810), notices (cultivo:695) y acciones del sistema de finca (delega en `renderSystemActionsListHtml` de agro-facturero-clientes-view-wizard.js:60, que escapa `text` y `timeLabel`).
+3. Las interpolaciones SIN escape restantes son seguras por tipo: estructura estática, ids de constantes locales (VER_TILES/CREAR_TYPES/ESTADO_OPTIONS/CURRENCY_OPTIONS), booleanos comparativos (`state.X === Y ? 'is-active' : ''`), numéricos (`state.paso`, `usd.toFixed(2)`, counts) y labels de constantes (`estadoLabel()` busca en ESTADO_OPTIONS; `nota` de finca es literal).
+4. **Causa raíz identificada**: cada wizard definía `escapeHtml` DENTRO del closure de la función factoría de sesión (personal:206, cultivo:237, finca:224). CodeQL no modela como sanitizer un helper encerrado en closure, así que el flujo `rows (BD) → movementText() → bodyHtml() → root.innerHTML` queda marcado aunque en runtime esté sanitizado. **Evidencia diferencial**: `agro.js` usa el MISMO patrón innerHTML con `escapeHtml` a nivel de módulo (agro.js:962) y no genera alertas.
+
+**Cambios (3 archivos, 2 ediciones cada uno — misma cirugía):**
+
+| Archivo | Cambio |
+|---|---|
+| agro-facturero-personal-wizard.js | `escapeHtml` promovida de definición interna del closure (:206) a función top-level del módulo (:113, junto a `let activeSession`). Cuerpo idéntico (puro, sin referencias al closure — verificado). Comentario de por qué vive a nivel de módulo. |
+| agro-facturero-cultivo-wizard.js | Ídem: def interna :237 → top-level :124. |
+| agro-facturero-finca-wizard.js | Ídem: def interna :224 → top-level :118. |
+
+Sin cambio de comportamiento: las llamadas internas resuelven vía scope chain al módulo (function declaration hoisted); las tres defs eran idénticas y puras.
+
+**Resultado de build**: `pnpm build:gold` ✅ verde (1.89s; agent-guard OK; agent-report-check OK; check-llms OK; UTF-8 OK). Verificación post-edit: exactamente 1 definición `function escapeHtml` por archivo, a nivel de módulo.
+
+**QA sugerido online (owner)**: (1) crear en cada facturero (Personal/Cultivo/Finca) un registro cuyo concepto sea `<img src=x onerror=alert(1)> & "prueba"`; (2) abrir las listas de los 3 wizards: el texto debe verse literal (escapado), sin ejecutar nada, con `&` y comillas visibles; (3) renders normales (sin caracteres especiales) idénticos a antes (sin doble escape tipo `&amp;amp;`); (4) recorrer los pasos de creación de cada wizard (formulario con concepto prellenado, review, done) — mismos textos que antes.
+
+**PENDIENTE (no completado)**: el cierre de las alertas #74/#75/#76 depende del re-análisis de CodeQL tras el push del owner. Si alguna quedara abierta, la causa sería que el modelado de sanitizer exige export del helper; en ese caso evaluar `export function escapeHtml` en una sesión futura (NO ejecutado ahora para no ampliar alcance).
+
+**NO se hizo (scope respetado)**: ninguna llamada a escapeHtml añadida (no había nada sin escapar), monolito agro.js intacto, Edge Function intacta, agro-facturero-clientes-view-wizard.js intacto (solo auditado), resto de módulos, QA/browser, git.
+
+**Bloque git sugerido (NO ejecutado)**:
+```bash
+git add apps/gold/agro/agro-facturero-personal-wizard.js apps/gold/agro/agro-facturero-cultivo-wizard.js apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "security: Oleada E — escape de datos de usuario en renders innerHTML de factureros Personal/Cultivo/Finca (CodeQL #74-76)"
+git push
+```
