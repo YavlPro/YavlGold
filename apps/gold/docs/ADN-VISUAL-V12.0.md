@@ -76,6 +76,14 @@ El sistema debe sentirse agrícola, serio, sobrio, oscuro, dorado y útil.
 --border-gold: rgba(200,167,82,0.25);
 ```
 
+### Fondos dorados suaves
+
+```css
+--gold-soft-bg: rgba(200,167,82,0.10);
+```
+
+> `--gold-soft-bg` (dorado suave): tinte de fondo para iconos e ilustración (círculos de iconos, tiles de identidad). Ratificado 2026-09-19 (ANEXO 29 MF-5); capa canónica en `agro-tokens.css`. Nunca se usa como color de texto funcional ni como borde en reposo.
+
 ### Estados semánticos
 
 ```css

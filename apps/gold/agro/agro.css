@@ -9830,10 +9830,27 @@ body.agro-shell-rail-collapsed.agro-shell-ready .app-container {
     line-height: 1;
     letter-spacing: 0;
     cursor: pointer;
+    /* ANEXO 29 MF-5: ancla del indicador ::before del tab activo. */
+    position: relative;
     transition:
       background 160ms ease,
       border-color 160ms ease,
       color 160ms ease;
+  }
+
+  /* ANEXO 29 MF-5: indicador fino del tab activo — línea 2px --gold-4 sobre
+     el icono. Refuerza el estado sin comunicar solo con color (§16); texto e
+     icono se conservan. Absoluto: no entra en el flujo del grid. */
+  .agro-mobile-tabbar__item.is-active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: var(--space-6, 1.5rem);
+    height: 2px;
+    border-radius: var(--radius-pill, 9999px);
+    background: var(--gold-4);
   }
 
   .agro-mobile-tabbar__item i {

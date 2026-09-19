@@ -1137,3 +1137,38 @@ Agente: GLM (ZCode). Pase autorizado expresamente por el owner. **Hallazgo centr
 git add apps/gold/docs/MANIFIESTO_AGRO.md apps/gold/docs/ADN-VISUAL-V12.0.md apps/gold/docs/FICHA_TECNICA.md apps/gold/docs-agro.html apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "docs(agro): pase documental conjunto — canon reconciliado con producto vivo (ANEXO 31: Inicio=Dashboard directo, Crear Finca en Granja, Menú MI CUENTA+AYUDA · ANEXO 30: períodos como libro de la finca con farm_id y lectura de generales · nombre visible Agente Agro)"
 ```
+
+---
+
+## Sesión 2026-09-19 (VIII) — ANEXO 29 MF-5: pulido premium canon-compliant (contraste, profundidad tokenizada, --gold-soft-bg, indicador de tab)
+
+Agente: GLM (ZCode). Relanzamiento tras PARO de carrera (el owner commiteó el pase documental como 3c4491a3 → gate (e) limpio). Ocho decisiones cerradas ejecutadas en orden §17 (ADN primero). Git NO ejecutado.
+
+**Cambios (6 archivos)**:
+
+| Archivo | Cambio |
+|---|---|
+| `docs/ADN-VISUAL-V12.0.md` | **D3/§17 paso 1**: subsección "Fondos dorados suaves" en §2 — `--gold-soft-bg: rgba(200,167,82,0.10)` + regla de uso (iconos/ilustración, nunca texto funcional ni borde en reposo), patrón del precedente `--text-ivory`. |
+| `agro/agro-tokens.css` | **D3 paso 2**: `--gold-soft-bg` en la capa canónica; **D2**: `--shadow-dark` y `--shadow-focus` añadidos — son canon ADN §3 (:107-108) pero FALTABAN en la capa de tokens (completado, declarado). |
+| `agro/agro-assistant-chat.css` | **D1**: guía de uso (summary + ul) a `--text-secondary`; **D2**: welcome y sugerencias sobre `--bg-2` opaco + `--shadow-dark`; **D3**: círculo `--gold-soft-bg` (--space-8, radius-pill) en `.ast-suggestion-icon`; **D5**: reposo `--border-neutral` en chips de sugerencia, chips de fuentes y botón Copiar (dorado solo hover/focus, ya existente); **D8**: paddings mobile en escala (welcome space-3/4, pills space-1/3). |
+| `agro/agro-assistant.css` | **D1**: sub de brand a secondary; título del panel Contexto a `--text-primary` y sus section-titles a `--text-secondary` (antes dorados con opacidad — prohibido §2); `.ast-ctx-item strong` a dorado sólido; label "HISTORIAL" a `--gold-prestige` sólido (idioma de los section-title del hub); **D3**: tiles de icono (page-icon y brand-icon) a `--gold-soft-bg` — el brand-icon tenía gradiente (retirado); **D5**: `.ast-btn-history` reposo neutral; **D6**: fila de acciones con padding/radio unificado en escala (--space-2/3, --radius-md); **D2**: sheet de historial sobre `--bg-3` + `--shadow-dark` (antes overlay-shadow direccional custom). |
+| `agro/agro-memory-workspace.css` | **D5/D6**: botón AgroRepo reposo `--border-neutral`, padding en escala, radius-md. |
+| `agro/agro.css` | **D7**: indicador fino del tab activo — línea 2px `--gold-4` vía `::before` absoluto (top, centrada, --space-6 de ancho, radius-pill) sobre `.agro-mobile-tabbar__item.is-active` + `position: relative` en el item; texto+icono intactos (§16); sin JS. |
+
+**D4 (compositor)**: verificación sin cirugía, como definió el relanzamiento — el wrap YA es neutral en reposo (`--border-neutral`) con ring dorado solo en `:focus-within`; el "doble anillo" percibido vivía en los botones adyacentes de la fila, ahora neutros.
+
+**Resultado de build**: `pnpm build:gold` ✅ verde (2.40s; check-llms OK).
+
+**DoD greps de cierre**: (1) Cero hex/rgba nuevo fuera de la capa de tokens — los únicos valores literales añadidos son las 2 DEFINICIONES en agro-tokens.css; el resto son fallbacks dentro de `var()` (patrón establecido). (2) Cero gradientes añadidos (la única mención es la palabra "gradiente" en un comentario). (3) Bordes dorados en reposo: los ítems de la decisión 5 (chips, AgroRepo/Historial, fuentes, Copiar) ahora neutros; restantes verificados uno a uno = estados :hover/:focus/:active, burbujas transitorias (typing/system/toast), `.ast-page-icon` (tile de identidad, fuera de la lista D5), `.ast-btn-outline` (canon §7 del modal de exportación) y trigger legacy sin referencias — declarados. (4) `--text-muted` restante = meta transitorio declarado: timestamps de threads/mensajes, fechas de citas, typing label, cooldown, stats del sheet, hints de estado vacío, label "Contexto consultado" y preview monospace del modal.
+
+**Declaraciones honestas**: (1) `--shadow-dark`/`--shadow-focus` se AÑADIERON a agro-tokens.css porque el ADN §3 los documenta pero la capa no los tenía — completar canon, no inventar token. (2) `--space-N` viven en `assets/css/tokens.css` (capa global), no en agro-tokens.css — verificado antes de usarlos. (3) El indicador del tab usa 2px literal (valor explícito del owner). (4) `.ast-suggestion-icon` círculo de --space-8 (2rem) dentro de botón ≥44px — decorativo, touch intacto. (5) QA runtime no ejecutado (ley §5); reduced-motion intacto (línea estática, sin animación nueva).
+
+**QA sugerido (owner)**: móvil y desktop → welcome y sugerencias con profundidad sobria (sin glow), iconos en círculos dorado-suave; chips/botones de fila/fuentes/copiar sobrios en reposo y dorados al hover; guía y labels legibles sin esfuerzo; sheet de historial sobre bg-3; tab activo de la barra inferior con línea fina dorada superior; compositor neutro que arma ring al focus.
+
+**NO se hizo (scope respetado)**: git (bloque sugerido abajo); JS (indicador CSS-only); MANIFIESTO/FICHA/docs-agro/llms; burbujas transitorias y btn-outline canon (declarados, no listados en D5); dorados con opacidad fuera del asistente.
+
+**Bloque git sugerido (NO ejecutado)**:
+```bash
+git add apps/gold/docs/ADN-VISUAL-V12.0.md apps/gold/agro/agro-tokens.css apps/gold/agro/agro-assistant.css apps/gold/agro/agro-assistant-chat.css apps/gold/agro/agro-memory-workspace.css apps/gold/agro/agro.css apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "feat(dna): ANEXO 29 MF-5 — pulido premium canon-compliant (token --gold-soft-bg §2 + shadow-dark/focus completados en capa, contraste funcional secondary/primary, profundidad bg-2/3+shadow-dark en cards del asistente, bordes neutros en reposo con dorado solo hover/focus, fila de acciones en escala, indicador fino 2px del tab activo)"
+```

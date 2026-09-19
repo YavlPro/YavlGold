@@ -46,6 +46,10 @@
   --border-gold: rgba(200,167,82,0.25);
   --border-prestige: rgba(229,213,160,0.18);
 
+  /* ADN V12 §2 — Fondos dorados suaves (ANEXO 29 MF-5): iconos/ilustración,
+     nunca texto funcional ni bordes en reposo. */
+  --gold-soft-bg: rgba(200,167,82,0.10);
+
   /* Radius System */
   --radius-xs: 4px;
   --radius-sm: 8px;
@@ -60,6 +64,9 @@
   --shadow-gold-md: 0 5px 20px rgba(200,167,82,0.25);
   --shadow-gold-lg: 0 10px 40px rgba(200,167,82,0.35);
   --shadow-metallic: 0 4px 20px rgba(200,167,82,0.30), 0 0 40px rgba(200,167,82,0.08);
+  /* ADN V12 §3 canon de cards: sombra oscura, no glow. Faltaba en esta capa. */
+  --shadow-dark: 0 4px 24px rgba(0,0,0,0.5);
+  --shadow-focus: 0 0 0 2px var(--bg-1), 0 0 0 4px var(--gold-4);
 
   /* Glassmorphism */
   --glass-bg: rgba(17,17,17,0.9);

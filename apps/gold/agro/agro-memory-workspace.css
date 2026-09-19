@@ -125,10 +125,11 @@
     justify-content: center;
     gap: var(--space-2, 0.5rem);
     width: 100%;
-    padding: 0.55rem 0.9rem;
+    /* ANEXO 29 MF-5: reposo neutral + padding/radio en escala (§7/§14). */
+    padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
     min-height: 40px;
-    border: 1px solid var(--border-gold, rgba(200, 167, 82, 0.25));
-    border-radius: var(--radius-md, 8px);
+    border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
+    border-radius: var(--radius-md, 12px);
     background: transparent;
     color: var(--gold-4, #C8A752);
     font-family: var(--font-body);

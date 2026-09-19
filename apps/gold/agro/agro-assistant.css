@@ -121,7 +121,8 @@ body[data-agro-active-view="asistente"] .agro-feedback-fab {
   justify-content: center;
   flex-shrink: 0;
   border: 1px solid var(--border-gold, rgba(200, 167, 82, 0.25));
-  background: rgba(200, 167, 82, 0.10);
+  /* ANEXO 29 MF-5: tinte de icono tokenizado (--gold-soft-bg §2). */
+  background: var(--gold-soft-bg, rgba(200, 167, 82, 0.10));
   color: var(--gold-4, #C8A752);
 }
 
@@ -254,7 +255,8 @@ body[data-agro-active-view="asistente"] .agro-feedback-fab {
   width: 30px;
   height: 30px;
   border-radius: var(--radius-sm, 8px);
-  background: linear-gradient(135deg, rgba(200, 167, 82, 0.3), rgba(200, 167, 82, 0.1));
+  /* ANEXO 29 MF-5: gradiente de icono → tinte plano --gold-soft-bg (§2). */
+  background: var(--gold-soft-bg, rgba(200, 167, 82, 0.10));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -273,7 +275,8 @@ body[data-agro-active-view="asistente"] .agro-feedback-fab {
 .asistente-dedicado .ast-sidebar-brand-sub {
   font-family: var(--font-body);
   font-size: 0.62rem;
-  color: var(--text-muted, rgba(255, 255, 255, 0.4));
+  /* ANEXO 29 MF-5: sub de brand es texto funcional — secondary (§2). */
+  color: var(--text-secondary, #cccccc);
   text-transform: uppercase;
   letter-spacing: 0.8px;
 }
@@ -338,7 +341,9 @@ body[data-agro-active-view="asistente"] .agro-feedback-fab {
   font-family: var(--font-heading);
   font-size: 0.62rem;
   font-weight: 700;
-  color: rgba(200, 167, 82, 0.7);
+  /* ANEXO 29 MF-5: label funcional — dorado sólido prestige (sin opacidad,
+   §2), mismo idioma que los section-title del hub. */
+  color: var(--gold-prestige, #E5D5A0);
   text-transform: uppercase;
   letter-spacing: 0.8px;
   padding: 0.7rem 0.9rem 0.3rem;
@@ -523,7 +528,9 @@ body[data-agro-active-view="asistente"] .agro-feedback-fab {
   font-family: var(--font-heading);
   font-size: 0.78rem;
   font-weight: 700;
-  color: rgba(200, 167, 82, 0.9);
+  /* ANEXO 29 MF-5: título funcional en text-primary (antes dorado con
+     opacidad — prohibido §2). */
+  color: var(--text-primary, #ffffff);
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -562,7 +569,9 @@ body[data-agro-active-view="asistente"] .agro-feedback-fab {
   font-family: var(--font-heading);
   font-size: 0.6rem;
   font-weight: 700;
-  color: rgba(200, 167, 82, 0.6);
+  /* ANEXO 29 MF-5: label funcional en text-secondary (antes dorado con
+     opacidad — prohibido §2). */
+  color: var(--text-secondary, #cccccc);
   text-transform: uppercase;
   letter-spacing: 0.8px;
   padding: 0.4rem 0;
@@ -600,7 +609,9 @@ body[data-agro-active-view="asistente"] .agro-feedback-fab {
 }
 
 .asistente-dedicado .ast-ctx-item strong {
-  color: rgba(200, 167, 82, 0.85);
+  /* ANEXO 29 MF-5: dorado sólido (la opacidad en texto funcional está
+     prohibida §2). */
+  color: var(--gold-4, #C8A752);
   font-weight: 600;
 }
 
@@ -842,7 +853,9 @@ body[data-agro-active-view="asistente"] .agro-feedback-fab {
     flex: 1 1 0;
     min-width: 0;
     min-height: 44px;
-    padding: 0.5rem 0.55rem;
+    /* ANEXO 29 MF-5: padding/radio en escala, radio unificado del grupo. */
+    padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+    border-radius: var(--radius-md, 12px);
     font-size: 0.72rem;
     white-space: nowrap;
     overflow: hidden;
@@ -858,8 +871,9 @@ body[data-agro-active-view="asistente"] .agro-feedback-fab {
     justify-content: center;
     gap: var(--space-2, 0.5rem);
     width: 100%;
-    border: 1px solid var(--border-gold, rgba(200, 167, 82, 0.25));
-    border-radius: var(--radius-md, 8px);
+    /* ANEXO 29 MF-5: reposo neutral — el dorado vive en hover/focus (§7). */
+    border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
+    border-radius: var(--radius-md, 12px);
     background: transparent;
     color: var(--gold-4, #C8A752);
     font-family: var(--font-body);
@@ -890,7 +904,10 @@ body[data-agro-active-view="asistente"] .agro-feedback-fab {
     border-top: 1px solid var(--border-gold, rgba(200, 167, 82, 0.3));
     border-radius: var(--radius-lg, 16px) var(--radius-lg, 16px) 0 0;
     padding-bottom: env(safe-area-inset-bottom, 0px);
-    box-shadow: 0 -18px 48px var(--overlay-shadow, rgba(0, 0, 0, 0.55));
+    /* ANEXO 29 MF-5: profundidad tokenizada — bg-3 sobre bg-1 con sombra
+       canon §3 (antes overlay-shadow direccional custom). */
+    background: var(--bg-3, #111113);
+    box-shadow: var(--shadow-dark, 0 4px 24px rgba(0, 0, 0, 0.5));
   }
 
   .asistente-dedicado .ast-sidebar.open .ast-sidebar-head,
