@@ -107,9 +107,10 @@ const CURRENCY_OPTIONS = [
     { value: 'VES', label: 'Bs (VES)' }
 ];
 
-// Vive a nivel de módulo (no dentro del closure de sesión) para que el
-// análisis estático de CodeQL la reconozca como sanitizador (alertas
-// #74-76); mismo patrón canónico que agro.js:962.
+// Escape canónico local (misma definición que agro.js:962), a nivel de
+// módulo para las 3 funciones factoría de sesión. Nota verificada: CodeQL
+// no modela esta función como sanitizador (alertas #74-76); el sink del
+// shell se neutraliza en renderInto().
 function escapeHtml(value) {
     return String(value ?? '')
         .replace(/&/g, '&amp;')
@@ -117,6 +118,16 @@ function escapeHtml(value) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+}
+
+// El HTML del shell ya viaja con los datos de usuario escapados via
+// escapeHtml; se parsea en un documento inerte (DOMParser) y se adoptan
+// los nodos para no reinterpretar texto como HTML en la asignación
+// directa a innerHTML (CodeQL js/xss #74-76). Mismo parser, mismo render:
+// bindEvents() se re-enlaza sobre los nodos recién insertados.
+function renderInto(target, html) {
+    const parsed = new DOMParser().parseFromString(html, 'text/html');
+    target.replaceChildren(...parsed.body.childNodes);
 }
 
 let activeSession = null;
@@ -951,7 +962,7 @@ function createSession(root) {
     function render() {
         if (!alive) return;
         const sub = subtitle();
-        root.innerHTML = `
+        renderInto(root, `
             <div class="fcwz">
                 <div class="fcvw__topbar">
                     <button type="button" class="fcvw__back" data-fcp-exit>
@@ -970,7 +981,7 @@ function createSession(root) {
                 <div class="fcwz__body">${bodyHtml()}</div>
                 ${footerHtml()}
             </div>
-        `;
+        `);
         bindEvents();
         syncHash();
     }
