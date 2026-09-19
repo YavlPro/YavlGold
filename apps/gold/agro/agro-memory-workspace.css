@@ -156,6 +156,70 @@
         pointer-events: auto !important;
         transform: translateY(0) !important;
     }
+
+    /* ---------- ANEXO 29 MF-3: inmersión sin scroll de entrada ----------
+       La página entera scrolleaba (workspace en flujo normal + height calc
+       del asistente heredado de la vista standalone). En capa ia la columna
+       pasa a altura viewport: el scroll vive SOLO dentro de .ast-messages y
+       el compositor ancla sobre la tab bar sin scroll de página. */
+
+    /* Header global fuera en Memoria (MANIFIESTO §4.12.3: módulo profundo
+       oculta la navegación global; la identidad vive en el header de la card
+       y la salida en la barra del hub). ia y rag; Inicio/Granja/Menú y
+       desktop lo conservan. El nombre del perfil ya fue aplicado al boot
+       (applyHeaderIdentity lee .user-profile .user-name una vez) — ocultar
+       por CSS no rompe ese wiring. */
+    body[data-agro-memoria-layer] .agro-shell-header {
+        display: none;
+    }
+
+    /* Hueco muerto fuera: padding del contenedor compacto y sin colchón
+       inferior de módulo (el workspace ya termina sobre la tab bar).
+       #main-content gana el empate de especificidad con la regla
+       depth="module" de agro.css (inyectado por JS después de los links). */
+    body[data-agro-memoria-layer="ia"] #main-content.app-container {
+        padding: var(--space-2, 0.5rem) var(--space-2, 0.5rem) 0;
+    }
+
+    /* Columna fija: workspace = 100dvh - tab bar - su offset - respiro. */
+    body[data-agro-memoria-layer="ia"] .agro-memory-workspace {
+        height: calc(100svh - var(--agro-mobile-tabbar-height, 4.9rem) - max(var(--space-2, 0.5rem), env(safe-area-inset-bottom, 0px)) - var(--space-2, 0.5rem));
+        height: calc(100dvh - var(--agro-mobile-tabbar-height, 4.9rem) - max(var(--space-2, 0.5rem), env(safe-area-inset-bottom, 0px)) - var(--space-2, 0.5rem));
+        min-height: 0;
+        padding: 0;
+        overflow: hidden;
+    }
+
+    /* El scroll de página muere aquí; el scroll real es el de .ast-messages. */
+    body[data-agro-memoria-layer="ia"] .agro-memory-workspace .amw-panel--ia {
+        overflow: hidden;
+    }
+
+    /* Alturas calc heredadas de la vista standalone fuera (flex:1 del
+       embed llena el panel acotado). El min-height calc de ≤480 en
+       .agro-assistant-workspace también se neutraliza o clipea el compositor. */
+    body[data-agro-memoria-layer="ia"] .agro-memory-workspace .asistente-dedicado {
+        height: auto;
+        min-height: 0;
+    }
+
+    body[data-agro-memoria-layer="ia"] .agro-memory-workspace .agro-assistant-workspace {
+        min-height: 0;
+    }
+
+    /* ---------- MF-3: un solo tab dorado en la barra del hub ----------
+       syncViewButtons marca Memoria (data-agro-view) y syncMobileHub conserva
+       el hub previo (semántica Volver del ANEXO 29 S2) → dos items .is-active.
+       El estado JS queda intacto; solo se neutraliza el look del tab de hub. */
+    body[data-agro-active-view="memoria"] .agro-mobile-tabbar__item[data-agro-mobile-tab].is-active {
+        border-color: transparent;
+        background: transparent;
+        color: var(--text-muted);
+    }
+
+    body[data-agro-active-view="memoria"] .agro-mobile-tabbar__item[data-agro-mobile-tab].is-active i {
+        color: var(--gold-3);
+    }
 }
 
 @media (min-width: 769px) {

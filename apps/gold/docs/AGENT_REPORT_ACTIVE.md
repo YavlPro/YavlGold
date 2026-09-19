@@ -983,3 +983,42 @@ Agente: GLM (ZCode). QA owner 19-sep 08:11 (mobile, capa IA): tres botones apila
 git add apps/gold/agro/agro-assistant.css apps/gold/agro/agro-assistant-chat.css apps/gold/agro/index.html apps/gold/docs/AGENT_REPORT_ACTIVE.md
 git commit -m "fix(memoria): ANEXO 29 MF-2 — asistente mobile inmersivo real (display:flex que QA-fix 3 omitió: fila de 3 acciones en 1 línea, footer solo en sheet, compositor opaco con clearance de tabbar en contenedor en vez de sticky flotante, título completo sin badge) + label compacto Nueva"
 ```
+
+---
+
+## Sesión 2026-09-19 (IV) — ANEXO 29 MF-3: inmersión mobile sin scroll de entrada + un solo tab dorado
+
+Agente: GLM (ZCode). QA owner 19-sep (mobile, capa IA): aún hay scroll de entrada — compositor bajo el pliegue, hueco muerto entre header global y card, welcome ~media pantalla. Referencia: superficie verde ("Agente IA — Publicar Cosecha") entra sin scroll. Ad-hoc del owner: "doble dorado" en la barra inferior del hub. Git NO ejecutado.
+
+**Trazado (verificado en código, no asumido)**:
+
+- **Causa estructural del scroll**: `.agro-memory-workspace` en flujo normal (`min-height: calc(100dvh - 140px)`) + `.asistente-dedicado` con `height: calc(100svh - 116px)` heredada de la vista standalone (el embed no la pisa) + `padding-bottom: 2rem+safe-area` de `depth="module"` en `.app-container` → página más alta que el viewport.
+- **Hueco muerto**: `.header { padding: var(--spacing-lg) 0; margin-bottom: var(--spacing-xl) }` (agro-index-critical.css) + padding del workspace — desaparece ocultando el header global en Memoria.
+- **Doble dorado (causa real)**: dos mecanismos marcan `.is-active` en la tab bar a la vez — `syncViewButtons` (agro-shell.js:1199) marca el tab Memoria vía `data-agro-view="memoria"`, y `syncMobileHub` conserva el hub previo activo (VIEW_TO_MOBILE_HUB sin entrada "memoria" POR DISEÑO, ANEXO 29 S2: conservar el hub para el Volver) → Inicio+Memoria dorados. Es conflicto visual de estado, no de estado en sí.
+- **Identidad (PARO d)**: `applyHeaderIdentity` (agro.js:15302) aplica nombre/avatar UNA vez al boot leyendo `.user-profile .user-name` — sin MutationObserver; ocultar el header por CSS en Memoria no rompe wiring (y en Inicio nunca se oculta). No se activó el PARO.
+- **Trampa ≤480 detectada**: `.asistente-dedicado .agro-assistant-workspace { min-height: calc(100svh - 104px) }` (≤480, después en cascada) habría clipeado el compositor dentro de la columna fija — neutralizada.
+
+**Cambios (2 CSS, sin markup)**:
+
+| Archivo | Cambio |
+|---|---|
+| `agro/agro-memory-workspace.css` | ≤768: header global `.agro-shell-header` oculto con flag de capa (ia y rag; §4.12.3); `#main-content.app-container` padding compacto y sin colchón inferior (id gana el empate con la regla depth="module" de agro.css, inyectado por JS después de los links); **columna fija capa ia**: workspace `height: calc(100dvh - tabbar - max(0.5rem, safe-area) - respiro)` (fallback svh) + `overflow:hidden`, panel ia `overflow:hidden` (el scroll de página muere ahí), `.asistente-dedicado` height:auto/min-height:0, `.agro-assistant-workspace` min-height:0; **un solo tab dorado**: `body[data-agro-active-view="memoria"] .agro-mobile-tabbar__item[data-agro-mobile-tab].is-active` neutralizado a look inactivo (el tab Memoria no tiene `data-agro-mobile-tab`, no le afecta; estado JS intacto). |
+| `agro/agro-assistant-chat.css` | ≤768: regla de clearance MF-2 en `.ast-main` ELIMINADA (absorbida por la columna fija) con comentario de sucesión; `.ast-input-area` `flex:none` (anclado al final); `.ast-input` `overflow-y:auto` (grow interno del textarea, nunca scroll de página); **welcome compacto**: grid `auto 1fr` (icono 32px + título en una fila), descripción 0.78rem sin max-width (2 líneas), chips como pills `flex-wrap` con `min-height:44px` (§16), Configurar+Guía compartiendo fila (cada uno ≥44px), paddings reducidos. |
+
+**Presupuesto vertical verificado aritméticamente (no runtime)**: 360×740 → workspace ≈646px; header card ≈51 + acciones ≈62 + compositor ≈71 → área de mensajes ≈461px; welcome compacto ≈314px (42.4% del viewport, dentro del objetivo "~40%"; en 390×844 baja a 37%). Compositor visible al entrar sin scroll de página.
+
+**Z-index verificado**: sheet de historial `position:fixed` z140 (escapa del overflow:hidden — ningún ancestro con transform persistente; la animación de entrada `amwPanelIn` ya removió su transform al abrirse) > tab bar z126 > columna (sin z nuevo); modal z1000. Sin regresiones.
+
+**Resultado de build**: `pnpm build:gold` ✅ verde (2.52s; UTF-8 OK; CSS procesado por esbuild sin errores).
+
+**Declaraciones honestas**: (1) El welcome compacto no requirió markup: el grid reordena los 6 hijos existentes por auto-placement — diff sin HTML. (2) 42.4% ≈ objetivo ~40%: el texto canónico de los chips (MANIFIESTO §9.11, se envía íntegro vía data-suggestion) impide 2 pills por fila a 360px; si el owner exige ≤40% estricto, el follow-up sería acortar el texto visible (no el enviado). (3) La neutralización del tab dorado es CSS-only: el estado `.is-active` de Inicio sigue en el DOM (semántica Volver intacta; si mañana el tab-bar cambia de look hay que recordar este override). (4) Con el header oculto, la campana de notificaciones no es alcanzable dentro de Memoria — canónicamente correcto (§4.12.3), declarado. (5) Fallback `100svh` antes de `100dvh` para navegadores sin dvh. (6) QA runtime no ejecutado (ley §5).
+
+**QA sugerido (owner)**: móvil 360 y 390 → Memoria·IA: entra SIN scroll (compositor a la vista sobre la tab bar), welcome compacto con pills tapeables, Configurar+Guía en una fila; enviar mensaje scrollea solo dentro del chat; abrir Guía crece hacia adentro; un solo tab dorado (Memoria) en la barra; Inicio/Granja/Menú conservan header; capa rag intacta con su Volver; sheet de historial abre encima; desktop sin cambios; consola limpia.
+
+**NO se hizo (scope respetado)**: git (bloque sugerido abajo); markup (no hizo falta); capa rag, drawer, desktop, markdown, citas, retrieval, Edge (fuera de scope); acortar textos de chips (canónicos).
+
+**Bloque git sugerido (NO ejecutado)**:
+```bash
+git add apps/gold/agro/agro-memory-workspace.css apps/gold/agro/agro-assistant-chat.css apps/gold/docs/AGENT_REPORT_ACTIVE.md
+git commit -m "fix(memoria): ANEXO 29 MF-3 — inmersión mobile sin scroll de entrada (columna fija 100dvh-tabbar en capa ia con scroll interno del chat, header global oculto en Memoria §4.12.3, hueco muerto fuera, welcome compacto en grid, compositor flex-none anclado, clearance MF-2 absorbido) + un solo tab dorado en la barra del hub (look CSS-only, estado Volver intacto)"
+```

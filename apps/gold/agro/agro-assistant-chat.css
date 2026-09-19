@@ -627,19 +627,21 @@
     padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
     position: sticky;
     bottom: 0;
-    /* ANEXO 29 MF-2: fondo opaco — si el sticky llega a desplazarlo, la
-       conversación nunca se ve a través del compositor (antes rgba 0.95). */
+    /* ANEXO 29 MF-3: flex-none — anclado al final de la columna fija; el
+       área de mensajes (flex:1) es la que cede espacio. */
+    flex: none;
+    /* ANEXO 29 MF-2: fondo opaco — la conversación nunca se ve a través. */
     background: var(--bg-1, #0a0a0a);
   }
 
-  /* ANEXO 29 MF-2: en la capa IA de Memoria el tabbar inferior vive como
-     salida (S3-b). El clearance vive en el CONTENEDOR (.ast-main), no como
-     offset sticky del compositor: con bottom:0 el constraint queda saturado
-     en reposo, el compositor ancla en su posición natural sobre la tab bar
-     (sin solape) y no flota tapando la conversación con velo semitransparente.
-     El strip despejado muestra el fondo opaco de .ast-layout. */
-  body[data-agro-memoria-layer="ia"] .asistente-dedicado .ast-main {
-    padding-bottom: calc(var(--agro-mobile-tabbar-height, 4.9rem) + var(--space-2, 0.5rem) + env(safe-area-inset-bottom, 0px));
+  /* ANEXO 29 MF-3: el clearance de tab bar de MF-2 quedó absorbido por la
+     columna fija (agro-memory-workspace.css acota el workspace sobre la
+     tab bar) — sin padding extra en .ast-main ni offset en el compositor. */
+
+  /* Textarea crece hacia adentro: el scroll del excedente es del textarea,
+     nunca de la página (columna fija MF-3). */
+  .asistente-dedicado .ast-input {
+    overflow-y: auto;
   }
 
   .asistente-dedicado .assistant-message { max-width: 92%; }
@@ -649,6 +651,71 @@
   .asistente-dedicado .ast-input-hint {
     flex-direction: row;
     align-items: center;
+  }
+
+  /* ── ANEXO 29 MF-3: welcome compacto (≤ ~40% del viewport en 360×740) ──
+     Icono+título en una fila, descripción corta, chips como pills wrap
+     (touch ≥44px §16) y Configurar+Guía compartiendo fila. */
+  .asistente-dedicado .ast-welcome {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.4rem 0.6rem;
+    align-content: center;
+    padding: 0.85rem 0.75rem;
+    text-align: left;
+  }
+
+  .asistente-dedicado .ast-welcome-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
+    margin: 0;
+    align-self: center;
+  }
+
+  .asistente-dedicado .ast-welcome-title {
+    align-self: center;
+    margin: 0;
+    text-align: left;
+  }
+
+  .asistente-dedicado .ast-welcome-desc {
+    grid-column: 1 / -1;
+    margin: 0;
+    max-width: none;
+    font-size: 0.78rem;
+    text-align: left;
+  }
+
+  .asistente-dedicado .ast-welcome-suggestions {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0;
+  }
+
+  .asistente-dedicado .ast-suggestion {
+    width: auto;
+    flex: 0 1 auto;
+    min-height: 44px;
+    padding: 0.3rem 0.65rem;
+    font-size: 0.7rem;
+  }
+
+  .asistente-dedicado .ast-configure-btn {
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .asistente-dedicado .ast-guide {
+    grid-column: auto;
+    margin-top: 0;
+    max-width: none;
+  }
+
+  .asistente-dedicado .ast-guide-summary {
+    min-height: 44px;
   }
 }
 
