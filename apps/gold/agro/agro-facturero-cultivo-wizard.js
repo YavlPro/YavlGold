@@ -846,7 +846,6 @@ function createSession(root) {
 
             const tipo = CREAR_TYPES.find((entry) => entry.id === state.tipoId);
             const economicType = tipo?.id || 'expense';
-            await assertOperationalPeriodOpen({ movementDate: state.fecha, userId: user.id });
 
             const amount = Number(state.monto);
             const rate = effectiveRate();
@@ -858,6 +857,10 @@ function createSession(root) {
             // partición Cultivo (crop_id es el eje, nunca row.farm_id).
             const crop = getCropsState().crops.find((entry) => String(entry?.id || '') === state.cropId);
             const cropFarmId = String(crop?.farm_id || '').trim();
+
+            // ANEXO 30 S4: el período se resuelve en la finca del cultivo
+            // (D-30-1); cultivo legacy sin finca cae en el bucket Vista general.
+            await assertOperationalPeriodOpen({ movementDate: state.fecha, userId: user.id, farmId: cropFarmId });
 
             const table = TYPE_TO_TABLE[economicType] || 'agro_expenses';
             const payload = {

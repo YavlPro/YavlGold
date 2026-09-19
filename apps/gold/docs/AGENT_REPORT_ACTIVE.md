@@ -734,3 +734,77 @@ Agente: GLM (ZCode). Micro-fix por orden del owner (22:26): eliminar el cluster 
 git add apps/gold/agro/index.html apps/gold/agro/agro-assistant-chat.css
 git commit -m "chore(agro): ANEXO 29 MF-1 — fuera hints de teclado del compositor del asistente (cluster kbd retirado, contador derecho anclado con margin-auto, css huérfano eliminado)"
 ```
+
+---
+
+## Sesión 2026-09-18 (XIV) — ANEXO 30 Fase 0: Períodos como libro de finca (solo lectura)
+
+Agente: GLM (ZCode). MODO SOLO LECTURA: cero edits de código, cero git, cero canon (única escritura = este INGEST). Regla del owner cerrada: Operaciones de la Finca es libro DE FINCA — la lectura del período NO se parte por vinculación a cultivo, y cada ciclo de período corresponde a UNA finca (calendario, lista y creación por finca). Alcance aplicado: **A (default)** — lectura plana de finca + ciclos atados a finca, `crop_id` conservado en el dato para costos del cultivo (§4.3).
+
+**Veredicto de schema (a)**:
+- `agro_operational_cycles.farm_id` **SÍ existe** — migración `supabase/migrations/20260604120000_agro_operational_farm_id.sql:8-9` (nullable, FK `agro_farms`, on delete set null; índice user+farm :14-16). También `agro_operational_movements.farm_id` (:19-20), y el compositor lo puebla (`agroOperationalCycles.js:1313` deriveMovementPayload).
+- `agro_period_cycles` (la tabla propia del módulo) **NO tiene farm_id** — creada en `20260411130000_create_agro_period_cycles.sql:6-22` (id, user_id, name, period_year, period_month, start/end_date, deleted_at) con único parcial `(user_id, period_year, period_month) WHERE deleted_at IS NULL` (:24-26). **Migración necesaria para alcance A**: add column farm_id + reemplazo del único parcial por `(user_id, farm_id, period_year, period_month)`. Backfill filas existentes: recomendación dejar `null` = "Vista general" (sin reatribución silenciosa); decisión final del owner en S1.
+- La query de actividad del módulo hoy **no selecciona farm_id** (`agro-period-cycles.js:398` ciclos, :412 movimientos).
+
+**Render de la partición (b)** — todo vive dentro de `agro-period-cycles.js` (ningún otro archivo la renderiza): desglose `<details>` "Ver desglose por vinculación a cultivo" con grupos "Vinculados a cultivo"/"Generales de la finca" (`renderCycleCard` :972-988 + `renderGroupCard` :902-917); celda "Asociados / Generales" (`buildSnapshotMeta` :740); métricas de comparación :821-836. La alimenta `association = crop_id ? 'linked' : 'unlinked'` (`buildOperationalMovementRow` :315,:330) — `crop_id` viene del CICLO operacional (`agro_operational_cycles.crop_id`, select :398), no del movimiento. Contadores linked/unlinked: :388-389, :455-456, :475-476.
+
+**Dependencias de crop_id operacional (c)** — bajo alcance A quedan INTACTAS (consumen las tablas directo, no la lectura del módulo): `computeCropFinances` Dashboard Bloque 4 (`agro-dashboard-v11.js:508-519` + `fetchOperationalExpensesDirect` :544-549 por `crop_id`, bridges `window._agroMergedOperationalExpensesByCrop` agro.js:11932); cards de Mis Cultivos (unión dedup ledger-prima agro.js:11879-11937, keyed por crop_id — camino §4.3 `costosTotales`); `agro-crop-report.js:742-751` (eq crop_id); rank RPC `agro_rank_top_crops_profit` (`20260221231650_...sql:156-163`, join ciclos×movimientos por crop_id). Por `farm_id` (también intactos): `agro-farm-report.js:126`, `agro-farm-compare.js:80-83`, `agro-farms.js:151-156`, lector canónico `agro-ledger-reader.js` (particiones farm/crop/orphan :259-266). Si el alcance fuera B (borrar el vínculo del dato), la matriz rompe §4.3 completo — razón por la que A es el default sano.
+
+**Scope actual calendario/lista/creación (d)**: HOY todo es global por usuario — `fetchPeriodCycles` `.eq('user_id')` sin farm (`agro-period-cycles.js:569`), actividad `.eq('user_id')` (:399,:413), tabs solo Activos/Finalizados (:1119-1122), modal de creación con nombre+mes únicamente (:684-697), payload sin farm_id (:1269-1276), guard de duplicado por monthKey (:1264). Cero selector de finca en el módulo. `assertOperationalPeriodOpen` (user+mes, :1445-1494) la consumen los 3 wizards + compositor (agro-facturero-cultivo-wizard.js:849, agro-facturero-personal-wizard.js:429, agro-facturero-finca-wizard.js:703, agroOperationalCycles.js:1358,:1410) — bajo A necesita parámetro farmId opcional (retrocompatible).
+
+**(e) fuera de Operaciones — confirmado NO se tocan**: cards de cultivo (bridge crop_id), Facturero del Cultivo (ledger-reader preset crop; su finca solo acota chips de cultivos, "Nunca filtra por farm_id de la fila" :384 nota + wizard :272-273), reportes finca/cultivo, rankings RPC, `agro-operational-edit.js` (edita movimientos; "farm_id/crop_id viven en el ciclo" :9, jamás los toca :270).
+
+**Diseño del fix (alcance A)**: (1) DDL farm_id en `agro_period_cycles` + único parcial con farm_id; (2) lectura plana: retirar partición linked/unlinked del render/VM/comparador/copys (subtitle :498 "Incluye movimientos vinculados..." también cambia), lista única ordenada por fecha/tipo; (3) scoping por finca: selector chips (fuente `window._agroFarms.getFarms()` agro-farms.js:724, "Vista general" primero — patrón §4.5) + `.eq('farm_id', farmId)` en lectura cuando finca específica + select de farm_id en queries de actividad; creación SIEMPRE con finca obligatoria (pre-select si hay una sola — patrón §4.3); guard duplicado por monthKey+farmId; (4) punto abierto S1: regla de atribución para ciclos vinculados a cultivo con `farm_id` null (fallback `crop.farm_id` vs exclusión) — requiere query de datos reales del owner (count crop-linked sin farm).
+
+**Reconciliación documental GATEADA (S5, solo con autorización expresa)**: MANIFIESTO §4.4 (subsuperficies por finca + "cada período pertenece a UNA finca"; ojo: línea 452 "sin importar el cultivo" YA alinea con lectura plana — el código era lo que desviaba), §4.3 (aclaración lectura-vs-cómputo: lectura plana ≠ pérdida del vínculo del dato), §4.5.2 (cross-ref libro de finca por períodos), FICHA §5 (agro_period_cycles + farm_id; operacionales con farm_id/crop_id).
+
+**Plan de micro-sesiones**: S1 DDL+migración+query backfill (DoD: migración en supabase/migrations, build verde) → S2 lectura plana (DoD: grep cero partición en módulo, build verde) → S3 selector por finca+creación (DoD: build verde + queries estáticas documentadas) → S4 assertOperationalPeriodOpen farmId (DoD: 4 call sites, retrocompatible) → S5 documental GATEADO. Regla de paro: sin evidencia no se propone fix; QA online exclusivo del owner.
+
+**Resultado de build**: `pnpm build:gold` ✅ verde de partida (exit 0, UTF-8 OK). Sin cambios de código → no hay build de cierre distinto del de partida.
+
+**NO se hizo (scope respetado)**: cero edits de código; cero git; cero canon; sin queries a datos reales (bloqueo honesto: counts de backfill y ciclos crop-linked sin farm requieren acceso del owner); agroOperationalCycles.js (4314L, writer) solo se leyó.
+
+**Lo NO trazado, declarado**: composición interna de `state.datasets`/stamps del legacy agroOperationalCycles (no afecta al diseño A: el módulo de períodos lee las tablas directo); verificación runtime (ley §5).
+
+---
+
+## Sesión 2026-09-18 (XV) — ANEXO 30 S1→S4: períodos por finca + lectura plana (implementación)
+
+Agente: GLM (ZCode). Ejecución de las 4 etapas con DoD por etapa. Git NO ejecutado. Migración creada como ARCHIVO; aplicación a remoto = owner. Previo: Fase 0 (sesión XIV) con inventario y veredicto de schema.
+
+**S1 — DDL + selects** (DoD ✓: build verde; migración validada estáticamente — patrones idempotentes copiados de 20260604120000; selects con farm_id; cero render):
+- Nueva `supabase/migrations/20260918200000_agro_period_cycles_farm_id.sql`: add column farm_id (FK agro_farms, on delete set null) + drop único parcial `(user_id, period_year, period_month)` y create `(user_id, farm_id, period_year, period_month) WHERE deleted_at IS NULL` + índice user+farm. Backfill: null = bucket Vista general (D-30-2). Comentario in-migration: NULLs no colisionan en único de PG → guard app cubre VG.
+- `agro-period-cycles.js`: farm_id añadido a selects de ciclos operacionales, movimientos y agro_period_cycles (rama principal y fallback sin deleted_at).
+
+**S2 — Lectura plana** (DoD ✓: build verde; grep cero linked/unlinked/"Vinculados a cultivo"/"Generales de la finca" en el módulo — exit 1; counts/estado sin cambio):
+- Retirada la partición de: `buildOperationalMovementRow` (association+cropId fuera), `buildOperationalActivityIndex` (association del cycleIndex + linked/unlinkedCycleCount), `buildCycleViewModel` (arrays linked/unlinked + counts), `buildSnapshotMeta` (celda "Asociados / Generales"), `buildCompareMetrics` (2 métricas del comparador + vars). El `<details>` "Ver desglose por vinculación a cultivo" reemplazado por `renderFlatMovementSection` — sección plana "Movimientos del período" (contador + lista única por fecha/tipo, top-3 + "+N más" existente). `renderGroupCard` eliminado. Copys: subtitle calendario ahora "…en una sola lectura plana por tipo y fecha".
+- CSS higiene (§11.7): fuera `__group-copy` (lista compartida), `__groups-details`, `__groups-toggle` (+marker/::before/details[open]/hover) y `.is-linked`/`.is-unlinked`. `__group(s)/__group-head/__group-title/__group-count/movement-*` se conservan (los reutiliza la lista plana).
+
+**S3 — Scoping por finca + creación** (DoD ✓: build verde; crear sin finca imposible — select `required` con placeholder disabled + throw explícito en `createPeriodCycleFromDraft`; mes duplicado solo dentro de la MISMA finca — guard `monthKey+farm_id`, index DB con farm_id lo respalda; Vista general sin filtro = agrega todo):
+- Estado `selectedFarmId` ('' = Vista general) + helpers `getFarmsList`/`defaultDraftFarmId` (fuente `window._agroFarms.getFarms()`, importado en bootstrapAgro — index.html:3404; guard optional-chaining si aún no cargó).
+- `fetchPeriodCycles(userId, farmId)`: `.eq('farm_id')` solo con finca elegida (VG incluye null + todas). `fetchOperationalPeriodActivity(userId, farmId)`: D-30-1 COALESCE — con finca elegida, query de `agro_crops(id,farm_id)` y criba `cycle.farm_id || crop.farm_id === farmId`; VG sin criba.
+- `mergePeriodCycles`: guard primer-gana para filas persistidas (VG puede traer 2 períodos del mismo mes en fincas distintas: la card del mes toma el más reciente por created_at; el otro sigue visible/editable bajo su chip — decisión declarada, documentada abajo).
+- Chips de finca `renderFarmFilter` (Vista general primero, patrón §4.5; touch ≥44px, 150ms, focus-ring, tokens; visibles salvo schemaMissing) en renderRoot bajo el header. Handler `[data-period-farm]` → set + refresh.
+- Modal de creación: campo Finca obligatorio (select), pre-select si hay una sola finca (al abrir y en resetForm); payload con farm_id; select escucha por `change` (drafts de select no disparan input en todos los navegadores).
+
+**S4 — assertOperationalPeriodOpen(farmId)** (DoD ✓: build verde; firma retrocompatible — farmId opcional default ''):
+- `agro-period-cycles.js`: param `farmId`, normalizado; `.eq('farm_id')` en ambas ramas (con/sin deleted_at) solo cuando viene; selects ahora incluyen farm_id.
+- Call sites: Cultivo wizard — assert REORDENADO tras resolver crop/cropFarmId y pasa `farmId: cropFarmId` (cultivo legacy sin finca → VG, D-30-1); Finca wizard — `farmId: state.farmId || ''` (D-2 ya exige finca en CREAR); compositor agroOperationalCycles create/update — `farmId: payload.farmId || ''`. Personal wizard SIN cambio por diseño (partición orphan no conoce finca).
+
+**Compatibilidad pre-migración (declarada)**: si el código se despliega antes de aplicar la migración, la vista de períodos degrada honesta al panel "Falta la base de datos… aplica la migración canónica" (isSchemaMissingError matchea 'column agro_period_cycles.farm_id does not exist'); los wizards NO se rompen (assert trata el error como schema-missing → allowed). Código y migración deben viajar juntos.
+
+**Verificación estática final**: `pnpm build:gold` ✅ verde (por etapa y final). Grep partición = 0 en el módulo. Bundle dist lleva S3 (`Filtro de finca`, `La finca del ciclo es obligatoria`, css `farm-filter` en agro-period-cycles-*.css). Tamaños: módulo 1594L JS / 915L CSS (límites §11.X OK). Cero cambios en computeCropFinances/cards de cultivo/lector canónico/reportes/rankings (crop_id intacto — alcance A).
+
+**QA sugerido (owner)**: (1) aplicar migración a remoto ANTES del QA de la vista; (2) Operaciones de la Finca → chips Vista general + fincas; cards con lista única "Movimientos del período" sin rastro de Vinculados/Generales; (3) crear período: finca obligatoria (placeholder "Elige la finca…"), pre-select con una sola finca; duplicado mismo mes+finca bloqueado, mismo mes en otra finca permitido; (4) chip por finca → solo sus períodos y su actividad (incluye ciclos ligados a cultivos de esa finca sin farm_id propio — COALESCE); (5) Vista general → agrega todo (card por mes; dos fincas mismo mes: card = fila más reciente, la otra bajo su chip); (6) wizards Finca/Cultivo/Personal registran normal y el período resuelto corresponde a su finca; (7) Dashboard Bloque 4 y costos del ciclo de cultivo SIN cambio.
+
+**NO se hizo (scope respetado)**: git (bloques sugeridos abajo, código y migración por separado); aplicación de la migración a remoto (owner); S5 documental GATEADO (MANIFIESTO §4.3/§4.4/§4.5.2 + FICHA §5 a palabra del owner); etiquetas de finca en las cards (no pedidas — la card de VG con dos fincas en el mismo mes usa el nombre de la fila más reciente); QA runtime (ley §5).
+
+**Bloques git sugeridos (NO ejecutados)**:
+```bash
+git add supabase/migrations/20260918200000_agro_period_cycles_farm_id.sql
+git commit -m "feat(db): ANEXO 30 S1 — farm_id en agro_period_cycles (FK agro_farms, on delete set null) + único parcial (user_id, farm_id, period_year, period_month); backfill null = bucket Vista general (D-30-2)"
+```
+```bash
+git add apps/gold/agro/agro-period-cycles.js apps/gold/agro/agro-period-cycles.css apps/gold/agro/agro-facturero-cultivo-wizard.js apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/agro/agroOperationalCycles.js
+git commit -m "feat(agro): ANEXO 30 S2-S4 — períodos como libro de finca: lectura plana sin partición por cultivo + chips de finca (Vista general / COALESCE D-30-1) + creación con finca obligatoria (guard mes+finca) + assertOperationalPeriodOpen con farmId en wizards y compositor"
+```

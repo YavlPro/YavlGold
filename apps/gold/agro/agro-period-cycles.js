@@ -26,6 +26,7 @@ const state = {
     compareSecondaryId: '',
     currentSubview: 'activos',
     calendarioTab: 'activos',
+    selectedFarmId: '',
     cycles: [],
     summary: createEmptySummary(),
     values: createDraftValues()
@@ -34,7 +35,8 @@ const state = {
 function createDraftValues() {
     return {
         name: '',
-        periodMonth: currentMonthKey()
+        periodMonth: currentMonthKey(),
+        farmId: ''
     };
 }
 
@@ -59,6 +61,24 @@ function normalizeToken(value) {
         .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase()
         .trim();
+}
+
+function getFarmsList() {
+    if (typeof window === 'undefined' || typeof window._agroFarms?.getFarms !== 'function') {
+        return [];
+    }
+    const farms = window._agroFarms.getFarms();
+    return (Array.isArray(farms) ? farms : [])
+        .map((farm) => ({
+            id: normalizeId(farm?.id),
+            name: String(farm?.name || '').trim() || 'Finca sin nombre'
+        }))
+        .filter((farm) => farm.id);
+}
+
+function defaultDraftFarmId() {
+    const farms = getFarmsList();
+    return farms.length === 1 ? farms[0].id : '';
 }
 
 function normalizePeriodSubview(value) {
@@ -312,7 +332,6 @@ function createFallbackOperationalMovement(cycle) {
 }
 
 function buildOperationalMovementRow(cycle, movement) {
-    const cropId = normalizeId(cycle?.crop_id);
     const economicType = normalizeToken(cycle?.economic_type);
     const typeMeta = createMovementTypeMeta(economicType);
     const amount = movement?.amount_usd != null ? movement.amount_usd : movement?.amount;
@@ -326,8 +345,6 @@ function buildOperationalMovementRow(cycle, movement) {
         concept,
         date: String(movement?.movement_date || cycle?.opened_at || '').trim(),
         created_at: String(movement?.created_at || cycle?.created_at || '').trim(),
-        cropId,
-        association: cropId ? 'linked' : 'unlinked',
         amountLabel: formatAmountLabel(amount, currency),
         typeLabel: typeMeta.label,
         typeTone: typeMeta.tone,
@@ -373,8 +390,7 @@ function buildOperationalActivityIndex(cycles, movements) {
             if (!bucket.cycleIndex.has(cycleId)) {
                 bucket.cycleIndex.set(cycleId, {
                     id: cycleId,
-                    status: normalizeToken(cycle?.status || 'open'),
-                    association: row.association
+                    status: normalizeToken(cycle?.status || 'open')
                 });
             }
         });
@@ -385,31 +401,48 @@ function buildOperationalActivityIndex(cycles, movements) {
         const cycleEntries = Array.from(bucket.cycleIndex.values());
         bucket.cycleCount = cycleEntries.length;
         bucket.activeCycleCount = cycleEntries.filter((entry) => ACTIVE_OPERATIONAL_STATUS_VALUES.has(entry.status)).length;
-        bucket.linkedCycleCount = cycleEntries.filter((entry) => entry.association === 'linked').length;
-        bucket.unlinkedCycleCount = cycleEntries.filter((entry) => entry.association !== 'linked').length;
     });
 
     return months;
 }
 
-async function fetchOperationalPeriodActivity(userId) {
+async function fetchOperationalPeriodActivity(userId, farmId = '') {
     const { data: cycles, error: cyclesError } = await supabase
         .from('agro_operational_cycles')
-        .select('id,user_id,name,economic_type,category,crop_id,status,opened_at,closed_at,created_at')
+        .select('id,user_id,name,economic_type,category,crop_id,farm_id,status,opened_at,closed_at,created_at')
         .eq('user_id', userId)
         .order('opened_at', { ascending: false })
         .order('created_at', { ascending: false });
 
     if (cyclesError) throw cyclesError;
 
-    const cycleIds = (cycles || []).map((cycle) => normalizeId(cycle?.id)).filter(Boolean);
+    let scopedCycles = Array.isArray(cycles) ? cycles : [];
+
+    // D-30-1: atribución de lectura por finca = COALESCE(cycle.farm_id, crop.farm_id).
+    // Solo se criba al elegir una finca; Vista general agrega toda la actividad.
+    if (farmId) {
+        const { data: crops, error: cropsError } = await supabase
+            .from('agro_crops')
+            .select('id,farm_id')
+            .eq('user_id', userId)
+            .is('deleted_at', null);
+        if (cropsError) throw cropsError;
+        const cropFarmById = new Map((Array.isArray(crops) ? crops : [])
+            .map((crop) => [normalizeId(crop?.id), normalizeId(crop?.farm_id)]));
+        scopedCycles = scopedCycles.filter((cycle) => {
+            const attributedFarmId = normalizeId(cycle?.farm_id) || cropFarmById.get(normalizeId(cycle?.crop_id)) || '';
+            return attributedFarmId === farmId;
+        });
+    }
+
+    const cycleIds = scopedCycles.map((cycle) => normalizeId(cycle?.id)).filter(Boolean);
     if (cycleIds.length === 0) {
         return new Map();
     }
 
     const { data: movements, error: movementsError } = await supabase
         .from('agro_operational_movements')
-        .select('id,cycle_id,amount,currency,amount_usd,concept,movement_date,created_at')
+        .select('id,cycle_id,amount,currency,amount_usd,concept,movement_date,created_at,farm_id')
         .eq('user_id', userId)
         .in('cycle_id', cycleIds)
         .order('movement_date', { ascending: false })
@@ -422,9 +455,15 @@ async function fetchOperationalPeriodActivity(userId) {
 function mergePeriodCycles(rows, activityMap, userId) {
     const merged = new Map();
 
+    // Vista general puede traer dos períodos del mismo mes en fincas distintas:
+    // gana el más reciente (fetch ordena created_at desc); el otro sigue visible
+    // y editable vía su chip de finca. Primer-gana = determinista.
     (Array.isArray(rows) ? rows : []).forEach((row) => {
         const normalized = normalizePersistedCycle(row);
-        merged.set(monthKeyFromParts(normalized.period_year, normalized.period_month), normalized);
+        const rowKey = monthKeyFromParts(normalized.period_year, normalized.period_month);
+        if (!merged.has(rowKey)) {
+            merged.set(rowKey, normalized);
+        }
     });
 
     if (activityMap instanceof Map) {
@@ -452,8 +491,6 @@ function buildCycleViewModel(cycle, activityMap) {
     const movements = Array.isArray(activity?.movements)
         ? [...activity.movements]
         : [];
-    const linked = movements.filter((movement) => movement.association === 'linked');
-    const unlinked = movements.filter((movement) => movement.association !== 'linked');
     const activeCycleCount = Number(activity?.activeCycleCount || 0);
     const status = activeCycleCount > 0 ? 'active' : deriveCalendarStatus(cycle);
     const progress = deriveProgress(cycle);
@@ -467,13 +504,9 @@ function buildCycleViewModel(cycle, activityMap) {
         status,
         progress,
         movements,
-        linked,
-        unlinked,
         movementCount: movements.length,
         cycleCount: Number(activity?.cycleCount || 0),
         activeCycleCount,
-        linkedCycleCount: Number(activity?.linkedCycleCount || 0),
-        unlinkedCycleCount: Number(activity?.unlinkedCycleCount || 0),
         portfolioStatus,
         incomeCount: movements.filter((movement) => movement.kind === 'income').length,
         lossCount: movements.filter((movement) => movement.kind === 'loss').length
@@ -495,7 +528,7 @@ function buildSummary(cycles) {
 const PERIOD_SUBVIEW_META = Object.freeze({
     calendario: Object.freeze({
         title: 'Operaciones de la Finca',
-        subtitle: 'Operaciones de tu finca agrupadas por período. Incluye movimientos vinculados a cultivos y movimientos generales.',
+        subtitle: 'Operaciones de tu finca agrupadas por período, en una sola lectura plana por tipo y fecha.',
         overviewEyebrow: 'Operaciones de la Finca',
         overviewTitle: 'Períodos en calendario',
         overviewCopy: 'Meses activos y finalizados concentrados en una sola vista para seguimiento de las operaciones de la finca.',
@@ -562,27 +595,35 @@ async function ensureUserId(initialUserId = '') {
     return userId;
 }
 
-async function fetchPeriodCycles(userId) {
+async function fetchPeriodCycles(userId, farmId = '') {
     let query = supabase
         .from(PERIOD_CYCLE_TABLE)
-        .select('id,user_id,name,period_year,period_month,start_date,end_date,created_at,updated_at,deleted_at')
+        .select('id,user_id,name,farm_id,period_year,period_month,start_date,end_date,created_at,updated_at,deleted_at')
         .eq('user_id', userId)
         .order('start_date', { ascending: false })
         .order('created_at', { ascending: false });
+
+    if (farmId) {
+        query = query.eq('farm_id', farmId);
+    }
 
     query = query.is('deleted_at', null);
 
     const { data, error } = await query;
     if (error) {
         if (isMissingColumnError(error, 'deleted_at')) {
-            const fallback = await supabase
+            let fallback = supabase
                 .from(PERIOD_CYCLE_TABLE)
-                .select('id,user_id,name,period_year,period_month,start_date,end_date,created_at,updated_at')
+                .select('id,user_id,name,farm_id,period_year,period_month,start_date,end_date,created_at,updated_at')
                 .eq('user_id', userId)
                 .order('start_date', { ascending: false })
                 .order('created_at', { ascending: false });
-            if (fallback.error) throw fallback.error;
-            return fallback.data || [];
+            if (farmId) {
+                fallback = fallback.eq('farm_id', farmId);
+            }
+            const fallbackResult = await fallback;
+            if (fallbackResult.error) throw fallbackResult.error;
+            return fallbackResult.data || [];
         }
         throw error;
     }
@@ -637,6 +678,20 @@ function renderModuleHeader() {
     `;
 }
 
+function renderFarmFilter() {
+    if (state.schemaMissing) return '';
+    const farms = getFarmsList();
+    if (farms.length === 0) return '';
+    const chips = [{ id: '', label: 'Vista general' }, ...farms];
+    return `
+        <div class="agro-period-cycles__farm-filter" role="group" aria-label="Filtro de finca de los períodos">
+            ${chips.map((chip) => `
+                <button type="button" class="agro-period-cycles__farm-chip${state.selectedFarmId === chip.id ? ' is-active' : ''}" data-period-farm="${escapeAttr(chip.id)}" aria-pressed="${state.selectedFarmId === chip.id}">${escapeHtml(chip.label)}</button>
+            `).join('')}
+        </div>
+    `;
+}
+
 function renderOverviewSection() {
     if (state.currentSubview === 'calendario') return '';
 
@@ -670,6 +725,10 @@ function renderOverviewSection() {
 function renderCreateModal() {
     if (!state.formOpen) return '';
     const values = state.values || createDraftValues();
+    const farms = getFarmsList();
+    const farmOptions = farms.map((farm) => `
+        <option value="${escapeAttr(farm.id)}"${values.farmId === farm.id ? ' selected' : ''}>${escapeHtml(farm.name)}</option>
+    `).join('');
     return `
         <div class="agro-period-cycles__modal agro-modal-canon" data-period-overlay>
             <div class="agro-period-cycles__dialog agro-modal-canon__dialog" role="dialog" aria-modal="true" aria-labelledby="agro-period-cycle-form-title">
@@ -677,7 +736,7 @@ function renderCreateModal() {
                     <div>
                         <p class="agro-period-cycles__dialog-eyebrow">Nuevo período</p>
                         <h3 class="agro-period-cycles__dialog-title" id="agro-period-cycle-form-title">Crear ciclo de período</h3>
-                        <p class="agro-period-cycles__dialog-copy">Define el nombre visible y el mes calendario. La lectura operativa seguirá viniendo de la actividad real del período.</p>
+                        <p class="agro-period-cycles__dialog-copy">Define el nombre visible, la finca y el mes calendario. La lectura operativa seguirá viniendo de la actividad real del período.</p>
                     </div>
                     <button type="button" class="agro-period-cycles__dialog-close agro-modal-canon__close" data-period-action="cancel-form" aria-label="Cerrar modal">&times;</button>
                 </div>
@@ -685,6 +744,13 @@ function renderCreateModal() {
                     <label class="agro-period-cycles__field">
                         <span class="agro-period-cycles__field-label">Nombre del ciclo</span>
                         <input type="text" class="styled-input" name="name" data-period-draft="name" value="${escapeAttr(values.name)}" placeholder="Ej. Abril Operativo 2026" maxlength="80" required>
+                    </label>
+                    <label class="agro-period-cycles__field">
+                        <span class="agro-period-cycles__field-label">Finca</span>
+                        <select class="styled-input" name="farmId" data-period-draft="farmId" required>
+                            <option value="" disabled${values.farmId ? '' : ' selected'}>Elige la finca del período…</option>
+                            ${farmOptions}
+                        </select>
                     </label>
                     <label class="agro-period-cycles__field">
                         <span class="agro-period-cycles__field-label">Mes calendario</span>
@@ -736,8 +802,7 @@ function buildSnapshotMeta(cycle) {
     return [
         { label: 'Movimientos', value: String(cycle.movementCount || 0) },
         { label: 'Ciclos operativos', value: String(cycle.cycleCount || 0) },
-        { label: 'Abiertos', value: String(cycle.activeCycleCount || 0) },
-        { label: 'Asociados / Generales', value: `${cycle.linked.length} / ${cycle.unlinked.length}` }
+        { label: 'Abiertos', value: String(cycle.activeCycleCount || 0) }
     ];
 }
 
@@ -781,10 +846,6 @@ function formatSignedCount(value, unit = '') {
 }
 
 function buildCompareMetrics(leftCycle, rightCycle) {
-    const linkedLeft = Array.isArray(leftCycle?.linked) ? leftCycle.linked.length : 0;
-    const linkedRight = Array.isArray(rightCycle?.linked) ? rightCycle.linked.length : 0;
-    const unlinkedLeft = Array.isArray(leftCycle?.unlinked) ? leftCycle.unlinked.length : 0;
-    const unlinkedRight = Array.isArray(rightCycle?.unlinked) ? rightCycle.unlinked.length : 0;
     return [
         {
             label: 'Progreso mensual',
@@ -817,22 +878,6 @@ function buildCompareMetrics(leftCycle, rightCycle) {
             delta: formatSignedCount(Number(leftCycle?.activeCycleCount || 0) - Number(rightCycle?.activeCycleCount || 0)),
             leftSub: leftCycle?.portfolioStatus === 'open' ? 'Mes con Facturero de Clientes' : 'Mes sin Facturero de Clientes',
             rightSub: rightCycle?.portfolioStatus === 'open' ? 'Mes con Facturero de Clientes' : 'Mes sin Facturero de Clientes'
-        },
-        {
-            label: 'Vinculados a cultivo',
-            left: String(linkedLeft),
-            right: String(linkedRight),
-            delta: formatSignedCount(linkedLeft - linkedRight),
-            leftSub: 'Impactan cultivos',
-            rightSub: 'Impactan cultivos'
-        },
-        {
-            label: 'Generales de la finca',
-            left: String(unlinkedLeft),
-            right: String(unlinkedRight),
-            delta: formatSignedCount(unlinkedLeft - unlinkedRight),
-            leftSub: 'Sin cultivo asociado',
-            rightSub: 'Sin cultivo asociado'
         },
         {
             label: 'Ingresos registrados',
@@ -899,19 +944,16 @@ function renderCompareMetric(metric) {
     `;
 }
 
-function renderGroupCard(title, copy, rows, tone) {
+function renderFlatMovementSection(cycle) {
     return `
-        <section class="agro-period-cycle-card__group is-${escapeAttr(tone)}">
-            <div class="agro-period-cycle-card__group-head">
-                <div>
-                    <p class="agro-period-cycle-card__group-title">${escapeHtml(title)}</p>
-                    <p class="agro-period-cycle-card__group-copy">${escapeHtml(copy)}</p>
+        <section class="agro-period-cycle-card__groups">
+            <article class="agro-period-cycle-card__group">
+                <div class="agro-period-cycle-card__group-head">
+                    <p class="agro-period-cycle-card__group-title">Movimientos del período</p>
+                    <span class="agro-period-cycle-card__group-count">${cycle.movementCount}</span>
                 </div>
-                <span class="agro-period-cycle-card__group-count">${rows.length}</span>
-            </div>
-            ${renderMovementList(rows, tone === 'linked'
-        ? 'Sin movimientos vinculados a cultivo en este período.'
-        : 'Sin movimientos generales en este período.')}
+                ${renderMovementList(cycle.movements, 'Sin movimientos en este período.')}
+            </article>
         </section>
     `;
 }
@@ -969,23 +1011,7 @@ function renderCycleCard(cycle) {
                 <span class="agro-period-cycle-card__profit-value">${escapeHtml(buildOperationalSnapshot(cycle))}</span>
             </section>
 
-            <details class="agro-period-cycle-card__groups-details">
-                <summary class="agro-period-cycle-card__groups-toggle">Ver desglose por vinculación a cultivo</summary>
-                <div class="agro-period-cycle-card__groups">
-                    ${renderGroupCard(
-        'Vinculados a cultivo',
-        'Gastos e ingresos asociados a un cultivo específico. El período los agrupa temporalmente.',
-        cycle.linked,
-        'linked'
-    )}
-                    ${renderGroupCard(
-        'Generales de la finca',
-        'Gastos e ingresos sin vínculo a un cultivo específico. Registrados en la finca y mostrados en este período.',
-        cycle.unlinked,
-        'unlinked'
-    )}
-                </div>
-            </details>
+            ${renderFlatMovementSection(cycle)}
         </article>
     `;
 }
@@ -1197,6 +1223,7 @@ function renderRoot() {
     state.root.innerHTML = `
         <div class="agro-period-cycles agro-ops-v10">
             ${renderModuleHeader()}
+            ${renderFarmFilter()}
             ${renderOverviewSection()}
             ${bodyMarkup}
             ${renderCreateModal()}
@@ -1212,8 +1239,8 @@ async function refreshPeriodCycles(options = {}) {
 
     try {
         const userId = await ensureUserId(options.initialUserId);
-        const rows = await fetchPeriodCycles(userId);
-        const activityMap = await fetchOperationalPeriodActivity(userId);
+        const rows = await fetchPeriodCycles(userId, state.selectedFarmId);
+        const activityMap = await fetchOperationalPeriodActivity(userId, state.selectedFarmId);
         const mergedCycles = mergePeriodCycles(rows, activityMap, userId);
         state.cycles = mergedCycles.map((row) => buildCycleViewModel(row, activityMap));
         state.summary = buildSummary(state.cycles);
@@ -1260,14 +1287,22 @@ async function createPeriodCycleFromDraft() {
         throw new Error('El nombre del ciclo es obligatorio.');
     }
 
+    const farmId = normalizeId(state.values?.farmId);
+    if (!farmId) {
+        throw new Error('La finca del ciclo es obligatoria.');
+    }
+
     const parsed = parseMonthInput(state.values?.periodMonth);
-    const duplicate = state.cycles.find((cycle) => cycle.monthKey === parsed.monthKey && cycle.derived !== true);
+    const duplicate = state.cycles.find((cycle) => cycle.monthKey === parsed.monthKey
+        && normalizeId(cycle?.farm_id) === farmId
+        && cycle.derived !== true);
     if (duplicate) {
-        throw new Error(`Ya existe un ciclo para ${duplicate.monthLabel}.`);
+        throw new Error(`Ya existe un ciclo para ${duplicate.monthLabel} en esta finca.`);
     }
 
     const payload = {
         user_id: userId,
+        farm_id: farmId,
         name,
         period_year: parsed.year,
         period_month: parsed.month,
@@ -1289,7 +1324,8 @@ function resetForm(keepMonth = true) {
     state.creating = false;
     state.values = {
         name: '',
-        periodMonth: monthValue
+        periodMonth: monthValue,
+        farmId: defaultDraftFarmId()
     };
 }
 
@@ -1299,6 +1335,16 @@ function bindRootEvents() {
             if (event.target?.matches?.('[data-period-overlay]')) {
                 resetForm();
                 renderRoot();
+                return;
+            }
+
+            const farmChip = event.target.closest('[data-period-farm]');
+            if (farmChip) {
+                const nextFarmId = normalizeId(farmChip.dataset.periodFarm);
+                if (nextFarmId !== state.selectedFarmId) {
+                    state.selectedFarmId = nextFarmId;
+                    void refreshPeriodCycles();
+                }
                 return;
             }
 
@@ -1315,6 +1361,9 @@ function bindRootEvents() {
 
             const action = button.dataset.periodAction;
             if (action === 'toggle-form') {
+                if (!state.formOpen && !state.values?.farmId) {
+                    state.values.farmId = defaultDraftFarmId();
+                }
                 state.formOpen = !state.formOpen;
                 renderRoot();
                 return;
@@ -1382,6 +1431,11 @@ function bindRootEvents() {
         });
 
         state.root.addEventListener('change', (event) => {
+            const draftField = event.target?.dataset?.periodDraft;
+            if (draftField) {
+                setDraftValue(draftField, event.target.value);
+                return;
+            }
             const compareRole = event.target?.dataset?.periodCompare;
             if (!compareRole) return;
             const nextId = normalizeId(event.target.value);
@@ -1442,7 +1496,7 @@ export function getAgroPeriodCyclesSummary() {
     };
 }
 
-export async function assertOperationalPeriodOpen({ movementDate, userId = '' } = {}) {
+export async function assertOperationalPeriodOpen({ movementDate, userId = '', farmId = '' } = {}) {
     const safeDate = String(movementDate || '').trim();
     if (!safeDate) return { allowed: true, cycle: null };
     if (!isValidLocalDateIso(safeDate)) {
@@ -1454,29 +1508,36 @@ export async function assertOperationalPeriodOpen({ movementDate, userId = '' } 
 
     const monthKey = safeDate.slice(0, 7);
     const resolvedUserId = await ensureUserId(userId);
+    const safeFarmId = normalizeId(farmId);
     const derivedCycle = buildDerivedCycle(monthKey, resolvedUserId);
     const year = Number(derivedCycle.period_year || 0);
     const month = Number(derivedCycle.period_month || 0);
 
     let cycle = derivedCycle;
 
-    let result = await supabase
+    let query = supabase
         .from(PERIOD_CYCLE_TABLE)
-        .select('id,name,period_year,period_month,start_date,end_date,deleted_at,user_id')
+        .select('id,name,farm_id,period_year,period_month,start_date,end_date,deleted_at,user_id')
         .eq('user_id', resolvedUserId)
         .eq('period_year', year)
         .eq('period_month', month)
-        .is('deleted_at', null)
-        .maybeSingle();
+        .is('deleted_at', null);
+    if (safeFarmId) {
+        query = query.eq('farm_id', safeFarmId);
+    }
+    let result = await query.maybeSingle();
 
     if (result.error && isMissingColumnError(result.error, 'deleted_at')) {
-        result = await supabase
+        let fallback = supabase
             .from(PERIOD_CYCLE_TABLE)
-            .select('id,name,period_year,period_month,start_date,end_date,user_id')
+            .select('id,name,farm_id,period_year,period_month,start_date,end_date,user_id')
             .eq('user_id', resolvedUserId)
             .eq('period_year', year)
-            .eq('period_month', month)
-            .maybeSingle();
+            .eq('period_month', month);
+        if (safeFarmId) {
+            fallback = fallback.eq('farm_id', safeFarmId);
+        }
+        result = await fallback.maybeSingle();
     }
 
     if (result.error) {

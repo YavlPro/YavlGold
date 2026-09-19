@@ -1357,7 +1357,8 @@ async function createCycleRecord(payload) {
     const userId = await ensureUserId();
     await assertOperationalPeriodOpen({
         movementDate: payload?.movementDate,
-        userId
+        userId,
+        farmId: payload.farmId || ''
     });
     const cropId = await validateCropId(supabase, userId, payload.cropId);
     const closedAt = payload.status === 'closed' ? todayLocalIso() : null;
@@ -1409,7 +1410,8 @@ async function updateCycleRecord(cycleId, payload) {
     const userId = await ensureUserId();
     await assertOperationalPeriodOpen({
         movementDate: payload?.movementDate,
-        userId
+        userId,
+        farmId: payload.farmId || ''
     });
     const existingCycle = state.cycleIndex.get(cycleId);
     if (!existingCycle) {
