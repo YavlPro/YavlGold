@@ -163,16 +163,24 @@ async function ensurePanels() {
     }
 }
 
-// Las secciones reubicadas dejan de ser regiones del shell: si el shell las
- //capturó en topLevelRegions antes de la reubicación, syncRegions las oculta
-// en cada cambio de vista. Este unhide corre tras cada activación (el evento
-// view-changed se dispara DESPUÉS de syncRegions) y en el init tardío.
+// QA-fix (ANEXO 29, 18-sep 21:22 — workspace montado pero paneles vacíos):
+// syncRegions oculta las regiones que no coinciden con la vista activa con la
+// clase .is-shell-hidden (display:none !important, agro.css:9373) MÁS el
+// atributo hidden. Las secciones reubicadas fueron capturadas en
+// topLevelRegions del shell antes de la reubicación, así que el shell les
+// re-aplica esa clase en CADA cambio de vista. Limpiar solo hidden/inert no
+// basta: hay que retirar la clase también, aquí (reubicación) y en cada
+// activación — el evento view-changed llega DESPUÉS de syncRegions, así que
+// el orden desoculta correctamente.
+function revealEmbeddedSection(section) {
+    if (!section) return;
+    section.hidden = false;
+    section.removeAttribute('inert');
+    section.classList.remove('is-shell-hidden', 'is-shell-active');
+}
+
 function unhideEmbeddedSections() {
-    [state.repoSection, state.assistantSection].forEach((section) => {
-        if (!section) return;
-        section.hidden = false;
-        section.removeAttribute('inert');
-    });
+    [state.repoSection, state.assistantSection].forEach(revealEmbeddedSection);
 }
 
 function activateFromContext() {
@@ -193,8 +201,7 @@ function relocatePanels() {
 
     if (state.repoSection && state.ragHost && !state.ragHost.contains(state.repoSection)) {
         state.repoSection.removeAttribute('data-agro-shell-region');
-        state.repoSection.removeAttribute('hidden');
-        state.repoSection.removeAttribute('inert');
+        revealEmbeddedSection(state.repoSection);
         state.repoSection.style.removeProperty('margin-top');
         state.repoSection.classList.add('amw-embedded', 'amw-embedded--rag');
         state.ragHost.appendChild(state.repoSection);
@@ -202,8 +209,7 @@ function relocatePanels() {
 
     if (state.assistantSection && state.iaHost && !state.iaHost.contains(state.assistantSection)) {
         state.assistantSection.removeAttribute('data-agro-shell-region');
-        state.assistantSection.removeAttribute('hidden');
-        state.assistantSection.removeAttribute('inert');
+        revealEmbeddedSection(state.assistantSection);
         state.assistantSection.classList.add('amw-embedded', 'amw-embedded--ia');
         state.iaHost.appendChild(state.assistantSection);
     }

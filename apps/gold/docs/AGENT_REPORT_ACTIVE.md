@@ -572,3 +572,50 @@ Agente: GLM (Zcode). S2 (workspace/routing/estado) y S3 (puerta directa/visual/m
 git add apps/gold/agro/agro-memory-workspace.js apps/gold/agro/agro-memory-workspace.css apps/gold/agro/index.html apps/gold/agro/agro-shell.js apps/gold/agro/agro-assistant-ui.js apps/gold/agro/agro-shell-favorites.js
 git commit -m "feat(memoria): ANEXO 29 S2+S3 — workspace fullscreen Memoria (RAG+IA, toggle Ambas/Memoria/IA sin perder estado) + puerta directa sin hub intermedio + aliases legacy con panel + favoritos remapeados"
 ```
+
+> **Nota posterior (sesión IX):** el owner commiteó S2+S3 como `c362bbd6` (21:19) y el QA online dio ROJO (workspace sin paneles). El bloque de arriba queda como registro histórico; el fix va en la sesión IX.
+
+---
+
+## Sesión 2026-09-18 (IX) — ANEXO 29 QA-fix: workspace montado pero paneles vacíos
+
+Agente: GLM (ZCode). QA owner 21:22 ROJO: "topbar Volver+Memoria correcto, cero contenido: ni paneles ni toggle". MODO diagnóstico con evidencia; fix mínimo aplicado con causa clara y confirmada. Git NO ejecutado. Previo: owner commiteó S2+S3 como `c362bbd6`.
+
+**Causa raíz CONFIRMADA (archivo:línea)**: `.is-shell-hidden { display: none !important }` (agro.css:9373-9375). En el boot, `syncRegions` (agro-shell.js:1210) oculta toda región que no coincide con la vista activa con ESA CLASE más el atributo `hidden` (setElementHiddenInert :738-746). Las secciones `#agro-repo-section` y `.asistente-dedicado` fueron capturadas en `topLevelRegions` (agro-shell.js:983, captura ÚNICA al init) ANTES de que el workspace las reubicara — y como la reubicación les strips el `data-agro-shell-region`, cada `syncRegions` posterior las vuelve a marcar `is-shell-hidden` (nunca matchean). La reubicación y el unhide de activación de S2 limpiaban SOLO `hidden`+`inert`, nunca la clase → ambos paneles quedan `display:none !important` para siempre. Secuencia exacta del fallo: boot → setActiveView('memoria') → syncRegions aplica clase a las dos secciones (regiones 'agrorepo'/'asistente' ≠ 'memoria') → workspace reubica y limpia attrs → clase viaja con el nodo → paneles invisibles aunque los hosts estén visibles.
+
+**Fix mínimo (2 archivos)**:
+
+| Archivo | Cambio |
+|---|---|
+| `agro/agro-memory-workspace.js` | Nueva `revealEmbeddedSection(section)`: limpia `hidden`+`inert`+`classList.remove('is-shell-hidden','is-shell-active')`. Usada en `relocatePanels()` (reemplaza los removeAttribute sueltos) y en `unhideEmbeddedSections()` (cada activación — el evento view-changed llega DESPUÉS de syncRegions, así que el orden desoculta en cada ciclo). Cubre ambos órdenes de carga shell/workspace: si el workspace carga antes del shell, las secciones nunca se capturan y el fix es no-op. |
+| `agro/agro-memory-workspace.css` | Guard `.agro-memory-workspace[hidden] { display:none }` — el `display:flex` del autor pisaba el `[hidden]` nativo de la sección (riesgo de flash pre-init del shell y defensa ante cualquier ruta que dependa solo del atributo). |
+
+**Trazado del prompt de diagnóstico del owner, con los selectores REALES (los del snippet usaban atributos que no existen: `data-agro-memoria-workspace`/`data-memoria-panel`)**:
+- (a) Orden de boot: las secciones son HTML estático (source index.html:2315 y :3657; dist/agro/index.html:2287/:2315 verificados) y el module script corre post-parse — appendChild nunca falló por orden. La carrera relevante era otra: SHELL captura regiones ANTES de la reubicación (causa raíz).
+- (b) Reubicación: la lógica era correcta (los nodos se movían); lo que viajaba con ellos era la clase maldita.
+- (c) Visibilidad: este era el fallo — hosts visibles, hijos con `is-shell-hidden !important`.
+- (d) CSS: `<link>` presente (source :160; asset `agro-qB0EJyi8.css` en dist); sin colisiones `amw-` en CSS preexistente (grep 0).
+- (e) Toggle: markup estático íntegro en source y dist (header completo con los 3 chips, leído línea a línea) — el toggle NO depende del JS. No se encontró mecanismo estático que lo oculte; la lectura más probable de la captura es el contextbar del shell (Volver + título 'Memoria' a profundidad módulo) sobre el cuerpo vacío. Si tras este fix el toggle sigue sin verse, hace falta la salida DevTools del owner (snippet corregido en QA sugerido).
+- (f) Console: sin errores de sintaxis (build verde; chunk nuevo `agro-memory-workspace-BiY8pDa3.js` contiene el fix).
+
+**Resultado de build**: `pnpm build:gold` ✅ verde (2.56s). Diff acotado a los 2 archivos del workspace.
+
+**QA sugerido (owner)**: recargar con cache dura (Ctrl+Shift+R) y abrir Memoria → ambos paneles visibles en desktop (Ambas), IA en móvil; toggle funcional. Si algo sigue sin verse, pegar en consola (selectores reales):
+```javascript
+const ws = document.querySelector('#agro-memory-workspace');
+const rag = document.querySelector('[data-amw-panel-container="rag"] > #agro-repo-section');
+const ia = document.querySelector('[data-amw-panel-container="ia"] .asistente-dedicado');
+console.log('workspace', !!ws, 'hidden?', ws?.hidden, ws?.className);
+console.log('rag dentro del host:', !!rag, 'clases:', rag?.className);
+console.log('ia dentro del host:', !!ia, 'clases:', ia?.className);
+console.log('toggle:', !!document.getElementById('amw-toggle'), getComputedStyle(document.getElementById('amw-toggle')).display);
+console.log('módulo:', typeof window._agroMemoriaRevealRag);
+```
+
+**NO se hizo (scope respetado)**: git (bloque sugerido abajo); cambios en shell/Edge/assistant (B1); rediseño del layout.
+
+**Bloque git sugerido (NO ejecutado)**:
+```bash
+git add apps/gold/agro/agro-memory-workspace.js apps/gold/agro/agro-memory-workspace.css
+git commit -m "fix(memoria): ANEXO 29 QA-fix — paneles del workspace quedaban invisibles: is-shell-hidden (display:none !important) viajaba con las secciones reubicadas y nunca se limpiaba (revealEmbeddedSection en reubicación + cada activación) + guard [hidden] en la sección"
+```

@@ -13,6 +13,13 @@
     min-height: calc(100dvh - 140px);
 }
 
+/* QA-fix ANEXO 29: display:flex del autor NO puede pisar el [hidden] nativo
+   (la sección arranca hidden en el HTML y el shell la gestiona por
+   hidden + is-shell-hidden; sin esto habría flash pre-init del shell). */
+.agro-memory-workspace[hidden] {
+    display: none;
+}
+
 /* ---------- Header: Volver + título + segmented chips ---------- */
 
 .amw-header {
