@@ -24,6 +24,7 @@ import {
     renderFactureroClientEntryGate,
     openFactureroClientFlow
 } from './agro-facturero-clientes-flow.js';
+import { openFactureroExistingClientFlow } from './agro-facturero-clientes-existing-flow.js';
 import {
     openFactureroViewWizard,
     destroyFactureroViewWizard
@@ -3039,6 +3040,40 @@ function openFlowWizard(root, route) {
     });
 }
 
+let activeExistingFlowSession = false;
+
+// Wizard "Cliente existente" (subview=existente, D2 sesion 2026-09-20):
+// nuevo registro Fiado/Pagado para un cliente ya registrado. Guard espejo
+// de openFlowWizard para no re-instanciar en refrescos de renderView.
+function openExistingFlowWizard(root, route) {
+    if (activeExistingFlowSession) return;
+    activeExistingFlowSession = true;
+    openFactureroExistingClientFlow(root, {
+        startStep: Math.max((Number(route.paso) || 1) - 1, 0),
+        preselectedBuyerId: String(route.id || '').trim(),
+        onExit: () => {
+            activeExistingFlowSession = false;
+            writeFactureroHashRoute({ subview: '' });
+            renderView();
+        },
+        onGoToDetail: (buyerId) => {
+            activeExistingFlowSession = false;
+            if (!buyerId) return;
+            loadSummary();
+            openBuyerDetailWithRoute(buyerId);
+        },
+        onGoToRecords: () => {
+            activeExistingFlowSession = false;
+            loadSummary();
+            writeFactureroHashRoute({ subview: 'ver-clientes', paso: 1 });
+            renderView();
+        },
+        onCreated: () => {
+            void loadSummary();
+        }
+    });
+}
+
 function renderEntryGate(root) {
     writeFactureroHashRoute({ subview: '' });
     renderFactureroClientEntryGate(root, {
@@ -3059,6 +3094,24 @@ function renderEntryGate(root) {
         // se retira de la puerta (el subview `registros` sigue vivo en el routing;
         // su retiro completo es decision futura del owner).
         doors.querySelector('[data-flow-door="registros"]')?.remove();
+
+        // Tercer tile (D1, sesion 2026-09-20): registro para un cliente ya
+        // registrado. Mismo chrome fcflow-door; se inserta antes de "Ver clientes"
+        // para conservar el orden Nuevo cliente · Cliente existente · Ver clientes.
+        const existingDoor = document.createElement('button');
+        existingDoor.type = 'button';
+        existingDoor.className = 'fcflow-door';
+        existingDoor.setAttribute('data-flow-door', 'existente');
+        existingDoor.innerHTML = `
+            <i class="fa-solid fa-user-check" aria-hidden="true"></i>
+            <span class="fcflow-door__title">Cliente existente</span>
+            <span class="fcflow-door__desc">Registra una nueva venta o fiado a alguien que ya está en tu libro.</span>
+        `;
+        existingDoor.addEventListener('click', () => {
+            writeFactureroHashRoute({ subview: 'existente', paso: 1 });
+            renderView();
+        });
+        doors.appendChild(existingDoor);
 
         const viewWizardDoor = document.createElement('button');
         viewWizardDoor.type = 'button';
@@ -3183,6 +3236,7 @@ function renderView() {
     if (!root) return;
 
     // Routing profundo por hash: '' = entrada P0, 'nuevo' = wizard por páginas,
+    // 'existente' = wizard registro para cliente existente (8 pasos),
     // 'ver-clientes' = wizard de consulta (4 pasos), 'registros' = lista,
     // 'detalle' = detalle del cliente.
     const route = readFactureroHashRoute() || {};
@@ -3192,6 +3246,12 @@ function renderView() {
     // termina para que su body class (contextbar neutralizada) no quede pegado.
     if (routeSubview !== 'ver-clientes' && activeViewWizardSession) {
         closeViewWizardSession();
+    }
+
+    // Igual para el wizard "Cliente existente": si el hash salio de existente,
+    // su sesion termina para no bloquear re-entradas (limpieza espejo).
+    if (routeSubview !== 'existente' && activeExistingFlowSession) {
+        activeExistingFlowSession = false;
     }
 
     // Chrome del detalle (topbar propia con Volver unico) solo cuando el
@@ -3214,6 +3274,11 @@ function renderView() {
 
     if (routeSubview === 'nuevo') {
         openFlowWizard(root, route);
+        return;
+    }
+
+    if (routeSubview === 'existente') {
+        openExistingFlowWizard(root, route);
         return;
     }
 

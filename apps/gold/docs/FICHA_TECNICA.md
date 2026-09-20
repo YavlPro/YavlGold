@@ -166,6 +166,7 @@ agro-facturero-clientes-view.js — Facturero de Clientes: vista de clientes, ta
 agro-facturero-clientes-detail.js — Facturero de Clientes: detalle individual del cliente (historial, saldos, acciones)
 agro-facturero-clientes-export.js — Facturero de Clientes: export Markdown de la lista (global y por finca)
 agro-facturero-clientes-flow.js — wizard de creación de cliente y primer registro (8 pasos) y routing hash del facturero (readFactureroHashRoute/writeFactureroHashRoute)
+agro-facturero-clientes-existing-flow.js — wizard "Cliente existente" (subview=existente, 8 pasos): nuevo registro Fiado/Pagado para un cliente ya registrado; reutiliza la escritura de flow.js (insertRowWithColumnFallback + buyer identity link), cultivos solo produccion/finalizado + chip "Sin cultivo", pérdida/donación excluidas (nacen por transferencia en el detalle)
 agro-facturero-clientes-view-wizard.js — wizard de lectura "Ver clientes" (4 pasos), subvista "Acciones del sistema" (24 h) y componente compartido de trazabilidad (renderSystemActionsListHtml)
 agro-facturero-finca-wizard.js — wizard de 5 pasos para Facturero de la Finca (puerta Crear/Ver, tipo de registro, finca, categoría canónica y lista/formulario final con persistencia por hash y navegación guiada)
 agro-facturero-finca-edit.js — modal de edición y eliminación suave de movimientos del ledger de la finca (cargado dinámicamente vía import() desde el wizard, edición multimoneda con respeto de tasa histórica, borrado suave con deleted_at, exclusión de filas originadas en fiados/clientes)
@@ -421,11 +422,12 @@ La navegación profunda y modular dentro de los factureros se sincroniza de form
   * `cat`: slug de categoría canónica (`insumos`, `herramientas`, `mano_obra`, `mantenimiento`, `transporte`, `otros`, `ventas` — `ventas` existe solo en ingresos).
   * **Persistencia:** idéntica al wizard de Finca — únicamente por hash, sin `localStorage`.
 
-- **Flujos Facturero de Clientes (`agro-facturero-clientes-flow.js` / `agro-facturero-clientes-view-wizard.js`):**
-  Estructura hash:
-  `#view=cartera&subview=nuevo&paso=N` (wizard de creación de cliente y primer registro en 8 pasos).
-  `#view=cartera&subview=ver&paso=N` (wizard de lectura "Ver clientes" en 4 pasos).
-  Sincronización gestionada por `readFactureroHashRoute()` y `writeFactureroHashRoute()`.
+- **Flujos Facturero de Clientes (`agro-facturero-clientes-flow.js` / `agro-facturero-clientes-existing-flow.js` / `agro-facturero-clientes-view-wizard.js`):**
+  Estructura hash (view viva: `facturero-clientes`; el alias legacy `cartera-viva` se acepta en lectura con coerción — la Ficha v1.8 documentaba `cartera`, que ya no corresponde al routing vivo):
+  `#view=facturero-clientes&subview=nuevo&paso=N` (wizard de creación de cliente y primer registro en 8 pasos).
+  `#view=facturero-clientes&subview=existente&paso=N&id=UUID` (wizard "Cliente existente" en 8 pasos: cuenta YavlGold → cliente → finca → cultivo → tipo Fiado/Pagado → categoría/presentación → formulario → confirmación; `id` es el cliente elegido, restaurable ante F5).
+  `#view=facturero-clientes&subview=ver-clientes&paso=N` (wizard de lectura "Ver clientes" en 4 pasos).
+  Sincronización gestionada por `readFactureroHashRoute()` y `writeFactureroHashRoute()`; otras subviews del mismo view: `detalle&id=UUID` (detalle del cliente) y `registros` (legacy, redirige a `ver-clientes`).
 
 - **Workspace Memoria (`agro-memory-workspace.js`):**
   Estructura hash: `#view=memoria` (capa IA, hogar) y `#view=memoria&subview=rag` (capa AgroRepo).
@@ -551,5 +553,5 @@ git status
 
 ---
 
-**Versión de Ficha:** 1.8
-**Última Actualización:** 11/09/2026
+**Versión de Ficha:** 1.9
+**Última Actualización:** 20/09/2026

@@ -110,9 +110,12 @@
 }
 
 /* ---------- P0: puertas de entrada ---------- */
+/* auto-fit: con 2 tiles se comportan como hoy (fila compartida); con 3 tiles
+   (Facturero de Clientes: Nuevo · Existente · Ver) fluyen en la misma fila y
+   colapsan a 1 columna en mobile. Pistas vacías se colapsan solas. */
 .fcflow-doors {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
     gap: var(--space-3, 0.75rem);
     margin-top: var(--space-2, 0.5rem);
 }

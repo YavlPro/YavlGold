@@ -340,14 +340,18 @@ function buildActions(ciclo) {
 // cultivos visibles; chips 3+4 solo con fase habilitada por el Facturero de
 // Clientes — misma lista vía puente window._agroClientesFlow (flow.js), sin
 // duplicar vocabulario. Labels estáticos, cero datos inventados.
+// D5 (sesión 2026-09-20): cards finalizadas también muestran Crear registro +
+// Ver registros; las perdidas solo Ver registros. Precultivo (activo) intacto.
 function buildCropChips(ciclo, mode) {
   const id = String(ciclo?.id || '').trim();
-  if (!id || mode !== 'active' || ciclo?.isAuditCard === true) return '';
+  if (!id || ciclo?.isAuditCard === true) return '';
+  if (mode !== 'active' && mode !== 'finished') return '';
   const resolvedStatus = String(ciclo?.resolvedStatus || '').trim();
-  const flowAllowed = window._agroClientesFlow?.allowedCropStatuses?.has?.(resolvedStatus) === true;
+  const flowAllowed = mode === 'active' && window._agroClientesFlow?.allowedCropStatuses?.has?.(resolvedStatus) === true;
+  const showCreate = mode === 'active' || String(ciclo?.estado || '').trim() !== 'perdido';
   return `
     <div class="crop-chip-row">
-      <button type="button" class="crop-chip" data-crop-chip="cultivo-crear" data-crop-id="${escapeAttr(id)}">Crear registro</button>
+      ${showCreate ? `<button type="button" class="crop-chip" data-crop-chip="cultivo-crear" data-crop-id="${escapeAttr(id)}">Crear registro</button>` : ''}
       <button type="button" class="crop-chip" data-crop-chip="cultivo-ver" data-crop-id="${escapeAttr(id)}">Ver registros</button>
       ${flowAllowed ? `<button type="button" class="crop-chip" data-crop-chip="clientes-crear">Crear factura de cliente</button>
       <button type="button" class="crop-chip" data-crop-chip="clientes-ver">Ver registros de clientes</button>` : ''}

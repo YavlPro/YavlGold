@@ -1440,3 +1440,76 @@ git add apps/gold/agro/agro-facturero-personal-wizard.js apps/gold/agro/agro-fac
 git commit -m "security: cierre CodeQL #74-76 — sink innerHTML del shell de factureros neutralizado via renderInto (DOMParser + replaceChildren); escape verificado intacto"
 git push
 ```
+
+---
+
+## Sesión 2026-09-19 — Resumen ejecutivo completo
+
+**Hecho (resumen):**
+- ANEXO 29 MF-2→MF-5: memoria conectada mobile (acciones flex, compositor opaco, columna IA fija, rename Agente Agro, tokens premium canon-compliant).
+- ANEXO 30 S1-S4 + QA-fix: Operaciones de la Finca como libro de finca (lectura plana, scoping farm_id, migración DB). QA-fix chips con nombre real.
+- ANEXO 31 S1-S3 + pase documental: Inicio=Dashboard directo, Granja con Crear Finca, Menú MI CUENTA/AYUDA. Pase documental auditado 15/15.
+- Fases 0-4 Agente Agro: privacidad invoke, verdad financiera multimoneda, conciencia módulo (tools + multi-turn), persistencia AgroRepo en Supabase (sync LWW + caché local).
+- security P0-P2: guard IDOR get_farm_balance, XSS rankings, agro_events RLS, grants mínimos, ownership agenda, sanitización edge.
+- security oleada-e + CodeQL #74-76: escapeHtml a scope módulo, innerHTML→renderInto en wizards.
+- chore: ignores herramientas auxiliares (.freebuff, .mimosa, .zcodeignore).
+
+**Commits de la jornada** (owner): `9faa4770`, `fdf653b3`, `299c4c40`, `145cda3c`, `abee3288`, `05fc9587`, `dc6aa5ab`, `f06bf9fd`, `eb40e13e`, `c54a044a`, `9a52b5ed`, `d62fdf58`, `140df5d2`.
+
+**Pendientes para mañana (2026-09-20):**
+1. **QA online owner**: validar en runtime toda la jornada de hoy (visual, navegación, finca libro, agente agro, agrorepo, seguridad).
+2. **Commit/push bloque completo**: si QA aprueba.
+3. **Vulnerabilidades CodeQL #74-76**: fix aplicado en working tree (renderInto), sin push. tras push, verificar cierre de alerts en siguiente análisis CodeQL. Si alguna persiste, revisar cadena fuente→sink.
+4. **Residuos UI "Asistente IA"**: sidebar brand + botón Dashboard — decisión owner pendiente.
+
+**Bloque git sugerido (NO ejecutado — esperando QA owner):**
+```bash
+git add -A
+git commit -m "feat: ANEXO 29 MF-5 + ANEXO 30 + ANEXO 31 + Fases Agente Agro/AgroRepo + security P0-P2/CodeQL #74-76"
+git push
+```
+
+**NO se hizo (scope respetado):** QA/browser, git sin palabra del owner, cambios en canónicos sin autorización.
+
+---
+
+## Sesión 2026-09-20 — Wizard "Cliente existente" (subview=existente) + chips de cards de cultivo + canon documental
+
+**Agente:** GLM (ZCode). **Autorización expresa del owner** para modificar `MANIFIESTO_AGRO.md` y `FICHA_TECNICA.md` únicamente según la Tarea D del prompt de sesión.
+
+**Objetivo:** tercera entrada en la puerta del Facturero de Clientes (tile `Cliente existente`), wizard de página completa de 8 pasos sobre `subview=existente` para registrar Fiado/Pagado a un cliente ya registrado, filtro de cultivos produccion/finalizado + chip `Sin cultivo` en los wizards de creación, chips de cards de Mis cultivos según estado (D5) y actualización canon documental (Manifiesto 4.5.1, FICHA v1.9).
+
+**Diagnóstico con evidencia (Tarea C):**
+- **V1 — Ruta canónica:** `writeFactureroHashRoute()` (flow.js:107-120) escribe SIEMPRE `view=facturero-clientes`; `readFactureroHashRoute()` (flow.js:92-105) acepta `facturero-clientes` + alias legacy `cartera-viva` (coerción en lectura). Producción muestra `#view=facturero-clientes`. La FICHA v1.8 documentaba `#view=cartera`, que el código ni siquiera acepta como alias → reconciliada en D-doc2. Coexisten alias con coerción: `cartera-viva` (lectura) y `registros` (redirect a `ver-clientes` en renderView view.js).
+- **V2 — Anti-monolito:** `agro-facturero-clientes-flow.js` medido en 1237 líneas (≥1200) → rama nueva extraída a módulo `agro-facturero-clientes-existing-flow.js` (1066 líneas, rango de vigilancia 800-1200), según regla del prompt.
+- **V3 — Escritura del primer registro:** `insertMovement()` (flow.js:974-1064) escribe por tabName: `pendientes→agro_pending`, `ingresos→agro_income` (más pérdidas/transferencias no permitidas aquí); payload con `crop_id` nullable, `farm_id` resuelto (state o crop.farm_id), fecha/concepto/monto, currency, exchange_rate de mercado, monto_usd; `cliente` para fiados; para ingresos `categoria: crop_id?'ventas':'general'` + `origin_table:'agro_pending'` + `transfer_state:'active'`; buyer identity via `ensureBuyerIdentityLink`; unidades kg→quantity_kg / saco-cesta→unit_type+unit_qty; insert con `insertRowWithColumnFallback`. El wizard nuevo reutiliza EXACTAMENTE esta escritura (helpers exportados de flow.js), sin contabilidad paralela.
+- **D4 ya implementado en subview=nuevo:** `FLOW_ALLOWED_CROP_STATUSES = {produccion, finalizado}` (flow.js:65) + `eligibleCropsForFarm()` filtrando por finca (flow.js:610-614). Solo faltaba el label del chip: "General / Sin cultivo" → "Sin cultivo". El wizard de lectura (ver-clientes) NO se tocó: su regla "el estado del cultivo no excluye" vive en view-wizard.js y sigue intacta.
+- **B1 — Cards de Mis cultivos:** chips renderizados por `buildCropChips(ciclo, mode)` (agrociclos.js:343-356): solo `mode==='active'` → las cards finalizadas/perdidas (ambas renderizadas con mode 'finished' vía `renderFinishedCycles` desde agro.js:11579, `renderCropCycleGroup`) no mostraban chips. El grupo perdido identifica `estado:'perdido'` (agro.js:11155-11157, `buildFinishedCycleCardsData` con `groupType==='lost'`); finalizados reciben estado de `mapStatusToFinishedCycleMeta` (agro.js:10838-10858).
+
+**Cambios por archivo:**
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro-facturero-clientes-existing-flow.js` | NUEVO (1066 L) | Wizard `subview=existente` 8 pasos (cuenta→cliente→finca→cultivo→tipo→categoría/presentación→formulario→confirmación) + pantalla de éxito. Chrome fcflow reutilizado (cero CSS nuevo de wizard); clientes reales de `agro_buyers` (activos, sin archivados) filtrados por vinculación real `linked_user_id`; búsqueda humana nombre/finca/contacto (finca extraída de notes "Finca: X"); cultivos solo produccion/finalizado de la finca elegida + chip `Sin cultivo` (al cambiar finca se limpia el cultivo: regla estricta de no mezcla); P5 solo Fiado/Pagado (D3); P6 categoría honesta (fiado "No aplica categoría"; pago muestra Ventas/General auto según cultivo, réplica del insert) + presentación/cantidad réplica; P7 formulario réplica (COP/USD/VES, tasa mercado readonly, guardrail USD, fecha, concepto) con nodos `data-money`/`data-buyer-name` para privacidad; P8 resumen + Confirmar → `insertMovement` réplica exacta. Navegación: Siguiente único avance, Volver retrocede paso (P1→puerta), Ir a inicio con confirmación de borrador, hash `paso=1..8&id` persistente ante F5. |
+| `apps/gold/agro/agro-facturero-clientes-flow.js` | Quirúrgico (6 ediciones) | Export de `RECORD_TYPES`, `UNIT_OPTIONS`, `buildConceptWithWho`, `insertRowWithColumnFallback`, `isEligibleFlowCrop`, `cropDisplayLabel`, + wrapper `resolveFlowCropStatus` (reuso sin duplicar); `writeFactureroHashRoute` persiste `paso` también para `subview=existente`; chip "General / Sin cultivo" → "Sin cultivo" (D4). Sin cambios de comportamiento runtime existente. |
+| `apps/gold/agro/agro-facturero-clientes-view.js` | Quirúrgico | Import del módulo nuevo; tercer tile `Cliente existente` en la puerta (mismo patrón del tile Ver clientes: se agrega desde la vista sin tocar el entry gate canónico de flow.js; orden Nuevo·Existente·Ver); rama de routing `existente` en `renderView` + `openExistingFlowWizard` con guard `activeExistingFlowSession` espejo de `openFlowWizard` y limpieza cuando el hash sale de `existente`; comentario de routing actualizado. |
+| `apps/gold/agro/agro-facturero-clientes-flow.css` | 1 regla | `.fcflow-doors` → `repeat(auto-fit, minmax(230px, 1fr))`: con 2 tiles se comportan igual que hoy (puertas de finca/cultivo/personal intactas), con 3 fluyen en una fila y colapsan en mobile. |
+| `apps/gold/agro/agrociclos.js` | Quirúrgico (~10 L) | `buildCropChips` acepta también `mode==='finished'`: finalizado muestra `Crear registro`+`Ver registros` (mismos deep-links al Facturero del Cultivo), perdido (`estado==='perdido'`) solo `Ver registros`; chips de clientes siguen exclusivos de cards activas con fase habilitada; precultivo y activos intactos. |
+| `apps/gold/docs/MANIFIESTO_AGRO.md` | Canon (autorizado) | §4.5.1: puerta con tres entradas; subtítulos de los tres wizards; regla de selector de cultivos en wizards de creación (produccion/finalizado + Sin cultivo, opcional; exclusión solo aplica a lectura); regla de cards de Mis cultivos. Ninguna otra sección tocada. |
+| `apps/gold/docs/FICHA_TECNICA.md` | Canon (autorizado) | §8: bloque de flujos del Facturero de Clientes reconciliado (view viva `facturero-clientes`, alias `cartera-viva`, subviews `nuevo`/`existente`/`ver-clientes`/`detalle`/`registros`) + documentación de `subview=existente&paso&id`; §4.2: línea del módulo nuevo; Versión 1.9, Última Actualización 20/09/2026. |
+| `apps/gold/docs/ops/daily-log-2026-09-20.md` | NUEVO | Bitácora diaria canónica (§4.3). |
+
+**Resultado de build:** `pnpm build:gold` ✅ verde (agent-guard OK; agent-report-check OK; vite build OK, 209 módulos; check-llms OK; check-dist-utf8 OK). `node --check` OK en los 4 archivos JS tocados. El módulo nuevo queda bundleado dentro del chunk `agro-facturero-clientes-view-*.js` (import estático desde view.js, mismo patrón que flow.js — cadena: index.html dynamic → view.js static → existing-flow.js; sin dependencias circulares).
+
+**Verificación estática realizada (sin QA browser, ley del owner):** routing simétrico (write escribe `existente`/paso/id; read lo restaura; F5 sobre paso≤8 reabre ese paso; tras guardar, F5 cae en P8 con borrador vacío → Confirmar bloqueado por validación: guard natural contra doble inserción); deep-links de chips intactos (`cultivo-crear`→`facturero-cultivo&rama=crear&paso=2&crop=`, `cultivo-ver`→`rama=ver&paso=3`); guard de sesión espejo del wizard nuevo; eventos de refresco idénticos (`agro:pending:refreshed`/`agro:income:changed`/`agro:crops:refresh`); todas las clases CSS usadas existen en agro-facturero-clientes-flow.css; privacidad vía nodos `data-money`/`data-buyer-name` (enmascaramiento automático del observer de agro-privacy.js).
+
+**NO se hizo (scope respetado):** wizard de lectura ver-clientes intacto (regla "el estado del cultivo no excluye" sin tocar); sin pérdidas ni donaciones desde el wizard nuevo; cultivo sigue opcional; sin fingir vinculación YavlGold (P1 filtra por `linked_user_id` real); agro.js sin cambios (feature vive en módulo nuevo); sin datos mock; sin QA browser; sin git (commits/push solo con confirmación expresa del owner).
+
+**QA pendiente del owner (online):** (1) puerta con 3 tiles y orden responsive; (2) wizard existente completo: F5 en cada paso restaura; Volver desde P1 sale a la puerta; Ir a inicio pide confirmación con borrador sucio; (3) P1 filtra clientes con/sin cuenta según vinculación real; (4) P4 muestra solo cultivos produccion/finalizado de la finca elegida y "Sin cultivo"; cambio de finca limpia cultivo; (5) P6: fiado muestra "No aplica categoría", pago muestra Ventas/General según cultivo; (6) guardar Fiado y Pagado → fila real en agro_pending/agro_income con buyer_id correcto y unidad; pantalla de éxito → detalle del cliente; (7) modo montos ocultos enmascara resumen; (8) cards Mis cultivos: finalizado ambos chips, perdido solo Ver registros, activos/precultivo como antes; (9) subview=nuevo: chip "Sin cultivo" y comportamiento previo intacto.
+
+**Bloque git sugerido (NO ejecutado):**
+```bash
+git add apps/gold/agro/agro-facturero-clientes-existing-flow.js apps/gold/agro/agro-facturero-clientes-flow.js apps/gold/agro/agro-facturero-clientes-view.js apps/gold/agro/agro-facturero-clientes-flow.css apps/gold/agro/agrociclos.js apps/gold/docs/MANIFIESTO_AGRO.md apps/gold/docs/FICHA_TECNICA.md apps/gold/docs/AGENT_REPORT_ACTIVE.md apps/gold/docs/ops/daily-log-2026-09-20.md
+git commit -m "feat: wizard Cliente existente (subview=existente, 8 pasos) + puerta 3 tiles + chips cards cultivo (D5) + canon Manifiesto 4.5.1 / FICHA v1.9"
+git push
+```

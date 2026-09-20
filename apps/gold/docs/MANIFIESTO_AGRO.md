@@ -673,10 +673,19 @@ a página completa. No usa modales como pasos.
   parcial) queda reflejado en el libro general con trazabilidad clara de su
   origen comercial, sin duplicar la historia del dinero ni maquillar las deudas
   vivas que aún resten.
-- Los dos wizards se distinguen con un subtítulo humano en la topbar:
-  "Creación de nuevo cliente y registro" y "Ver clientes y registros".
-- La puerta del facturero ofrece dos entradas: `Nuevo cliente` (creación)
-  y `Ver clientes` (lectura).
+- Los tres wizards se distinguen con un subtítulo humano en la topbar:
+  "Creación de nuevo cliente y registro", "Nuevo registro para cliente
+  existente" y "Ver clientes y registros".
+- La puerta del facturero ofrece tres entradas: `Nuevo cliente` (creación
+  desde cero), `Cliente existente` (nuevo registro para un cliente ya
+  registrado) y `Ver clientes` (lectura).
+- En los wizards de creación (`Nuevo cliente` y `Cliente existente`), el
+  selector de cultivos ofrece únicamente cultivos de la finca elegida en
+  estado produccion o finalizado, más la opción honesta `Sin cultivo`; la
+  asociación a cultivo sigue siendo opcional. La regla de que el estado del
+  cultivo no excluye aplica solo al wizard de lectura `Ver clientes`.
+- Las cards de Mis cultivos muestran `Crear registro` y `Ver registros` en
+  estados activos y finalizado; perdido muestra solo `Ver registros`.
 - La lista legacy `registros` queda retirada de la navegación y redirige al
   wizard. El detalle del cliente es superficie dedicada: sin tabs hermanas,
   `Volver` único y filtros sin solapes (tipo de fila, estado, unidad).

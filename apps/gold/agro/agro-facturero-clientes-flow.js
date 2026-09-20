@@ -28,7 +28,9 @@ const STEP_ORDER_NEW = ['link', 'data', 'type', 'crop', 'unit', 'details', 'summ
 const STEP_ORDER_RECORD = ['type', 'crop', 'unit', 'details', 'summary', 'done'];
 const TOTAL_STEPS = 8;
 
-const RECORD_TYPES = Object.freeze({
+// Exportado para agro-facturero-clientes-existing-flow.js: única fuente de
+// verdad de etiquetas/íconos de tipos y unidades de la familia fcflow.
+export const RECORD_TYPES = Object.freeze({
     pendientes: Object.freeze({
         label: 'Fiado',
         hint: 'Te entregaron producto y te van a pagar.',
@@ -55,7 +57,7 @@ const RECORD_TYPES = Object.freeze({
     })
 });
 
-const UNIT_OPTIONS = [
+export const UNIT_OPTIONS = [
     { value: 'saco', label: 'Saco', icon: 'fa-solid fa-box' },
     { value: 'cesta', label: 'Cesta', icon: 'fa-solid fa-basket-shopping' },
     { value: 'kg', label: 'Kg', icon: 'fa-solid fa-weight-scale' }
@@ -110,7 +112,7 @@ export function writeFactureroHashRoute({ subview = '', paso = null, id = '' } =
         const params = new URLSearchParams();
         params.set('view', 'facturero-clientes');
         if (subview) params.set('subview', subview);
-        if ((subview === 'nuevo' || subview === 'ver-clientes') && Number.isFinite(paso) && paso > 0) params.set('paso', String(paso));
+        if ((subview === 'nuevo' || subview === 'ver-clientes' || subview === 'existente') && Number.isFinite(paso) && paso > 0) params.set('paso', String(paso));
         if (id) params.set('id', id);
         url.hash = `#${params.toString()}`;
         history.replaceState(null, '', url);
@@ -164,17 +166,21 @@ function resolveCropStatus(crop) {
     return normalizeCropStatus(crop?.status) || stored;
 }
 
-function isEligibleFlowCrop(crop) {
+export function isEligibleFlowCrop(crop) {
     if (!crop?.id) return false;
     return FLOW_ALLOWED_CROP_STATUSES.has(resolveCropStatus(crop));
 }
 
-function cropDisplayLabel(crop) {
+export function cropDisplayLabel(crop) {
     const rawName = String(crop?.name || '').trim().replace(/^[^\p{L}\p{N}]+/u, '').trim();
     return rawName || 'Cultivo';
 }
 
-function buildConceptWithWho(tabName, concept, whoValue) {
+export function resolveFlowCropStatus(crop) {
+    return resolveCropStatus(crop);
+}
+
+export function buildConceptWithWho(tabName, concept, whoValue) {
     const safeConcept = String(concept || '').trim();
     const who = String(whoValue || '').trim();
     if (!who) return safeConcept;
@@ -213,7 +219,9 @@ function isMissingColumnError(error, column) {
     return hasMissingPhrase && text.includes('column') && mentionsColumn;
 }
 
-async function insertRowWithColumnFallback(tableName, payload, optionalFields = []) {
+// Exportado para agro-facturero-clientes-existing-flow.js (reuso exacto de la
+// escritura del primer registro — canon V3, sin contabilidad paralela).
+export async function insertRowWithColumnFallback(tableName, payload, optionalFields = []) {
     let workingPayload = { ...(payload || {}) };
     const knownMissing = flowMissingColumnsCache.get(tableName);
     if (knownMissing instanceof Set) {
@@ -627,7 +635,7 @@ export function openFactureroClientFlow(root, options = {}) {
 
         const crops = eligibleCropsForFarm(state.farmId);
         const cropCards = [
-            optionCard({ value: '__general__', label: 'General / Sin cultivo', hint: 'No asociado a cultivo', icon: 'fa-solid fa-table-cells-large', selected: !state.cropId })
+            optionCard({ value: '__general__', label: 'Sin cultivo', hint: 'No asociado a cultivo', icon: 'fa-solid fa-table-cells-large', selected: !state.cropId })
         ].concat(crops.map((crop) => optionCard({
             value: String(crop.id),
             label: cropDisplayLabel(crop),
