@@ -1513,3 +1513,48 @@ git add apps/gold/agro/agro-facturero-clientes-existing-flow.js apps/gold/agro/a
 git commit -m "feat: wizard Cliente existente (subview=existente, 8 pasos) + puerta 3 tiles + chips cards cultivo (D5) + canon Manifiesto 4.5.1 / FICHA v1.9"
 git push
 ```
+
+---
+
+## Sesión 2026-09-20 (VIII) — CIERRE DETERMINISTA CodeQL #74-76: DOMPurify en el sink compartido agro-safe-html.js + corrección preventiva del wizard Cliente existente
+
+Agente: GLM (ZCode). Objetivo: cierre determinista de las alertas #74/#75/#76 ("DOM text reinterpreted as HTML", High) que el owner sigue viendo abiertas en `github.com/YavlPro/YavlGold/security/code-scanning` (captura 2026-09-19 18:02, filtro `is:open branch:main`: 3 abiertas / 73 cerradas).
+
+**Diagnóstico (por qué la Oleada E no cerró las alertas):**
+1. La captura del owner es anterior a los commits 9a52b5ed (18:17) y d62f6df58 (18:45); VI/VII documentaron que CodeQL re-analizó tras 9a52b5ed y MANTUVO las alertas (líneas desplazadas +3): `escapeHtml` custom no es sanitizer modelado, ni en closure ni a nivel de módulo.
+2. El approach de VII (`renderInto` = `DOMParser.parseFromString` + `replaceChildren`) deja el closure sin sink de string, pero `DOMParser.parseFromString(html, 'text/html')` reinterpreta un string como HTML y CodeQL lo modela como sink en la familia XSS/DOM-text: alto riesgo de que las alertas persistan apuntando a la línea del parse (re-scan post-push aún sin verificar por el owner).
+3. Cadena taint verificada: `conceptoInput.value / montoInput.value / fechaInput.value` (DOM text, personal:1058-1062, cultivo:1346-1350, finca:1288-1292) → `state.*` → `escapeHtml()` (no modelado) → template del shell → sink.
+4. La solución determinista es un sanitizer que CodeQL SÍ modela: **DOMPurify** (los models de sanitizer de CodeQL son por librería — VI/VII ya lo habían identificado). Beneficio extra: defensa en profundidad real en runtime, recuperando la vigilancia que el analizador pierde sin sink de string (el trade-off documentado en VII queda resuelto).
+
+**Cambios (6 archivos):**
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| apps/gold/package.json + pnpm-lock.yaml | dep | `dompurify 3.4.15` (librería de sanitización, no framework ni dep visual; §1 no la prohíbe). Instalada con `--store-dir` del store existente (~/.pnpm-store/v3) para no reinstalar el workspace. |
+| apps/gold/agro/agro-safe-html.js | nuevo (51 L) | Módulo compartido: `escapeHtml` canónico (misma def que agro.js:962) + `renderInto(target, html)` = `DOMPurify.sanitize` → `DOMParser.parseFromString` → `replaceChildren`. Sanitizer modelado por CodeQL corta el flujo taint DOM-text→HTML; sin dependencias circulares (solo importa dompurify). |
+| agro-facturero-personal-wizard.js | rewiring | Defs locales `escapeHtml`+`renderInto` eliminadas; import desde agro-safe-html.js. `renderInto(root, ...)` intacto en `render()`. |
+| agro-facturero-cultivo-wizard.js | rewiring | Ídem. |
+| agro-facturero-finca-wizard.js | rewiring | Ídem. |
+| agro-facturero-clientes-existing-flow.js | preventivo | Mismo patrón de shell recién introducido esta mañana (e9194dc6): `root.innerHTML = \`` en render() (:1036) con DOM-text (state.monto/concepto/fecha desde input.value :692-694) → reemplazado por `renderInto(root, ...)`; `escapeHtml` local eliminado (import compartido). Sin re-scan de CodeQL aún sobre este archivo: corrige la misma clase ANTES de que abra una alerta nueva (#77) tras el próximo push. |
+
+Los `node.innerHTML` estáticos internos de cada wizard (mensajes de estado, no DOM-text) quedan intactos por alcance, igual que en VII.
+
+**Resultado de build**: `pnpm build:gold` ✅ verde (2.64s; agent-guard OK; agent-report-check OK; vite OK; check-llms OK; UTF-8 OK). `node --check` OK en los 5 archivos JS. Vite code-splitea DOMPurify en un chunk compartido `agro-safe-html-*.js` (29 kB) que importan los 4 wizards — una sola copia en runtime.
+
+**Verificación estática/real (sin QA browser, ley del owner):**
+1. Consistencia: 0 defs locales de `escapeHtml` en los 4 consumidores; 4 imports de agro-safe-html.js; 1 llamada `renderInto(root,` por archivo.
+2. **Test conductual real con jsdom + dompurify 3.4.15 (node, sin datos mock en producción)**: contra markup representativo de los shells (data-*, aria-*, inputs con value escapado, style inline, disabled, inputmode) — todos preservados; round-trip de atributo verificado (`input.value` parsea de vuelta al texto literal, incluido el payload `<img src=x onerror=alert(1)>` escapado que se muestra como texto). Contra interpolación SIN escapar (simula bug futuro): `onerror`, `<script>`, `href="javascript:"` y `onclick` ELIMINADOS; texto legítimo intacto.
+3. Bundling: chunk agro-safe-html presente en dist con fingerprint de dompurify (ALLOWED_TAGS).
+
+**QA sugerido online (owner)**: (1) recorrer los 4 wizards (Personal/Cultivo/Finca + Cliente existente) — render y navegación idénticos a antes; (2) crear registro con concepto `<img src=x onerror=alert(1)> & "prueba"` en cada wizard: debe verse literal; (3) tras push, CodeQL debe cerrar #74/#75/#76 (sanitizer modelado); si alguna persistiera, abrir "Show paths" y reportar la cadena — ya no debería existir sink alcanzable sin pasar por DOMPurify.sanitize.
+
+**Trade-off honesto (§8.5)**: DOMPurify agrega ~10 kB gzip compartidos (chunk único) y una pasada de sanitización por render de shell (imperceptible en wizards a página completa). A cambio: cierre determinista de alertas + neutralización runtime de interpolaciones futuras sin escapar (mejora real, no cosmética). Si el owner prefiere cero dependencias, la alternativa es revertir a VII y hacer dismiss "false positive" en la UI — documentado, no recomendado.
+
+**NO se hizo (scope respetado)**: agro-facturero-clientes-flow.js (root.innerHTML :255/:1214 — NO flaggeado por CodeQL hoy; :255 es template 100% estático y :1214 no tiene flujo DOM-text→sink demostrado; tocarlo sería expansión preventiva adicional) — se deja constancia para vigilar el próximo scan; monolito agro.js intacto; agro-facturero-clientes-view.js:2847 intacto (template.innerHTML no alertado); Edge/supabase intactos; sin QA browser; sin git (commit/push solo con confirmación expresa del owner); Mimosa scan no re-ejecutado (pendiente del owner; hook reportó scanner_enobufs en sesión previa).
+
+**Bloque git sugerido (NO ejecutado):**
+```bash
+git add apps/gold/package.json pnpm-lock.yaml apps/gold/agro/agro-safe-html.js apps/gold/agro/agro-facturero-personal-wizard.js apps/gold/agro/agro-facturero-cultivo-wizard.js apps/gold/agro/agro-facturero-finca-wizard.js apps/gold/agro/agro-facturero-clientes-existing-flow.js apps/gold/docs/AGENT_REPORT_ACTIVE.md apps/gold/docs/ops/daily-log-2026-09-20.md
+git commit -m "security: CodeQL #74-76 cierre determinista — DOMPurify en sink compartido agro-safe-html.js (renderInto sanitize+parse+adopt) + wizard Cliente existente al mismo canon"
+git push
+```

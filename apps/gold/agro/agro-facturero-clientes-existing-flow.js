@@ -40,6 +40,7 @@ import {
     resolveFlowCropStatus,
     cropDisplayLabel
 } from './agro-facturero-clientes-flow.js';
+import { escapeHtml, renderInto } from './agro-safe-html.js';
 
 const EXISTING_FLOW_CLASS = 'fcflow';
 const EXISTING_SUBTITLE = 'Nuevo registro para cliente existente';
@@ -59,14 +60,9 @@ const USD_GUARDRAIL_MIN = 1000;
 
 let activeExistingFlowToken = 0;
 
-function escapeHtml(value) {
-    return String(value ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
+// escapeHtml llega de agro-safe-html.js (canon compartido; DOMPurify en el
+// sink renderInto corta el flujo taint DOM-text→HTML, misma clase que las
+// alertas CodeQL #74-76 de los wizards Personal/Cultivo/Finca).
 
 function escapeAttribute(value) {
     return escapeHtml(value);
@@ -1033,7 +1029,7 @@ export function openFactureroExistingClientFlow(root, options = {}) {
             : step === 'form' ? renderStepForm()
             : renderStepSummary();
 
-        root.innerHTML = `
+        renderInto(root, `
             <div class="${EXISTING_FLOW_CLASS}">
                 ${!done ? `
                     <div class="fcflow__topbar">
@@ -1054,7 +1050,7 @@ export function openFactureroExistingClientFlow(root, options = {}) {
                 <div class="fcflow__body">${bodyHtml}</div>
                 <div class="fcflow__footer">${footerButton()}</div>
             </div>
-        `;
+        `);
         bindEvents();
     }
 
