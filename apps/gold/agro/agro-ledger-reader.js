@@ -1,10 +1,11 @@
 /**
  * Agro — Lector canonico del ledger por particion (Sesion 1 frente Cultivo).
  *
- * Reader PURO sin wiring: lo consumen los wizards de Cultivo y Personal;
- * Finca conserva su lectura local historica. Extraccion fiel de
- * fetchTileRows de agro-facturero-finca-wizard.js (:466-617) con las
- * particiones como parametro en vez de estado de sesion.
+ * Reader PURO sin wiring: lo consumen los TRES wizards — Cultivo y Personal
+ * lo importan directo; Finca via wrapper S7 (fetchReaderTileRows, sin
+ * translate). Extraccion fiel original de fetchTileRows de
+ * agro-facturero-finca-wizard.js, con las particiones como parametro en
+ * vez de estado de sesion.
  *
  * Particiones canonicas (MANIFIESTO 4.5):
  *   { preset: 'farm',   farmId?  } -> crop_id IS NULL (+eq farm_id si farmId)

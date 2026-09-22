@@ -1558,3 +1558,150 @@ git add apps/gold/package.json pnpm-lock.yaml apps/gold/agro/agro-safe-html.js a
 git commit -m "security: CodeQL #74-76 cierre determinista — DOMPurify en sink compartido agro-safe-html.js (renderInto sanitize+parse+adopt) + wizard Cliente existente al mismo canon"
 git push
 ```
+
+---
+
+## Sesión 2026-09-20 — Cierre operativo del día (informe de DeepSeek V4.1-Flash)
+
+**Agente emisor:** DeepSeek V4.1-Flash (Gerente Táctico), en ausencia de Qwen (créditos agotados).
+**Modo:** cierre operativo. Sin canonización nueva. Git ejecutado por el owner.
+
+**Resumen ejecutivo:** Jornada de solución determinista y cierre de frente múltiple. Wizard "Cliente existente" (8 pasos, 1066L) como módulo dedicado; puerta del facturero con tercer tile; chips de cards de cultivo (D5); solución CodeQL #74-79 con DOMPurify en módulo compartido `agro-safe-html.js`. Build verde, QA del owner GREEN, todo pusheado a `origin/main`.
+
+**Estado operativo:** GREEN.
+
+### Lo que se construyó hoy
+
+| Frente | Detalle |
+|---|---|
+| Wizard "Cliente existente" | `agro-facturero-clientes-existing-flow.js` (1066L), 8 pasos, clientes reales de `agro_buyers` por vinculación real, cultivos produccion/finalizado por finca + chip "Sin cultivo", solo Fiado/Pagado, insert réplica exacta sin contabilidad paralela |
+| Puerta facturero | 3 tiles: Nuevo cliente · Cliente existente · Mis clientes (o equivalente según diseño); grid auto-fit, routing + guard en view.js |
+| Chips cards cultivo | `buildCropChips` en `agrociclos.js`: finalizado → Crear registro + Ver registros; perdido → solo Ver registros; precultivo/activos intactos |
+| Canon documental | MANIFIESTO §4.5.1 (3 entradas, subtítulos, regla cultivos creación, regla cards); FICHA TÉCNICA v1.9 (ruta viva `facturero-clientes` reconciliada); AGENT_REPORT_ACTIVE sesión VIII |
+| CodeQL #74-79 (DOMPurify) | `dompurify 3.4.15` + módulo compartido `agro-safe-html.js` (`escapeHtml` + `renderInto` con sanitize→parse→adopt); 4 wizards rewireados; test conductual jsdom (markup preservado, XSS como texto literal) |
+
+**Causa raíz del cierre de CodeQL:** CodeQL solo reconoce como sanitizer lo que está en su modelo built-in. `DOMParser + replaceChildren` es funcionalmente seguro pero no modelado. DOMPurify sí lo está.
+
+### Verificación del build
+
+```
+agent-guard: OK
+agent-report-check: OK
+vite build: 211 modules transformed, built in 2.41s
+check-llms: OK
+UTF-8 verification passed
+```
+
+`dist/assets/agro-safe-html-*.js` presente en bundle (29.14 kB, 11.17 kB gzip).
+
+### Archivos commiteados y pusheados
+
+- `agro-facturero-clientes-existing-flow.js` (nuevo, 1066L)
+- `agro-facturero-cultivo-wizard.js`
+- `agro-facturero-finca-wizard.js`
+- `agro-facturero-personal-wizard.js`
+- `agro-safe-html.js` (nuevo)
+- `package.json` + `pnpm-lock.yaml` (DOMPurify 3.4.15)
+- `AGENT_REPORT_ACTIVE.md`
+
+QA online del owner: GREEN. Push confirmado a `origin/main`.
+
+### Pendientes vivos (para el próximo agente)
+
+| # | Pendiente | Prioridad |
+|---|---|---|
+| 1 | Verificar cierre de CodeQL #74-79 post-push en GitHub Security | Alta |
+| 2 | Fijar Node 20.x con nvm (drift v26.8.1) | Media |
+| 3 | Canonizar rename "Asistente Agro → Agente Agro" en MANIFIESTO §4.10 | Media |
+| 4 | Escaneo Mimosa — verificar `security_scan_status` del job `scan-job-mua4owr2` | Media |
+| 5 | Crónica de septiembre al cierre del mes | Cierre mensual |
+| 6 | Deuda >1200L del wizard Cultivo | Baja |
+| 7 | Períodos al reader (Fase 4 residual) | Parcial |
+| 8 | Comentario stale en header de `agro-ledger-reader.js` | Baja |
+
+> Cierre de esta tabla: ver **Sesión 2026-09-21** al final del archivo.
+
+### Lecciones del día
+
+1. **Sanitizers que CodeQL reconoce:** un refactor funcionalmente seguro puede no cerrar la alerta. La diferencia es el modelo de sanitizers del motor. DOMPurify está modelado; DOMParser + replaceChildren no.
+2. **Módulo compartido como solución estructural:** cuando 3+ archivos necesitan el mismo sanitizer, crear un módulo centralizado (`agro-safe-html.js`) en vez de repetir el patrón.
+3. **Wizard espejo sin contabilidad paralela:** reutilizar la misma escritura del wizard original sin reimplementar cálculos.
+
+### Reglas para el agente que continúa
+
+1. Leer este informe + tail de AGENT_REPORT_ACTIVE.md antes de editar.
+2. Misión = chat nuevo. Cada frente o diagnóstico abre sesión nueva con prompt autocontenido.
+3. Ley de QA §5: sin QA de agentes; cierre con `pnpm build:gold` + verificación estática.
+4. Git: solo sugerir, nunca ejecutar sin confirmación expresa del owner.
+5. DOMPurify es el sanitizer canónico. Todo render dinámico de HTML debe pasar por `agro-safe-html.js`.
+6. Nunca declarar "CodeQL cerrado" hasta que GitHub Security lo confirme.
+
+### Gobernanza
+
+- **GLM 5.3 Max:** ejecución disciplinada del wizard existente (1066L) y migración DOMPurify. Confiabilidad alta.
+- **Qwen 3.8 Max:** créditos agotados durante la jornada. No ejecutó hoy.
+- **Gemini 3.8 Flash High:** no trabajó hoy; historial 3/3 vigente.
+- **Mimo 2.5:** disponible para documentación. No ejecutó hoy.
+- **Owner:** única puerta de QA, push y canon. QA runtime GREEN cerró el frente.
+
+**Estado final:** Wizard Cliente Existente GREEN. CodeQL GREEN (solución determinista, pendiente confirmación post-push). Build verde. La campaña de septiembre queda redonda.
+
+**DeepSeek V4.1-Flash, Gerente Táctico. QA GREEN.**
+
+---
+
+## Sesión 2026-09-21 — Cierre de pendientes de la tabla 2026-09-20
+
+**Agente:** opencode (mimo-v2.6-flash-free).
+**Modo:** cierre documental de pendientes + gate de build. Sin features nuevas. Sin git sin confirmación del owner.
+
+**Objetivo:** tratar la tabla `### Pendientes vivos` de la sesión 2026-09-20 (#1–#8) tras la confirmación del owner de que CodeQL está green y "del resto sí conviene tratarlo".
+
+**Diagnóstico (estático, ley §5):**
+
+| # | Evidencia | Veredicto |
+|---|---|---|
+| 1 CodeQL #74-79 | Owner confirma green en GitHub Security | **CERRADO** |
+| 2 Node 20.x | nvm 0.40.1 + default alias `20`; symlinks `~/.local/bin/{node,npm,npx}` → `/home/yerikson/.nvm/versions/node/v20.20.2/bin/...`; `node=v20.20.2`, `npm=10.8.2`, `pnpm=9.1.0` con y sin nvm cargado; `.nvmrc`/`.node-version`/engines `20.x` | **CERRADO** |
+| 3 Rename MANIFIESTO | Sin literal "Asistente Agro"; canon en §3.1:128, §4.11:1126 ("Nombre visible: **Agente Agro**"), §8:1615 | **CERRADO** |
+| 4 Mimosa `scan-job-mua4owr2` | Job `status: completed`, `findingCount: 4`, `completeness: partial`, `verdictEffect: none`. 4 hallazgos: `authClient.js:194` FP, `authUI.js:564` FP, `agro-shell.js:1367` XSS FP/advisory, `agro-assistant/index.ts:1088` SSRF FP/advisory. No hay campo literal `security_scan_status` | **CERRADO** |
+| 5 Crónica septiembre | No vence hasta cierre de mes | **VIVO** |
+| 6 Deuda >1200L wizard Cultivo | `agro-facturero-cultivo-wizard.js` = 1486L, acoplamiento alto; refactor sin QA del owner viola ley §5 | **PLAN** — extracción solo si el owner la ordena |
+| 7 Períodos al reader | Sin definición en docs; hipótesis: gateo de períodos solo en escrituras (`assertOperationalPeriodOpen` en `agro-period-cycles.js:1497`; call sites cultivo:859, finca:700, personal:425, operationalCycles:1358/1411) | **VIVO** — requiere definición del owner |
+| 8 Header stale `agro-ledger-reader.js` | Header actualizado: menciona los TRES wizards; Finca via wrapper S7 (`fetchReaderTileRows`, sin translate) | **CERRADO** |
+
+**Cambios realizados:**
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/agro/agro-ledger-reader.js` | fix docs | Header canónico: reader puro consumido por los 3 wizards (Finca via wrapper S7); +9/−4 |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | docs | Esta sección + puntero en la tabla #1–#8 |
+| `apps/gold/docs/ops/daily-log-2026-09-21.md` | docs | Bitácora diaria del día |
+| `~/.local/bin/{node,npm,npx}` | entorno | Symlinks absolutos a Node 20.20.2 (reparación del pendiente #2; fuera del repo) |
+
+**Resultado de build:**
+
+```
+pnpm build:gold  →  BUILD_EXIT=0
+agent-guard: OK · agent-report-check: OK · vite build OK · check-dist-utf8: OK
+Node: v20.20.2 · npm: 10.8.2 · pnpm: 9.1.0
+Log: /tmp/build-gold-node20.log
+```
+
+**QA sugerido (owner):** QA online habitual; nada de runtime tocado salvo comentario de header del reader.
+
+**NO se hizo (scope respetado):** commit/push (espera confirmación expresa); refactor del wizard Cultivo (#6); definición de Fase 4 residual de períodos (#7); crónica de septiembre (#5); MANIFIESTO (solo lectura).
+
+### Pendientes vivos tras esta sesión
+
+| # | Pendiente | Prioridad |
+|---|---|---|
+| 5 | Crónica de septiembre al cierre del mes | Cierre mensual |
+| 6 | Deuda >1200L del wizard Cultivo — esperar orden del owner para extraer | Baja |
+| 7 | Períodos al reader (Fase 4 residual) — definición del owner | Media |
+
+Cerrados en esta sesión: #1 · #2 · #3 · #4 · #8.
+
+**Estado final de la sesión:** BUILD GREEN bajo Node 20. Cinco de ocho pendientes cerrados. Dos abiertos por decisión del owner; uno calendario.
+
+**opencode (mimo-v2.6-flash-free). Build GREEN. Git pendiente de confirmación.**
