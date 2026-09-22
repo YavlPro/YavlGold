@@ -403,7 +403,7 @@
           </li>
           <li class="docs-list__item">
             <i class="fas fa-book docs-list__icon" aria-hidden="true"></i>
-            <span><strong>Memoria.</strong> Tu AgroRepo y el Asistente IA para consultar tus registros con
+            <span><strong>Memoria.</strong> Tu AgroRepo y el Agente Agro (Asistente IA) para consultar tus registros con
               contexto real.</span>
           </li>
           <li class="docs-list__item">
@@ -419,7 +419,7 @@
           <li class="docs-list__item"><strong>Mis factureros</strong> — Facturero de Clientes (fiados y cobros),
             Facturero de la Finca (registros de finca), Facturero del Cultivo (registros de cultivo) y Facturero Personal (gastos personales). Los tres primeros incluyen selectores dinamicos de finca y cultivo.</li>
           <li class="docs-list__item"><strong>Mi Planificacion</strong> — Clima Agro.</li>
-          <li class="docs-list__item"><strong>Trabajo y lectura</strong> — Trabajo Diario, Mis Clientes y Centro de Reportes.</li>
+          <li class="docs-list__item"><strong>Trabajo y lectura</strong> — Trabajo Diario, Mis Clientes y Centro de Reportes Generales.</li>
         </ul>
         <p>Cuando estas en una puerta principal, ves la navegacion general. Cuando entras a un modulo como AgroRepo,
           Facturero de Clientes, Facturero de la Finca o cualquier otro módulo, la pantalla se enfoca en esa tarea y aparece un boton
@@ -441,9 +441,9 @@
         <details class="docs-faq__item">
           <summary class="docs-faq__question">Puedo usar Agro sin internet?</summary>
           <p class="docs-faq__answer">Agro funciona principalmente online: guarda datos con Supabase, actualiza clima y
-            consulta información de tu cuenta. Algunas superficies puntuales, como AgroRepo, son local-first y pueden
-            trabajar en LocalStorage del navegador. AgroRepo se guarda en este navegador. Si borras datos del navegador
-            o cambias de dispositivo, puedes perder esa información si no exportas.</p>
+            consulta información de tu cuenta. AgroRepo es local-first: trabaja en LocalStorage del navegador como
+            caché offline y se sincroniza con Supabase (fuente de verdad en la nube). Si borras datos del navegador
+            o cambias de dispositivo, tus notas se recuperan al iniciar sesión y sincronizar.</p>
         </details>
         <details class="docs-faq__item">
           <summary class="docs-faq__question">A quien le pertenecen mis datos?</summary>

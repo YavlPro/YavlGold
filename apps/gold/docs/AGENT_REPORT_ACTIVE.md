@@ -1705,3 +1705,54 @@ Cerrados en esta sesión: #1 · #2 · #3 · #4 · #8.
 **Estado final de la sesión:** BUILD GREEN bajo Node 20. Cinco de ocho pendientes cerrados. Dos abiertos por decisión del owner; uno calendario.
 
 **opencode (mimo-v2.6-flash-free). Build GREEN. Git pendiente de confirmación.**
+
+---
+
+## Sesión 2026-09-21 (fix) — Alineación de landing y docs con MANIFIESTO_AGRO.md
+
+**Agente:** opencode (mimo-v2.6-flash-free).
+**Modo:** corrección quirúrgica de desalineaciones docs/landing vs MANIFIESTO (luz verde del owner). Sin tocar MANIFIESTO. Sin git sin confirmación.
+
+**Objetivo:** corregir los hallazgos de la auditoría estática `docs`/`landing` vs `MANIFIESTO_AGRO.md` aprobados por el owner.
+
+**Diagnóstico (estático, ley §5):**
+
+| Hallazgo | Evidencia | Fix |
+|---|---|---|
+| "Bitácora 100% local" | `public/llms.txt:30` — falso post-Fase 4 | Escrito Fase 4: Supabase `agro_repo_entries` = fuente de verdad, localStorage = caché + LWW |
+| FAQ offline stale | `docs-agro.html:443-446` — "si borras datos… puedes perder" | Reescrito: caché offline + sync con Supabase; notas recuperables al iniciar sesión |
+| FAQ landing incompleta | `public/agro/landing.html:670` — solo LocalStorage | Añadido sync Supabase / viaje entre dispositivos |
+| FAQ institucional incompleta | `faq.html:65` — solo LocalStorage | Mismo wording Fase 4 |
+| "Centro de Reportes" (corto) | `docs-agro.html:422` + `agro/index.html:462,702,1332` | Renombrado a **Centro de Reportes Generales** (§3.1/§4.9); shell label ya era canónico en `agro-shell.js:184` |
+| Card ausente | `index.html` grid — sin Facturero del Cultivo | Insertada card `data-modo="comercial"`, tag "Mis Factureros", entre Finca y Personal |
+| "Agente Agro" ausente en docs/landing | §4.11 nombre visible | `docs-agro.html` Memoria: "Agente Agro (Asistente IA)"; landing feature: título "Agente Agro" |
+| "Clima" genérico | `landing.html:618` | Renombrado a "Clima Agro" |
+
+**Cambios realizados:**
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/public/llms.txt` | fix factual | Línea 30: persistencia Fase 4 correcta |
+| `apps/gold/docs-agro.html` | fix | FAQ offline Fase 4 · "Centro de Reportes Generales" · "Agente Agro" en Memoria |
+| `apps/gold/public/agro/landing.html` | fix | FAQ Fase 4 · feature "Agente Agro" (párrafo duplicado eliminado) · "Clima Agro" |
+| `apps/gold/faq.html` | fix | FAQ offline Fase 4 |
+| `apps/gold/index.html` | fix | Nueva card Facturero del Cultivo (+15L) |
+| `apps/gold/agro/index.html` | fix | 3 labels → "Centro de Reportes Generales" (launcher, hub móvil, tools) |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | docs | Esta sección |
+| `apps/gold/docs/ops/daily-log-2026-09-21.md` | docs | Actualización del daily log |
+
+**Resultado de build:**
+
+```
+pnpm build:gold  →  BUILD_EXIT=0
+agent-guard: OK · agent-report-check: OK · vite build OK (3.71s) · check-llms: OK · check-dist-utf8: OK
+Node: v20.20.2 · npm: 10.8.2 · pnpm: 9.1.0
+```
+
+**QA sugerido (owner):** QA online; verificar home `index.html` (6–7 cards factureros), FAQ sin internet en las 3 superficies, labels del shell "Centro de Reportes Generales", landing feature "Agente Agro"/"Clima Agro".
+
+**NO se hizo (scope respetado):** MANIFIESTO (§9.4 no tocado — requiere autorización expresa); pendientes #5/#6/#7; rankings de landing anclados a Mis Clientes (menor, no aprobado explícitamente); commit/push (espera confirmación).
+
+**Estado final de la sesión:** desalineaciones corregidas. BUILD GREEN (BUILD_EXIT=0). Git pendiente de confirmación del owner.
+
+**opencode (mimo-v2.6-flash-free). Fix aplicado.**
