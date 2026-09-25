@@ -1,0 +1,42 @@
+YavlGold — Herramienta agrícola digital
+Copyright (C) 2026 Yerikson Varela
+
+Este producto se distribuye bajo la GNU Affero General Public License,
+versión 3 o (a tu elección) cualquier versión posterior (AGPL-3.0-or-later).
+El texto íntegro y literal de la licencia vive en el archivo LICENSE de la
+raíz del repositorio y en apps/gold/LICENSE. Ese archivo contiene
+únicamente el texto de la licencia, sin adiciones.
+
+Este programa es software libre: puedes redistribuirlo y/o modificarlo bajo
+los términos de la GNU Affero General Public License publicada por la Free
+Software Foundation, en su versión 3 o (a tu elección) cualquier versión
+posterior.
+
+Se distribuye con la esperanza de que sea útil, pero SIN NINGUNA GARANTÍA;
+ni siquiera la garantía implícita de COMERCIABILIDAD o IDONEIDAD PARA UN
+PROPÓSITO PARTICULAR. Consulta la GNU Affero General Public License para
+más detalles.
+
+
+---------------------------------------------------------------------------
+LICENCIA COMERCIAL ALTERNATIVA
+
+Si deseas usar, desplegar o integrar este software sin quedar sujeto a las
+obligaciones de la AGPL-3.0 (en particular la §13, que obliga a publicar el
+código fuente de versiones modificadas ofrecidas como servicio en red),
+existe una licencia comercial disponible.
+
+Contacto: soporte@yavlgold.com — asunto: "Licencia comercial"
+Detalle: COMMERCIAL.md
+---------------------------------------------------------------------------
+
+
+Nota histórica: las versiones de YavlGold publicadas antes de la migración
+a AGPL-3.0 fueron liberadas bajo licencia MIT y conservan esa licencia de
+forma perpetua e irrevocable para quien las haya obtenido. La relicencia no
+es retroactiva: la AGPL-3.0 aplica a partir de su incorporación al repo y
+no afecta a copias ya recibidas.
+
+No se liberan con la licencia del código fuente: la marca YavlGold, sus
+logos, los nombres comerciales, los dominios, los datos de usuarios y los
+despliegues productivos.
