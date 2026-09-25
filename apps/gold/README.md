@@ -74,7 +74,7 @@ pnpm -C apps/gold build
 
 ## Rutas de confianza
 
-- `/open-source` -> licencia MIT, repositorio y gobernanza OSS.
+- `/open-source` -> licencia AGPL-3.0, repositorio y gobernanza OSS.
 - `/anti-suplantacion` -> aviso "no inversiones / no pedimos dinero".
 - `/privacy` y `/terms` -> plantillas operativas legales mínimas.
 - `/status` -> estado público básico del servicio.

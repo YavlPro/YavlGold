@@ -76,7 +76,12 @@ gold/
 
 ## Licencia
 
-MIT License. Ver `LICENSE`.
+GNU Affero General Public License v3.0 o posterior (`AGPL-3.0-or-later`). Ver `LICENSE`.
+
+El código sigue abierto y auditable: cualquiera puede leerlo, estudiarlo y modificarlo.
+Quien lo despliegue como servicio en red debe publicar el código fuente de sus cambios
+(AGPL §13). Quien necesite usarlo sin esa obligación puede solicitar una licencia
+comercial escribiendo a `soporte@yavlgold.com`; detalles en `LICENSE-COMMERCIAL.md`.
 
 ## Open Source y confianza
 

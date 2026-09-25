@@ -32,7 +32,7 @@
     "productividad"
   ],
   "author": "Yerikson Varela",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "engines": {
     "node": "20.x",
     "pnpm": ">=8.0.0"

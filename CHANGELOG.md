@@ -12,6 +12,7 @@ This file follows the spirit of Keep a Changelog and keeps release notes useful 
 
 ### Changed
 
+- Relicensing of the codebase from MIT to `AGPL-3.0-or-later`: root and `apps/gold` `LICENSE` files now carry the full GNU Affero General Public License v3.0 plus a commercial-license notice, `package.json` files declare `AGPL-3.0-or-later`, public footers and the `/open-source` page point to AGPL-3.0, and a new `LICENSE-COMMERCIAL.md` documents the paid alternative for users who cannot publish derived source. **Not retroactive:** versions published before this change remain under MIT in perpetuity, and the AGPL text applies only from this commit forward.
 - Documented production trust defaults: security contact `soporte@yavlgold.com`, public repository `https://github.com/YavlPro/YavlGold`, Venezuelan applicable-law wording, and operational response targets.
 
 ### Fixed
