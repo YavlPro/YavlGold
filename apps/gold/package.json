@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "node scripts/agent-guard.mjs && node scripts/agent-report-check.mjs && vite build && node scripts/check-llms.mjs && node scripts/check-dist-utf8.mjs",
+    "test": "node --test agro/",
     "preview": "vite preview",
     "clean:gold": "rimraf dist"
   },
