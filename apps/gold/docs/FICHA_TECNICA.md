@@ -7,6 +7,7 @@
 **Instrucciones para agentes:** `AGENTS.md` (raiz del repo)
 **Sistema de diseño:** `apps/gold/docs/ADN-VISUAL-V12.0.md` (canon activo)
 **LLMs context:** `apps/gold/public/llms.txt` (servido en produccion)
+**Licencia:** `AGPL-3.0-or-later` (`LICENSE` en raiz y en `apps/gold/`, texto verbatim; avisos en `NOTICE`) + licencia privada alternativa en `COMMERCIAL.md`. No retroactiva: lo publicado antes de 2026-09-25 conserva MIT en perpetuidad.
 
 ---
 
@@ -394,6 +395,13 @@ disponible, con fallback defensivo a query directa.
 - NO ejecutar comandos git automáticamente
 - Sugerir comandos al final: `git status` → `git add` → `git commit` → `git push`
 
+### Licencia
+- **Código:** `AGPL-3.0-or-later`. `LICENSE` (raiz) y `apps/gold/LICENSE` contienen el texto verbatim de la AGPL (661 líneas) **sin nada encima**, para que GitHub/licensee pueda assertar el SPDX id.
+- **Avisos:** copyright y nota de doble licencia en `NOTICE` (raiz).
+- **Comercial:** `COMMERCIAL.md` (raiz) documenta la licencia privada pagada para quien no puede publicar el código derivado. Se renombró desde `LICENSE-COMMERCIAL.md` porque matcheaba el patrón `LICENSE*` y contaminaba la detección de licencia.
+- **No retroactiva:** las versiones publicadas antes del 2026-09-25 permanecen bajo MIT en perpetuidad.
+- Excepciones por contrato: `apps/gold/crypto/LICENSE` (Apache-2.0, terceros) y la documentación histórica congelada en `apps/gold/docs/**`.
+
 ---
 
 ## 8. ROUTING Y BUILD
@@ -450,6 +458,15 @@ pnpm -C apps/gold build
 3. `vite build` — build de producción MPA
 4. `check-llms.mjs` — valida `llms.txt` en dist
 5. `check-dist-utf8.mjs` — verifica encoding UTF-8 en HTML de salida
+
+### Tests
+- **Runner:** `node:test` + `node:assert/strict` (runtime de Node, **sin dependencias de testing** — vitest/jest prohibidos).
+- **Script:** `pnpm test` (raiz o `apps/gold`) → `node --test agro/`.
+- **Tarea Turbo:** `test` en `turbo.json` (`dependsOn: ["^build"]`, `outputs: []`).
+- **CI:** step `Test` en `.github/workflows/gold-build.yml`, entre "Install dependencies" y "Build Gold".
+- **Suite:** 128 tests en `apps/gold/agro/*.test.mjs` — 125 de lógica financiera pura (`agro-exchange`, `agro-unit-totals`, `agro-format`, `agro-report-format`, `agro-display-currency`) + 3 preexistentes (`agro-profit-calculator`). 3 marcados con `{ skip: 'bug real, ver resumen' }` a la espera de fix.
+- **Convención:** los tests de módulos que tocan `localStorage`/`fetch`/`window` instalan stubs en memoria antes de importar; `agro-display-currency.js` se importa dinámicamente porque lee storage en top-level. Nunca inyectar datos mock en código de producción.
+- ⚠️ **Pendiente conocido:** el script es `node --test agro/`, que funciona en **Node 20** (la versión que usa el CI) pero **falla en Node 22+ con `MODULE_NOT_FOUND`**. La forma portable verificada es `node --test agro/*.test.mjs`. **NO cambiarlo sin decisión del owner** — es un cambio de código.
 
 ### Agregar Nueva Página
 1. Crear HTML en ubicación apropiada
@@ -525,6 +542,9 @@ pnpm install
 # Build de producción
 pnpm build:gold
 
+# Tests (node:test, ver sección 8 · Tests)
+pnpm test
+
 # Desarrollo local (si configurado)
 pnpm dev
 
@@ -541,6 +561,7 @@ git status
 - **Migración tipográfica V12** — ✅ RESUELTA (28-jun-2026). Orbitron/Rajdhani erradicadas de superficies visibles. Plus Jakarta Sans, Inter y Playfair Display gobiernan la plataforma. Cualquier referencia residual futura debe tratarse como regresión o deuda histórica no visible y auditarse antes de tocar.
 - **`z-index: 10090` en modal de edición (`#modal-edit-facturero` / `agro-facturero-finca-edit.js`)** — se sitúa por encima de la escala canónica de tokens de capas del ADN Visual (§8 tokens, donde `--z-modal: 10000`). Práctica existente a normalizar dentro de una armonización global de capas.
 - **Brecha de clase `.input-canon`** — definida conceptualmente en el ADN Visual V12 §7 como estándar de controles de formulario, pero inexistente como clase global en las hojas de estilo del proyecto (brecha doc-vs-realidad a unificar en futuro refactor de inputs).
+- **Script de test no portable entre versiones de Node** — `pnpm test` ejecuta `node --test agro/`, que funciona en Node 20 (versión del CI) pero falla en Node 22+ con `MODULE_NOT_FOUND`. La forma portable verificada es `node --test agro/*.test.mjs`. **No aplicado**: requiere decisión del owner (es código, no documentación).
 
 ---
 

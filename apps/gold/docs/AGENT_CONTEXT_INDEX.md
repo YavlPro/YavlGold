@@ -2,7 +2,7 @@
 
 Mapa central de navegación documental de YavlGold.
 Este archivo es el punto de entrada para cualquier agente que necesite entender el sistema.
-Actualizado: 2026-08-05.
+Actualizado: 2026-09-25.
 
 ---
 
@@ -19,6 +19,8 @@ Actualizado: 2026-08-05.
 | **Bitácora diaria** | daily-log-YYYY-MM-DD.md | docs/ops/ | Handoff operativo temporal entre agentes |
 | **Mapa central** | AGENT_CONTEXT_INDEX.md | docs/ | Este archivo |
 | **Resumen operativo** | llms.txt | public/ | Contexto para LLMs (servido en prod) |
+| **Aviso de copyright** | NOTICE | raiz | Copyright del titular + aviso de doble licencia (AGPL-3.0-or-later / comercial) |
+| **Licencia comercial** | COMMERCIAL.md | raiz | Licencia privada pagada para quien no puede publicar código derivado |
 
 ---
 
@@ -32,6 +34,7 @@ Actualizado: 2026-08-05.
 - [ADN-VISUAL-V10.0.md](./ADN-VISUAL-V10.0.md) — Referencia histórica fundacional (V10, ya no rige)
 - [yavlgold-context.md](./yavlgold-context.md) — Contexto consolidado (8K lineas)
 - [FICHA_TECNICA.md](./FICHA_TECNICA.md) — Ficha técnica estructural
+- [QA_INFORME_AGENTE_AGRO_2026-09-25.md](./QA_INFORME_AGENTE_AGRO_2026-09-25.md) — **QA online del Asistente IA (frente ABIERTO)**: 21 pruebas (incl. E1 capacidades y límites), bugs B-1…B-6, privacidad pendiente. Obligatorio antes de tocar el Asistente, SYSTEM_PROMPT, tools financieras o Edge Function
 
 ---
 
@@ -52,6 +55,7 @@ Actualizado: 2026-08-05.
    - Agro → MANIFIESTO_AGRO.md
    - Visión estratégica del producto → ROADMAP_VISION_YAVLGOLD.md
    - Estado operativo → AGENT_REPORT_ACTIVE.md
+   - QA del Asistente IA / bugs B-1…B-6 / privacidad del asistente → QA_INFORME_AGENTE_AGRO_2026-09-25.md
    - Bitácora del mes actual → docs/ops/daily-log-YYYY-MM-DD.md
    - Estructura técnica → FICHA_TECNICA.md
    - Contexto rápido → llms.txt

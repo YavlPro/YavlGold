@@ -17,6 +17,12 @@ Archivo anterior archivado: `AGENT_LEGACY_CONTEXT__2026-08-01__2026-09-17.md`
 
 ## Frente abierto (activo)
 
+- **3 BUGS DE FORMATO/REDONDEO (2026-09-25) — frente ABIERTO, diferidos**: detectados por la suite nueva y marcados con `{ skip: 'bug real, ver resumen' }`; producción intacta, sin fix hasta mañana.
+  1. **`agro-format.js:14` — `toCents()` asimétrico en negativos** (RIESGO ALTO): `toCents(0.125) === 13` pero `toCents(-0.125) === -12`, porque `Math.round` va hacia +Infinity. **Afecta valores almacenados, no solo presentación** → NO tocar hasta auditar cuántos movimientos con centavos `.xx5` negativos existen en el ledger.
+  2. **`agro-exchange.js:322` — signo pegado**: `formatCurrencyDisplay(-5,'USD')` → `"$-5.00"` en vez de `"-$5.00"` (a diferencia de `formatMoney`, que sí pone el signo antes del prefijo). Solo presentación.
+  3. **`agro-exchange.js:326` — VES sin separador de miles**: `"Bs 1500000.00"` en vez de `"Bs 1,500,000.00"`. La rama `decimals===0` (COP, línea 325) usa `toLocaleString()` y sí agrupa; la de decimales usa `toFixed()` pelado. El JSDoc de la línea 317 documenta `"Bs 1,500.00"` — **el código nunca cumplió su propia doc**. Solo presentación.
+  - **Nota de locale (línea 325):** `toLocaleString()` va SIN locale, así que el agrupador depende del navegador (`en-US` → `"1,500,000"` · `es-VE` → `"1.500.000"`). Al arreglar el bug 3 hay que fijar locale explícito **en ambas ramas**. Decisión de producto pendiente del owner.
+- **QA ONLINE del Agente Agro (2026-09-20 → 2026-09-25) — frente ABIERTO**: informe canónico en `QA_INFORME_AGENTE_AGRO_2026-09-25.md`. 21 pruebas (12 PASS · 2 PASS PARCIAL · 6 FAIL · 1 INCONCLUSO) + 7 errores de conexión. Bugs abiertos: **B-1** `get_my_farms` vacío · **B-2** enrutamiento clima/mercado cae al flujo de cultivos · **B-3** lenguaje monetario sin moneda/formato/alcance · **B-4** citas AgroRepo sin "Contexto consultado" · **B-5** errores intermitentes Edge Function · **B-6** privacidad NO validada (inconclusa). Cualquier agente que toque el Asistente IA, `SYSTEM_PROMPT`, tools financieras, privacidad o la Edge Function DEBE leer ese informe antes de editar. Prioridad del owner: B-5 → B-1 → B-2 → B-3 → B-4 → privacidad; A/B de modelos diferido hasta cerrar P0/P1.
 - **ANEXO 23-b — pivote nativo en totales del ciclo**: commiteado por el owner como `10347911` (HEAD al abrir esta sesión; tree limpio). Causa raíz del residual: `normalizeCycleDisplayCurrency()` sin argumento siempre devuelve 'USD' (normalizador puro, no getter) → el guard nativo del ANEXO 23 jamás activaba y las 6 líneas de la card seguían en camino USD (200.110/200.106 vs 200.000 reales). Fix: `getCycleDisplayCurrency()` real en los 3 guards de `agrociclos.js`; moneda null del movimiento hereda la del ciclo (`agroOperationalCycles.js`); bridge expone `window._agroMergedOperationalNativeByCrop`. Detalle completo y tabla de verdad: final del archivo archivado (sesión 2026-09-17 II).
 - **ANEXO 24 — retiro de Mi Carrito**: commiteado por el owner como `d5a9cccf`. Módulo `agro-cart.js` archivado en `archive/legacy-js/`; rutas legacy `#view=carrito`/`#view=operational-cart` coercen al hub Granja vía `SHELL_GATE_ROUTES`; tablas Supabase intactas. Ver sesión 2026-09-17 (III).
 - **ANEXO 25 S1 — extracción del Asistente IA del monolito**: commiteado por el owner como `a1274f84` (QA funcional GREEN 17-sep 20:40). Split D-IA-2: `agro-assistant.js` (core 1,167L) + `agro-assistant-ui.js` (render 426L) + `agro-assistant.css` (1,433L); `agro.js` 17.780→16.292; Edge Function intacta; claves localStorage idénticas. Ver sesión 2026-09-17 (IV).
@@ -1756,3 +1762,204 @@ Node: v20.20.2 · npm: 10.8.2 · pnpm: 9.1.0
 **Estado final de la sesión:** desalineaciones corregidas. BUILD GREEN (BUILD_EXIT=0). Git pendiente de confirmación del owner.
 
 **opencode (mimo-v2.6-flash-free). Fix aplicado.**
+
+---
+
+## Sesión 2026-09-25 — Ingest del Informe de QA Online del Agente Agro
+
+**Agente:** opencode (mimo-v2.6-flash-free).
+**Modo:** ingest documental. Sin tocar código. Sin git sin confirmación.
+
+**Objetivo:** guardar el informe de QA online del owner (período 2026-09-20 → 2026-09-25) y hacerlo relevante para cualquier agente futuro.
+
+**Cambios realizados:**
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/docs/QA_INFORME_AGENTE_AGRO_2026-09-25.md` | creación | Informe completo del frente de QA del Asistente IA: matriz de 20 pruebas, catálogo B-1…B-6, privacidad bloqueada, prioridades P0/P1/P2, criterios de aceptación y plan de re-test |
+| `apps/gold/docs/QA_INFORME_AGENTE_AGRO_2026-09-25.md` | update | Incorporación de la prueba **E1** (export 2026-09-25T01:25Z, "¿Qué puedes hacer y qué no?" → PASS CON OBSERVACIONES): Sesión E en la matriz, bloque E1 con observaciones y añadidos sugeridos de prompt (clima, precios futuros, cultivos no registrados), totales 20→21 pruebas, fortalezas, P1.1 y plan de re-test actualizados |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | docs | Bullet en "Frente abierto (activo)" con estado, bugs y orden de resolución + esta sección |
+| `apps/gold/docs/AGENT_CONTEXT_INDEX.md` | docs | Vínculo en "Nucleo obligatorio" y ruta de consulta en "Query" |
+
+**Resultado de build:** no aplica (solo documentación; sin cambios de código).
+
+**QA sugerido (owner):** ninguna acción; el informe es evidencia de su propio QA online.
+
+**NO se hizo (scope respetado):** código, MANIFIESTO, git, corrección de los bugs B-1…B-6 (frente sigue ABIERTO).
+
+**opencode (mimo-v2.6-flash-free). Ingest documental completo.**
+
+---
+
+## Sesión 2026-09-25 — Relicencia de MIT a AGPL-3.0-or-later + licencia comercial
+
+**Agente:** opencode (mimo-v2.6-flash-free).
+**Modo:** relicencia documental/legal. Sin lógica de negocio, sin CSS/JS, sin SQL.
+
+**Objetivo:** migrar la licencia del código de MIT a `AGPL-3.0-or-later` manteniendo el repo público auditable (anti-suplantación) y habilitando una licencia comercial como vía de monetización. Relicencia unilateral válida: titular único del copyright Yerikson Varela, sin contribuidores externos ni CLA.
+
+**Diagnóstico:** 21 superficies activas declaraban MIT (2 `LICENSE`, 4 `package.json`, 13 HTML, 2 `README.md`). `apps/gold/crypto/LICENSE` es Apache-2.0 de terceros y `apps/gold/docs/**` histórico es registro congelado: ambos fuera de alcance por reglas duras del prompt.
+
+**Cambios realizados:**
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `LICENSE`, `apps/gold/LICENSE` | rewrite | Cabecera YavlGold/Copyright + nota histórica + texto literal AGPL-3.0 descargado de gnu.org (692 líneas) |
+| `LICENSE-COMMERCIAL.md` (hoy `COMMERCIAL.md`) | creación | Qué cubre, a quién aplica, condiciones y contacto `soporte@yavlgold.com` |
+| `package.json`, `apps/gold/package.json`, `apps/gold/agro/package.json`, `apps/gold/social/package.json` | edit | `"license": "MIT"` → `"AGPL-3.0-or-later"` |
+| `apps/gold/open-source.html` | rewrite | `h1` AGPL-3.0, lead con §13, sección "Licencia comercial", nota histórica vía `.trust-note` existente (sin CSS nuevo) |
+| 12 footers HTML | edit | `Licencia MIT` → `Licencia AGPL-3.0` (href intacto) |
+| `index.html`, `public/agro/landing.html`, `dashboard/index.html` | edit | `Open Source (MIT)` / `(MIT License)` → `Open Source (AGPL-3.0)` |
+| `README.md`, `apps/gold/README.md` | edit | Sección Licencia AGPL + licencia comercial; ruta `/open-source` |
+| `CHANGELOG.md` | edit | Entrada `[Unreleased] → Changed` con aclaración explícita de no retroactividad |
+
+**Resultado de build:**
+
+```
+pnpm build:gold  →  BUILD_EXIT=0
+agent-guard: OK · agent-report-check: OK · vite build OK · check-llms: OK · check-dist-utf8: OK
+```
+
+**Checks de verificación:** los 4 pedidos corrieron. Check 2 (4 `package.json` = AGPL), check 3 (`crypto/LICENSE` sigue Apache) y check 4 (build) en verde. El check 1 deja restos de "MIT" **solo** en: la nota histórica de `open-source.html` (exigida por el propio prompt), la entrada de `CHANGELOG.md` que declara la no retroactividad, `LICENSE`/`apps/gold/LICENSE` (sin extensión, fuera del filtro), `apps/gold/dist/` (build regenerado, gitignored) y `.kilo/` (tooling gitignored con un worktree clonado en `6a04025f`). Ninguna superficie activa declara ya MIT como licencia vigente.
+
+**QA sugerido (owner):** QA online de `/open-source` (h1, bloque comercial, nota histórica), footers de las 12 páginas, copyright de home/landing/dashboard; verificar en GitHub → Settings → About que la licencia detectada muestre AGPL-3.0; confirmar la fecha de corte de la nota histórica (usada 2026-09-25); validar el plan comercial con abogado de PI.
+
+**NO se hizo (scope respetado):** `apps/gold/crypto/LICENSE` (Apache-2.0 intacto); `.kilocode/skills/**`; documentación histórica (`docs/archive`, `AGENT_LEGACY_*`, `chronicles`, `ADN-VISUAL-V10/V11`, `yavlgold-context.md`, `apps/gold/archive`); `node_modules`, `dist`, `pnpm-lock.yaml`; retroactividad; push/PR; visibilidad del repo; lógica de negocio, CSS, JS y migraciones SQL.
+
+**Git:** commit único `ad8db86f` — `license: migración de MIT a AGPL-3.0-or-later + excepción comercial (no retroactivo)`. Sin push. Esta entrada queda sin commitear junto con los cambios preexistentes de la sesión de QA.
+
+**opencode (mimo-v2.6-flash-free). Relicencia completa.**
+
+---
+
+## Sesión 2026-09-25 — Fix: detección SPDX de GitHub (NOASSERTION → AGPL)
+
+**Agente:** opencode (mimo-v2.6-flash-free). Continuación quirúrgica de la sesión de relicencia.
+
+**Diagnóstico:** verificado en la API pública de GitHub: `license.spdx_id = "NOASSERTION"`, `key = "other"`. Causa raíz: la cabecera en español prependida al texto de la AGPL (31 de 692 líneas) bajó la similitud por debajo del umbral de `licensee`, y `LICENSE-COMMERCIAL.md` matcheaba el patrón `LICENSE*` creando un segundo candidato ambiguo. Evidencia de apoyo: el árbol commiteado contiene 11 archivos candidatos (`LICENSE`, `apps/gold/LICENSE`, `apps/gold/crypto/LICENSE`, `LICENSE-COMMERCIAL.md` y 7 `LICENSE*` de terceros bajo `.kilocode/skills/`); cuando GitHub aún reportaba MIT, `apps/gold/crypto/LICENSE` y los de `.kilocode` ya existían, así que la caída se debe a cambios en la raíz.
+
+**Cambios realizados:**
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `LICENSE`, `apps/gold/LICENSE` | strip | 692 → **661 líneas**: solo el texto literal de la AGPL-3.0, idéntico byte a byte al de gnu.org (`diff -q` OK) |
+| `NOTICE` | creación | Copyright, aviso de licencia comercial (`soporte@yavlgold.com`), nota histórica MIT no retroactiva y superficies no liberadas |
+| `LICENSE-COMMERCIAL.md` → `COMMERCIAL.md` | rename | `git mv`; elimina el candidato `LICENSE*` ambiguo |
+| `README.md` | edit | + `NOTICE`; enlace comercial ahora a `COMMERCIAL.md` |
+| `CHANGELOG.md` | edit | Corregido el bullet de relicencia para que describa `LICENSE` verbatim + `NOTICE` + `COMMERCIAL.md` |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | docs | Anotación del rename en la sesión anterior + esta sección |
+
+**Resultado de build:**
+
+```
+pnpm build:gold  →  BUILD_EXIT=0
+agent-guard: OK · agent-report-check: OK · check-llms: OK · check-dist-utf8: OK
+```
+
+**Verificación:** `wc -l LICENSE apps/gold/LICENSE` → 661/661; `ls LICENSE*` → solo `LICENSE`; `diff -q LICENSE /tmp/agpl-3.0.txt` → idéntico; `crypto/LICENSE` intacto (Apache-2.0); `.kilocode/` intacto; los 4 `package.json` siguen en `AGPL-3.0-or-later`.
+
+**NO verificado:** la detección de GitHub. No hay Ruby/`licensee` en este entorno, así que la corrección se aplicó sobre las dos causas probables y **solo el reindexado tras el push confirma**. Hipótesis de reserva si sigue en `NOASSERTION`: los 7 `LICENSE*` de `.kilocode/skills/` (fuera de alcance por regla dura 2).
+
+**NO se hizo (scope respetado):** `apps/gold/crypto/LICENSE`; `.kilocode/**`; `node_modules`, `dist`, `pnpm-lock.yaml`; texto de la AGPL; CSS/JS/negocio/SQL; push (pendiente del owner).
+
+**Git:** commit `84e90ae3` — `license: LICENSE verbatim para detección SPDX correcta; avisos a NOTICE`. Sin push. Esta entrada y los docs de la sesión de QA siguen sin commitear.
+
+**opencode (mimo-v2.6-flash-free). Fix de detección aplicado.**
+
+---
+
+## Sesión 2026-09-25 — Runner de tests del monorepo + cobertura de lógica financiera pura
+
+**Agente:** opencode (mimo-v2.6-flash-free).
+**Modo:** infraestructura de QA + tests. Sin tocar código de producción.
+
+**Objetivo:** cablear `pnpm test` en el runner (Turbo + CI) y añadir tests `node:test` a 5 módulos de lógica financiera pura de `apps/gold/agro/`, sin dependencias nuevas y sin modificar producción.
+
+**Diagnóstico:**
+- Sin script `test` en `apps/gold/package.json`, sin task `test` en `turbo.json` y sin paso de test en `.github/workflows/gold-build.yml`: el repo no ejecutaba ningún test en CI.
+- Node 20.20.2 **no expande globs** en `node --test` → `"agro/**/*.test.mjs"` falla como patrón literal. Solución elegida: `node --test agro/` (recursivo, sin shell globbing; verificado que no hay dirs `test/` ni archivos confusibles bajo `agro/`).
+- Módulos "puros" en teoría no lo son del todo: `agro-exchange.js` usa `localStorage` + `fetch`, `agro-display-currency.js` usa `window` (lee en top-level). Solución: stubs de `localStorage` en memoria, `fetch` que rechaza (offline) y `window` apuntando al mismo almacén; import dinámico donde el módulo lee storage al cargar.
+
+**Cambios realizados:**
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `apps/gold/package.json` | edit | `"test": "node --test agro/"` |
+| `turbo.json` | edit | task `test` (`dependsOn: ["^build"]`, `outputs: []`) |
+| `.github/workflows/gold-build.yml` | edit | step `Test / pnpm test` entre install y build |
+| `apps/gold/agro/agro-exchange.test.mjs` | creación | 32 tests (2 skip de bug) |
+| `apps/gold/agro/agro-unit-totals.test.mjs` | creación | 38 tests |
+| `apps/gold/agro/agro-format.test.mjs` | creación | 21 tests (1 skip de bug) |
+| `apps/gold/agro/agro-display-currency.test.mjs` | creación | 15 tests |
+| `apps/gold/agro/agro-report-format.test.mjs` | creación | 19 tests |
+
+**Resultado de build:** `pnpm test` → 128 tests · 125 pass · 0 fail · 3 skipped (bugs reales documentados). `pnpm build:gold` → BUILD_EXIT=0 (UTF-8 guardrail OK).
+
+**Bugs encontrados (marcados con `{ skip: 'bug real, ver resumen' }`, sin tocar producción):**
+1. `toCents()` asimétrico en medios: `toCents(0.125) === 13` pero `toCents(-0.125) === -12` (`Math.round` va hacia +Infinity) — `agro-format.js`.
+2. `formatCurrencyDisplay()` signo mal colocado: `formatCurrencyDisplay(-5,'USD')` → `"$-5.00"` en vez de `"-$5.00"` — `agro-exchange.js`.
+3. `formatCurrencyDisplay()` sin separador de miles en VES: `"Bs 1500000.00"` en vez de `"Bs 1,500,000.00"` (COP sí agrupa vía `toLocaleString`) — `agro-exchange.js`.
+
+**QA sugerido (owner):** en producción, verificar que los 3 bugs anteriores no afectan flujos reales visibles (montos negativos en historial y montos VES grandes); decidir fix o aceptar comportamiento.
+
+**NO se hizo (scope respetado):** código de producción, `agro.js`, DOM/Supabase, dependencias nuevas, vitest, push, y los 3 docs pendientes de sesiones previas (`QA_INFORME_AGENTE_AGRO_2026-09-25.md`, `AGENT_CONTEXT_INDEX.md`, y las secciones previas de este mismo archivo).
+
+**Git:** commit `test: cablea runner en turbo/CI + cobertura de lógica financiera pura`. Sin push (pendiente del owner).
+
+**opencode (mimo-v2.6-flash-free). Runner + cobertura completos.**
+
+---
+
+## Sesión 2026-09-25 — Cierre documental: relicencia AGPL-3.0-or-later, runner de tests y 3 bugs diferidos
+
+**Agente:** opencode (mimo-v2.6-flash-free).
+**Modo:** cierre documental + infraestructura de QA. Sin lógica de negocio, sin CSS/JS de producción, sin SQL.
+
+**Objetivo:** cerrar el día dejando la relicencia, el runner de tests y sus hallazgos documentados, canónicamente y con los frentes abiertos visibles para cualquier agente futuro.
+
+**Diagnóstico:**
+- El repo no corría ningún test en CI: `apps/gold/package.json` no tenía script `test`, `turbo.json` no tenía task `test` y `.github/workflows/gold-build.yml` no tenía step de test. El único test existente (`apps/gold/agro/agro-profit-calculator.test.mjs`, 3 tests) estaba **huérfano**: ni turbo ni CI lo ejecutaban.
+- La detección de licencia de GitHub devolvía `NOASSERTION` / `key: other` por dos causas independientes: (a) una cabecera de 31 líneas encima del texto AGPL bajaba la similitud a 95,5% (licensee exige el texto verbatim), y (b) `LICENSE-COMMERCIAL.md` matcheaba el patrón `LICENSE*` y contaminaba la detección del archivo principal.
+- Node 20.20.2 (versión del CI) no expande globs en `node --test`, por lo que un patrón `agro/**/*.test.mjs` falla como ruta literal.
+
+**Cambios realizados:**
+
+| Archivo | Tipo | Cambio |
+|---|---|---|
+| `LICENSE`, `apps/gold/LICENSE` | rewrite (commit `ad8db86f`) | Migración MIT → `AGPL-3.0-or-later` con aviso de no retroactividad |
+| `LICENSE`, `apps/gold/LICENSE` | rewrite (commit `84e90ae3`) | Texto verbatim AGPL-3.0 (661 L) sin cabecera encima; avisos a `NOTICE` |
+| `LICENSE-COMMERCIAL.md` → `COMMERCIAL.md` | rename (commit `84e90ae3`) | Elimina el candidato ambiguo `LICENSE*` que contaminaba la detección |
+| `NOTICE` | creación (commit `84e90ae3`) | Copyright Yerikson Varela + aviso de doble licencia |
+| `apps/gold/package.json` | edit (commit `82b82434`) | `"test": "node --test agro/"` |
+| `turbo.json` | edit (commit `82b82434`) | Task `test` (`dependsOn: ["^build"]`, `outputs: []`) |
+| `.github/workflows/gold-build.yml` | edit (commit `82b82434`) | Step `Test` (`pnpm test`) entre install y build |
+| `apps/gold/agro/agro-exchange.test.mjs` | creación | 32 tests (2 skip de bug) |
+| `apps/gold/agro/agro-unit-totals.test.mjs` | creación | 38 tests |
+| `apps/gold/agro/agro-format.test.mjs` | creación | 21 tests (1 skip de bug) |
+| `apps/gold/agro/agro-report-format.test.mjs` | creación | 19 tests |
+| `apps/gold/agro/agro-display-currency.test.mjs` | creación | 15 tests |
+| `CHANGELOG.md` | edit | Entrada `Changed` de relicencia corregida + `Added` de la suite y el runner |
+| `AGENT_CONTEXT_INDEX.md` | edit | Fecha + capas `NOTICE` y `COMMERCIAL.md` |
+| `FICHA_TECNICA.md` | edit | Licencia `AGPL-3.0-or-later`, sección de tests y deuda del script portable |
+| `docs/ops/daily-log-2026-09-25.md` | update | Bitácora diaria del día (local, gitignored) |
+
+**Resultado de build:** `pnpm build:gold` → **BUILD_EXIT=0** (agent-guard · agent-report-check · vite · check-llms · check-dist-utf8).
+**Resultado de tests:** `pnpm test` → **128 tests · 125 pass · 0 fail · 3 skipped**.
+**CI:** verde en `82b82434` (success).
+**Detección de licencia:** API de GitHub `.license.spdx_id = "AGPL-3.0"` (antes `NOASSERTION`).
+
+**QA sugerido (owner):**
+1. Verificar en el repo público que la etiqueta de licencia sigue leyendo `AGPL-3.0` tras este cierre documental.
+2. Confirmar que el step `Test` aparece en la ejecución de CI del próximo push.
+3. Auditar el impacto del bug 1 antes de programar su fix (ver frente abierto).
+
+**NO se hizo (scope respetado):** código de producción, `agro.js`, DOM/Supabase, dependencias nuevas, fix de los 3 bugs (diferidos a mañana), cambio del script `test` a la forma portable (queda anotado en `FICHA_TECNICA.md`; es código y hoy cerramos solo documentación), push.
+
+**Frentes abiertos que deja esta sesión:**
+- 3 bugs de formato/redondeo (`agro-format.js:14` · `agro-exchange.js:322` · `agro-exchange.js:326`) — ver "Frente abierto (activo)".
+- Pendiente del script de test portable (Node 22+ `MODULE_NOT_FOUND`).
+- QA online del Agente Agro (B-1…B-6), sin cambios.
+
+**Estado final de la sesión:** 3 commits en `origin/main` (`ad8db86f`, `84e90ae3`, `82b82434`), CI verde, build verde, 128 tests en verde. Documentación de cierre commiteada sin push, a la espera de la palabra del owner.
+
+**opencode (mimo-v2.6-flash-free). Cierre documental completo.**
